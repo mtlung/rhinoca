@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "../src/taskpool.h"
-
+#include <math.h>
 namespace {
 
 class MyTask : public Task
@@ -9,7 +9,13 @@ public:
 	MyTask(int id=0) : _id(id) {}
 	virtual void run(TaskPool* taskPool)
 	{
+/*		float val =0.1f;
+		for(int i=0; i<10000; ++i)
+			val = sinf(val);
+
+		printf("Task: %d, thread: %d, val: %f\n", _id, TaskPool::threadId(), val);*/
 		printf("Task: %d, thread: %d\n", _id, TaskPool::threadId());
+
 		delete this;
 	}
 	int _id;
@@ -70,6 +76,7 @@ TEST_FIXTURE(TaskPoolTest, singleThreadDependency)
 
 	{	// Task1 depends on task2
 		TaskPool taskPool;
+		taskPool.init(4);
 		TaskId t1 = taskPool.beginAdd(new MyTask(0));
 
 		TaskId t2 = taskPool.beginAdd(new MyTask(1));
@@ -82,11 +89,8 @@ TEST_FIXTURE(TaskPoolTest, singleThreadDependency)
 			taskPool.finishAdd(taskPool.beginAdd(new MyTask(i+2)));
 		}
 
-		taskPool.init(4);
 		while(taskPool.taskCount()) {
-			Mutex m;
-			m.lock();
-			m.unlock();
+			taskPool.doSomeTask();
 		}
 	}
 }

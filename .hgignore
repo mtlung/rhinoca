@@ -1,5 +1,12 @@
 glob:*.ncb
-glob:*.user
 glob:build/win32/tmp
 glob:thirdParty/SpiderMonkey/Debug
 glob:thirdParty/SpiderMonkey/Release
+glob:bin/*.pdb
+glob:bin/*.ilk
+glob:build/win32/*.suo
+glob:lib/*.exp
+glob:lib/*.lib
+glob:bin/*.dll
+glob:bin/*.exe
+glob:build/win32/*.user

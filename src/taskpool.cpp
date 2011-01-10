@@ -113,11 +113,11 @@ TaskPool::~TaskPool()
 static void _run(TaskPool* pool)
 {
 	while(pool->keepRun()) {
-		pool->_doSomeTask();
+		pool->doSomeTask();
 
 		// TODO: Use condition variable
 #ifdef RHINOCA_WINDOWS
-		::Sleep(DWORD(1));
+//		::Sleep(DWORD(1));
 #else
 		::usleep(useconds_t(1 * 1000));
 #endif
@@ -254,12 +254,20 @@ void TaskPool::_wait(TaskProxy* p)
 	}
 }
 
+void TaskPool::doSomeTask()
+{
+	ScopeLock lock(mutex);
+
+	while(_pendingTasks)
+		_doTask(_pendingTasks);
+}
+
 // NOTE: Recursive and re-entrant
 void TaskPool::_doTask(TaskProxy* p)
 {
 	ASSERT(mutex.isLocked());
+	ASSERT(p->task);
 
-	if(!p->task) return;	// Already finished
 	Task* task = p->task;
 	p->task = NULL;
 
@@ -268,9 +276,11 @@ void TaskPool::_doTask(TaskProxy* p)
 	if(p->dependency)
 		_wait(p->dependency);
 
+	p->openChildCount++;
 	{	ScopeUnlock unlock(mutex);
 		task->run(this);
 	}
+	p->openChildCount--;
 
 	if(TaskProxy* parent = p->parent) {
 		parent->openChildCount--;
@@ -280,14 +290,6 @@ void TaskPool::_doTask(TaskProxy* p)
 
 	if(p->openChildCount == 0)
 		_removeOpenTask(p);
-}
-
-void TaskPool::_doSomeTask()
-{
-	ScopeLock lock(mutex);
-
-	while(_pendingTasks)
-		_doTask(_pendingTasks);
 }
 
 TaskPool::TaskProxy* TaskPool::_findProxyById(TaskId id)
@@ -316,7 +318,6 @@ void TaskPool::_removeOpenTask(TaskProxy* p)
 
 void TaskPool::_removePendingTask(TaskProxy* p)
 {
-//	ASSERT(!p->task);
 	if(p->prevPending) p->prevPending->nextPending = p->nextPending;
 	if(p->nextPending) p->nextPending->prevPending = p->prevPending;
 	if(p == _pendingTasks) _pendingTasks = p->nextPending;

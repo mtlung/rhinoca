@@ -48,6 +48,10 @@ public:
 	/// task should be finished anyway.
 	void wait(TaskId id);
 
+	/// If you know your thread have some idle time,
+	/// call this function to help consuming the task queue
+	void doSomeTask();
+
 	/// Return false if the TaskPool is going to shutdown
 	bool keepRun() const;
 
@@ -55,13 +59,12 @@ public:
 	static int threadId();
 
 	int taskCount() const { return taskList.count; }
+
 protected:
 	class TaskProxy;
 
 	friend void _run(TaskPool*);
 	void _doTask(TaskProxy* id);
-
-	void _doSomeTask();
 
 	void _wait(TaskProxy* id);
 
