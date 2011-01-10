@@ -97,6 +97,7 @@ TaskPool::~TaskPool()
 
 	for(rhuint i=0; i<_threadCount; ++i) {
 		ScopeUnlock unlock(mutex);
+
 #ifdef RHINOCA_WINDOWS
 		HANDLE h = reinterpret_cast<HANDLE>(_threadHandles[i]);
 		VERIFY(::WaitForSingleObject(h, INFINITE) == WAIT_OBJECT_0);
@@ -118,12 +119,11 @@ static void _run(TaskPool* pool)
 
 		// TODO: Use condition variable
 #ifdef RHINOCA_WINDOWS
-//		::Sleep(DWORD(1));
+		::Sleep(DWORD(0));
 #else
 		::usleep(useconds_t(1 * 1000));
 #endif
 	}
-	::Sleep(DWORD(1));
 }
 
 #ifdef RHINOCA_WINDOWS

@@ -49,7 +49,7 @@ TEST_FIXTURE(TaskPoolTest, singleThreadBasic)
 
 TEST_FIXTURE(TaskPoolTest, singleThreadDependency)
 {
-/*	{	// Task2 depends on task1, task1 will be run before task2
+	{	// Task2 depends on task1, task1 will be run before task2
 		TaskPool taskPool;
 		TaskId t1 = taskPool.beginAdd(new MyTask);
 		taskPool.finishAdd(t1);
@@ -72,7 +72,7 @@ TEST_FIXTURE(TaskPoolTest, singleThreadDependency)
 		// The id 't1' is already become invalid, but it's not a problem since we sure task1 is already finished
 		taskPool.dependsOn(t2, t1);
 		taskPool.finishAdd(t2);
-	}*/
+	}
 
 	{	// Task1 depends on task2
 		TaskPool taskPool;
