@@ -1,6 +1,10 @@
 #include "pch.h"
 #include "../src/taskpool.h"
 #include <math.h>
+#include <vector>
+
+float global = 0;
+
 namespace {
 
 class MyTask : public Task
@@ -13,7 +17,8 @@ public:
 		for(int i=0; i<10000; ++i)
 			val = sinf(val);
 
-		printf("Task: %d, thread: %d, val: %f\n", _id, TaskPool::threadId(), val);
+		global += val;
+//		printf("Task: %d, thread: %d, val: %f\n", _id, TaskPool::threadId(), val);
 //		printf("Task: %d, thread: %d\n", _id, TaskPool::threadId());
 
 		delete this;
@@ -26,6 +31,8 @@ class TaskPoolTest
 public:
 //	TaskPool taskPool;
 };
+
+}	// namespace
 
 TEST_FIXTURE(TaskPoolTest, empty) { TaskPool taskPool; }
 
@@ -135,7 +142,4 @@ TEST_FIXTURE(TaskPoolTest, singleThreadChild)
 
 		taskPool.finishAdd(t1);
 	}
-
 }
-
-}	// namespace

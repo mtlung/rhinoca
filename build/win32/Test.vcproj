@@ -297,6 +297,10 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\test\taskpoolmergesorttest.cpp"
+			>
+		</File>
+		<File
 			RelativePath="..\..\test\taskpooltest.cpp"
 			>
 		</File>
