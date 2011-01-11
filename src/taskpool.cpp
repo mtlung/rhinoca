@@ -10,12 +10,13 @@ class TaskPool::TaskProxy
 public:
 	TaskProxy();
 
-	TaskId id;				///< 0 for invalid id
+	volatile TaskId id;				///< 0 for invalid id
 	Task* task;				///< Once complete it will set to NULL
 	bool finalized;			///< Attributes like dependency, affinity, parent cannot be set after the task is finalized
 	int affinity;
 	TaskProxy* parent;		///< A task is consider completed only if all it's child are completed.
 	TaskProxy* dependency;	///< This task cannot be start until the depending task completes.
+	TaskId dependencyId;	///< The dependency valid only if dependency->id == dependencyId
 	int openChildCount;		///< When a task completes, it reduces the openChildCount of it's parent. When this figure reaches zero, the work is completed.
 
 	TaskProxy* nextFree;
@@ -24,10 +25,12 @@ public:
 };	// TaskProxy
 
 TaskPool::TaskProxy::TaskProxy()
-	: task(NULL)
+	: id(rhuint(-1))
+	, task(NULL)
 	, finalized(false)
 	, affinity(0)
-	, parent(NULL), dependency(NULL)
+	, parent(NULL)
+	, dependency(NULL), dependencyId(rhuint(-1))
 	, openChildCount(0)
 	, nextFree(NULL)
 	, nextOpen(NULL), prevOpen(NULL)
@@ -113,17 +116,22 @@ TaskPool::~TaskPool()
 	rhdelete(_threadHandles);
 }
 
+static void mysleep(int ms)
+{
+#ifdef RHINOCA_WINDOWS
+		::Sleep(DWORD(ms));
+#else
+		::usleep(useconds_t(ms * 1000));
+#endif
+}
+
 static void _run(TaskPool* pool)
 {
 	while(pool->keepRun()) {
 		pool->doSomeTask();
 
 		// TODO: Use condition variable
-#ifdef RHINOCA_WINDOWS
-		::Sleep(DWORD(1));
-#else
-		::usleep(useconds_t(1 * 1000));
-#endif
+		mysleep(1);
 	}
 }
 
@@ -185,7 +193,7 @@ void TaskPool::addChild(TaskId parent, TaskId child)
 	ASSERT(childProxy && !childProxy->finalized && "Parameter 'child' has already finalized");
 	ASSERT(!childProxy->parent && "The given child task is already under");
 
-	parentProxy->openChildCount++;
+	_retainTask(parentProxy);	// Paired with releaseTask() in _doTask()
 	childProxy->parent = parentProxy;
 }
 
@@ -199,6 +207,7 @@ void TaskPool::dependsOn(TaskId src, TaskId on)
 	ASSERT(srcProxy && !srcProxy->finalized && "Parameter 'src' has already finalized");
 
 	srcProxy->dependency = onProxy;
+	srcProxy->dependencyId = on;
 }
 
 void TaskPool::setAffinity(TaskId id, int affinity)
@@ -231,13 +240,14 @@ TaskId TaskPool::addFinalized(Task* task, TaskId parent, TaskId dependency, int 
 	if(parent != 0) {
 		TaskProxy* parentProxy = _findProxyById(parent);
 		ASSERT(parentProxy && !parentProxy->finalized && "Parameter 'parent' has already finalized");
-		parentProxy->openChildCount++;
+		_retainTask(parentProxy);	// Paired with releaseTask() in _doTask()
 		proxy->parent = parentProxy;
 	}
 
 	if(dependency != 0) {
 		TaskProxy* depProxy = _findProxyById(dependency);
 		proxy->dependency = depProxy;
+		proxy->dependencyId = dependency;
 	}
 
 	if(_openTasks) _openTasks->prevOpen = proxy;
@@ -276,20 +286,29 @@ void TaskPool::wait(TaskId id)
 void TaskPool::_wait(TaskProxy* p, int tId)
 {
 	ASSERT(mutex.isLocked());
-	if(!p || !p->task) return;	// Already finished
+	if(!p) return;
 
 	Task* taskToWait = p->task;
+	TaskId id = p->id;
 	if(p->affinity == 0 || p->affinity == tId) {
 		_doTask(p, tId);
-		if(p->openChildCount)
+		if(p->id == id)
 			goto DoOtherTasks;
 	}
 	else {
-	DoOtherTasks:
 		// Do other tasks until the task in question was finish
 		// When the task get finished, p->task becomes null
-		while(p->task == taskToWait || p->openChildCount) {
-			_doTask(this->_pendingTasks, tId);
+	DoOtherTasks:
+		// If p->id not equals to id, it means the task is already finished long ago, and the proxy get reused.
+		while(p->id == id) {
+			if(this->_pendingTasks)
+				_doTask(this->_pendingTasks, tId);
+			else {
+				// If no more task can do we sleep for a while
+				// NOTE: Temporary release mutex to avoid deal lock
+				ScopeUnlock unlock(mutex);
+				mysleep(1);
+			}
 		}
 	}
 }
@@ -321,15 +340,18 @@ void TaskPool::doSomeTask()
 void TaskPool::_doTask(TaskProxy* p, int tId)
 {
 	ASSERT(mutex.isLocked());
-	ASSERT(p->task);
+	
+	if(!p || !p->task) return;
 
 	Task* task = p->task;
 	p->task = NULL;
 
 	_removePendingTask(p);
 
-	if(p->dependency)
-		_wait(p->dependency, tId);
+	if(TaskProxy* dep = p->dependency) {
+		if(dep->id == p->dependencyId)
+			_wait(dep, tId);
+	}
 
 	_retainTask(p);
 	{	ScopeUnlock unlock(mutex);

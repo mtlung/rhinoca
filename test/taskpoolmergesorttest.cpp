@@ -1,7 +1,10 @@
 #include "pch.h"
 #include "../src/taskpool.h"
+#include "../src/timer.h"
 #include <stdlib.h>
 #include <vector>
+
+static const rhuint testSize = 10000;
 
 static void merge(int* data, int left, int leftEnd, int right, int rightEnd)
 {
@@ -34,11 +37,19 @@ static void mergeSortSingleThread(int* data, int begin, int end)
 
 TEST(TaskPoolSingleThreadMergeSortTest)
 {
-	std::vector<int> data(1000);
+	std::vector<int> data(testSize);
 	for(rhuint i=0; i<data.size(); ++i)
 		data[i] = rand() % data.size();
 
+	Timer timer;
+	float begin = timer.seconds();
 	mergeSortSingleThread(&data[0], 0, data.size());
+	float dt =  timer.seconds() - begin;
+//	printf("Time for SingleThreadMergeSort: %f\n", dt);
+	(void)dt;
+
+	for(rhuint i=1; i<data.size(); ++i)
+		CHECK(data[i-1] <= data[i]);
 }
 
 static void mergeSortMultiThread(int* data, int begin, int end, TaskPool& taskPool, int workCount=1)
@@ -118,13 +129,19 @@ static void mergeSortMultiThread(int* data, int begin, int end, TaskPool& taskPo
 TEST(TaskPoolMultiThreadMergeSortTest)
 {
 	TaskPool taskPool;
-	taskPool.init(3);
+	taskPool.init(1);
 
-	std::vector<int> data(1000);
+	std::vector<int> data(testSize);
 	for(rhuint i=0; i<data.size(); ++i)
 		data[i] = rand() % data.size();
 
+	Timer timer;
+	float begin = timer.seconds();
 	mergeSortMultiThread(&data[0], 0, data.size(), taskPool);
+	float dt =  timer.seconds() - begin;
+//	printf("Time for MultiThreadMergeSort: %f\n", dt);
+	(void)dt;
 
-	data[0] = data[0];
+	for(rhuint i=1; i<data.size(); ++i)
+		CHECK(data[i-1] <= data[i]);
 }
