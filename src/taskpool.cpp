@@ -89,11 +89,12 @@ TaskPool::TaskPool()
 
 TaskPool::~TaskPool()
 {
+	int tId = threadId();
 	ScopeLock lock(mutex);
 
 	_keepRun = false;
 	while(_openTasks)
-		_wait(_openTasks);
+		_wait(_openTasks, tId);
 
 	for(rhuint i=0; i<_threadCount; ++i) {
 		ScopeUnlock unlock(mutex);
@@ -119,7 +120,7 @@ static void _run(TaskPool* pool)
 
 		// TODO: Use condition variable
 #ifdef RHINOCA_WINDOWS
-		::Sleep(DWORD(0));
+		::Sleep(DWORD(1));
 #else
 		::usleep(useconds_t(1 * 1000));
 #endif
@@ -152,12 +153,13 @@ void TaskPool::init(rhuint threadCount)
 	}
 }
 
-TaskId TaskPool::beginAdd(Task* task)
+TaskId TaskPool::beginAdd(Task* task, int affinity)
 {
 	ScopeLock lock(mutex);
 
 	TaskProxy* proxy = taskList.alloc();
 	proxy->task = task;
+	proxy->affinity = affinity;
 
 	if(_openTasks) _openTasks->prevOpen = proxy;
 	proxy->nextOpen = _openTasks;
@@ -167,23 +169,9 @@ TaskId TaskPool::beginAdd(Task* task)
 	proxy->nextPending = _pendingTasks;
 	_pendingTasks = proxy;
 
-	proxy->openChildCount = 1;	// Don't let this task to finish, before we call finishAdd()
+	_retainTask(proxy);	// Don't let this task to finish, before we call finishAdd()
 
 	return proxy->id;
-}
-
-void TaskPool::finishAdd(TaskId id)
-{
-	ScopeLock lock(mutex);
-
-	if(TaskProxy* p = _findProxyById(id)) {
-		ASSERT(!p->finalized && "Please call finishAdd() only once");
-		p->finalized = true;
-		p->openChildCount--;
-
-		if(p->openChildCount == 0 && !p->task)
-			_removeOpenTask(p);
-	}
 }
 
 void TaskPool::addChild(TaskId parent, TaskId child)
@@ -193,8 +181,8 @@ void TaskPool::addChild(TaskId parent, TaskId child)
 	TaskProxy* parentProxy = _findProxyById(parent);
 	TaskProxy* childProxy = _findProxyById(child);
 
-	ASSERT(parentProxy && !parentProxy->finalized && "Call addChild() before calling finishAdd() on the parent");
-	ASSERT(childProxy && !childProxy->finalized && "Call addChild() before calling finishAdd() on the child");
+	ASSERT(parentProxy && !parentProxy->finalized && "Parameter 'parent' has already finalized");
+	ASSERT(childProxy && !childProxy->finalized && "Parameter 'child' has already finalized");
 	ASSERT(!childProxy->parent && "The given child task is already under");
 
 	parentProxy->openChildCount++;
@@ -208,9 +196,59 @@ void TaskPool::dependsOn(TaskId src, TaskId on)
 	TaskProxy* srcProxy = _findProxyById(src);
 	TaskProxy* onProxy = _findProxyById(on);
 
-	ASSERT(srcProxy && !srcProxy->finalized && "Call dependsOn() before calling finishAdd() on the src");
+	ASSERT(srcProxy && !srcProxy->finalized && "Parameter 'src' has already finalized");
 
 	srcProxy->dependency = onProxy;
+}
+
+void TaskPool::setAffinity(TaskId id, int affinity)
+{
+	ScopeLock lock(mutex);
+	if(TaskProxy* p = _findProxyById(id))
+		p->affinity = affinity;
+}
+
+void TaskPool::finishAdd(TaskId id)
+{
+	ScopeLock lock(mutex);
+
+	if(TaskProxy* p = _findProxyById(id)) {
+		ASSERT(!p->finalized && "Please call finishAdd() only once");
+		p->finalized = true;
+		_releaseTask(p);
+	}
+}
+
+TaskId TaskPool::addFinalized(Task* task, TaskId parent, TaskId dependency, int affinity)
+{
+	ScopeLock lock(mutex);
+
+	TaskProxy* proxy = taskList.alloc();
+	proxy->task = task;
+	proxy->affinity = affinity;
+	proxy->finalized = true;
+
+	if(parent != 0) {
+		TaskProxy* parentProxy = _findProxyById(parent);
+		ASSERT(parentProxy && !parentProxy->finalized && "Parameter 'parent' has already finalized");
+		parentProxy->openChildCount++;
+		proxy->parent = parentProxy;
+	}
+
+	if(dependency != 0) {
+		TaskProxy* depProxy = _findProxyById(dependency);
+		proxy->dependency = depProxy;
+	}
+
+	if(_openTasks) _openTasks->prevOpen = proxy;
+	proxy->nextOpen = _openTasks;
+	_openTasks = proxy;
+
+	if(_pendingTasks) _pendingTasks->prevPending = proxy;
+	proxy->nextPending = _pendingTasks;
+	_pendingTasks = proxy;
+
+	return proxy->id;
 }
 
 bool TaskPool::keepRun() const
@@ -230,19 +268,19 @@ int TaskPool::threadId()
 // NOTE: Recursive and re-entrant
 void TaskPool::wait(TaskId id)
 {
+	int tId = threadId();
 	ScopeLock lock(mutex);
-	_wait(_findProxyById(id));
+	_wait(_findProxyById(id), tId);
 }
 
-void TaskPool::_wait(TaskProxy* p)
+void TaskPool::_wait(TaskProxy* p, int tId)
 {
 	ASSERT(mutex.isLocked());
 	if(!p || !p->task) return;	// Already finished
 
 	Task* taskToWait = p->task;
-	int thisThreadAffinit = 0;
-	if(p->affinity == -1 || p->affinity == thisThreadAffinit) {
-		_doTask(p);
+	if(p->affinity == 0 || p->affinity == tId) {
+		_doTask(p, tId);
 		if(p->openChildCount)
 			goto DoOtherTasks;
 	}
@@ -251,21 +289,36 @@ void TaskPool::_wait(TaskProxy* p)
 		// Do other tasks until the task in question was finish
 		// When the task get finished, p->task becomes null
 		while(p->task == taskToWait || p->openChildCount) {
-			_doTask(this->_pendingTasks);
+			_doTask(this->_pendingTasks, tId);
 		}
 	}
 }
 
 void TaskPool::doSomeTask()
 {
+	int tId = threadId();
 	ScopeLock lock(mutex);
 
-	while(_pendingTasks)
-		_doTask(_pendingTasks);
+	TaskProxy* p = _pendingTasks;
+	while(p) {
+		TaskProxy* next = p->nextPending;
+
+		if(p->affinity == 0 || p->affinity == tId) {
+			// NOTE: After _doTask(), the 'next' pointer becomes invalid
+			_doTask(p, tId);
+
+			// NOTE: Each time _doTask() is invoked, we start to search task
+			// at the beginning, to avoid the problem of 'next' become invalid,
+			// may be in-efficient, but easier to implement.
+			p = _pendingTasks;
+		}
+		else
+			p = next;
+	}
 }
 
 // NOTE: Recursive and re-entrant
-void TaskPool::_doTask(TaskProxy* p)
+void TaskPool::_doTask(TaskProxy* p, int tId)
 {
 	ASSERT(mutex.isLocked());
 	ASSERT(p->task);
@@ -276,22 +329,17 @@ void TaskPool::_doTask(TaskProxy* p)
 	_removePendingTask(p);
 
 	if(p->dependency)
-		_wait(p->dependency);
+		_wait(p->dependency, tId);
 
-	p->openChildCount++;
+	_retainTask(p);
 	{	ScopeUnlock unlock(mutex);
 		task->run(this);
 	}
-	p->openChildCount--;
 
-	if(TaskProxy* parent = p->parent) {
-		parent->openChildCount--;
-		if(parent->openChildCount == 0 && !parent->task)
-			_removeOpenTask(parent);
-	}
+	if(TaskProxy* parent = p->parent)
+		_releaseTask(parent);
 
-	if(p->openChildCount == 0)
-		_removeOpenTask(p);
+	_releaseTask(p);
 }
 
 TaskPool::TaskProxy* TaskPool::_findProxyById(TaskId id)
@@ -310,8 +358,23 @@ TaskPool::TaskProxy* TaskPool::_findProxyById(TaskId id)
 	return NULL;
 }
 
+void TaskPool::_retainTask(TaskProxy* p)
+{
+	p->openChildCount++;
+}
+
+void TaskPool::_releaseTask(TaskProxy* p)
+{
+	ASSERT(mutex.isLocked());
+	p->openChildCount--;
+	if(p->openChildCount == 0 && !p->task)
+		_removeOpenTask(p);
+}
+
 void TaskPool::_removeOpenTask(TaskProxy* p)
 {
+	ASSERT(mutex.isLocked());
+	ASSERT(!p->task);
 	if(p->prevOpen) p->prevOpen->nextOpen = p->nextOpen;
 	if(p->nextOpen) p->nextOpen->prevOpen = p->prevOpen;
 	if(p == _openTasks) _openTasks = p->nextOpen;
@@ -320,6 +383,7 @@ void TaskPool::_removeOpenTask(TaskProxy* p)
 
 void TaskPool::_removePendingTask(TaskProxy* p)
 {
+	ASSERT(mutex.isLocked());
 	if(p->prevPending) p->prevPending->nextPending = p->nextPending;
 	if(p->nextPending) p->nextPending->prevPending = p->prevPending;
 	if(p == _pendingTasks) _pendingTasks = p->nextPending;

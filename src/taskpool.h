@@ -35,13 +35,19 @@ public:
 	void init(rhuint threadCount);
 
 	/// You can addChild() and dependsOn() in-between beginAdd() and finishAdd()
-	TaskId beginAdd(Task* task);
-
-	void finishAdd(TaskId id);
+	/// The task will begin to process as soon as possible
+	TaskId beginAdd(Task* task, int affinity=0);
 
 	void addChild(TaskId parent, TaskId child);
 
 	void dependsOn(TaskId src, TaskId on);
+
+	void setAffinity(TaskId id, int affinity);
+
+	void finishAdd(TaskId id);
+
+	/// Add the task, set the properties and finish the add, all in a single function call
+	TaskId addFinalized(Task* task, TaskId parent=0, TaskId dependency=0, int affinity=0);
 
 	/// @note The TaskId may be reused for another task that you
 	/// were NOT waiting for, but that's not the problem since the
@@ -64,11 +70,19 @@ protected:
 	class TaskProxy;
 
 	friend void _run(TaskPool*);
-	void _doTask(TaskProxy* id);
+	void _doTask(TaskProxy* id, int threadId);
 
-	void _wait(TaskProxy* id);
+	void _wait(TaskProxy* id, int threadId);
 
 	TaskProxy* _findProxyById(TaskId id);
+
+	/// Hold the TaskProxy such that it's member will not reset even
+	/// the task has been finished and prevent the proxy from being reused.
+	void _retainTask(TaskProxy* p);
+
+	/// If the retain count reach zero, it means absolutly no one (potentially)
+	/// intrested in the task any more, the proxy can be safely reused.
+	void _releaseTask(TaskProxy* p);
 
 	void _removeOpenTask(TaskProxy* p);
 

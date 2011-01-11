@@ -9,12 +9,12 @@ public:
 	MyTask(int id=0) : _id(id) {}
 	virtual void run(TaskPool* taskPool)
 	{
-/*		float val =0.1f;
+		float val =0.1f;
 		for(int i=0; i<10000; ++i)
 			val = sinf(val);
 
-		printf("Task: %d, thread: %d, val: %f\n", _id, TaskPool::threadId(), val);*/
-		printf("Task: %d, thread: %d\n", _id, TaskPool::threadId());
+		printf("Task: %d, thread: %d, val: %f\n", _id, TaskPool::threadId(), val);
+//		printf("Task: %d, thread: %d\n", _id, TaskPool::threadId());
 
 		delete this;
 	}
@@ -75,8 +75,9 @@ TEST_FIXTURE(TaskPoolTest, singleThreadDependency)
 	}
 
 	{	// Task1 depends on task2
+		int threadId = TaskPool::threadId();
 		TaskPool taskPool;
-		taskPool.init(4);
+		taskPool.init(3);
 		TaskId t1 = taskPool.beginAdd(new MyTask(0));
 
 		TaskId t2 = taskPool.beginAdd(new MyTask(1));
@@ -86,7 +87,8 @@ TEST_FIXTURE(TaskPoolTest, singleThreadDependency)
 		taskPool.finishAdd(t1);
 
 		for(int i=0; i<10000; ++i) {
-			taskPool.finishAdd(taskPool.beginAdd(new MyTask(i+2)));
+			taskPool.addFinalized(new MyTask(i+2), 0, 0, 0);
+//			taskPool.finishAdd(taskPool.beginAdd(new MyTask(i+2), threadId));
 		}
 
 		while(taskPool.taskCount()) {
