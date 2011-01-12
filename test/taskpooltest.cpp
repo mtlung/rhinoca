@@ -1,9 +1,6 @@
 #include "pch.h"
 #include "../src/taskpool.h"
 #include <math.h>
-#include <vector>
-
-float global = 0;
 
 namespace {
 
@@ -17,9 +14,8 @@ public:
 		for(int i=0; i<10000; ++i)
 			val = sinf(val);
 
-		global += val;
+		(void)val;
 //		printf("Task: %d, thread: %d, val: %f\n", _id, TaskPool::threadId(), val);
-//		printf("Task: %d, thread: %d\n", _id, TaskPool::threadId());
 
 		delete this;
 	}
@@ -29,7 +25,6 @@ public:
 class TaskPoolTest
 {
 public:
-//	TaskPool taskPool;
 };
 
 }	// namespace
@@ -58,8 +53,7 @@ TEST_FIXTURE(TaskPoolTest, singleThreadDependency)
 {
 	{	// Task2 depends on task1, task1 will be run before task2
 		TaskPool taskPool;
-		TaskId t1 = taskPool.beginAdd(new MyTask);
-		taskPool.finishAdd(t1);
+		TaskId t1 = taskPool.addFinalized(new MyTask);
 
 		TaskId t2 = taskPool.beginAdd(new MyTask);
 		taskPool.dependsOn(t2, t1);
@@ -84,7 +78,6 @@ TEST_FIXTURE(TaskPoolTest, singleThreadDependency)
 	{	// Task1 depends on task2
 		int threadId = TaskPool::threadId();
 		TaskPool taskPool;
-		taskPool.init(3);
 		TaskId t1 = taskPool.beginAdd(new MyTask(0));
 
 		TaskId t2 = taskPool.beginAdd(new MyTask(1));
@@ -93,14 +86,11 @@ TEST_FIXTURE(TaskPoolTest, singleThreadDependency)
 		taskPool.dependsOn(t1, t2);
 		taskPool.finishAdd(t1);
 
-		for(int i=0; i<10; ++i) {
+		for(int i=0; i<10; ++i)
 			taskPool.addFinalized(new MyTask(i+2), 0, 0, 0);
-//			taskPool.finishAdd(taskPool.beginAdd(new MyTask(i+2), threadId));
-		}
 
-		while(taskPool.taskCount()) {
+		while(taskPool.taskCount())
 			taskPool.doSomeTask();
-		}
 	}
 }
 

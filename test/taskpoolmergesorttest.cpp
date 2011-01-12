@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <vector>
 
-static const bool benchmark = true;
+static const bool benchmark = false;
 static const rhuint testSize = benchmark ? 10000000 : 1000;
 
 /// scratch is a memory buffer having the same size as data

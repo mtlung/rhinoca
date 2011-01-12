@@ -10,7 +10,10 @@ class TaskPool::TaskProxy
 public:
 	TaskProxy();
 
-	volatile TaskId id;				///< 0 for invalid id
+	void* operator new(size_t size) { return rhinoca_malloc(size); }
+	void operator delete(void* ptr) { rhinoca_free(ptr); }
+
+	volatile TaskId id;		///< 0 for invalid id
 	Task* task;				///< Once complete it will set to NULL
 	bool finalized;			///< Attributes like dependency, affinity, parent cannot be set after the task is finalized
 	int affinity;
@@ -25,12 +28,12 @@ public:
 };	// TaskProxy
 
 TaskPool::TaskProxy::TaskProxy()
-	: id(rhuint(-1))
+	: id(0)
 	, task(NULL)
 	, finalized(false)
 	, affinity(0)
 	, parent(NULL)
-	, dependency(NULL), dependencyId(rhuint(-1))
+	, dependency(NULL), dependencyId(0)
 	, openChildCount(0)
 	, nextFree(NULL)
 	, nextOpen(NULL), prevOpen(NULL)

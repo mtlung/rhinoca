@@ -289,6 +289,10 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\src\intrusiveptr.h"
+			>
+		</File>
+		<File
 			RelativePath="..\..\src\jsbindable.cpp"
 			>
 		</File>
@@ -350,6 +354,14 @@
 		</File>
 		<File
 			RelativePath="..\..\src\platform.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\src\resource.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\src\resource.h"
 			>
 		</File>
 		<File

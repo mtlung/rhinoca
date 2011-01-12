@@ -2,7 +2,6 @@
 #include "window.h"
 #include "document.h"
 #include "../common.h"
-#include "../map.h"
 
 namespace Dom {
 
