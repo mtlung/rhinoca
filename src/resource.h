@@ -13,17 +13,19 @@ class Resource
 	, public MapBase<FixString>::Node<Resource>
 	, private Noncopyable
 {
-public:
+protected:
 	explicit Resource(const char* path);
+
 	virtual ~Resource();
 
+public:
 // Operations
 	/// Unload the data which occupy most memory, and only bare information can remain.
 	/// For example, after a Texture is unloaded, the pixel data are gone but we still keep the width/height
 	virtual void unload() {}
 
 // Attributes
-	enum State { NotLoaded, Ready, Loaded, Unloaded, Aborted };
+	enum State { NotLoaded, Loading, Ready, Loaded, Unloaded, Aborted };
 	State state;
 	TaskId taskReady, taskLoaded;
 	float hotness;	///!< For tracking resource usage and perform unload when resource is scarce
@@ -44,9 +46,18 @@ public:
 	/// @note: Recursive and re-entrant
 	ResourcePtr load(const char* path);
 
+	template<class T>
+	IntrusivePtr<T> loadAs(const char* path) { return dynamic_cast<T*>(load(path).get()); }
+
+	// Call this on every frame
 	void update();
 
 	void collectUnused();
+
+// Factories
+	typedef Resource* (*CreateFunc)(const char* path, ResourceManager* mgr);
+	typedef bool (*LoadFunc)(Resource* resource, ResourceManager* mgr);
+	void addFactory(CreateFunc createFunc, LoadFunc loadFunc);
 
 // Attributes
 	TaskPool* taskPool;
@@ -54,32 +65,13 @@ public:
 protected:
 	Mutex _mutex;
 
+	struct Tuple { CreateFunc create; LoadFunc load; };
+	Tuple* _factories;
+	int _factoryCount;
+	int _factoryBufCount;
+
 	typedef Map<Resource> Resources;
 	Resources _resources;
 };	// ResourceManager
-
-class ResourceFactory
-{
-public:
-	ResourceFactory();
-	~ResourceFactory();
-
-	static ResourceFactory& singleton();
-
-	/// Returns a new Resource if the path/file extension matched, null otherwise
-	Resource* create(const char* path, ResourceManager* mgr);
-
-	/// Loads the Resource if the path/file extension matched, do nothing otherwise
-	void load(Resource* resource, ResourceManager* mgr);
-
-	/// A function that return a new Resource if the path/file extension matched, otherwise return null
-	typedef Resource* (*FactoryFunc)(const char* path, ResourceManager* mgr);
-	void addFactory(FactoryFunc factory);
-
-protected:
-	FactoryFunc* _factories;
-	int _factoryCount;
-	int _factoryBufCount;
-};	// ResourceFactory
 
 #endif	// __RESOURCE_H__

@@ -27,9 +27,9 @@
 	To iterate tough the elements of the map:
 	\code
 	// Iterator from small to large
-	for(FooNode* n = &map.findMin(); n != NULL; n = n->next()) {}
+	for(FooNode* n = map.findMin(); n != NULL; n = n->next()) {}
 	// Iterator from large to small
-	for(FooNode* n = &map.findMax(); n != NULL; n = n->prev()) {}
+	for(FooNode* n = map.findMax(); n != NULL; n = n->prev()) {}
 	\endcode
 
 	To find an element with a provided key:

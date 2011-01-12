@@ -32,6 +32,7 @@ public:
 	TaskPool();
 	~TaskPool();
 
+// Operations
 	void init(rhuint threadCount);
 
 	/// You can addChild() and dependsOn() in-between beginAdd() and finishAdd()
@@ -61,10 +62,13 @@ public:
 	/// Return false if the TaskPool is going to shutdown
 	bool keepRun() const;
 
+// Attributes
 	/// To get the current thread id, which is use for setting affinity
 	static int threadId();
 
 	int taskCount() const { return taskList.count; }
+
+	int mainThreadId() const { return _mainThreadId; }
 
 protected:
 	class TaskProxy;
@@ -111,6 +115,8 @@ protected:
 
 	rhuint _threadCount;
 	rhuint* _threadHandles;
+
+	int _mainThreadId;
 
 	mutable Mutex mutex;
 };	// TaskPool

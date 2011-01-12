@@ -90,6 +90,7 @@ TaskPool::TaskPool()
 	, _pendingTasks(NULL)
 	, _threadCount(0)
 	, _threadHandles(NULL)
+	, _mainThreadId(TaskPool::threadId())
 {
 }
 
