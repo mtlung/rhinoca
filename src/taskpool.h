@@ -19,6 +19,9 @@ public:
 	/// When there are idling thread in the TaskPool, it may request
 	/// a Task to off load part of it's work to another new Task
 	virtual bool offload(TaskPool* taskPool) { return false; }
+
+	void* operator new(size_t size) { return rhinoca_malloc(size); }
+	void operator delete(void* ptr) { rhinoca_free(ptr); }
 };	// Task
 
 typedef rhuint TaskId;
@@ -66,6 +69,10 @@ public:
 
 	/// Return false if the TaskPool is going to shutdown
 	bool keepRun() const;
+
+	/// Callback to invoke when a task finish
+	typedef void (*Callback)(TaskPool* taskPool, void* userData);
+	void addCallback(TaskId id, Callback callback, void* userData, int affinity);
 
 // Attributes
 	/// To get the current thread id, which is use for setting affinity

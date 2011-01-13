@@ -17,6 +17,26 @@ JSClass Image::jsClass = {
 	JS_ConvertStub,  JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
+static void onReadyCallback(TaskPool* taskPool, void* userData)
+{
+	Image* self = reinterpret_cast<Image*>(userData);
+
+	jsval rval;
+	jsval closure;
+	if(JS_GetProperty(self->jsContext, self->jsObject, "onready", &closure) && closure != JSVAL_VOID)
+		JS_CallFunctionValue(self->jsContext, self->jsObject, closure, 0, NULL, &rval);
+}
+
+static void onLoadCallback(TaskPool* taskPool, void* userData)
+{
+	Image* self = reinterpret_cast<Image*>(userData);
+
+	jsval rval;
+	jsval closure;
+	if(JS_GetProperty(self->jsContext, self->jsObject, "onload", &closure) && closure != JSVAL_VOID)
+		JS_CallFunctionValue(self->jsContext, self->jsObject, closure, 0, NULL, &rval);
+}
+
 JSBool setSrc(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	Image* self = reinterpret_cast<Image*>(JS_GetPrivate(cx, obj));
@@ -32,6 +52,13 @@ JSBool setSrc(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 
 	ResourceManager& mgr = self->ownerDocument->rhinoca->resourceManager;
 	self->texture = mgr.loadAs<Texture>(path.c_str());
+
+	// Register callbacks
+	if(self->texture) {
+		int tId = TaskPool::threadId();
+		mgr.taskPool->addCallback(self->texture->taskReady, onReadyCallback, self, tId);
+		mgr.taskPool->addCallback(self->texture->taskLoaded, onLoadCallback, self, tId);
+	}
 
 	return JS_TRUE;
 }

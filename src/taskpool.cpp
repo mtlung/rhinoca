@@ -421,3 +421,23 @@ void TaskPool::_removePendingTask(TaskProxy* p)
 	if(p == _pendingTasks) _pendingTasks = p->nextPending;
 	p->prevPending = p->nextPending = NULL;
 }
+
+void TaskPool::addCallback(TaskId id, Callback callback, void* userData, int affinity)
+{
+	class CallbackTask : public Task
+	{
+	public:
+		virtual void run(TaskPool* taskPool)
+		{
+			callback(taskPool, userData);
+			delete this;
+		}
+		void* userData;
+		TaskPool::Callback callback;
+	};
+
+	CallbackTask* t = new CallbackTask;
+	t->callback = callback;
+	t->userData = userData;
+	addFinalized(t, 0, id, affinity);
+}
