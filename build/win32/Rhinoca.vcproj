@@ -217,56 +217,68 @@
 			</File>
 		</Filter>
 		<Filter
-			Name="renderer"
+			Name="render"
 			>
 			<File
-				RelativePath="..\..\src\renderer\framebuffer.cpp"
+				RelativePath="..\..\src\render\framebuffer.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\renderer\framebuffer.h"
+				RelativePath="..\..\src\render\framebuffer.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\renderer\glew.h"
+				RelativePath="..\..\src\render\glew.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\renderer\renderer.cpp"
+				RelativePath="..\..\src\render\render.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\renderer\renderer.h"
+				RelativePath="..\..\src\render\render.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\renderer\texture.cpp"
+				RelativePath="..\..\src\render\texture.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\renderer\texture.h"
+				RelativePath="..\..\src\render\texture.h"
 				>
 			</File>
 			<Filter
 				Name="glew"
 				>
 				<File
-					RelativePath="..\..\src\renderer\glew\glew.cpp"
+					RelativePath="..\..\src\render\glew\glew.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\src\renderer\glew\glew.h"
+					RelativePath="..\..\src\render\glew\glew.h"
 					>
 				</File>
 				<File
-					RelativePath="..\..\src\renderer\glew\glxew.h"
+					RelativePath="..\..\src\render\glew\glxew.h"
 					>
 				</File>
 				<File
-					RelativePath="..\..\src\renderer\glew\wglew.h"
+					RelativePath="..\..\src\render\glew\wglew.h"
 					>
 				</File>
 			</Filter>
+		</Filter>
+		<Filter
+			Name="loader"
+			>
+			<File
+				RelativePath="..\..\src\loader\bmploader.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\loader\loader.h"
+				>
+			</File>
 		</Filter>
 		<File
 			RelativePath="..\..\src\atomic.h"

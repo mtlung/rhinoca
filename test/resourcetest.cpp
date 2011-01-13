@@ -6,15 +6,15 @@ namespace {
 class MyResource : public Resource
 {
 public:
-	MyResource(const char* path) : Resource(path), dummyData(0) {}
+	MyResource(const char* uri) : Resource(uri), dummyData(0) {}
 	int dummyData;
 };
 
 typedef IntrusivePtr<MyResource> MyResourcePtr;
 
-Resource* create(const char* path, ResourceManager* mgr)
+Resource* create(const char* uri, ResourceManager* mgr)
 {
-	return new MyResource(path);
+	return new MyResource(uri);
 }
 
 bool load(Resource* resource, ResourceManager* mgr)

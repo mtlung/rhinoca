@@ -2,7 +2,7 @@
 #define __DOME_CANVAS_H__
 
 #include "element.h"
-#include "../renderer/framebuffer.h"
+#include "../render/framebuffer.h"
 
 namespace Dom {
 
