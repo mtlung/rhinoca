@@ -2,6 +2,9 @@
 #include "../render/texture.h"
 #include "../platform.h"
 
+// http://www.spacesimulator.net/tut4_3dsloader.html
+// http://www.gamedev.net/reference/articles/article1966.asp
+
 using namespace Render;
 
 namespace Loader {
@@ -19,7 +22,12 @@ public:
 	BmpLoader(Texture* t, ResourceManager* mgr)
 		: texture(t), manager(mgr)
 		, width(0), height(0)
+		, pixelData(NULL), pixelDataSize(0), pixelDataFormat(0)
 	{}
+
+	~BmpLoader() {
+		rhinoca_free(pixelData);
+	}
 
 	virtual void run(TaskPool* taskPool);
 
@@ -29,6 +37,9 @@ public:
 	Texture* texture;
 	ResourceManager* manager;
 	rhuint width, height;
+	char* pixelData;
+	rhuint pixelDataSize;
+	int pixelDataFormat;
 };
 
 void BmpLoader::run(TaskPool* taskPool)
@@ -68,6 +79,8 @@ void BmpLoader::load(TaskPool* taskPool)
 	io_read(f, &infoHeader, sizeof(infoHeader), tId);
 	width = infoHeader.biWidth;
 
+	pixelDataFormat = Texture::BGR;
+
 	if(infoHeader.biBitCount != 24) {
 		print(rh, "BitmapLoader: Only 24-bit color is supported, operation aborted");
 		goto Abort;
@@ -88,6 +101,31 @@ void BmpLoader::load(TaskPool* taskPool)
 		flipVertical = false;
 	}
 
+	// Memory usage for one row of image
+	const rhuint rowByte = width * (sizeof(char) * 3);
+
+	ASSERT(!pixelData);
+	pixelDataSize = rowByte * height;
+	pixelData = (char*)rhinoca_malloc(pixelDataSize);
+
+	if(!pixelData) {
+		print(rh, "BitmapLoader: Corruption of file or not enough memory, operation aborted");
+		goto Abort;
+	}
+
+	// At this point we can read every pixel of the image
+	for(rhuint h = 0; h<height; ++h) {
+		// Bitmap file is differ from other image format like jpg and png that
+		// the vertical scan line order is inverted.
+		const rhuint invertedH = flipVertical ? height - 1 - h : h;
+
+		char* p = pixelData + (invertedH * rowByte);
+		if(io_read(f, p, rowByte, tId) != rowByte) {
+			print(rh, "BitmapLoader: End of file, bitmap data incomplete");
+			goto Abort;
+		}
+	}
+
 	io_close(f, tId);
 	return;
 
@@ -101,8 +139,10 @@ void BmpLoader::commit(TaskPool* taskPool)
 	ASSERT(texture->scratch == this);
 	texture->scratch = NULL;
 
-	texture->width = width;
-	texture->height = height;
+	if(texture->create(width, height, pixelData, pixelDataSize, pixelDataFormat))
+		texture->state = Resource::Loaded;
+	else
+		texture->state = Resource::Aborted;
 
 	delete this;
 }

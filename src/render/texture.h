@@ -12,10 +12,16 @@ public:
 	explicit Texture(const char* uri);
 	virtual ~Texture();
 
-	enum Format { RGB, BGR, RGBA, BGRA };
+	// Constants from gl.h
+	enum Format {
+		RGB		= 0x1907,
+		BGR		= 0x80E0,
+		RGBA	= 0x1908,
+		BGRA	= 0x80E1,
+	};
 
 // Operations
-	bool create(rhuint width, rhuint height, const char* data, rhuint dataSize, Format dataFormat);
+	bool create(rhuint width, rhuint height, const char* data, rhuint dataSize, int srcFormat);
 
 	void clear();
 

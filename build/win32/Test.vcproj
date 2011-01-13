@@ -45,7 +45,8 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				UsePrecompiledHeader="0"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="pch.h"
 				WarningLevel="3"
 				DebugInformationFormat="4"
 			/>
@@ -119,7 +120,8 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
-				UsePrecompiledHeader="0"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="pch.h"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -172,125 +174,29 @@
 		/>
 	</References>
 	<Files>
-		<Filter
-			Name="CppTestHarness"
-			>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\AssertException.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\AssertException.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\CheckMacros.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\Checks.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\Checks.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\Config.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\CppTestHarness.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\HTMLTestReporter.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\HTMLTestReporter.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\Makefile"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\PrintfTestReporter.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\PrintfTestReporter.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\ReadMe.txt"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\ReportAssert.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\ReportAssert.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\SignalTranslator.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\Test.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\Test.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\TestLauncher.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\TestLauncher.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\TestMacros.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\TestReporter.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\TestReporter.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\TestResults.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\TestResults.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\TestRunner.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\TestRunner.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\thirdParty\CppTestHarness\TypedTestLauncher.h"
-				>
-			</File>
-		</Filter>
 		<File
 			RelativePath="..\..\test\main.cpp"
 			>
+		</File>
+		<File
+			RelativePath="..\..\test\pch.cpp"
+			>
+			<FileConfiguration
+				Name="Debug|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					UsePrecompiledHeader="1"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					UsePrecompiledHeader="1"
+				/>
+			</FileConfiguration>
 		</File>
 		<File
 			RelativePath="..\..\test\pch.h"

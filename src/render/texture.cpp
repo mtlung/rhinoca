@@ -16,31 +16,19 @@ Texture::~Texture()
 	clear();
 }
 
-static rhuint formatComponentCount(Texture::Format format)
+static rhuint formatComponentCount(int format)
 {
 	switch(format) {
-	case Texture::RGB: return 3;
-	case Texture::BGR: return 3;
-	case Texture::RGBA: return 4;
-	case Texture::BGRA: return 4;
+	case GL_RGB: return 3;
+	case GL_BGR: return 3;
+	case GL_RGBA: return 4;
+	case GL_BGRA: return 4;
 	}
 	ASSERT(false);
 	return 0;
 }
 
-static rhuint formatOglFormat(Texture::Format format)
-{
-	switch(format) {
-	case Texture::RGB: return GL_RGB;
-	case Texture::BGR: return GL_BGR;
-	case Texture::RGBA: return GL_RGBA;
-	case Texture::BGRA: return GL_BGRA;
-	}
-	ASSERT(false);
-	return 0;
-}
-
-bool Texture::create(rhuint w, rhuint h, const char* data, rhuint dataSize, Format dataFormat)
+bool Texture::create(rhuint w, rhuint h, const char* data, rhuint dataSize, int srcFormat)
 {
 	_type = GL_TEXTURE_2D;
 	width = w;
@@ -51,8 +39,8 @@ bool Texture::create(rhuint w, rhuint h, const char* data, rhuint dataSize, Form
 
 	glTexImage2D(
 		_type, 0, GL_RGBA8, width, height, 0,
-		formatComponentCount(dataFormat),
-		formatOglFormat(dataFormat),
+		formatComponentCount(srcFormat),
+		srcFormat,
 		data
 	);
 

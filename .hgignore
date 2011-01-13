@@ -4,9 +4,15 @@ glob:thirdParty/SpiderMonkey/Debug
 glob:thirdParty/SpiderMonkey/Release
 glob:bin/*.pdb
 glob:bin/*.ilk
-glob:build/win32/*.suo
 glob:lib/*.exp
 glob:lib/*.lib
 glob:bin/*.dll
 glob:bin/*.exe
-glob:build/win32/*.user
+glob:thirdParty/CppTestHarness/Win32
+glob:thirdParty/png/Win32
+glob:thirdParty/zlib/Win32
+glob:thirdParty/SmallJpeg/Win32
+glob:*.user
+glob:lib/*.idb
+glob:lib/*.pdb
+glob:*.suo
