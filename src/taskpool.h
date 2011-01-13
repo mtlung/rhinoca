@@ -39,8 +39,10 @@ public:
 	/// The task will begin to process as soon as possible
 	TaskId beginAdd(Task* task, int affinity=0);
 
+	/// A task is consider completed only if all it's children are completed
 	void addChild(TaskId parent, TaskId child);
 
+	/// A task cannot be start until it's depending task completes
 	void dependsOn(TaskId src, TaskId on);
 
 	void setAffinity(TaskId id, int affinity);
@@ -54,6 +56,9 @@ public:
 	/// were NOT waiting for, but that's not the problem since the
 	/// task should be finished anyway.
 	void wait(TaskId id);
+
+	/// Check if a task is finished.
+	bool isDone(TaskId id);
 
 	/// If you know your thread have some idle time,
 	/// call this function to help consuming the task queue

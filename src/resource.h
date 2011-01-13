@@ -61,6 +61,7 @@ public:
 	void addFactory(CreateFunc createFunc, LoadFunc loadFunc);
 
 // Attributes
+	Rhinoca* rhinoca;
 	TaskPool* taskPool;
 
 protected:
@@ -74,5 +75,7 @@ protected:
 	typedef Map<Resource> Resources;
 	Resources _resources;
 };	// ResourceManager
+
+extern bool uriExtensionMatch(const char* uri, const char* extension);
 
 #endif	// __RESOURCE_H__

@@ -1,5 +1,12 @@
 #include "pch.h"
 #include "image.h"
+#include "document.h"
+#include "../context.h"
+#include "../path.h"
+#include "../resource.h"
+#include "../render/texture.h"
+
+using namespace Render;
 
 namespace Dom {
 
@@ -17,11 +24,14 @@ JSBool setSrc(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	JSString* jss = JS_ValueToString(cx, *vp);
 	if(!jss) return JS_FALSE;
 	char* str = JS_GetStringBytes(jss);
-/*	MCD::Path path = gCurrentDocument->documentPath;
+
+	// Assume relative path to the document
+	Path path = self->ownerDocument->rhinoca->documentUrl;
 	path = path.getBranchPath();
 	path /= str;
-	image->texture = gCurrentDocument->framework->resourceManager().loadAs<Texture>(path, 1000);
-	printf("%s\n", str);*/
+
+	ResourceManager& mgr = self->ownerDocument->rhinoca->resourceManager;
+	self->texture = mgr.loadAs<Texture>(path.c_str());
 
 	return JS_TRUE;
 }
@@ -38,6 +48,9 @@ static JSBool construct(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, j
 	Image* img = new Image;
 	img->bind(cx, NULL);
 
+	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
+	img->ownerDocument = rh->domWindow->document;
+
 	*rval = OBJECT_TO_JSVAL(img->jsObject);
 
 	return JS_TRUE;
@@ -48,15 +61,12 @@ static JSFunctionSpec methods[] = {
 };
 
 Image::Image()
-	: _width(0)
-	, _height(0)
+	: texture(NULL)
 {
 }
 
 Image::~Image()
 {
-	int a = 0;
-	a = a;
 }
 
 void Image::bind(JSContext* cx, JSObject* parent)
@@ -80,12 +90,14 @@ Element* Image::factoryCreate(const char* type)
 	return strcasecmp(type, "Image") == 0 ? new Image : NULL;
 }
 
-void Image::setWidth()
+rhuint Image::width() const
 {
+	return texture ? texture->width : 0;
 }
 
-void Image::setHeight()
+rhuint Image::height() const
 {
+	return texture ? texture->height : 0;
 }
 
 }	// namespace Dom

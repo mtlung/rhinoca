@@ -13,7 +13,8 @@ Resource::~Resource()
 {}
 
 ResourceManager::ResourceManager()
-	: taskPool(NULL)
+	: rhinoca(NULL)
+	, taskPool(NULL)
 	, _factories(NULL)
 	, _factoryCount(0)
 	, _factoryBufCount(0)
@@ -23,8 +24,10 @@ ResourceManager::ResourceManager()
 ResourceManager::~ResourceManager()
 {
 	Resource* r = NULL;
-	while(r = _resources.findMin())
+	while(r = _resources.findMin()) {
+		taskPool->wait(r->taskLoaded);
 		intrusivePtrRelease(r);
+	}
 
 	rhdelete(_factories);
 }
@@ -100,4 +103,13 @@ void ResourceManager::addFactory(CreateFunc createFunc, LoadFunc loadFunc)
 
 	_factories[_factoryCount-1].create = createFunc;
 	_factories[_factoryCount-1].load = loadFunc;
+}
+
+bool uriExtensionMatch(const char* uri, const char* extension)
+{
+	rhuint uriLen = strlen(uri);
+	rhuint extLen = strlen(extension);
+
+	if(uriLen < extLen) return false;
+	return strcasecmp(uri + uriLen - extLen, extension) == 0;
 }

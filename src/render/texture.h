@@ -21,10 +21,10 @@ public:
 
 // Attibutes
 	rhuint handle;
+	rhuint width, height;
 
 protected:
 	rhuint _type;
-	rhuint _width, _height;
 };	// Texture
 
 }	// namespace Render

@@ -15,6 +15,8 @@ bool loadPng(Resource* resource, ResourceManager* mgr);
 Resource* createJpeg(const char* uri, ResourceManager* mgr);
 bool loadJpeg(Resource* resource, ResourceManager* mgr);
 
+void registerLoaders(ResourceManager* mgr);
+
 }	// namespace Loader
 
 #endif	// __LOADER_LOADER_H__

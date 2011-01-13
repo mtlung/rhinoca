@@ -128,9 +128,9 @@ bool initOpenGl(HWND hWnd, HDC& dc)
 	return ::wglMakeCurrent(dc, rc) == TRUE;
 }
 
-static void* ioOpen(Rhinoca* rh, const char* url, int threadId)
+static void* ioOpen(Rhinoca* rh, const char* uri, int threadId)
 {
-	FILE* f = fopen(url, "rb");
+	FILE* f = fopen(uri, "rb");
 	return f;
 }
 

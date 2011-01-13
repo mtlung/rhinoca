@@ -7,7 +7,7 @@ namespace Render {
 Texture::Texture(const char* uri)
 	: Resource(uri)
 	, handle(0)
-	, _width(0), _height(0)
+	, width(0), height(0)
 {
 }
 
@@ -40,11 +40,11 @@ static rhuint formatOglFormat(Texture::Format format)
 	return 0;
 }
 
-bool Texture::create(rhuint width, rhuint height, const char* data, rhuint dataSize, Format dataFormat)
+bool Texture::create(rhuint w, rhuint h, const char* data, rhuint dataSize, Format dataFormat)
 {
 	_type = GL_TEXTURE_2D;
-	_width = width;
-	_height = height;
+	width = w;
+	height = h;
 
 	glGenTextures(1, &handle);
 	glBindTexture(_type, handle);
@@ -67,7 +67,7 @@ void Texture::clear()
 	if(handle) glDeleteTextures(1, &handle);
 	handle = 0;
 	_type = 0;
-	_width = _height = 0;
+	width = height = 0;
 }
 
 }

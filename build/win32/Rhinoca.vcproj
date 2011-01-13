@@ -276,7 +276,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\loader\jpegloader.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\loader\loader.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\loader\loader.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\loader\pngloader.cpp"
 				>
 			</File>
 		</Filter>

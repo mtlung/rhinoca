@@ -5,6 +5,7 @@
 #include "dom/document.h"
 #include "dom/element.h"
 #include "dom/registerfactories.h"
+#include "loader/loader.h"
 
 #include <string>
 
@@ -65,9 +66,13 @@ Rhinoca::Rhinoca()
 	jsGlobal = JS_NewObject(jsContext, &jsGlobalClass, 0, 0);
 	VERIFY(JS_InitStandardClasses(jsContext, jsGlobal));
 
-	domWindow = new Dom::Window;
+	domWindow = new Dom::Window(this);
 	domWindow->bind(jsContext, jsGlobal);
 	domWindow->addGcRoot();
+
+	taskPool.init(3);
+	resourceManager.taskPool = &taskPool;
+	Loader::registerLoaders(&resourceManager);
 
 	Dom::registerFactories();
 	Dom::registerClasses(jsContext, jsGlobal);
@@ -105,6 +110,8 @@ Rhinoca::~Rhinoca()
 void Rhinoca::update()
 {
 	domWindow->update();
+	resourceManager.update();
+	taskPool.doSomeTask();
 }
 
 void Rhinoca:: collectGarbage()
@@ -120,12 +127,12 @@ static void appendFileToString(void* file, std::string& str)
 		str.append(buf, (size_t)readCount);
 }
 
-bool Rhinoca::openDoucment(const char* url)
+bool Rhinoca::openDoucment(const char* uri)
 {
 	std::string html;
 
 	{	// Reads the html file into memory
-		void* file = io_open(this, url, 0);
+		void* file = io_open(this, uri, 0);
 		if(!file) return false;
 		appendFileToString(file, html);
 		io_close(file, 0);
@@ -134,7 +141,7 @@ bool Rhinoca::openDoucment(const char* url)
 	Dom::ElementFactory& factory = Dom::ElementFactory::singleton();
 	Dom::Node* currentNode = domWindow->document->rootNode();
 
-	documentUrl = url;
+	documentUrl = uri;
 	XmlParser parser;
 	parser.parse(const_cast<char*>(html.c_str()));
 

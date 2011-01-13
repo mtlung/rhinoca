@@ -2,6 +2,7 @@
 #define __COMMON_H__
 
 #include "rhinoca.h"
+#include "intrusiveptr.h"
 #include <assert.h>
 #include <string.h>
 

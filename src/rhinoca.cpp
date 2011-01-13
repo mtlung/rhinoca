@@ -31,21 +31,23 @@ void rhinoca_destroy(Rhinoca* context)
 	delete context;
 }
 
-void rhinoca_setPrivate(Rhinoca* rh, void* data)
-{
-	rh->privateData = data;
-}
-
 void* rhinoca_getPrivate(Rhinoca* rh)
 {
 	return rh->privateData;
 }
 
-// Document
-void rhinoca_openDocument(Rhinoca* rh, const char* url)
+void rhinoca_setPrivate(Rhinoca* rh, void* data)
 {
-	if(!rh->openDoucment(url))
-		print(rh, "Fail to load '%s'\n", url);
+	rh->privateData = data;
+}
+
+Rhinoca* currentContext = NULL;
+
+// Document
+void rhinoca_openDocument(Rhinoca* rh, const char* uri)
+{
+	if(!rh->openDoucment(uri))
+		print(rh, "Fail to load '%s'\n", uri);
 }
 
 void rhinoca_closeDocument(Rhinoca* rh)

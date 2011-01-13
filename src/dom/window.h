@@ -34,7 +34,7 @@ public:
 class Window : public JsBindable
 {
 public:
-	Window();
+	explicit Window(Rhinoca* rh);
 	~Window();
 
 // Operations
@@ -43,6 +43,7 @@ public:
 	void update();
 
 // Attributes
+	Rhinoca* rhinoca;
 	Document* document;
 
 	Timer timer;

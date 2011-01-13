@@ -92,9 +92,10 @@ static JSFunctionSpec methods[] = {
 	{0}
 };
 
-Window::Window()
+Window::Window(Rhinoca* rh)
+	: rhinoca(rh)
 {
-	document = new Document;
+	document = new Document(rh);
 }
 
 Window::~Window()

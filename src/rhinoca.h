@@ -71,11 +71,11 @@ RHINOCA_API void rhinoca_init();
 RHINOCA_API void rhinoca_close();
 RHINOCA_API Rhinoca* rhinoca_create(RhinocaRenderContext* renderContex);
 RHINOCA_API void rhinoca_destroy(Rhinoca* rh);
-RHINOCA_API void rhinoca_setPrivate(Rhinoca* rh, void* data);
 RHINOCA_API void* rhinoca_getPrivate(Rhinoca* rh);
+RHINOCA_API void rhinoca_setPrivate(Rhinoca* rh, void* data);
 
 // Document open/close
-RHINOCA_API void rhinoca_openDocument(Rhinoca* rh, const char* url);
+RHINOCA_API void rhinoca_openDocument(Rhinoca* rh, const char* uri);
 RHINOCA_API void rhinoca_closeDocument(Rhinoca* rh);
 
 // Main loop iteration processing
@@ -83,7 +83,7 @@ RHINOCA_API void rhinoca_update(Rhinoca* rh);
 RHINOCA_API void rhinoca_processevent(Rhinoca* rh, RhinocaEvent ev);
 
 // IO functions
-typedef void* (*rhinoca_io_open)(Rhinoca* rh, const char* url, int threadId);
+typedef void* (*rhinoca_io_open)(Rhinoca* rh, const char* uri, int threadId);
 typedef rhuint64 (*rhinoca_io_read)(void* file, void* buffer, rhuint64 size, int threadId);
 typedef void (*rhinoca_io_close)(void* file, int threadId);
 void rhinoca_io_setcallback(rhinoca_io_open open, rhinoca_io_read read, rhinoca_io_close close);

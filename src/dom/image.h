@@ -3,6 +3,12 @@
 
 #include "element.h"
 
+namespace Render {
+
+typedef IntrusivePtr<class Texture> TexturePtr;
+
+}	// namespace Render
+
 namespace Dom {
 
 class Image : public Element
@@ -18,17 +24,12 @@ public:
 	static Element* factoryCreate(const char* type);
 
 // Attributes
-	int width() const { return _width; }
-	int height() const { return _height; }
+	Render::TexturePtr texture;
 
-	void setWidth();
-	void setHeight();
+	rhuint width() const;
+	rhuint height() const;
 
 	static JSClass jsClass;
-
-protected:
-	int _width;
-	int _height;
 };	// Canvas
 
 }	// namespace Dom

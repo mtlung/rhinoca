@@ -2,6 +2,7 @@
 #define __CONTEXT_H__
 
 #include "common.h"
+#include "resource.h"
 #include "rhstring.h"
 #include "dom/window.h"
 
@@ -19,7 +20,7 @@ public:
 	~Rhinoca();
 
 // Operations
-	bool openDoucment(const char* url);
+	bool openDoucment(const char* uri);
 	void closeDocument();
 
 	void update();
@@ -34,6 +35,9 @@ public:
 	FixString documentUrl;
 
 	Dom::Window* domWindow;
+
+	TaskPool taskPool;
+	ResourceManager resourceManager;
 };	// Rhinoca
 
 #endif	// __CONTEXT_H__

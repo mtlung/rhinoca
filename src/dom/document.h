@@ -12,7 +12,7 @@ class Element;
 class Document : public JsBindable
 {
 public:
-	Document();
+	explicit Document(Rhinoca* rh);
 	~Document();
 
 // Operations
@@ -21,6 +21,7 @@ public:
 	Element* getElementById(const char* id);
 
 // Attributes
+	Rhinoca* rhinoca;
 	Node* rootNode() { return _rootNode; }
 
 	static JSClass jsClass;

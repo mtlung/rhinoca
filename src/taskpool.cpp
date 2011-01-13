@@ -17,7 +17,7 @@ public:
 	Task* task;				///< Once complete it will set to NULL
 	bool finalized;			///< Attributes like dependency, affinity, parent cannot be set after the task is finalized
 	int affinity;
-	TaskProxy* parent;		///< A task is consider completed only if all it's child are completed.
+	TaskProxy* parent;		///< A task is consider completed only if all it's children are completed.
 	TaskProxy* dependency;	///< This task cannot be start until the depending task completes.
 	TaskId dependencyId;	///< The dependency valid only if dependency->id == dependencyId
 	int openChildCount;		///< When a task completes, it reduces the openChildCount of it's parent. When this figure reaches zero, the work is completed.
@@ -315,6 +315,12 @@ void TaskPool::_wait(TaskProxy* p, int tId)
 			}
 		}
 	}
+}
+
+bool TaskPool::isDone(TaskId id)
+{
+	ScopeLock lock(mutex);
+	return _findProxyById(id) == NULL;
 }
 
 void TaskPool::doSomeTask()

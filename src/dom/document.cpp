@@ -42,8 +42,9 @@ static JSFunctionSpec methods[] = {
 	{0}
 };
 
-Document::Document()
-	: _rootNode(NULL)
+Document::Document(Rhinoca* rh)
+	: rhinoca(rh)
+	, _rootNode(NULL)
 {
 }
 

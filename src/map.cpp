@@ -50,6 +50,9 @@ void AvlTree::Node::setChildSafe(Direction dir, Node* child)
 }
 
 #ifndef NDEBUG
+#ifdef max
+#	undef max
+#endif
 size_t max(size_t lhs, size_t rhs)
 {
 	return lhs > rhs ? lhs : rhs;
