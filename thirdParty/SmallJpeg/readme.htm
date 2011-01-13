@@ -1,0 +1,195 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+<BASE HREF="http://users.voicenet.com.wstub.archive.org/~richgel/">
+
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=iso-8859-1">
+	<TITLE>Small JPEG Decoder Library</TITLE>
+	<META NAME="GENERATOR" CONTENT="StarOffice/5.2 (Win32)">
+	<META NAME="AUTHOR" CONTENT="Rich Geldreich">
+	<META NAME="CREATED" CONTENT="20001116;18005536">
+	<META NAME="CHANGEDBY" CONTENT=" ">
+	<META NAME="CHANGED" CONTENT="20001116;18172501">
+	<STYLE>
+	<!--
+		TD P { color: #000000 }
+		P { color: #000000 }
+		A:link { color: #0000ee }
+		A:visited { color: #551a8b }
+	-->
+	</STYLE>
+</HEAD>
+<BODY TEXT="#000000" LINK="#0000ee" VLINK="#551a8b" BGCOLOR="#ffffff">
+<P ALIGN=CENTER><FONT SIZE=4>Small JPEG Decoder Library</FONT>
+<BR>Copyright &copy; 1994-2000 Rich Geldreich (<A HREF="mailto:richgel@voicenet.com">richgel@voicenet.com</A>)</P>
+<P><FONT SIZE=4>Introduction</FONT> 
+</P>
+<P>The Small JPEG Decoder Library is a C++ library that can decode the
+most common types of JPEG images. It's
+not the most full-featured JPEG library available, but it's
+relatively fast, completely free with full source code (LGPL
+license), uses little memory, and should be easy to understand and
+further optimize. The very common Huffman DCT-based
+sequential and progressive modes of operation are supported. 
+</P>
+<P>This library only handles JPEG decompression, upsampling, and
+colorspace conversion. It does not handle pixel format conversion,
+quantization, dithering, etc. 
+</P>
+<P>If your application's input set is limited in some way (say,
+you're making a game or some other app that has prepared resources),
+this library may suite your needs. This library may also prove useful
+to those that want to read JPEG images on very small 32-bit platforms
+or embedded devices. 
+</P>
+<P>v0.93b (Dec. 28, 2001) may be downloaded below. The file
+&quot;readme.txt&quot; contains more information about the library,
+its history, etc. 
+</P>
+<P><FONT SIZE=4>Features</FONT> 
+</P>
+<UL>
+	<LI><P STYLE="margin-bottom: 0in">Relatively simple (very little
+	code compared to other implementations) 
+	</P>
+	<LI><P STYLE="margin-bottom: 0in">Free (LGPL license) 
+	</P>
+	<LI><P STYLE="margin-bottom: 0in">A lot of MMX instruction set
+	specific optimizations -- decoder is 30%-40% faster when MMX is
+	enabled 
+	</P>
+	<LI><P STYLE="margin-bottom: 0in">Supports the most common (widely
+	used) file types: 
+	</P>
+	<UL>
+		<LI><P STYLE="margin-bottom: 0in">Grayscale 
+		</P>
+		<LI><P STYLE="margin-bottom: 0in">YCbCr colorspace: H1V1, H1V2,
+		H2V1, or H2V2 sampling factors 
+		</P>
+	</UL>
+	<LI><P STYLE="margin-bottom: 0in">Progressive images 
+	</P>
+	<LI><P STYLE="margin-bottom: 0in">Decodes images up to 8192x8192
+	(this limit can be easily increased) 
+	</P>
+	<LI><P>Includes Visual C++ 6.0 project, with a small sample
+	application (jpg2tga, a simple JPEG to TGA converter) 
+	</P>
+</UL>
+<P><FONT SIZE=4>Limitations</FONT> 
+</P>
+<UL>
+	<LI><P STYLE="margin-bottom: 0in">The chrominance channels are
+	upsampled using what's effectively a simple box filter. This can
+	lead to some artifacts depending on the image. 
+	</P>
+	<LI><P STYLE="margin-bottom: 0in">Only 8-bit component precision
+	streams are supported. 
+	</P>
+	<LI><P STYLE="margin-bottom: 0in">No arithmetic coding support. 
+	</P>
+	<LI><P STYLE="margin-bottom: 0in">Does not support CMYK image types.
+		</P>
+	<LI><P STYLE="margin-bottom: 0in">Less forgiving than other
+	implementations: if the input stream is bad or corrupted, this
+	decoder may exit with an error condition a little earlier than other
+	decoders. (Restart markers are properly parsed but not currently
+	used to recover if the data stream goes south.) 
+	</P>
+	<P STYLE="margin-bottom: 0in"></P>
+</UL>
+<P><FONT SIZE=4>Known Problems</FONT> 
+</P>
+<P>The MMX specific code in h2v2.cpp does not round and, in general,
+is not as precise as it should be. The output G component suffers the
+worst. I might rewrite this code again-- there's way too much
+unpacking/packing/shifting going on anyway. 
+</P>
+<P><FONT SIZE=4>Download</FONT> 
+</P>
+<P><A HREF="jpgd093b.zip">jpgd093b.zip</A> (79k) Tweaked YCbCr to RGB lookup tables to improve grayscale pixel conversion quality.
+</P>
+<P><A HREF="readme.txt">readme.txt</A> (8k) Readme file from archive.
+</P>
+<P><FONT SIZE=4>Previous Versions</FONT> 
+<P><A HREF="jpgd093a.zip">jpgd093a.zip</A> (79k) Fixed a dumb bug in the
+decode_next_row functions that could allow non-zero coefficients from
+leaking through in rare cases.</P>
+<P><A HREF="jpgd093.zip">jpgd093.zip</A> (298k) MMX state
+saved/restored around calls to the decoder stream's read() method,
+added some defines to ease porting to non-x86 platforms. </P>
+<P><A HREF="jpgd092.zip">jpgd092.zip</A> (323k) Much faster. Still
+needs a lot of testing because there's a lot more assembler and MMX
+specific code. 
+</P>
+<P><A HREF="jpgd091.zip">jpgd091.zip</A> (290k) Added warning about
+the MMX IDCT bug, added free(Pbuf); to jpg2tga.cpp, fixed workspace
+so the lib header files can be found, changed comments a bit. 
+</P>
+</BODY>
+
+<SCRIPT language="Javascript">
+<!--
+
+// FILE ARCHIVED ON 20071018072749 AND RETRIEVED FROM THE
+// INTERNET ARCHIVE ON 20090709023243.
+// JAVASCRIPT APPENDED BY WAYBACK MACHINE, COPYRIGHT INTERNET ARCHIVE.
+// ALL OTHER CONTENT MAY ALSO BE PROTECTED BY COPYRIGHT (17 U.S.C.
+// SECTION 108(a)(3)).
+
+   var sWayBackCGI = "http://web.archive.org/web/20071018072749/";
+
+   function xResolveUrl(url) {
+      var image = new Image();
+      image.src = url;
+      return image.src;
+   }
+   function xLateUrl(aCollection, sProp) {
+      var i = 0;
+      for(i = 0; i < aCollection.length; i++) {
+         var url = aCollection[i][sProp];         if (typeof(url) == "string") { 
+          if (url.indexOf("mailto:") == -1 &&
+             url.indexOf("javascript:") == -1
+             && url.length > 0) {
+            if(url.indexOf("http") != 0) {
+                url = xResolveUrl(url);
+            }
+            url = url.replace('.wstub.archive.org','');
+            aCollection[i][sProp] = sWayBackCGI + url;
+         }
+         }
+      }
+   }
+
+   xLateUrl(document.getElementsByTagName("IMG"),"src");
+   xLateUrl(document.getElementsByTagName("A"),"href");
+   xLateUrl(document.getElementsByTagName("AREA"),"href");
+   xLateUrl(document.getElementsByTagName("OBJECT"),"codebase");
+   xLateUrl(document.getElementsByTagName("OBJECT"),"data");
+   xLateUrl(document.getElementsByTagName("APPLET"),"codebase");
+   xLateUrl(document.getElementsByTagName("APPLET"),"archive");
+   xLateUrl(document.getElementsByTagName("EMBED"),"src");
+   xLateUrl(document.getElementsByTagName("BODY"),"background");
+   xLateUrl(document.getElementsByTagName("TD"),"background");
+   xLateUrl(document.getElementsByTagName("INPUT"),"src");
+   var forms = document.getElementsByTagName("FORM");
+   if (forms) {
+       var j = 0;
+       for (j = 0; j < forms.length; j++) {
+              f = forms[j];
+              if (typeof(f.action)  == "string") {
+                 if(typeof(f.method)  == "string") {
+                     if(typeof(f.method) != "post") {
+                        f.action = sWayBackCGI + f.action;
+                     }
+                  }
+              }
+        }
+    }
+
+
+//-->
+</SCRIPT>
+
+</HTML>

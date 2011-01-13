@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="MCD3PartyRelease"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		Optimization="3"
+		InlineFunctionExpansion="2"
+		EnableIntrinsicFunctions="true"
+		FavorSizeOrSpeed="1"
+		OmitFramePointers="true"
+		PreprocessorDefinitions="NDEBUG"
+		StringPooling="true"
+		RuntimeLibrary="2"
+		EnableEnhancedInstructionSet="2"
+	/>
+</VisualStudioPropertySheet>

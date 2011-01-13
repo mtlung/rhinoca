@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="MCD3PartyGeneral"
+	OutputDirectory="../../Lib"
+	IntermediateDirectory="$(PlatformName)/$(ConfigurationName)"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		PreprocessorDefinitions="_WINDOWS;"
+		ProgramDataBaseFileName="$(OutDir)/$(TargetName).pdb"
+		WarningLevel="4"
+		DebugInformationFormat="3"
+		DisableSpecificWarnings="4251;4996"
+	/>
+</VisualStudioPropertySheet>
