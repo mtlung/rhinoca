@@ -25,11 +25,14 @@ public:
 	virtual void unload() {}
 
 // Attributes
+	FixString uri() const;
+
 	enum State { NotLoaded, Loading, Ready, Loaded, Unloaded, Aborted };
 	State state;
+
 	TaskId taskReady, taskLoaded;
+
 	float hotness;	///!< For tracking resource usage and perform unload when resource is scarce
-	const FixString uri;
 
 	void* scratch;	///! Hold any temporary needed during loading
 };	// Resource

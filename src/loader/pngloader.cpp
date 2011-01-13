@@ -45,7 +45,7 @@ void PngLoader::load(TaskPool* taskPool)
 	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
-	void* f = io_open(rh, texture->uri, tId);
+	void* f = io_open(rh, texture->uri(), tId);
 	if(!f) goto Abort;
 
 	io_close(f, tId);
@@ -69,7 +69,7 @@ void PngLoader::commit(TaskPool* taskPool)
 
 bool loadPng(Resource* resource, ResourceManager* mgr)
 {
-	if(!uriExtensionMatch(resource->uri, ".png")) return false;
+	if(!uriExtensionMatch(resource->uri(), ".png")) return false;
 
 	TaskPool* taskPool = mgr->taskPool;
 

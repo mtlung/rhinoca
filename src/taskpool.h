@@ -78,7 +78,7 @@ public:
 	/// To get the current thread id, which is use for setting affinity
 	static int threadId();
 
-	int taskCount() const { return taskList.count; }
+	rhuint taskCount() const { return taskList.count; }
 
 	int mainThreadId() const { return _mainThreadId; }
 

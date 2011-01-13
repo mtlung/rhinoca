@@ -45,7 +45,7 @@ void JpegLoader::load(TaskPool* taskPool)
 	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
-	void* f = io_open(rh, texture->uri, tId);
+	void* f = io_open(rh, texture->uri(), tId);
 	if(!f) goto Abort;
 
 	io_close(f, tId);
@@ -69,7 +69,7 @@ void JpegLoader::commit(TaskPool* taskPool)
 
 bool loadJpeg(Resource* resource, ResourceManager* mgr)
 {
-	if(!uriExtensionMatch(resource->uri, ".jpg") && !uriExtensionMatch(resource->uri, ".jpeg")) return false;
+	if(!uriExtensionMatch(resource->uri(), ".jpg") && !uriExtensionMatch(resource->uri(), ".jpeg")) return false;
 
 	TaskPool* taskPool = mgr->taskPool;
 

@@ -422,6 +422,7 @@ void TaskPool::_removePendingTask(TaskProxy* p)
 	p->prevPending = p->nextPending = NULL;
 }
 
+// NOTE: This function is purely build on top of other public interface of TaskPool ^.^
 void TaskPool::addCallback(TaskId id, Callback callback, void* userData, int affinity)
 {
 	class CallbackTask : public Task

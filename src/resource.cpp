@@ -2,15 +2,21 @@
 #include "resource.h"
 
 Resource::Resource(const char* p)
-	: uri(p)
-	, state(NotLoaded)
+	: state(NotLoaded)
 	, taskReady(0), taskLoaded(0)
 	, hotness(0)
 	, scratch(NULL)
-{}
+{
+	setKey(p);
+}
 
 Resource::~Resource()
 {}
+
+FixString Resource::uri() const
+{
+	return getKey();
+}
 
 ResourceManager::ResourceManager()
 	: rhinoca(NULL)

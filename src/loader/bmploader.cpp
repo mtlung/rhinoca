@@ -56,7 +56,7 @@ void BmpLoader::load(TaskPool* taskPool)
 	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
-	void* f = io_open(rh, texture->uri, tId);
+	void* f = io_open(rh, texture->uri(), tId);
 	if(!f) goto Abort;
 
 	// Windows.h gives us these types to work with the Bitmap files
@@ -149,7 +149,7 @@ void BmpLoader::commit(TaskPool* taskPool)
 
 bool loadBmp(Resource* resource, ResourceManager* mgr)
 {
-	if(!uriExtensionMatch(resource->uri, ".bmp")) return false;
+	if(!uriExtensionMatch(resource->uri(), ".bmp")) return false;
 
 	TaskPool* taskPool = mgr->taskPool;
 
