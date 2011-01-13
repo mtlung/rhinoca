@@ -14,7 +14,7 @@ class Resource
 	, private Noncopyable
 {
 protected:
-	explicit Resource(const char* path);
+	explicit Resource(const char* uri);
 
 	virtual ~Resource();
 
@@ -29,7 +29,7 @@ public:
 	State state;
 	TaskId taskReady, taskLoaded;
 	float hotness;	///!< For tracking resource usage and perform unload when resource is scarce
-	const FixString path;
+	const FixString uri;
 
 	void* scratch;	///! Hold any temporary needed during loading
 };	// Resource
@@ -44,18 +44,19 @@ public:
 
 // Operations
 	/// @note: Recursive and re-entrant
-	ResourcePtr load(const char* path);
+	ResourcePtr load(const char* uri);
 
 	template<class T>
-	IntrusivePtr<T> loadAs(const char* path) { return dynamic_cast<T*>(load(path).get()); }
+	IntrusivePtr<T> loadAs(const char* uri) { return dynamic_cast<T*>(load(uri).get()); }
 
 	// Call this on every frame
 	void update();
 
+	/// Check for infrequently used resource and unload them
 	void collectUnused();
 
 // Factories
-	typedef Resource* (*CreateFunc)(const char* path, ResourceManager* mgr);
+	typedef Resource* (*CreateFunc)(const char* uri, ResourceManager* mgr);
 	typedef bool (*LoadFunc)(Resource* resource, ResourceManager* mgr);
 	void addFactory(CreateFunc createFunc, LoadFunc loadFunc);
 

@@ -60,6 +60,7 @@ bool load(Resource* resource, ResourceManager* mgr)
 TEST(ResourceTest)
 {
 	TaskPool taskPool;
+	taskPool.init(1);
 	ResourceManager mgr;
 	mgr.taskPool = &taskPool;
 	mgr.addFactory(create, load);

@@ -4,8 +4,9 @@
 
 namespace Render {
 
-Texture::Texture()
-	: handle(0)
+Texture::Texture(const char* uri)
+	: Resource(uri)
+	, handle(0)
 	, _width(0), _height(0)
 {
 }

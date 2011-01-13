@@ -2,15 +2,15 @@
 #define __RENDER_TEXTURE_H__
 
 #include "../common.h"
-#include "../rhstring.h"
+#include "../resource.h"
 
 namespace Render {
 
-class Texture : private Noncopyable
+class Texture : public Resource
 {
 public:
-	Texture();
-	~Texture();
+	explicit Texture(const char* uri);
+	virtual ~Texture();
 
 	enum Format { RGB, BGR, RGBA, BGRA };
 
@@ -21,7 +21,6 @@ public:
 
 // Attibutes
 	rhuint handle;
-	FixString url;
 
 protected:
 	rhuint _type;

@@ -2,7 +2,7 @@
 #include "resource.h"
 
 Resource::Resource(const char* p)
-	: path(p)
+	: uri(p)
 	, state(NotLoaded)
 	, taskReady(0), taskLoaded(0)
 	, hotness(0)
@@ -29,16 +29,16 @@ ResourceManager::~ResourceManager()
 	rhdelete(_factories);
 }
 
-ResourcePtr ResourceManager::load(const char* path)
+ResourcePtr ResourceManager::load(const char* uri)
 {
 	ScopeLock lock(_mutex);
 
-	Resource* r = _resources.find(path);
+	Resource* r = _resources.find(uri);
 
-	// Create the resource if the path not found in resource list
+	// Create the resource if the uri not found in resource list
 	if(!r) {
 		for(int i=0; !r && i<_factoryCount; ++i)
-			r = _factories[i].create(path, this);
+			r = _factories[i].create(uri, this);
 
 		if(!r) return NULL;
 		VERIFY(_resources.insertUnique(*r));
