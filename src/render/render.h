@@ -1,5 +1,5 @@
-#ifndef __RENDERER_RENDERER_H__
-#define __RENDERER_RENDERER_H__
+#ifndef __RENDER_RENDER_H__
+#define __RENDER_RENDER_H__
 
 namespace Render {
 
@@ -9,4 +9,4 @@ void close();
 
 }	// Render
 
-#endif	// __RENDERER_RENDERER_H__
+#endif	// __RENDER_RENDER_H__
