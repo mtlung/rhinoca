@@ -63,7 +63,8 @@ struct RhinocaRenderContext;
 /// Platform dependent key/mouse/gesture event data
 struct RhinocaEvent {
 	int type;
-	int value;
+	int value1;
+	int value2;
 };
 
 // Context management
@@ -73,6 +74,11 @@ RHINOCA_API Rhinoca* rhinoca_create(RhinocaRenderContext* renderContex);
 RHINOCA_API void rhinoca_destroy(Rhinoca* rh);
 RHINOCA_API void* rhinoca_getPrivate(Rhinoca* rh);
 RHINOCA_API void rhinoca_setPrivate(Rhinoca* rh, void* data);
+
+// Window
+RHINOCA_API void rhinoca_setSize(Rhinoca* rh, rhuint width, rhuint height);
+RHINOCA_API rhuint rhinoca_getWidth(Rhinoca* rh);
+RHINOCA_API rhuint rhinoca_getHeight(Rhinoca* rh);
 
 // Document open/close
 RHINOCA_API void rhinoca_openDocument(Rhinoca* rh, const char* uri);

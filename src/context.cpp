@@ -58,6 +58,7 @@ static JSFunctionSpec jsConsoleMethods[] = {
 
 Rhinoca::Rhinoca()
 	: privateData(NULL)
+	, width(0), height(0)
 {
 	jsContext = JS_NewContext(jsrt, 8192);
 	JS_SetContextPrivate(jsContext, this);

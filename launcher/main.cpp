@@ -26,8 +26,18 @@ static bool quitWindow = false;
 
 LRESULT CALLBACK wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	Rhinoca* rh = reinterpret_cast<Rhinoca*>(::GetWindowLongPtr(hWnd, GWLP_USERDATA));
+
+	{
+		RhinocaEvent ev = { uMsg, wParam, lParam };
+		rhinoca_processevent(rh, ev);
+	}
+
 	switch(uMsg)
 	{
+	case WM_SIZE:
+		rhinoca_setSize(rh, LOWORD(lParam), HIWORD(lParam));
+		break;
 	case WM_PAINT:
 		::ValidateRect(hWnd, NULL);
 		break;
@@ -102,8 +112,6 @@ HWND createWindow(HWND existingWindow, int width, int height, bool fullScreen)
 //			setFullscreen(true);
 	}
 
-	::ShowWindow(hWnd, true);
-
 	return hWnd;
 }
 
@@ -165,6 +173,10 @@ int main()
 	Rhinoca* rh = rhinoca_create(NULL);
 	rhinoca_io_setcallback(ioOpen, ioRead, ioClose);
 
+	// Associate Rhinoca context as the user-data of the window handle
+	::SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG>(rh));
+	::ShowWindow(hWnd, true);
+
 	rhinoca_openDocument(rh, "html5/test1/test.html");
 
 	while(true) {
@@ -175,9 +187,6 @@ int main()
 			(void)DispatchMessage(&message);
 
 			if(quitWindow) break;
-
-			RhinocaEvent ev = { message.lParam, message.wParam };
-			rhinoca_processevent(rh, ev);
 		}
 
 		if(!quitWindow) {

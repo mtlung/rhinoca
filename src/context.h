@@ -36,6 +36,8 @@ public:
 
 	Dom::Window* domWindow;
 
+	rhuint width, height;
+
 	TaskPool taskPool;
 	ResourceManager resourceManager;
 };	// Rhinoca

@@ -41,6 +41,24 @@ void rhinoca_setPrivate(Rhinoca* rh, void* data)
 	rh->privateData = data;
 }
 
+void rhinoca_setSize(Rhinoca* rh, rhuint width, rhuint height)
+{
+	if(width != 0 && height != 0) {
+		rh->width = width;
+		rh->height = height;
+	}
+}
+
+rhuint rhinoca_getWidth(Rhinoca* rh)
+{
+	return rh->width;
+}
+
+rhuint rhinoca_getHeight(Rhinoca* rh)
+{
+	return rh->height;
+}
+
 Rhinoca* currentContext = NULL;
 
 // Document
