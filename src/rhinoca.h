@@ -41,16 +41,24 @@ extern "C" {
 
 #ifdef _MSC_VER
 typedef int rhint;
+typedef __int8 rhint8;
+typedef __int16 rhint16;
 typedef __int32 rhint32;
 typedef __int64 rhint64;
 typedef unsigned int rhuint;
+typedef unsigned __int8 rhuint8;
+typedef unsigned __int16 rhuint16;
 typedef unsigned __int32 rhuint32;
 typedef unsigned __int64 rhuint64;
 #else
 typedef int rhint;
+typedef char rhint8;
+typedef short rhint16;
 typedef int rhint32;
 typedef long rhint64;
 typedef unsigned int rhuint;
+typedef unsigned char rhuint8;
+typedef unsigned short rhuint16;
 typedef unsigned int rhuint32;
 typedef unsigned long rhuint64;
 #endif
