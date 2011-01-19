@@ -2,12 +2,14 @@
 #define __RENDER_RENDERQUEUE_H__
 
 #include "../rhinoca.h"
+#include "../vector.h"
 
 namespace Render {
 
 class RenderCommand
 {
 	virtual ~RenderCommand() {}
+	virtual void render() = 0;
 };
 
 // A render queue in the spirit of http://realtimecollisiondetection.net/blog/?p=86
@@ -18,7 +20,7 @@ public:
 	int	layer;
 	int	viewport;
 	int	viewportLayer;
-	int	alphaBlend; 
+	int	alphaBlend;
 	int	isCmd;
 
 	int cmdPriority;
@@ -44,6 +46,14 @@ public:
 class RenderQueue
 {
 public:
+	RenderQueue();
+
+	~RenderQueue();
+
+	void render();
+
+	///
+	Vector<RenderItem> renderItems;
 };
 
 }	// Render

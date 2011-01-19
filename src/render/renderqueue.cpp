@@ -49,7 +49,7 @@ RenderItemKey::operator rhuint64()
 			|	(viewportLayer	<<  2);	// 2 bits ( 4)
 										// 1 bit = alpha
 										// 1 bit = !cmd
-	if (alphaBlend) 
+	if (alphaBlend)
 		BaseKey |= 2;
 
 	if (isCmd)
@@ -121,7 +121,7 @@ void RenderItemKey::decode(rhuint64 Key)
 			z		= (A.Alpha.HighZ << 8) | (A.Alpha.LowZ);
 			mtlId	=  A.Alpha.Mtl;
 			mtlPass	=  A.Alpha.MtlPass;
-			
+
 			depth	= 1.0f - (z / float((1<<24)-1));
 		}
 		else
@@ -141,15 +141,27 @@ void RenderItemKey::makeOutOfRange()
 	layer			= -1;
 	viewport		= -1;
 	viewportLayer	= -1;
-	alphaBlend		= -1; 
+	alphaBlend		= -1;
 	isCmd			= -1;
-	
+
 	cmdPriority		= -1;
 	cmdParam		= -1;
-	
+
 	mtlId			= -1;
 	mtlPass			= -1;
-	depth			= -1.0f; 
+	depth			= -1.0f;
+}
+
+RenderQueue::RenderQueue()
+{
+}
+
+RenderQueue::~RenderQueue()
+{
+}
+
+RenderQueue::render()
+{
 }
 
 }	// Render
