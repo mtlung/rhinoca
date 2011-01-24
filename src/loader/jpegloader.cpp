@@ -1,10 +1,32 @@
 #include "pch.h"
 #include "../render/texture.h"
 #include "../platform.h"
+#include "../../thirdparty/SmallJpeg/jpegdecoder.h"
+
+#ifdef RHINOCA_VC
+#	pragma comment(lib, "SmallJpeg")
+#endif
 
 using namespace Render;
 
 namespace Loader {
+
+class Stream : public jpeg_decoder_stream
+{
+public:
+	explicit Stream(void* f, int tId) : file(f), threadId(tId) {}
+
+	int read(uchar* Pbuf, int max_bytes_to_read, bool* Peof_flag)
+	{
+		int readCount = (int)io_read(file, (char*)Pbuf, max_bytes_to_read, threadId);
+		*Peof_flag = (readCount == 0);
+
+		return readCount;
+	}
+
+	void* file;
+	int threadId;
+};	// Stream
 
 Resource* createJpeg(const char* uri, ResourceManager* mgr)
 {
@@ -19,7 +41,16 @@ public:
 	JpegLoader(Texture* t, ResourceManager* mgr)
 		: texture(t), manager(mgr)
 		, width(0), height(0)
+		, pixelData(NULL), pixelDataSize(0), rowBytes(0), pixelDataFormat(0)
+		, _decoder(NULL), _stream(NULL)
 	{}
+
+	~JpegLoader()
+	{
+		rhinoca_free(pixelData);
+		delete _decoder;
+		delete _stream;
+	}
 
 	virtual void run(TaskPool* taskPool);
 
@@ -29,6 +60,13 @@ public:
 	Texture* texture;
 	ResourceManager* manager;
 	rhuint width, height;
+	char* pixelData;
+	rhuint pixelDataSize;
+	rhuint rowBytes;
+	int pixelDataFormat;
+
+	Pjpeg_decoder _decoder;
+	Stream* _stream;
 };
 
 void JpegLoader::run(TaskPool* taskPool)
@@ -48,6 +86,53 @@ void JpegLoader::load(TaskPool* taskPool)
 	void* f = io_open(rh, texture->uri(), tId);
 	if(!f) goto Abort;
 
+	_decoder = new jpeg_decoder(_stream = new Stream(f, tId), true);
+
+	if(_decoder->get_error_code() != JPGD_OKAY) {
+		print(rh, "JpegLoader: load error, operation aborted");
+		goto Abort;
+	}
+
+	if(_decoder->begin() != JPGD_OKAY) {
+		print(rh, "JpegLoader: load error, operation aborted");
+		goto Abort;
+	}
+
+	int c = _decoder->get_num_components();
+	if(c == 1)
+		print(rh, "JpegLoader: gray scale image is not yet supported, operation aborted");
+	else if(c == 3)
+		pixelDataFormat = Texture::RGBA;	// Note that the source format is 4 byte even c == 3
+	else {
+		print(rh, "JpegLoader: image with number of color component equals to %i is not supported, operation aborted", c);
+		goto Abort;
+	}
+
+	width = _decoder->get_width();
+	height = _decoder->get_height();
+	rowBytes = _decoder->get_bytes_per_scan_line();
+
+	ASSERT(!pixelData);
+	pixelDataSize = rowBytes * height;
+	pixelData = (char*)rhinoca_malloc(pixelDataSize);
+
+	void* Pscan_line_ofs = NULL;
+	uint scan_line_len = 0;
+
+	char* p = pixelData;
+	while(true) {
+		int result = _decoder->decode(&Pscan_line_ofs, &scan_line_len);
+		if(result == JPGD_OKAY) {
+			memcpy(p, Pscan_line_ofs, scan_line_len);
+			p += scan_line_len;
+			continue;
+		}
+		else if(result == JPGD_DONE)
+			break;
+		else
+			goto Abort;
+	}
+
 	io_close(f, tId);
 	return;
 
@@ -61,8 +146,10 @@ void JpegLoader::commit(TaskPool* taskPool)
 	ASSERT(texture->scratch == this);
 	texture->scratch = NULL;
 
-	texture->width = width;
-	texture->height = height;
+	if(texture->create(width, height, pixelData, pixelDataSize, pixelDataFormat))
+		texture->state = Resource::Loaded;
+	else
+		texture->state = Resource::Aborted;
 
 	delete this;
 }

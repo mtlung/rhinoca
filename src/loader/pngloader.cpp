@@ -44,16 +44,14 @@ public:
 	rhuint width, height;
 	char* pixelData;
 	rhuint pixelDataSize;
+	rhuint rowBytes;
 	int pixelDataFormat;
 
 	png_structp png_ptr;
 	png_infop info_ptr;
-	png_uint_32 rowBytes;	// Number of byte per row of image data
 	int currentPass;		// For keep tracking when a new pass is loaded
 	bool _aborted;
 	bool _loadFinished;
-
-	TaskPool* _taskPool;
 };
 
 static void info_callback(png_structp png_ptr, png_infop)
@@ -133,12 +131,11 @@ static void end_callback(png_structp png_ptr, png_infop)
 PngLoader::PngLoader(Texture* t, ResourceManager* mgr)
 	: texture(t), manager(mgr)
 	, width(0), height(0)
-	, pixelData(NULL), pixelDataSize(0), pixelDataFormat(0)
+	, pixelData(NULL), pixelDataSize(0), rowBytes(0), pixelDataFormat(0)
 	, png_ptr(NULL), info_ptr(NULL)
-	, rowBytes(0), currentPass(0)
+	, currentPass(0)
 	, _aborted(false)
 	, _loadFinished(false)
-	, _taskPool(NULL)
 {
 	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	ASSERT(png_ptr);

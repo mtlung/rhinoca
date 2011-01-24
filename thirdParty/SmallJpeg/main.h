@@ -37,7 +37,7 @@ typedef unsigned short uint16;      /* 16 bits     */
 typedef unsigned short ushort;      /* 16 bits     */
 typedef unsigned int   uint;        /* 16/32+ bits */
 typedef unsigned long  ulong;       /* 32 bits     */
-typedef   signed int   int32;       /* 32+ bits    */
+//typedef   signed int   int32;       /* 32+ bits    */
 
 #ifndef max
 #define max(a,b) (((a)>(b)) ? (a) : (b))
