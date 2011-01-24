@@ -38,6 +38,8 @@ public:
 
 	rhuint width, height;
 
+	RhinocaRenderContext* renderContex;
+
 	TaskPool taskPool;
 	ResourceManager resourceManager;
 };	// Rhinoca

@@ -9,10 +9,12 @@
 
 #include <string>
 
-#ifndef NDEBUG
-#	pragma comment(lib, "js32d")
-#else
-#	pragma comment(lib, "js32")
+#ifdef RHINOCA_VC
+#	ifndef NDEBUG
+#		pragma comment(lib, "js32d")
+#	else
+#		pragma comment(lib, "js32")
+#	endif
 #endif
 
 void jsReportError(JSContext* cx, const char* message, JSErrorReport* report)
@@ -59,6 +61,7 @@ static JSFunctionSpec jsConsoleMethods[] = {
 Rhinoca::Rhinoca()
 	: privateData(NULL)
 	, width(0), height(0)
+	, renderContex(NULL)
 {
 	jsContext = JS_NewContext(jsrt, 8192);
 	JS_SetContextPrivate(jsContext, this);
@@ -128,6 +131,16 @@ static void appendFileToString(void* file, std::string& str)
 		str.append(buf, (size_t)readCount);
 }
 
+unsigned countNewline(const char* str, const char* end)
+{
+	const char* p = str;
+	unsigned count = 0;
+	int len = end - str;
+	while(--len >= 0)
+		count += (str[len] == '\n') ? 1 : 0;
+	return count;
+}
+
 bool Rhinoca::openDoucment(const char* uri)
 {
 	std::string html;
@@ -158,7 +171,7 @@ bool Rhinoca::openDoucment(const char* uri)
 			parser.pushAttributes();
 
 			{
-				Dom::Element* element = factory.create(parser.elementName());
+				Dom::Element* element = factory.create(this, parser.elementName(), &parser);
 				if(!element) element = new Dom::Element;
 
 				element->ownerDocument = domWindow->document;
@@ -175,7 +188,7 @@ bool Rhinoca::openDoucment(const char* uri)
 					script += str;
 					script += "};";
 					jsval rval;
-					JS_EvaluateScript(jsContext, jsGlobal, script.c_str(), script.size(), "", 0, &rval);
+					JS_EvaluateScript(jsContext, jsGlobal, script.c_str(), script.size(), uri, 0, &rval);
 				}
 			}
 			else if(strcasecmp(parser.elementName(), "canvas") == 0)
@@ -196,13 +209,14 @@ bool Rhinoca::openDoucment(const char* uri)
 					script += str;
 					script += "};";
 					jsval rval;
-					JS_EvaluateScript(jsContext, jsGlobal, script.c_str(), script.size(), "", 0, &rval);
+					JS_EvaluateScript(jsContext, jsGlobal, script.c_str(), script.size(), uri, 0, &rval);
 				}
 			}
 			else if(strcasecmp(parser.elementName(), "script") == 0)
 			{
 				std::string script;
 				Path scriptUrl = documentUrl.c_str();
+				unsigned lineNo = 0;
 
 				if(const char* srcUrl = parser.attributeValueIgnoreCase("src"))
 				{
@@ -212,12 +226,14 @@ bool Rhinoca::openDoucment(const char* uri)
 						io_close(file, 0);
 					}
 				}
-				else
+				else {
 					script = parser.textData();
+					lineNo = countNewline(html.c_str(), parser.textData());
+				}
 
 				if(!script.empty()) {
 					jsval rval;
-					JS_EvaluateScript(jsContext, jsGlobal, script.c_str(), script.size(), scriptUrl.c_str(), 0, &rval);
+					JS_EvaluateScript(jsContext, jsGlobal, script.c_str(), script.size(), scriptUrl.c_str(), lineNo+1, &rval);
 				}
 			}
 

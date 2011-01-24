@@ -6,6 +6,8 @@
 // Reference: http://www.bsdlover.cn/study/UnixTree/V7/usr/src/libc/gen/atof.c.html
 double atof(const char* p, double onErr)
 {
+	if(!p) return onErr;
+
 	char c;
 	double fl, flexp, exp5;
 	double big = 72057594037927936.;  /*2^56*/

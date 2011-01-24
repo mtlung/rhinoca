@@ -18,7 +18,7 @@ extern "C" {
 #		define RHINOCA_IPHONE_SIMULATOR
 #	endif
 #	if TARGET_OS_IPHONE && !TARGET_IPHONE_SIMULATOR
-#		define RHINOCA_IPHONE_DEVICE
+#		define RHINOCA_IOS_DEVICE
 #	endif
 #endif
 

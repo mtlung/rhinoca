@@ -112,7 +112,7 @@ void Image::registerClass(JSContext* cx, JSObject* parent)
 	JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL);
 }
 
-Element* Image::factoryCreate(const char* type)
+Element* Image::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
 	return strcasecmp(type, "Image") == 0 ? new Image : NULL;
 }

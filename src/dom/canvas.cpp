@@ -1,6 +1,10 @@
 #include "pch.h"
 #include "canvas.h"
 #include "canvas2dcontext.h"
+#include "../context.h"
+#include "../xmlparser.h"
+
+using namespace Render;
 
 namespace Dom {
 
@@ -58,17 +62,55 @@ void Canvas::bind(JSContext* cx, JSObject* parent)
 	addReference();
 }
 
-Element* Canvas::factoryCreate(const char* type)
+void Canvas::bindFramebuffer()
 {
-	return strcasecmp(type, "Canvas") == 0 ? new Canvas : NULL;
+	_framebuffer.bind();
 }
 
-void Canvas::setWidth()
+void Canvas::unbindFramebuffer()
 {
+	_framebuffer.unbind();
 }
 
-void Canvas::setHeight()
+Element* Canvas::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
+	if(strcasecmp(type, "Canvas") != 0) return NULL;
+
+	Canvas* canvas = new Canvas;
+
+	// NOTE: Assume html specified canvas is visible
+	if(parser)
+		canvas->_framebuffer.useExternal(rh->renderContex);
+
+	/// The default size of a canvas is 300 x 150 as described by the standard
+	float w = 300, h = 150;
+
+	if(parser) {
+		w = parser->attributeValueAsFloat("width", w);
+		h = parser->attributeValueAsFloat("height", h);
+	}
+
+	canvas->setWidth((unsigned)w);
+	canvas->setHeight((unsigned)h);
+
+	return canvas;
+}
+
+Texture* Canvas::texture()
+{
+	return _framebuffer.texture.get();
+}
+
+void Canvas::setWidth(unsigned w)
+{
+	if(w == width()) return;
+	_framebuffer.createTexture(w, height());
+}
+
+void Canvas::setHeight(unsigned h)
+{
+	if(h == height()) return;
+	_framebuffer.createTexture(width(), h);
 }
 
 Canvas::Context::Context(Canvas* c)

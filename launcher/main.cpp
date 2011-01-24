@@ -4,10 +4,12 @@
 #define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <gl/gl.h>
+//#include <gl/gl.h>
+#include "../src/render/glew.h"
 #include <stdio.h>
 #include <crtdbg.h>
 #include <assert.h>
+#include <malloc.h>
 
 #pragma comment(lib, "OpenGL32")
 #pragma comment(lib, "GLU32")
@@ -22,7 +24,45 @@
 
 static const wchar_t* windowClass = L"Rhinoca Launcher";
 
-static bool quitWindow = false;
+static bool _quitWindow = false;
+
+struct RhinocaRenderContext
+{
+	unsigned fbo;
+	unsigned depth;
+	unsigned texture;
+};
+
+int _width = -1;
+int _height = -1;
+
+static RhinocaRenderContext renderContext = { 0, 0, 0 };
+
+static void setupFbo(unsigned width, unsigned height)
+{
+	// Generate texture
+	if(!renderContext.texture) glGenTextures(1, &renderContext.texture);
+	glBindTexture(GL_TEXTURE_2D, renderContext.texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	ASSERT(GL_NO_ERROR == glGetError());
+
+	// Generate frame buffer for depth
+	if(!renderContext.depth) glGenRenderbuffers(1, &renderContext.depth);
+	glBindRenderbuffer(GL_RENDERBUFFER, renderContext.depth);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
+	ASSERT(GL_NO_ERROR == glGetError());
+
+	// Create render target for Rhinoca to draw to
+	if(!renderContext.fbo) glGenFramebuffers(1, &renderContext.fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, renderContext.fbo);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderContext.texture, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderContext.depth);
+	ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+	ASSERT(GL_NO_ERROR == glGetError());
+}
 
 LRESULT CALLBACK wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -36,13 +76,16 @@ LRESULT CALLBACK wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch(uMsg)
 	{
 	case WM_SIZE:
-		rhinoca_setSize(rh, LOWORD(lParam), HIWORD(lParam));
+		// TODO: Keep the data in the fbo texture during resize
+		_width = LOWORD(lParam);
+		_height = HIWORD(lParam);
+		rhinoca_setSize(rh, _width, _height);
 		break;
 	case WM_PAINT:
 		::ValidateRect(hWnd, NULL);
 		break;
 	case WM_DESTROY:
-		quitWindow = true;
+		_quitWindow = true;
 		break;
 	default:
 		return ::DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -51,7 +94,7 @@ LRESULT CALLBACK wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-HWND createWindow(HWND existingWindow, int width, int height, bool fullScreen)
+HWND createWindow(HWND existingWindow, int& width, int& height, bool fullScreen)
 {
 	width = width <= 0 ? CW_USEDEFAULT : width;
 	height = height <= 0 ? CW_USEDEFAULT : width;
@@ -164,13 +207,20 @@ int main()
 	_CrtSetBreakAlloc(-1);
 #endif
 
-	HWND hWnd = createWindow(NULL, -1, -1, false);
+	HWND hWnd = createWindow(NULL, _width, _height, false);
 
 	HDC dc;
 	initOpenGl(hWnd, dc);
 
+	VERIFY(glewInit() == GLEW_OK);
+	ASSERT(GL_NO_ERROR == glGetError());
+
+	setupFbo(_width, _height);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 	rhinoca_init();
-	Rhinoca* rh = rhinoca_create(NULL);
+	Rhinoca* rh = rhinoca_create(&renderContext);
 	rhinoca_io_setcallback(ioOpen, ioRead, ioClose);
 
 	// Associate Rhinoca context as the user-data of the window handle
@@ -186,11 +236,42 @@ int main()
 			(void)TranslateMessage(&message);
 			(void)DispatchMessage(&message);
 
-			if(quitWindow) break;
+			if(_quitWindow) break;
 		}
 
-		if(!quitWindow) {
+		if(!_quitWindow) {
+			ASSERT(GL_NO_ERROR == glGetError());
 			rhinoca_update(rh);
+			ASSERT(GL_NO_ERROR == glGetError());
+
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+//			glClearColor(0, 0, 1, 1);
+//			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			glViewport(0, 0, _width, _height);
+			glMatrixMode(GL_PROJECTION);
+			glLoadIdentity();
+			glOrtho(0, _width, _height, 0, 1, -1);
+			glMatrixMode(GL_MODELVIEW);
+			glLoadIdentity();
+
+			glEnable(GL_TEXTURE_2D);
+			glBindTexture(GL_TEXTURE_2D, renderContext.texture);
+
+			glColor3f(1, 1, 1);
+			glBegin(GL_QUADS);
+				glTexCoord2f(0, 0);
+				glVertex3i(0, 0, 0);
+				glTexCoord2f(1, 0);
+				glVertex3i(_width, 0, 0);
+				glTexCoord2f(1, 1);
+				glVertex3i(_width, _height, 0);
+				glTexCoord2f(0, 1);
+				glVertex3i(0, _height, 0);
+			glEnd();
+
+			ASSERT(GL_NO_ERROR == glGetError());
 			VERIFY(::SwapBuffers(dc) == TRUE);
 		} else
 			break;
@@ -200,6 +281,11 @@ int main()
 
 	rhinoca_destroy(rh);
 	rhinoca_close();
+
+	{	// Destroy the render context
+		glDeleteFramebuffers(1, &renderContext.fbo);
+		glDeleteTextures(1, &renderContext.texture);
+	}
 
 	return 0;
 }

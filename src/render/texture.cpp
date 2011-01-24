@@ -30,6 +30,7 @@ static rhuint formatComponentCount(int format)
 
 bool Texture::create(rhuint w, rhuint h, const char* data, rhuint dataSize, int srcFormat)
 {
+
 	_type = GL_TEXTURE_2D;
 	width = w;
 	height = h;
@@ -37,12 +38,27 @@ bool Texture::create(rhuint w, rhuint h, const char* data, rhuint dataSize, int 
 	glGenTextures(1, &handle);
 	glBindTexture(_type, handle);
 
-	glTexImage2D(
-		_type, 0, GL_RGBA8, width, height, 0,
-		formatComponentCount(srcFormat),
-		srcFormat,
-		data
-	);
+	if(srcFormat) {
+		glTexImage2D(
+			_type, 0, GL_RGBA8, width, height, 0,
+			srcFormat,
+			GL_UNSIGNED_BYTE,
+			data
+		);
+	}
+	else {
+		glTexImage2D(_type, 0, GL_RGBA8, width, height, 0,
+			GL_RGBA,
+			GL_UNSIGNED_BYTE,
+			NULL
+		);
+	}
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	ASSERT(GL_NO_ERROR == glGetError());
 
 	return true;
 }
@@ -56,6 +72,11 @@ void Texture::clear()
 	handle = 0;
 	_type = 0;
 	width = height = 0;
+}
+
+void Texture::bind()
+{
+	glBindTexture(_type, handle);
 }
 
 }

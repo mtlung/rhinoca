@@ -4,6 +4,8 @@
 #include "element.h"
 #include "../render/framebuffer.h"
 
+namespace Render { class Texture; }
+
 namespace Dom {
 
 class Canvas : public Element
@@ -15,7 +17,10 @@ public:
 // Operations
 	void bind(JSContext* cx, JSObject* parent);
 
-	static Element* factoryCreate(const char* type);
+	void bindFramebuffer();
+	void unbindFramebuffer();
+
+	static Element* factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser);
 
 // Attributes
 	class Context : public JsBindable
@@ -28,17 +33,17 @@ public:
 
 	Context* context;
 
-	int width() const { return _width; }
-	int height() const { return _height; }
+	Render::Texture* texture();
 
-	void setWidth();
-	void setHeight();
+	int width() const { return _framebuffer.width; }
+	int height() const { return _framebuffer.height; }
+
+	void setWidth(unsigned width);
+	void setHeight(unsigned height);
 
 	static JSClass jsClass;
 
 protected:
-	int _width;
-	int _height;
 	Render::Framebuffer _framebuffer;
 };	// Canvas
 

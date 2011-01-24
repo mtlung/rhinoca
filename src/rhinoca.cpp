@@ -20,9 +20,10 @@ void rhinoca_close()
 	Render::close();
 }
 
-Rhinoca* rhinoca_create(RhinocaRenderContext* renderContex)
+Rhinoca* rhinoca_create(RhinocaRenderContext* renderContext)
 {
 	Rhinoca* context = new Rhinoca;
+	context->renderContex = renderContext;
 	return context;
 }
 

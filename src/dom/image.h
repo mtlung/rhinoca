@@ -21,7 +21,7 @@ public:
 	void bind(JSContext* cx, JSObject* parent);
 
 	static void registerClass(JSContext* cx, JSObject* parent);
-	static Element* factoryCreate(const char* type);
+	static Element* factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser);
 
 // Attributes
 	Render::TexturePtr texture;

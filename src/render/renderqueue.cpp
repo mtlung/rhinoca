@@ -160,7 +160,7 @@ RenderQueue::~RenderQueue()
 {
 }
 
-RenderQueue::render()
+void RenderQueue::render()
 {
 }
 

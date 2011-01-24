@@ -25,6 +25,8 @@ public:
 
 	void clear();
 
+	void bind();
+
 // Attibutes
 	rhuint handle;
 	rhuint width, height;
@@ -32,6 +34,8 @@ public:
 protected:
 	rhuint _type;
 };	// Texture
+
+typedef IntrusivePtr<Texture> TexturePtr;
 
 }	// namespace Render
 

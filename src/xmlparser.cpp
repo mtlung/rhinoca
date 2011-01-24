@@ -517,22 +517,17 @@ void XmlParser::popAttributes()
 
 float XmlParser::stringToFloat(const char* str, float defaultValue)
 {
-	double value = defaultValue;
-	if(!str || !atof(str, value))
-		return defaultValue;
-	return float(value);
+	return (float)atof(str, defaultValue);
 }
 
 bool XmlParser::stringToBool(const char* str, bool defaultValue)
 {
-	double number = 0.0;
 	if(!str)
 		return defaultValue;
-	else if(atof(str, number))
-		return number > 0;
 	else if(strcasecmp(str, "true") == 0)
 		return true;
 	else if(strcasecmp(str, "false") == 0)
 		return false;
-	return defaultValue;
+
+	return atof(str, defaultValue) > 0 ? true : false;
 }

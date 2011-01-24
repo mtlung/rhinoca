@@ -28,10 +28,10 @@ ElementFactory& ElementFactory::singleton()
 	return factory;
 }
 
-Element* ElementFactory::create(const char* type)
+Element* ElementFactory::create(Rhinoca* rh, const char* type, XmlParser* parser)
 {
 	for(int i=0; i<_factoryCount; ++i) {
-		if(Element* e = _factories[i](type))
+		if(Element* e = _factories[i](rh, type, parser))
 			return e;
 	}
 	return NULL;

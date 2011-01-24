@@ -413,10 +413,6 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\src\sort.h"
-			>
-		</File>
-		<File
 			RelativePath="..\..\src\taskpool.cpp"
 			>
 		</File>
