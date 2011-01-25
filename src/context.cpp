@@ -1,9 +1,11 @@
 #include "pch.h"
 #include "context.h"
 #include "path.h"
+#include "platform.h"
 #include "xmlparser.h"
 #include "dom/document.h"
 #include "dom/element.h"
+#include "dom/keyevent.h"
 #include "dom/registerfactories.h"
 #include "loader/loader.h"
 
@@ -64,17 +66,20 @@ Rhinoca::Rhinoca()
 	, renderContex(NULL)
 {
 	jsContext = JS_NewContext(jsrt, 8192);
+	JS_SetOptions(jsContext, JS_GetOptions(jsContext) | JSOPTION_STRICT);
 	JS_SetContextPrivate(jsContext, this);
 	JS_SetErrorReporter(jsContext, jsReportError);
 
 	jsGlobal = JS_NewObject(jsContext, &jsGlobalClass, 0, 0);
+	JS_SetGlobalObject(jsContext, jsGlobal);
+
 	VERIFY(JS_InitStandardClasses(jsContext, jsGlobal));
 
 	domWindow = new Dom::Window(this);
 	domWindow->bind(jsContext, jsGlobal);
-	domWindow->addGcRoot();
+	domWindow->addGcRoot();	// releaseGcRoot() in ~Rhinoca()
 
-	taskPool.init(3);
+//	taskPool.init(3);
 	resourceManager.taskPool = &taskPool;
 	Loader::registerLoaders(&resourceManager);
 
@@ -82,7 +87,7 @@ Rhinoca::Rhinoca()
 	Dom::registerClasses(jsContext, jsGlobal);
 
 	{	// Register the console object
-		jsConsole = JS_DefineObject(jsContext, jsGlobal, "console", &jsConsoleClass, 0, 0);
+		jsConsole = JS_DefineObject(jsContext, jsGlobal, "console", &jsConsoleClass, 0, JSPROP_ENUMERATE);
 		VERIFY(JS_SetPrivate(jsContext, jsConsole, this));
 		VERIFY(JS_AddNamedRoot(jsContext, &jsConsole, "console"));
 		VERIFY(JS_DefineFunctions(jsContext, jsConsole, jsConsoleMethods));
@@ -105,9 +110,16 @@ Rhinoca::~Rhinoca()
 {
 	VERIFY(JS_RemoveRoot(jsContext, &jsConsole));
 	domWindow->releaseGcRoot();
-	const char* script = "document=null;window=null;";
+
+	// TODO: I've got problem that JS_DestroyContext() will not release global variables
+	const char* script = "for(att in this) { delete this[att]; }";
 	jsval rval;
 	VERIFY(JS_EvaluateScript(jsContext, jsGlobal, script, strlen(script), "", 0, &rval));
+
+//	FILE* f = fopen("dumpHeap.txt", "w");
+//	JS_DumpHeap(jsContext, f, NULL, 0, NULL, 1000, NULL);
+//	fclose(f);
+
 	JS_DestroyContext(jsContext);
 }
 
@@ -118,7 +130,64 @@ void Rhinoca::update()
 	taskPool.doSomeTask();
 }
 
-void Rhinoca:: collectGarbage()
+int convertKeyCode(WPARAM virtualKey, LPARAM flags)
+{
+	switch(virtualKey)
+	{
+		case VK_SPACE :			return 32;
+		case VK_LEFT :			return 37;
+		case VK_RIGHT :			return 39;
+		case VK_UP :			return 38;
+		case VK_DOWN :			return 0;
+	}
+
+	return 0;
+}
+
+void Rhinoca::processEvent(RhinocaEvent ev)
+{
+	WPARAM wParam = ev.value1;
+	LPARAM lParam = ev.value2;
+
+	const char* onkeydown = "onkeydown";
+	const char* onkeyup = "onkeyup";
+	const char* keyEvent = NULL;
+	int keyCode = 0;
+
+	switch(ev.type)
+	{
+	case WM_KEYDOWN:
+	case WM_SYSKEYDOWN:
+	{
+		if(/*myKeyRepeatEnabled || */((lParam & (1 << 30)) == 0)) {
+			keyCode = convertKeyCode(wParam, lParam);
+			keyEvent = onkeydown;
+		}
+
+		break;
+	}
+
+	case WM_KEYUP:
+	case WM_SYSKEYUP:
+		keyCode = convertKeyCode(wParam, lParam);
+		keyEvent = onkeyup;
+	}
+
+	if(keyEvent)
+	{
+		jsval argv, closure, rval;
+		Dom::Document* document = domWindow->document;
+		if(JS_GetProperty(document->jsContext, document->jsObject, keyEvent, &closure) && closure != JSVAL_VOID) {
+			Dom::KeyEvent* e = new Dom::KeyEvent;
+			e->keyCode = keyCode;
+			e->bind(document->jsContext, NULL);
+			argv = OBJECT_TO_JSVAL(e->jsObject);
+			JS_CallFunctionValue(document->jsContext, document->jsObject, closure, 1, &argv, &rval);
+		}
+	}
+}
+
+void Rhinoca::collectGarbage()
 {
 	JS_GC(jsContext);
 }

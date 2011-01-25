@@ -16,6 +16,8 @@ void rhinoca_init()
 void rhinoca_close()
 {
 	JS_DestroyRuntime(jsrt);
+	JS_ShutDown();
+
 	jsrt = NULL;
 	Render::close();
 }
@@ -82,6 +84,7 @@ void rhinoca_update(Rhinoca* context)
 
 void rhinoca_processevent(Rhinoca* context, RhinocaEvent ev)
 {
+	context->processEvent(ev);
 }
 
 // IO

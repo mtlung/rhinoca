@@ -110,13 +110,13 @@ void Window::bind(JSContext* cx, JSObject* parent)
 {
 	ASSERT(!jsContext);
 	jsContext = cx;
-	jsObject = JS_DefineObject(cx, parent, "window", &jsClass, 0, 0);
+	jsObject = JS_DefineObject(cx, parent, "window", &jsClass, 0, JSPROP_ENUMERATE);
 	VERIFY(JS_SetPrivate(cx, jsObject, this));
 	VERIFY(JS_DefineFunctions(cx, jsObject, methods));
 	addReference();
 
 	document->bind(cx, parent);
-	document->addGcRoot();
+	document->addGcRoot();	// releaseGcRoot() in ~Window()
 }
 
 void Window::update()

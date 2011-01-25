@@ -25,6 +25,8 @@ public:
 
 	void update();
 
+	void processEvent(RhinocaEvent ev);
+
 	void collectGarbage();
 
 // Attributes

@@ -73,6 +73,8 @@ struct RhinocaEvent {
 	int type;
 	int value1;
 	int value2;
+	int value3;
+	int value4;
 };
 
 // Context management

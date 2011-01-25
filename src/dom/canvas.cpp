@@ -55,9 +55,11 @@ static JSBool getContext(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, 
 	*rval = JSVAL_VOID;
 
 	if(strcasecmp(str, "2d") == 0) {
-		self->context = new Canvas2dContext(self);
-		self->context->bind(cx, NULL);
-		self->context->addGcRoot();
+		if(!self->context) {
+			self->context = new Canvas2dContext(self);
+			self->context->bind(cx, NULL);
+			self->context->addGcRoot();
+		}
 		*rval = OBJECT_TO_JSVAL(self->context->jsObject);
 	}
 

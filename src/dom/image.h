@@ -30,7 +30,7 @@ public:
 	rhuint height() const;
 
 	static JSClass jsClass;
-};	// Canvas
+};	// Image
 
 }	// namespace Dom
 

@@ -192,6 +192,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\dom\keyevent.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\keyevent.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\dom\node.cpp"
 				>
 			</File>
@@ -338,6 +346,14 @@
 		</File>
 		<File
 			RelativePath="..\..\src\map.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\src\mat44.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\src\mat44.h"
 			>
 		</File>
 		<File

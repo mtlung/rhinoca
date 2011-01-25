@@ -69,7 +69,7 @@ LRESULT CALLBACK wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	Rhinoca* rh = reinterpret_cast<Rhinoca*>(::GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
 	{
-		RhinocaEvent ev = { uMsg, wParam, lParam };
+		RhinocaEvent ev = { uMsg, wParam, lParam, 0, 0 };
 		rhinoca_processevent(rh, ev);
 	}
 
