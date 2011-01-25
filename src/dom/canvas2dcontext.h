@@ -2,6 +2,8 @@
 #define __DOME_CANVAS2DCONTEXT_H__
 
 #include "canvas.h"
+#include "../mat44.h"
+#include "../vector.h"
 
 namespace Dom {
 
@@ -46,6 +48,12 @@ public:
 // Attributes
 	unsigned width() const { return canvas->width(); }
 	unsigned height() const { return canvas->height(); }
+
+	struct State {
+		Mat44 transform;
+	};
+	State currentState;
+	Vector<State> stateStack;
 
 	static JSClass jsClass;
 };	// Canvas2dContext

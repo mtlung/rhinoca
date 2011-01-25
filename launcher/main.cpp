@@ -241,6 +241,12 @@ int main()
 
 		if(!_quitWindow) {
 			ASSERT(GL_NO_ERROR == glGetError());
+
+			glEnable(GL_BLEND);
+			glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+			glDepthMask(GL_FALSE);
+
 			rhinoca_update(rh);
 			ASSERT(GL_NO_ERROR == glGetError());
 

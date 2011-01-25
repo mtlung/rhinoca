@@ -98,7 +98,7 @@ void Node::bind(JSContext* cx, JSObject* parent)
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
 	VERIFY(JS_SetPrivate(cx, jsObject, this));
 	VERIFY(JS_DefineFunctions(cx, jsObject, methods));
-//	JS_DefineProperties(cx, jsObject, Canvas_properties);
+	VERIFY(JS_DefineProperties(cx, jsObject, properties));
 	addReference();
 }
 

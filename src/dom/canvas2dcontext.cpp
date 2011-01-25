@@ -2,6 +2,7 @@
 #include "canvas2dcontext.h"
 #include "image.h"
 #include "../render/glew.h"
+#include "../mat44.h"
 
 using namespace Render;
 
@@ -12,6 +13,18 @@ JSClass Canvas2dContext::jsClass = {
 	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
+};
+
+static JSBool getCanvas(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	Canvas2dContext* context = reinterpret_cast<Canvas2dContext*>(JS_GetPrivate(cx, obj));
+	*vp = OBJECT_TO_JSVAL(context->canvas->jsObject);
+	return JS_TRUE;
+}
+
+static JSPropertySpec properties[] = {
+	{"canvas", 0, 0, getCanvas, JS_PropertyStub},
+	{0}
 };
 
 static JSBool clearRect(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
@@ -111,17 +124,84 @@ static JSBool drawImage(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, j
 	return JS_TRUE;
 }
 
+static JSBool save(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &Canvas2dContext::jsClass, argv)) return JS_FALSE;
+	Canvas2dContext* self = reinterpret_cast<Canvas2dContext*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	self->save();
+
+	return JS_TRUE;
+}
+
+static JSBool restore(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &Canvas2dContext::jsClass, argv)) return JS_FALSE;
+	Canvas2dContext* self = reinterpret_cast<Canvas2dContext*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	self->restore();
+
+	return JS_TRUE;
+}
+
+static JSBool scale(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &Canvas2dContext::jsClass, argv)) return JS_FALSE;
+	Canvas2dContext* self = reinterpret_cast<Canvas2dContext*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	double x, y;
+	JS_ValueToNumber(cx, argv[0], &x);
+	JS_ValueToNumber(cx, argv[1], &y);
+	self->scale((float)x, float(y));
+
+	return JS_TRUE;
+}
+
+static JSBool rotate(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &Canvas2dContext::jsClass, argv)) return JS_FALSE;
+	Canvas2dContext* self = reinterpret_cast<Canvas2dContext*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	return JS_TRUE;
+}
+
+static JSBool translate(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &Canvas2dContext::jsClass, argv)) return JS_FALSE;
+	Canvas2dContext* self = reinterpret_cast<Canvas2dContext*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	double x, y;
+	JS_ValueToNumber(cx, argv[0], &x);
+	JS_ValueToNumber(cx, argv[1], &y);
+	self->translate((float)x, float(y));
+
+	return JS_TRUE;
+}
+
 static JSFunctionSpec methods[] = {
 	{"clearRect", clearRect, 4,0,0},
 	{"beginLayer", beginLayer, 0,0,0},
 	{"endLayer", endLayer, 0,0,0},
 	{"drawImage", drawImage, 5,0,0},
+	{"save", save, 0,0,0},
+	{"restore", restore, 0,0,0},
+	{"scale", scale, 2,0,0},
+	{"rotate", rotate, 1,0,0},
+	{"translate", translate, 2,0,0},
+//	{"transform", transform, 5,0,0},
+//	{"setTransform", setTransform, 5,0,0},
 	{0}
 };
 
 Canvas2dContext::Canvas2dContext(Canvas* c)
 	: Context(c)
 {
+	currentState.transform = Mat44::identity;
 }
 
 Canvas2dContext::~Canvas2dContext()
@@ -136,6 +216,7 @@ void Canvas2dContext::bind(JSContext* cx, JSObject* parent)
 	jsObject = JS_NewObject(cx, &jsClass, NULL, NULL);
 	VERIFY(JS_SetPrivate(cx, jsObject, this));
 	VERIFY(JS_DefineFunctions(cx, jsObject, methods));
+	VERIFY(JS_DefineProperties(cx, jsObject, properties));
 	addReference();
 }
 
@@ -149,6 +230,32 @@ void Canvas2dContext::endLayer()
 
 void Canvas2dContext::clearRect(float x, float y, float w, float h)
 {
+	canvas->bindFramebuffer();
+
+	unsigned w_ = width();
+	unsigned h_ = height();
+
+	glViewport(0, 0, w_, h_);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0, w_, 0, h_, 10, -10);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	glDisable(GL_TEXTURE_2D);
+
+	glColor4f(0, 0, 0, 1);
+	glBegin(GL_QUADS);
+		glVertex3f(x + 0, y + 0, -1);
+		glVertex3f(x + w, y + 0, -1);
+		glVertex3f(x + w, y + h, -1);
+		glVertex3f(x + 0, y + h, -1);
+	glEnd();
+	glColor4f(1, 1, 1, 1);
+
+	canvas->unbindFramebuffer();
 }
 
 void Canvas2dContext::drawImage(
@@ -200,18 +307,31 @@ void Canvas2dContext::drawImage(
 	glEnable(GL_TEXTURE_2D);
 	texture->bind();
 
+	float sx1 = srcx, sx2 = srcx + srcw;
+	float sy1 = srcy, sy2 = srcy + srch;
+	float dx1 = dstx, dx2 = dstx + dstw;
+	float dy1 = dsty, dy2 = dsty + dsth;
+
+	float v1[3] = { dx1, dy1, 0 };
+	currentState.transform.transformPoint(v1);
+	dx1 = v1[0]; dy1 = v1[1];
+
+	float v2[3] = { dx2, dy2, 0 };
+	currentState.transform.transformPoint(v2);
+	dx2 = v2[0]; dy2 = v2[1];
+
 	glBegin(GL_QUADS);
-		glTexCoord2f(srcx +    0, srcy +    0);
-		glVertex3f(  dstx +    0, dsty +    0, 1);
+		glTexCoord2f(sx1, sy1);
+		glVertex3f(  dx1, dy1, 1);
 
-		glTexCoord2f(srcx + srcw, srcy +    0);
-		glVertex3f(  dstx + dstw, dsty +    0, 1);
+		glTexCoord2f(sx2, sy1);
+		glVertex3f(  dx2, dy1, 1);
 
-		glTexCoord2f(srcx + srcw, srcy + srch);
-		glVertex3f(  dstx + dstw, dsty + dsth, 1);
+		glTexCoord2f(sx2, sy2);
+		glVertex3f(  dx2, dy2, 1);
 
-		glTexCoord2f(srcx +    0, srcy + srch);
-		glVertex3f(  dstx +    0, dsty + dsth, 1);
+		glTexCoord2f(sx1, sy2);
+		glVertex3f(  dx1, dy2, 1);
 	glEnd();
 
 	canvas->unbindFramebuffer();
@@ -219,14 +339,20 @@ void Canvas2dContext::drawImage(
 
 void Canvas2dContext::save()
 {
+	stateStack.push_back(currentState);
 }
 
 void Canvas2dContext::restore()
 {
+	currentState = stateStack.top();
+	stateStack.pop_back();
 }
 
 void Canvas2dContext::scale(float x, float y)
 {
+	float v[3] = { x, y, 1 };
+	Mat44 m = Mat44::makeScale(v);
+	currentState.transform *= m;
 }
 
 void Canvas2dContext::rotate(float angle)
@@ -235,6 +361,9 @@ void Canvas2dContext::rotate(float angle)
 
 void Canvas2dContext::translate(float x, float y)
 {
+	float v[3] = { x, y, 0 };
+	Mat44 m = Mat44::makeTranslation(v);
+	currentState.transform *= m;
 }
 
 void Canvas2dContext::transform(float m11, float m12, float m22, float dx, float dy)
