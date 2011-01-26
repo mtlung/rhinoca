@@ -12,6 +12,19 @@ JSClass Window::jsClass = {
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
+static JSBool compileScript(TimerCallback* cb, JSContext* cx, JSObject* obj, jsval* argv)
+{
+	JSString* jss = JS_ValueToString(cx, argv[0]);
+	char* str = JS_GetStringBytes(jss);
+	cb->jsScript = JS_CompileScript(cx, obj, JS_GetStringBytes(jss), JS_GetStringLength(jss), NULL, 0);
+	if(!cb->jsScript) return JS_FALSE;
+	cb->jsScriptObject = JS_NewScriptObject(cx, cb->jsScript);
+	if(!cb->jsScriptObject) { JS_DestroyScript(cx, cb->jsScript); return JS_FALSE; }
+	VERIFY(JS_AddNamedRoot(cx, &cb->jsScriptObject, "TimerCallback's script object"));
+
+	return JS_TRUE;
+}
+
 JSBool setTimeout(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
 {
 	int32 timeout;	// In unit of millisecond
@@ -21,8 +34,14 @@ JSBool setTimeout(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* 
 	TimerCallback* cb = new TimerCallback;
 	cb->bind(cx, NULL);
 
-	cb->closure = argv[0];
-	VERIFY(JS_AddNamedRoot(cx, &cb->closure, "Closure of TimerCallback"));
+	if(JSVAL_IS_STRING(argv[0])) {
+		if(!compileScript(cb, cx, obj, argv)) return JS_FALSE;
+	}
+	else {
+		cb->closure = argv[0];
+		VERIFY(JS_AddNamedRoot(cx, &cb->closure, "Closure of TimerCallback"));
+	}
+
 	cb->interval = 0;
 	cb->setNextInvokeTime(float(self->timer.seconds()) + (float)timeout/1000);
 
@@ -43,8 +62,14 @@ JSBool setInterval(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval*
 	TimerCallback* cb = new TimerCallback;
 	cb->bind(cx, NULL);
 
-	cb->closure = argv[0];
-	VERIFY(JS_AddNamedRoot(cx, &cb->closure, "Closure of TimerCallback"));
+	if(JSVAL_IS_STRING(argv[0])) {
+		if(!compileScript(cb, cx, obj, argv)) return JS_FALSE;
+	}
+	else {
+		cb->closure = argv[0];
+		VERIFY(JS_AddNamedRoot(cx, &cb->closure, "Closure of TimerCallback"));
+	}
+
 	cb->interval = (float)interval/1000;
 	cb->setNextInvokeTime(float(self->timer.seconds()) + cb->interval);
 
@@ -130,7 +155,10 @@ void Window::update()
 			break;
 
 		jsval rval;
-		JS_CallFunctionValue(cb->jsContext, jsObject, cb->closure, 0, NULL, &rval);
+		if(cb->jsScript)
+			JS_ExecuteScript(cb->jsContext, jsObject, cb->jsScript, &rval);
+		else
+			JS_CallFunctionValue(cb->jsContext, jsObject, cb->closure, 0, NULL, &rval);
 
 		if(cb->interval > 0) {
 			float t = cb->nextInvokeTime();
@@ -150,9 +178,15 @@ JSClass TimerCallback::jsClass = {
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
+TimerCallback::TimerCallback()
+	: closure(NULL), jsScript(NULL), jsScriptObject(NULL)
+{
+}
+
 TimerCallback::~TimerCallback()
 {
 	ASSERT(closure == NULL);
+	ASSERT(jsScript == NULL);
 }
 
 void TimerCallback::bind(JSContext* cx, JSObject* parent)
@@ -169,7 +203,10 @@ void TimerCallback::removeThis()
 	super::removeThis();
 	releaseGcRoot();
 	VERIFY(JS_RemoveRoot(jsContext, &closure));
+	VERIFY(JS_RemoveRoot(jsContext, &jsScriptObject));
 	closure = NULL;
+	jsScript = NULL;
+	jsScriptObject = NULL;
 }
 
 }	// namespace Dom

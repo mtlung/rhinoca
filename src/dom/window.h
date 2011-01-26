@@ -14,6 +14,7 @@ class TimerCallback : public JsBindable, public MapBase<float>::Node<TimerCallba
 public:
 	typedef MapBase<float>::Node<TimerCallback> super;
 
+	TimerCallback();
 	~TimerCallback();
 
 	void bind(JSContext* cx, JSObject* parent);
@@ -24,8 +25,10 @@ public:
 	void setNextInvokeTime(float val) { setKey(val); }
 	bool operator<(const TimerCallback& rhs) const { return nextInvokeTime() < rhs.nextInvokeTime(); }
 
-	jsval closure;	///< The js function to be invoked
-	float interval;	///< Will enqueue itself again if interval is larger than zero
+	jsval closure;				///< The js function closure to be invoked
+	JSScript* jsScript;			///< The compile script to be invoked
+	JSObject* jsScriptObject;	///< To manage the life-time of jsScript
+	float interval;				///< Will enqueue itself again if interval is larger than zero
 
 	static JSClass jsClass;
 };	// TimerCallback
