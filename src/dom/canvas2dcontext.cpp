@@ -17,8 +17,8 @@ JSClass Canvas2dContext::jsClass = {
 
 static JSBool getCanvas(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
-	Canvas2dContext* context = reinterpret_cast<Canvas2dContext*>(JS_GetPrivate(cx, obj));
-	*vp = OBJECT_TO_JSVAL(context->canvas->jsObject);
+	Canvas2dContext* self = reinterpret_cast<Canvas2dContext*>(JS_GetPrivate(cx, obj));
+	*vp = OBJECT_TO_JSVAL(self->canvas->jsObject);
 	return JS_TRUE;
 }
 
@@ -206,7 +206,6 @@ Canvas2dContext::Canvas2dContext(Canvas* c)
 
 Canvas2dContext::~Canvas2dContext()
 {
-	releaseGcRoot();
 }
 
 void Canvas2dContext::bind(JSContext* cx, JSObject* parent)

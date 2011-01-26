@@ -17,14 +17,14 @@ JSClass Canvas::jsClass = {
 
 static JSBool getWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
-	Canvas* canvas = reinterpret_cast<Canvas*>(JS_GetPrivate(cx, obj));
-	return JS_NewNumberValue(cx, canvas->width(), vp);
+	Canvas* self = reinterpret_cast<Canvas*>(JS_GetPrivate(cx, obj));
+	return JS_NewNumberValue(cx, self->width(), vp);
 }
 
 static JSBool getHeight(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
-	Canvas* canvas = reinterpret_cast<Canvas*>(JS_GetPrivate(cx, obj));
-	return JS_NewNumberValue(cx, canvas->height(), vp);
+	Canvas* self = reinterpret_cast<Canvas*>(JS_GetPrivate(cx, obj));
+	return JS_NewNumberValue(cx, self->height(), vp);
 }
 
 static JSBool setWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
@@ -58,7 +58,7 @@ static JSBool getContext(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, 
 		if(!self->context) {
 			self->context = new Canvas2dContext(self);
 			self->context->bind(cx, NULL);
-			self->context->addGcRoot();
+			self->context->addGcRoot();	// releaseGcRoot() in ~Canvas()
 		}
 		*rval = OBJECT_TO_JSVAL(self->context->jsObject);
 	}
@@ -88,7 +88,7 @@ void Canvas::bind(JSContext* cx, JSObject* parent)
 {
 	ASSERT(!jsContext);
 	jsContext = cx;
-	jsObject = JS_NewObject(cx, &jsClass, Node::createPrototype(), NULL);
+	jsObject = JS_NewObject(cx, &jsClass, Element::createPrototype(), NULL);
 	VERIFY(JS_SetPrivate(cx, jsObject, this));
 	VERIFY(JS_DefineFunctions(cx, jsObject, methods));
 	VERIFY(JS_DefineProperties(cx, jsObject, properties));

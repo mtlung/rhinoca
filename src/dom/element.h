@@ -11,8 +11,15 @@ namespace Dom {
 class Element : public Node
 {
 public:
+	Element();
+
+// Operations
+	JSObject* createPrototype();
+
 // Attributes
 	FixString id;
+	bool visible;
+	long top, left;
 
 	static JSClass jsClass;
 };	// Element
@@ -38,6 +45,18 @@ protected:
 	int _factoryCount;
 	int _factoryBufCount;
 };	// ElementFactory
+
+class ElementStyle : public JsBindable
+{
+public:
+// Operations
+	void bind(JSContext* cx, JSObject* parent);
+
+// Attributes
+	Element* element;
+
+	static JSClass jsClass;
+};	// ElementStyle
 
 }	// namespace Dom
 

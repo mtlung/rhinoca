@@ -129,6 +129,8 @@ Window::~Window()
 
 	while(TimerCallback* cb = timerCallbacks.findMin())
 		cb->removeThis();
+
+	JS_GC(jsContext);
 }
 
 void Window::bind(JSContext* cx, JSObject* parent)

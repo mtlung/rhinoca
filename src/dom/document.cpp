@@ -72,6 +72,7 @@ void Document::bind(JSContext* cx, JSObject* parent)
 	_rootNode = new Node;
 	_rootNode->bind(jsContext, NULL);
 	_rootNode->addGcRoot();
+	_rootNode->ownerDocument = this;
 }
 
 Element* Document::createElement(const char* eleType)

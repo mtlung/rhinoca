@@ -22,7 +22,8 @@
 void jsReportError(JSContext* cx, const char* message, JSErrorReport* report)
 {
 	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
-	print(rh, "JS error: %s:%u\n%s\n",
+	print(rh, "JS %s: %s:%u\n%s\n",
+		JSREPORT_IS_WARNING(report->flags) ? "warning" : "error",
 		report->filename ? report->filename : "<no filename>",
 		(unsigned int)report->lineno,
 		message
@@ -70,7 +71,7 @@ Rhinoca::Rhinoca()
 	JS_SetContextPrivate(jsContext, this);
 	JS_SetErrorReporter(jsContext, jsReportError);
 
-	jsGlobal = JS_NewObject(jsContext, &jsGlobalClass, 0, 0);
+	jsGlobal = JS_NewObject(jsContext, &jsGlobalClass, NULL, NULL);
 	JS_SetGlobalObject(jsContext, jsGlobal);
 
 	VERIFY(JS_InitStandardClasses(jsContext, jsGlobal));
@@ -79,7 +80,7 @@ Rhinoca::Rhinoca()
 	domWindow->bind(jsContext, jsGlobal);
 	domWindow->addGcRoot();	// releaseGcRoot() in ~Rhinoca()
 
-//	taskPool.init(3);
+	taskPool.init(3);
 	resourceManager.taskPool = &taskPool;
 	Loader::registerLoaders(&resourceManager);
 
@@ -113,6 +114,9 @@ Rhinoca::Rhinoca()
 Rhinoca::~Rhinoca()
 {
 	VERIFY(JS_RemoveRoot(jsContext, &jsConsole));
+
+	VERIFY(JS_DeleteProperty(jsContext, jsGlobal, "window"));
+	VERIFY(JS_DeleteProperty(jsContext, jsGlobal, "document"));
 	domWindow->releaseGcRoot();
 
 	// TODO: I've got problem that JS_DestroyContext() will not release global variables
@@ -132,6 +136,8 @@ void Rhinoca::update()
 	domWindow->update();
 	resourceManager.update();
 	taskPool.doSomeTask();
+
+	JS_MaybeGC(jsContext);
 }
 
 int convertKeyCode(WPARAM virtualKey, LPARAM flags)

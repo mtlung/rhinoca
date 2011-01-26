@@ -124,7 +124,11 @@ void JpegLoader::load(TaskPool* taskPool)
 		int result = _decoder->decode(&Pscan_line_ofs, &scan_line_len);
 		if(result == JPGD_OKAY) {
 			memcpy(p, Pscan_line_ofs, scan_line_len);
-			p += scan_line_len;
+
+			// Assign alpha to 1
+			for(char* end = p + scan_line_len; p < end; p += 4)
+				p[3] = (char)255;
+
 			continue;
 		}
 		else if(result == JPGD_DONE)
