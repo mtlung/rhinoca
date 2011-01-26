@@ -66,7 +66,7 @@ Rhinoca::Rhinoca()
 	, renderContex(NULL)
 {
 	jsContext = JS_NewContext(jsrt, 8192);
-	JS_SetOptions(jsContext, JS_GetOptions(jsContext) | JSOPTION_STRICT);
+//	JS_SetOptions(jsContext, JS_GetOptions(jsContext) | JSOPTION_STRICT);
 	JS_SetContextPrivate(jsContext, this);
 	JS_SetErrorReporter(jsContext, jsReportError);
 
@@ -100,6 +100,10 @@ Rhinoca::Rhinoca()
 			"function clearInterval(cb) { window.clearInterval(cb); };"
 			"function clearTimeout(cb) { window.clearTimeout(cb); };"
 			"function log(msg){setTimeout(function(){throw new Error(msg);},0);}"
+
+			"var navigator = { userAgent: {"
+			"	indexOf : function(str) { return -1; }, match : function(str) { return false; }"
+			"}};"
 		;
 		jsval rval;
 		VERIFY(JS_EvaluateScript(jsContext, jsGlobal, script, strlen(script), "", 0, &rval));
@@ -210,6 +214,16 @@ unsigned countNewline(const char* str, const char* end)
 	return count;
 }
 
+const char* removeBom(const char* str, unsigned& len)
+{
+	if(len < 3) return str;
+	if(str[0] == (char)0xEF && str[1] == (char)0xBB && str[2] == (char)0xBF) {
+		len -= 3;
+		return str + 3;
+	}
+	return str;
+}
+
 bool Rhinoca::openDoucment(const char* uri)
 {
 	std::string html;
@@ -240,7 +254,8 @@ bool Rhinoca::openDoucment(const char* uri)
 			parser.pushAttributes();
 
 			{
-				Dom::Element* element = factory.create(this, parser.elementName(), &parser);
+				const char* eleName = parser.elementName();
+				Dom::Element* element = factory.create(this, eleName, &parser);
 				if(!element) element = new Dom::Element;
 
 				element->ownerDocument = domWindow->document;
@@ -301,8 +316,10 @@ bool Rhinoca::openDoucment(const char* uri)
 				}
 
 				if(!script.empty()) {
+					unsigned len = script.size();
+					const char* s = removeBom(script.c_str(), len);
 					jsval rval;
-					JS_EvaluateScript(jsContext, jsGlobal, script.c_str(), script.size(), scriptUrl.c_str(), lineNo+1, &rval);
+					JS_EvaluateScript(jsContext, jsGlobal, s, len, scriptUrl.c_str(), lineNo+1, &rval);
 				}
 			}
 

@@ -18,6 +18,8 @@ public:
 // Operations
 	void bind(JSContext* cx, JSObject* parent);
 
+	Element* createElement(const char* eleType);
+
 	Element* getElementById(const char* id);
 
 // Attributes

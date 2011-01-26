@@ -15,12 +15,18 @@ JSClass Document::jsClass = {
 
 static JSBool createElement(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
 {
-/*	JSString* jss = JS_ValueToString(cx, argv[0]);
+	JSString* jss = JS_ValueToString(cx, argv[0]);
 	char* str = JS_GetStringBytes(jss);
 	Document* doc = reinterpret_cast<Document*>(JS_GetPrivate(cx, obj));
-	DocumentElement* ele = doc->createElement(str);
-	ele->bindJs(cx, nullptr);
-	*rval = OBJECT_TO_JSVAL(ele->jsObject);*/
+	
+	if(Element* ele = doc->createElement(str))
+	{
+		ele->bind(cx, NULL);
+		*rval = OBJECT_TO_JSVAL(ele->jsObject);
+	}
+	else
+		*rval = JSVAL_VOID;
+
 	return JS_TRUE;
 }
 
@@ -66,6 +72,12 @@ void Document::bind(JSContext* cx, JSObject* parent)
 	_rootNode = new Node;
 	_rootNode->bind(jsContext, NULL);
 	_rootNode->addGcRoot();
+}
+
+Element* Document::createElement(const char* eleType)
+{
+	ElementFactory& factory = ElementFactory::singleton();
+	return factory.create(this->rhinoca, eleType, NULL);
 }
 
 Element* Document::getElementById(const char* id)
