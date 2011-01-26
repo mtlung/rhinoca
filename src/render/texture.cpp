@@ -76,7 +76,8 @@ void Texture::clear()
 
 void Texture::bind()
 {
-	glBindTexture(_type, handle);
+	if(handle)
+		glBindTexture(_type, handle);
 }
 
 }
