@@ -14,7 +14,8 @@ JSClass KeyEvent::jsClass = {
 static JSBool keyCode(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	KeyEvent* self = reinterpret_cast<KeyEvent*>(JS_GetPrivate(cx, obj));
-	return JS_NewNumberValue(cx, self->keyCode, vp);
+	*vp = INT_TO_JSVAL(self->keyCode);
+	return JS_TRUE;
 }
 
 static JSPropertySpec properties[] = {

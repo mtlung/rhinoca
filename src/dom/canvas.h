@@ -1,5 +1,5 @@
-#ifndef __DOME_CANVAS_H__
-#define __DOME_CANVAS_H__
+#ifndef __DOM_CANVAS_H__
+#define __DOM_CANVAS_H__
 
 #include "element.h"
 #include "../render/framebuffer.h"
@@ -49,4 +49,4 @@ protected:
 
 }	// namespace Dom
 
-#endif	// __DOME_CANVAS_H__
+#endif	// __DOM_CANVAS_H__

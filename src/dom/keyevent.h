@@ -1,5 +1,5 @@
-#ifndef __DOME_KEYEVENT_H__
-#define __DOME_KEYEVENT_H__
+#ifndef __DOM_KEYEVENT_H__
+#define __DOM_KEYEVENT_H__
 
 #include "../jsbindable.h"
 

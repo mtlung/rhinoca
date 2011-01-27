@@ -1,5 +1,5 @@
-#ifndef __DOME_IMAGE_H__
-#define __DOME_IMAGE_H__
+#ifndef __DOM_IMAGE_H__
+#define __DOM_IMAGE_H__
 
 #include "element.h"
 

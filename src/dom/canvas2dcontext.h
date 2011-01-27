@@ -1,5 +1,5 @@
-#ifndef __DOME_CANVAS2DCONTEXT_H__
-#define __DOME_CANVAS2DCONTEXT_H__
+#ifndef __DOM_CANVAS2DCONTEXT_H__
+#define __DOM_CANVAS2DCONTEXT_H__
 
 #include "canvas.h"
 #include "../mat44.h"
@@ -60,4 +60,4 @@ public:
 
 }	// namespace Dom
 
-#endif	// __DOME_CANVAS2DCONTEXT_H__
+#endif	// __DOM_CANVAS2DCONTEXT_H__

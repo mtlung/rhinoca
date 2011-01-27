@@ -200,6 +200,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\dom\mouseevent.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\mouseevent.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\dom\node.cpp"
 				>
 			</File>

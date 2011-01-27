@@ -6,6 +6,7 @@
 #include "dom/document.h"
 #include "dom/element.h"
 #include "dom/keyevent.h"
+#include "dom/mouseevent.h"
 #include "dom/registerfactories.h"
 #include "loader/loader.h"
 
@@ -163,23 +164,33 @@ void Rhinoca::processEvent(RhinocaEvent ev)
 	const char* keyEvent = NULL;
 	int keyCode = 0;
 
+	const char* mouseEvent = NULL;
+
 	switch(ev.type)
 	{
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:
-	{
 		if(/*myKeyRepeatEnabled || */((lParam & (1 << 30)) == 0)) {
 			keyCode = convertKeyCode(wParam, lParam);
 			keyEvent = onkeydown;
 		}
-
 		break;
-	}
 
 	case WM_KEYUP:
 	case WM_SYSKEYUP:
 		keyCode = convertKeyCode(wParam, lParam);
 		keyEvent = onkeyup;
+		break;
+
+	case WM_LBUTTONDOWN:
+		mouseEvent = "onmousedown";
+		break;
+	case WM_LBUTTONUP:
+		mouseEvent = "onmouseup";
+		break;
+	case WM_MOUSEMOVE:
+		mouseEvent = "onmousemove";
+		break;
 	}
 
 	if(keyEvent)
@@ -192,6 +203,22 @@ void Rhinoca::processEvent(RhinocaEvent ev)
 			e->bind(document->jsContext, NULL);
 			argv = OBJECT_TO_JSVAL(e->jsObject);
 			JS_CallFunctionValue(document->jsContext, document->jsObject, closure, 1, &argv, &rval);
+		}
+	}
+
+	if(mouseEvent) for(Dom::NodeIterator itr(domWindow->document->rootNode()); !itr.ended(); itr.next())
+	{
+		jsval argv, closure, rval;
+		if(JS_GetProperty(itr->jsContext, itr->jsObject, mouseEvent, &closure) && closure != JSVAL_VOID) {
+			Dom::MouseEvent* e = new Dom::MouseEvent;
+			e->clientX = LOWORD(lParam);
+			e->clientY = HIWORD(lParam);
+
+//			printf("%d, %d\n", e->clientX, e->clientY);
+
+			e->bind(itr->jsContext, NULL);
+			argv = OBJECT_TO_JSVAL(e->jsObject);
+			JS_CallFunctionValue(itr->jsContext, itr->jsObject, closure, 1, &argv, &rval);
 		}
 	}
 }
