@@ -3,6 +3,7 @@
 #include "image.h"
 #include "../render/glew.h"
 #include "../mat44.h"
+#include "../vec3.h"
 
 using namespace Render;
 
@@ -166,6 +167,10 @@ static JSBool rotate(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsva
 	Canvas2dContext* self = reinterpret_cast<Canvas2dContext*>(JS_GetPrivate(cx, obj));
 	if(!self) return JS_FALSE;
 
+	double angle;
+	JS_ValueToNumber(cx, argv[0], &angle);
+	self->rotate((float)angle);
+
 	return JS_TRUE;
 }
 
@@ -311,26 +316,28 @@ void Canvas2dContext::drawImage(
 	float dx1 = dstx, dx2 = dstx + dstw;
 	float dy1 = dsty, dy2 = dsty + dsth;
 
-	float v1[3] = { dx1, dy1, 0 };
-	currentState.transform.transformPoint(v1);
-	dx1 = v1[0]; dy1 = v1[1];
+	Vec3 dp1(dx1, dy1, 1);
+	Vec3 dp2(dx2, dy1, 1);
+	Vec3 dp3(dx2, dy2, 1);
+	Vec3 dp4(dx1, dy2, 1);
 
-	float v2[3] = { dx2, dy2, 0 };
-	currentState.transform.transformPoint(v2);
-	dx2 = v2[0]; dy2 = v2[1];
+	currentState.transform.transformPoint(dp1.data);
+	currentState.transform.transformPoint(dp2.data);
+	currentState.transform.transformPoint(dp3.data);
+	currentState.transform.transformPoint(dp4.data);
 
 	glBegin(GL_QUADS);
 		glTexCoord2f(sx1, sy1);
-		glVertex3f(  dx1, dy1, 1);
+		glVertex3fv(dp1.data);
 
 		glTexCoord2f(sx2, sy1);
-		glVertex3f(  dx2, dy1, 1);
+		glVertex3fv(dp2.data);
 
 		glTexCoord2f(sx2, sy2);
-		glVertex3f(  dx2, dy2, 1);
+		glVertex3fv(dp3.data);
 
 		glTexCoord2f(sx1, sy2);
-		glVertex3f(  dx1, dy2, 1);
+		glVertex3fv(dp4.data);
 	glEnd();
 
 	canvas->unbindFramebuffer();
@@ -356,6 +363,9 @@ void Canvas2dContext::scale(float x, float y)
 
 void Canvas2dContext::rotate(float angle)
 {
+	float axis[3] = { 0, 0, 1 };
+	Mat44 m = Mat44::makeAxisRotation(axis, angle);
+	currentState.transform *= m;
 }
 
 void Canvas2dContext::translate(float x, float y)

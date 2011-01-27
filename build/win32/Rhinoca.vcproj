@@ -445,6 +445,10 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\src\vec3.h"
+			>
+		</File>
+		<File
 			RelativePath="..\..\src\vector.h"
 			>
 		</File>

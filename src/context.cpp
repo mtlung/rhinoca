@@ -67,7 +67,7 @@ Rhinoca::Rhinoca()
 	, renderContex(NULL)
 {
 	jsContext = JS_NewContext(jsrt, 8192);
-//	JS_SetOptions(jsContext, JS_GetOptions(jsContext) | JSOPTION_STRICT);
+	JS_SetOptions(jsContext, JS_GetOptions(jsContext) | JSOPTION_STRICT);
 	JS_SetContextPrivate(jsContext, this);
 	JS_SetErrorReporter(jsContext, jsReportError);
 
@@ -80,7 +80,7 @@ Rhinoca::Rhinoca()
 	domWindow->bind(jsContext, jsGlobal);
 	domWindow->addGcRoot();	// releaseGcRoot() in ~Rhinoca()
 
-	taskPool.init(3);
+	taskPool.init(1);
 	resourceManager.taskPool = &taskPool;
 	Loader::registerLoaders(&resourceManager);
 
