@@ -71,7 +71,7 @@ void Document::bind(JSContext* cx, JSObject* parent)
 
 	_rootNode = new Node;
 	_rootNode->bind(jsContext, NULL);
-	_rootNode->addGcRoot();
+	_rootNode->addGcRoot();	// releaseGcRoot() in ~Document()
 	_rootNode->ownerDocument = this;
 }
 

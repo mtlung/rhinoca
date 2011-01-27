@@ -115,14 +115,13 @@ Rhinoca::~Rhinoca()
 {
 	VERIFY(JS_RemoveRoot(jsContext, &jsConsole));
 
-	VERIFY(JS_DeleteProperty(jsContext, jsGlobal, "window"));
-	VERIFY(JS_DeleteProperty(jsContext, jsGlobal, "document"));
 	domWindow->releaseGcRoot();
 
-	// TODO: I've got problem that JS_DestroyContext() will not release global variables
-	const char* script = "for(att in this) { delete this[att]; }";
-	jsval rval;
-	VERIFY(JS_EvaluateScript(jsContext, jsGlobal, script, strlen(script), "", 0, &rval));
+	// NOTE: I found this "clear scope" is necessary in order to not leak memory
+	// This requirement is not mentioned in the Mozilla documentation, I wonder why
+	// JS_DestroyContext() didn't do all the necessary job to clear the global.
+	// Similar problem: http://web.archiveorange.com/archive/v/yxPWTpZYQx37ab1hpyWc
+	JS_ClearScope(jsContext, jsGlobal);
 
 //	FILE* f = fopen("dumpHeap.txt", "w");
 //	JS_DumpHeap(jsContext, f, NULL, 0, NULL, 1000, NULL);

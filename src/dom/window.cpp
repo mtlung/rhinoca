@@ -46,7 +46,7 @@ JSBool setTimeout(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* 
 	cb->setNextInvokeTime(float(self->timer.seconds()) + (float)timeout/1000);
 
 	self->timerCallbacks.insert(*cb);
-	cb->addGcRoot();
+	cb->addGcRoot();	// releaseGcRoot() in ~TimerCallback::removeThis()
 
 	*rval = OBJECT_TO_JSVAL(cb->jsObject);
 
@@ -74,7 +74,7 @@ JSBool setInterval(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval*
 	cb->setNextInvokeTime(float(self->timer.seconds()) + cb->interval);
 
 	self->timerCallbacks.insert(*cb);
-	cb->addGcRoot();
+	cb->addGcRoot();	// releaseGcRoot() in ~TimerCallback::removeThis()
 
 	*rval = OBJECT_TO_JSVAL(cb->jsObject);
 
@@ -203,12 +203,12 @@ void TimerCallback::bind(JSContext* cx, JSObject* parent)
 void TimerCallback::removeThis()
 {
 	super::removeThis();
-	releaseGcRoot();
-	VERIFY(JS_RemoveRoot(jsContext, &closure));
-	VERIFY(JS_RemoveRoot(jsContext, &jsScriptObject));
 	closure = NULL;
 	jsScript = NULL;
 	jsScriptObject = NULL;
+	VERIFY(JS_RemoveRoot(jsContext, &closure));
+	VERIFY(JS_RemoveRoot(jsContext, &jsScriptObject));
+	releaseGcRoot();
 }
 
 }	// namespace Dom
