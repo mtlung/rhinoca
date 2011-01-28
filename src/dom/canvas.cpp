@@ -18,13 +18,13 @@ JSClass Canvas::jsClass = {
 static JSBool getWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	Canvas* self = reinterpret_cast<Canvas*>(JS_GetPrivate(cx, obj));
-	return JS_NewNumberValue(cx, self->width(), vp);
+	*vp = INT_TO_JSVAL(self->width()); return JS_TRUE;
 }
 
 static JSBool getHeight(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	Canvas* self = reinterpret_cast<Canvas*>(JS_GetPrivate(cx, obj));
-	return JS_NewNumberValue(cx, self->height(), vp);
+	*vp = INT_TO_JSVAL(self->height()); return JS_TRUE;
 }
 
 static JSBool setWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)

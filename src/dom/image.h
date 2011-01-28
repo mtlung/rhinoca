@@ -26,10 +26,14 @@ public:
 // Attributes
 	Render::TexturePtr texture;
 
-	rhuint width() const;
-	rhuint height() const;
+	unsigned width() const;
+	unsigned height() const;
+	unsigned naturalWidth() const;
+	unsigned naturalHeight() const;
 
 	static JSClass jsClass;
+
+	int _width, _height;
 };	// Image
 
 }	// namespace Dom
