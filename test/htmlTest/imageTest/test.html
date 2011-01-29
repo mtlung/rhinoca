@@ -1,0 +1,36 @@
+<html>
+<head>
+<title>Image test</title>
+<script>
+function draw() {
+	var ctx = document.getElementById('canvas').getContext('2d');
+
+	{	var img = new Image();
+		img.src = 'rhino.bmp';
+		// Setting the width of the image doesn't affect canvas's drawImage
+		img.width = 123;
+		img.onload = function() {
+			ctx.drawImage(img, 0, 0);
+		}
+	}
+
+	{	var img = new Image();
+		img.src = 'rhino.jpg';
+		img.onload = function() {
+			ctx.drawImage(img, 50, 50);
+		}
+	}
+
+	{	var img = new Image();
+		img.src = 'rhino.png';
+		img.onload = function() {
+			ctx.drawImage(img, 100, 100);
+		}
+	}
+}
+</script>
+</head>
+<body onload="draw();">
+	<canvas id="canvas" width="400" height="300"></canvas>
+</body>
+</html>
