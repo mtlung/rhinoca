@@ -96,7 +96,7 @@ RHINOCA_API void rhinoca_closeDocument(Rhinoca* rh);
 
 // Main loop iteration processing
 RHINOCA_API void rhinoca_update(Rhinoca* rh);
-RHINOCA_API void rhinoca_processevent(Rhinoca* rh, RhinocaEvent ev);
+RHINOCA_API void rhinoca_processEvent(Rhinoca* rh, RhinocaEvent ev);
 
 // IO functions
 typedef void* (*rhinoca_io_open)(Rhinoca* rh, const char* uri, int threadId);
@@ -112,6 +112,8 @@ RHINOCA_API void* rhinoca_realloc(void* ptr, rhuint oldSize, rhuint size);
 // Others
 typedef void (*rhinoca_printFunc)(Rhinoca* rh, const char* str, ...);
 RHINOCA_API void rhinoca_setPrintFunc(rhinoca_printFunc printFunc);
+typedef void (*rhinoca_alertFunc)(Rhinoca* rh, void* userData, const char* str);
+RHINOCA_API void rhinoca_setAlertFunc(rhinoca_alertFunc alertFunc, void* userData);
 RHINOCA_API void rhinoca_collectGarbage(Rhinoca* rh);
 
 #ifdef __cplusplus

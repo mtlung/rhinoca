@@ -70,7 +70,7 @@ LRESULT CALLBACK wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	{
 		RhinocaEvent ev = { uMsg, wParam, lParam, 0, 0 };
-		rhinoca_processevent(rh, ev);
+		rhinoca_processEvent(rh, ev);
 	}
 
 	switch(uMsg)
@@ -199,6 +199,13 @@ static void ioClose(void* file, int threadId)
 
 void rhinoca_io_setcallback(rhinoca_io_open open, rhinoca_io_read read, rhinoca_io_close close);
 
+void alertFunc(Rhinoca* rh, void* userData, const char* str)
+{
+	MessageBoxA((HWND)userData, str, "Javascript alert", MB_OK);
+}
+
+RHINOCA_API void rhinoca_setAlertFunc(rhinoca_alertFunc alertFunc);
+
 int main()
 {
 #ifdef _MSC_VER
@@ -221,6 +228,7 @@ int main()
 
 	rhinoca_init();
 	Rhinoca* rh = rhinoca_create(&renderContext);
+	rhinoca_setAlertFunc(alertFunc, hWnd);
 	rhinoca_io_setcallback(ioOpen, ioRead, ioClose);
 
 	// Associate Rhinoca context as the user-data of the window handle

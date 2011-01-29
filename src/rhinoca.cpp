@@ -82,7 +82,7 @@ void rhinoca_update(Rhinoca* context)
 	context->update();
 }
 
-void rhinoca_processevent(Rhinoca* context, RhinocaEvent ev)
+void rhinoca_processEvent(Rhinoca* context, RhinocaEvent ev)
 {
 	context->processEvent(ev);
 }
@@ -118,6 +118,15 @@ rhinoca_printFunc print = defaultPrintFunc;
 void rhinoca_setPrintFunc(rhinoca_printFunc printFunc)
 {
 	print = printFunc;
+}
+
+rhinoca_alertFunc alertFunc = NULL;
+void* alertFuncUserData = NULL;
+
+void rhinoca_setAlertFunc(rhinoca_alertFunc alertFunc_, void* userData)
+{
+	alertFunc = alertFunc_;
+	alertFuncUserData = userData;
 }
 
 void rhinoca_collectGarbage(Rhinoca* rh)

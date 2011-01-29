@@ -3,6 +3,9 @@
 #include "document.h"
 #include "../common.h"
 
+extern rhinoca_alertFunc alertFunc;
+extern void* alertFuncUserData;
+
 namespace Dom {
 
 JSClass Window::jsClass = {
@@ -11,6 +14,18 @@ JSClass Window::jsClass = {
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
+
+static JSBool alert(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	JSString* jss = JS_ValueToString(cx, argv[0]);
+	if(alertFunc && jss) {
+		Window* self = reinterpret_cast<Window*>(JS_GetPrivate(cx, obj));
+		char* str = JS_GetStringBytes(jss);
+		alertFunc(self->rhinoca, alertFuncUserData, str);
+		return JS_TRUE;
+	}
+	return JS_FALSE;
+}
 
 static JSBool compileScript(TimerCallback* cb, JSContext* cx, JSObject* obj, jsval* argv)
 {
@@ -110,6 +125,7 @@ JSBool clearInterval(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsva
 }
 
 static JSFunctionSpec methods[] = {
+	{"alert", alert, 1,0,0},
 	{"setTimeout", setTimeout, 2,0,0},
 	{"setInterval", setInterval, 2,0,0},
 	{"clearTimeout", clearTimeout, 1,0,0},

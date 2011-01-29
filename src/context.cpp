@@ -97,6 +97,7 @@ Rhinoca::Rhinoca()
 
 	{	// Run some default scripts
 		const char* script =
+			"function alert(msg) { return window.alert(msg); }"
 			"function setInterval(cb, interval) { return window.setInterval(cb, interval); };"
 			"function setTimeout(cb, timeout) { return window.setTimeout(cb, timeout); };"
 			"function clearInterval(cb) { window.clearInterval(cb); };"
@@ -246,9 +247,18 @@ unsigned countNewline(const char* str, const char* end)
 	return count;
 }
 
-const char* removeBom(const char* str, unsigned& len)
+const char* removeBom(Rhinoca* rh, const char* uri, const char* str, unsigned& len)
 {
 	if(len < 3) return str;
+
+	if( (str[0] == (char)0xFE && str[1] == (char)0xFF) ||
+		(str[0] == (char)0xFF && str[1] == (char)0xFE))
+	{
+		print(rh, "'%s' is encode using UTF-16 which is not supported\n");
+		len = 0;
+		return NULL;
+	}
+
 	if(str[0] == (char)0xEF && str[1] == (char)0xBB && str[2] == (char)0xBF) {
 		len -= 3;
 		return str + 3;
@@ -333,8 +343,9 @@ bool Rhinoca::openDoucment(const char* uri)
 				std::string script;
 				Path scriptUrl = documentUrl.c_str();
 				unsigned lineNo = 0;
+				const char* srcUrl = NULL;
 
-				if(const char* srcUrl = parser.attributeValueIgnoreCase("src"))
+				if(srcUrl = parser.attributeValueIgnoreCase("src"))
 				{
 					scriptUrl = scriptUrl.getBranchPath() / srcUrl;
 					if(void* file = io_open(this, scriptUrl.c_str(), 0)) {
@@ -349,9 +360,10 @@ bool Rhinoca::openDoucment(const char* uri)
 
 				if(!script.empty()) {
 					unsigned len = script.size();
-					const char* s = removeBom(script.c_str(), len);
-					jsval rval;
-					JS_EvaluateScript(jsContext, jsGlobal, s, len, scriptUrl.c_str(), lineNo+1, &rval);
+					if(const char* s = removeBom(this, srcUrl, script.c_str(), len)) {
+						jsval rval;
+						JS_EvaluateScript(jsContext, jsGlobal, s, len, scriptUrl.c_str(), lineNo+1, &rval);
+					}
 				}
 			}
 

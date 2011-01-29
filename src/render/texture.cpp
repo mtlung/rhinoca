@@ -76,8 +76,10 @@ void Texture::clear()
 
 void Texture::bind()
 {
-	if(handle)
+	if(handle) {
+		++hotness;
 		glBindTexture(_type, handle);
+	}
 }
 
 }
