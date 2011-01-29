@@ -6,7 +6,7 @@
 
 namespace Dom {
 
-class Document;
+class HTMLDocument;
 
 /// Reference: http://www.w3schools.com/dom/dom_node.asp
 /// Reference: https://developer.mozilla.org/en/Gecko_DOM_Reference
@@ -34,7 +34,7 @@ public:
 
 // Attributes
 	FixString nodeName;
-	Document* ownerDocument;
+	HTMLDocument* ownerDocument;
 
 	Node* parentNode;
 	Node* firstChild;

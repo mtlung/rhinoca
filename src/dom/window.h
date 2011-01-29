@@ -7,7 +7,7 @@
 
 namespace Dom {
 
-class Document;
+class HTMLDocument;
 
 class TimerCallback : public JsBindable, public MapBase<float>::Node<TimerCallback>
 {
@@ -34,11 +34,11 @@ public:
 };	// TimerCallback
 
 /// Reference: http://www.w3schools.com/jsref/obj_window.asp
-class Window : public JsBindable
+class DOMWindow : public JsBindable
 {
 public:
-	explicit Window(Rhinoca* rh);
-	~Window();
+	explicit DOMWindow(Rhinoca* rh);
+	~DOMWindow();
 
 // Operations
 	void bind(JSContext* cx, JSObject* parent);
@@ -47,7 +47,7 @@ public:
 
 // Attributes
 	Rhinoca* rhinoca;
-	Document* document;
+	HTMLDocument* document;
 
 	Timer timer;
 

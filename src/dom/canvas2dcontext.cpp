@@ -9,8 +9,8 @@ using namespace Render;
 
 namespace Dom {
 
-JSClass Canvas2dContext::jsClass = {
-	"Canvas2dContext", JSCLASS_HAS_PRIVATE,
+JSClass CanvasRenderingContext2D::jsClass = {
+	"CanvasRenderingContext2D", JSCLASS_HAS_PRIVATE,
 	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
@@ -18,7 +18,7 @@ JSClass Canvas2dContext::jsClass = {
 
 static JSBool getCanvas(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
-	Canvas2dContext* self = reinterpret_cast<Canvas2dContext*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
 	*vp = OBJECT_TO_JSVAL(self->canvas->jsObject);
 	return JS_TRUE;
 }
@@ -30,8 +30,8 @@ static JSPropertySpec properties[] = {
 
 static JSBool clearRect(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
 {
-	if(!JS_InstanceOf(cx, obj, &Canvas2dContext::jsClass, argv)) return JS_FALSE;
-	Canvas2dContext* self = reinterpret_cast<Canvas2dContext*>(JS_GetPrivate(cx, obj));
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
 	if(!self) return JS_FALSE;
 
 	double x, y, w, h;
@@ -47,8 +47,8 @@ static JSBool clearRect(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, j
 
 static JSBool beginLayer(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
 {
-	if(!JS_InstanceOf(cx, obj, &Canvas2dContext::jsClass, argv)) return JS_FALSE;
-	Canvas2dContext* self = reinterpret_cast<Canvas2dContext*>(JS_GetPrivate(cx, obj));
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
 	if(!self) return JS_FALSE;
 	self->beginLayer();
 	return JS_TRUE;
@@ -56,8 +56,8 @@ static JSBool beginLayer(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, 
 
 static JSBool endLayer(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
 {
-	if(!JS_InstanceOf(cx, obj, &Canvas2dContext::jsClass, argv)) return JS_FALSE;
-	Canvas2dContext* self = reinterpret_cast<Canvas2dContext*>(JS_GetPrivate(cx, obj));
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
 	if(!self) return JS_FALSE;
 	self->endLayer();
 	return JS_TRUE;
@@ -65,8 +65,8 @@ static JSBool endLayer(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, js
 
 static JSBool drawImage(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
 {
-	if(!JS_InstanceOf(cx, obj, &Canvas2dContext::jsClass, argv)) return JS_FALSE;
-	Canvas2dContext* self = reinterpret_cast<Canvas2dContext*>(JS_GetPrivate(cx, obj));
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
 	if(!self) return JS_FALSE;
 
 	JSObject* imgObj = NULL;
@@ -74,12 +74,12 @@ static JSBool drawImage(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, j
 
 	// Determine the source is an image or a canvas
 	Texture* texture;
-	if(JS_InstanceOf(cx, imgObj, &Image::jsClass, NULL)) {
-		Image* img = reinterpret_cast<Image*>(JS_GetPrivate(cx ,imgObj));
+	if(JS_InstanceOf(cx, imgObj, &HTMLImageElement::jsClass, NULL)) {
+		HTMLImageElement* img = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx ,imgObj));
 		texture = img->texture.get();
 	}
-	if(JS_InstanceOf(cx, imgObj, &Canvas::jsClass, NULL)) {
-		Canvas* otherCanvas = reinterpret_cast<Canvas*>(JS_GetPrivate(cx ,imgObj));
+	if(JS_InstanceOf(cx, imgObj, &HTMLCanvasElement::jsClass, NULL)) {
+		HTMLCanvasElement* otherCanvas = reinterpret_cast<HTMLCanvasElement*>(JS_GetPrivate(cx ,imgObj));
 		texture = otherCanvas->texture();
 	}
 
@@ -127,8 +127,8 @@ static JSBool drawImage(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, j
 
 static JSBool save(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
 {
-	if(!JS_InstanceOf(cx, obj, &Canvas2dContext::jsClass, argv)) return JS_FALSE;
-	Canvas2dContext* self = reinterpret_cast<Canvas2dContext*>(JS_GetPrivate(cx, obj));
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
 	if(!self) return JS_FALSE;
 
 	self->save();
@@ -138,8 +138,8 @@ static JSBool save(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval*
 
 static JSBool restore(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
 {
-	if(!JS_InstanceOf(cx, obj, &Canvas2dContext::jsClass, argv)) return JS_FALSE;
-	Canvas2dContext* self = reinterpret_cast<Canvas2dContext*>(JS_GetPrivate(cx, obj));
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
 	if(!self) return JS_FALSE;
 
 	self->restore();
@@ -149,8 +149,8 @@ static JSBool restore(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsv
 
 static JSBool scale(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
 {
-	if(!JS_InstanceOf(cx, obj, &Canvas2dContext::jsClass, argv)) return JS_FALSE;
-	Canvas2dContext* self = reinterpret_cast<Canvas2dContext*>(JS_GetPrivate(cx, obj));
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
 	if(!self) return JS_FALSE;
 
 	double x, y;
@@ -163,8 +163,8 @@ static JSBool scale(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval
 
 static JSBool rotate(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
 {
-	if(!JS_InstanceOf(cx, obj, &Canvas2dContext::jsClass, argv)) return JS_FALSE;
-	Canvas2dContext* self = reinterpret_cast<Canvas2dContext*>(JS_GetPrivate(cx, obj));
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
 	if(!self) return JS_FALSE;
 
 	double angle;
@@ -176,8 +176,8 @@ static JSBool rotate(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsva
 
 static JSBool translate(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
 {
-	if(!JS_InstanceOf(cx, obj, &Canvas2dContext::jsClass, argv)) return JS_FALSE;
-	Canvas2dContext* self = reinterpret_cast<Canvas2dContext*>(JS_GetPrivate(cx, obj));
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
 	if(!self) return JS_FALSE;
 
 	double x, y;
@@ -203,17 +203,17 @@ static JSFunctionSpec methods[] = {
 	{0}
 };
 
-Canvas2dContext::Canvas2dContext(Canvas* c)
+CanvasRenderingContext2D::CanvasRenderingContext2D(HTMLCanvasElement* c)
 	: Context(c)
 {
 	currentState.transform = Mat44::identity;
 }
 
-Canvas2dContext::~Canvas2dContext()
+CanvasRenderingContext2D::~CanvasRenderingContext2D()
 {
 }
 
-void Canvas2dContext::bind(JSContext* cx, JSObject* parent)
+void CanvasRenderingContext2D::bind(JSContext* cx, JSObject* parent)
 {
 	ASSERT(!jsContext);
 	jsContext = cx;
@@ -224,15 +224,15 @@ void Canvas2dContext::bind(JSContext* cx, JSObject* parent)
 	addReference();
 }
 
-void Canvas2dContext::beginLayer()
+void CanvasRenderingContext2D::beginLayer()
 {
 }
 
-void Canvas2dContext::endLayer()
+void CanvasRenderingContext2D::endLayer()
 {
 }
 
-void Canvas2dContext::clearRect(float x, float y, float w, float h)
+void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 {
 	canvas->bindFramebuffer();
 
@@ -262,7 +262,7 @@ void Canvas2dContext::clearRect(float x, float y, float w, float h)
 	canvas->unbindFramebuffer();
 }
 
-void Canvas2dContext::drawImage(
+void CanvasRenderingContext2D::drawImage(
 	Texture* texture,
 	float dstx, float dsty)
 {
@@ -273,7 +273,7 @@ void Canvas2dContext::drawImage(
 	);
 }
 
-void Canvas2dContext::drawImage(
+void CanvasRenderingContext2D::drawImage(
 	Texture* texture,
 	float dstx, float dsty, float dstw, float dsth)
 {
@@ -283,7 +283,7 @@ void Canvas2dContext::drawImage(
 	);
 }
 
-void Canvas2dContext::drawImage(
+void CanvasRenderingContext2D::drawImage(
 	Texture* texture,
 	float srcx, float srcy, float srcw, float srch,
 	float dstx, float dsty, float dstw, float dsth)
@@ -343,43 +343,43 @@ void Canvas2dContext::drawImage(
 	canvas->unbindFramebuffer();
 }
 
-void Canvas2dContext::save()
+void CanvasRenderingContext2D::save()
 {
 	stateStack.push_back(currentState);
 }
 
-void Canvas2dContext::restore()
+void CanvasRenderingContext2D::restore()
 {
 	currentState = stateStack.top();
 	stateStack.pop_back();
 }
 
-void Canvas2dContext::scale(float x, float y)
+void CanvasRenderingContext2D::scale(float x, float y)
 {
 	float v[3] = { x, y, 1 };
 	Mat44 m = Mat44::makeScale(v);
 	currentState.transform *= m;
 }
 
-void Canvas2dContext::rotate(float angle)
+void CanvasRenderingContext2D::rotate(float angle)
 {
 	float axis[3] = { 0, 0, 1 };
 	Mat44 m = Mat44::makeAxisRotation(axis, angle);
 	currentState.transform *= m;
 }
 
-void Canvas2dContext::translate(float x, float y)
+void CanvasRenderingContext2D::translate(float x, float y)
 {
 	float v[3] = { x, y, 0 };
 	Mat44 m = Mat44::makeTranslation(v);
 	currentState.transform *= m;
 }
 
-void Canvas2dContext::transform(float m11, float m12, float m22, float dx, float dy)
+void CanvasRenderingContext2D::transform(float m11, float m12, float m22, float dx, float dy)
 {
 }
 
-void Canvas2dContext::setTransform(float m11, float m12, float m22, float dx, float dy)
+void CanvasRenderingContext2D::setTransform(float m11, float m12, float m22, float dx, float dy)
 {
 }
 

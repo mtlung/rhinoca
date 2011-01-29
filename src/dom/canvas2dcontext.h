@@ -7,11 +7,11 @@
 
 namespace Dom {
 
-class Canvas2dContext : public Canvas::Context
+class CanvasRenderingContext2D : public HTMLCanvasElement::Context
 {
 public:
-	explicit Canvas2dContext(Canvas*);
-	~Canvas2dContext();
+	explicit CanvasRenderingContext2D(HTMLCanvasElement*);
+	~CanvasRenderingContext2D();
 
 // Operations
 	void bind(JSContext* cx, JSObject* parent);
@@ -56,7 +56,7 @@ public:
 	Vector<State> stateStack;
 
 	static JSClass jsClass;
-};	// Canvas2dContext
+};	// CanvasRenderingContext2D
 
 }	// namespace Dom
 

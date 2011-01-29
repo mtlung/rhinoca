@@ -9,11 +9,11 @@ class Node;
 class Element;
 
 // Reference: http://www.w3schools.com/dom/dom_document.asp
-class Document : public JsBindable
+class HTMLDocument : public JsBindable
 {
 public:
-	explicit Document(Rhinoca* rh);
-	~Document();
+	explicit HTMLDocument(Rhinoca* rh);
+	~HTMLDocument();
 
 // Operations
 	void bind(JSContext* cx, JSObject* parent);
@@ -30,7 +30,7 @@ public:
 
 protected:
 	Node* _rootNode;
-};	// Document
+};	// HTMLDocument
 
 }	// namespace Dom
 

@@ -36,7 +36,7 @@ public:
 	void* privateData;
 	FixString documentUrl;
 
-	Dom::Window* domWindow;
+	Dom::DOMWindow* domWindow;
 
 	rhuint width, height;
 

@@ -8,11 +8,11 @@ namespace Render { class Texture; }
 
 namespace Dom {
 
-class Canvas : public Element
+class HTMLCanvasElement : public Element
 {
 public:
-	Canvas();
-	~Canvas();
+	HTMLCanvasElement();
+	~HTMLCanvasElement();
 
 // Operations
 	void bind(JSContext* cx, JSObject* parent);
@@ -20,15 +20,16 @@ public:
 	void bindFramebuffer();
 	void unbindFramebuffer();
 
+	static void registerClass(JSContext* cx, JSObject* parent);
 	static Element* factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser);
 
 // Attributes
 	class Context : public JsBindable
 	{
 	public:
-		explicit Context(Canvas*);
+		explicit Context(HTMLCanvasElement*);
 		virtual ~Context();
-		Canvas* canvas;
+		HTMLCanvasElement* canvas;
 	};	// Context
 
 	Context* context;
@@ -45,7 +46,7 @@ public:
 
 protected:
 	Render::Framebuffer _framebuffer;
-};	// Canvas
+};	// HTMLCanvasElement
 
 }	// namespace Dom
 

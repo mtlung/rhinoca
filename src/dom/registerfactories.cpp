@@ -6,15 +6,16 @@ namespace Dom {
 
 void registerClasses(JSContext* cx, JSObject* parent)
 {
-	Image::registerClass(cx, parent);
+	HTMLCanvasElement::registerClass(cx, parent);
+	HTMLImageElement::registerClass(cx, parent);
 }
 
 void registerFactories()
 {
 	ElementFactory& f = ElementFactory::singleton();
 
-	f.addFactory(&Canvas::factoryCreate);
-	f.addFactory(&Image::factoryCreate);
+	f.addFactory(&HTMLCanvasElement::factoryCreate);
+	f.addFactory(&HTMLImageElement::factoryCreate);
 }
 
 }	// namespace Dom

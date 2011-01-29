@@ -10,8 +10,8 @@ using namespace Render;
 
 namespace Dom {
 
-JSClass Image::jsClass = {
-	"Image", JSCLASS_HAS_PRIVATE,
+JSClass HTMLImageElement::jsClass = {
+	"HTMLImageElement", JSCLASS_HAS_PRIVATE,
 	JS_PropertyStub,  JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub,  JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
@@ -19,7 +19,7 @@ JSClass Image::jsClass = {
 
 static void onReadyCallback(TaskPool* taskPool, void* userData)
 {
-	Image* self = reinterpret_cast<Image*>(userData);
+	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(userData);
 
 	jsval rval;
 	jsval closure;
@@ -30,7 +30,7 @@ static void onReadyCallback(TaskPool* taskPool, void* userData)
 
 static void onLoadCallback(TaskPool* taskPool, void* userData)
 {
-	Image* self = reinterpret_cast<Image*>(userData);
+	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(userData);
 
 	jsval rval;
 	jsval closure;
@@ -41,14 +41,14 @@ static void onLoadCallback(TaskPool* taskPool, void* userData)
 
 static JSBool getSrc(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
-	Image* self = reinterpret_cast<Image*>(JS_GetPrivate(cx, obj));
+	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
 	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->texture->uri().c_str()));
 	return JS_TRUE;
 }
 
 static JSBool setSrc(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
-	Image* self = reinterpret_cast<Image*>(JS_GetPrivate(cx, obj));
+	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
 
 	JSString* jss = JS_ValueToString(cx, *vp);
 	if(!jss) return JS_FALSE;
@@ -74,43 +74,43 @@ static JSBool setSrc(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 
 static JSBool getWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
-	Image* self = reinterpret_cast<Image*>(JS_GetPrivate(cx, obj));
+	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
 	*vp = INT_TO_JSVAL(self->width()); return JS_TRUE;
 }
 
 static JSBool setWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
-	Image* self = reinterpret_cast<Image*>(JS_GetPrivate(cx, obj));
+	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
 	self->_width = JSVAL_TO_INT(vp); return JS_TRUE;
 }
 
 static JSBool getHeight(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
-	Image* self = reinterpret_cast<Image*>(JS_GetPrivate(cx, obj));
+	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
 	*vp = INT_TO_JSVAL(self->height()); return JS_TRUE;
 }
 
 static JSBool setHeight(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
-	Image* self = reinterpret_cast<Image*>(JS_GetPrivate(cx, obj));
+	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
 	self->_height = JSVAL_TO_INT(vp); return JS_TRUE;
 }
 
 static JSBool naturalWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
-	Image* self = reinterpret_cast<Image*>(JS_GetPrivate(cx, obj));
+	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
 	*vp = INT_TO_JSVAL(self->naturalWidth()); return JS_TRUE;
 }
 
 static JSBool naturalHeight(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
-	Image* self = reinterpret_cast<Image*>(JS_GetPrivate(cx, obj));
+	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
 	*vp = INT_TO_JSVAL(self->naturalHeight()); return JS_TRUE;
 }
 
 static JSBool complete(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
-	Image* self = reinterpret_cast<Image*>(JS_GetPrivate(cx, obj));
+	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
 	bool ret = self->texture && self->texture->state == Texture::Loaded;
 	*vp = BOOLEAN_TO_JSVAL(ret); return JS_TRUE;
 }
@@ -129,7 +129,7 @@ static JSBool construct(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, j
 {
 	if(!JS_IsConstructing(cx)) return JS_FALSE;	// Not called as constructor? (called without new)
 
-	Image* img = new Image;
+	HTMLImageElement* img = new HTMLImageElement;
 	img->bind(cx, NULL);
 
 	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
@@ -144,17 +144,17 @@ static JSFunctionSpec methods[] = {
 	{0}
 };
 
-Image::Image()
+HTMLImageElement::HTMLImageElement()
 	: texture(NULL)
 	, _width(-1), _height(-1)
 {
 }
 
-Image::~Image()
+HTMLImageElement::~HTMLImageElement()
 {
 }
 
-void Image::bind(JSContext* cx, JSObject* parent)
+void HTMLImageElement::bind(JSContext* cx, JSObject* parent)
 {
 	ASSERT(!jsContext);
 	jsContext = cx;
@@ -165,32 +165,32 @@ void Image::bind(JSContext* cx, JSObject* parent)
 	addReference();
 }
 
-void Image::registerClass(JSContext* cx, JSObject* parent)
+void HTMLImageElement::registerClass(JSContext* cx, JSObject* parent)
 {
 	JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL);
 }
 
-Element* Image::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
+Element* HTMLImageElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
-	return strcasecmp(type, "Image") == 0 ? new Image : NULL;
+	return strcasecmp(type, "Img") == 0 ? new HTMLImageElement : NULL;
 }
 
-rhuint Image::width() const
+rhuint HTMLImageElement::width() const
 {
 	return _width < 0 ? naturalWidth() : _width;
 }
 
-rhuint Image::height() const
+rhuint HTMLImageElement::height() const
 {
 	return _height < 0 ? naturalHeight() : _height;
 }
 
-rhuint Image::naturalWidth() const
+rhuint HTMLImageElement::naturalWidth() const
 {
 	return texture ? texture->width : 0;
 }
 
-rhuint Image::naturalHeight() const
+rhuint HTMLImageElement::naturalHeight() const
 {
 	return texture ? texture->height : 0;
 }

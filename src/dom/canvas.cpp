@@ -8,8 +8,8 @@ using namespace Render;
 
 namespace Dom {
 
-JSClass Canvas::jsClass = {
-	"Canvas", JSCLASS_HAS_PRIVATE,
+JSClass HTMLCanvasElement::jsClass = {
+	"HTMLCanvasElement", JSCLASS_HAS_PRIVATE,
 	JS_PropertyStub,  JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub,  JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
@@ -17,13 +17,13 @@ JSClass Canvas::jsClass = {
 
 static JSBool getWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
-	Canvas* self = reinterpret_cast<Canvas*>(JS_GetPrivate(cx, obj));
+	HTMLCanvasElement* self = reinterpret_cast<HTMLCanvasElement*>(JS_GetPrivate(cx, obj));
 	*vp = INT_TO_JSVAL(self->width()); return JS_TRUE;
 }
 
 static JSBool getHeight(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
-	Canvas* self = reinterpret_cast<Canvas*>(JS_GetPrivate(cx, obj));
+	HTMLCanvasElement* self = reinterpret_cast<HTMLCanvasElement*>(JS_GetPrivate(cx, obj));
 	*vp = INT_TO_JSVAL(self->height()); return JS_TRUE;
 }
 
@@ -45,9 +45,24 @@ static JSPropertySpec properties[] = {
 	{0}
 };
 
+static JSBool construct(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_IsConstructing(cx)) return JS_FALSE;	// Not called as constructor? (called without new)
+
+	HTMLCanvasElement* img = new HTMLCanvasElement;
+	img->bind(cx, NULL);
+
+	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
+	img->ownerDocument = rh->domWindow->document;
+
+	*rval = OBJECT_TO_JSVAL(img->jsObject);
+
+	return JS_TRUE;
+}
+
 static JSBool getContext(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
 {
-	Canvas* self = reinterpret_cast<Canvas*>(JS_GetPrivate(cx, obj));
+	HTMLCanvasElement* self = reinterpret_cast<HTMLCanvasElement*>(JS_GetPrivate(cx, obj));
 
 	JSString* jss = JS_ValueToString(cx, argv[0]);
 	char* str = JS_GetStringBytes(jss);
@@ -56,9 +71,9 @@ static JSBool getContext(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, 
 
 	if(strcasecmp(str, "2d") == 0) {
 		if(!self->context) {
-			self->context = new Canvas2dContext(self);
+			self->context = new CanvasRenderingContext2D(self);
 			self->context->bind(cx, NULL);
-			self->context->addGcRoot();	// releaseGcRoot() in ~Canvas()
+			self->context->addGcRoot();	// releaseGcRoot() in ~HTMLCanvasElement()
 		}
 		*rval = OBJECT_TO_JSVAL(self->context->jsObject);
 	}
@@ -71,12 +86,12 @@ static JSFunctionSpec methods[] = {
 	{0}
 };
 
-Canvas::Canvas()
+HTMLCanvasElement::HTMLCanvasElement()
 	: context(NULL)
 {
 }
 
-Canvas::~Canvas()
+HTMLCanvasElement::~HTMLCanvasElement()
 {
 	if(context) {
 		context->canvas = NULL;
@@ -84,7 +99,7 @@ Canvas::~Canvas()
 	}
 }
 
-void Canvas::bind(JSContext* cx, JSObject* parent)
+void HTMLCanvasElement::bind(JSContext* cx, JSObject* parent)
 {
 	ASSERT(!jsContext);
 	jsContext = cx;
@@ -95,21 +110,26 @@ void Canvas::bind(JSContext* cx, JSObject* parent)
 	addReference();
 }
 
-void Canvas::bindFramebuffer()
+void HTMLCanvasElement::bindFramebuffer()
 {
 	_framebuffer.bind();
 }
 
-void Canvas::unbindFramebuffer()
+void HTMLCanvasElement::unbindFramebuffer()
 {
 	_framebuffer.unbind();
 }
 
-Element* Canvas::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
+void HTMLCanvasElement::registerClass(JSContext* cx, JSObject* parent)
+{
+	JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL);
+}
+
+Element* HTMLCanvasElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
 	if(strcasecmp(type, "Canvas") != 0) return NULL;
 
-	Canvas* canvas = new Canvas;
+	HTMLCanvasElement* canvas = new HTMLCanvasElement;
 
 	// NOTE: Assume html specified canvas is visible
 	if(parser)
@@ -129,29 +149,29 @@ Element* Canvas::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 	return canvas;
 }
 
-Texture* Canvas::texture()
+Texture* HTMLCanvasElement::texture()
 {
 	return _framebuffer.texture.get();
 }
 
-void Canvas::setWidth(unsigned w)
+void HTMLCanvasElement::setWidth(unsigned w)
 {
 	if(w == width()) return;
 	_framebuffer.createTexture(w, height());
 }
 
-void Canvas::setHeight(unsigned h)
+void HTMLCanvasElement::setHeight(unsigned h)
 {
 	if(h == height()) return;
 	_framebuffer.createTexture(width(), h);
 }
 
-Canvas::Context::Context(Canvas* c)
+HTMLCanvasElement::Context::Context(HTMLCanvasElement* c)
 	: canvas(c)
 {
 }
 
-Canvas::Context::~Context()
+HTMLCanvasElement::Context::~Context()
 {
 }
 

@@ -77,7 +77,7 @@ Rhinoca::Rhinoca()
 
 	VERIFY(JS_InitStandardClasses(jsContext, jsGlobal));
 
-	domWindow = new Dom::Window(this);
+	domWindow = new Dom::DOMWindow(this);
 	domWindow->bind(jsContext, jsGlobal);
 	domWindow->addGcRoot();	// releaseGcRoot() in ~Rhinoca()
 
@@ -103,6 +103,9 @@ Rhinoca::Rhinoca()
 			"function clearInterval(cb) { window.clearInterval(cb); };"
 			"function clearTimeout(cb) { window.clearTimeout(cb); };"
 			"function log(msg){setTimeout(function(){throw new Error(msg);},0);}"
+
+			"var Image = HTMLImageElement;"
+			"var Canvas = HTMLCanvasElement;"
 
 			"var navigator = { userAgent: {"
 			"	indexOf : function(str) { return -1; }, match : function(str) { return false; }"
@@ -197,7 +200,7 @@ void Rhinoca::processEvent(RhinocaEvent ev)
 	if(keyEvent)
 	{
 		jsval argv, closure, rval;
-		Dom::Document* document = domWindow->document;
+		Dom::HTMLDocument* document = domWindow->document;
 		if(JS_GetProperty(document->jsContext, document->jsObject, keyEvent, &closure) && closure != JSVAL_VOID) {
 			Dom::KeyEvent* e = new Dom::KeyEvent;
 			e->keyCode = keyCode;
@@ -254,7 +257,7 @@ const char* removeBom(Rhinoca* rh, const char* uri, const char* str, unsigned& l
 	if( (str[0] == (char)0xFE && str[1] == (char)0xFF) ||
 		(str[0] == (char)0xFF && str[1] == (char)0xFE))
 	{
-		print(rh, "'%s' is encode using UTF-16 which is not supported\n");
+		print(rh, "'%s' is encoded using UTF-16 which is not supported\n");
 		len = 0;
 		return NULL;
 	}

@@ -6,8 +6,8 @@
 
 namespace Dom {
 
-JSClass Document::jsClass = {
-	"Document", JSCLASS_HAS_PRIVATE,
+JSClass HTMLDocument::jsClass = {
+	"HTMLDocument", JSCLASS_HAS_PRIVATE,
 	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
@@ -17,7 +17,7 @@ static JSBool createElement(JSContext* cx, JSObject* obj, uintN argc, jsval* arg
 {
 	JSString* jss = JS_ValueToString(cx, argv[0]);
 	char* str = JS_GetStringBytes(jss);
-	Document* doc = reinterpret_cast<Document*>(JS_GetPrivate(cx, obj));
+	HTMLDocument* doc = reinterpret_cast<HTMLDocument*>(JS_GetPrivate(cx, obj));
 	
 	if(Element* ele = doc->createElement(str))
 	{
@@ -34,7 +34,7 @@ static JSBool getElementById(JSContext* cx, JSObject* obj, uintN argc, jsval* ar
 {
 	JSString* jss = JS_ValueToString(cx, argv[0]);
 	char* str = JS_GetStringBytes(jss);
-	Document* doc = reinterpret_cast<Document*>(JS_GetPrivate(cx, obj));
+	HTMLDocument* doc = reinterpret_cast<HTMLDocument*>(JS_GetPrivate(cx, obj));
 	Element* ele = doc->getElementById(str);
 
 	*rval = ele ? OBJECT_TO_JSVAL(ele->jsObject) : JSVAL_VOID;
@@ -48,18 +48,18 @@ static JSFunctionSpec methods[] = {
 	{0}
 };
 
-Document::Document(Rhinoca* rh)
+HTMLDocument::HTMLDocument(Rhinoca* rh)
 	: rhinoca(rh)
 	, _rootNode(NULL)
 {
 }
 
-Document::~Document()
+HTMLDocument::~HTMLDocument()
 {
 	_rootNode->removeThis();
 }
 
-void Document::bind(JSContext* cx, JSObject* parent)
+void HTMLDocument::bind(JSContext* cx, JSObject* parent)
 {
 	ASSERT(!jsContext);
 	jsContext = cx;
@@ -71,17 +71,17 @@ void Document::bind(JSContext* cx, JSObject* parent)
 
 	_rootNode = new Node;
 	_rootNode->bind(jsContext, NULL);
-	_rootNode->addGcRoot();	// releaseGcRoot() in ~Document()
+	_rootNode->addGcRoot();	// releaseGcRoot() in ~HTMLDocument()
 	_rootNode->ownerDocument = this;
 }
 
-Element* Document::createElement(const char* eleType)
+Element* HTMLDocument::createElement(const char* eleType)
 {
 	ElementFactory& factory = ElementFactory::singleton();
 	return factory.create(this->rhinoca, eleType, NULL);
 }
 
-Element* Document::getElementById(const char* id)
+Element* HTMLDocument::getElementById(const char* id)
 {
 	StringHash h(id, 0);
 	for(NodeIterator i(_rootNode); !i.ended(); i.next()) {

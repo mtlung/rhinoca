@@ -8,8 +8,8 @@ extern void* alertFuncUserData;
 
 namespace Dom {
 
-JSClass Window::jsClass = {
-	"Window", JSCLASS_HAS_PRIVATE,
+JSClass DOMWindow::jsClass = {
+	"DOMWindow", JSCLASS_HAS_PRIVATE,
 	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
@@ -19,7 +19,7 @@ static JSBool alert(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval
 {
 	JSString* jss = JS_ValueToString(cx, argv[0]);
 	if(alertFunc && jss) {
-		Window* self = reinterpret_cast<Window*>(JS_GetPrivate(cx, obj));
+		DOMWindow* self = reinterpret_cast<DOMWindow*>(JS_GetPrivate(cx, obj));
 		char* str = JS_GetStringBytes(jss);
 		alertFunc(self->rhinoca, alertFuncUserData, str);
 		return JS_TRUE;
@@ -44,7 +44,7 @@ JSBool setTimeout(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* 
 {
 	int32 timeout;	// In unit of millisecond
 	if(!JS_ValueToInt32(cx, argv[1], &timeout)) return JS_FALSE;
-	Window* self = reinterpret_cast<Window*>(JS_GetPrivate(cx, obj));
+	DOMWindow* self = reinterpret_cast<DOMWindow*>(JS_GetPrivate(cx, obj));
 
 	TimerCallback* cb = new TimerCallback;
 	cb->bind(cx, NULL);
@@ -72,7 +72,7 @@ JSBool setInterval(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval*
 {
 	int32 interval;	// In unit of millisecond
 	if(!JS_ValueToInt32(cx, argv[1], &interval)) return JS_FALSE;
-	Window* self = reinterpret_cast<Window*>(JS_GetPrivate(cx, obj));
+	DOMWindow* self = reinterpret_cast<DOMWindow*>(JS_GetPrivate(cx, obj));
 
 	TimerCallback* cb = new TimerCallback;
 	cb->bind(cx, NULL);
@@ -133,13 +133,13 @@ static JSFunctionSpec methods[] = {
 	{0}
 };
 
-Window::Window(Rhinoca* rh)
+DOMWindow::DOMWindow(Rhinoca* rh)
 	: rhinoca(rh)
 {
-	document = new Document(rh);
+	document = new HTMLDocument(rh);
 }
 
-Window::~Window()
+DOMWindow::~DOMWindow()
 {
 	document->releaseGcRoot();
 
@@ -149,7 +149,7 @@ Window::~Window()
 	JS_GC(jsContext);
 }
 
-void Window::bind(JSContext* cx, JSObject* parent)
+void DOMWindow::bind(JSContext* cx, JSObject* parent)
 {
 	ASSERT(!jsContext);
 	jsContext = cx;
@@ -159,10 +159,10 @@ void Window::bind(JSContext* cx, JSObject* parent)
 	addReference();
 
 	document->bind(cx, parent);
-	document->addGcRoot();	// releaseGcRoot() in ~Window()
+	document->addGcRoot();	// releaseGcRoot() in ~DOMWindow()
 }
 
-void Window::update()
+void DOMWindow::update()
 {
 	if(timerCallbacks.isEmpty()) return;
 	float now = (float)timer.seconds();

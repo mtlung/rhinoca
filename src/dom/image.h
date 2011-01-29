@@ -11,11 +11,11 @@ typedef IntrusivePtr<class Texture> TexturePtr;
 
 namespace Dom {
 
-class Image : public Element
+class HTMLImageElement : public Element
 {
 public:
-	Image();
-	~Image();
+	HTMLImageElement();
+	~HTMLImageElement();
 
 // Operations
 	void bind(JSContext* cx, JSObject* parent);
@@ -34,7 +34,7 @@ public:
 	static JSClass jsClass;
 
 	int _width, _height;
-};	// Image
+};	// HTMLImageElement
 
 }	// namespace Dom
 
