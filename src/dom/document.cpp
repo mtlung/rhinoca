@@ -4,6 +4,7 @@
 #include "element.h"
 #include "node.h"
 #include "../common.h"
+#include "../context.h"
 
 namespace Dom {
 
@@ -109,6 +110,11 @@ Element* HTMLDocument::getElementById(const char* id)
 		}
 	}
 	return NULL;
+}
+
+DOMWindow* HTMLDocument::window()
+{
+	return rhinoca->domWindow;
 }
 
 HTMLBodyElement* HTMLDocument::body()

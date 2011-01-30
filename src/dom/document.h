@@ -7,6 +7,7 @@ namespace Dom {
 
 class Node;
 class Element;
+class DOMWindow;
 class HTMLBodyElement;
 
 // Reference: http://www.w3schools.com/dom/dom_document.asp
@@ -26,6 +27,8 @@ public:
 // Attributes
 	Rhinoca* rhinoca;
 	Node* rootNode() { return _rootNode; }
+
+	DOMWindow* window();
 
 	HTMLBodyElement* body();
 

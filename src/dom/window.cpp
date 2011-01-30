@@ -1,7 +1,10 @@
 #include "pch.h"
 #include "window.h"
+#include "canvas.h"
 #include "document.h"
+#include "node.h"
 #include "../common.h"
+#include "../context.h"
 
 extern rhinoca_alertFunc alertFunc;
 extern void* alertFuncUserData;
@@ -137,6 +140,9 @@ DOMWindow::DOMWindow(Rhinoca* rh)
 	: rhinoca(rh)
 {
 	document = new HTMLDocument(rh);
+	virtualCanvas = new HTMLCanvasElement();
+	virtualCanvas->useExternalFrameBuffer(rh);
+	virtualCanvas->createContext("2d");
 }
 
 DOMWindow::~DOMWindow()
@@ -145,6 +151,8 @@ DOMWindow::~DOMWindow()
 
 	while(TimerCallback* cb = timerCallbacks.findMin())
 		cb->removeThis();
+
+	delete virtualCanvas;
 
 	JS_GC(jsContext);
 }
@@ -187,6 +195,33 @@ void DOMWindow::update()
 		else
 			cb->removeThis();
 	}
+}
+
+void DOMWindow::render()
+{
+	if(!document) return;
+	Node* root = document->rootNode();
+	if(!root) return;
+
+	// Resize the virtual canvas if needed
+	if(virtualCanvas->width() != width())
+		virtualCanvas->setWidth(width());
+	if(virtualCanvas->height() != height())
+		virtualCanvas->setHeight(height());
+
+	for(NodeIterator i(document->rootNode()); !i.ended(); i.next()) {
+		i->render();
+	}
+}
+
+unsigned DOMWindow::width() const
+{
+	return rhinoca->width;
+}
+
+unsigned DOMWindow::height() const
+{
+	return rhinoca->height;
 }
 
 JSClass TimerCallback::jsClass = {

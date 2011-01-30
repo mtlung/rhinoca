@@ -32,6 +32,9 @@ public:
 	/// Will not delete the C++ object, actual delete is done during JS GC.
 	void removeThis();
 
+	/// Render this node to the window
+	virtual void render() {}
+
 // Attributes
 	FixString nodeName;
 	HTMLDocument* ownerDocument;

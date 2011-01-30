@@ -62,10 +62,10 @@ static JSFunctionSpec jsConsoleMethods[] = {
 	{0}
 };
 
-Rhinoca::Rhinoca()
+Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 	: privateData(NULL)
 	, width(0), height(0)
-	, renderContex(NULL)
+	, renderContex(rc)
 {
 	jsContext = JS_NewContext(jsrt, 8192);
 	JS_SetOptions(jsContext, JS_GetOptions(jsContext) | JSOPTION_STRICT);
@@ -128,18 +128,17 @@ Rhinoca::~Rhinoca()
 	// Similar problem: http://web.archiveorange.com/archive/v/yxPWTpZYQx37ab1hpyWc
 	JS_ClearScope(jsContext, jsGlobal);
 
-//	FILE* f = fopen("dumpHeap.txt", "w");
-//	JS_DumpHeap(jsContext, f, NULL, 0, NULL, 1000, NULL);
-//	fclose(f);
-
 	JS_DestroyContext(jsContext);
 }
 
 void Rhinoca::update()
 {
 	domWindow->update();
+
 	resourceManager.update();
 	taskPool.doSomeTask();
+
+	domWindow->render();
 
 	JS_MaybeGC(jsContext);
 }

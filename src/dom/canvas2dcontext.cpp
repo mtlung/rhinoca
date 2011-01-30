@@ -331,6 +331,8 @@ void CanvasRenderingContext2D::drawImage(
 	unsigned w = width();
 	unsigned h = height();
 
+	ASSERT(w > 0 && h > 0);
+
 	glViewport(0, 0, w, h);
 
 	glMatrixMode(GL_PROJECTION);

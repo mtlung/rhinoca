@@ -16,7 +16,7 @@ extern JSRuntime* jsrt;
 struct Rhinoca
 {
 public:
-	Rhinoca();
+	explicit Rhinoca(RhinocaRenderContext* rc);
 	~Rhinoca();
 
 // Operations
@@ -38,7 +38,7 @@ public:
 
 	Dom::DOMWindow* domWindow;
 
-	rhuint width, height;
+	unsigned width, height;
 
 	RhinocaRenderContext* renderContex;
 

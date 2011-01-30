@@ -20,6 +20,12 @@ public:
 	void bindFramebuffer();
 	void unbindFramebuffer();
 
+	void useExternalFrameBuffer(Rhinoca* rh);
+
+	void createContext(const char* ctxName);
+
+	virtual void render();
+
 	static void registerClass(JSContext* cx, JSObject* parent);
 	static Element* factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser);
 

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "canvas.h"
 #include "canvas2dcontext.h"
+#include "document.h"
 #include "../context.h"
 #include "../xmlparser.h"
 
@@ -69,16 +70,18 @@ static JSBool getContext(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, 
 
 	*rval = JSVAL_VOID;
 
-	if(strcasecmp(str, "2d") == 0) {
-		if(!self->context) {
-			self->context = new CanvasRenderingContext2D(self);
-			self->context->bind(cx, NULL);
-			self->context->addGcRoot();	// releaseGcRoot() in ~HTMLCanvasElement()
-		}
-		*rval = OBJECT_TO_JSVAL(self->context->jsObject);
+	if(!self->context) {
+		self->createContext(str);
+		self->context->bind(cx, NULL);
+		self->context->addGcRoot();	// releaseGcRoot() in ~HTMLCanvasElement()
 	}
 
-	return JS_TRUE;
+	if(self->context) {
+		*rval = OBJECT_TO_JSVAL(self->context->jsObject);
+		return JS_TRUE;
+	}
+
+	return JS_FALSE;
 }
 
 static JSFunctionSpec methods[] = {
@@ -95,7 +98,8 @@ HTMLCanvasElement::~HTMLCanvasElement()
 {
 	if(context) {
 		context->canvas = NULL;
-		context->releaseGcRoot();
+		if(jsContext) context->releaseGcRoot();
+		context->releaseReference();
 	}
 }
 
@@ -120,6 +124,35 @@ void HTMLCanvasElement::unbindFramebuffer()
 	_framebuffer.unbind();
 }
 
+void HTMLCanvasElement::useExternalFrameBuffer(Rhinoca* rh)
+{
+	_framebuffer.useExternal(rh->renderContex);
+}
+
+void HTMLCanvasElement::createContext(const char* ctxName)
+{
+	if(context) return;
+
+	if(strcasecmp(ctxName, "2d") == 0) {
+		context = new CanvasRenderingContext2D(this);
+		context->addReference();
+	}
+}
+
+void HTMLCanvasElement::render()
+{
+	// No need to draw to the window, if 'frontBufferOnly' is set to true such that all
+	// draw operation is already put on the window
+	if(_framebuffer.external != 0) return;
+
+	DOMWindow* window = ownerDocument->window();
+	HTMLCanvasElement* vc = window->virtualCanvas;
+
+	CanvasRenderingContext2D* ctx = dynamic_cast<CanvasRenderingContext2D*>(vc->context);
+
+	ctx->drawImage(texture(), 0, 0);
+}
+
 void HTMLCanvasElement::registerClass(JSContext* cx, JSObject* parent)
 {
 	JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL);
@@ -131,16 +164,16 @@ Element* HTMLCanvasElement::factoryCreate(Rhinoca* rh, const char* type, XmlPars
 
 	HTMLCanvasElement* canvas = new HTMLCanvasElement;
 
-	// NOTE: Assume html specified canvas is visible
-	if(parser)
-		canvas->_framebuffer.useExternal(rh->renderContex);
-
 	/// The default size of a canvas is 300 x 150 as described by the standard
 	float w = 300, h = 150;
 
 	if(parser) {
-		w = parser->attributeValueAsFloat("width", w);
-		h = parser->attributeValueAsFloat("height", h);
+		w = parser->attributeValueAsFloatIgnoreCase("width", w);
+		h = parser->attributeValueAsFloatIgnoreCase("height", h);
+
+		bool frontBufferOnly = parser->attributeValueAsBoolIgnoreCase("frontBufferOnly", false);
+		if(frontBufferOnly)
+			canvas->useExternalFrameBuffer(rh);
 	}
 
 	canvas->setWidth((unsigned)w);

@@ -8,6 +8,7 @@
 namespace Dom {
 
 class HTMLDocument;
+class HTMLCanvasElement;
 
 class TimerCallback : public JsBindable, public MapBase<float>::Node<TimerCallback>
 {
@@ -45,11 +46,19 @@ public:
 
 	void update();
 
+	void render();
+
 // Attributes
 	Rhinoca* rhinoca;
 	HTMLDocument* document;
 
+	unsigned width() const;
+	unsigned height() const;
+
 	Timer timer;
+
+	/// We use this canvas for rendering stuffs into the window
+	HTMLCanvasElement* virtualCanvas;
 
 	typedef Map<TimerCallback> TimerCallbacks;
 	TimerCallbacks timerCallbacks;

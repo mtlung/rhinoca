@@ -88,7 +88,7 @@ Node::Node()
 Node::~Node()
 {
 	while(firstChild) firstChild->removeThis();
-	JS_GC(jsContext);
+	if(jsContext) JS_GC(jsContext);
 }
 
 void Node::bind(JSContext* cx, JSObject* parent)

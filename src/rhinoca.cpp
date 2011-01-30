@@ -24,8 +24,7 @@ void rhinoca_close()
 
 Rhinoca* rhinoca_create(RhinocaRenderContext* renderContext)
 {
-	Rhinoca* context = new Rhinoca;
-	context->renderContex = renderContext;
+	Rhinoca* context = new Rhinoca(renderContext);
 	return context;
 }
 
