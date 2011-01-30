@@ -42,8 +42,8 @@ public:
 	void scale(float x, float y);
 	void rotate(float angle);	///< The angle is radian
 	void translate(float x, float y);
-	void transform(float m11, float m12, float m22, float dx, float dy);
-	void setTransform(float m11, float m12, float m22, float dx, float dy);
+	void transform(float m11, float m12, float m21, float m22, float dx, float dy);
+	void setTransform(float m11, float m12, float m21, float m22, float dx, float dy);
 
 // Attributes
 	unsigned width() const { return canvas->width(); }

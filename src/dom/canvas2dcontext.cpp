@@ -156,7 +156,7 @@ static JSBool scale(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval
 	double x, y;
 	JS_ValueToNumber(cx, argv[0], &x);
 	JS_ValueToNumber(cx, argv[1], &y);
-	self->scale((float)x, float(y));
+	self->scale((float)x, (float)y);
 
 	return JS_TRUE;
 }
@@ -183,7 +183,45 @@ static JSBool translate(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, j
 	double x, y;
 	JS_ValueToNumber(cx, argv[0], &x);
 	JS_ValueToNumber(cx, argv[1], &y);
-	self->translate((float)x, float(y));
+	self->translate((float)x, (float)y);
+
+	return JS_TRUE;
+}
+
+static JSBool transform(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	double m11, m12, m21, m22, dx, dy;
+	JS_ValueToNumber(cx, argv[0], &m11);
+	JS_ValueToNumber(cx, argv[1], &m12);
+	JS_ValueToNumber(cx, argv[2], &m21);
+	JS_ValueToNumber(cx, argv[3], &m22);
+	JS_ValueToNumber(cx, argv[4], &dx);
+	JS_ValueToNumber(cx, argv[5], &dy);
+
+	self->transform((float)m11, (float)m21, (float)m21, (float)m22, (float)dx, (float)dy);
+
+	return JS_TRUE;
+}
+
+static JSBool setTransform(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	double m11, m12, m21, m22, dx, dy;
+	JS_ValueToNumber(cx, argv[0], &m11);
+	JS_ValueToNumber(cx, argv[1], &m12);
+	JS_ValueToNumber(cx, argv[2], &m21);
+	JS_ValueToNumber(cx, argv[3], &m22);
+	JS_ValueToNumber(cx, argv[4], &dx);
+	JS_ValueToNumber(cx, argv[5], &dy);
+
+	self->setTransform((float)m11, (float)m21, (float)m21, (float)m22, (float)dx, (float)dy);
 
 	return JS_TRUE;
 }
@@ -198,8 +236,8 @@ static JSFunctionSpec methods[] = {
 	{"scale", scale, 2,0,0},
 	{"rotate", rotate, 1,0,0},
 	{"translate", translate, 2,0,0},
-//	{"transform", transform, 5,0,0},
-//	{"setTransform", setTransform, 5,0,0},
+	{"transform", transform, 6,0,0},
+	{"setTransform", setTransform, 6,0,0},
 	{0}
 };
 
@@ -375,11 +413,11 @@ void CanvasRenderingContext2D::translate(float x, float y)
 	currentState.transform *= m;
 }
 
-void CanvasRenderingContext2D::transform(float m11, float m12, float m22, float dx, float dy)
+void CanvasRenderingContext2D::transform(float m11, float m12, float m21, float m22, float dx, float dy)
 {
 }
 
-void CanvasRenderingContext2D::setTransform(float m11, float m12, float m22, float dx, float dy)
+void CanvasRenderingContext2D::setTransform(float m11, float m12, float m21, float m22, float dx, float dy)
 {
 }
 

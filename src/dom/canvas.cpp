@@ -127,7 +127,7 @@ void HTMLCanvasElement::registerClass(JSContext* cx, JSObject* parent)
 
 Element* HTMLCanvasElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
-	if(strcasecmp(type, "Canvas") != 0) return NULL;
+	if(strcasecmp(type, "CANVAS") != 0) return NULL;
 
 	HTMLCanvasElement* canvas = new HTMLCanvasElement;
 
@@ -164,6 +164,11 @@ void HTMLCanvasElement::setHeight(unsigned h)
 {
 	if(h == height()) return;
 	_framebuffer.createTexture(width(), h);
+}
+
+const char* HTMLCanvasElement::tagName() const
+{
+	return "CANVAS";
 }
 
 HTMLCanvasElement::Context::Context(HTMLCanvasElement* c)

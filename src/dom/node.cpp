@@ -18,7 +18,7 @@ static JSBool appendChild(JSContext* cx, JSObject* obj, uintN argc, jsval* argv,
 	JSObject* jsChild = NULL;
 	VERIFY(JS_ValueToObject(cx, argv[0], &jsChild));
 
-	if(!JS_InstanceOf(cx, jsChild, &Node::jsClass, argv)) return JS_FALSE;
+//	if(!JS_InstanceOf(cx, jsChild, &Node::jsClass, argv)) return JS_FALSE;
 	Node* child = reinterpret_cast<Node*>(JS_GetPrivate(cx, jsChild));
 
 	self->appendChild(child);
@@ -124,7 +124,11 @@ void Node::appendChild(Node* child)
 		firstChild = child;
 
 	child->ownerDocument = ownerDocument;
-	child->bind(jsContext, NULL);
+
+	// 'child' may already bind to JS
+	if(!child->jsContext)
+		child->bind(jsContext, NULL);
+
 	child->addGcRoot();	// releaseGcRoot() in Node::removeThis()
 }
 
@@ -142,7 +146,10 @@ void Node::insertBefore(Node* newChild, Node* refChild)
 		firstChild = newChild;
 
 	newChild->ownerDocument = ownerDocument;
-	newChild->bind(jsContext, NULL);
+
+	if(!newChild->jsContext)
+		newChild->bind(jsContext, NULL);
+
 	newChild->addGcRoot();	// releaseGcRoot() in Node::removeThis()
 }
 

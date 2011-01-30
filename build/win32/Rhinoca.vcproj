@@ -152,6 +152,14 @@
 			Name="dom"
 			>
 			<File
+				RelativePath="..\..\src\dom\body.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\body.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\dom\canvas.cpp"
 				>
 			</File>
@@ -165,6 +173,14 @@
 			</File>
 			<File
 				RelativePath="..\..\src\dom\canvas2dcontext.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\div.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\div.h"
 				>
 			</File>
 			<File

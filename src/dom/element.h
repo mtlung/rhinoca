@@ -21,6 +21,8 @@ public:
 	bool visible;
 	long top, left;
 
+	virtual const char* tagName() const;
+
 	static JSClass jsClass;
 };	// Element
 

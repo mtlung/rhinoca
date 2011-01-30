@@ -22,8 +22,16 @@ static JSBool elementGetStyle(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	return JS_TRUE;
 }
 
+static JSBool tagName(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	Element* self = reinterpret_cast<Element*>(JS_GetPrivate(cx, obj));
+	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->tagName()));
+	return JS_TRUE;
+}
+
 static JSPropertySpec elementProperties[] = {
 	{"style", 0, 0, elementGetStyle, JS_PropertyStub},
+	{"tagName", 0, 0, tagName, JS_PropertyStub},
 	{0}
 };
 
@@ -42,6 +50,11 @@ JSObject* Element::createPrototype()
 	VERIFY(JS_DefineProperties(jsContext, proto, elementProperties));
 	addReference();
 	return proto;
+}
+
+const char* Element::tagName() const
+{
+	return "ELEMENT";
 }
 
 ElementFactory::ElementFactory()

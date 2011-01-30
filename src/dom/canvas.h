@@ -42,6 +42,8 @@ public:
 	void setWidth(unsigned width);
 	void setHeight(unsigned height);
 
+	virtual const char* tagName() const;
+
 	static JSClass jsClass;
 
 protected:

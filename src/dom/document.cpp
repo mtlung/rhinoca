@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "document.h"
+#include "body.h"
 #include "element.h"
 #include "node.h"
 #include "../common.h"
@@ -11,6 +12,22 @@ JSClass HTMLDocument::jsClass = {
 	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
+};
+
+static JSBool getBody(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	HTMLDocument* self = reinterpret_cast<HTMLDocument*>(JS_GetPrivate(cx, obj));
+	HTMLBodyElement* body = self->body();
+	if(!body)
+		*vp = JSVAL_NULL;
+	else
+		*vp = OBJECT_TO_JSVAL(body->jsObject);
+	return JS_TRUE;
+}
+
+static JSPropertySpec properties[] = {
+	{"body", 0, 0, getBody, JS_PropertyStub},
+	{0}
 };
 
 static JSBool createElement(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
@@ -66,6 +83,7 @@ void HTMLDocument::bind(JSContext* cx, JSObject* parent)
 	jsObject = JS_DefineObject(cx, parent, "document", &jsClass, 0, JSPROP_ENUMERATE);
 	VERIFY(JS_SetPrivate(cx, jsObject, this));
 	VERIFY(JS_DefineFunctions(cx, jsObject, methods));
+	VERIFY(JS_DefineProperties(cx, jsObject, properties));
 
 	addReference();
 
@@ -88,6 +106,17 @@ Element* HTMLDocument::getElementById(const char* id)
 		if(Element* e = dynamic_cast<Element*>(i.current())) {
 			if(e->id.hashValue() == h)
 				return e;
+		}
+	}
+	return NULL;
+}
+
+HTMLBodyElement* HTMLDocument::body()
+{
+	for(NodeIterator i(_rootNode); !i.ended(); i.next()) {
+		if(Element* e = dynamic_cast<Element*>(i.current())) {
+			if(strcmp(e->tagName(), "BODY") == 0)
+				return dynamic_cast<HTMLBodyElement*>(i.current());
 		}
 	}
 	return NULL;

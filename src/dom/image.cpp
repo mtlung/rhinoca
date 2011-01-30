@@ -12,9 +12,9 @@ namespace Dom {
 
 JSClass HTMLImageElement::jsClass = {
 	"HTMLImageElement", JSCLASS_HAS_PRIVATE,
-	JS_PropertyStub,  JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
-	JS_ConvertStub,  JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
+	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static void onReadyCallback(TaskPool* taskPool, void* userData)
@@ -172,7 +172,7 @@ void HTMLImageElement::registerClass(JSContext* cx, JSObject* parent)
 
 Element* HTMLImageElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
-	return strcasecmp(type, "Img") == 0 ? new HTMLImageElement : NULL;
+	return strcasecmp(type, "IMG") == 0 ? new HTMLImageElement : NULL;
 }
 
 rhuint HTMLImageElement::width() const
@@ -193,6 +193,11 @@ rhuint HTMLImageElement::naturalWidth() const
 rhuint HTMLImageElement::naturalHeight() const
 {
 	return texture ? texture->height : 0;
+}
+
+const char* HTMLImageElement::tagName() const
+{
+	return "IMG";
 }
 
 }	// namespace Dom

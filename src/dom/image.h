@@ -31,6 +31,8 @@ public:
 	unsigned naturalWidth() const;
 	unsigned naturalHeight() const;
 
+	virtual const char* tagName() const;
+
 	static JSClass jsClass;
 
 	int _width, _height;
