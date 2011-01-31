@@ -35,6 +35,40 @@ static JSPropertySpec elementProperties[] = {
 	{0}
 };
 
+static JSBool getAttribute(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+//	if(!JS_InstanceOf(cx, obj, &Element::jsClass, argv)) return JS_FALSE;
+	Element* self = reinterpret_cast<Element*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	if(JSString* jss = JS_ValueToString(cx, argv[0])) {
+		char* str = JS_GetStringBytes(jss);
+		return JS_GetProperty(cx, self->jsObject, str, rval);
+	}
+
+	return JS_FALSE;
+}
+
+static JSBool setAttribute(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+//	if(!JS_InstanceOf(cx, obj, &Element::jsClass, argv)) return JS_FALSE;
+	Element* self = reinterpret_cast<Element*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	if(JSString* jss = JS_ValueToString(cx, argv[0])) {
+		char* str = JS_GetStringBytes(jss);
+		return JS_SetProperty(cx, self->jsObject, str, &argv[1]);
+	}
+
+	return JS_FALSE;
+}
+
+static JSFunctionSpec elementMethods[] = {
+	{"getAttribute", getAttribute, 1,0,0},
+	{"setAttribute", setAttribute, 2,0,0},
+	{0}
+};
+
 Element::Element()
 	: visible(true)
 	, top(0), left(0)
@@ -46,10 +80,15 @@ JSObject* Element::createPrototype()
 	ASSERT(jsContext);
 	JSObject* proto = JS_NewObject(jsContext, &jsClass, Node::createPrototype(), NULL);
 	VERIFY(JS_SetPrivate(jsContext, proto, this));
-//	VERIFY(JS_DefineFunctions(jsContext, proto, methods));
+	VERIFY(JS_DefineFunctions(jsContext, proto, elementMethods));
 	VERIFY(JS_DefineProperties(jsContext, proto, elementProperties));
 	addReference();
 	return proto;
+}
+
+void Element::registerClass(JSContext* cx, JSObject* parent)
+{
+	JS_InitClass(cx, parent, NULL, &jsClass, NULL, 0, NULL, NULL, NULL, NULL);
 }
 
 const char* Element::tagName() const

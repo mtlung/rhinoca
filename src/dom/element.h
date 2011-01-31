@@ -16,6 +16,8 @@ public:
 // Operations
 	JSObject* createPrototype();
 
+	static void registerClass(JSContext* cx, JSObject* parent);
+
 // Attributes
 	FixString id;
 	bool visible;

@@ -8,6 +8,7 @@ namespace Dom {
 
 void registerClasses(JSContext* cx, JSObject* parent)
 {
+	Element::registerClass(cx, parent);
 	HTMLCanvasElement::registerClass(cx, parent);
 	HTMLImageElement::registerClass(cx, parent);
 }
