@@ -19,6 +19,7 @@ Texture::~Texture()
 static rhuint formatComponentCount(int format)
 {
 	switch(format) {
+	case GL_LUMINANCE: return 1;
 	case GL_RGB: return 3;
 	case GL_BGR: return 3;
 	case GL_RGBA: return 4;

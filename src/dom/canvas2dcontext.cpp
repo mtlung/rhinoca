@@ -279,6 +279,8 @@ void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 
 	glViewport(0, 0, w_, h_);
 
+	glDisable(GL_BLEND);
+
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(0, w_, 0, h_, 10, -10);
@@ -288,7 +290,7 @@ void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 
 	glDisable(GL_TEXTURE_2D);
 
-	glColor4f(0, 0, 0, 1);
+	glColor4f(0, 0, 0, 0);
 	glBegin(GL_QUADS);
 		glVertex3f(x + 0, y + 0, -1);
 		glVertex3f(x + w, y + 0, -1);
@@ -296,6 +298,8 @@ void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 		glVertex3f(x + 0, y + h, -1);
 	glEnd();
 	glColor4f(1, 1, 1, 1);
+
+	glEnable(GL_BLEND);
 
 	canvas->unbindFramebuffer();
 }
@@ -417,9 +421,71 @@ void CanvasRenderingContext2D::translate(float x, float y)
 
 void CanvasRenderingContext2D::transform(float m11, float m12, float m21, float m22, float dx, float dy)
 {
+	Mat44 m = Mat44::identity;
+	m.m11 = m11;	m.m12 = m12;
+	m.m21 = m21;	m.m22 = m22;
+	m.m03 = dx;		m.m13 = dy;
+	currentState.transform *= m;
 }
 
 void CanvasRenderingContext2D::setTransform(float m11, float m12, float m21, float m22, float dx, float dy)
+{
+	Mat44 m = Mat44::identity;
+	m.m11 = m11;	m.m12 = m12;
+	m.m21 = m21;	m.m22 = m22;
+	m.m03 = dx;		m.m13 = dy;
+	currentState.transform = m;
+}
+
+void CanvasRenderingContext2D::beginPath()
+{
+}
+
+void CanvasRenderingContext2D::moveTo(float x, float y)
+{
+}
+
+void CanvasRenderingContext2D::closePath()
+{
+}
+
+void CanvasRenderingContext2D::lineTo(float x, float y)
+{
+}
+
+void CanvasRenderingContext2D::quadrativeCureTo(float cpx, float cpy, float x, float y)
+{
+}
+
+void CanvasRenderingContext2D::bezierCurveTo(float cp1x, float cp1y, float cp2x, float cp2y, float x, float y)
+{
+}
+
+void CanvasRenderingContext2D::arcTo(float x1, float y1, float x2, float y2, float radius)
+{
+}
+
+void CanvasRenderingContext2D::arc(float x, float y, float radius, float startAngle, float endAngle, bool anticlockwise)
+{
+}
+
+void CanvasRenderingContext2D::rect(float x, float y, float w, float h)
+{
+}
+
+void CanvasRenderingContext2D::fill()
+{
+}
+
+void CanvasRenderingContext2D::stroke()
+{
+}
+
+void CanvasRenderingContext2D::clip()
+{
+}
+
+void CanvasRenderingContext2D::isPointInPath(float x, float y)
 {
 }
 

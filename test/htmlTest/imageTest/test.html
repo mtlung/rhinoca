@@ -5,32 +5,46 @@
 function draw() {
 	var ctx = document.getElementById('canvas').getContext('2d');
 
-	{	var img = new Image();
-		img.src = 'rhino.bmp';
+	{	var img1 = new Image();
+		img1.src = 'rhino.bmp';
 		// Setting the width of the image doesn't affect canvas's drawImage
-		img.width = 123;
-		img.onload = function() {
-			ctx.drawImage(img, 0, 0);
+		img1.width = 123;
+		img1.onload = function() {
+			ctx.drawImage(img1, 0, 0);
 		}
 	}
 
-	{	var img = new Image();
-		img.src = 'rhino.jpg';
-		img.onload = function() {
-			ctx.drawImage(img, 50, 50);
+	{	var img2 = new Image();
+		img2.src = 'rhino.jpg';
+		img2.onload = function() {
+			ctx.drawImage(img2, 40, 40);
 		}
 	}
 
-	{	var img = new Image();
-		img.src = 'rhino.png';
-		img.onload = function() {
-			ctx.drawImage(img, 100, 100);
+	{	var img3 = new Image();
+		img3.src = 'rhino_gray.jpg';
+		img3.onload = function() {
+			ctx.drawImage(img3, 80, 80);
+		}
+	}
+
+	{	var img4 = new Image();
+		img4.src = 'rhino.png';
+		img4.onload = function() {
+			ctx.drawImage(img4, 120, 120);
+		}
+	}
+
+	{	var img5 = new Image();
+		img5.src = 'rhino_gray.png';
+		img5.onload = function() {
+			ctx.drawImage(img5, 160, 160);
 		}
 	}
 }
 </script>
 </head>
 <body onload="draw();">
-	<canvas id="canvas" width="400" height="300"></canvas>
+	<canvas id="canvas" width="600" height="600"></canvas>
 </body>
 </html>

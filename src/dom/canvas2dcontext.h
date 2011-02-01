@@ -21,6 +21,14 @@ public:
 
 	void clearRect(float x, float y, float w, float h);
 
+// States
+	/// Pushes the current state onto the stack.
+	void save();
+
+	/// Pops the top state on the stack, restoring the context to that state.
+	void restore();
+
+// Draw image
 	void drawImage(
 		Render::Texture* texture,
 		float dstx, float dsty
@@ -37,13 +45,72 @@ public:
 		float dstx, float dsty, float dstw, float dsth
 	);
 
-	void save();
-	void restore();
+// Transforms
+	/// Changes the transformation matrix to apply a scaling transformation with the given characteristics.
 	void scale(float x, float y);
-	void rotate(float angle);	///< The angle is radian
+
+	/// Changes the transformation matrix to apply a rotation transformation with the given characteristics.
+	/// The angle is in radians.
+	void rotate(float angle);
+
+	/// Changes the transformation matrix to apply a translation transformation with the given characteristics.
 	void translate(float x, float y);
+
+	/// Changes the transformation matrix to apply the matrix given by the arguments as described below.
 	void transform(float m11, float m12, float m21, float m22, float dx, float dy);
+
+	/// Changes the transformation matrix to the matrix given by the arguments as described below.
 	void setTransform(float m11, float m12, float m21, float m22, float dx, float dy);
+
+// Paths
+	/// Resets the current path.
+	void beginPath();
+
+	/// Creates a new subpath with the given point.
+	void moveTo(float x, float y);
+
+	/// Marks the current subpath as closed, and starts a new subpath with
+	/// a point the same as the start and end of the newly closed subpath.
+	void closePath();
+
+	/// Adds the given point to the current subpath, connected to the
+	/// previous one by a straight line.
+	void lineTo(float x, float y);
+
+	/// Adds the given point to the current path, connected to the previous
+	/// one by a quadratic Bezier curve with the given control point.
+	void quadrativeCureTo(float cpx, float cpy, float x, float y);
+
+	/// Adds the given point to the current path, connected to the previous
+	/// one by a cubic Bezier curve with the given control points.
+	void bezierCurveTo(float cp1x, float cp1y, float cp2x, float cp2y, float x, float y);
+
+	/// Adds a point to the current path, connected to the previous one b
+	/// a straight line, then adds a second point to the current path, connected
+	/// to the previous one by an arc whose properties are described by the arguments.
+	void arcTo(float x1, float y1, float x2, float y2, float radius);
+
+	/// Adds points to the subpath such that the arc described by the
+	/// circumference of the circle described by the arguments, starting at
+	/// the given start angle and ending at the given end angle, going in
+	/// the given direction, is added to the path, connected to the previous
+	/// point by a straight line.
+	void arc(float x, float y, float radius, float startAngle, float endAngle, bool anticlockwise);
+
+	/// Adds a new closed subpath to the path, representing the given rectangle.
+	void rect(float x, float y, float w, float h);
+
+	/// Fills the subpaths with the current fill style.
+	void fill();
+
+	/// Strokes the subpaths with the current stroke style.
+	void stroke();
+
+	/// Further constrains the clipping region to the given path.
+	void clip();
+
+	/// Returns true if the given point is in the current path.
+	void isPointInPath(float x, float y);
 
 // Attributes
 	unsigned width() const { return canvas->width(); }

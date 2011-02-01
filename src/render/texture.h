@@ -14,10 +14,11 @@ public:
 
 	// Constants from gl.h
 	enum Format {
-		RGB		= 0x1907,
-		BGR		= 0x80E0,
-		RGBA	= 0x1908,
-		BGRA	= 0x80E1,
+		LUMINANCE	= 0x1909,
+		RGB			= 0x1907,
+		BGR			= 0x80E0,
+		RGBA		= 0x1908,
+		BGRA		= 0x80E1,
 	};
 
 // Operations

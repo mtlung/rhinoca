@@ -72,23 +72,26 @@ void PngLoader::onPngInfoReady()
 
 	switch(color_type) {
 	case PNG_COLOR_TYPE_RGB:
-        png_set_filler(png_ptr, 0x000000ff, PNG_FILLER_AFTER);
-		png_read_update_info(png_ptr, info_ptr);
+		png_set_filler(png_ptr, 0x000000ff, PNG_FILLER_AFTER);
 	case PNG_COLOR_TYPE_RGB_ALPHA:
 		pixelDataFormat = Texture::RGBA;
 		break;
 	case PNG_COLOR_TYPE_GRAY:
-		print(rh, "PngLoader: gray scale image is not yet supported, operation aborted");
+		print(rh, "PngLoader: gray scale image is not yet supported, operation aborted\n");
+		_aborted = true;
+		break;
 	case PNG_COLOR_TYPE_GRAY_ALPHA:
-		print(rh, "PngLoader: gray scale image is not yet supported, operation aborted");
+		print(rh, "PngLoader: gray scale image is not yet supported, operation aborted\n");
+		_aborted = true;
+		break;
 	case PNG_COLOR_TYPE_PALETTE:	// Color palette is not supported
-		print(rh, "PngLoader: image using color palette is not supported, operation aborted");
+		print(rh, "PngLoader: image using color palette is not supported, operation aborted\n");
+		_aborted = true;
+		break;
 	default:
 		_aborted = true;
 		break;
 	}
-
-	rowBytes = info_ptr->rowbytes;
 
 	// We'll let libpng expand interlaced images.
 	if(interlace_method == PNG_INTERLACE_ADAM7) {
@@ -97,6 +100,7 @@ void PngLoader::onPngInfoReady()
 	}
 
 	png_read_update_info(png_ptr, info_ptr);
+	rowBytes = info_ptr->rowbytes;
 
 	ASSERT(!pixelData);
 	pixelDataSize = rowBytes * height;

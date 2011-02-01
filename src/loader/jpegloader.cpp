@@ -100,7 +100,7 @@ void JpegLoader::load(TaskPool* taskPool)
 
 	int c = _decoder->get_num_components();
 	if(c == 1)
-		print(rh, "JpegLoader: gray scale image is not yet supported, operation aborted");
+		pixelDataFormat = Texture::LUMINANCE;
 	else if(c == 3)
 		pixelDataFormat = Texture::RGBA;	// Note that the source format is 4 byte even c == 3
 	else {
@@ -125,9 +125,11 @@ void JpegLoader::load(TaskPool* taskPool)
 		if(result == JPGD_OKAY) {
 			memcpy(p, Pscan_line_ofs, scan_line_len);
 
-			// Assign alpha to 1
-			for(char* end = p + scan_line_len; p < end; p += 4)
+			// Assign alpha to 1 for incomming is RGB
+			if(c == 3) for(char* end = p + scan_line_len; p < end; p += 4)
 				p[3] = (char)255;
+			else
+				p += _decoder->get_bytes_per_scan_line();
 
 			continue;
 		}

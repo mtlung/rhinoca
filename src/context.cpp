@@ -82,6 +82,7 @@ Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 	domWindow->addGcRoot();	// releaseGcRoot() in ~Rhinoca()
 
 	taskPool.init(1);
+	resourceManager.rhinoca = this;
 	resourceManager.taskPool = &taskPool;
 	Loader::registerLoaders(&resourceManager);
 
