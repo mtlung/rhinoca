@@ -70,12 +70,10 @@ void PngLoader::onPngInfoReady()
 		(png_uint_32*)(&width), (png_uint_32*)(&height),
 		&bit_depth, &color_type, &interlace_method, NULL, NULL);
 
-	rowBytes = info_ptr->rowbytes;
-
 	switch(color_type) {
 	case PNG_COLOR_TYPE_RGB:
-		pixelDataFormat = Texture::RGB;
-		break;
+        png_set_filler(png_ptr, 0x000000ff, PNG_FILLER_AFTER);
+		png_read_update_info(png_ptr, info_ptr);
 	case PNG_COLOR_TYPE_RGB_ALPHA:
 		pixelDataFormat = Texture::RGBA;
 		break;
@@ -89,6 +87,8 @@ void PngLoader::onPngInfoReady()
 		_aborted = true;
 		break;
 	}
+
+	rowBytes = info_ptr->rowbytes;
 
 	// We'll let libpng expand interlaced images.
 	if(interlace_method == PNG_INTERLACE_ADAM7) {
