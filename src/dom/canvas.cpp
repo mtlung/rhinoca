@@ -4,6 +4,7 @@
 #include "document.h"
 #include "../context.h"
 #include "../xmlparser.h"
+#include <string.h>
 
 using namespace Render;
 

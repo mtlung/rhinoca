@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "resource.h"
+#include <string.h>
 
 Resource::Resource(const char* p)
 	: state(NotLoaded)

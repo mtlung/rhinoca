@@ -129,7 +129,7 @@ static void mysleep(int ms)
 #endif
 }
 
-static void _run(TaskPool* pool)
+void _run(TaskPool* pool)
 {
 	while(pool->keepRun()) {
 		pool->doSomeTask();
@@ -143,7 +143,7 @@ static void _run(TaskPool* pool)
 static DWORD WINAPI _threadFunc(LPVOID p)
 {
 #else
-static void* _Run(void* p) {
+static void* _threadFunc(void* p) {
 #endif
 	TaskPool* pool = reinterpret_cast<TaskPool*>(p);
 	_run(pool);
@@ -160,7 +160,7 @@ void TaskPool::init(rhuint threadCount)
 #ifdef RHINOCA_WINDOWS
 		_threadHandles[i] = reinterpret_cast<rhuint>(::CreateThread(NULL, 0, &_threadFunc, this, 0, NULL));
 #else
-		VERIFY(::pthread_create(&_threadHandles[i], NULL, &_threadFunc, this) == 0);
+		VERIFY(::pthread_create(reinterpret_cast<pthread_t*>(&_threadHandles[i]), NULL, &_threadFunc, this) == 0);
 #endif
 	}
 }

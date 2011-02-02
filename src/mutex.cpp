@@ -115,7 +115,7 @@ Mutex::Mutex(int spinCount)
 	_locked = false;
 #endif
 	// TODO: Spin count is not yet supported.
-	::pthread_mutex_init(&mMutex, nullptr);
+	::pthread_mutex_init(&mMutex, NULL);
 }
 
 Mutex::~Mutex()
@@ -128,7 +128,7 @@ Mutex::~Mutex()
 
 void Mutex::lock()
 {
-	MCD_VERIFY(::pthread_mutex_lock(&mMutex) == 0);
+	VERIFY(::pthread_mutex_lock(&mMutex) == 0);
 #ifndef NDEBUG
 	ASSERT(!_locked && "Double lock");
 	_locked = true;
@@ -141,7 +141,7 @@ void Mutex::unlock()
 	ASSERT(_locked && "Unlock when not locked");
 	_locked = false;
 #endif
-	MCD_VERIFY(::pthread_mutex_unlock(&mMutex) == 0);
+	VERIFY(::pthread_mutex_unlock(&mMutex) == 0);
 }
 
 bool Mutex::tryLock()
@@ -163,10 +163,10 @@ RecursiveMutex::RecursiveMutex(int spinCount)
 	(void)spinCount;
 
 	pthread_mutexattr_t attr;
-	MCD_VERIFY(::pthread_mutexattr_init(&attr) == 0);
-	MCD_VERIFY(::pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE) == 0);
-	MCD_VERIFY(::pthread_mutex_init(&mMutex, &attr) == 0);
-	MCD_VERIFY(::pthread_mutexattr_destroy(&attr) == 0);
+	VERIFY(::pthread_mutexattr_init(&attr) == 0);
+	VERIFY(::pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE) == 0);
+	VERIFY(::pthread_mutex_init(&mMutex, &attr) == 0);
+	VERIFY(::pthread_mutexattr_destroy(&attr) == 0);
 
 
 #ifndef NDEBUG
@@ -177,7 +177,7 @@ RecursiveMutex::RecursiveMutex(int spinCount)
 RecursiveMutex::~RecursiveMutex()
 {
 	ASSERT(!isLocked() && "Delete before unlock");
-	MCD_VERIFY(::pthread_mutex_destroy(&mMutex) == 0);
+	VERIFY(::pthread_mutex_destroy(&mMutex) == 0);
 }
 
 void RecursiveMutex::lock()
@@ -194,7 +194,7 @@ void RecursiveMutex::unlock()
 	ASSERT(_lockCount > 0);
 	--_lockCount;
 #endif
-	MCD_VERIFY(::pthread_mutex_unlock(&mMutex) == 0);
+	VERIFY(::pthread_mutex_unlock(&mMutex) == 0);
 }
 
 bool RecursiveMutex::tryLock()

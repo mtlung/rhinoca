@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "rhinoca.h"
-#include <malloc.h>
+#include <stdlib.h>
 
 void* rhinoca_malloc(unsigned int size)
 {

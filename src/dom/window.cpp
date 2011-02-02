@@ -33,7 +33,6 @@ static JSBool alert(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval
 static JSBool compileScript(TimerCallback* cb, JSContext* cx, JSObject* obj, jsval* argv)
 {
 	JSString* jss = JS_ValueToString(cx, argv[0]);
-	char* str = JS_GetStringBytes(jss);
 	cb->jsScript = JS_CompileScript(cx, obj, JS_GetStringBytes(jss), JS_GetStringLength(jss), NULL, 0);
 	if(!cb->jsScript) return JS_FALSE;
 	cb->jsScriptObject = JS_NewScriptObject(cx, cb->jsScript);
@@ -238,7 +237,7 @@ TimerCallback::TimerCallback()
 
 TimerCallback::~TimerCallback()
 {
-	ASSERT(closure == NULL);
+	ASSERT(closure == 0);
 	ASSERT(jsScript == NULL);
 }
 

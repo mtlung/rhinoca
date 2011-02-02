@@ -21,7 +21,7 @@ public:
 // Attributes
 	FixString id;
 	bool visible;
-	long top, left;
+	rhint32 top, left;
 
 	virtual const char* tagName() const;
 

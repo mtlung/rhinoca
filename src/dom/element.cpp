@@ -1,6 +1,14 @@
 #include "pch.h"
 #include "element.h"
 
+static JSBool JS_ValueToRhInt32(JSContext *cx, jsval v, rhint32 *ip)
+{
+	int32 val = *ip;
+	JSBool ret = JS_ValueToInt32(cx, v, &val);
+	*ip = val;
+	return ret;
+}
+
 namespace Dom {
 
 JSClass Element::jsClass = {
@@ -169,7 +177,7 @@ static JSBool styleGetTop(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 static JSBool styleSetTop(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	ElementStyle* self = reinterpret_cast<ElementStyle*>(JS_GetPrivate(cx, obj));
-	return JS_ValueToInt32(cx, *vp, &self->element->top);
+	return JS_ValueToRhInt32(cx, *vp, &self->element->top);
 }
 
 static JSBool styleGetLeft(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
@@ -182,7 +190,7 @@ static JSBool styleGetLeft(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 static JSBool styleSetLeft(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	ElementStyle* self = reinterpret_cast<ElementStyle*>(JS_GetPrivate(cx, obj));
-	return JS_ValueToInt32(cx, *vp, &self->element->left);
+	return JS_ValueToRhInt32(cx, *vp, &self->element->left);
 }
 
 static JSPropertySpec properties[] = {

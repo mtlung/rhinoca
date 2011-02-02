@@ -2,6 +2,7 @@
 #include "div.h"
 #include "document.h"
 #include "../context.h"
+#include <string.h>
 
 namespace Dom {
 

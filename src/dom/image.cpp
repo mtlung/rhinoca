@@ -55,7 +55,7 @@ static JSBool setSrc(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	char* str = JS_GetStringBytes(jss);
 
 	// Assume relative path to the document
-	Path path = self->ownerDocument->rhinoca->documentUrl;
+	Path path = self->ownerDocument->rhinoca->documentUrl.c_str();
 	path = path.getBranchPath();
 	path /= str;
 

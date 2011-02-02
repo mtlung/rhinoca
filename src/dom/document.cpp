@@ -5,6 +5,7 @@
 #include "node.h"
 #include "../common.h"
 #include "../context.h"
+#include <string.h>
 
 namespace Dom {
 

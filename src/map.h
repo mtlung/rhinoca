@@ -332,7 +332,7 @@ public:
 			if(parent) {
 				Comparator hint(parent->mKey);
 				int cmp = hint.compare(mKey);
-				MCD_ASSERT(!cmp || (cmp == dir));
+				ASSERT(!cmp || (cmp == dir));
 			}
 
 			size_t nL = static_cast<NodeBase*>(mChildren[Left])->assertValid(total, this, -1);
