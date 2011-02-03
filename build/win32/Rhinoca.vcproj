@@ -260,7 +260,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\render\glew.h"
+				RelativePath="..\..\src\render\gl.h"
 				>
 			</File>
 			<File

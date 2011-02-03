@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "render.h"
-#include "glew.h"
+#include "gl.h"
 
 namespace Render {
 

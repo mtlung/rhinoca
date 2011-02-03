@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "canvas2dcontext.h"
 #include "image.h"
-#include "../render/glew.h"
+#include "../render/gl.h"
 #include "../mat44.h"
 #include "../vec3.h"
 
