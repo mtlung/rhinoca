@@ -8,7 +8,7 @@
 #endif
 
 #if defined(RHINOCA_IOS_DEVICE)
-#	include "vfpmath/matrix_impl.h"
+//#	include "vfpmath/matrix_impl.h"
 #endif
 
 #include <memory.h> // For memcpy
@@ -33,7 +33,7 @@ void Mat44::mul(const Mat44& rhs, Mat44& ret) const
 	ASSERT(&rhs != &ret);
 	ASSERT(this != &ret);
 
-#if defined(RHINOCA_IOS_DEVICE)
+#if 0 && defined(RHINOCA_IOS_DEVICE)
 
 	Matrix4Mul(this->getPtr(), rhs.getPtr(), ret.getPtr());
 

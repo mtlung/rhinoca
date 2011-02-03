@@ -353,6 +353,10 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\src\context_win.h"
+			>
+		</File>
+		<File
 			RelativePath="..\..\src\intrusiveptr.h"
 			>
 		</File>

@@ -10,14 +10,19 @@ extern "C" {
 #endif
 
 #ifdef __APPLE__
+#	include <Availability.h>
+#	include <TargetConditionals.h>
 #	define RHINOCA_APPLE
 #	if TARGET_OS_IPHONE
+#		define RHINOCA_IOS
 #		define RHINOCA_IPHONE
 #	endif
 #	if TARGET_IPHONE_SIMULATOR
+#		define RHINOCA_IOS
 #		define RHINOCA_IPHONE_SIMULATOR
 #	endif
 #	if TARGET_OS_IPHONE && !TARGET_IPHONE_SIMULATOR
+#		define RHINOCA_IOS
 #		define RHINOCA_IOS_DEVICE
 #	endif
 #endif
@@ -64,9 +69,11 @@ typedef unsigned long rhuint64;
 #endif
 
 struct Rhinoca;
+typedef struct Rhinoca Rhinoca;
 
 /// Platform dependent handle
 struct RhinocaRenderContext;
+typedef struct RhinocaRenderContext RhinocaRenderContext;
 
 /// Platform dependent key/mouse/gesture event data
 struct RhinocaEvent {
@@ -76,6 +83,7 @@ struct RhinocaEvent {
 	int value3;
 	int value4;
 };
+typedef struct RhinocaEvent RhinocaEvent;
 
 // Context management
 RHINOCA_API void rhinoca_init();
