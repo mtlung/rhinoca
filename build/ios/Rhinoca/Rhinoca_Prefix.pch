@@ -1,0 +1,16 @@
+//
+// Prefix header for all source files of the 'CocoaTouchStaticLibrary' target in the 'CocoaTouchStaticLibrary' project.
+//
+
+#ifdef __OBJC__
+    #import <Foundation/Foundation.h>
+#endif
+
+#define XP_UNIX
+#include <assert.h>
+#include <stdio.h>
+#ifdef _DEBUG
+#	define DEBUG
+#endif
+#include "../../../thirdParty/SpiderMonkey/jsapi.h"
+#undef XP_UNIX

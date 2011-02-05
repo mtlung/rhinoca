@@ -21,7 +21,9 @@ static rhuint formatComponentCount(int format)
 	switch(format) {
 	case GL_LUMINANCE: return 1;
 	case GL_RGB: return 3;
+#ifdef RHINOCA_WINDOWS
 	case GL_BGR: return 3;
+#endif
 	case GL_RGBA: return 4;
 	case GL_BGRA: return 4;
 	}
@@ -29,26 +31,30 @@ static rhuint formatComponentCount(int format)
 	return 0;
 }
 
-bool Texture::create(rhuint w, rhuint h, const char* data, rhuint dataSize, int srcFormat)
+bool Texture::create(rhuint w, rhuint h, const char* data, rhuint dataSize, int srcFormat, int dstFormat)
 {
-
 	_type = GL_TEXTURE_2D;
+//	_type = GL_TEXTURE_RECTANGLE;
 	width = w;
 	height = h;
+
+	if(w == 0 || h == 0) return false;
+
+	ASSERT(GL_NO_ERROR == glGetError());
 
 	glGenTextures(1, &handle);
 	glBindTexture(_type, handle);
 
 	if(srcFormat) {
 		glTexImage2D(
-			_type, 0, GL_RGBA8, width, height, 0,
+			_type, 0, dstFormat, width, height, 0,
 			srcFormat,
 			GL_UNSIGNED_BYTE,
 			data
 		);
 	}
 	else {
-		glTexImage2D(_type, 0, GL_RGBA8, width, height, 0,
+		glTexImage2D(_type, 0, dstFormat, width, height, 0,
 			GL_RGBA,
 			GL_UNSIGNED_BYTE,
 			NULL

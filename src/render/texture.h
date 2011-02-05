@@ -14,15 +14,16 @@ public:
 
 	// Constants from gl.h
 	enum Format {
-		LUMINANCE	= 0x1909,
-		RGB			= 0x1907,
-		BGR			= 0x80E0,
-		RGBA		= 0x1908,
-		BGRA		= 0x80E1,
+		LUMINANCE		= 0x1909,
+		LUMINANCE_ALPHA	= 0x190A,
+		RGB				= 0x1907,
+		BGR				= 0x80E0,
+		RGBA			= 0x1908,
+		BGRA			= 0x80E1,
 	};
 
 // Operations
-	bool create(rhuint width, rhuint height, const char* data, rhuint dataSize, int srcFormat);
+	bool create(rhuint width, rhuint height, const char* data, rhuint dataSize, int srcFormat, int dstFormat=RGBA);
 
 	void clear();
 

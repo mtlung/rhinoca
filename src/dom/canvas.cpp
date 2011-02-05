@@ -193,13 +193,17 @@ Texture* HTMLCanvasElement::texture()
 void HTMLCanvasElement::setWidth(unsigned w)
 {
 	if(w == width()) return;
-	_framebuffer.createTexture(w, height());
+	_framebuffer.width = w;
+	if(!_framebuffer.external)
+		_framebuffer.createTexture(w, height());
 }
 
 void HTMLCanvasElement::setHeight(unsigned h)
 {
 	if(h == height()) return;
-	_framebuffer.createTexture(width(), h);
+	_framebuffer.height = h;
+	if(!_framebuffer.external)
+		_framebuffer.createTexture(width(), h);
 }
 
 const char* HTMLCanvasElement::tagName() const

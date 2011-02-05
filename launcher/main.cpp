@@ -5,7 +5,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 //#include <gl/gl.h>
-#include "../src/render/glew.h"
+#include "../src/render/gl.h"
 #include <stdio.h>
 #include <crtdbg.h>
 #include <assert.h>
@@ -197,8 +197,6 @@ static void ioClose(void* file, int threadId)
 	fclose(f);
 }
 
-void rhinoca_io_setcallback(rhinoca_io_open open, rhinoca_io_read read, rhinoca_io_close close);
-
 void alertFunc(Rhinoca* rh, void* userData, const char* str)
 {
 	MessageBoxA((HWND)userData, str, "Javascript alert", MB_OK);
@@ -236,6 +234,10 @@ int main()
 	::ShowWindow(hWnd, true);
 
 	rhinoca_openDocument(rh, "html5/test1/test.html");
+//	rhinoca_openDocument(rh, "html5/test3/test_sprites.html");
+//	rhinoca_openDocument(rh, "html5/test4/test.html");
+//	rhinoca_openDocument(rh, "html5/on9birds/on9birds.html");
+//	rhinoca_openDocument(rh, "../../test/htmlTest/imageTest/test.html");
 
 	while(true) {
 		MSG message;

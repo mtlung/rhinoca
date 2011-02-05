@@ -53,7 +53,7 @@ void Framebuffer::unbind()
 void Framebuffer::createTexture(unsigned w, unsigned h)
 {
 	texture = new Texture("");
-	texture->create(w, h, NULL, 0, Texture::BGRA);
+	(void)texture->create(w, h, NULL, 0, Texture::RGBA);
 	width = w;
 	height = h;
 }
