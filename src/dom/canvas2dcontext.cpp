@@ -281,12 +281,10 @@ void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 
 	glDisable(GL_BLEND);
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
+	Driver::setProjectionMatrix(Mat44::identity.data);
 	glOrtho(0, w_, 0, h_, 10, -10);
 
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+	Driver::setViewMatrix(Mat44::identity.data);
 
 	Driver::useTexture(NULL);
 
@@ -337,12 +335,10 @@ void CanvasRenderingContext2D::drawImage(
 
 	Driver::setViewport(0, 0, w, h);
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
+	Driver::setProjectionMatrix(Mat44::identity.data);
 	glOrtho(0, w, 0, h, 10, -10);
 
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+	Driver::setViewMatrix(Mat44::identity.data);
 
 	float tw = 1.0f / texture->width;
 	float th = 1.0f / texture->height;
