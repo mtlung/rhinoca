@@ -71,12 +71,12 @@ void Driver::deleteContext(void* ctx)
 
 void Driver::forceApplyCurrent()
 {
-	if(_currentContext->texture) {
+	if(_currentContext->enableTexture2D)
 		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, (GLuint)_currentContext->texture);
-	}
 	else
 		glDisable(GL_TEXTURE_2D);
+
+	glBindTexture(GL_TEXTURE_2D, (GLuint)_currentContext->texture);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)_currentContext->renderTarget);
 }
@@ -187,18 +187,22 @@ void Driver::deleteTexture(void* textureHandle)
 
 void Driver::useTexture(void* textureHandle)
 {
-//	if(_currentContext->texture == textureHandle) return;
+	if(_currentContext->texture == textureHandle) return;
 	_currentContext->texture = textureHandle;
 
 	GLuint handle = reinterpret_cast<GLuint>(textureHandle);
 
 	if(handle) {
-		if(!_currentContext->enableTexture2D)
+		if(!_currentContext->enableTexture2D) {
 			glEnable(GL_TEXTURE_2D);
+			_currentContext->enableTexture2D = true;
+		}
 	}
 	else {
-		if(_currentContext->enableTexture2D)
+		if(_currentContext->enableTexture2D) {
 			glDisable(GL_TEXTURE_2D);
+			_currentContext->enableTexture2D = false;
+		}
 	}
 	glBindTexture(GL_TEXTURE_2D, handle);
 }

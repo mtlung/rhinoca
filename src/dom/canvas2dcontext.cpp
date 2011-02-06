@@ -288,7 +288,7 @@ void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	glDisable(GL_TEXTURE_2D);
+	Driver::useTexture(NULL);
 
 	glColor4f(0, 0, 0, 0);
 	glBegin(GL_QUADS);
@@ -350,7 +350,6 @@ void CanvasRenderingContext2D::drawImage(
 	srcx *= tw;	srcw *= tw;
 	srcy *= th; srch *= th;
 
-	glEnable(GL_TEXTURE_2D);
 	texture->bind();
 
 	float sx1 = srcx, sx2 = srcx + srcw;
