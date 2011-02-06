@@ -10,6 +10,7 @@
 #include "dom/mouseevent.h"
 #include "dom/registerfactories.h"
 #include "loader/loader.h"
+#include "render/driver.h"
 
 #ifdef RHINOCA_IOS
 #	include "context_ios.h"
@@ -88,7 +89,7 @@ Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 	domWindow->bind(jsContext, jsGlobal);
 	domWindow->addGcRoot();	// releaseGcRoot() in ~Rhinoca()
 
-	taskPool.init(1);
+//	taskPool.init(1);
 	resourceManager.rhinoca = this;
 	resourceManager.taskPool = &taskPool;
 	Loader::registerLoaders(&resourceManager);
@@ -141,6 +142,8 @@ Rhinoca::~Rhinoca()
 
 void Rhinoca::update()
 {
+	Render::Driver::forceApplyCurrent();
+
 	domWindow->update();
 
 	resourceManager.update();
@@ -149,6 +152,8 @@ void Rhinoca::update()
 	domWindow->render();
 
 	JS_MaybeGC(jsContext);
+
+	Render::Driver::useRenderTarget(NULL);
 }
 
 void Rhinoca::collectGarbage()

@@ -252,6 +252,14 @@
 			Name="render"
 			>
 			<File
+				RelativePath="..\..\src\render\win32\driver.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\render\driver.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\render\framebuffer.cpp"
 				>
 			</File>

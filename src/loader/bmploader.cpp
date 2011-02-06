@@ -22,7 +22,7 @@ public:
 	BmpLoader(Texture* t, ResourceManager* mgr)
 		: texture(t), manager(mgr)
 		, width(0), height(0)
-		, pixelData(NULL), pixelDataSize(0), pixelDataFormat(0)
+		, pixelData(NULL), pixelDataSize(0), pixelDataFormat(Driver::RGBA)
 	{}
 
 	~BmpLoader() {
@@ -39,7 +39,7 @@ public:
 	rhuint width, height;
 	char* pixelData;
 	rhuint pixelDataSize;
-	int pixelDataFormat;
+	Texture::Format pixelDataFormat;
 };
 
 void BmpLoader::run(TaskPool* taskPool)
@@ -79,7 +79,7 @@ void BmpLoader::load(TaskPool* taskPool)
 	io_read(f, &infoHeader, sizeof(infoHeader), tId);
 	width = infoHeader.biWidth;
 
-	pixelDataFormat = Texture::BGR;
+	pixelDataFormat = Driver::BGR;
 
 	if(infoHeader.biBitCount != 24) {
 		print(rh, "BitmapLoader: Only 24-bit color is supported, operation aborted");

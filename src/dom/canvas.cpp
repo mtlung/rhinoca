@@ -122,9 +122,10 @@ void HTMLCanvasElement::bindFramebuffer()
 	_framebuffer.bind();
 }
 
-void HTMLCanvasElement::unbindFramebuffer()
+void HTMLCanvasElement::createTextureFrameBuffer(unsigned w, unsigned h)
 {
-	_framebuffer.unbind();
+	if(w > 0 && h > 0)
+		_framebuffer.createTexture(w, h);
 }
 
 void HTMLCanvasElement::useExternalFrameBuffer(Rhinoca* rh)
@@ -146,7 +147,7 @@ void HTMLCanvasElement::render()
 {
 	// No need to draw to the window, if 'frontBufferOnly' is set to true such that all
 	// draw operation is already put on the window
-	if(_framebuffer.external != 0) return;
+	if(!_framebuffer.texture) return;
 
 	DOMWindow* window = ownerDocument->window();
 	HTMLCanvasElement* vc = window->virtualCanvas;
@@ -193,16 +194,24 @@ Texture* HTMLCanvasElement::texture()
 void HTMLCanvasElement::setWidth(unsigned w)
 {
 	if(w == width()) return;
+
+	if(!_framebuffer.handle)
+		createTextureFrameBuffer(w, _framebuffer.height);
 	_framebuffer.width = w;
-	if(!_framebuffer.external)
+
+	if(_framebuffer.texture)
 		_framebuffer.createTexture(w, height());
 }
 
 void HTMLCanvasElement::setHeight(unsigned h)
 {
 	if(h == height()) return;
+
+	if(!_framebuffer.handle)
+		createTextureFrameBuffer(_framebuffer.width, h);
 	_framebuffer.height = h;
-	if(!_framebuffer.external)
+
+	if(_framebuffer.texture)
 		_framebuffer.createTexture(width(), h);
 }
 

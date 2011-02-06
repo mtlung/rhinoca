@@ -277,7 +277,7 @@ void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 	unsigned w_ = width();
 	unsigned h_ = height();
 
-	glViewport(0, 0, w_, h_);
+	Driver::setViewport(0, 0, w_, h_);
 
 	glDisable(GL_BLEND);
 
@@ -300,8 +300,6 @@ void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 	glColor4f(1, 1, 1, 1);
 
 	glEnable(GL_BLEND);
-
-	canvas->unbindFramebuffer();
 }
 
 void CanvasRenderingContext2D::drawImage(
@@ -337,7 +335,7 @@ void CanvasRenderingContext2D::drawImage(
 
 	ASSERT(w > 0 && h > 0);
 
-	glViewport(0, 0, w, h);
+	Driver::setViewport(0, 0, w, h);
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -383,8 +381,6 @@ void CanvasRenderingContext2D::drawImage(
 		glTexCoord2f(sx1, sy2);
 		glVertex3fv(dp4.data);
 	glEnd();
-
-	canvas->unbindFramebuffer();
 }
 
 void CanvasRenderingContext2D::save()

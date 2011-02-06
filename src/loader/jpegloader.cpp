@@ -41,7 +41,7 @@ public:
 	JpegLoader(Texture* t, ResourceManager* mgr)
 		: texture(t), manager(mgr)
 		, width(0), height(0)
-		, pixelData(NULL), pixelDataSize(0), rowBytes(0), pixelDataFormat(0)
+		, pixelData(NULL), pixelDataSize(0), rowBytes(0), pixelDataFormat(Driver::RGBA)
 		, _decoder(NULL), _stream(NULL)
 	{}
 
@@ -63,7 +63,7 @@ public:
 	char* pixelData;
 	rhuint pixelDataSize;
 	rhuint rowBytes;
-	int pixelDataFormat;
+	Texture::Format pixelDataFormat;
 
 	Pjpeg_decoder _decoder;
 	Stream* _stream;
@@ -100,9 +100,9 @@ void JpegLoader::load(TaskPool* taskPool)
 
 	int c = _decoder->get_num_components();
 	if(c == 1)
-		pixelDataFormat = Texture::LUMINANCE;
+		pixelDataFormat = Driver::LUMINANCE;
 	else if(c == 3)
-		pixelDataFormat = Texture::RGBA;	// Note that the source format is 4 byte even c == 3
+		pixelDataFormat = Driver::RGBA;	// Note that the source format is 4 byte even c == 3
 	else {
 		print(rh, "JpegLoader: image with number of color component equals to %i is not supported, operation aborted", c);
 		goto Abort;

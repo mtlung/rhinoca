@@ -45,7 +45,7 @@ public:
 	char* pixelData;
 	rhuint pixelDataSize;
 	rhuint rowBytes;
-	int pixelDataFormat;
+	Texture::Format pixelDataFormat;
 
 	png_structp png_ptr;
 	png_infop info_ptr;
@@ -74,7 +74,7 @@ void PngLoader::onPngInfoReady()
 	case PNG_COLOR_TYPE_RGB:
 		png_set_filler(png_ptr, 0x000000ff, PNG_FILLER_AFTER);
 	case PNG_COLOR_TYPE_RGB_ALPHA:
-		pixelDataFormat = Texture::RGBA;
+		pixelDataFormat = Driver::RGBA;
 		break;
 	case PNG_COLOR_TYPE_GRAY:
 		print(rh, "PngLoader: gray scale image is not yet supported, operation aborted\n");
@@ -92,6 +92,9 @@ void PngLoader::onPngInfoReady()
 		_aborted = true;
 		break;
 	}
+
+	if(_aborted)
+		return;
 
 	// We'll let libpng expand interlaced images.
 	if(interlace_method == PNG_INTERLACE_ADAM7) {
@@ -135,7 +138,7 @@ static void end_callback(png_structp png_ptr, png_infop)
 PngLoader::PngLoader(Texture* t, ResourceManager* mgr)
 	: texture(t), manager(mgr)
 	, width(0), height(0)
-	, pixelData(NULL), pixelDataSize(0), rowBytes(0), pixelDataFormat(0)
+	, pixelData(NULL), pixelDataSize(0), rowBytes(0), pixelDataFormat(Driver::RGBA)
 	, png_ptr(NULL), info_ptr(NULL)
 	, currentPass(0)
 	, _aborted(false)

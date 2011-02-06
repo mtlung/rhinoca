@@ -1,16 +1,18 @@
 #include "pch.h"
 #include "rhinoca.h"
 #include "context.h"
-#include "render/render.h"
+#include "render/driver.h"
 #include <stdarg.h>	// For va_list
 
 // Context
 JSRuntime* jsrt = NULL;
+void* driverContext = NULL;
 
 void rhinoca_init()
 {
 	jsrt = JS_NewRuntime(8L * 1024L * 1024L);
-	VERIFY(Render::init());
+	driverContext = Render::Driver::createContext(0);
+	Render::Driver::useContext(driverContext);
 }
 
 void rhinoca_close()
@@ -19,7 +21,7 @@ void rhinoca_close()
 	JS_ShutDown();
 
 	jsrt = NULL;
-	Render::close();
+	Render::Driver::deleteContext(driverContext);
 }
 
 Rhinoca* rhinoca_create(RhinocaRenderContext* renderContext)

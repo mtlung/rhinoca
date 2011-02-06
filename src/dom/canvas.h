@@ -18,8 +18,8 @@ public:
 	void bind(JSContext* cx, JSObject* parent);
 
 	void bindFramebuffer();
-	void unbindFramebuffer();
 
+	void createTextureFrameBuffer(unsigned w, unsigned h);
 	void useExternalFrameBuffer(Rhinoca* rh);
 
 	void createContext(const char* ctxName);

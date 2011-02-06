@@ -1,8 +1,8 @@
 #ifndef __RENDERER_FRAMEBUFFER_H__
 #define __RENDERER_FRAMEBUFFER_H__
 
-#include "../common.h"
 #include "texture.h"
+#include "../common.h"
 
 namespace Render {
 
@@ -21,17 +21,13 @@ public:
 	void useExternal(RhinocaRenderContext* context);
 
 // Attibutes
-	rhuint handle;
-	rhuint external;
+	void* handle;
 
-	rhuint width, height;
+	unsigned width, height;
 
 	/// Null -> Render to frame buffer
 	/// Not null -> Render to texture
 	TexturePtr texture;
-
-protected:
-	bool _binded;
 };	// Framebuffer
 
 }	// Render

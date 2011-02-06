@@ -1,6 +1,7 @@
 #ifndef __RENDER_TEXTURE_H__
 #define __RENDER_TEXTURE_H__
 
+#include "driver.h"
 #include "../common.h"
 #include "../resource.h"
 
@@ -12,29 +13,18 @@ public:
 	explicit Texture(const char* uri);
 	virtual ~Texture();
 
-	// Constants from gl.h
-	enum Format {
-		LUMINANCE		= 0x1909,
-		LUMINANCE_ALPHA	= 0x190A,
-		RGB				= 0x1907,
-		BGR				= 0x80E0,
-		RGBA			= 0x1908,
-		BGRA			= 0x80E1,
-	};
-
 // Operations
-	bool create(rhuint width, rhuint height, const char* data, rhuint dataSize, int srcFormat, int dstFormat=RGBA);
+	typedef Driver::TextureFormat Format;
+
+	bool create(unsigned width, unsigned height, const char* data, unsigned dataSize, Format dataFormat);
 
 	void clear();
 
 	void bind();
 
 // Attibutes
-	rhuint handle;
-	rhuint width, height;
-
-protected:
-	rhuint _type;
+	void* handle;
+	unsigned width, height;
 };	// Texture
 
 typedef IntrusivePtr<Texture> TexturePtr;
