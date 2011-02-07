@@ -292,7 +292,7 @@ void TaskPool::_wait(TaskProxy* p, int tId)
 	ASSERT(mutex.isLocked());
 	if(!p) return;
 
-	Task* taskToWait = p->task;
+//	Task* taskToWait = p->task;
 	TaskId id = p->id;
 	if(p->affinity == 0 || p->affinity == tId) {
 		_doTask(p, tId);

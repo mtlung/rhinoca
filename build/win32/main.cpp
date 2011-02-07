@@ -1,11 +1,11 @@
 #define  _CRT_SECURE_NO_WARNINGS
-#include "../src/rhinoca.h"
+#include "../../src/rhinoca.h"
 
 #define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 //#include <gl/gl.h>
-#include "../src/render/gl.h"
+#include "../../src/render/gl.h"
 #include <stdio.h>
 #include <crtdbg.h>
 #include <assert.h>
@@ -260,7 +260,7 @@ int main()
 			rhinoca_update(rh);
 			ASSERT(GL_NO_ERROR == glGetError());
 
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+//			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 //			glClearColor(0, 0, 1, 1);
 //			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

@@ -173,7 +173,7 @@
 	</References>
 	<Files>
 		<File
-			RelativePath="..\..\launcher\main.cpp"
+			RelativePath=".\main.cpp"
 			>
 		</File>
 	</Files>
