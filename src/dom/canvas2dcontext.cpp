@@ -277,13 +277,16 @@ void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 	unsigned w_ = width();
 	unsigned h_ = height();
 
+	static const Driver::BlendState blendState = {
+		false,
+		Driver::BlendState::Add, Driver::BlendState::Add,
+		Driver::BlendState::One, Driver::BlendState::Zero,
+		Driver::BlendState::One, Driver::BlendState::Zero
+	};
+	Driver::setBlendState(blendState);
+
 	Driver::setViewport(0, 0, w_, h_);
-
-	glDisable(GL_BLEND);
-
-	Driver::setProjectionMatrix(Mat44::identity.data);
-	glOrtho(0, w_, 0, h_, 10, -10);
-
+	Driver::ortho(0, w_, 0, h_, 10, -10);
 	Driver::setViewMatrix(Mat44::identity.data);
 
 	Driver::useTexture(NULL);
@@ -296,8 +299,6 @@ void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 		glVertex3f(x + 0, y + h, -1);
 	glEnd();
 	glColor4f(1, 1, 1, 1);
-
-	glEnable(GL_BLEND);
 }
 
 void CanvasRenderingContext2D::drawImage(
@@ -333,11 +334,16 @@ void CanvasRenderingContext2D::drawImage(
 
 	ASSERT(w > 0 && h > 0);
 
+	static const Driver::BlendState blendState = {
+		true,
+		Driver::BlendState::Add, Driver::BlendState::Add,
+		Driver::BlendState::SrcAlpha, Driver::BlendState::InvSrcAlpha,
+		Driver::BlendState::SrcAlpha, Driver::BlendState::InvSrcAlpha
+	};
+	Driver::setBlendState(blendState);
+
 	Driver::setViewport(0, 0, w, h);
-
-	Driver::setProjectionMatrix(Mat44::identity.data);
-	glOrtho(0, w, 0, h, 10, -10);
-
+	Driver::ortho(0, w, 0, h, 10, -10);
 	Driver::setViewMatrix(Mat44::identity.data);
 
 	float tw = 1.0f / texture->width;

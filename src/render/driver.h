@@ -24,6 +24,9 @@ public:
 	static void setProjectionMatrix(const float* matrix);
 	static void setViewMatrix(const float* matrix);
 
+	static void ortho(float left, float right, float bottom, float top, float zNear, float zFar);
+	static void ortho(unsigned left, unsigned right, unsigned bottom, unsigned top, unsigned zNear, unsigned zFar);
+
 // Texture
 	enum TextureFormat {
 		ANY				= 0,
@@ -111,8 +114,8 @@ public:
 		BlendValue colorSrc, colorDst, alphaSrc, alphaDst;
 	};	// BlendState
 
-	static void setRasterizerState(RasterizerState& state);
-	static void setBlendState(BlendState& state);
+	static void setRasterizerState(const RasterizerState& state);
+	static void setBlendState(const BlendState& state);
 
 	static void setViewport(float left, float top, float width, float height);
 	static void setViewport(unsigned left, unsigned top, unsigned width, unsigned height);

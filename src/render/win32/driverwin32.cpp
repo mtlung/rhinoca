@@ -126,7 +126,6 @@ void Driver::setProjectionMatrix(const float* matrix)
 {
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixf(matrix);
-
 }
 
 void Driver::setViewMatrix(const float* matrix)
@@ -135,6 +134,7 @@ void Driver::setViewMatrix(const float* matrix)
 	glLoadMatrixf(matrix);
 }
 
+// Texture
 static Driver::TextureFormat autoChooseFormat(Driver::TextureFormat srcFormat)
 {
 	switch(srcFormat) {
@@ -147,7 +147,6 @@ static Driver::TextureFormat autoChooseFormat(Driver::TextureFormat srcFormat)
 	}
 }
 
-// Texture
 void* Driver::createTexture(unsigned width, unsigned height, TextureFormat internalFormat, const void* srcData, TextureFormat srcDataFormat)
 {
 	ASSERT(GL_NO_ERROR == glGetError());
@@ -256,11 +255,11 @@ void Driver::useMesh(int meshHandle)
 }
 
 // States
-void Driver::setRasterizerState(RasterizerState& state)
+void Driver::setRasterizerState(const RasterizerState& state)
 {
 }
 
-void Driver::setBlendState(BlendState& state)
+void Driver::setBlendState(const BlendState& state)
 {
 	unsigned h = hash(&state, sizeof(state));
 	if(h == _currentContext->blendStateHash) return;
