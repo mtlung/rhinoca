@@ -7,14 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		182F552F13039084003805A7 /* rhino_gray.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 182F552913039084003805A7 /* rhino_gray.jpg */; };
+		182F553013039084003805A7 /* rhino_gray.png in Resources */ = {isa = PBXBuildFile; fileRef = 182F552A13039084003805A7 /* rhino_gray.png */; };
+		182F553113039084003805A7 /* rhino.bmp in Resources */ = {isa = PBXBuildFile; fileRef = 182F552B13039084003805A7 /* rhino.bmp */; };
+		182F553213039084003805A7 /* rhino.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 182F552C13039084003805A7 /* rhino.jpg */; };
+		182F553313039084003805A7 /* rhino.png in Resources */ = {isa = PBXBuildFile; fileRef = 182F552D13039084003805A7 /* rhino.png */; };
+		182F553413039084003805A7 /* test.html in Resources */ = {isa = PBXBuildFile; fileRef = 182F552E13039084003805A7 /* test.html */; };
+		182F5542130390E6003805A7 /* libSpiderMonkey.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 182F553F130390D1003805A7 /* libSpiderMonkey.a */; };
 		187BCBBF12FAAC2F0042FDB1 /* libRhinoca.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 187BCB8F12FAA71F0042FDB1 /* libRhinoca.a */; };
-		187BCBF112FAB64C0042FDB1 /* libSpiderMonkey.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 187BCBF012FAB6430042FDB1 /* libSpiderMonkey.a */; };
-		187BCCDC12FAFB0E0042FDB1 /* rhino_gray.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 187BCCD612FAFB0E0042FDB1 /* rhino_gray.jpg */; };
-		187BCCDD12FAFB0E0042FDB1 /* rhino_gray.png in Resources */ = {isa = PBXBuildFile; fileRef = 187BCCD712FAFB0E0042FDB1 /* rhino_gray.png */; };
-		187BCCDE12FAFB0E0042FDB1 /* rhino.bmp in Resources */ = {isa = PBXBuildFile; fileRef = 187BCCD812FAFB0E0042FDB1 /* rhino.bmp */; };
-		187BCCDF12FAFB0E0042FDB1 /* rhino.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 187BCCD912FAFB0E0042FDB1 /* rhino.jpg */; };
-		187BCCE012FAFB0E0042FDB1 /* rhino.png in Resources */ = {isa = PBXBuildFile; fileRef = 187BCCDA12FAFB0E0042FDB1 /* rhino.png */; };
-		187BCCE112FAFB0E0042FDB1 /* test.html in Resources */ = {isa = PBXBuildFile; fileRef = 187BCCDB12FAFB0E0042FDB1 /* test.html */; };
 		187BCE2D12FC315F0042FDB1 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 187BCE2C12FC315F0042FDB1 /* CoreGraphics.framework */; };
 		1D3623260D0F684500981E51 /* LauncherAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3623250D0F684500981E51 /* LauncherAppDelegate.m */; };
 		1D60589B0D05DD56006BFB54 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; };
@@ -31,38 +31,38 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		182F553E130390D1003805A7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 182F5537130390D1003805A7 /* SpiderMonkey.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = D2AAC07E0554694100DB518D /* libSpiderMonkey.a */;
+			remoteInfo = SpiderMonkey;
+		};
 		187BCB8E12FAA71F0042FDB1 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 187BCB8A12FAA71F0042FDB1 /* Rhinoca.xcodeproj */;
 			proxyType = 2;
-			remoteGlobalIDString = D2AAC07E0554694100DB518D /* libRhinoca.a */;
+			remoteGlobalIDString = D2AAC07E0554694100DB518D;
 			remoteInfo = Rhinoca;
 		};
 		187BCB9212FAA7330042FDB1 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 187BCB8A12FAA71F0042FDB1 /* Rhinoca.xcodeproj */;
 			proxyType = 1;
-			remoteGlobalIDString = D2AAC07D0554694100DB518D /* Rhinoca */;
+			remoteGlobalIDString = D2AAC07D0554694100DB518D;
 			remoteInfo = Rhinoca;
-		};
-		187BCBEF12FAB6430042FDB1 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 187BCBEB12FAB6430042FDB1 /* SpiderMonkey.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = D2AAC07E0554694100DB518D /* libSpiderMonkey.a */;
-			remoteInfo = SpiderMonkey;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		182F552913039084003805A7 /* rhino_gray.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = rhino_gray.jpg; path = ../../../test/htmlTest/imageTest/rhino_gray.jpg; sourceTree = SOURCE_ROOT; };
+		182F552A13039084003805A7 /* rhino_gray.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = rhino_gray.png; path = ../../../test/htmlTest/imageTest/rhino_gray.png; sourceTree = SOURCE_ROOT; };
+		182F552B13039084003805A7 /* rhino.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; name = rhino.bmp; path = ../../../test/htmlTest/imageTest/rhino.bmp; sourceTree = SOURCE_ROOT; };
+		182F552C13039084003805A7 /* rhino.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = rhino.jpg; path = ../../../test/htmlTest/imageTest/rhino.jpg; sourceTree = SOURCE_ROOT; };
+		182F552D13039084003805A7 /* rhino.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = rhino.png; path = ../../../test/htmlTest/imageTest/rhino.png; sourceTree = SOURCE_ROOT; };
+		182F552E13039084003805A7 /* test.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = test.html; path = ../../../test/htmlTest/imageTest/test.html; sourceTree = SOURCE_ROOT; };
+		182F5537130390D1003805A7 /* SpiderMonkey.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SpiderMonkey.xcodeproj; path = ../../../thirdParty/SpiderMonkey/ios/SpiderMonkey.xcodeproj; sourceTree = SOURCE_ROOT; };
 		187BCB8A12FAA71F0042FDB1 /* Rhinoca.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Rhinoca.xcodeproj; path = ../Rhinoca/Rhinoca.xcodeproj; sourceTree = SOURCE_ROOT; };
-		187BCBEB12FAB6430042FDB1 /* SpiderMonkey.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SpiderMonkey.xcodeproj; path = ../../../thirdParty/SpiderMonkey/SpiderMonkey.xcodeproj; sourceTree = SOURCE_ROOT; };
-		187BCCD612FAFB0E0042FDB1 /* rhino_gray.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = rhino_gray.jpg; path = ../../../test/imageTest/rhino_gray.jpg; sourceTree = SOURCE_ROOT; };
-		187BCCD712FAFB0E0042FDB1 /* rhino_gray.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = rhino_gray.png; path = ../../../test/imageTest/rhino_gray.png; sourceTree = SOURCE_ROOT; };
-		187BCCD812FAFB0E0042FDB1 /* rhino.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; name = rhino.bmp; path = ../../../test/imageTest/rhino.bmp; sourceTree = SOURCE_ROOT; };
-		187BCCD912FAFB0E0042FDB1 /* rhino.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = rhino.jpg; path = ../../../test/imageTest/rhino.jpg; sourceTree = SOURCE_ROOT; };
-		187BCCDA12FAFB0E0042FDB1 /* rhino.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = rhino.png; path = ../../../test/imageTest/rhino.png; sourceTree = SOURCE_ROOT; };
-		187BCCDB12FAFB0E0042FDB1 /* test.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = test.html; path = ../../../test/imageTest/test.html; sourceTree = SOURCE_ROOT; };
 		187BCE2412FC31340042FDB1 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		187BCE2C12FC315F0042FDB1 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -90,8 +90,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				187BCBF112FAB64C0042FDB1 /* libSpiderMonkey.a in Frameworks */,
 				187BCBBF12FAAC2F0042FDB1 /* libRhinoca.a in Frameworks */,
+				182F5542130390E6003805A7 /* libSpiderMonkey.a in Frameworks */,
 				1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */,
 				1DF5F4E00D08C38300B7A737 /* UIKit.framework in Frameworks */,
 				28FD15000DC6FC520079059D /* OpenGLES.framework in Frameworks */,
@@ -116,18 +116,18 @@
 			path = Classes;
 			sourceTree = "<group>";
 		};
-		187BCB8B12FAA71F0042FDB1 /* Products */ = {
+		182F5538130390D1003805A7 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				187BCB8F12FAA71F0042FDB1 /* libRhinoca.a */,
+				182F553F130390D1003805A7 /* libSpiderMonkey.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		187BCBEC12FAB6430042FDB1 /* Products */ = {
+		187BCB8B12FAA71F0042FDB1 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				187BCBF012FAB6430042FDB1 /* libSpiderMonkey.a */,
+				187BCB8F12FAA71F0042FDB1 /* libRhinoca.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -152,7 +152,7 @@
 		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
 			isa = PBXGroup;
 			children = (
-				187BCBEB12FAB6430042FDB1 /* SpiderMonkey.xcodeproj */,
+				182F5537130390D1003805A7 /* SpiderMonkey.xcodeproj */,
 				187BCB8A12FAA71F0042FDB1 /* Rhinoca.xcodeproj */,
 				080E96DDFE201D6D7F000001 /* Classes */,
 				2514C27610084DB600A42282 /* Shaders */,
@@ -178,12 +178,12 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				187BCCD612FAFB0E0042FDB1 /* rhino_gray.jpg */,
-				187BCCD712FAFB0E0042FDB1 /* rhino_gray.png */,
-				187BCCD812FAFB0E0042FDB1 /* rhino.bmp */,
-				187BCCD912FAFB0E0042FDB1 /* rhino.jpg */,
-				187BCCDA12FAFB0E0042FDB1 /* rhino.png */,
-				187BCCDB12FAFB0E0042FDB1 /* test.html */,
+				182F552913039084003805A7 /* rhino_gray.jpg */,
+				182F552A13039084003805A7 /* rhino_gray.png */,
+				182F552B13039084003805A7 /* rhino.bmp */,
+				182F552C13039084003805A7 /* rhino.jpg */,
+				182F552D13039084003805A7 /* rhino.png */,
+				182F552E13039084003805A7 /* test.html */,
 				28EC4C5811D54ECE0027AA9F /* LauncherViewController.xib */,
 				28AD733E0D9D9553002E5188 /* MainWindow.xib */,
 				8D1107310486CEB800E47090 /* Launcher-Info.plist */,
@@ -246,8 +246,8 @@
 					ProjectRef = 187BCB8A12FAA71F0042FDB1 /* Rhinoca.xcodeproj */;
 				},
 				{
-					ProductGroup = 187BCBEC12FAB6430042FDB1 /* Products */;
-					ProjectRef = 187BCBEB12FAB6430042FDB1 /* SpiderMonkey.xcodeproj */;
+					ProductGroup = 182F5538130390D1003805A7 /* Products */;
+					ProjectRef = 182F5537130390D1003805A7 /* SpiderMonkey.xcodeproj */;
 				},
 			);
 			projectRoot = "";
@@ -258,18 +258,18 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
+		182F553F130390D1003805A7 /* libSpiderMonkey.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libSpiderMonkey.a;
+			remoteRef = 182F553E130390D1003805A7 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 		187BCB8F12FAA71F0042FDB1 /* libRhinoca.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
 			path = libRhinoca.a;
 			remoteRef = 187BCB8E12FAA71F0042FDB1 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		187BCBF012FAB6430042FDB1 /* libSpiderMonkey.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = libSpiderMonkey.a;
-			remoteRef = 187BCBEF12FAB6430042FDB1 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -283,12 +283,12 @@
 				2514C27C10084DCA00A42282 /* Shader.vsh in Resources */,
 				28AD733F0D9D9553002E5188 /* MainWindow.xib in Resources */,
 				28EC4C5A11D54ECE0027AA9F /* LauncherViewController.xib in Resources */,
-				187BCCDC12FAFB0E0042FDB1 /* rhino_gray.jpg in Resources */,
-				187BCCDD12FAFB0E0042FDB1 /* rhino_gray.png in Resources */,
-				187BCCDE12FAFB0E0042FDB1 /* rhino.bmp in Resources */,
-				187BCCDF12FAFB0E0042FDB1 /* rhino.jpg in Resources */,
-				187BCCE012FAFB0E0042FDB1 /* rhino.png in Resources */,
-				187BCCE112FAFB0E0042FDB1 /* test.html in Resources */,
+				182F552F13039084003805A7 /* rhino_gray.jpg in Resources */,
+				182F553013039084003805A7 /* rhino_gray.png in Resources */,
+				182F553113039084003805A7 /* rhino.bmp in Resources */,
+				182F553213039084003805A7 /* rhino.jpg in Resources */,
+				182F553313039084003805A7 /* rhino.png in Resources */,
+				182F553413039084003805A7 /* test.html in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

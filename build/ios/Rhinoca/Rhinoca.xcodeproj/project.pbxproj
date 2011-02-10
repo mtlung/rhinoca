@@ -82,16 +82,16 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		187BCB5512FAA2CD0042FDB1 /* PBXContainerItemProxy */ = {
+		182F5650130397F9003805A7 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 187BCB4E12FAA2CD0042FDB1 /* SpiderMonkey.xcodeproj */;
+			containerPortal = 182F564C130397F9003805A7 /* SpiderMonkey.xcodeproj */;
 			proxyType = 2;
 			remoteGlobalIDString = D2AAC07E0554694100DB518D /* libSpiderMonkey.a */;
 			remoteInfo = SpiderMonkey;
 		};
-		187BCB5712FAA2D90042FDB1 /* PBXContainerItemProxy */ = {
+		182F56521303980A003805A7 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 187BCB4E12FAA2CD0042FDB1 /* SpiderMonkey.xcodeproj */;
+			containerPortal = 182F564C130397F9003805A7 /* SpiderMonkey.xcodeproj */;
 			proxyType = 1;
 			remoteGlobalIDString = D2AAC07D0554694100DB518D /* SpiderMonkey */;
 			remoteInfo = SpiderMonkey;
@@ -99,6 +99,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		182F564C130397F9003805A7 /* SpiderMonkey.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SpiderMonkey.xcodeproj; path = ../../../thirdParty/SpiderMonkey/ios/SpiderMonkey.xcodeproj; sourceTree = SOURCE_ROOT; };
 		187BC9CD12F9B4560042FDB1 /* atomic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = atomic.h; path = ../../../src/atomic.h; sourceTree = SOURCE_ROOT; };
 		187BC9CE12F9B4560042FDB1 /* common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = common.cpp; path = ../../../src/common.cpp; sourceTree = SOURCE_ROOT; };
 		187BC9CF12F9B4560042FDB1 /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = common.h; path = ../../../src/common.h; sourceTree = SOURCE_ROOT; };
@@ -156,7 +157,6 @@
 		187BCA9812F9BEFB0042FDB1 /* window.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = window.h; path = ../../../src/dom/window.h; sourceTree = SOURCE_ROOT; };
 		187BCAB912F9BF450042FDB1 /* loader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = loader.cpp; sourceTree = "<group>"; };
 		187BCABA12F9BF450042FDB1 /* loader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = loader.h; sourceTree = "<group>"; };
-		187BCB4E12FAA2CD0042FDB1 /* SpiderMonkey.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SpiderMonkey.xcodeproj; path = ../../../thirdParty/SpiderMonkey/SpiderMonkey.xcodeproj; sourceTree = SOURCE_ROOT; };
 		187BCBC212FAAC8F0042FDB1 /* context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = context.cpp; path = ../../../src/context.cpp; sourceTree = SOURCE_ROOT; };
 		187BCBC612FAADC70042FDB1 /* context_ios.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = context_ios.h; path = ../../../src/context_ios.h; sourceTree = SOURCE_ROOT; };
 		187BCC3712FABB1D0042FDB1 /* texture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = texture.cpp; path = ../../../src/render/texture.cpp; sourceTree = SOURCE_ROOT; };
@@ -198,7 +198,7 @@
 		0867D691FE84028FC02AAC07 /* Rhinoca */ = {
 			isa = PBXGroup;
 			children = (
-				187BCB4E12FAA2CD0042FDB1 /* SpiderMonkey.xcodeproj */,
+				182F564C130397F9003805A7 /* SpiderMonkey.xcodeproj */,
 				08FB77AEFE84172EC02AAC07 /* Classes */,
 				32C88DFF0371C24200C91783 /* Other Sources */,
 				0867D69AFE84028FC02AAC07 /* Frameworks */,
@@ -259,6 +259,14 @@
 			name = Classes;
 			sourceTree = "<group>";
 		};
+		182F564D130397F9003805A7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				182F5651130397F9003805A7 /* libSpiderMonkey.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		187BCA4812F9BBD20042FDB1 /* dom */ = {
 			isa = PBXGroup;
 			children = (
@@ -300,14 +308,6 @@
 			name = loader;
 			path = ../../../src/loader;
 			sourceTree = SOURCE_ROOT;
-		};
-		187BCB4F12FAA2CD0042FDB1 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				187BCB5612FAA2CD0042FDB1 /* libSpiderMonkey.a */,
-			);
-			name = Products;
-			sourceTree = "<group>";
 		};
 		187BCC2C12FABB050042FDB1 /* render */ = {
 			isa = PBXGroup;
@@ -396,7 +396,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				187BCB5812FAA2D90042FDB1 /* PBXTargetDependency */,
+				182F56531303980A003805A7 /* PBXTargetDependency */,
 			);
 			name = Rhinoca;
 			productName = Rhinoca;
@@ -423,8 +423,8 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
-					ProductGroup = 187BCB4F12FAA2CD0042FDB1 /* Products */;
-					ProjectRef = 187BCB4E12FAA2CD0042FDB1 /* SpiderMonkey.xcodeproj */;
+					ProductGroup = 182F564D130397F9003805A7 /* Products */;
+					ProjectRef = 182F564C130397F9003805A7 /* SpiderMonkey.xcodeproj */;
 				},
 			);
 			projectRoot = "";
@@ -435,11 +435,11 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		187BCB5612FAA2CD0042FDB1 /* libSpiderMonkey.a */ = {
+		182F5651130397F9003805A7 /* libSpiderMonkey.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
 			path = libSpiderMonkey.a;
-			remoteRef = 187BCB5512FAA2CD0042FDB1 /* PBXContainerItemProxy */;
+			remoteRef = 182F5650130397F9003805A7 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -487,10 +487,10 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		187BCB5812FAA2D90042FDB1 /* PBXTargetDependency */ = {
+		182F56531303980A003805A7 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = SpiderMonkey;
-			targetProxy = 187BCB5712FAA2D90042FDB1 /* PBXContainerItemProxy */;
+			targetProxy = 182F56521303980A003805A7 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -540,6 +540,7 @@
 				OTHER_LDFLAGS = "-ObjC";
 				PREBINDING = NO;
 				SDKROOT = iphoneos;
+				USER_HEADER_SEARCH_PATHS = ../../../thirdParty/SpiderMonkey/ios;
 			};
 			name = Debug;
 		};
@@ -557,6 +558,7 @@
 				PREBINDING = NO;
 				RUN_CLANG_STATIC_ANALYZER = YES;
 				SDKROOT = iphoneos;
+				USER_HEADER_SEARCH_PATHS = ../../../thirdParty/SpiderMonkey/ios;
 			};
 			name = Release;
 		};

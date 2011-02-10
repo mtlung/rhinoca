@@ -16,3 +16,8 @@ glob:*.user
 glob:lib/*.idb
 glob:lib/*.pdb
 glob:*.suo
+thirdParty/SpiderMonkey/ios/build
+build/ios/Launcher/build
+build/ios/Rhinoca/build
+glob:*.xcodeproj/*.pbxuser
+glob:*.xcodeproj/*.perspectivev3

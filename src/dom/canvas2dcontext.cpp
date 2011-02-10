@@ -280,8 +280,8 @@ void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 	static const Driver::BlendState blendState = {
 		false,
 		Driver::BlendState::Add, Driver::BlendState::Add,
-		Driver::BlendState::One, Driver::BlendState::Zero,
-		Driver::BlendState::One, Driver::BlendState::Zero
+		Driver::BlendState::One, Driver::BlendState::Zero,	// Color src, dst
+		Driver::BlendState::One, Driver::BlendState::Zero	// Alpha src, dst
 	};
 	Driver::setBlendState(blendState);
 
@@ -337,8 +337,8 @@ void CanvasRenderingContext2D::drawImage(
 	static const Driver::BlendState blendState = {
 		true,
 		Driver::BlendState::Add, Driver::BlendState::Add,
-		Driver::BlendState::SrcAlpha, Driver::BlendState::InvSrcAlpha,
-		Driver::BlendState::SrcAlpha, Driver::BlendState::InvSrcAlpha
+		Driver::BlendState::SrcAlpha, Driver::BlendState::InvSrcAlpha,	// Color src, dst
+		Driver::BlendState::SrcAlpha, Driver::BlendState::DstAlpha		// Alpha src, dst
 	};
 	Driver::setBlendState(blendState);
 

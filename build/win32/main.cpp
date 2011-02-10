@@ -233,10 +233,10 @@ int main()
 	::SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG>(rh));
 	::ShowWindow(hWnd, true);
 
-	rhinoca_openDocument(rh, "html5/test1/test.html");
+//	rhinoca_openDocument(rh, "html5/test1/test2.html");
 //	rhinoca_openDocument(rh, "html5/test3/test_sprites.html");
 //	rhinoca_openDocument(rh, "html5/test4/test.html");
-//	rhinoca_openDocument(rh, "html5/on9birds/on9birds.html");
+	rhinoca_openDocument(rh, "../../sample/on9birds.html");
 //	rhinoca_openDocument(rh, "../../test/htmlTest/imageTest/test.html");
 
 	while(true) {
@@ -252,18 +252,15 @@ int main()
 		if(!_quitWindow) {
 			ASSERT(GL_NO_ERROR == glGetError());
 
-			glEnable(GL_BLEND);
-			glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
 			glDepthMask(GL_FALSE);
 
 			rhinoca_update(rh);
 			ASSERT(GL_NO_ERROR == glGetError());
 
-//			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-//			glClearColor(0, 0, 1, 1);
-//			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glClearColor(1, 1, 1, 1);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			glViewport(0, 0, _width, _height);
 			glMatrixMode(GL_PROJECTION);
@@ -275,7 +272,7 @@ int main()
 			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, renderContext.texture);
 
-			glColor3f(1, 1, 1);
+			glColor4f(1, 1, 1, 1);
 			glBegin(GL_QUADS);
 				glTexCoord2f(0, 0);
 				glVertex3i(0, 0, 0);
