@@ -4,8 +4,8 @@
 #define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-//#include <gl/gl.h>
 #include "../../src/render/gl.h"
+//#include <gl/gl.h>
 #include <stdio.h>
 #include <crtdbg.h>
 #include <assert.h>
@@ -296,8 +296,10 @@ int main()
 	rhinoca_close();
 
 	{	// Destroy the render context
+		glDeleteRenderbuffers(1, &renderContext.depth);
 		glDeleteFramebuffers(1, &renderContext.fbo);
 		glDeleteTextures(1, &renderContext.texture);
+		wglDeleteContext(wglGetCurrentContext());
 	}
 
 	return 0;

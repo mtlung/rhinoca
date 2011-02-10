@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "canvas2dcontext.h"
 #include "image.h"
-#include "../render/gl.h"
 #include "../mat44.h"
 #include "../vec3.h"
 
@@ -289,16 +288,14 @@ void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 	Driver::ortho(0, w_, 0, h_, 10, -10);
 	Driver::setViewMatrix(Mat44::identity.data);
 
-	Driver::useTexture(NULL);
-
-	glColor4f(0, 0, 0, 0);
-	glBegin(GL_QUADS);
-		glVertex3f(x + 0, y + 0, -1);
-		glVertex3f(x + w, y + 0, -1);
-		glVertex3f(x + w, y + h, -1);
-		glVertex3f(x + 0, y + h, -1);
-	glEnd();
-	glColor4f(1, 1, 1, 1);
+	Driver::setColor(0, 0, 0, 0);
+	Driver::drawQuad(
+		x + 0, y + 0,
+		x + w, y + 0,
+		x + w, y + h,
+		x + 0, y + h,
+		-1	// z value
+	);
 }
 
 void CanvasRenderingContext2D::drawImage(
@@ -369,19 +366,18 @@ void CanvasRenderingContext2D::drawImage(
 	currentState.transform.transformPoint(dp3.data);
 	currentState.transform.transformPoint(dp4.data);
 
-	glBegin(GL_QUADS);
-		glTexCoord2f(sx1, sy1);
-		glVertex3fv(dp1.data);
-
-		glTexCoord2f(sx2, sy1);
-		glVertex3fv(dp2.data);
-
-		glTexCoord2f(sx2, sy2);
-		glVertex3fv(dp3.data);
-
-		glTexCoord2f(sx1, sy2);
-		glVertex3fv(dp4.data);
-	glEnd();
+	Driver::setColor(1, 1, 1, 1);
+	Driver::drawQuad(
+		dp1.x, dp1.y,
+		dp2.x, dp2.y,
+		dp3.x, dp3.y,
+		dp4.x, dp4.y,
+		1,	// z value
+		sx1, sy1,
+		sx2, sy1,
+		sx2, sy2,
+		sx1, sy2
+	);
 }
 
 void CanvasRenderingContext2D::save()

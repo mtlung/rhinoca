@@ -2,6 +2,7 @@
 #include "../driver.h"
 #include "../gl.h"
 #include "../../common.h"
+#include "../../Vec3.h"
 
 namespace Render {
 
@@ -20,8 +21,13 @@ public:
 	bool enableTexture2D;
 	void* renderTarget;
 	void* texture;
-	float vpLeft, vpTop, vpWidth, vpHeight;
+
+	Vec4 color;	/// Color only affect drawQuad
+	unsigned colorHash;
+
+	float vpLeft, vpTop, vpWidth, vpHeight;	// Viewport
 	unsigned viewportHash;
+
 	Driver::BlendState blendState;
 	unsigned blendStateHash;
 };	// Context
@@ -39,6 +45,12 @@ void* Driver::createContext(void* externalHandle)
 	ctx->enableTexture2D = true;
 	glEnable(GL_TEXTURE_2D);
 
+	ctx->color = Vec4(1, 1, 1, 1);
+	ctx->colorHash = hash(ctx->color.data, sizeof(ctx->color));
+	glColor4fv(ctx->color.data);
+
+	ctx->vpLeft = ctx->vpTop = 0;
+	ctx->vpWidth = ctx->vpHeight = 0;
 	ctx->viewportHash = 0;
 
 	ctx->blendState.enable = false;
@@ -48,9 +60,6 @@ void* Driver::createContext(void* externalHandle)
 	ctx->blendState.colorDst = BlendState::Zero;
 	ctx->blendState.alphaSrc = BlendState::One;
 	ctx->blendState.alphaDst = BlendState::Zero;
-
-	ctx->vpLeft = ctx->vpTop = 0;
-	ctx->vpWidth = ctx->vpHeight = 0;
 
 	glDisable(GL_BLEND);
 	glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
@@ -75,6 +84,8 @@ void Driver::deleteContext(void* ctx)
 
 void Driver::forceApplyCurrent()
 {
+	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)_currentContext->renderTarget);
+
 	if(_currentContext->enableTexture2D)
 		glEnable(GL_TEXTURE_2D);
 	else
@@ -82,7 +93,7 @@ void Driver::forceApplyCurrent()
 
 	glBindTexture(GL_TEXTURE_2D, (GLuint)_currentContext->texture);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)_currentContext->renderTarget);
+	glColor4fv(_currentContext->color.data);
 
 	glViewport(
 		(GLint)_currentContext->vpLeft,
@@ -90,6 +101,9 @@ void Driver::forceApplyCurrent()
 		(GLsizei)_currentContext->vpWidth,
 		(GLsizei)_currentContext->vpHeight
 	);
+
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glEnableClientState(GL_VERTEX_ARRAY);
 }
 
 // Render target
@@ -215,6 +229,47 @@ void Driver::useTexture(void* textureHandle)
 		}
 	}
 	glBindTexture(GL_TEXTURE_2D, handle);
+}
+
+// Color
+void Driver::setColor(float r, float g, float b, float a)
+{
+	Vec4 c(r, g, b, a);
+	unsigned h = hash(c.data, sizeof(c));
+
+	if(_currentContext->colorHash != h) {
+		glColor4fv(c.data);
+
+		_currentContext->colorHash = h;
+		_currentContext->color = c;
+	}
+}
+
+// Draw quad
+void Driver::drawQuad(
+	float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float z
+)
+{
+	Driver::useTexture(NULL);
+
+	float xyz[] = { x1, y1, z, x2, y2, z, x3, y3, z, x4, y4, z };
+	glVertexPointer(3, GL_FLOAT, 0, xyz);
+
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
+void Driver::drawQuad(
+	float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float z,
+	float u1, float v1, float u2, float v2, float u3, float v3, float u4, float v4
+)
+{
+	float uv[] = { u1, v1, u2, v2, u3, v3, u4, v4 };
+	glTexCoordPointer(2, GL_FLOAT, 0, uv);
+
+	float xyz[] = { x1, y1, z, x2, y2, z, x3, y3, z, x4, y4, z };
+	glVertexPointer(3, GL_FLOAT, 0, xyz);
+
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
 // Mesh
