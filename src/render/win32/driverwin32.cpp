@@ -20,6 +20,7 @@ public:
 	bool enableTexture2D;
 	void* renderTarget;
 	void* texture;
+	float vpLeft, vpTop, vpWidth, vpHeight;
 	unsigned viewportHash;
 	Driver::BlendState blendState;
 	unsigned blendStateHash;
@@ -47,6 +48,9 @@ void* Driver::createContext(void* externalHandle)
 	ctx->blendState.colorDst = BlendState::Zero;
 	ctx->blendState.alphaSrc = BlendState::One;
 	ctx->blendState.alphaDst = BlendState::Zero;
+
+	ctx->vpLeft = ctx->vpTop = 0;
+	ctx->vpWidth = ctx->vpHeight = 0;
 
 	glDisable(GL_BLEND);
 	glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
@@ -79,6 +83,13 @@ void Driver::forceApplyCurrent()
 	glBindTexture(GL_TEXTURE_2D, (GLuint)_currentContext->texture);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)_currentContext->renderTarget);
+
+	glViewport(
+		(GLint)_currentContext->vpLeft,
+		(GLint)_currentContext->vpTop,
+		(GLsizei)_currentContext->vpWidth,
+		(GLsizei)_currentContext->vpHeight
+	);
 }
 
 // Render target
@@ -285,6 +296,11 @@ void Driver::setViewport(float left, float top, float width, float height)
 	if(_currentContext->viewportHash != h) {
 		glViewport((GLint)left, (GLint)top, (GLsizei)width, (GLsizei)height);
 		_currentContext->viewportHash = h;
+
+		_currentContext->vpLeft = left;
+		_currentContext->vpTop = left;
+		_currentContext->vpWidth = width;
+		_currentContext->vpHeight = height;
 	}
 }
 

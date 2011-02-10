@@ -236,7 +236,7 @@ int main()
 //	rhinoca_openDocument(rh, "html5/test1/test2.html");
 //	rhinoca_openDocument(rh, "html5/test3/test_sprites.html");
 //	rhinoca_openDocument(rh, "html5/test4/test.html");
-	rhinoca_openDocument(rh, "../../sample/on9birds.html");
+	rhinoca_openDocument(rh, "../../../on9bird/on9birds.html");
 //	rhinoca_openDocument(rh, "../../test/htmlTest/imageTest/test.html");
 
 	while(true) {
