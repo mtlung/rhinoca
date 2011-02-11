@@ -1,6 +1,8 @@
 #ifndef __RENDER_DRIVER_H__
 #define __RENDER_DRIVER_H__
 
+#include "../rhinoca.h"
+
 namespace Render {
 
 class Driver
@@ -43,18 +45,17 @@ public:
 
 	static void useTexture(void* textureHandle);
 
-// Color
-	static void setColor(float r, float g, float b, float a);
-
 // Draw quad
 	/// Specify the vertex in a "ring" order
 	static void drawQuad(
-		float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float z
+		float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float z,
+		rhuint8 r, rhuint8 g, rhuint8 b, rhuint8 a
 	);
 
 	static void drawQuad(
 		float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float z,
-		float u1, float v1, float u2, float v2, float u3, float v3, float u4, float v4
+		float u1, float v1, float u2, float v2, float u3, float v3, float u4, float v4,
+		rhuint8 r, rhuint8 g, rhuint8 b, rhuint8 a
 	);
 
 // Mesh

@@ -288,13 +288,13 @@ void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 	Driver::ortho(0, w_, 0, h_, 10, -10);
 	Driver::setViewMatrix(Mat44::identity.data);
 
-	Driver::setColor(0, 0, 0, 0);
 	Driver::drawQuad(
 		x + 0, y + 0,
 		x + w, y + 0,
 		x + w, y + h,
 		x + 0, y + h,
-		-1	// z value
+		-1,	// z value
+		0, 0, 0, 0
 	);
 }
 
@@ -366,7 +366,6 @@ void CanvasRenderingContext2D::drawImage(
 	currentState.transform.transformPoint(dp3.data);
 	currentState.transform.transformPoint(dp4.data);
 
-	Driver::setColor(1, 1, 1, 1);
 	Driver::drawQuad(
 		dp1.x, dp1.y,
 		dp2.x, dp2.y,
@@ -376,7 +375,8 @@ void CanvasRenderingContext2D::drawImage(
 		sx1, sy1,
 		sx2, sy1,
 		sx2, sy2,
-		sx1, sy2
+		sx1, sy2,
+		255, 255, 255, 255
 	);
 }
 

@@ -22,9 +22,6 @@ public:
 	void* renderTarget;
 	void* texture;
 
-	Vec4 color;	/// Color only affect drawQuad
-	unsigned colorHash;
-
 	float vpLeft, vpTop, vpWidth, vpHeight;	// Viewport
 	unsigned viewportHash;
 
@@ -44,10 +41,6 @@ void* Driver::createContext(void* externalHandle)
 
 	ctx->enableTexture2D = true;
 	glEnable(GL_TEXTURE_2D);
-
-	ctx->color = Vec4(1, 1, 1, 1);
-	ctx->colorHash = hash(ctx->color.data, sizeof(ctx->color));
-	glColor4fv(ctx->color.data);
 
 	ctx->vpLeft = ctx->vpTop = 0;
 	ctx->vpWidth = ctx->vpHeight = 0;
@@ -92,8 +85,6 @@ void Driver::forceApplyCurrent()
 		glDisable(GL_TEXTURE_2D);
 
 	glBindTexture(GL_TEXTURE_2D, (GLuint)_currentContext->texture);
-
-	glColor4fv(_currentContext->color.data);
 
 	glViewport(
 		(GLint)_currentContext->vpLeft,
@@ -231,26 +222,16 @@ void Driver::useTexture(void* textureHandle)
 	glBindTexture(GL_TEXTURE_2D, handle);
 }
 
-// Color
-void Driver::setColor(float r, float g, float b, float a)
-{
-	Vec4 c(r, g, b, a);
-	unsigned h = hash(c.data, sizeof(c));
-
-	if(_currentContext->colorHash != h) {
-		glColor4fv(c.data);
-
-		_currentContext->colorHash = h;
-		_currentContext->color = c;
-	}
-}
-
 // Draw quad
 void Driver::drawQuad(
-	float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float z
+	float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float z,
+	rhuint8 r, rhuint8 g, rhuint8 b, rhuint8 a
 )
 {
 	Driver::useTexture(NULL);
+
+	rhuint8 rgba[] = { r,g,b,a, r,g,b,a, r,g,b,a, r,g,b,a };
+	glColorPointer(4, GL_UNSIGNED_BYTE, 0, rgba);
 
 	float xyz[] = { x1, y1, z, x2, y2, z, x3, y3, z, x4, y4, z };
 	glVertexPointer(3, GL_FLOAT, 0, xyz);
@@ -260,9 +241,13 @@ void Driver::drawQuad(
 
 void Driver::drawQuad(
 	float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float z,
-	float u1, float v1, float u2, float v2, float u3, float v3, float u4, float v4
+	float u1, float v1, float u2, float v2, float u3, float v3, float u4, float v4,
+	rhuint8 r, rhuint8 g, rhuint8 b, rhuint8 a
 )
 {
+	rhuint8 rgba[] = { r,g,b,a, r,g,b,a, r,g,b,a, r,g,b,a };
+	glColorPointer(4, GL_UNSIGNED_BYTE, 0, rgba);
+
 	float uv[] = { u1, v1, u2, v2, u3, v3, u4, v4 };
 	glTexCoordPointer(2, GL_FLOAT, 0, uv);
 
