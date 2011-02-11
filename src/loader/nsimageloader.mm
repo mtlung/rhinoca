@@ -23,11 +23,10 @@ public:
 		: texture(t), manager(mgr)
 		, width(0), height(0)
 		, image(NULL)
-		, pixelData(NULL), pixelDataSize(0), pixelDataFormat(Driver::RGBA)
+		, pixelDataFormat(Driver::RGBA)
 	{}
 
 	~NSImageLoader() {
-		rhinoca_free(pixelData);
 		if(image) CGImageRelease(image);
 	}
 
@@ -40,7 +39,6 @@ public:
 	ResourceManager* manager;
 	rhuint width, height;
 	CGImageRef image;
-	char* pixelData;
 	rhuint pixelDataSize;
 	Texture::Format pixelDataFormat;
 };
@@ -109,26 +107,13 @@ Abort:
 	texture->state = Resource::Aborted;
 }
 
-static unsigned nextPOT(unsigned x)
-{
-	x = x - 1;
-	x = x | (x >> 1);
-	x = x | (x >> 2);
-	x = x | (x >> 4);
-	x = x | (x >> 8);
-	x = x | (x >>16);
-	return x + 1;
-}
-
 void NSImageLoader::commit(TaskPool* taskPool)
 {
 	ASSERT(texture->scratch == this);
 	texture->scratch = NULL;
 
 	unsigned components;
-	unsigned imgWide, imgHigh;			// Real image size
 	unsigned rowBytes, rowPixels;		// Image size padded by CGImage
-	unsigned POTWide, POTHigh;			// Image size padded to next power of two
 	CGBitmapInfo info;					// CGImage component layout info
 
 	info = CGImageGetBitmapInfo(image);	// CGImage may return pixels in RGBA, BGRA, or ARGB order
@@ -150,8 +135,8 @@ void NSImageLoader::commit(TaskPool* taskPool)
 	components = bpp >> 3;
 	rowBytes = CGImageGetBytesPerRow(image);	// CGImage may pad rows
 	rowPixels = rowBytes / components;
-	imgWide = CGImageGetWidth(image);
-	imgHigh = CGImageGetHeight(image);
+	width = CGImageGetWidth(image);
+	height = CGImageGetHeight(image);
 
 	// Choose OpenGL format
 	switch(bpp)
@@ -183,35 +168,6 @@ void NSImageLoader::commit(TaskPool* taskPool)
 
 	CFDataRef data = CGDataProviderCopyData(CGImageGetDataProvider(image));
 	pixels = (unsigned char*)CFDataGetBytePtr(data);
-
-	// Determine if we need to pad this image to a power of two.
-	// There are multiple ways to deal with NPOT images on renderers that only support POT:
-	// 1) scale down the image to POT size. Loses quality.
-	// 2) pad up the image to POT size. Wastes memory.
-	// 3) slice the image into multiple POT textures. Requires more rendering logic.
-	// And we pick 2) for simplicity.
-	POTWide = nextPOT(imgWide);
-	POTHigh = nextPOT(imgHigh);
-
-	width = POTWide;
-	height = POTHigh;
-
-	// TODO: Check for APPLE_texture_2D_limited_npot
-	if(imgWide != POTWide || imgHigh != POTHigh)
-	{
-		unsigned dstBytes = POTWide * components;
-		temp = (unsigned char*)malloc(dstBytes * POTHigh);
-
-		for(unsigned y = 0; y<imgHigh; ++y)
-			memcpy(&temp[y * dstBytes], &pixels[y * rowBytes], rowBytes);
-
-//		img->s *= (float)img->wide/POTWide;
-//		img->t *= (float)img->high/POTHigh;
-		width = POTWide;
-		height = POTHigh;
-		pixels = temp;
-		rowBytes = dstBytes;
-	}
 
 	if(texture->create(width, height, (const char*)pixels, pixelDataSize, format))
 		texture->state = Resource::Loaded;

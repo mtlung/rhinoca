@@ -11,8 +11,8 @@
 @class LauncherViewController;
 
 @interface LauncherAppDelegate : NSObject <UIApplicationDelegate> {
-    UIWindow *window;
-    LauncherViewController *viewController;
+	UIWindow *window;
+	LauncherViewController *viewController;
 }
 
 @property (nonatomic, retain) IBOutlet UIWindow *window;

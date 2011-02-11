@@ -35,7 +35,7 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = 182F5537130390D1003805A7 /* SpiderMonkey.xcodeproj */;
 			proxyType = 2;
-			remoteGlobalIDString = D2AAC07E0554694100DB518D /* libSpiderMonkey.a */;
+			remoteGlobalIDString = D2AAC07E0554694100DB518D;
 			remoteInfo = SpiderMonkey;
 		};
 		187BCB8E12FAA71F0042FDB1 /* PBXContainerItemProxy */ = {

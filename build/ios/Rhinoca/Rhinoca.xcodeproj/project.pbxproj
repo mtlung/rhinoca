@@ -77,6 +77,9 @@
 		187BCC6512FADFC70042FDB1 /* renderqueue.h in Headers */ = {isa = PBXBuildFile; fileRef = 187BCC6112FADFC70042FDB1 /* renderqueue.h */; };
 		187BCCA012FAE7F50042FDB1 /* canvas2dcontext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 187BCC9F12FAE7F50042FDB1 /* canvas2dcontext.cpp */; };
 		187BCDEB12FBD2B90042FDB1 /* nsimageloader.mm in Sources */ = {isa = PBXBuildFile; fileRef = 187BCDEA12FBD2B90042FDB1 /* nsimageloader.mm */; };
+		18F0C57F1303A566007752DB /* driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 18F0C57D1303A566007752DB /* driver.cpp */; };
+		18F0C5801303A566007752DB /* driver.h in Headers */ = {isa = PBXBuildFile; fileRef = 18F0C57E1303A566007752DB /* driver.h */; };
+		18F0C73E1304F121007752DB /* driverios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 18F0C73D1304F121007752DB /* driverios.cpp */; };
 		AA747D9F0F9514B9006C5449 /* Rhinoca_Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = AA747D9E0F9514B9006C5449 /* Rhinoca_Prefix.pch */; };
 		AACBBE4A0F95108600F1A2B1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AACBBE490F95108600F1A2B1 /* Foundation.framework */; };
 /* End PBXBuildFile section */
@@ -86,14 +89,14 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = 182F564C130397F9003805A7 /* SpiderMonkey.xcodeproj */;
 			proxyType = 2;
-			remoteGlobalIDString = D2AAC07E0554694100DB518D /* libSpiderMonkey.a */;
+			remoteGlobalIDString = D2AAC07E0554694100DB518D;
 			remoteInfo = SpiderMonkey;
 		};
 		182F56521303980A003805A7 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 182F564C130397F9003805A7 /* SpiderMonkey.xcodeproj */;
 			proxyType = 1;
-			remoteGlobalIDString = D2AAC07D0554694100DB518D /* SpiderMonkey */;
+			remoteGlobalIDString = D2AAC07D0554694100DB518D;
 			remoteInfo = SpiderMonkey;
 		};
 /* End PBXContainerItemProxy section */
@@ -170,6 +173,9 @@
 		187BCC6112FADFC70042FDB1 /* renderqueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = renderqueue.h; path = ../../../src/render/renderqueue.h; sourceTree = SOURCE_ROOT; };
 		187BCC9F12FAE7F50042FDB1 /* canvas2dcontext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = canvas2dcontext.cpp; path = ../../../src/dom/canvas2dcontext.cpp; sourceTree = SOURCE_ROOT; };
 		187BCDEA12FBD2B90042FDB1 /* nsimageloader.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = nsimageloader.mm; sourceTree = "<group>"; };
+		18F0C57D1303A566007752DB /* driver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = driver.cpp; path = ../../../src/render/driver.cpp; sourceTree = SOURCE_ROOT; };
+		18F0C57E1303A566007752DB /* driver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = driver.h; path = ../../../src/render/driver.h; sourceTree = SOURCE_ROOT; };
+		18F0C73D1304F121007752DB /* driverios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = driverios.cpp; path = ../../../src/render/ios/driverios.cpp; sourceTree = SOURCE_ROOT; };
 		AA747D9E0F9514B9006C5449 /* Rhinoca_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Rhinoca_Prefix.pch; sourceTree = SOURCE_ROOT; };
 		AACBBE490F95108600F1A2B1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		D2AAC07E0554694100DB518D /* libRhinoca.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRhinoca.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -312,6 +318,9 @@
 		187BCC2C12FABB050042FDB1 /* render */ = {
 			isa = PBXGroup;
 			children = (
+				18F0C57D1303A566007752DB /* driver.cpp */,
+				18F0C57E1303A566007752DB /* driver.h */,
+				18F0C73D1304F121007752DB /* driverios.cpp */,
 				187BCC5812FADFB60042FDB1 /* framebuffer.cpp */,
 				187BCC5912FADFB60042FDB1 /* framebuffer.h */,
 				187BCC4B12FADEF50042FDB1 /* gl.h */,
@@ -379,6 +388,7 @@
 				187BCC5B12FADFB60042FDB1 /* framebuffer.h in Headers */,
 				187BCC6312FADFC70042FDB1 /* render.h in Headers */,
 				187BCC6512FADFC70042FDB1 /* renderqueue.h in Headers */,
+				18F0C5801303A566007752DB /* driver.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -481,6 +491,8 @@
 				187BCC6412FADFC70042FDB1 /* renderqueue.cpp in Sources */,
 				187BCCA012FAE7F50042FDB1 /* canvas2dcontext.cpp in Sources */,
 				187BCDEB12FBD2B90042FDB1 /* nsimageloader.mm in Sources */,
+				18F0C57F1303A566007752DB /* driver.cpp in Sources */,
+				18F0C73E1304F121007752DB /* driverios.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
