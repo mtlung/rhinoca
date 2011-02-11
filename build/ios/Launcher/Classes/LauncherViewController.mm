@@ -29,6 +29,7 @@ enum {
 
 struct RhinocaRenderContext
 {
+	void* platformSpecificContext;
 	unsigned fbo;
 	unsigned depth;
 	unsigned texture;
@@ -75,38 +76,39 @@ static void ioClose(void* file, int threadId)
 - (void)awakeFromNib
 {
 	EAGLContext *aContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
-	
+
 	if (!aContext)
 	{
 		aContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
 	}
-	
+
 	if (!aContext)
 		NSLog(@"Failed to create ES context");
 	else if (![EAGLContext setCurrentContext:aContext])
 		NSLog(@"Failed to set ES context current");
-	
+
 	self.context = aContext;
 	[aContext release];
-	
+
 	[(EAGLView *)self.view setContext:context];
 	[(EAGLView *)self.view setFramebuffer];
-	
+
 	if ([context API] == kEAGLRenderingAPIOpenGLES2)
 		[self loadShaders];
-	
+
 	animating = FALSE;
 	animationFrameInterval = 1;
 	self.displayLink = nil;
-	
+
 	// Init Rhinoca
 	rhinoca_init();
 
+	renderContext.platformSpecificContext = aContext;
 	renderContext.fbo = ((EAGLView*)self.view)->defaultFramebuffer;
 	rh = rhinoca_create(&renderContext);
 	rhinoca_setSize(rh, self.view.bounds.size.width, self.view.bounds.size.height);
 	rhinoca_io_setcallback(ioOpen, ioRead, ioClose);
-	
+
 	rhinoca_openDocument(rh, "test.html");
 	assert(GL_NO_ERROR == glGetError());
 }
@@ -122,34 +124,34 @@ static void ioClose(void* file, int threadId)
 		glDeleteProgram(program);
 		program = 0;
 	}
-	
+
 	// Tear down context.
 	if ([EAGLContext currentContext] == context)
 		[EAGLContext setCurrentContext:nil];
-	
+
 	[context release];
-	
+
 	[super dealloc];
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
 	[self startAnimation];
-	
+
 	[super viewWillAppear:animated];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
 {
 	[self stopAnimation];
-	
+
 	[super viewWillDisappear:animated];
 }
 
 - (void)viewDidUnload
 {
 	[super viewDidUnload];
-	
+
 	if (program)
 	{
 		glDeleteProgram(program);
@@ -159,7 +161,7 @@ static void ioClose(void* file, int threadId)
 	// Tear down context.
 	if ([EAGLContext currentContext] == context)
 		[EAGLContext setCurrentContext:nil];
-	self.context = nil;	
+	self.context = nil;
 }
 
 - (NSInteger)animationFrameInterval
@@ -176,7 +178,7 @@ static void ioClose(void* file, int threadId)
 	if (frameInterval >= 1)
 	{
 		animationFrameInterval = frameInterval;
-		
+
 		if (animating)
 		{
 			[self stopAnimation];
@@ -193,7 +195,7 @@ static void ioClose(void* file, int threadId)
 		[aDisplayLink setFrameInterval:animationFrameInterval];
 		[aDisplayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
 		self.displayLink = aDisplayLink;
-		
+
 		animating = TRUE;
 	}
 }
@@ -211,11 +213,11 @@ static void ioClose(void* file, int threadId)
 - (void)drawFrame
 {
 	[(EAGLView *)self.view setFramebuffer];
-	
+
 	assert(GL_NO_ERROR == glGetError());
 
-	rhinoca_update(rh);
-	
+//	rhinoca_update(rh);
+
 	// Replace the implementation of this method to do your own custom drawing.
 	static const GLfloat squareVertices[] = {
 		-0.5f, -0.33f,
@@ -223,34 +225,35 @@ static void ioClose(void* file, int threadId)
 		-0.5f,  0.33f,
 		0.5f,  0.33f,
 	};
-	
+
 	static const GLubyte squareColors[] = {
 		255, 255,   0, 255,
 		0,   255, 255, 255,
 		0,	 0,   0,   0,
 		255,   0, 255, 255,
 	};
-	
+
 	static float transY = 0.0f;
-	
+
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
-	
+	glClear(GL_DEPTH_BUFFER_BIT);
+
 	if ([context API] == kEAGLRenderingAPIOpenGLES2)
 	{
 		// Use shader program.
 		glUseProgram(program);
-		
+
 		// Update uniform value.
 		glUniform1f(uniforms[UNIFORM_TRANSLATE], (GLfloat)transY);
-		transY += 0.075f;	
-		
+		transY += 0.075f;
+
 		// Update attribute values.
 		glVertexAttribPointer(ATTRIB_VERTEX, 2, GL_FLOAT, 0, 0, squareVertices);
 		glEnableVertexAttribArray(ATTRIB_VERTEX);
 		glVertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, 1, 0, squareColors);
 		glEnableVertexAttribArray(ATTRIB_COLOR);
-		
+
 		// Validate program before drawing. This is a good check, but only really necessary in a debug build.
 		// DEBUG macro must be defined in your debug configurations if that's not already the case.
 #if defined(DEBUG)
@@ -269,15 +272,17 @@ static void ioClose(void* file, int threadId)
 		glLoadIdentity();
 		glTranslatef(0.0f, (GLfloat)(sinf(transY)/2.0f), 0.0f);
 		transY += 0.075f;
-		
+
 		glVertexPointer(2, GL_FLOAT, 0, squareVertices);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glColorPointer(4, GL_UNSIGNED_BYTE, 0, squareColors);
 		glEnableClientState(GL_COLOR_ARRAY);
 	}
-	
+
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	
+
+	rhinoca_update(rh);
+
 	[(EAGLView *)self.view presentFramebuffer];
 }
 
@@ -285,7 +290,7 @@ static void ioClose(void* file, int threadId)
 {
 	// Releases the view if it doesn't have a superview.
 	[super didReceiveMemoryWarning];
-	
+
 	// Release any cached data, images, etc. that aren't in use.
 }
 
@@ -293,18 +298,18 @@ static void ioClose(void* file, int threadId)
 {
 	GLint status;
 	const GLchar *source;
-	
+
 	source = (GLchar *)[[NSString stringWithContentsOfFile:file encoding:NSUTF8StringEncoding error:nil] UTF8String];
 	if (!source)
 	{
 		NSLog(@"Failed to load vertex shader");
 		return FALSE;
 	}
-	
+
 	*shader = glCreateShader(type);
 	glShaderSource(*shader, 1, &source, NULL);
 	glCompileShader(*shader);
-	
+
 #if defined(DEBUG)
 	GLint logLength;
 	glGetShaderiv(*shader, GL_INFO_LOG_LENGTH, &logLength);
@@ -316,23 +321,23 @@ static void ioClose(void* file, int threadId)
 		free(log);
 	}
 #endif
-	
+
 	glGetShaderiv(*shader, GL_COMPILE_STATUS, &status);
 	if (status == 0)
 	{
 		glDeleteShader(*shader);
 		return FALSE;
 	}
-	
+
 	return TRUE;
 }
 
 - (BOOL)linkProgram:(GLuint)prog
 {
 	GLint status;
-	
+
 	glLinkProgram(prog);
-	
+
 #if defined(DEBUG)
 	GLint logLength;
 	glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &logLength);
@@ -344,18 +349,18 @@ static void ioClose(void* file, int threadId)
 		free(log);
 	}
 #endif
-	
+
 	glGetProgramiv(prog, GL_LINK_STATUS, &status);
 	if (status == 0)
 		return FALSE;
-	
+
 	return TRUE;
 }
 
 - (BOOL)validateProgram:(GLuint)prog
 {
 	GLint logLength, status;
-	
+
 	glValidateProgram(prog);
 	glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &logLength);
 	if (logLength > 0)
@@ -365,11 +370,11 @@ static void ioClose(void* file, int threadId)
 		NSLog(@"Program validate log:\n%s", log);
 		free(log);
 	}
-	
+
 	glGetProgramiv(prog, GL_VALIDATE_STATUS, &status);
 	if (status == 0)
 		return FALSE;
-	
+
 	return TRUE;
 }
 
@@ -377,10 +382,10 @@ static void ioClose(void* file, int threadId)
 {
 	GLuint vertShader, fragShader;
 	NSString *vertShaderPathname, *fragShaderPathname;
-	
+
 	// Create shader program.
 	program = glCreateProgram();
-	
+
 	// Create and compile vertex shader.
 	vertShaderPathname = [[NSBundle mainBundle] pathForResource:@"Shader" ofType:@"vsh"];
 	if (![self compileShader:&vertShader type:GL_VERTEX_SHADER file:vertShaderPathname])
@@ -388,7 +393,7 @@ static void ioClose(void* file, int threadId)
 		NSLog(@"Failed to compile vertex shader");
 		return FALSE;
 	}
-	
+
 	// Create and compile fragment shader.
 	fragShaderPathname = [[NSBundle mainBundle] pathForResource:@"Shader" ofType:@"fsh"];
 	if (![self compileShader:&fragShader type:GL_FRAGMENT_SHADER file:fragShaderPathname])
@@ -396,23 +401,23 @@ static void ioClose(void* file, int threadId)
 		NSLog(@"Failed to compile fragment shader");
 		return FALSE;
 	}
-	
+
 	// Attach vertex shader to program.
 	glAttachShader(program, vertShader);
-	
+
 	// Attach fragment shader to program.
 	glAttachShader(program, fragShader);
-	
+
 	// Bind attribute locations.
 	// This needs to be done prior to linking.
 	glBindAttribLocation(program, ATTRIB_VERTEX, "position");
 	glBindAttribLocation(program, ATTRIB_COLOR, "color");
-	
+
 	// Link program.
 	if (![self linkProgram:program])
 	{
 		NSLog(@"Failed to link program: %d", program);
-		
+
 		if (vertShader)
 		{
 			glDeleteShader(vertShader);
@@ -428,19 +433,19 @@ static void ioClose(void* file, int threadId)
 			glDeleteProgram(program);
 			program = 0;
 		}
-		
+
 		return FALSE;
 	}
-	
+
 	// Get uniform locations.
 	uniforms[UNIFORM_TRANSLATE] = glGetUniformLocation(program, "translate");
-	
+
 	// Release vertex and fragment shaders.
 	if (vertShader)
 		glDeleteShader(vertShader);
 	if (fragShader)
 		glDeleteShader(fragShader);
-	
+
 	return TRUE;
 }
 

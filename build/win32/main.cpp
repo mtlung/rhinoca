@@ -28,6 +28,7 @@ static bool _quitWindow = false;
 
 struct RhinocaRenderContext
 {
+	void* platformSpecificContext;
 	unsigned fbo;
 	unsigned depth;
 	unsigned texture;
@@ -36,7 +37,7 @@ struct RhinocaRenderContext
 int _width = -1;
 int _height = -1;
 
-static RhinocaRenderContext renderContext = { 0, 0, 0 };
+static RhinocaRenderContext renderContext = { NULL, 0, 0, 0 };
 
 static void setupFbo(unsigned width, unsigned height)
 {

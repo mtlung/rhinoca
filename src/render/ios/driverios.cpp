@@ -23,10 +23,10 @@ public:
 	bool enableTexture2D;
 	void* renderTarget;
 	void* texture;
-	
+
 	float vpLeft, vpTop, vpWidth, vpHeight;	// Viewport
 	unsigned viewportHash;
-	
+
 	Driver::BlendState blendState;
 	unsigned blendStateHash;
 };	// Context
@@ -37,14 +37,14 @@ static Context* _currentContext = NULL;
 void* Driver::createContext(void* externalHandle)
 {
 	Context* ctx = new Context;
-	
+
 	ctx->enableTexture2D = true;
 	glEnable(GL_TEXTURE_2D);
-	
+
 	ctx->vpLeft = ctx->vpTop = 0;
 	ctx->vpWidth = ctx->vpHeight = 0;
 	ctx->viewportHash = 0;
-	
+
 	ctx->blendState.enable = false;
 	ctx->blendState.colorOp = BlendState::Add;
 	ctx->blendState.alphaOp = BlendState::Add;
@@ -52,14 +52,16 @@ void* Driver::createContext(void* externalHandle)
 	ctx->blendState.colorDst = BlendState::Zero;
 	ctx->blendState.alphaSrc = BlendState::One;
 	ctx->blendState.alphaDst = BlendState::Zero;
-	
+
 	glDisable(GL_BLEND);
-	glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
-	glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-	
+	glBlendFunc(GL_ONE, GL_ZERO);
+	glBlendEquation(GL_FUNC_ADD);
+//	glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
+//	glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+
 	ctx->renderTarget = NULL;
 	ctx->texture = NULL;
-	
+
 	return ctx;
 }
 
@@ -77,14 +79,14 @@ void Driver::deleteContext(void* ctx)
 void Driver::forceApplyCurrent()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)_currentContext->renderTarget);
-	
+
 	if(_currentContext->enableTexture2D)
 		glEnable(GL_TEXTURE_2D);
 	else
 		glDisable(GL_TEXTURE_2D);
-	
+
 	glBindTexture(GL_TEXTURE_2D, (GLuint)_currentContext->texture);
-	
+
 	glViewport(
 		(GLint)_currentContext->vpLeft,
 		(GLint)_currentContext->vpTop,
@@ -106,17 +108,17 @@ void* Driver::createRenderTargetExternal(void* externalHandle)
 void* Driver::createRenderTargetTexture(void* textureHandle)
 {
 	ASSERT(GL_NO_ERROR == glGetError());
-	
+
 	GLuint handle;
 	glGenFramebuffers(1, &handle);
 	glBindFramebuffer(GL_FRAMEBUFFER, handle);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, (GLuint)textureHandle, 0);
-	
+
 	ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
 	ASSERT(GL_NO_ERROR == glGetError());
-	
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	
+
 	return reinterpret_cast<void*>(handle);
 }
 
@@ -132,7 +134,7 @@ void Driver::useRenderTarget(void* rtHandle)
 {
 	if(_currentContext->renderTarget == rtHandle) return;
 	_currentContext->renderTarget = rtHandle;
-	
+
 	GLuint handle = reinterpret_cast<GLuint>(rtHandle);
 	glBindFramebuffer(GL_FRAMEBUFFER, handle);
 }
@@ -166,32 +168,32 @@ static Driver::TextureFormat autoChooseFormat(Driver::TextureFormat srcFormat)
 void* Driver::createTexture(unsigned width, unsigned height, TextureFormat internalFormat, const void* srcData, TextureFormat srcDataFormat)
 {
 	ASSERT(GL_NO_ERROR == glGetError());
-	
+
 	if(internalFormat == ANY)
 		internalFormat = autoChooseFormat(srcDataFormat);
-	
+
 	GLenum type = GL_TEXTURE_2D;
 	GLuint handle;
 	glGenTextures(1, &handle);
 	glBindTexture(type, handle);
-	
+
 	// In IOS, non power of 2 texture clamp to edge must be used
 	glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	
+
 	glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	
+
 	glTexImage2D(
 		type, 0, internalFormat, width, height, 0,
 		srcDataFormat,
 		GL_UNSIGNED_BYTE,
 		srcData
 	);
-	
+
 	// Restore previous binded texture
 	glBindTexture(type, (GLuint)_currentContext->texture);
-	
+
 	ASSERT(GL_NO_ERROR == glGetError());
 	return reinterpret_cast<void*>(handle);
 }
@@ -318,16 +320,18 @@ void Driver::setBlendState(const BlendState& state)
 {
 	unsigned h = hash(&state, sizeof(state));
 	if(h == _currentContext->blendStateHash) return;
-	
+
 	if(!state.enable) {
 		glDisable(GL_BLEND);
 	}
 	else {
 		glEnable(GL_BLEND);
-		glBlendFuncSeparate(state.colorSrc, state.colorDst, state.alphaSrc, state.alphaDst);
-		glBlendEquationSeparate(state.colorOp, state.alphaOp);
+		glBlendFunc(state.colorSrc, state.colorDst);
+		glBlendEquation(state.colorOp);
+//		glBlendFuncSeparate(state.colorSrc, state.colorDst, state.alphaSrc, state.alphaDst);
+//		glBlendEquationSeparate(state.colorOp, state.alphaOp);
 	}
-	
+
 	_currentContext->blendState = state;
 	_currentContext->blendStateHash = h;
 }
@@ -336,11 +340,11 @@ void Driver::setViewport(float left, float top, float width, float height)
 {
 	float data[] = { left, top, width, height };
 	unsigned h = hash(data, sizeof(data));
-	
+
 	if(_currentContext->viewportHash != h) {
 		glViewport((GLint)left, (GLint)top, (GLsizei)width, (GLsizei)height);
 		_currentContext->viewportHash = h;
-		
+
 		_currentContext->vpLeft = left;
 		_currentContext->vpTop = left;
 		_currentContext->vpWidth = width;

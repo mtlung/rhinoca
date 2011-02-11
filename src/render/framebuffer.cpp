@@ -40,6 +40,7 @@ void Framebuffer::createTexture(unsigned w, unsigned h)
 // Opengl render context
 struct RhinocaRenderContext
 {
+	void* platformSpecificContext;
 	unsigned fbo;
 	unsigned depth;
 	unsigned texture;
