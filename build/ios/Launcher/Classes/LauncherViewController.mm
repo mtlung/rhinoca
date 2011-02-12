@@ -39,6 +39,36 @@ static RhinocaRenderContext renderContext = { 0, 0, 0 };
 
 static Rhinoca* rh = NULL;
 
+static void setupFbo(unsigned width, unsigned height)
+{
+	// Generate texture
+	// I've got white texture without the GL_CLAMP_TO_EDGE option,
+	// see https://devforums.apple.com/message/377748#377748
+	if(!renderContext.texture) glGenTextures(1, &renderContext.texture);
+	glBindTexture(GL_TEXTURE_2D, renderContext.texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	assert(GL_NO_ERROR == glGetError());
+
+	// Generate frame buffer for depth
+//	if(!renderContext.depth) glGenRenderbuffers(1, &renderContext.depth);
+//	glBindRenderbuffer(GL_RENDERBUFFER, renderContext.depth);
+//	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+//	assert(GL_NO_ERROR == glGetError());
+
+	// Create render target for Rhinoca to draw to
+	if(!renderContext.fbo) glGenFramebuffers(1, &renderContext.fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, renderContext.fbo);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderContext.texture, 0);
+//	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderContext.depth);
+	assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+	assert(GL_NO_ERROR == glGetError());
+}
+
 static void* ioOpen(Rhinoca* rh, const char* uri, int threadId)
 {
 	NSString* fullPath = [[NSBundle mainBundle] pathForResource:[NSString stringWithUTF8String:uri] ofType:nil];
@@ -100,13 +130,18 @@ static void ioClose(void* file, int threadId)
 	animationFrameInterval = 1;
 	self.displayLink = nil;
 
+	unsigned width = self.view.bounds.size.width;
+	unsigned height = self.view.bounds.size.height;
+
+	// Fbo for Rhinoca to render
+	renderContext.platformSpecificContext = aContext;
+	setupFbo(width, height);
+
 	// Init Rhinoca
 	rhinoca_init();
 
-	renderContext.platformSpecificContext = aContext;
-	renderContext.fbo = ((EAGLView*)self.view)->defaultFramebuffer;
 	rh = rhinoca_create(&renderContext);
-	rhinoca_setSize(rh, self.view.bounds.size.width, self.view.bounds.size.height);
+	rhinoca_setSize(rh, width, height);
 	rhinoca_io_setcallback(ioOpen, ioRead, ioClose);
 
 	rhinoca_openDocument(rh, "test.html");
@@ -214,32 +249,63 @@ static void ioClose(void* file, int threadId)
 {
 	[(EAGLView *)self.view setFramebuffer];
 
+	rhinoca_update(rh);
 	assert(GL_NO_ERROR == glGetError());
 
-//	rhinoca_update(rh);
+	unsigned width = self.view.bounds.size.width;
+	unsigned height = self.view.bounds.size.height;
 
-	// Replace the implementation of this method to do your own custom drawing.
-	static const GLfloat squareVertices[] = {
-		-0.5f, -0.33f,
-		0.5f, -0.33f,
-		-0.5f,  0.33f,
-		0.5f,  0.33f,
+	glBindFramebuffer(GL_FRAMEBUFFER, ((EAGLView*)self.view)->defaultFramebuffer);
+
+	glViewport(0, 0, width, height);
+	glClearColor(0, 0, 0, 1);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, renderContext.texture);
+	assert(GL_NO_ERROR == glGetError());
+
+	static const GLubyte color[] = {
+		255, 255, 255, 255,
+		255, 255, 255, 255,
+		255, 255, 255, 255,
+		255, 255, 255, 255
 	};
 
-	static const GLubyte squareColors[] = {
-		255, 255,   0, 255,
-		0,   255, 255, 255,
-		0,	 0,   0,   0,
-		255,   0, 255, 255,
+	static const GLfloat uv[] = {
+		0, 0,
+		1, 0,
+		1, 1,
+		0, 1,
 	};
 
-	static float transY = 0.0f;
+	static const GLfloat vertices[] = {
+//		-1, -1,
+//		 1, -1,
+//		 1,  1,
+//		-1,  1
+		-1,  1,
+		 1,  1,
+		 1, -1,
+		-1, -1
+	};
 
-	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glClear(GL_DEPTH_BUFFER_BIT);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 
-	if ([context API] == kEAGLRenderingAPIOpenGLES2)
+	glEnableClientState(GL_COLOR_ARRAY);
+	glColorPointer(4, GL_UNSIGNED_BYTE, 0, color);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glTexCoordPointer(2, GL_FLOAT, 0, uv);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(2, GL_FLOAT, 0, vertices);
+
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	assert(GL_NO_ERROR == glGetError());
+
+/*	if ([context API] == kEAGLRenderingAPIOpenGLES2)
 	{
 		// Use shader program.
 		glUseProgram(program);
@@ -280,8 +346,7 @@ static void ioClose(void* file, int threadId)
 	}
 
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-	rhinoca_update(rh);
+*/
 
 	[(EAGLView *)self.view presentFramebuffer];
 }

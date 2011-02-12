@@ -93,9 +93,14 @@ void NSImageLoader::load(TaskPool* taskPool)
 	cb.releaseInfo = dataProviderRelease;
 
 	dataProvider = CGDataProviderCreateSequential(f, &cb);
-	image = CGImageCreateWithPNGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
+
+	if(uriExtensionMatch(texture->uri(), ".jpg") || uriExtensionMatch(texture->uri(), ".jpeg"))
+		image = CGImageCreateWithJPEGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
+	else if(uriExtensionMatch(texture->uri(), ".png"))
+		image = CGImageCreateWithPNGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
+
 	CGDataProviderRelease(dataProvider);	// Shall close the file
-	
+
 	width = CGImageGetWidth(image);
 	height = CGImageGetHeight(image);
 	pixelDataSize = CGImageGetBytesPerRow(image) * height;
@@ -187,13 +192,13 @@ bool loadImage(Resource* resource, ResourceManager* mgr)
 	   uriExtensionMatch(uri, ".png"))
 	{
 		TaskPool* taskPool = mgr->taskPool;
-		
+
 		Texture* texture = dynamic_cast<Texture*>(resource);
-		
+
 		NSImageLoader* loaderTask = new NSImageLoader(texture, mgr);
 		texture->taskReady = taskPool->addFinalized(loaderTask);
 		texture->taskLoaded = taskPool->addFinalized(loaderTask, 0, texture->taskReady, taskPool->mainThreadId());
-		
+
 		return true;
 	}
 
