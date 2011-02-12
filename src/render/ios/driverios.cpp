@@ -2,6 +2,7 @@
 #include "../gl.h"
 #include "../../common.h"
 #include "../../Vec3.h"
+#include <string.h>
 
 // Reference:
 // Optimization guid: http://iphone-3d-programming.labs.oreilly.com/ch09.html
@@ -29,6 +30,8 @@ public:
 
 	Driver::BlendState blendState;
 	unsigned blendStateHash;
+
+	bool supportNPOT;
 };	// Context
 
 static Context* _currentContext = NULL;
@@ -61,6 +64,9 @@ void* Driver::createContext(void* externalHandle)
 
 	ctx->renderTarget = NULL;
 	ctx->texture = NULL;
+
+	const char* extensions = (char*)glGetString(GL_EXTENSIONS);
+	ctx->supportNPOT = strstr(extensions, "GL_APPLE_texture_2D_limited_npot") != 0;
 
 	return ctx;
 }
@@ -97,6 +103,25 @@ void Driver::forceApplyCurrent()
 	glEnableClientState(GL_COLOR_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
+}
+
+// Capability
+void* Driver::getCapability(const char* cap)
+{
+	if(strcmp(cap, "npot") == 0)
+		return _currentContext->supportNPOT ? (void*)1 : NULL;
+	return NULL;
+}
+
+unsigned Driver::nextPowerOfTwo(unsigned x)
+{
+	x = x - 1;
+	x = x | (x >> 1);
+	x = x | (x >> 2);
+	x = x | (x >> 4);
+	x = x | (x >> 8);
+	x = x | (x >>16);
+	return x + 1;
 }
 
 // Render target
@@ -172,6 +197,14 @@ void* Driver::createTexture(unsigned width, unsigned height, TextureFormat inter
 	if(internalFormat == ANY)
 		internalFormat = autoChooseFormat(srcDataFormat);
 
+	unsigned texWidth = width;
+	unsigned texHeight = height;
+
+	if(!_currentContext->supportNPOT) {
+		texWidth = nextPowerOfTwo(texWidth);
+		texHeight = nextPowerOfTwo(texHeight);
+	}
+
 	GLenum type = GL_TEXTURE_2D;
 	GLuint handle;
 	glGenTextures(1, &handle);
@@ -185,11 +218,16 @@ void* Driver::createTexture(unsigned width, unsigned height, TextureFormat inter
 	glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	glTexImage2D(
-		type, 0, internalFormat, width, height, 0,
+		type, 0, internalFormat, texWidth, texHeight, 0,
 		srcDataFormat,
 		GL_UNSIGNED_BYTE,
 		srcData
 	);
+
+	if(!_currentContext->supportNPOT) {
+		int area[] = { 0, 0, width, height };
+		glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_CROP_RECT_OES, area);
+	}
 
 	// Restore previous binded texture
 	glBindTexture(type, (GLuint)_currentContext->texture);

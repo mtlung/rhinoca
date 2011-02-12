@@ -5,6 +5,11 @@
 
 using namespace Render;
 
+// When the hardware cannot handle non power of two texture,
+// which power of two to choose for:
+// 1 means the next bigger pot, 2 means the next smaller pot
+static const unsigned npotHandlingFactor = 2;
+
 namespace Loader {
 
 Resource* createImage(const char* uri, ResourceManager* mgr)
@@ -21,7 +26,7 @@ class NSImageLoader : public Task
 public:
 	NSImageLoader(Texture* t, ResourceManager* mgr)
 		: texture(t), manager(mgr)
-		, width(0), height(0)
+		, width(0), height(0), texWidth(0), texHeight(0)
 		, image(NULL)
 		, pixelDataFormat(Driver::RGBA)
 	{}
@@ -37,9 +42,9 @@ public:
 
 	Texture* texture;
 	ResourceManager* manager;
-	rhuint width, height;
+	unsigned width, height, texWidth, texHeight;
 	CGImageRef image;
-	rhuint pixelDataSize;
+	unsigned pixelDataSize;
 	Texture::Format pixelDataFormat;
 };
 
@@ -72,6 +77,35 @@ static void dataProviderRelease(void* f)
 	io_close(f, 0);
 }
 
+// http://www.gotow.net/creative/wordpress/?p=7
+static CGImageRef shrinkImageToPOT(CGImageRef image)
+{
+	if(!image) return NULL;
+
+	unsigned width = CGImageGetWidth(image);
+	unsigned height = CGImageGetHeight(image);
+
+	width = Driver::nextPowerOfTwo(width) / npotHandlingFactor;
+	height = Driver::nextPowerOfTwo(height) / npotHandlingFactor;
+
+	CGContextRef ctx =	CGBitmapContextCreate(
+		NULL,
+		width, height,
+		CGImageGetBitsPerComponent(image),			// bites per component
+		CGImageGetBitsPerPixel(image) / 8 * width,	// bytes per row
+		CGImageGetColorSpace(image),				// NOTE: the color space need not to manual release
+		CGImageGetAlphaInfo(image)					// alpha info
+	);
+
+	if(!ctx) return NULL;
+
+	CGContextDrawImage(ctx, CGRectMake(0, 0, width, height), image);
+	CGImageRef ret = CGBitmapContextCreateImage(ctx);
+	CGContextRelease(ctx);
+
+	return ret;
+}
+
 void NSImageLoader::load(TaskPool* taskPool)
 {
 	texture->scratch = this;
@@ -101,9 +135,21 @@ void NSImageLoader::load(TaskPool* taskPool)
 
 	CGDataProviderRelease(dataProvider);	// Shall close the file
 
-	width = CGImageGetWidth(image);
-	height = CGImageGetHeight(image);
-	pixelDataSize = CGImageGetBytesPerRow(image) * height;
+	width = texWidth = CGImageGetWidth(image);
+	height = texHeight = CGImageGetHeight(image);
+
+	if(!Driver::getCapability("npot")) {
+		texWidth = Driver::nextPowerOfTwo(width) / npotHandlingFactor;
+		texHeight = Driver::nextPowerOfTwo(height) / npotHandlingFactor;
+
+		if(texWidth != width || texHeight != height) {
+			CGImageRef newImg = shrinkImageToPOT(image);
+			CGImageRelease(image);
+			image = newImg;
+		}
+	}
+
+	pixelDataSize = CGImageGetBytesPerRow(image) * texHeight;
 
 	return;
 
@@ -163,8 +209,6 @@ void NSImageLoader::commit(TaskPool* taskPool)
 	components = bpp >> 3;
 	rowBytes = CGImageGetBytesPerRow(image);	// CGImage may pad rows
 	rowPixels = rowBytes / components;
-	width = CGImageGetWidth(image);
-	height = CGImageGetHeight(image);
 
 	CFDataRef data = CGDataProviderCopyData(CGImageGetDataProvider(image));
 	pixels = (unsigned char*)CFDataGetBytePtr(data);
@@ -177,14 +221,14 @@ void NSImageLoader::commit(TaskPool* taskPool)
 		switch(info & kCGBitmapAlphaInfoMask) {
 		case kCGImageAlphaPremultipliedFirst:
 		case kCGImageAlphaFirst:
-			argbToRgba(pixels, rowPixels, rowBytes, height);
+			argbToRgba(pixels, rowPixels, rowBytes, texHeight);
 			break;
 		case kCGImageAlphaNoneSkipFirst:
-			argbToRgba(pixels, rowPixels, rowBytes, height);
+			argbToRgba(pixels, rowPixels, rowBytes, texHeight);
 		case kCGImageAlphaNoneSkipLast:
 			// If the driver support converting RGBA to RGB, then there is no need to call rgbaSetAlphaToOne()
 			//internal = Driver::RGB;
-			rgbaSetAlphaToOne(pixels, rowPixels, rowBytes, height);
+			rgbaSetAlphaToOne(pixels, rowPixels, rowBytes, texHeight);
 		case kCGImageAlphaPremultipliedLast:
 			break;
 		default:
@@ -205,10 +249,13 @@ void NSImageLoader::commit(TaskPool* taskPool)
 		ASSERT(false);
 	}
 
-	if(texture->create(width, height, internal, (const char*)pixels, pixelDataSize, format))
+	if(texture->create(texWidth, texHeight, internal, (const char*)pixels, pixelDataSize, format))
 		texture->state = Resource::Loaded;
 	else
 		texture->state = Resource::Aborted;
+
+	texture->width = width;
+	texture->height = height;
 
     free(temp);
 

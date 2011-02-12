@@ -35,12 +35,48 @@ struct RhinocaRenderContext
 	unsigned texture;
 };
 
+static unsigned fboWidth, fboHeight;
+
 static RhinocaRenderContext renderContext = { 0, 0, 0 };
 
 static Rhinoca* rh = NULL;
 
+static void printOglExtensions()
+{
+	char* extensions = strdup((const char*)glGetString(GL_EXTENSIONS));
+	char** extension = &extensions;
+	while(*extension)
+		printf("%s\n", strsep(extension, " "));
+}
+
+static unsigned nextPOT(unsigned x)
+{
+	x = x - 1;
+	x = x | (x >> 1);
+	x = x | (x >> 2);
+	x = x | (x >> 4);
+	x = x | (x >> 8);
+	x = x | (x >>16);
+	return x + 1;
+}
+
 static void setupFbo(unsigned width, unsigned height)
 {
+	printOglExtensions();
+
+	const char* extensions = (char*)glGetString(GL_EXTENSIONS);
+	bool npot = strstr(extensions, "GL_APPLE_texture_2D_limited_npot") != 0;
+
+	fboWidth = width;
+	fboHeight = height;
+
+	if(!npot) {
+		fboWidth = nextPOT(fboWidth);
+		fboHeight = nextPOT(fboHeight);
+	}
+
+	assert(GL_NO_ERROR == glGetError());
+
 	// Generate texture
 	// I've got white texture without the GL_CLAMP_TO_EDGE option,
 	// see https://devforums.apple.com/message/377748#377748
@@ -50,7 +86,13 @@ static void setupFbo(unsigned width, unsigned height)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+	if(!npot) {
+		int area[] = { 0, 0, width, height };
+		glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_CROP_RECT_OES, area);
+	}
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fboWidth, fboHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	assert(GL_NO_ERROR == glGetError());
 
@@ -272,18 +314,16 @@ static void ioClose(void* file, int threadId)
 		255, 255, 255, 255
 	};
 
+	float uvx = float(width)/fboWidth;
+	float uvy = float(height)/fboHeight;
 	static const GLfloat uv[] = {
 		0, 0,
-		1, 0,
-		1, 1,
-		0, 1,
+		uvx, 0,
+		uvx, uvy,
+		0, uvy,
 	};
 
 	static const GLfloat vertices[] = {
-//		-1, -1,
-//		 1, -1,
-//		 1,  1,
-//		-1,  1
 		-1,  1,
 		 1,  1,
 		 1, -1,
@@ -304,6 +344,8 @@ static void ioClose(void* file, int threadId)
 
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	assert(GL_NO_ERROR == glGetError());
+
+//	glDrawTexfOES(0, 0, 0, width, height);
 
 /*	if ([context API] == kEAGLRenderingAPIOpenGLES2)
 	{

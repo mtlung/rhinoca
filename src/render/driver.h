@@ -15,6 +15,13 @@ public:
 
 	static void forceApplyCurrent();
 
+// Capability
+	// Supported cap:
+	// npot
+	static void* getCapability(const char* cap);
+
+	static unsigned nextPowerOfTwo(unsigned x);
+
 // Render target
 	static void* createRenderTargetExternal(void* externalHandle);
 	static void* createRenderTargetTexture(void* textureHandle);
