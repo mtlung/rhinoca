@@ -68,6 +68,8 @@ static JSBool setSrc(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 		mgr.taskPool->addCallback(self->texture->taskReady, onReadyCallback, self, tId);
 		mgr.taskPool->addCallback(self->texture->taskLoaded, onLoadCallback, self, tId);
 	}
+	else
+		print(self->ownerDocument->rhinoca, "Failed to load: '%s'\n", path.c_str());
 
 	return JS_TRUE;
 }

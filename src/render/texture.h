@@ -16,7 +16,7 @@ public:
 // Operations
 	typedef Driver::TextureFormat Format;
 
-	bool create(unsigned width, unsigned height, const char* data, unsigned dataSize, Format dataFormat);
+	bool create(unsigned width, unsigned height, Format internalFormat, const char* data, unsigned dataSize, Format dataFormat);
 
 	void clear();
 

@@ -112,6 +112,29 @@ Abort:
 	texture->state = Resource::Aborted;
 }
 
+static void rgbaSetAlphaToOne(unsigned char* data, unsigned rowPixels, unsigned rowBytes, unsigned rows)
+{
+	for(unsigned i=0; i<rows; ++i) {
+		unsigned char* p = data + i * rowBytes;
+		for(unsigned j=0; j<rowPixels; ++j) {
+			p[3] = 255;
+			p += 4;
+		}
+	}
+}
+
+static void argbToRgba(unsigned char* data, unsigned rowPixels, unsigned rowBytes, unsigned rows)
+{
+	for(unsigned i=0; i<rows; ++i) {
+		unsigned char* p = data + i * rowBytes;
+		for(unsigned j=0; j<rowPixels; ++j) {
+			unsigned tmp[4] = { p[0], p[1], p[2], p[3] };
+			p[0] = tmp[1]; p[1] = tmp[2]; p[2] = tmp[3]; p[3] = tmp[0];
+			p += 4;
+		}
+	}
+}
+
 void NSImageLoader::commit(TaskPool* taskPool)
 {
 	ASSERT(texture->scratch == this);
@@ -143,18 +166,29 @@ void NSImageLoader::commit(TaskPool* taskPool)
 	width = CGImageGetWidth(image);
 	height = CGImageGetHeight(image);
 
+	CFDataRef data = CGDataProviderCopyData(CGImageGetDataProvider(image));
+	pixels = (unsigned char*)CFDataGetBytePtr(data);
+
 	// Choose OpenGL format
 	switch(bpp)
 	{
 	case 32:
-		internal = Driver::RGBA;
+		internal = format = Driver::RGBA;
 		switch(info & kCGBitmapAlphaInfoMask) {
 		case kCGImageAlphaPremultipliedFirst:
 		case kCGImageAlphaFirst:
+			argbToRgba(pixels, rowPixels, rowBytes, height);
+			break;
 		case kCGImageAlphaNoneSkipFirst:
-			format = Driver::BGRA;
+			argbToRgba(pixels, rowPixels, rowBytes, height);
+		case kCGImageAlphaNoneSkipLast:
+			// If the driver support converting RGBA to RGB, then there is no need to call rgbaSetAlphaToOne()
+			//internal = Driver::RGB;
+			rgbaSetAlphaToOne(pixels, rowPixels, rowBytes, height);
+		case kCGImageAlphaPremultipliedLast:
 			break;
 		default:
+			ASSERT(false);
 			format = Driver::RGBA;
 		}
 		break;
@@ -171,10 +205,7 @@ void NSImageLoader::commit(TaskPool* taskPool)
 		ASSERT(false);
 	}
 
-	CFDataRef data = CGDataProviderCopyData(CGImageGetDataProvider(image));
-	pixels = (unsigned char*)CFDataGetBytePtr(data);
-
-	if(texture->create(width, height, (const char*)pixels, pixelDataSize, format))
+	if(texture->create(width, height, internal, (const char*)pixels, pixelDataSize, format))
 		texture->state = Resource::Loaded;
 	else
 		texture->state = Resource::Aborted;

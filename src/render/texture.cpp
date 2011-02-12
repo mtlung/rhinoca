@@ -15,14 +15,14 @@ Texture::~Texture()
 	clear();
 }
 
-bool Texture::create(unsigned w, unsigned h, const char* data, unsigned dataSize, Format dataFormat)
+bool Texture::create(unsigned w, unsigned h, Format internalFormat, const char* data, unsigned dataSize, Format dataFormat)
 {
 	width = w;
 	height = h;
 
 	if(w == 0 || h == 0) return false;
 
-	handle = Driver::createTexture(w, h, Driver::ANY, data, dataFormat);
+	handle = Driver::createTexture(w, h, internalFormat, data, dataFormat);
 
 	return true;
 }
