@@ -37,6 +37,9 @@ typedef unsigned short uint16;      /* 16 bits     */
 typedef unsigned short ushort;      /* 16 bits     */
 typedef unsigned int   uint;        /* 16/32+ bits */
 typedef unsigned long  ulong;       /* 32 bits     */
+
+// Ricky Lung: The following line cause name collision with SpiderMonkey,
+// so I commented it out. And this line is copied to necessary C++ file (eg. idct.cpp)
 //typedef   signed int   int32;       /* 32+ bits    */
 
 #ifndef max

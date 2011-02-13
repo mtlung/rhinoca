@@ -38,6 +38,10 @@
 
 /*----------------------------------------------------------------------------*/
 #include "jpegdecoder.h"
+
+// Comment out the following line if needed
+typedef   signed int   int32;
+
 /*----------------------------------------------------------------------------*/
 #define CONST_BITS  13
 #define PASS1_BITS  2
