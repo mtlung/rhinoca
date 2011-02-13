@@ -60,12 +60,12 @@ typedef int rhint;
 typedef char rhint8;
 typedef short rhint16;
 typedef int rhint32;
-typedef long rhint64;
+typedef long long rhint64;
 typedef unsigned int rhuint;
 typedef unsigned char rhuint8;
 typedef unsigned short rhuint16;
 typedef unsigned int rhuint32;
-typedef unsigned long rhuint64;
+typedef unsigned long long rhuint64;
 #endif
 
 struct Rhinoca;

@@ -230,6 +230,7 @@ void NSImageLoader::commit(TaskPool* taskPool)
 			//internal = Driver::RGB;
 			rgbaSetAlphaToOne(pixels, rowPixels, rowBytes, texHeight);
 		case kCGImageAlphaPremultipliedLast:
+		case kCGImageAlphaLast:
 			break;
 		default:
 			ASSERT(false);
