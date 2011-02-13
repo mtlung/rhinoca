@@ -97,6 +97,12 @@ void Driver::forceApplyCurrent()
 	glEnableClientState(GL_VERTEX_ARRAY);
 }
 
+// Capability
+void* Driver::getCapability(const char* cap)
+{
+	return (void*)1;
+}
+
 // Render target
 void* Driver::createRenderTargetExternal(void* externalHandle)
 {

@@ -139,7 +139,7 @@ void BmpLoader::commit(TaskPool* taskPool)
 	ASSERT(texture->scratch == this);
 	texture->scratch = NULL;
 
-	if(texture->create(width, height, pixelData, pixelDataSize, pixelDataFormat))
+	if(texture->create(width, height, Driver::ANY, pixelData, pixelDataSize, pixelDataFormat))
 		texture->state = Resource::Loaded;
 	else
 		texture->state = Resource::Aborted;

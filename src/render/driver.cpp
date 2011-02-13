@@ -4,6 +4,17 @@
 
 namespace Render {
 
+unsigned Driver::nextPowerOfTwo(unsigned x)
+{
+	x = x - 1;
+	x = x | (x >> 1);
+	x = x | (x >> 2);
+	x = x | (x >> 4);
+	x = x | (x >> 8);
+	x = x | (x >>16);
+	return x + 1;
+}
+
 void Driver::ortho(float left, float right, float bottom, float top, float zNear, float zFar)
 {
 	Mat44 m = Mat44::identity;
