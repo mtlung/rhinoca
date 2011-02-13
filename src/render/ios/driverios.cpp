@@ -32,6 +32,7 @@ public:
 	unsigned blendStateHash;
 
 	bool supportNPOT;
+	bool supportSeperateBlend;
 };	// Context
 
 static Context* _currentContext = NULL;
@@ -40,6 +41,12 @@ static Context* _currentContext = NULL;
 void* Driver::createContext(void* externalHandle)
 {
 	Context* ctx = new Context;
+
+	const char* extensions = (char*)glGetString(GL_EXTENSIONS);
+	ctx->supportNPOT = strstr(extensions, "GL_APPLE_texture_2D_limited_npot") != 0;
+	ctx->supportSeperateBlend = (
+		strstr(extensions, "GL_OES_blend_equation_separate") != 0 &&
+		strstr(extensions, "GL_OES_blend_func_separate") != 0);
 
 	ctx->enableTexture2D = true;
 	glEnable(GL_TEXTURE_2D);
@@ -56,17 +63,17 @@ void* Driver::createContext(void* externalHandle)
 	ctx->blendState.alphaSrc = BlendState::One;
 	ctx->blendState.alphaDst = BlendState::Zero;
 
-	glDisable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_ZERO);
-	glBlendEquation(GL_FUNC_ADD);
-//	glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
-//	glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-
 	ctx->renderTarget = NULL;
 	ctx->texture = NULL;
 
-	const char* extensions = (char*)glGetString(GL_EXTENSIONS);
-	ctx->supportNPOT = strstr(extensions, "GL_APPLE_texture_2D_limited_npot") != 0;
+	glDisable(GL_BLEND);
+	if(ctx->supportSeperateBlend) {
+		glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
+		glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+	} else {
+		glBlendFunc(GL_ONE, GL_ZERO);
+		glBlendEquation(GL_FUNC_ADD);
+	}
 
 	return ctx;
 }
@@ -364,10 +371,13 @@ void Driver::setBlendState(const BlendState& state)
 	}
 	else {
 		glEnable(GL_BLEND);
-		glBlendFunc(state.colorSrc, state.colorDst);
-		glBlendEquation(state.colorOp);
-//		glBlendFuncSeparate(state.colorSrc, state.colorDst, state.alphaSrc, state.alphaDst);
-//		glBlendEquationSeparate(state.colorOp, state.alphaOp);
+		if(_currentContext->supportSeperateBlend) {
+			glBlendFuncSeparate(state.colorSrc, state.colorDst, state.alphaSrc, state.alphaDst);
+			glBlendEquationSeparate(state.colorOp, state.alphaOp);
+		} else {
+			glBlendFunc(state.colorSrc, state.colorDst);
+			glBlendEquation(state.colorOp);
+		}
 	}
 
 	_currentContext->blendState = state;

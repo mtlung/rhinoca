@@ -7,6 +7,7 @@ Texture::Texture(const char* uri)
 	: Resource(uri)
 	, handle(0)
 	, width(0), height(0)
+	, uvWidth(1), uvHeight(1)
 {
 }
 
@@ -23,6 +24,14 @@ bool Texture::create(unsigned w, unsigned h, Format internalFormat, const char* 
 	if(w == 0 || h == 0) return false;
 
 	handle = Driver::createTexture(w, h, internalFormat, data, dataFormat);
+
+	if(!Driver::getCapability("npot")) {
+		w = Driver::nextPowerOfTwo(w);
+		h = Driver::nextPowerOfTwo(h);
+	}
+
+	uvWidth = float(width) / w;
+	uvHeight = float(height) / h;
 
 	return true;
 }

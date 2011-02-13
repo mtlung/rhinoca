@@ -343,8 +343,8 @@ void CanvasRenderingContext2D::drawImage(
 	Driver::ortho(0, w, 0, h, 10, -10);
 	Driver::setViewMatrix(Mat44::identity.data);
 
-	float tw = 1.0f / texture->width;
-	float th = 1.0f / texture->height;
+	float tw = texture->uvWidth / texture->width;
+	float th = texture->uvHeight / texture->height;
 
 	srcx *= tw;	srcw *= tw;
 	srcy *= th; srch *= th;

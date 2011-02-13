@@ -283,6 +283,8 @@ bool Rhinoca::openDoucment(const char* uri)
 						appendFileToString(file, script);
 						io_close(file, 0);
 					}
+					else
+						print(this, "Fail to load '%s'\n", scriptUrl.c_str());
 				}
 				else {
 					script = parser.textData();
