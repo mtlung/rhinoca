@@ -8,6 +8,9 @@ namespace Render {
 class Driver
 {
 public:
+	static void init();
+	static void close();
+
 // Context
 	static void* createContext(void* externalHandle);
 	static void useContext(void* contextHandle);

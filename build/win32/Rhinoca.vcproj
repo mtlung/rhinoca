@@ -299,26 +299,6 @@
 				RelativePath="..\..\src\render\texture.h"
 				>
 			</File>
-			<Filter
-				Name="glew"
-				>
-				<File
-					RelativePath="..\..\src\render\glew\glew.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\render\glew\glew.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\render\glew\glxew.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\render\glew\wglew.h"
-					>
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="loader"

@@ -11,6 +11,7 @@ void* driverContext = NULL;
 void rhinoca_init()
 {
 	jsrt = JS_NewRuntime(8L * 1024L * 1024L);
+	Render::Driver::init();
 	driverContext = Render::Driver::createContext(0);
 	Render::Driver::useContext(driverContext);
 }

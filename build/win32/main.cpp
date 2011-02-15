@@ -4,8 +4,9 @@
 #define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include "../../src/render/gl.h"
-//#include <gl/gl.h>
+#include <gl/gl.h>
+//#define GL_GLEXT_PROTOTYPES
+#include "../../src/render/gl/glext.h"
 #include <stdio.h>
 #include <crtdbg.h>
 #include <assert.h>
@@ -25,6 +26,17 @@
 static const wchar_t* windowClass = L"Rhinoca Launcher";
 
 static bool _quitWindow = false;
+
+extern PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer;
+extern PFNGLGENFRAMEBUFFERSPROC glGenFramebuffers;
+extern PFNGLDELETEFRAMEBUFFERSPROC glDeleteFramebuffers;
+extern PFNGLGENRENDERBUFFERSPROC glGenRenderbuffers;
+extern PFNGLBINDRENDERBUFFERPROC glBindRenderbuffer;
+extern PFNGLDELETERENDERBUFFERSPROC glDeleteRenderbuffers;
+extern PFNGLRENDERBUFFERSTORAGEPROC glRenderbufferStorage;
+extern PFNGLFRAMEBUFFERRENDERBUFFERPROC glFramebufferRenderbuffer;
+extern PFNGLFRAMEBUFFERTEXTURE2DPROC glFramebufferTexture2D;
+extern PFNGLCHECKFRAMEBUFFERSTATUSPROC glCheckFramebufferStatus;
 
 struct RhinocaRenderContext
 {
@@ -217,15 +229,11 @@ int main()
 
 	HDC dc;
 	initOpenGl(hWnd, dc);
-
-	VERIFY(glewInit() == GLEW_OK);
-	ASSERT(GL_NO_ERROR == glGetError());
+	rhinoca_init();
 
 	setupFbo(_width, _height);
-
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	rhinoca_init();
 	Rhinoca* rh = rhinoca_create(&renderContext);
 	rhinoca_setAlertFunc(alertFunc, hWnd);
 	rhinoca_io_setcallback(ioOpen, ioRead, ioClose);
