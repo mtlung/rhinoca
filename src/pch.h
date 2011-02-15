@@ -3,6 +3,9 @@
 
 #ifdef _MSC_VER
 
+#include <windows.h>
+#include <gl/gl.h>
+
 #define XP_WIN
 #include <assert.h>
 #include <stdio.h>

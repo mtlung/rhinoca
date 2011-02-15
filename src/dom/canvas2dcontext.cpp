@@ -3,6 +3,7 @@
 #include "image.h"
 #include "../mat44.h"
 #include "../vec3.h"
+#include "../render/vg/openvg.h"
 
 using namespace Render;
 

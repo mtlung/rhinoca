@@ -2,6 +2,7 @@
 #include "rhinoca.h"
 #include "context.h"
 #include "render/driver.h"
+#include "render/vg/openvg.h"
 #include <stdarg.h>	// For va_list
 
 // Context
@@ -14,6 +15,8 @@ void rhinoca_init()
 	Render::Driver::init();
 	driverContext = Render::Driver::createContext(0);
 	Render::Driver::useContext(driverContext);
+
+	VERIFY(vgCreateContextSH(1, 1));
 }
 
 void rhinoca_close()
@@ -22,6 +25,7 @@ void rhinoca_close()
 	JS_ShutDown();
 
 	jsrt = NULL;
+	vgDestroyContextSH();
 	Render::Driver::deleteContext(driverContext);
 }
 

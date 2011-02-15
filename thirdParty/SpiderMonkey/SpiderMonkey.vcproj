@@ -41,6 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				PreprocessorDefinitions="WIN32;XP_WIN;JSFILE;_X86_=1;EXPORT_JS_API;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE"
+				SmallerTypeCheck="false"
 				RuntimeTypeInfo="false"
 				DisableSpecificWarnings="4100;4127;4214;4706"
 			/>
@@ -57,6 +58,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib"
 				OutputFile="$(OutDir)\$(ProjectName)d.dll"
+				GenerateDebugInformation="true"
 				ImportLibrary="../../lib/$(TargetName).lib"
 			/>
 			<Tool

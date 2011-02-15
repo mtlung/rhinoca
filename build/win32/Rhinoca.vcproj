@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS"
+				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;WIN32"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -107,7 +107,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS"
+				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;WIN32"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
@@ -272,14 +272,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\render\gl.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\render\render.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\render\render.h"
 				>
 			</File>
@@ -299,6 +291,102 @@
 				RelativePath="..\..\src\render\texture.h"
 				>
 			</File>
+			<Filter
+				Name="shivavg"
+				>
+				<File
+					RelativePath="..\..\src\render\vg\openvg.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shArrayBase.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shArrays.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shArrays.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shContext.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shContext.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shDefs.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shExtensions.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shExtensions.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shGeometry.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shGeometry.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shImage.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shImage.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shPaint.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shPaint.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shParams.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shPath.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shPath.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shPipeline.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shVectors.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shVectors.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\shivavg\shVgu.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\render\vg\vgu.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="loader"
