@@ -43,6 +43,7 @@ struct RhinocaRenderContext
 	void* platformSpecificContext;
 	unsigned fbo;
 	unsigned depth;
+	unsigned stencil;
 	unsigned texture;
 };
 

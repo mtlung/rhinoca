@@ -568,6 +568,13 @@ void CanvasRenderingContext2D::fill()
 
 void CanvasRenderingContext2D::stroke()
 {
+	vgResizeSurfaceSH(this->width(), this->height());
+
+	VGfloat cstroke[] = { 0.5f, 0.2f, 0.8f, 0.6f };
+	VGPaint testStroke = vgCreatePaint();
+	vgSetParameterfv(testStroke, VG_PAINT_COLOR, 4, cstroke);
+	vgSetPaint(testStroke, VG_STROKE_PATH);
+
 	vgDrawPath(openvg->path, VG_STROKE_PATH);
 }
 

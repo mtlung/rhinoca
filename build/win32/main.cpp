@@ -43,13 +43,14 @@ struct RhinocaRenderContext
 	void* platformSpecificContext;
 	unsigned fbo;
 	unsigned depth;
+	unsigned stencil;
 	unsigned texture;
 };
 
 int _width = -1;
 int _height = -1;
 
-static RhinocaRenderContext renderContext = { NULL, 0, 0, 0 };
+static RhinocaRenderContext renderContext = { NULL, 0, 0, 0, 0 };
 
 static void setupFbo(unsigned width, unsigned height)
 {
@@ -62,19 +63,21 @@ static void setupFbo(unsigned width, unsigned height)
 	glBindTexture(GL_TEXTURE_2D, 0);
 	ASSERT(GL_NO_ERROR == glGetError());
 
-	// Generate frame buffer for depth
+	// Generate frame buffer for depth and stencil
 	if(!renderContext.depth) glGenRenderbuffers(1, &renderContext.depth);
 	glBindRenderbuffer(GL_RENDERBUFFER, renderContext.depth);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
 	ASSERT(GL_NO_ERROR == glGetError());
 
 	// Create render target for Rhinoca to draw to
 	if(!renderContext.fbo) glGenFramebuffers(1, &renderContext.fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, renderContext.fbo);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderContext.texture, 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderContext.depth);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderContext.depth);
 	ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
 	ASSERT(GL_NO_ERROR == glGetError());
+
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }
 
 LRESULT CALLBACK wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -305,6 +308,7 @@ int main()
 	rhinoca_close();
 
 	{	// Destroy the render context
+		glDeleteRenderbuffers(1, &renderContext.stencil);
 		glDeleteRenderbuffers(1, &renderContext.depth);
 		glDeleteFramebuffers(1, &renderContext.fbo);
 		glDeleteTextures(1, &renderContext.texture);
