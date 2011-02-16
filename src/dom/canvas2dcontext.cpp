@@ -226,6 +226,67 @@ static JSBool setTransform(JSContext* cx, JSObject* obj, uintN argc, jsval* argv
 	return JS_TRUE;
 }
 
+static JSBool beginPath(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	self->beginPath();
+
+	return JS_TRUE;
+}
+
+static JSBool closePath(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	self->closePath();
+
+	return JS_TRUE;
+}
+
+static JSBool moveTo(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	double x, y;
+	JS_ValueToNumber(cx, argv[0], &x);
+	JS_ValueToNumber(cx, argv[1], &y);
+	self->moveTo((float)x, (float)y);
+
+	return JS_TRUE;
+}
+
+static JSBool lineTo(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	double x, y;
+	JS_ValueToNumber(cx, argv[0], &x);
+	JS_ValueToNumber(cx, argv[1], &y);
+	self->lineTo((float)x, (float)y);
+
+	return JS_TRUE;
+}
+
+static JSBool stroke(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	self->stroke();
+
+	return JS_TRUE;
+}
+
 static JSFunctionSpec methods[] = {
 	{"clearRect", clearRect, 4,0,0},
 	{"beginLayer", beginLayer, 0,0,0},
@@ -238,17 +299,35 @@ static JSFunctionSpec methods[] = {
 	{"translate", translate, 2,0,0},
 	{"transform", transform, 6,0,0},
 	{"setTransform", setTransform, 6,0,0},
+
+	{"beginPath", beginPath, 0,0,0},
+	{"closePath", closePath, 0,0,0},
+	{"moveTo", moveTo, 2,0,0},
+	{"lineTo", lineTo, 2,0,0},
+	{"stroke", stroke, 2,0,0},
 	{0}
+};
+
+
+struct CanvasRenderingContext2D::OpenVG
+{
+	VGPath path;
 };
 
 CanvasRenderingContext2D::CanvasRenderingContext2D(HTMLCanvasElement* c)
 	: Context(c)
 {
 	currentState.transform = Mat44::identity;
+
+	openvg = new OpenVG;
+	openvg->path = NULL;
 }
 
 CanvasRenderingContext2D::~CanvasRenderingContext2D()
 {
+	if(openvg->path)
+		vgDestroyPath(openvg->path);
+	delete openvg;
 }
 
 void CanvasRenderingContext2D::bind(JSContext* cx, JSObject* parent)
@@ -433,18 +512,34 @@ void CanvasRenderingContext2D::setTransform(float m11, float m12, float m21, flo
 
 void CanvasRenderingContext2D::beginPath()
 {
-}
+	if(openvg->path)
+		vgDestroyPath(openvg->path);
 
-void CanvasRenderingContext2D::moveTo(float x, float y)
-{
+	openvg->path = vgCreatePath(
+		VG_PATH_FORMAT_STANDARD, VG_PATH_DATATYPE_F,
+		1, 0, 0, 0, VG_PATH_CAPABILITY_ALL
+	);
 }
 
 void CanvasRenderingContext2D::closePath()
 {
+	VGubyte seg = VG_CLOSE_PATH;
+	VGfloat data[] = { 0, 0 };
+	vgAppendPathData(openvg->path, 1, &seg, data);
+}
+
+void CanvasRenderingContext2D::moveTo(float x, float y)
+{
+	VGubyte seg = VG_MOVE_TO;
+	VGfloat data[] = { x, y };
+	vgAppendPathData(openvg->path, 1, &seg, data);
 }
 
 void CanvasRenderingContext2D::lineTo(float x, float y)
 {
+	VGubyte seg = VG_LINE_TO_ABS;
+	VGfloat data[] = { x, y };
+	vgAppendPathData(openvg->path, 1, &seg, data);
 }
 
 void CanvasRenderingContext2D::quadrativeCureTo(float cpx, float cpy, float x, float y)
@@ -473,6 +568,7 @@ void CanvasRenderingContext2D::fill()
 
 void CanvasRenderingContext2D::stroke()
 {
+	vgDrawPath(openvg->path, VG_STROKE_PATH);
 }
 
 void CanvasRenderingContext2D::clip()

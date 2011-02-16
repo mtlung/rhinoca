@@ -66,12 +66,12 @@ public:
 	/// Resets the current path.
 	void beginPath();
 
-	/// Creates a new subpath with the given point.
-	void moveTo(float x, float y);
-
 	/// Marks the current subpath as closed, and starts a new subpath with
 	/// a point the same as the start and end of the newly closed subpath.
 	void closePath();
+
+	/// Creates a new subpath with the given point.
+	void moveTo(float x, float y);
 
 	/// Adds the given point to the current subpath, connected to the
 	/// previous one by a straight line.
@@ -115,6 +115,9 @@ public:
 // Attributes
 	unsigned width() const { return canvas->width(); }
 	unsigned height() const { return canvas->height(); }
+
+	struct OpenVG;
+	OpenVG* openvg;
 
 	struct State {
 		Mat44 transform;
