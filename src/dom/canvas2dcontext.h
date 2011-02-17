@@ -112,6 +112,10 @@ public:
 	/// Returns true if the given point is in the current path.
 	void isPointInPath(float x, float y);
 
+	void setStrokeStyle(float* rgba);
+
+	void setLineWidth(float width);
+
 // Attributes
 	unsigned width() const { return canvas->width(); }
 	unsigned height() const { return canvas->height(); }

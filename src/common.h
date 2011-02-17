@@ -39,12 +39,24 @@ extern rhinoca_io_close io_close;
 extern rhinoca_printFunc print;
 
 double atof(const char* str, double onErr);
+void tolower(char* str);
 
 #if defined(_MSC_VER)
 #define FORCE_INLINE __forceinline
 int strcasecmp(const char* s1, const char* s2);
 #else
 #define FORCE_INLINE inline
+#endif
+
+/*!	Macro to get the count of element of an array
+	For the Vsiaul Studio, in use the provided _countof macro defined in
+	stdlib.h, which can prevent many miss use of it.
+	\sa http://blogs.msdn.com/the1/archive/2004/05/07/128242.aspx
+ */
+#if defined(_MSC_VER)
+#	define COUNTOF(x) _countof(x)
+#else
+#	define COUNTOF(x) (sizeof(x) / sizeof(typeof(x[0])))
 #endif
 
 class Noncopyable

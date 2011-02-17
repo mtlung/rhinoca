@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "canvas2dcontext.h"
+#include "color.h"
 #include "image.h"
 #include "../mat44.h"
 #include "../vec3.h"
@@ -23,8 +24,36 @@ static JSBool getCanvas(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	return JS_TRUE;
 }
 
+static JSBool setStrokeStyle(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+
+	JSString* jss = JS_ValueToString(cx, *vp);
+	char* str = JS_GetStringBytes(jss);
+
+	Color c;
+	if(c.parse(str))
+		self->setStrokeStyle((float*)&c);
+	else {
+		// TODO: print warning
+	}	
+
+	return JS_TRUE;
+}
+
+static JSBool setLineWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	double w;
+	JS_ValueToNumber(cx, *vp, &w);
+	self->setLineWidth((float)w);
+	return JS_TRUE;
+}
+
 static JSPropertySpec properties[] = {
 	{"canvas", 0, 0, getCanvas, JS_PropertyStub},
+	{"strokeStyle", 0, 0, JS_PropertyStub, setStrokeStyle},
+	{"lineWidth", 0, 0, JS_PropertyStub, setLineWidth},
 	{0}
 };
 
@@ -312,6 +341,7 @@ static JSFunctionSpec methods[] = {
 struct CanvasRenderingContext2D::OpenVG
 {
 	VGPath path;
+	VGPaint strokePaint;
 };
 
 CanvasRenderingContext2D::CanvasRenderingContext2D(HTMLCanvasElement* c)
@@ -321,12 +351,16 @@ CanvasRenderingContext2D::CanvasRenderingContext2D(HTMLCanvasElement* c)
 
 	openvg = new OpenVG;
 	openvg->path = NULL;
+	openvg->strokePaint = vgCreatePaint();
+	vgSetPaint(openvg->strokePaint, VG_STROKE_PATH);
 }
 
 CanvasRenderingContext2D::~CanvasRenderingContext2D()
 {
 	if(openvg->path)
 		vgDestroyPath(openvg->path);
+	vgDestroyPaint(openvg->strokePaint);
+
 	delete openvg;
 }
 
@@ -569,12 +603,6 @@ void CanvasRenderingContext2D::fill()
 void CanvasRenderingContext2D::stroke()
 {
 	vgResizeSurfaceSH(this->width(), this->height());
-
-	VGfloat cstroke[] = { 0.5f, 0.2f, 0.8f, 0.6f };
-	VGPaint testStroke = vgCreatePaint();
-	vgSetParameterfv(testStroke, VG_PAINT_COLOR, 4, cstroke);
-	vgSetPaint(testStroke, VG_STROKE_PATH);
-
 	vgDrawPath(openvg->path, VG_STROKE_PATH);
 }
 
@@ -584,6 +612,16 @@ void CanvasRenderingContext2D::clip()
 
 void CanvasRenderingContext2D::isPointInPath(float x, float y)
 {
+}
+
+void CanvasRenderingContext2D::setStrokeStyle(float* rgba)
+{
+	vgSetParameterfv(openvg->strokePaint, VG_PAINT_COLOR, 4, rgba);
+}
+
+void CanvasRenderingContext2D::setLineWidth(float width)
+{
+	vgSetf(VG_STROKE_LINE_WIDTH, width);
 }
 
 }	// namespace Dom

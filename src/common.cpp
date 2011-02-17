@@ -95,6 +95,12 @@ double atof(const char* p, double onErr)
 	return fl;
 }
 
+void tolower(char* str)
+{
+	while(str != '\0')
+		*str = (char)tolower(*str);
+}
+
 #if defined(_MSC_VER)
 int strcasecmp(const char* s1, const char* s2)
 {
