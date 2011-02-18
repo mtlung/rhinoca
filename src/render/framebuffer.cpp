@@ -6,6 +6,7 @@ namespace Render {
 
 Framebuffer::Framebuffer()
 	: handle(0)
+	, depthStencilHandle(0)
 	, width(0), height(0)
 {
 }
@@ -32,7 +33,7 @@ void Framebuffer::createTexture(unsigned w, unsigned h)
 	width = w;
 	height = h;
 	Driver::deleteRenderTarget(handle);
-	handle = Driver::createRenderTargetTexture(texture->handle);
+	handle = Driver::createRenderTargetTexture(&texture->handle, &depthStencilHandle, w, h);
 }
 
 }	// Render
