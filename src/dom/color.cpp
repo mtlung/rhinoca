@@ -33,6 +33,7 @@ bool Color::parse(const char* str)
 		if(len == COUNTOF(buf)) return false;
 		++p;
 	}
+	buf[len] = '\0';
 
 	int scanfRet = 0;
 
@@ -83,15 +84,15 @@ bool Color::parse(const char* str)
 	{	// rgba(255, 0, 0, 255)
 		float r_, g_, b_, a_;
 		if(sscanf(buf, "rgba(%f,%f,%f,%f)", &r_, &g_, &b_, &a_) == 4) {
-			r = r_; g = g_; b = b_; a = a_;
+			r = r_ / 255; g = g_ / 255; b = b_ / 255; a = a_ / 255;
 			return true;
 		}
 	}
 
 	{	// rgba(255, 0, 0, 255)
 		float r_, g_, b_;
-		if(sscanf(buf, "rgb(%f,%f,%f)", &r_, &g_, &b_) == 4) {
-			r = r_; g = g_; b = b_; a = 1;
+		if(sscanf(buf, "rgb(%f,%f,%f)", &r_, &g_, &b_) == 3) {
+			r = r_ / 255; g = g_ / 255; b = b_ / 255; a = 1;
 			return true;
 		}
 	}

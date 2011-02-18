@@ -5,6 +5,7 @@
 #include "../mat44.h"
 #include "../vec3.h"
 #include "../render/vg/openvg.h"
+#include "../render/vg/vgu.h"
 
 using namespace Render;
 
@@ -305,6 +306,23 @@ static JSBool lineTo(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsva
 	return JS_TRUE;
 }
 
+static JSBool arc(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	double x, y, radius, startAngle, endAngle;
+	JS_ValueToNumber(cx, argv[0], &x);
+	JS_ValueToNumber(cx, argv[1], &y);
+	JS_ValueToNumber(cx, argv[2], &radius);
+	JS_ValueToNumber(cx, argv[3], &startAngle);
+	JS_ValueToNumber(cx, argv[4], &endAngle);
+	self->arc((float)x, (float)y, (float)radius, (float)startAngle, (float)endAngle, true);
+
+	return JS_TRUE;
+}
+
 static JSBool stroke(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
 {
 	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
@@ -333,6 +351,9 @@ static JSFunctionSpec methods[] = {
 	{"closePath", closePath, 0,0,0},
 	{"moveTo", moveTo, 2,0,0},
 	{"lineTo", lineTo, 2,0,0},
+
+	{"arc", arc, 6,0,0},
+
 	{"stroke", stroke, 2,0,0},
 	{0}
 };
@@ -590,6 +611,10 @@ void CanvasRenderingContext2D::arcTo(float x1, float y1, float x2, float y2, flo
 
 void CanvasRenderingContext2D::arc(float x, float y, float radius, float startAngle, float endAngle, bool anticlockwise)
 {
+	startAngle = startAngle * 360 / (2 * 3.14159f);
+	endAngle = endAngle * 360 / (2 * 3.14159f);
+	radius *= 2;
+	vguArc(openvg->path, x,y, radius,radius, startAngle, endAngle-startAngle, VGU_ARC_OPEN);
 }
 
 void CanvasRenderingContext2D::rect(float x, float y, float w, float h)
