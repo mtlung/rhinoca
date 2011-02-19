@@ -42,6 +42,23 @@ static JSBool setStrokeStyle(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	return JS_TRUE;
 }
 
+static JSBool setFillStyle(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+
+	JSString* jss = JS_ValueToString(cx, *vp);
+	char* str = JS_GetStringBytes(jss);
+
+	Color c;
+	if(c.parse(str))
+		self->setFillStyle((float*)&c);
+	else {
+		// TODO: print warning
+	}	
+
+	return JS_TRUE;
+}
+
 static JSBool setLineCap(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
@@ -81,6 +98,7 @@ static JSPropertySpec properties[] = {
 	{"lineCap", 0, 0, JS_PropertyStub, setLineCap},
 	{"lineJoin", 0, 0, JS_PropertyStub, setLineJoin},
 	{"lineWidth", 0, 0, JS_PropertyStub, setLineWidth},
+	{"fillStyle", 0, 0, JS_PropertyStub, setFillStyle},
 	{0}
 };
 
@@ -349,6 +367,22 @@ static JSBool arc(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* 
 	return JS_TRUE;
 }
 
+static JSBool rect(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	double x, y, w, h;
+	JS_ValueToNumber(cx, argv[0], &x);
+	JS_ValueToNumber(cx, argv[1], &y);
+	JS_ValueToNumber(cx, argv[2], &w);
+	JS_ValueToNumber(cx, argv[3], &h);
+	self->rect((float)x, (float)y, (float)w, (float)h);
+
+	return JS_TRUE;
+}
+
 static JSBool stroke(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
 {
 	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
@@ -360,13 +394,42 @@ static JSBool stroke(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsva
 	return JS_TRUE;
 }
 
+static JSBool fill(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	self->fill();
+
+	return JS_TRUE;
+}
+
+static JSBool fillRect(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	double x, y, w, h;
+	JS_ValueToNumber(cx, argv[0], &x);
+	JS_ValueToNumber(cx, argv[1], &y);
+	JS_ValueToNumber(cx, argv[2], &w);
+	JS_ValueToNumber(cx, argv[3], &h);
+	self->fillRect((float)x, (float)y, (float)w, (float)h);
+
+	return JS_TRUE;
+}
+
 static JSFunctionSpec methods[] = {
 	{"clearRect", clearRect, 4,0,0},
 	{"beginLayer", beginLayer, 0,0,0},
 	{"endLayer", endLayer, 0,0,0},
 	{"drawImage", drawImage, 5,0,0},
+
 	{"save", save, 0,0,0},
 	{"restore", restore, 0,0,0},
+
 	{"scale", scale, 2,0,0},
 	{"rotate", rotate, 1,0,0},
 	{"translate", translate, 2,0,0},
@@ -377,18 +440,23 @@ static JSFunctionSpec methods[] = {
 	{"closePath", closePath, 0,0,0},
 	{"moveTo", moveTo, 2,0,0},
 	{"lineTo", lineTo, 2,0,0},
-
 	{"arc", arc, 6,0,0},
+	{"rect", rect, 4,0,0},
 
-	{"stroke", stroke, 2,0,0},
+	{"fillRect", fillRect, 4,0,0},
+
+	{"stroke", stroke, 0,0,0},
+	{"fill", fill, 0,0,0},
 	{0}
 };
 
 
 struct CanvasRenderingContext2D::OpenVG
 {
-	VGPath path;
+	VGPath path;			/// The path for generic use
+	VGPath pathSimpleShape;	/// The path allocated for simple shape usage
 	VGPaint strokePaint;
+	VGPaint fillPaint;
 };
 
 CanvasRenderingContext2D::CanvasRenderingContext2D(HTMLCanvasElement* c)
@@ -397,9 +465,21 @@ CanvasRenderingContext2D::CanvasRenderingContext2D(HTMLCanvasElement* c)
 	currentState.transform = Mat44::identity;
 
 	openvg = new OpenVG;
-	openvg->path = NULL;
+
+	openvg->path = vgCreatePath(
+		VG_PATH_FORMAT_STANDARD, VG_PATH_DATATYPE_F,
+		1, 0, 0, 0, VG_PATH_CAPABILITY_ALL
+	);
+
+	openvg->pathSimpleShape = vgCreatePath(
+		VG_PATH_FORMAT_STANDARD, VG_PATH_DATATYPE_F,
+		1, 0, 0, 0, VG_PATH_CAPABILITY_ALL
+	);
+
 	openvg->strokePaint = vgCreatePaint();
+	openvg->fillPaint = vgCreatePaint();
 	vgSetPaint(openvg->strokePaint, VG_STROKE_PATH);
+	vgSetPaint(openvg->fillPaint, VG_FILL_PATH);
 }
 
 CanvasRenderingContext2D::~CanvasRenderingContext2D()
@@ -407,6 +487,7 @@ CanvasRenderingContext2D::~CanvasRenderingContext2D()
 	if(openvg->path)
 		vgDestroyPath(openvg->path);
 	vgDestroyPaint(openvg->strokePaint);
+	vgDestroyPaint(openvg->fillPaint);
 
 	delete openvg;
 }
@@ -593,13 +674,7 @@ void CanvasRenderingContext2D::setTransform(float m11, float m12, float m21, flo
 
 void CanvasRenderingContext2D::beginPath()
 {
-	if(openvg->path)
-		vgDestroyPath(openvg->path);
-
-	openvg->path = vgCreatePath(
-		VG_PATH_FORMAT_STANDARD, VG_PATH_DATATYPE_F,
-		1, 0, 0, 0, VG_PATH_CAPABILITY_ALL
-	);
+	vgClearPath(openvg->path, VG_PATH_CAPABILITY_ALL);
 }
 
 void CanvasRenderingContext2D::closePath()
@@ -645,12 +720,8 @@ void CanvasRenderingContext2D::arc(float x, float y, float radius, float startAn
 
 void CanvasRenderingContext2D::rect(float x, float y, float w, float h)
 {
-}
-
-void CanvasRenderingContext2D::fill()
-{
-	canvas->bindFramebuffer();
-	vgResizeSurfaceSH(this->width(), this->height());
+	vguRect(openvg->path, x, y, w, h);
+	moveTo(x, y);
 }
 
 void CanvasRenderingContext2D::stroke()
@@ -669,6 +740,41 @@ void CanvasRenderingContext2D::stroke()
 	vgDrawPath(openvg->path, VG_STROKE_PATH);
 }
 
+void CanvasRenderingContext2D::fill()
+{
+	canvas->bindFramebuffer();
+	vgResizeSurfaceSH(this->width(), this->height());
+
+	const Mat44& m = currentState.transform;
+	float mat33[] = {
+		m.m00, m.m10, m.m20,
+		m.m01, m.m11, m.m21,
+		m.m03, m.m13, m.m33,
+	};
+
+	vgLoadMatrix(mat33);
+	vgDrawPath(openvg->path, VG_FILL_PATH);
+}
+
+void CanvasRenderingContext2D::fillRect(float x, float y, float w, float h)
+{
+	vgClearPath(openvg->pathSimpleShape, VG_PATH_CAPABILITY_ALL);
+	vguRect(openvg->pathSimpleShape, x, y, w, h);
+
+	canvas->bindFramebuffer();
+	vgResizeSurfaceSH(this->width(), this->height());
+
+	const Mat44& m = currentState.transform;
+	float mat33[] = {
+		m.m00, m.m10, m.m20,
+		m.m01, m.m11, m.m21,
+		m.m03, m.m13, m.m33,
+	};
+
+	vgLoadMatrix(mat33);
+	vgDrawPath(openvg->pathSimpleShape, VG_FILL_PATH);
+}
+
 void CanvasRenderingContext2D::clip()
 {
 }
@@ -680,6 +786,11 @@ void CanvasRenderingContext2D::isPointInPath(float x, float y)
 void CanvasRenderingContext2D::setStrokeStyle(float* rgba)
 {
 	vgSetParameterfv(openvg->strokePaint, VG_PAINT_COLOR, 4, rgba);
+}
+
+void CanvasRenderingContext2D::setFillStyle(float* rgba)
+{
+	vgSetParameterfv(openvg->fillPaint, VG_PAINT_COLOR, 4, rgba);
 }
 
 void CanvasRenderingContext2D::setLineCap(const char* cap)

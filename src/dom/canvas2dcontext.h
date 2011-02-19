@@ -100,11 +100,13 @@ public:
 	/// Adds a new closed subpath to the path, representing the given rectangle.
 	void rect(float x, float y, float w, float h);
 
+	/// Strokes the subpaths with the current stroke style.
+	void stroke();
+
 	/// Fills the subpaths with the current fill style.
 	void fill();
 
-	/// Strokes the subpaths with the current stroke style.
-	void stroke();
+	void fillRect(float x, float y, float w, float h);
 
 	/// Further constrains the clipping region to the given path.
 	void clip();
@@ -113,6 +115,8 @@ public:
 	void isPointInPath(float x, float y);
 
 	void setStrokeStyle(float* rgba);
+
+	void setFillStyle(float* rgba);
 
 	/// Calue values are 'butt', 'round' and 'square'
 	void setLineCap(const char* cap);
