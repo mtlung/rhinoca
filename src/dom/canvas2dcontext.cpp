@@ -42,6 +42,30 @@ static JSBool setStrokeStyle(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	return JS_TRUE;
 }
 
+static JSBool setLineCap(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+
+	JSString* jss = JS_ValueToString(cx, *vp);
+	char* str = JS_GetStringBytes(jss);
+
+	self->setLineCap(str);
+
+	return JS_TRUE;
+}
+
+static JSBool setLineJoin(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+
+	JSString* jss = JS_ValueToString(cx, *vp);
+	char* str = JS_GetStringBytes(jss);
+
+	self->setLineJoin(str);
+
+	return JS_TRUE;
+}
+
 static JSBool setLineWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
@@ -54,6 +78,8 @@ static JSBool setLineWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 static JSPropertySpec properties[] = {
 	{"canvas", 0, 0, getCanvas, JS_PropertyStub},
 	{"strokeStyle", 0, 0, JS_PropertyStub, setStrokeStyle},
+	{"lineCap", 0, 0, JS_PropertyStub, setLineCap},
+	{"lineJoin", 0, 0, JS_PropertyStub, setLineJoin},
 	{"lineWidth", 0, 0, JS_PropertyStub, setLineWidth},
 	{0}
 };
@@ -654,6 +680,42 @@ void CanvasRenderingContext2D::isPointInPath(float x, float y)
 void CanvasRenderingContext2D::setStrokeStyle(float* rgba)
 {
 	vgSetParameterfv(openvg->strokePaint, VG_PAINT_COLOR, 4, rgba);
+}
+
+void CanvasRenderingContext2D::setLineCap(const char* cap)
+{
+	struct Cap {
+		const char* name;
+		VGCapStyle style;
+	};
+
+	static const Cap caps[] = {
+		{ "butt",	VG_CAP_BUTT },
+		{ "round",	VG_CAP_ROUND },
+		{ "square",	VG_CAP_SQUARE },
+	};
+
+	for(unsigned i=0; i<COUNTOF(caps); ++i)
+		if(strcasecmp(cap, caps[i].name) == 0)
+			vgSeti(VG_STROKE_CAP_STYLE,  caps[i].style);
+}
+
+void CanvasRenderingContext2D::setLineJoin(const char* join)
+{
+	struct Join {
+		const char* name;
+		VGJoinStyle style;
+	};
+
+	static const Join joins[] = {
+		{ "miter",	VG_JOIN_MITER },
+		{ "round",	VG_JOIN_ROUND },
+		{ "bevel",	VG_JOIN_BEVEL },
+	};
+
+	for(unsigned i=0; i<COUNTOF(joins); ++i)
+		if(strcasecmp(join, joins[i].name) == 0)
+			vgSeti(VG_STROKE_JOIN_STYLE, joins[i].style);
 }
 
 void CanvasRenderingContext2D::setLineWidth(float width)

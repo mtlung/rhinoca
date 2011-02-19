@@ -114,6 +114,12 @@ public:
 
 	void setStrokeStyle(float* rgba);
 
+	/// Calue values are 'butt', 'round' and 'square'
+	void setLineCap(const char* cap);
+
+	/// Calue values are 'round', 'bevel' and 'miter'
+	void setLineJoin(const char* join);
+
 	void setLineWidth(float width);
 
 // Attributes

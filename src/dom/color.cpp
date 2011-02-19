@@ -27,7 +27,9 @@ bool Color::parse(const char* str)
 
 	const char* p = str;
 	while(*p != '\0') {
-		if(*p == ' ') { ++p; continue; }	// Skip all space
+		// Skip white space
+		if(*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') { ++p; continue; }
+
 		buf[len] = (char)tolower(*p);
 		++len;
 		if(len == COUNTOF(buf)) return false;
@@ -96,6 +98,42 @@ bool Color::parse(const char* str)
 			return true;
 		}
 	}
+
+	struct NamedColor {
+		const char* name;
+		Color color;
+	};
+
+	static const float x80 = float(0x80)/0xFF;
+	static const float xC0 = float(0xC0)/0xFF;
+
+	static const NamedColor namedColors[] = {
+		{ "black",		Color(0, 0, 0) },
+		{ "silver",		Color(xC0, xC0, xC0) },
+		{ "gray",		Color(x80, x80, x80) },
+		{ "whilte",		Color(1, 1, 1) },
+
+		{ "maroon",		Color(x80, 0, 0) },
+		{ "red",		Color(1, 0, 0) },
+		{ "purple",		Color(x80, 0, x80) },
+		{ "fuchsia",	Color(1, 0, 1) },
+
+		{ "green",		Color(0, x80, 0) },
+		{ "lime",		Color(0, 1, 0) },
+		{ "ilive",		Color(x80, 0, x80) },
+		{ "yellow",		Color(1, 1, 0) },
+
+		{ "navy",		Color(0, 0, x80) },
+		{ "blue",		Color(0, 0, 1) },
+		{ "teal",		Color(0, x80, x80) },
+		{ "aqua",		Color(0, 1, 1) },
+	};
+
+	for(unsigned i=0; i<COUNTOF(namedColors); ++i)
+		if(strcasecmp(buf, namedColors[i].name) == 0) {
+			namedColors[i].color;
+			return true;
+		}
 
 	return false;
 }
