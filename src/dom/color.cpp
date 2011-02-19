@@ -83,10 +83,10 @@ bool Color::parse(const char* str)
 		}
 	}
 
-	{	// rgba(255, 0, 0, 255)
+	{	// rgba(255, 0, 0, 0.5)
 		float r_, g_, b_, a_;
 		if(sscanf(buf, "rgba(%f,%f,%f,%f)", &r_, &g_, &b_, &a_) == 4) {
-			r = r_ / 255; g = g_ / 255; b = b_ / 255; a = a_ / 255;
+			r = r_ / 255; g = g_ / 255; b = b_ / 255; a = a_;
 			return true;
 		}
 	}
