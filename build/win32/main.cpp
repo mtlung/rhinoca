@@ -57,9 +57,9 @@ static void setupFbo(unsigned width, unsigned height)
 	// Generate texture
 	if(!renderContext.texture) glGenTextures(1, &renderContext.texture);
 	glBindTexture(GL_TEXTURE_2D, renderContext.texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	ASSERT(GL_NO_ERROR == glGetError());
 
@@ -248,8 +248,9 @@ int main()
 //	rhinoca_openDocument(rh, "html5/test1/test2.html");
 //	rhinoca_openDocument(rh, "html5/test3/test_sprites.html");
 //	rhinoca_openDocument(rh, "html5/test4/test.html");
-	rhinoca_openDocument(rh, "../../../on9bird/on9birds.html");
+//	rhinoca_openDocument(rh, "../../../on9bird/on9birds.html");
 //	rhinoca_openDocument(rh, "../../test/htmlTest/imageTest/test.html");
+	rhinoca_openDocument(rh, "../../test/htmlTest/vgTest/test1.html");
 
 	while(true) {
 		MSG message;
@@ -271,10 +272,10 @@ int main()
 
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+			glViewport(0, 0, _width, _height);
 			glClearColor(1, 1, 1, 1);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			glViewport(0, 0, _width, _height);
 			glMatrixMode(GL_PROJECTION);
 			glLoadIdentity();
 			glOrtho(0, _width, _height, 0, 1, -1);

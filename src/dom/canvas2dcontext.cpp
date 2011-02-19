@@ -623,11 +623,23 @@ void CanvasRenderingContext2D::rect(float x, float y, float w, float h)
 
 void CanvasRenderingContext2D::fill()
 {
+	canvas->bindFramebuffer();
+	vgResizeSurfaceSH(this->width(), this->height());
 }
 
 void CanvasRenderingContext2D::stroke()
 {
+	canvas->bindFramebuffer();
 	vgResizeSurfaceSH(this->width(), this->height());
+
+	const Mat44& m = currentState.transform;
+	float mat33[] = {
+		m.m00, m.m10, m.m20,
+		m.m01, m.m11, m.m21,
+		m.m03, m.m13, m.m33,
+	};
+
+	vgLoadMatrix(mat33);
 	vgDrawPath(openvg->path, VG_STROKE_PATH);
 }
 

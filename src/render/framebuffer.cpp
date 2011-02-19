@@ -28,6 +28,8 @@ void Framebuffer::unbind()
 
 void Framebuffer::createTexture(unsigned w, unsigned h)
 {
+	if(width == w && height == h) return;
+
 	texture = new Texture("");
 	(void)texture->create(w, h, Render::Driver::ANY, NULL, 0, Render::Driver::RGBA);
 	width = w;
