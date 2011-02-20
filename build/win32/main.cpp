@@ -250,7 +250,7 @@ int main()
 //	rhinoca_openDocument(rh, "html5/test4/test.html");
 //	rhinoca_openDocument(rh, "../../../on9bird/on9birds.html");
 //	rhinoca_openDocument(rh, "../../test/htmlTest/imageTest/test.html");
-	rhinoca_openDocument(rh, "../../test/htmlTest/vgTest/test1.html");
+	rhinoca_openDocument(rh, "../../test/htmlTest/vgTest/test.html");
 
 	while(true) {
 		MSG message;

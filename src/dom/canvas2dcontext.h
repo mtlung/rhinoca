@@ -100,23 +100,14 @@ public:
 	/// Adds a new closed subpath to the path, representing the given rectangle.
 	void rect(float x, float y, float w, float h);
 
-	/// Strokes the subpaths with the current stroke style.
-	void stroke();
-
-	/// Fills the subpaths with the current fill style.
-	void fill();
-
-	void fillRect(float x, float y, float w, float h);
-
-	/// Further constrains the clipping region to the given path.
-	void clip();
-
 	/// Returns true if the given point is in the current path.
 	void isPointInPath(float x, float y);
 
-	void setStrokeStyle(float* rgba);
+// Stroke
+	/// Strokes the subpaths with the current stroke style.
+	void stroke();
 
-	void setFillStyle(float* rgba);
+	void setStrokeStyle(float* rgba);
 
 	/// Calue values are 'butt', 'round' and 'square'
 	void setLineCap(const char* cap);
@@ -126,9 +117,23 @@ public:
 
 	void setLineWidth(float width);
 
+// Fill
+	/// Fills the subpaths with the current fill style.
+	void fill();
+
+	void fillRect(float x, float y, float w, float h);
+
+	void setFillStyle(float* rgba);
+
+	/// Further constrains the clipping region to the given path.
+	void clip();
+
 // Attributes
 	unsigned width() const { return canvas->width(); }
 	unsigned height() const { return canvas->height(); }
+
+	float globalAlpha() const { return _globalAlpha; }
+	void setGlobalAlpha(float alpha);
 
 	struct OpenVG;
 	OpenVG* openvg;
@@ -138,6 +143,8 @@ public:
 	};
 	State currentState;
 	Vector<State> stateStack;
+
+	float _globalAlpha;
 
 	static JSClass jsClass;
 };	// CanvasRenderingContext2D

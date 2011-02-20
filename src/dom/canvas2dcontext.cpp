@@ -25,6 +25,15 @@ static JSBool getCanvas(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	return JS_TRUE;
 }
 
+static JSBool setGlobalAlpha(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	double a;
+	JS_ValueToNumber(cx, *vp, &a);
+	self->setGlobalAlpha((float)a);
+	return JS_TRUE;
+}
+
 static JSBool setStrokeStyle(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
@@ -94,6 +103,7 @@ static JSBool setLineWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 
 static JSPropertySpec properties[] = {
 	{"canvas", 0, 0, getCanvas, JS_PropertyStub},
+	{"globalAlpha", 0, 0, JS_PropertyStub, setGlobalAlpha},
 	{"strokeStyle", 0, 0, JS_PropertyStub, setStrokeStyle},
 	{"lineCap", 0, 0, JS_PropertyStub, setLineCap},
 	{"lineJoin", 0, 0, JS_PropertyStub, setLineJoin},
@@ -461,6 +471,7 @@ struct CanvasRenderingContext2D::OpenVG
 
 CanvasRenderingContext2D::CanvasRenderingContext2D(HTMLCanvasElement* c)
 	: Context(c)
+	, _globalAlpha(1)
 {
 	currentState.transform = Mat44::identity;
 
@@ -618,7 +629,7 @@ void CanvasRenderingContext2D::drawImage(
 		sx2, sy1,
 		sx2, sy2,
 		sx1, sy2,
-		255, 255, 255, 255
+		255, 255, 255, (rhuint8)(_globalAlpha * 255)
 	);
 }
 
@@ -832,6 +843,24 @@ void CanvasRenderingContext2D::setLineJoin(const char* join)
 void CanvasRenderingContext2D::setLineWidth(float width)
 {
 	vgSetf(VG_STROKE_LINE_WIDTH, width);
+}
+
+void CanvasRenderingContext2D::setGlobalAlpha(float alpha)
+{
+	Color sc;
+	vgGetParameterfv(openvg->strokePaint, VG_PAINT_COLOR, 4, (float*)&sc);
+
+	Color fc;
+	vgGetParameterfv(openvg->fillPaint, VG_PAINT_COLOR, 4, (float*)&fc);
+
+	const float newAlphaFacotr = alpha / _globalAlpha;
+	sc.a *= newAlphaFacotr;
+	fc.a *= newAlphaFacotr;
+
+	setStrokeStyle((float*)&sc);
+	setFillStyle((float*)&fc);
+
+	_globalAlpha = alpha;
 }
 
 }	// namespace Dom
