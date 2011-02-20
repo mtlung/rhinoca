@@ -1,0 +1,169 @@
+<html>
+	<head>
+	<title>Canvas drawImage example 2</title>
+	<script type="application/x-javascript">
+	function testLineWidth(ctx) {
+		for (var i = 0; i < 10; i++){
+			ctx.lineWidth = 1+i;
+			ctx.beginPath();
+			ctx.moveTo(5+i*14,5);
+			ctx.lineTo(5+i*14,140);
+			ctx.stroke();
+		}
+	}
+
+	function testStrokeStyle(ctx) {
+		for (var i=0;i<6;i++) for (var j=0;j<6;j++){
+			ctx.strokeStyle = 'rgb(0,' + Math.floor(255-42.5*i) + ',' +
+				Math.floor(255-42.5*j) + ')';
+			ctx.beginPath();
+			ctx.arc(12.5+j*25,12.5+i*25,10,0,Math.PI*2,true);
+			ctx.stroke();
+		}
+	}
+
+	function testLineCap(ctx) {
+		var lineCap = ['butt','round','square'];
+
+		// Draw guides
+		ctx.strokeStyle = '#09f';
+		ctx.beginPath();
+		ctx.moveTo(10,10);
+		ctx.lineTo(140,10);
+		ctx.moveTo(10,140);
+		ctx.lineTo(140,140);
+		ctx.stroke();
+
+		// Draw lines
+		ctx.strokeStyle = 'black';
+		for (var i=0;i<lineCap.length;i++) {
+			ctx.lineWidth = 15;
+			ctx.lineCap = lineCap[i];
+			ctx.beginPath();
+			ctx.moveTo(25+i*50,10);
+			ctx.lineTo(25+i*50,140);
+			ctx.stroke();
+		}		
+	}
+
+	function testLineJoin(ctx) {
+		var lineJoin = ['round','bevel','miter'];
+		ctx.lineWidth = 10;
+		for (var i=0;i<lineJoin.length;i++) {
+			ctx.lineJoin = lineJoin[i];
+			ctx.beginPath();
+			ctx.moveTo(-5,5+i*40);
+			ctx.lineTo(35,45+i*40);
+			ctx.lineTo(75,5+i*40);
+			ctx.lineTo(115,45+i*40);
+			ctx.lineTo(155,5+i*40);
+			ctx.stroke();
+		}
+	}
+
+	function testFillStyle(ctx) {
+		for (var i=0;i<6;i++) {
+			for (var j=0;j<6;j++) {
+				ctx.fillStyle = 'rgb(' + Math.floor(255-42.5*i) + ',' +
+					Math.floor(255-42.5*j) + ',0)';
+				ctx.fillRect(j*25,i*25,25,25);
+			}
+		}
+	}
+
+	function testRgba(ctx) {
+		// Draw background
+		ctx.fillStyle = 'rgb(255,221,0)';
+		ctx.fillRect(0,0,150,37.5);
+		ctx.fillStyle = 'rgb(102,204,0)';
+		ctx.fillRect(0,37.5,150,37.5);
+		ctx.fillStyle = 'rgb(0,153,255)';
+		ctx.fillRect(0,75,150,37.5);
+		ctx.fillStyle = 'rgb(255,51,0)';
+		ctx.fillRect(0,112.5,150,37.5);
+		
+		// Draw semi transparent rectangles
+		for (var i=0;i<10;i++) {
+			ctx.fillStyle = 'rgba(255,255,255,'+(i+1)/10+')';
+			for (var j=0;j<4;j++) {
+				ctx.fillRect(5+i*14,5+j*37.5,14,27.5)
+			}
+		}
+	}
+	
+	function testGlobalAlpha(ctx) {
+		// draw background
+		ctx.fillStyle = '#FD0';
+		ctx.fillRect(0,0,75,75);
+		ctx.fillStyle = '#6C0';
+		ctx.fillRect(75,0,75,75);
+		ctx.fillStyle = '#09F';
+		ctx.fillRect(0,75,75,75);
+		ctx.fillStyle = '#F30';
+		ctx.fillRect(75,75,75,75);
+		ctx.fillStyle = '#FFF';
+		
+		// set transparency value
+		ctx.globalAlpha = 0.2;
+		
+		// Draw semi transparent circles
+		for (var i=0;i<7;i++){
+			ctx.beginPath();
+			ctx.arc(75,75,10+10*i,0,Math.PI*2,true);
+			ctx.fill();
+		}
+	}
+
+	function draw() {
+		var ctx = document.getElementById('canvas').getContext('2d');
+
+		// For more VG example, go to:
+		// https://developer.mozilla.org/En/Canvas_tutorial/Applying_styles_and_colors
+
+		ctx.translate(10, 10);
+
+		ctx.lineWidth = 1;
+		testLineWidth(ctx);
+
+		ctx.lineWidth = 1;
+		ctx.translate(180, 0);
+		testStrokeStyle(ctx);
+		
+		ctx.lineWidth = 1;
+		ctx.translate(180, 0);
+		testLineCap(ctx);
+
+		ctx.lineWidth = 1;
+		ctx.translate(180, 0);
+		testLineJoin(ctx);
+
+		ctx.translate(-180 * 3, 180);
+		testFillStyle(ctx);
+
+		ctx.translate(180, 0);
+		testRgba(ctx);
+
+		ctx.translate(180, 0);
+		testGlobalAlpha(ctx);
+
+/*		var img2 = new Image();
+		img2.src = 'test.png';
+		img2.onload = function() {
+			ctx.drawImage(img2, 0, 0);
+		}
+
+		var img1 = new Image();
+		img1.src = 'rhino.bmp';
+		img1.onload = function() {
+			ctx.drawImage(img1, 100, 100);
+		}*/
+	}
+	</script>
+	</head>
+	<body onload="draw();">
+		<h1>Canvas test</h1>
+		<div>
+			<canvas id="canvas" width="800" height="600" frontBufferOnly="false"></canvas>
+		</div>
+	</body>
+</html>
