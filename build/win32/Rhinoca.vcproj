@@ -176,6 +176,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\dom\canvasgradient.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\canvasgradient.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\dom\color.cpp"
 				>
 			</File>

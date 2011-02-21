@@ -107,7 +107,9 @@ public:
 	/// Strokes the subpaths with the current stroke style.
 	void stroke();
 
-	void setStrokeStyle(float* rgba);
+	void strokeRect(float x, float y, float w, float h);
+
+	void setStrokeColor(float* rgba);
 
 	/// Calue values are 'butt', 'round' and 'square'
 	void setLineCap(const char* cap);
@@ -123,7 +125,7 @@ public:
 
 	void fillRect(float x, float y, float w, float h);
 
-	void setFillStyle(float* rgba);
+	void setFillColor(float* rgba);
 
 	/// Further constrains the clipping region to the given path.
 	void clip();

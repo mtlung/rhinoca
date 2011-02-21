@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "canvas2dcontext.h"
+#include "canvasgradient.h"
 #include "color.h"
 #include "image.h"
 #include "../mat44.h"
@@ -38,15 +39,21 @@ static JSBool setStrokeStyle(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
 
-	JSString* jss = JS_ValueToString(cx, *vp);
-	char* str = JS_GetStringBytes(jss);
-
-	Color c;
-	if(c.parse(str))
-		self->setStrokeStyle((float*)&c);
+	if(JSVAL_IS_OBJECT(*vp)) {
+		JSObject* o = JSVAL_TO_OBJECT(*vp);
+		CanvasGradient* g = reinterpret_cast<CanvasGradient*>(JS_GetPrivate(cx, o));
+	}
 	else {
-		// TODO: print warning
-	}	
+		JSString* jss = JS_ValueToString(cx, *vp);
+		char* str = JS_GetStringBytes(jss);
+
+		Color c;
+		if(c.parse(str))
+			self->setStrokeColor((float*)&c);
+		else {
+			// TODO: print warning
+		}
+	}
 
 	return JS_TRUE;
 }
@@ -55,15 +62,21 @@ static JSBool setFillStyle(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
 
-	JSString* jss = JS_ValueToString(cx, *vp);
-	char* str = JS_GetStringBytes(jss);
-
-	Color c;
-	if(c.parse(str))
-		self->setFillStyle((float*)&c);
+	if(JSVAL_IS_OBJECT(*vp)) {
+		JSObject* o = JSVAL_TO_OBJECT(*vp);
+		CanvasGradient* g = reinterpret_cast<CanvasGradient*>(JS_GetPrivate(cx, o));
+	}
 	else {
-		// TODO: print warning
-	}	
+		JSString* jss = JS_ValueToString(cx, *vp);
+		char* str = JS_GetStringBytes(jss);
+
+		Color c;
+		if(c.parse(str))
+			self->setFillColor((float*)&c);
+		else {
+			// TODO: print warning
+		}
+	}
 
 	return JS_TRUE;
 }
@@ -393,6 +406,52 @@ static JSBool rect(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval*
 	return JS_TRUE;
 }
 
+static JSBool createLinearGradient(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	CanvasGradient* g = new CanvasGradient;
+	g->bind(cx, NULL);
+
+	double x1, y1, x2, y2;
+	JS_ValueToNumber(cx, argv[0], &x1);
+	JS_ValueToNumber(cx, argv[1], &y1);
+	JS_ValueToNumber(cx, argv[2], &x2);
+	JS_ValueToNumber(cx, argv[3], &y2);
+
+	g->createLinear((float)x1, (float)y1, (float)x2, (float)y2);
+
+	*rval = OBJECT_TO_JSVAL(g->jsObject);
+
+	return JS_TRUE;
+}
+
+static JSBool createRadialGradient(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	CanvasGradient* g = new CanvasGradient;
+	g->bind(cx, NULL);
+
+	double x1, y1, r1, x2, y2, r2;
+	JS_ValueToNumber(cx, argv[0], &x1);
+	JS_ValueToNumber(cx, argv[1], &y1);
+	JS_ValueToNumber(cx, argv[2], &r1);
+	JS_ValueToNumber(cx, argv[3], &x2);
+	JS_ValueToNumber(cx, argv[4], &y2);
+	JS_ValueToNumber(cx, argv[5], &r2);
+
+	g->createRadial((float)x1, (float)y1, (float)r1, (float)x2, (float)y2, (float)r2);
+
+	*rval = OBJECT_TO_JSVAL(g->jsObject);
+
+	return JS_TRUE;
+}
+
 static JSBool stroke(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
 {
 	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
@@ -400,6 +459,22 @@ static JSBool stroke(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsva
 	if(!self) return JS_FALSE;
 
 	self->stroke();
+
+	return JS_TRUE;
+}
+
+static JSBool strokeRect(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	double x, y, w, h;
+	JS_ValueToNumber(cx, argv[0], &x);
+	JS_ValueToNumber(cx, argv[1], &y);
+	JS_ValueToNumber(cx, argv[2], &w);
+	JS_ValueToNumber(cx, argv[3], &h);
+	self->strokeRect((float)x, (float)y, (float)w, (float)h);
 
 	return JS_TRUE;
 }
@@ -453,10 +528,14 @@ static JSFunctionSpec methods[] = {
 	{"arc", arc, 6,0,0},
 	{"rect", rect, 4,0,0},
 
-	{"fillRect", fillRect, 4,0,0},
+	{"createLinearGradient", createLinearGradient, 4,0,0},
+	{"createRadialGradient", createRadialGradient, 6,0,0},
 
 	{"stroke", stroke, 0,0,0},
+	{"strokeRect", strokeRect, 4,0,0},
 	{"fill", fill, 0,0,0},
+	{"fillRect", fillRect, 4,0,0},
+
 	{0}
 };
 
@@ -751,6 +830,25 @@ void CanvasRenderingContext2D::stroke()
 	vgDrawPath(openvg->path, VG_STROKE_PATH);
 }
 
+void CanvasRenderingContext2D::strokeRect(float x, float y, float w, float h)
+{
+	vgClearPath(openvg->pathSimpleShape, VG_PATH_CAPABILITY_ALL);
+	vguRect(openvg->pathSimpleShape, x, y, w, h);
+
+	canvas->bindFramebuffer();
+	vgResizeSurfaceSH(this->width(), this->height());
+
+	const Mat44& m = currentState.transform;
+	float mat33[] = {
+		m.m00, m.m10, m.m20,
+		m.m01, m.m11, m.m21,
+		m.m03, m.m13, m.m33,
+	};
+
+	vgLoadMatrix(mat33);
+	vgDrawPath(openvg->pathSimpleShape, VG_STROKE_PATH);
+}
+
 void CanvasRenderingContext2D::fill()
 {
 	canvas->bindFramebuffer();
@@ -794,13 +892,15 @@ void CanvasRenderingContext2D::isPointInPath(float x, float y)
 {
 }
 
-void CanvasRenderingContext2D::setStrokeStyle(float* rgba)
+void CanvasRenderingContext2D::setStrokeColor(float* rgba)
 {
+	vgSetPaint(openvg->strokePaint, VG_STROKE_PATH);
 	vgSetParameterfv(openvg->strokePaint, VG_PAINT_COLOR, 4, rgba);
 }
 
-void CanvasRenderingContext2D::setFillStyle(float* rgba)
+void CanvasRenderingContext2D::setFillColor(float* rgba)
 {
+	vgSetPaint(openvg->fillPaint, VG_FILL_PATH);
 	vgSetParameterfv(openvg->fillPaint, VG_PAINT_COLOR, 4, rgba);
 }
 
@@ -857,8 +957,8 @@ void CanvasRenderingContext2D::setGlobalAlpha(float alpha)
 	sc.a *= newAlphaFacotr;
 	fc.a *= newAlphaFacotr;
 
-	setStrokeStyle((float*)&sc);
-	setFillStyle((float*)&fc);
+	setStrokeColor((float*)&sc);
+	setFillColor((float*)&fc);
 
 	_globalAlpha = alpha;
 }
