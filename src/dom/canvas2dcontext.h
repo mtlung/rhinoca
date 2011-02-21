@@ -7,6 +7,8 @@
 
 namespace Dom {
 
+class CanvasGradient;
+
 class CanvasRenderingContext2D : public HTMLCanvasElement::Context
 {
 public:
@@ -111,6 +113,8 @@ public:
 
 	void setStrokeColor(float* rgba);
 
+	void setStrokeGradient(CanvasGradient* gradient);
+
 	/// Calue values are 'butt', 'round' and 'square'
 	void setLineCap(const char* cap);
 
@@ -126,6 +130,8 @@ public:
 	void fillRect(float x, float y, float w, float h);
 
 	void setFillColor(float* rgba);
+
+	void setFillGradient(CanvasGradient* gradient);
 
 	/// Further constrains the clipping region to the given path.
 	void clip();

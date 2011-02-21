@@ -33,16 +33,20 @@ static JSBool addColorStop(JSContext* cx, JSObject* obj, uintN argc, jsval* argv
 
 static JSFunctionSpec methods[] = {
 	{"addColorStop", addColorStop, 2,0,0},
+	{0}
 };
 
 CanvasGradient::CanvasGradient()
 	: handle(NULL)
+	, stops(NULL)
+	, stopCount(0)
 {
 }
 
 CanvasGradient::~CanvasGradient()
 {
 	vgDestroyPaint(handle);
+	rhdelete(stops);
 }
 
 void CanvasGradient::bind(JSContext* cx, JSObject* parent)
@@ -59,6 +63,7 @@ void CanvasGradient::createLinear(float xStart, float yStart, float xEnd, float 
 {
 	ASSERT(!handle);
 	handle = vgCreatePaint();
+	vgSetParameteri(handle, VG_PAINT_COLOR_RAMP_SPREAD_MODE, VG_COLOR_RAMP_SPREAD_PAD);
 	vgSetParameteri(handle, VG_PAINT_TYPE, VG_PAINT_TYPE_LINEAR_GRADIENT);
 	const float linear[] = { xStart, yStart ,xEnd, yEnd };
 	vgSetParameterfv(handle, VG_PAINT_LINEAR_GRADIENT, 4, linear);
@@ -68,7 +73,10 @@ void CanvasGradient::createRadial(float xStart, float yStart, float radiusStart,
 {
 	ASSERT(!handle);
 	handle = vgCreatePaint();
+	vgSetParameteri(handle, VG_PAINT_COLOR_RAMP_SPREAD_MODE, VG_COLOR_RAMP_SPREAD_PAD);
 	vgSetParameteri(handle, VG_PAINT_TYPE, VG_PAINT_TYPE_RADIAL_GRADIENT);
+	const float radial[] = { xEnd, yEnd, xStart, yStart ,radiusEnd };
+	vgSetParameterfv(handle, VG_PAINT_RADIAL_GRADIENT, 5, radial);
 }
 
 struct ColorStop {
@@ -80,22 +88,17 @@ void CanvasGradient::addColorStop(float offset, const char* color)
 	Color c;
 	c.parse(color);
 
-	VGint size = vgGetParameterVectorSize(handle, VG_PAINT_COLOR_RAMP_STOPS);
+	stops = (float*)rhrenew<ColorStop>((ColorStop*)stops, stopCount, stopCount + 1);
+	ColorStop* s = reinterpret_cast<ColorStop*>(stops);
 
-	ColorStop* colorStop = rhnew<ColorStop>(size + 1);
+	s[stopCount].t = offset;
+	s[stopCount].r = c.r;
+	s[stopCount].g = c.g;
+	s[stopCount].b = c.b;
+	s[stopCount].a = c.a;
+	++stopCount;
 
-	if(size > 0)
-		vgGetParameterfv(handle, VG_PAINT_COLOR_RAMP_STOPS, size, (VGfloat*)colorStop);
-
-	colorStop[size*5].t = offset;
-	colorStop[size*5].r = c.r;
-	colorStop[size*5].g = c.g;
-	colorStop[size*5].b = c.b;
-	colorStop[size*5].a = c.a;
-
-	vgSetParameterfv(handle, VG_PAINT_COLOR_RAMP_STOPS, (size + 1) * 5, (VGfloat*)colorStop);
-
-	rhdelete(colorStop);
+//	vgSetParameterfv(handle, VG_PAINT_COLOR_RAMP_STOPS, stopCount * 5, stops);
 }
 
 }	// namespace Dom

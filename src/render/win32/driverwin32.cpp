@@ -119,7 +119,7 @@ void* Driver::createContext(void* externalHandle)
 	Context* ctx = new Context;
 
 	ctx->enableTexture2D = true;
-	glEnable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_2D);
 
 	ctx->vpLeft = ctx->vpTop = 0;
 	ctx->vpWidth = ctx->vpHeight = 0;
@@ -222,7 +222,12 @@ void* Driver::createRenderTargetTexture(void** textureHandle, void** depthStenci
 	ASSERT(GL_NO_ERROR == glGetError());
 
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	glViewport(0, 0, width, height);
+	glClearColor(0, 0, 0, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)_context->renderTarget);
 
 	return reinterpret_cast<void*>(handle);
 }

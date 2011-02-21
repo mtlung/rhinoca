@@ -42,6 +42,8 @@ static JSBool setStrokeStyle(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	if(JSVAL_IS_OBJECT(*vp)) {
 		JSObject* o = JSVAL_TO_OBJECT(*vp);
 		CanvasGradient* g = reinterpret_cast<CanvasGradient*>(JS_GetPrivate(cx, o));
+
+		self->setStrokeGradient(g);
 	}
 	else {
 		JSString* jss = JS_ValueToString(cx, *vp);
@@ -65,6 +67,8 @@ static JSBool setFillStyle(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	if(JSVAL_IS_OBJECT(*vp)) {
 		JSObject* o = JSVAL_TO_OBJECT(*vp);
 		CanvasGradient* g = reinterpret_cast<CanvasGradient*>(JS_GetPrivate(cx, o));
+
+		self->setFillGradient(g);
 	}
 	else {
 		JSString* jss = JS_ValueToString(cx, *vp);
@@ -817,6 +821,7 @@ void CanvasRenderingContext2D::rect(float x, float y, float w, float h)
 void CanvasRenderingContext2D::stroke()
 {
 	canvas->bindFramebuffer();
+	Driver::useTexture(0);
 	vgResizeSurfaceSH(this->width(), this->height());
 
 	const Mat44& m = currentState.transform;
@@ -836,6 +841,7 @@ void CanvasRenderingContext2D::strokeRect(float x, float y, float w, float h)
 	vguRect(openvg->pathSimpleShape, x, y, w, h);
 
 	canvas->bindFramebuffer();
+	Driver::useTexture(0);
 	vgResizeSurfaceSH(this->width(), this->height());
 
 	const Mat44& m = currentState.transform;
@@ -852,6 +858,7 @@ void CanvasRenderingContext2D::strokeRect(float x, float y, float w, float h)
 void CanvasRenderingContext2D::fill()
 {
 	canvas->bindFramebuffer();
+	Driver::useTexture(0);
 	vgResizeSurfaceSH(this->width(), this->height());
 
 	const Mat44& m = currentState.transform;
@@ -871,6 +878,7 @@ void CanvasRenderingContext2D::fillRect(float x, float y, float w, float h)
 	vguRect(openvg->pathSimpleShape, x, y, w, h);
 
 	canvas->bindFramebuffer();
+	Driver::useTexture(0);
 	vgResizeSurfaceSH(this->width(), this->height());
 
 	const Mat44& m = currentState.transform;
@@ -898,10 +906,28 @@ void CanvasRenderingContext2D::setStrokeColor(float* rgba)
 	vgSetParameterfv(openvg->strokePaint, VG_PAINT_COLOR, 4, rgba);
 }
 
+void CanvasRenderingContext2D::setStrokeGradient(CanvasGradient* gradient)
+{
+	vgSetParameterfv(
+		gradient->handle, VG_PAINT_COLOR_RAMP_STOPS,
+		gradient->stopCount * 5, gradient->stops
+	);
+	vgSetPaint(gradient->handle, VG_STROKE_PATH);
+}
+
 void CanvasRenderingContext2D::setFillColor(float* rgba)
 {
 	vgSetPaint(openvg->fillPaint, VG_FILL_PATH);
 	vgSetParameterfv(openvg->fillPaint, VG_PAINT_COLOR, 4, rgba);
+}
+
+void CanvasRenderingContext2D::setFillGradient(CanvasGradient* gradient)
+{
+	vgSetParameterfv(
+		gradient->handle, VG_PAINT_COLOR_RAMP_STOPS,
+		gradient->stopCount * 5, gradient->stops
+	);
+	vgSetPaint(gradient->handle, VG_FILL_PATH);
 }
 
 void CanvasRenderingContext2D::setLineCap(const char* cap)

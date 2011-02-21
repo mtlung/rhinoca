@@ -27,6 +27,9 @@ public:
 	};
 
 	void* handle;
+	float* stops;
+	unsigned stopCount;
+
 	static JSClass jsClass;
 };	// CanvasGradient
 
