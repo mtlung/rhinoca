@@ -97,8 +97,6 @@ void CanvasGradient::addColorStop(float offset, const char* color)
 	s[stopCount].b = c.b;
 	s[stopCount].a = c.a;
 	++stopCount;
-
-//	vgSetParameterfv(handle, VG_PAINT_COLOR_RAMP_STOPS, stopCount * 5, stops);
 }
 
 }	// namespace Dom

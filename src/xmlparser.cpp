@@ -470,9 +470,23 @@ const char* XmlParser::attributeValue(const char* name) const
 	return mImpl.attributeValue(name);
 }
 
+const char* XmlParser::attributeValue(const char* name, const char* defaultValue) const
+{
+	if(const char* ret = mImpl.attributeValue(name))
+		return ret;
+	return defaultValue;
+}
+
 const char* XmlParser::attributeValueIgnoreCase(const char* name) const
 {
 	return mImpl.attributeValueIgnoreCase(name);
+}
+
+const char* XmlParser::attributeValueIgnoreCase(const char* name, const char* defaultValue) const
+{
+	if(const char* ret = mImpl.attributeValueIgnoreCase(name))
+		return ret;
+	return defaultValue;
 }
 
 float XmlParser::attributeValueAsFloat(size_t idx, float defaultValue) const

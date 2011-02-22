@@ -144,7 +144,11 @@ public:
 	 */
 	const char* attributeValue(const char* name) const;
 
+	const char* attributeValue(const char* name, const char* defaultValue) const;
+
 	const char* attributeValueIgnoreCase(const char* name) const;
+
+	const char* attributeValueIgnoreCase(const char* name, const char* defaultValue) const;
 
 	float attributeValueAsFloat(size_t idx, float defaultValue = 0.0f) const;
 
