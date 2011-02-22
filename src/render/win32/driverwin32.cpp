@@ -285,23 +285,26 @@ void* Driver::createTexture(unsigned width, unsigned height, TextureFormat inter
 	GLenum type = GL_TEXTURE_2D;
 	GLuint handle;
 	glGenTextures(1, &handle);
-	glBindTexture(type, handle);
 
-	glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	if(width != 0 && height != 0) {
+		glBindTexture(type, handle);
 
-	glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	glTexImage2D(
-		type, 0, internalFormat, width, height, 0,
-		srcDataFormat,
-		GL_UNSIGNED_BYTE,
-		srcData
-	);
+		glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	// Restore previous binded texture
-	glBindTexture(type, (GLuint)_context->texture);
+		glTexImage2D(
+			type, 0, internalFormat, width, height, 0,
+			srcDataFormat,
+			GL_UNSIGNED_BYTE,
+			srcData
+		);
+
+		// Restore previous binded texture
+		glBindTexture(type, (GLuint)_context->texture);
+	}
 
 	ASSERT(GL_NO_ERROR == glGetError());
 	return reinterpret_cast<void*>(handle);

@@ -39,6 +39,7 @@
 #define _ARRAY_DEFINE
 #include "shArrayBase.h"
 
+#include "../driver.h"
 
 void SHPaint_ctor(SHPaint *p)
 {
@@ -53,7 +54,8 @@ void SHPaint_ctor(SHPaint *p)
   p->tilingMode = VG_TILE_FILL;
   for (i=0; i<4; ++i) p->linearGradient[i] = 0.0f;
   for (i=0; i<5; ++i) p->radialGradient[i] = 0.0f;
-  glGenTextures(1, &p->texture);
+  p->texture = (GLuint)Render::Driver::createTexture(0, 0);
+//glGenTextures(1, &p->texture);
   p->pattern = VG_INVALID_HANDLE;
 }
 
@@ -62,8 +64,9 @@ void SHPaint_dtor(SHPaint *p)
   SH_DEINITOBJ(SHStopArray, p->instops);
   SH_DEINITOBJ(SHStopArray, p->stops);
   
-  if (glIsTexture(p->texture))
-    glDeleteTextures(1, &p->texture);
+  Render::Driver::deleteTexture((void*)p->texture);
+//if (glIsTexture(p->texture))
+//  glDeleteTextures(1, &p->texture);
 }
 
 VG_API_CALL VGPaint vgCreatePaint(void)
