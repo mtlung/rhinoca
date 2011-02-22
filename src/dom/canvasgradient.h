@@ -29,6 +29,7 @@ public:
 	void* handle;
 	float* stops;
 	unsigned stopCount;
+	float _radiusStart, _radiusEnd;	// For radial fill
 
 	static JSClass jsClass;
 };	// CanvasGradient

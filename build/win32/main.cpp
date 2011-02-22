@@ -113,7 +113,7 @@ LRESULT CALLBACK wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 HWND createWindow(HWND existingWindow, int& width, int& height, bool fullScreen)
 {
 	width = width <= 0 ? CW_USEDEFAULT : width;
-	height = height <= 0 ? CW_USEDEFAULT : width;
+	height = height <= 0 ? CW_USEDEFAULT : height;
 
 	HWND hWnd = NULL;
 	HMODULE hModule = ::GetModuleHandle(NULL);
