@@ -30,6 +30,8 @@
 #include "shGeometry.h"
 #include "shPaint.h"
 
+#include "../driver.h"
+
 void shPremultiplyFramebuffer()
 {
   /* Multiply target color with its own alpha */
@@ -41,6 +43,77 @@ void shUnpremultiplyFramebuffer()
   /* TODO: hmmmm..... any idea? */
 }
 
+using namespace Render;
+static const Driver::BlendState blendState_Disabled = {
+	false,
+	Driver::BlendState::Add, Driver::BlendState::Add,
+	Driver::BlendState::Zero, Driver::BlendState::Zero,	// Color src, dst
+	Driver::BlendState::Zero, Driver::BlendState::Zero	// Alpha src, dst
+};
+
+static const Driver::BlendState blendState_Src = {
+	false,
+	Driver::BlendState::Add, Driver::BlendState::Add,
+	Driver::BlendState::One, Driver::BlendState::Zero,
+	Driver::BlendState::One, Driver::BlendState::Zero
+};
+
+static const Driver::BlendState blendState_SrcIn = {
+	true,
+	Driver::BlendState::Add, Driver::BlendState::Add,
+	Driver::BlendState::DstAlpha, Driver::BlendState::Zero,
+	Driver::BlendState::DstAlpha, Driver::BlendState::Zero
+};
+
+static const Driver::BlendState blendState_DstIn = {
+	true,
+	Driver::BlendState::Add, Driver::BlendState::Add,
+	Driver::BlendState::Zero, Driver::BlendState::SrcAlpha,
+	Driver::BlendState::Zero, Driver::BlendState::SrcAlpha
+};
+
+static const Driver::BlendState blendState_SrcOutSh = {
+	true,
+	Driver::BlendState::Add, Driver::BlendState::Add,
+	Driver::BlendState::InvDstAlpha, Driver::BlendState::Zero,
+	Driver::BlendState::InvDstAlpha, Driver::BlendState::Zero
+};
+
+static const Driver::BlendState blendState_DstOutSh = {
+	true,
+	Driver::BlendState::Add, Driver::BlendState::Add,
+	Driver::BlendState::Zero, Driver::BlendState::InvSrcAlpha,
+	Driver::BlendState::Zero, Driver::BlendState::InvSrcAlpha
+};
+
+static const Driver::BlendState blendState_SrcAtopSh = {
+	true,
+	Driver::BlendState::Add, Driver::BlendState::Add,
+	Driver::BlendState::DstAlpha, Driver::BlendState::InvSrcAlpha,
+	Driver::BlendState::DstAlpha, Driver::BlendState::InvSrcAlpha
+};
+
+static const Driver::BlendState blendState_DstAtopSh = {
+	true,
+	Driver::BlendState::Add, Driver::BlendState::Add,
+	Driver::BlendState::InvDstAlpha, Driver::BlendState::SrcAlpha,
+	Driver::BlendState::InvDstAlpha, Driver::BlendState::SrcAlpha
+};
+
+static const Driver::BlendState blendState_DstOver = {
+	true,
+	Driver::BlendState::Add, Driver::BlendState::Add,
+	Driver::BlendState::InvDstAlpha, Driver::BlendState::DstAlpha,
+	Driver::BlendState::InvDstAlpha, Driver::BlendState::DstAlpha
+};
+
+static const Driver::BlendState blendState_SrcOver = {
+	true,
+	Driver::BlendState::Add, Driver::BlendState::Add,
+	Driver::BlendState::SrcAlpha, Driver::BlendState::InvSrcAlpha,
+	Driver::BlendState::SrcAlpha, Driver::BlendState::InvSrcAlpha
+};
+
 void updateBlendingStateGL(VGContext *c, int alphaIsOne)
 {
   /* Most common drawing mode (SRC_OVER with alpha=1)
@@ -50,41 +123,24 @@ void updateBlendingStateGL(VGContext *c, int alphaIsOne)
   switch (c->blendMode)
   {
   case VG_BLEND_SRC:
-    glBlendFunc(GL_ONE, GL_ZERO);
-    glDisable(GL_BLEND); break;
-
+    Driver::setBlendState(blendState_Src); break;
   case VG_BLEND_SRC_IN:
-    glBlendFunc(GL_DST_ALPHA, GL_ZERO);
-    glEnable(GL_BLEND); break;
-
+    Driver::setBlendState(blendState_SrcIn); break;
   case VG_BLEND_DST_IN:
-    glBlendFunc(GL_ZERO, GL_SRC_ALPHA);
-    glEnable(GL_BLEND); break;
-    
+    Driver::setBlendState(blendState_DstIn); break;
   case VG_BLEND_SRC_OUT_SH:
-    glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_ZERO);
-    glEnable(GL_BLEND); break;
-
+    Driver::setBlendState(blendState_SrcOutSh); break;
   case VG_BLEND_DST_OUT_SH:
-    glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND); break;
-
+    Driver::setBlendState(blendState_DstOutSh); break;
   case VG_BLEND_SRC_ATOP_SH:
-    glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND); break;
-
+    Driver::setBlendState(blendState_SrcAtopSh); break;
   case VG_BLEND_DST_ATOP_SH:
-    glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_SRC_ALPHA);
-    glEnable(GL_BLEND); break;
-
+    Driver::setBlendState(blendState_DstAtopSh); break;
   case VG_BLEND_DST_OVER:
-    glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_DST_ALPHA);
-    glEnable(GL_BLEND); break;
-
+    Driver::setBlendState(blendState_DstOver); break;
   case VG_BLEND_SRC_OVER: default:
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    if (alphaIsOne) glDisable(GL_BLEND);
-    else glEnable(GL_BLEND); break;
+    if (alphaIsOne) Driver::setBlendEnable(false);
+	else Driver::setBlendState(blendState_SrcOver);
   };
 }
 
@@ -264,7 +320,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
     /* Clear stencil for sure */
     /* TODO: Is there any way to do this safely along
        with the paint generation pass?? */
-    glDisable(GL_BLEND);
+	Driver::setBlendEnable(false);
     glDisable(GL_MULTISAMPLE);
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     shDrawBoundBox(context, p, VG_FILL_PATH);
@@ -272,7 +328,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
     /* Reset state */
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glDisable(GL_STENCIL_TEST);
-    glDisable(GL_BLEND);
+	Driver::setBlendEnable(false);
   }
   
   /* TODO: Turn antialiasing on/off */
@@ -306,7 +362,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
       shDrawPaintMesh(context, &p->min, &p->max, VG_STROKE_PATH, GL_TEXTURE0);
       
       /* Clear stencil for sure */
-      glDisable(GL_BLEND);
+	  Driver::setBlendEnable(false);
       glDisable(GL_MULTISAMPLE);
       glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
       shDrawBoundBox(context, p, VG_STROKE_PATH);
@@ -314,7 +370,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
       /* Reset state */
       glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
       glDisable(GL_STENCIL_TEST);
-      glDisable(GL_BLEND);
+	  Driver::setBlendEnable(false);
       
     }else{
       
@@ -325,13 +381,13 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
       
       /* Draw contour as a line */
       glDisable(GL_MULTISAMPLE);
-      glEnable(GL_BLEND);
+	  Driver::setBlendEnable(true);
       glEnable(GL_LINE_SMOOTH);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       glColor4fv((GLfloat*)&c);
       shDrawVertices(p, GL_LINE_STRIP);
-      
-      glDisable(GL_BLEND);
+
+	  Driver::setBlendEnable(false);
       glDisable(GL_LINE_SMOOTH);
     }
   }
@@ -408,7 +464,7 @@ VG_API_CALL void vgDrawImage(VGImage image)
       fill->type != VG_PAINT_TYPE_COLOR) {
     
     /* Draw image quad into stencil */
-    glDisable(GL_BLEND);
+    Driver::setBlendEnable(false);
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_STENCIL_TEST);
     glStencilFunc(GL_ALWAYS, 1, 1);

@@ -151,6 +151,7 @@ public:
 
 	static void setRasterizerState(const RasterizerState& state);
 	static void setBlendState(const BlendState& state);
+	static void setBlendEnable(bool b);
 
 	static void setViewport(float left, float top, float width, float height);
 	static void setViewport(unsigned left, unsigned top, unsigned width, unsigned height);

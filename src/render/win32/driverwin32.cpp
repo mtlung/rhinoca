@@ -454,6 +454,18 @@ void Driver::setBlendState(const BlendState& state)
 	_context->blendStateHash = h;
 }
 
+void Driver::setBlendEnable(bool b)
+{
+	if(_context->blendState.enable == b)
+		return;
+
+	if(b) glEnable(GL_BLEND);
+	else glDisable(GL_BLEND);
+
+	_context->blendState.enable = b;
+	_context->blendStateHash = hash(&_context->blendState, sizeof(BlendState));
+}
+
 void Driver::setViewport(float left, float top, float width, float height)
 {
 	float data[] = { left, top, width, height };
