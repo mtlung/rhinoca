@@ -27,6 +27,10 @@ static bool glInited = false;
 
 namespace Render {
 
+#define GET_FUNC_PTR(ptr, type) \
+	if(!(ptr = (type) wglGetProcAddress(#ptr))) \
+	{	ptr = (type) wglGetProcAddress(#ptr"EXT");	}
+
 void Driver::init()
 {
 	if(glInited)
@@ -34,81 +38,19 @@ void Driver::init()
 
 	glInited = true;
 
-	glBlendFuncSeparate = (PFNGLBLENDFUNCSEPARATEPROC) wglGetProcAddress("glBlendFuncSeparate");
-
-	if( ! glBlendFuncSeparate )
-	{
-		glBlendFuncSeparate = (PFNGLBLENDFUNCSEPARATEPROC) wglGetProcAddress("glBlendFuncSeparateEXT");
-	}
-	
-	glBlendEquationSeparate = (PFNGLBLENDEQUATIONSEPARATEPROC)wglGetProcAddress("glBlendEquationSeparate");
-
-	if( ! glBlendEquationSeparate )
-	{
-		glBlendEquationSeparate = (PFNGLBLENDEQUATIONSEPARATEPROC)wglGetProcAddress("glBlendEquationSeparateEXT");
-	}
-
-	glBindFramebuffer = (PFNGLBINDFRAMEBUFFERPROC) wglGetProcAddress("glBindFramebuffer");
-	if( ! glBindFramebuffer )
-	{
-		glBindFramebuffer = (PFNGLBINDFRAMEBUFFERPROC) wglGetProcAddress("glBindFramebufferEXT");	
-	}
-	
-	glGenFramebuffers = (PFNGLGENFRAMEBUFFERSPROC) wglGetProcAddress("glGenFramebuffers");
-	if( ! glGenFramebuffers )
-	{
-		glGenFramebuffers = (PFNGLGENFRAMEBUFFERSPROC) wglGetProcAddress("glGenFramebuffersEXT");	
-	}
-
-	glDeleteFramebuffers = (PFNGLDELETEFRAMEBUFFERSPROC) wglGetProcAddress("glDeleteFramebuffers");
-	if( ! glDeleteFramebuffers )
-	{
-		glDeleteFramebuffers = (PFNGLDELETEFRAMEBUFFERSPROC) wglGetProcAddress("glDeleteFramebuffersEXT");
-	}
-
-	glGenRenderbuffers = (PFNGLGENRENDERBUFFERSPROC) wglGetProcAddress("glGenRenderbuffers");
-	if( ! glGenRenderbuffers )
-	{
-		glGenRenderbuffers = (PFNGLGENRENDERBUFFERSPROC) wglGetProcAddress("glGenRenderbuffersEXT");	
-	}
-	
-	glBindRenderbuffer = (PFNGLBINDRENDERBUFFERPROC) wglGetProcAddress("glBindRenderbuffer");
-	if( ! glBindRenderbuffer )
-	{
-		glBindRenderbuffer = (PFNGLBINDRENDERBUFFERPROC) wglGetProcAddress("glBindRenderbufferEXT");		
-	}
-
-	glDeleteRenderbuffers = (PFNGLDELETERENDERBUFFERSPROC) wglGetProcAddress("glDeleteRenderbuffers");
-	if( ! glDeleteRenderbuffers )
-	{
-		glDeleteRenderbuffers = (PFNGLDELETERENDERBUFFERSPROC) wglGetProcAddress("glDeleteRenderbuffersEXT");
-	}
-
-	glRenderbufferStorage = (PFNGLRENDERBUFFERSTORAGEPROC) wglGetProcAddress("glRenderbufferStorage");
-	if( ! glRenderbufferStorage )
-	{
-		glRenderbufferStorage = (PFNGLRENDERBUFFERSTORAGEPROC) wglGetProcAddress("glRenderbufferStorageEXT");	
-	}
-
-	glFramebufferRenderbuffer = (PFNGLFRAMEBUFFERRENDERBUFFERPROC) wglGetProcAddress("glFramebufferRenderbuffer");
-	if( ! glFramebufferRenderbuffer )
-	{
-		glFramebufferRenderbuffer = (PFNGLFRAMEBUFFERRENDERBUFFERPROC) wglGetProcAddress("glFramebufferRenderbufferEXT");	
-	}
-
-	glFramebufferTexture2D = (PFNGLFRAMEBUFFERTEXTURE2DPROC) wglGetProcAddress("glFramebufferTexture2D");
-	if( ! glFramebufferTexture2D )
-	{
-		glFramebufferTexture2D = (PFNGLFRAMEBUFFERTEXTURE2DPROC) wglGetProcAddress("glFramebufferTexture2DEXT");	
-	}
-
-	glCheckFramebufferStatus = (PFNGLCHECKFRAMEBUFFERSTATUSPROC) wglGetProcAddress("glCheckFramebufferStatus");
-	if( ! glCheckFramebufferStatus )
-	{
-		glCheckFramebufferStatus = (PFNGLCHECKFRAMEBUFFERSTATUSPROC) wglGetProcAddress("glCheckFramebufferStatusEXT");	
-	}
+	GET_FUNC_PTR(glBlendFuncSeparate, PFNGLBLENDFUNCSEPARATEPROC);
+	GET_FUNC_PTR(glBlendEquationSeparate, PFNGLBLENDEQUATIONSEPARATEPROC);
+	GET_FUNC_PTR(glBindFramebuffer, PFNGLBINDFRAMEBUFFERPROC);
+	GET_FUNC_PTR(glGenFramebuffers, PFNGLGENFRAMEBUFFERSPROC);
+	GET_FUNC_PTR(glDeleteFramebuffers, PFNGLDELETEFRAMEBUFFERSPROC);
+	GET_FUNC_PTR(glGenRenderbuffers, PFNGLGENRENDERBUFFERSPROC);	
+	GET_FUNC_PTR(glBindRenderbuffer, PFNGLBINDRENDERBUFFERPROC);
+	GET_FUNC_PTR(glDeleteRenderbuffers, PFNGLDELETERENDERBUFFERSPROC);
+	GET_FUNC_PTR(glRenderbufferStorage, PFNGLRENDERBUFFERSTORAGEPROC);
+	GET_FUNC_PTR(glFramebufferRenderbuffer, PFNGLFRAMEBUFFERRENDERBUFFERPROC);
+	GET_FUNC_PTR(glFramebufferTexture2D, PFNGLFRAMEBUFFERTEXTURE2DPROC);
+	GET_FUNC_PTR(glCheckFramebufferStatus, PFNGLCHECKFRAMEBUFFERSTATUSPROC);
 }
-
 
 void Driver::close()
 {
@@ -134,6 +76,9 @@ public:
 	unsigned viewportHash;
 
 	bool vertexArrayEnabled, coordArrayEnabled, colorArrayEnabled;
+
+	Driver::DepthStencilState depthStencilState;
+	unsigned depthStencilStateHash;
 
 	Driver::BlendState blendState;
 	unsigned blendStateHash;
@@ -187,6 +132,13 @@ void* Driver::createContext(void* externalHandle)
 	enableColorArray(false, true, ctx);
 	enableCoordArray(false, true, ctx);
 
+	ctx->depthStencilState.depthEnable = false;
+	ctx->depthStencilState.stencilEnable = false;
+	ctx->depthStencilStateHash = 0;
+
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_STENCIL_TEST);
+
 	ctx->blendState.enable = false;
 	ctx->blendState.colorOp = BlendState::Add;
 	ctx->blendState.alphaOp = BlendState::Add;
@@ -194,6 +146,7 @@ void* Driver::createContext(void* externalHandle)
 	ctx->blendState.colorDst = BlendState::Zero;
 	ctx->blendState.alphaSrc = BlendState::One;
 	ctx->blendState.alphaDst = BlendState::Zero;
+	ctx->blendStateHash = 0;
 
 	glDisable(GL_BLEND);
 	glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
@@ -492,6 +445,34 @@ void Driver::useMesh(int meshHandle)
 // States
 void Driver::setRasterizerState(const RasterizerState& state)
 {
+}
+
+void Driver::setDepthStencilState(const DepthStencilState& state)
+{
+}
+
+void Driver::setDepthTestEnable(bool b)
+{
+	if(_context->depthStencilState.depthEnable == b)
+		return;
+
+	if(b) glEnable(GL_DEPTH_TEST);
+	else glDisable(GL_DEPTH_TEST);
+
+	_context->depthStencilState.depthEnable = b;
+	_context->depthStencilStateHash = hash(&_context->depthStencilState, sizeof(DepthStencilState));
+}
+
+void Driver::setStencilTestEnable(bool b)
+{
+	if(_context->depthStencilState.stencilEnable == b)
+		return;
+
+	if(b) glEnable(GL_STENCIL_TEST);
+	else glDisable(GL_STENCIL_TEST);
+
+	_context->depthStencilState.stencilEnable = b;
+	_context->depthStencilStateHash = hash(&_context->depthStencilState, sizeof(DepthStencilState));
 }
 
 void Driver::setBlendState(const BlendState& state)

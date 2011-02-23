@@ -301,7 +301,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
   if (paintModes & VG_FILL_PATH) {
     
     /* Tesselate into stencil */
-    glEnable(GL_STENCIL_TEST);
+    Driver::setStencilTestEnable(true);
     glStencilFunc(GL_ALWAYS, 0, 0);
     glStencilOp(GL_INVERT, GL_INVERT, GL_INVERT);
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -328,7 +328,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
     
     /* Reset state */
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glDisable(GL_STENCIL_TEST);
+    Driver::setStencilTestEnable(false);
 	Driver::setBlendEnable(false);
   }
   
@@ -345,7 +345,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
       shStrokePath(context, p);
 
       /* Stroke into stencil */
-      glEnable(GL_STENCIL_TEST);
+      Driver::setStencilTestEnable(true);
       glStencilFunc(GL_NOTEQUAL, 1, 1);
       glStencilOp(GL_KEEP, GL_INCR, GL_INCR);
       glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -370,7 +370,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
       
       /* Reset state */
       glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-      glDisable(GL_STENCIL_TEST);
+      Driver::setStencilTestEnable(false);
 	  Driver::setBlendEnable(false);
       
     }else{
@@ -467,7 +467,7 @@ VG_API_CALL void vgDrawImage(VGImage image)
     /* Draw image quad into stencil */
     Driver::setBlendEnable(false);
     glDisable(GL_TEXTURE_2D);
-    glEnable(GL_STENCIL_TEST);
+    Driver::setStencilTestEnable(true);
     glStencilFunc(GL_ALWAYS, 1, 1);
     glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
     glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
@@ -501,7 +501,7 @@ VG_API_CALL void vgDrawImage(VGImage image)
     
     glActiveTexture(GL_TEXTURE0);
     glDisable(GL_TEXTURE_2D);
-    glDisable(GL_STENCIL_TEST);
+    Driver::setStencilTestEnable(false);
     
   }else if (context->imageMode == VG_DRAW_IMAGE_STENCIL) {
     

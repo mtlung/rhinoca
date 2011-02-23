@@ -126,9 +126,19 @@ public:
 		CullMode cullMode;
 	};	// RasterizerState
 
+	static void setRasterizerState(const RasterizerState& state);
+
 	struct DepthStencilState
 	{
-		enum StencilFunc {
+		enum CompareFunc {
+			Never		= 0x0200,	// Never pass, 
+			Less		= 0x0201,	// Pass if src depth < dst depth, pass if (ref & mask) < (stencil & mask)
+			Equal		= 0x0202,
+			LEqual		= 0x0203,
+			Greater		= 0x0204,
+			NotEqual	= 0x0205,
+			GEqual		= 0x0206,
+			Always		= 0x0207,
 		};	// StencilFunc
 
 		enum StencilOp {
@@ -142,7 +152,13 @@ public:
 
 		bool depthEnable;
 		bool stencilEnable;
+		CompareFunc stencilFunc, depthFunc;
+		StencilOp stencilOp;
 	};	// DepthStencilState
+
+	static void setDepthStencilState(const DepthStencilState& state);
+	static void setDepthTestEnable(bool b);
+	static void setStencilTestEnable(bool b);
 
 	struct BlendState
 	{
@@ -171,8 +187,6 @@ public:
 		BlendOp colorOp, alphaOp;
 		BlendValue colorSrc, colorDst, alphaSrc, alphaDst;
 	};	// BlendState
-
-	static void setRasterizerState(const RasterizerState& state);
 
 	static void setBlendState(const BlendState& state);
 	static void setBlendEnable(bool b);
