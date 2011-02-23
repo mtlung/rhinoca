@@ -630,7 +630,7 @@ void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 		x + w, y + h,
 		x + 0, y + h,
 		-1,	// z value
-		0, 0, 0, 0
+		(rhuint8)0, (rhuint8)0, (rhuint8)0, (rhuint8)0
 	);
 }
 

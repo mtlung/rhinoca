@@ -153,7 +153,7 @@ static void shDrawStroke(SHPath *p)
   glEnableClientState(GL_VERTEX_ARRAY);
   glVertexPointer(2, GL_FLOAT, 0, p->stroke.items);
   glDrawArrays(GL_TRIANGLES, 0, p->stroke.size);
-  glDisableClientState(GL_VERTEX_ARRAY);
+//  glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 /*-----------------------------------------------------------
@@ -177,7 +177,7 @@ static void shDrawVertices(SHPath *p, GLenum mode)
     start += size;
   }
   
-  glDisableClientState(GL_VERTEX_ARRAY);
+//  glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 /*-------------------------------------------------------------
@@ -189,13 +189,15 @@ static void shDrawBoundBox(VGContext *c, SHPath *p, VGPaintMode mode)
   SHfloat K = 1.0f;
   if (mode == VG_STROKE_PATH)
     K = SH_CEIL(c->strokeMiterLimit * c->strokeLineWidth) + 1.0f;
-  
-  glBegin(GL_QUADS);
-  glVertex2f(p->min.x-K, p->min.y-K);
-  glVertex2f(p->max.x+K, p->min.y-K);
-  glVertex2f(p->max.x+K, p->max.y+K);
-  glVertex2f(p->min.x-K, p->max.y+K);
-  glEnd();
+
+  Render::Driver::drawQuad(
+    p->min.x-K, p->min.y-K,
+    p->max.x+K, p->min.y-K,
+    p->max.x+K, p->max.y+K,
+    p->min.x-K, p->max.y+K,
+    0.0f,
+    (rhuint8)255u, (rhuint8)255u, (rhuint8)255u, (rhuint8)255u
+  );
 }
 
 /*--------------------------------------------------------------
@@ -243,13 +245,12 @@ static void shDrawPaintMesh(VGContext *c, SHVector2 *min, SHVector2 *max,
     }/* else behave as a color paint */
   
   case VG_PAINT_TYPE_COLOR:
-    glColor4fv((GLfloat*)&p->color);
-    glBegin(GL_QUADS);
-    glVertex2f(pmin.x, pmin.y);
-    glVertex2f(pmax.x, pmin.y);
-    glVertex2f(pmax.x, pmax.y);
-    glVertex2f(pmin.x, pmax.y);
-    glEnd();
+    Render::Driver::drawQuad(
+      pmin.x, pmin.y, pmax.x, pmin.y,
+      pmax.x, pmax.y, pmin.x, pmax.y,
+      0.0f,
+      p->color.r, p->color.g, p->color.b, p->color.a
+    );
     break;
   }
 }
@@ -470,13 +471,15 @@ VG_API_CALL void vgDrawImage(VGImage image)
     glStencilFunc(GL_ALWAYS, 1, 1);
     glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
     glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
-    
-    glBegin(GL_QUADS);
-    glVertex2i(0, 0);
-    glVertex2i(i->width, 0);
-    glVertex2i(i->width, i->height);
-    glVertex2i(0, i->height);
-    glEnd();
+
+    Render::Driver::drawQuad(
+      0, 0,
+      (float)i->width, 0,
+      (float)i->width, (float)i->height,
+      0, (float)i->height,
+      0.0f,
+      (rhuint8)255u, (rhuint8)255u, (rhuint8)255u, (rhuint8)255u
+    );
 
     /* Setup blending */
     updateBlendingStateGL(context, 0);

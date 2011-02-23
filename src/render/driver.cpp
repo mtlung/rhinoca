@@ -35,4 +35,17 @@ void Driver::ortho(unsigned left, unsigned right, unsigned bottom, unsigned top,
 	ortho((float)left, (float)right, (float)bottom, (float)top, (float)zNear, (float)zFar);
 }
 
+void Driver::drawQuad(
+	float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float z,
+	float r, float g, float b, float a
+)
+{
+	Driver::drawQuad(
+		x1, y1, x2, y2,
+		x3, y3, x4, y4,
+		z,
+		(rhuint8)(r * 255), (rhuint8)(g * 255), (rhuint8)(b * 255), (rhuint8)(a * 255)
+	);
+}
+
 }	// Render
