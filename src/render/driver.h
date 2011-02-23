@@ -126,6 +126,24 @@ public:
 		CullMode cullMode;
 	};	// RasterizerState
 
+	struct DepthStencilState
+	{
+		enum StencilFunc {
+		};	// StencilFunc
+
+		enum StencilOp {
+			Zero		= 0,
+			Invert		= 0x150A,
+			Keep		= 0x1E00,
+			Replace		= 0x1E01,
+			Incr		= 0x1E02,
+			Decr		= 0x1E03,
+		};
+
+		bool depthEnable;
+		bool stencilEnable;
+	};	// DepthStencilState
+
 	struct BlendState
 	{
 		enum BlendValue {
@@ -155,6 +173,7 @@ public:
 	};	// BlendState
 
 	static void setRasterizerState(const RasterizerState& state);
+
 	static void setBlendState(const BlendState& state);
 	static void setBlendEnable(bool b);
 

@@ -55,63 +55,63 @@ static const Driver::BlendState blendState_Src = {
 	false,
 	Driver::BlendState::Add, Driver::BlendState::Add,
 	Driver::BlendState::One, Driver::BlendState::Zero,
-	Driver::BlendState::One, Driver::BlendState::Zero
+	Driver::BlendState::One, Driver::BlendState::One
 };
 
 static const Driver::BlendState blendState_SrcIn = {
 	true,
 	Driver::BlendState::Add, Driver::BlendState::Add,
 	Driver::BlendState::DstAlpha, Driver::BlendState::Zero,
-	Driver::BlendState::DstAlpha, Driver::BlendState::Zero
+	Driver::BlendState::One, Driver::BlendState::One
 };
 
 static const Driver::BlendState blendState_DstIn = {
 	true,
 	Driver::BlendState::Add, Driver::BlendState::Add,
 	Driver::BlendState::Zero, Driver::BlendState::SrcAlpha,
-	Driver::BlendState::Zero, Driver::BlendState::SrcAlpha
+	Driver::BlendState::One, Driver::BlendState::One
 };
 
 static const Driver::BlendState blendState_SrcOutSh = {
 	true,
 	Driver::BlendState::Add, Driver::BlendState::Add,
 	Driver::BlendState::InvDstAlpha, Driver::BlendState::Zero,
-	Driver::BlendState::InvDstAlpha, Driver::BlendState::Zero
+	Driver::BlendState::One, Driver::BlendState::One
 };
 
 static const Driver::BlendState blendState_DstOutSh = {
 	true,
 	Driver::BlendState::Add, Driver::BlendState::Add,
 	Driver::BlendState::Zero, Driver::BlendState::InvSrcAlpha,
-	Driver::BlendState::Zero, Driver::BlendState::InvSrcAlpha
+	Driver::BlendState::One, Driver::BlendState::One
 };
 
 static const Driver::BlendState blendState_SrcAtopSh = {
 	true,
 	Driver::BlendState::Add, Driver::BlendState::Add,
 	Driver::BlendState::DstAlpha, Driver::BlendState::InvSrcAlpha,
-	Driver::BlendState::DstAlpha, Driver::BlendState::InvSrcAlpha
+	Driver::BlendState::One, Driver::BlendState::One
 };
 
 static const Driver::BlendState blendState_DstAtopSh = {
 	true,
 	Driver::BlendState::Add, Driver::BlendState::Add,
 	Driver::BlendState::InvDstAlpha, Driver::BlendState::SrcAlpha,
-	Driver::BlendState::InvDstAlpha, Driver::BlendState::SrcAlpha
+	Driver::BlendState::One, Driver::BlendState::One
 };
 
 static const Driver::BlendState blendState_DstOver = {
 	true,
 	Driver::BlendState::Add, Driver::BlendState::Add,
 	Driver::BlendState::InvDstAlpha, Driver::BlendState::DstAlpha,
-	Driver::BlendState::InvDstAlpha, Driver::BlendState::DstAlpha
+	Driver::BlendState::One, Driver::BlendState::One
 };
 
 static const Driver::BlendState blendState_SrcOver = {
 	true,
 	Driver::BlendState::Add, Driver::BlendState::Add,
 	Driver::BlendState::SrcAlpha, Driver::BlendState::InvSrcAlpha,
-	Driver::BlendState::SrcAlpha, Driver::BlendState::InvSrcAlpha
+	Driver::BlendState::One, Driver::BlendState::One
 };
 
 void updateBlendingStateGL(VGContext *c, int alphaIsOne)
