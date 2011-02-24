@@ -132,25 +132,41 @@ void* Driver::createContext(void* externalHandle)
 	enableColorArray(false, true, ctx);
 	enableCoordArray(false, true, ctx);
 
-	ctx->depthStencilState.depthEnable = false;
-	ctx->depthStencilState.stencilEnable = false;
-	ctx->depthStencilStateHash = 0;
+	{	// Depth stencil
+		ctx->depthStencilState.depthEnable = false;
+		ctx->depthStencilState.stencilEnable = false;
+		ctx->depthStencilState.stencilRefValue = 0;
+		ctx->depthStencilState.stencilMask = rhuint8(-1);
+		ctx->depthStencilState.stencilFunc = DepthStencilState::Always;
+		ctx->depthStencilState.stencilPassOp = DepthStencilState::Replace;
+		ctx->depthStencilState.stencilFailOp = DepthStencilState::Replace;
+		ctx->depthStencilState.stencilZFailOp = DepthStencilState::Replace;
+		ctx->depthStencilStateHash = 0;
 
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_STENCIL_TEST);
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_STENCIL_TEST);
+		glStencilFunc(
+			ctx->depthStencilState.stencilFunc,
+			ctx->depthStencilState.stencilRefValue,
+			ctx->depthStencilState.stencilMask
+		);
+		glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+	}
 
-	ctx->blendState.enable = false;
-	ctx->blendState.colorOp = BlendState::Add;
-	ctx->blendState.alphaOp = BlendState::Add;
-	ctx->blendState.colorSrc = BlendState::One;
-	ctx->blendState.colorDst = BlendState::Zero;
-	ctx->blendState.alphaSrc = BlendState::One;
-	ctx->blendState.alphaDst = BlendState::Zero;
-	ctx->blendStateHash = 0;
+	{	// Blending
+		ctx->blendState.enable = false;
+		ctx->blendState.colorOp = BlendState::Add;
+		ctx->blendState.alphaOp = BlendState::Add;
+		ctx->blendState.colorSrc = BlendState::One;
+		ctx->blendState.colorDst = BlendState::Zero;
+		ctx->blendState.alphaSrc = BlendState::One;
+		ctx->blendState.alphaDst = BlendState::Zero;
+		ctx->blendStateHash = 0;
 
-	glDisable(GL_BLEND);
-	glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
-	glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+		glDisable(GL_BLEND);
+		glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
+		glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+	}
 
 	ctx->renderTarget = NULL;
 	ctx->texture = NULL;
@@ -235,7 +251,7 @@ void* Driver::createRenderTargetTexture(void** textureHandle, void** depthStenci
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
 	glViewport(0, 0, width, height);
-	glClearColor(0, 0, 0, 0);
+	glClearColor(1, 1, 1, 1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)_context->renderTarget);
@@ -449,6 +465,24 @@ void Driver::setRasterizerState(const RasterizerState& state)
 
 void Driver::setDepthStencilState(const DepthStencilState& state)
 {
+	unsigned h = hash(&state, sizeof(state));
+//	if(h == _context->depthStencilStateHash) return;
+
+	if(!state.stencilEnable) {
+		glDisable(GL_STENCIL_TEST);
+	}
+	else {
+		glEnable(GL_STENCIL_TEST);
+		glStencilFunc(
+			state.stencilFunc,
+			state.stencilRefValue,
+			state.stencilMask
+		);
+		glStencilOp(state.stencilFailOp, state.stencilZFailOp, state.stencilPassOp);
+	}
+
+	_context->depthStencilState = state;
+	_context->depthStencilStateHash = h;
 }
 
 void Driver::setDepthTestEnable(bool b)

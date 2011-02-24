@@ -114,6 +114,38 @@ static const Driver::BlendState blendState_SrcOver = {
 	Driver::BlendState::One, Driver::BlendState::One
 };
 
+static const Driver::DepthStencilState stencilState_drawOdd = {
+	true, Driver::DepthStencilState::Always,
+	true, 1, 1, Driver::DepthStencilState::Equal,
+	Driver::DepthStencilState::Zero,
+	Driver::DepthStencilState::Zero,
+	Driver::DepthStencilState::Zero
+};
+
+static const Driver::DepthStencilState stencilState_tesselateTo = {
+	true, Driver::DepthStencilState::Always,
+	true, 0, 0, Driver::DepthStencilState::Always,
+	Driver::DepthStencilState::Invert,
+	Driver::DepthStencilState::Invert,
+	Driver::DepthStencilState::Invert
+};
+
+static const Driver::DepthStencilState stencilState_strokeTo = {
+	true, Driver::DepthStencilState::Always,
+	true, 1, 1, Driver::DepthStencilState::NotEqual,
+	Driver::DepthStencilState::Keep,
+	Driver::DepthStencilState::Incr,
+	Driver::DepthStencilState::Incr
+};
+
+static const Driver::DepthStencilState stencilState_quadTo = {
+	true, Driver::DepthStencilState::Always,
+	true, 1, 1, Driver::DepthStencilState::Always,
+	Driver::DepthStencilState::Replace,
+	Driver::DepthStencilState::Replace,
+	Driver::DepthStencilState::Replace
+};
+
 void updateBlendingStateGL(VGContext *c, int alphaIsOne)
 {
   /* Most common drawing mode (SRC_OVER with alpha=1)
@@ -301,9 +333,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
   if (paintModes & VG_FILL_PATH) {
     
     /* Tesselate into stencil */
-    Driver::setStencilTestEnable(true);
-    glStencilFunc(GL_ALWAYS, 0, 0);
-    glStencilOp(GL_INVERT, GL_INVERT, GL_INVERT);
+	Driver::setDepthStencilState(stencilState_tesselateTo);
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     shDrawVertices(p, GL_TRIANGLE_FAN);
     
@@ -313,8 +343,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
                           fill->color.a == 1.0f);
     
     /* Draw paint where stencil odd */
-    glStencilFunc(GL_EQUAL, 1, 1);
-    glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
+	Driver::setDepthStencilState(stencilState_drawOdd);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     shDrawPaintMesh(context, &p->min, &p->max, VG_FILL_PATH, GL_TEXTURE0);
 
@@ -345,9 +374,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
       shStrokePath(context, p);
 
       /* Stroke into stencil */
-      Driver::setStencilTestEnable(true);
-      glStencilFunc(GL_NOTEQUAL, 1, 1);
-      glStencilOp(GL_KEEP, GL_INCR, GL_INCR);
+      Driver::setDepthStencilState(stencilState_strokeTo);
       glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
       shDrawStroke(p);
 
@@ -357,8 +384,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
                             stroke->color.a == 1.0f);
 
       /* Draw paint where stencil odd */
-      glStencilFunc(GL_EQUAL, 1, 1);
-      glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
+	  Driver::setDepthStencilState(stencilState_drawOdd);
       glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
       shDrawPaintMesh(context, &p->min, &p->max, VG_STROKE_PATH, GL_TEXTURE0);
       
@@ -467,9 +493,7 @@ VG_API_CALL void vgDrawImage(VGImage image)
     /* Draw image quad into stencil */
     Driver::setBlendEnable(false);
     glDisable(GL_TEXTURE_2D);
-    Driver::setStencilTestEnable(true);
-    glStencilFunc(GL_ALWAYS, 1, 1);
-    glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+	Driver::setDepthStencilState(stencilState_quadTo);
     glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
 
     Render::Driver::drawQuad(
@@ -486,8 +510,7 @@ VG_API_CALL void vgDrawImage(VGImage image)
     
     /* Draw gradient mesh where stencil 1*/
     glEnable(GL_TEXTURE_2D);
-    glStencilFunc(GL_EQUAL, 1, 1);
-    glStencilOp(GL_ZERO,GL_ZERO,GL_ZERO);
+	Driver::setDepthStencilState(stencilState_drawOdd);
     glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
     
     SET2(min,0,0);

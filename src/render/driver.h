@@ -151,9 +151,13 @@ public:
 		};
 
 		bool depthEnable;
+		CompareFunc depthFunc;
+
 		bool stencilEnable;
-		CompareFunc stencilFunc, depthFunc;
-		StencilOp stencilOp;
+		rhuint8 stencilRefValue;
+		rhuint8 stencilMask;
+		CompareFunc stencilFunc;
+		StencilOp stencilFailOp, stencilZFailOp, stencilPassOp;
 	};	// DepthStencilState
 
 	static void setDepthStencilState(const DepthStencilState& state);
