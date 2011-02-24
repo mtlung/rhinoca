@@ -616,7 +616,8 @@ void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 		false,
 		Driver::BlendState::Add, Driver::BlendState::Add,
 		Driver::BlendState::One, Driver::BlendState::Zero,	// Color src, dst
-		Driver::BlendState::One, Driver::BlendState::Zero	// Alpha src, dst
+		Driver::BlendState::One, Driver::BlendState::Zero,	// Alpha src, dst
+		Driver::BlendState::EnableAll
 	};
 	Driver::setBlendState(blendState);
 
@@ -671,7 +672,8 @@ void CanvasRenderingContext2D::drawImage(
 		true,
 		Driver::BlendState::Add, Driver::BlendState::Add,
 		Driver::BlendState::SrcAlpha, Driver::BlendState::InvSrcAlpha,	// Color src, dst
-		Driver::BlendState::SrcAlpha, Driver::BlendState::DstAlpha		// Alpha src, dst
+		Driver::BlendState::One, Driver::BlendState::One,		// Alpha src, dst
+		Driver::BlendState::EnableAll
 	};
 	Driver::setBlendState(blendState);
 

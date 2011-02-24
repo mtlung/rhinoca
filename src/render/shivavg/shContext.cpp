@@ -26,6 +26,10 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "../driver.h"
+
+using namespace Render;
+
 /*-----------------------------------------------------
  * Simple functions to create a VG context instance
  * on top of an existing OpenGL context.
@@ -59,7 +63,7 @@ VG_API_CALL void vgResizeSurfaceSH(VGint width, VGint height)
   context->surfaceHeight = height;
   
   /* setup GL projection */
-  glViewport(0,0,width,height);
+  Driver::setViewport(0,0,(unsigned)width,(unsigned)height);
   
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();

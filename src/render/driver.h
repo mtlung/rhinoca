@@ -160,6 +160,7 @@ public:
 		StencilOp stencilFailOp, stencilZFailOp, stencilPassOp;
 	};	// DepthStencilState
 
+	static void getDepthStencilState(DepthStencilState& state);
 	static void setDepthStencilState(const DepthStencilState& state);
 	static void setDepthTestEnable(bool b);
 	static void setStencilTestEnable(bool b);
@@ -187,13 +188,25 @@ public:
 			Max			= 0x8008,
 		};
 
+		enum ColorWriteEnable {
+			DisableAll	= 0,
+			EnableRed	= 1,
+			EnableGreen	= 2,
+			EnableBlue	= 4,
+			EnableAlpha	= 8,
+			EnableAll	= EnableRed | EnableGreen | EnableBlue | EnableAlpha,
+		};
+
 		bool enable;
 		BlendOp colorOp, alphaOp;
 		BlendValue colorSrc, colorDst, alphaSrc, alphaDst;
+		ColorWriteEnable wirteMask;
 	};	// BlendState
 
+	static void getBlendState(BlendState& state);
 	static void setBlendState(const BlendState& state);
 	static void setBlendEnable(bool b);
+	static void setColorWriteMask(BlendState::ColorWriteEnable mask);
 
 	static void setViewport(float left, float top, float width, float height);
 	static void setViewport(unsigned left, unsigned top, unsigned width, unsigned height);

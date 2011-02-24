@@ -48,70 +48,80 @@ static const Driver::BlendState blendState_Disabled = {
 	false,
 	Driver::BlendState::Add, Driver::BlendState::Add,
 	Driver::BlendState::Zero, Driver::BlendState::Zero,	// Color src, dst
-	Driver::BlendState::Zero, Driver::BlendState::Zero	// Alpha src, dst
+	Driver::BlendState::Zero, Driver::BlendState::Zero,	// Alpha src, dst
+	Driver::BlendState::EnableAll
 };
 
 static const Driver::BlendState blendState_Src = {
 	false,
 	Driver::BlendState::Add, Driver::BlendState::Add,
 	Driver::BlendState::One, Driver::BlendState::Zero,
-	Driver::BlendState::One, Driver::BlendState::One
+	Driver::BlendState::One, Driver::BlendState::One,
+	Driver::BlendState::EnableAll
 };
 
 static const Driver::BlendState blendState_SrcIn = {
 	true,
 	Driver::BlendState::Add, Driver::BlendState::Add,
 	Driver::BlendState::DstAlpha, Driver::BlendState::Zero,
-	Driver::BlendState::One, Driver::BlendState::One
+	Driver::BlendState::One, Driver::BlendState::One,
+	Driver::BlendState::EnableAll
 };
 
 static const Driver::BlendState blendState_DstIn = {
 	true,
 	Driver::BlendState::Add, Driver::BlendState::Add,
 	Driver::BlendState::Zero, Driver::BlendState::SrcAlpha,
-	Driver::BlendState::One, Driver::BlendState::One
+	Driver::BlendState::One, Driver::BlendState::One,
+	Driver::BlendState::EnableAll
 };
 
 static const Driver::BlendState blendState_SrcOutSh = {
 	true,
 	Driver::BlendState::Add, Driver::BlendState::Add,
 	Driver::BlendState::InvDstAlpha, Driver::BlendState::Zero,
-	Driver::BlendState::One, Driver::BlendState::One
+	Driver::BlendState::One, Driver::BlendState::One,
+	Driver::BlendState::EnableAll
 };
 
 static const Driver::BlendState blendState_DstOutSh = {
 	true,
 	Driver::BlendState::Add, Driver::BlendState::Add,
 	Driver::BlendState::Zero, Driver::BlendState::InvSrcAlpha,
-	Driver::BlendState::One, Driver::BlendState::One
+	Driver::BlendState::One, Driver::BlendState::One,
+	Driver::BlendState::EnableAll
 };
 
 static const Driver::BlendState blendState_SrcAtopSh = {
 	true,
 	Driver::BlendState::Add, Driver::BlendState::Add,
 	Driver::BlendState::DstAlpha, Driver::BlendState::InvSrcAlpha,
-	Driver::BlendState::One, Driver::BlendState::One
+	Driver::BlendState::One, Driver::BlendState::One,
+	Driver::BlendState::EnableAll
 };
 
 static const Driver::BlendState blendState_DstAtopSh = {
 	true,
 	Driver::BlendState::Add, Driver::BlendState::Add,
 	Driver::BlendState::InvDstAlpha, Driver::BlendState::SrcAlpha,
-	Driver::BlendState::One, Driver::BlendState::One
+	Driver::BlendState::One, Driver::BlendState::One,
+	Driver::BlendState::EnableAll
 };
 
 static const Driver::BlendState blendState_DstOver = {
 	true,
 	Driver::BlendState::Add, Driver::BlendState::Add,
 	Driver::BlendState::InvDstAlpha, Driver::BlendState::DstAlpha,
-	Driver::BlendState::One, Driver::BlendState::One
+	Driver::BlendState::One, Driver::BlendState::One,
+	Driver::BlendState::EnableAll
 };
 
 static const Driver::BlendState blendState_SrcOver = {
 	true,
 	Driver::BlendState::Add, Driver::BlendState::Add,
 	Driver::BlendState::SrcAlpha, Driver::BlendState::InvSrcAlpha,
-	Driver::BlendState::One, Driver::BlendState::One
+	Driver::BlendState::One, Driver::BlendState::One,
+	Driver::BlendState::EnableAll
 };
 
 static const Driver::DepthStencilState stencilState_drawOdd = {
@@ -171,8 +181,8 @@ void updateBlendingStateGL(VGContext *c, int alphaIsOne)
   case VG_BLEND_DST_OVER:
     Driver::setBlendState(blendState_DstOver); break;
   case VG_BLEND_SRC_OVER: default:
-    if (alphaIsOne) Driver::setBlendEnable(false);
-	else Driver::setBlendState(blendState_SrcOver);
+    if (alphaIsOne) Driver::setBlendState(blendState_Disabled);
+    else Driver::setBlendState(blendState_SrcOver);
   };
 }
 
@@ -333,8 +343,8 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
   if (paintModes & VG_FILL_PATH) {
     
     /* Tesselate into stencil */
-	Driver::setDepthStencilState(stencilState_tesselateTo);
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    Driver::setDepthStencilState(stencilState_tesselateTo);
+    Driver::setColorWriteMask(Driver::BlendState::DisableAll);
     shDrawVertices(p, GL_TRIANGLE_FAN);
     
     /* Setup blending */
@@ -343,22 +353,21 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
                           fill->color.a == 1.0f);
     
     /* Draw paint where stencil odd */
-	Driver::setDepthStencilState(stencilState_drawOdd);
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    Driver::setDepthStencilState(stencilState_drawOdd);
     shDrawPaintMesh(context, &p->min, &p->max, VG_FILL_PATH, GL_TEXTURE0);
 
     /* Clear stencil for sure */
     /* TODO: Is there any way to do this safely along
        with the paint generation pass?? */
-	Driver::setBlendEnable(false);
+    Driver::setBlendEnable(false);
     glDisable(GL_MULTISAMPLE);
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    Driver::setColorWriteMask(Driver::BlendState::DisableAll);
     shDrawBoundBox(context, p, VG_FILL_PATH);
     
     /* Reset state */
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    Driver::setColorWriteMask(Driver::BlendState::EnableAll);
     Driver::setStencilTestEnable(false);
-	Driver::setBlendEnable(false);
+    Driver::setBlendEnable(false);
   }
   
   /* TODO: Turn antialiasing on/off */
@@ -375,7 +384,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
 
       /* Stroke into stencil */
       Driver::setDepthStencilState(stencilState_strokeTo);
-      glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+      Driver::setColorWriteMask(Driver::BlendState::DisableAll);
       shDrawStroke(p);
 
       /* Setup blending */
@@ -385,17 +394,16 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
 
       /* Draw paint where stencil odd */
 	  Driver::setDepthStencilState(stencilState_drawOdd);
-      glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
       shDrawPaintMesh(context, &p->min, &p->max, VG_STROKE_PATH, GL_TEXTURE0);
       
       /* Clear stencil for sure */
 	  Driver::setBlendEnable(false);
       glDisable(GL_MULTISAMPLE);
-      glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+      Driver::setColorWriteMask(Driver::BlendState::DisableAll);
       shDrawBoundBox(context, p, VG_STROKE_PATH);
       
       /* Reset state */
-      glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+      Driver::setColorWriteMask(Driver::BlendState::EnableAll);
       Driver::setStencilTestEnable(false);
 	  Driver::setBlendEnable(false);
       
@@ -408,13 +416,13 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
       
       /* Draw contour as a line */
       glDisable(GL_MULTISAMPLE);
-	  Driver::setBlendEnable(true);
+      Driver::setBlendEnable(true);
       glEnable(GL_LINE_SMOOTH);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       glColor4fv((GLfloat*)&c);
       shDrawVertices(p, GL_LINE_STRIP);
 
-	  Driver::setBlendEnable(false);
+      Driver::setBlendEnable(false);
       glDisable(GL_LINE_SMOOTH);
     }
   }
@@ -494,7 +502,7 @@ VG_API_CALL void vgDrawImage(VGImage image)
     Driver::setBlendEnable(false);
     glDisable(GL_TEXTURE_2D);
 	Driver::setDepthStencilState(stencilState_quadTo);
-    glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+    Driver::setColorWriteMask(Driver::BlendState::DisableAll);
 
     Render::Driver::drawQuad(
       0, 0,
@@ -511,7 +519,6 @@ VG_API_CALL void vgDrawImage(VGImage image)
     /* Draw gradient mesh where stencil 1*/
     glEnable(GL_TEXTURE_2D);
 	Driver::setDepthStencilState(stencilState_drawOdd);
-    glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
     
     SET2(min,0,0);
     SET2(max, (SHfloat)i->width, (SHfloat)i->height);

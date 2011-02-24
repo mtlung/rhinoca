@@ -161,11 +161,13 @@ void* Driver::createContext(void* externalHandle)
 		ctx->blendState.colorDst = BlendState::Zero;
 		ctx->blendState.alphaSrc = BlendState::One;
 		ctx->blendState.alphaDst = BlendState::Zero;
+		ctx->blendState.wirteMask = BlendState::EnableAll;
 		ctx->blendStateHash = 0;
 
 		glDisable(GL_BLEND);
 		glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
 		glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	}
 
 	ctx->renderTarget = NULL;
@@ -463,10 +465,15 @@ void Driver::setRasterizerState(const RasterizerState& state)
 {
 }
 
+void Driver::getDepthStencilState(DepthStencilState& state)
+{
+	state = _context->depthStencilState;
+}
+
 void Driver::setDepthStencilState(const DepthStencilState& state)
 {
 	unsigned h = hash(&state, sizeof(state));
-//	if(h == _context->depthStencilStateHash) return;
+	if(h == _context->depthStencilStateHash) return;
 
 	if(!state.stencilEnable) {
 		glDisable(GL_STENCIL_TEST);
@@ -509,16 +516,38 @@ void Driver::setStencilTestEnable(bool b)
 	_context->depthStencilStateHash = hash(&_context->depthStencilState, sizeof(DepthStencilState));
 }
 
+void Driver::getBlendState(BlendState& state)
+{
+	state = _context->blendState;
+}
+
+
+// Only hash BlendOp and BlendValue
+static unsigned blendStateHash(const Driver::BlendState& state)
+{
+	unsigned h = hash(
+		&state.colorOp,
+		offsetof(Driver::BlendState, Driver::BlendState::wirteMask) -
+		offsetof(Driver::BlendState, Driver::BlendState::colorOp)
+	);
+	return h;
+}
+
 void Driver::setBlendState(const BlendState& state)
 {
-	unsigned h = hash(&state, sizeof(state));
-	if(h == _context->blendStateHash) return;
+	setBlendEnable(state.enable);
 
-	if(!state.enable) {
-		glDisable(GL_BLEND);
+	if(state.wirteMask != _context->blendState.wirteMask) {
+		glColorMask(
+			(state.wirteMask & BlendState::EnableRed) > 0,
+			(state.wirteMask & BlendState::EnableGreen) > 0,
+			(state.wirteMask & BlendState::EnableBlue) > 0,
+			(state.wirteMask & BlendState::EnableAlpha) > 0
+		);
 	}
-	else {
-		glEnable(GL_BLEND);
+
+	unsigned h = blendStateHash(state);
+	if(h != _context->blendStateHash) {
 		glBlendFuncSeparate(state.colorSrc, state.colorDst, state.alphaSrc, state.alphaDst);
 		glBlendEquationSeparate(state.colorOp, state.alphaOp);
 	}
@@ -536,7 +565,21 @@ void Driver::setBlendEnable(bool b)
 	else glDisable(GL_BLEND);
 
 	_context->blendState.enable = b;
-	_context->blendStateHash = hash(&_context->blendState, sizeof(BlendState));
+}
+
+void Driver::setColorWriteMask(Driver::BlendState::ColorWriteEnable mask)
+{
+	if(mask == _context->blendState.wirteMask)
+		return;
+
+	_context->blendState.wirteMask = mask;
+
+	glColorMask(
+		(mask & BlendState::EnableRed) > 0,
+		(mask & BlendState::EnableGreen) > 0,
+		(mask & BlendState::EnableBlue) > 0,
+		(mask & BlendState::EnableAlpha) > 0
+	);
 }
 
 void Driver::setViewport(float left, float top, float width, float height)
