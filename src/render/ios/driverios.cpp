@@ -9,6 +9,14 @@
 
 namespace Render {
 
+void Driver::init()
+{
+}
+
+void Driver::close()
+{
+}
+
 static unsigned hash(const void* data, unsigned len)
 {
 	unsigned h = 0;
@@ -28,6 +36,11 @@ public:
 	float vpLeft, vpTop, vpWidth, vpHeight;	// Viewport
 	unsigned viewportHash;
 
+	bool vertexArrayEnabled, coordArrayEnabled, colorArrayEnabled;
+
+	Driver::DepthStencilState depthStencilState;
+	unsigned depthStencilStateHash;
+
 	Driver::BlendState blendState;
 	unsigned blendStateHash;
 
@@ -35,7 +48,37 @@ public:
 	bool supportSeperateBlend;
 };	// Context
 
-static Context* _currentContext = NULL;
+static Context* _context = NULL;
+
+static void enableVertexArray(bool b, bool force=false, Context* c = _context)
+{
+	if(b && (force || !c->vertexArrayEnabled))
+		glEnableClientState(GL_VERTEX_ARRAY);
+	else if(!b && (force || c->vertexArrayEnabled))
+		glDisableClientState(GL_VERTEX_ARRAY);
+
+	c->vertexArrayEnabled = b;
+}
+
+static void enableColorArray(bool b, bool force=false, Context* c = _context)
+{
+	if(b && (force || !c->colorArrayEnabled))
+		glEnableClientState(GL_COLOR_ARRAY);
+	else if(!b && (force || c->colorArrayEnabled))
+		glDisableClientState(GL_COLOR_ARRAY);
+
+	c->colorArrayEnabled = b;
+}
+
+static void enableCoordArray(bool b, bool force=false, Context* c = _context)
+{
+	if(b && (force || !c->coordArrayEnabled))
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	else if(!b && (force || c->coordArrayEnabled))
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	c->coordArrayEnabled = b;
+}
 
 // Context
 void* Driver::createContext(void* externalHandle)
@@ -55,68 +98,98 @@ void* Driver::createContext(void* externalHandle)
 	ctx->vpWidth = ctx->vpHeight = 0;
 	ctx->viewportHash = 0;
 
-	ctx->blendState.enable = false;
-	ctx->blendState.colorOp = BlendState::Add;
-	ctx->blendState.alphaOp = BlendState::Add;
-	ctx->blendState.colorSrc = BlendState::One;
-	ctx->blendState.colorDst = BlendState::Zero;
-	ctx->blendState.alphaSrc = BlendState::One;
-	ctx->blendState.alphaDst = BlendState::Zero;
+	enableVertexArray(false, true, ctx);
+	enableColorArray(false, true, ctx);
+	enableCoordArray(false, true, ctx);
+
+	{	// Depth stencil
+		ctx->depthStencilState.depthEnable = false;
+		ctx->depthStencilState.stencilEnable = false;
+		ctx->depthStencilState.stencilRefValue = 0;
+		ctx->depthStencilState.stencilMask = rhuint8(-1);
+		ctx->depthStencilState.stencilFunc = DepthStencilState::Always;
+		ctx->depthStencilState.stencilPassOp = DepthStencilState::Replace;
+		ctx->depthStencilState.stencilFailOp = DepthStencilState::Replace;
+		ctx->depthStencilState.stencilZFailOp = DepthStencilState::Replace;
+		ctx->depthStencilStateHash = 0;
+
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_STENCIL_TEST);
+		glStencilFunc(
+			ctx->depthStencilState.stencilFunc,
+			ctx->depthStencilState.stencilRefValue,
+			ctx->depthStencilState.stencilMask
+		);
+		glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+	}
+
+	{	// Blending
+		ctx->blendState.enable = false;
+		ctx->blendState.colorOp = BlendState::Add;
+		ctx->blendState.alphaOp = BlendState::Add;
+		ctx->blendState.colorSrc = BlendState::One;
+		ctx->blendState.colorDst = BlendState::Zero;
+		ctx->blendState.alphaSrc = BlendState::One;
+		ctx->blendState.alphaDst = BlendState::Zero;
+		ctx->blendState.wirteMask = BlendState::EnableAll;
+		ctx->blendStateHash = 0;
+
+		glDisable(GL_BLEND);
+		if(ctx->supportSeperateBlend) {
+			glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
+			glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+		} else {
+			glBlendFunc(GL_ONE, GL_ZERO);
+			glBlendEquation(GL_FUNC_ADD);
+		}
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	}
 
 	ctx->renderTarget = NULL;
 	ctx->texture = NULL;
-
-	glDisable(GL_BLEND);
-	if(ctx->supportSeperateBlend) {
-		glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
-		glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-	} else {
-		glBlendFunc(GL_ONE, GL_ZERO);
-		glBlendEquation(GL_FUNC_ADD);
-	}
 
 	return ctx;
 }
 
 void Driver::useContext(void* ctx)
 {
-	_currentContext = reinterpret_cast<Context*>(ctx);
+	_context = reinterpret_cast<Context*>(ctx);
 }
 
 void Driver::deleteContext(void* ctx)
 {
-	if(_currentContext == ctx) _currentContext = NULL;
+	if(_context == ctx) _context = NULL;
 	delete reinterpret_cast<Context*>(ctx);
 }
 
 void Driver::forceApplyCurrent()
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)_currentContext->renderTarget);
+	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)_context->renderTarget);
 
-	if(_currentContext->enableTexture2D)
+	if(_context->enableTexture2D)
 		glEnable(GL_TEXTURE_2D);
 	else
 		glDisable(GL_TEXTURE_2D);
 
-	glBindTexture(GL_TEXTURE_2D, (GLuint)_currentContext->texture);
+	glBindTexture(GL_TEXTURE_2D, (GLuint)_context->texture);
 
 	glViewport(
-		(GLint)_currentContext->vpLeft,
-		(GLint)_currentContext->vpTop,
-		(GLsizei)_currentContext->vpWidth,
-		(GLsizei)_currentContext->vpHeight
+		(GLint)_context->vpLeft,
+		(GLint)_context->vpTop,
+		(GLsizei)_context->vpWidth,
+		(GLsizei)_context->vpHeight
 	);
 
-	glEnableClientState(GL_COLOR_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glEnableClientState(GL_VERTEX_ARRAY);
+	enableVertexArray(_context->vertexArrayEnabled, true);
+	enableColorArray(_context->coordArrayEnabled, true);
+	enableCoordArray(_context->coordArrayEnabled, true);
 }
 
 // Capability
 void* Driver::getCapability(const char* cap)
 {
 	if(strcmp(cap, "npot") == 0)
-		return _currentContext->supportNPOT ? (void*)1 : NULL;
+		return _context->supportNPOT ? (void*)1 : NULL;
 	return NULL;
 }
 
@@ -145,16 +218,16 @@ void* Driver::createRenderTargetTexture(void* textureHandle)
 
 void Driver::deleteRenderTarget(void* rtHandle)
 {
-	if(_currentContext->renderTarget == rtHandle)
-		_currentContext->renderTarget = NULL;
+	if(_context->renderTarget == rtHandle)
+		_context->renderTarget = NULL;
 	GLuint handle = reinterpret_cast<GLuint>(rtHandle);
 	if(handle) glDeleteFramebuffers(1, &handle);
 }
 
 void Driver::useRenderTarget(void* rtHandle)
 {
-	if(_currentContext->renderTarget == rtHandle) return;
-	_currentContext->renderTarget = rtHandle;
+	if(_context->renderTarget == rtHandle) return;
+	_context->renderTarget = rtHandle;
 
 	GLuint handle = reinterpret_cast<GLuint>(rtHandle);
 	glBindFramebuffer(GL_FRAMEBUFFER, handle);
@@ -196,7 +269,7 @@ void* Driver::createTexture(unsigned width, unsigned height, TextureFormat inter
 	unsigned texWidth = width;
 	unsigned texHeight = height;
 
-	if(!_currentContext->supportNPOT) {
+	if(!_context->supportNPOT) {
 		texWidth = nextPowerOfTwo(texWidth);
 		texHeight = nextPowerOfTwo(texHeight);
 	}
@@ -220,13 +293,13 @@ void* Driver::createTexture(unsigned width, unsigned height, TextureFormat inter
 		srcData
 	);
 
-	if(!_currentContext->supportNPOT) {
+	if(!_context->supportNPOT) {
 		int area[] = { 0, 0, width, height };
 		glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_CROP_RECT_OES, area);
 	}
 
 	// Restore previous binded texture
-	glBindTexture(type, (GLuint)_currentContext->texture);
+	glBindTexture(type, (GLuint)_context->texture);
 
 	ASSERT(GL_NO_ERROR == glGetError());
 	return reinterpret_cast<void*>(handle);
@@ -234,29 +307,29 @@ void* Driver::createTexture(unsigned width, unsigned height, TextureFormat inter
 
 void Driver::deleteTexture(void* textureHandle)
 {
-	if(_currentContext->texture == textureHandle)
-		_currentContext->texture = NULL;
+	if(_context->texture == textureHandle)
+		_context->texture = NULL;
 	GLuint handle = reinterpret_cast<GLuint>(textureHandle);
 	if(handle) glDeleteTextures(1, &handle);
 }
 
 void Driver::useTexture(void* textureHandle)
 {
-	if(_currentContext->texture == textureHandle) return;
-	_currentContext->texture = textureHandle;
+	if(_context->texture == textureHandle) return;
+	_context->texture = textureHandle;
 
 	GLuint handle = reinterpret_cast<GLuint>(textureHandle);
 
 	if(handle) {
-		if(!_currentContext->enableTexture2D) {
+		if(!_context->enableTexture2D) {
 			glEnable(GL_TEXTURE_2D);
-			_currentContext->enableTexture2D = true;
+			_context->enableTexture2D = true;
 		}
 	}
 	else {
-		if(_currentContext->enableTexture2D) {
+		if(_context->enableTexture2D) {
 			glDisable(GL_TEXTURE_2D);
-			_currentContext->enableTexture2D = false;
+			_context->enableTexture2D = false;
 		}
 	}
 	glBindTexture(GL_TEXTURE_2D, handle);
@@ -269,6 +342,10 @@ void Driver::drawQuad(
 )
 {
 	Driver::useTexture(NULL);
+
+	enableVertexArray(true);
+	enableColorArray(true);
+	enableCoordArray(false);
 
 	rhuint8 rgba[] = { r,g,b,a, r,g,b,a, r,g,b,a, r,g,b,a };
 	glColorPointer(4, GL_UNSIGNED_BYTE, 0, rgba);
@@ -285,6 +362,10 @@ void Driver::drawQuad(
 	rhuint8 r, rhuint8 g, rhuint8 b, rhuint8 a
 )
 {
+	enableVertexArray(true);
+	enableColorArray(true);
+	enableCoordArray(true);
+
 	rhuint8 rgba[] = { r,g,b,a, r,g,b,a, r,g,b,a, r,g,b,a };
 	glColorPointer(4, GL_UNSIGNED_BYTE, 0, rgba);
 
@@ -353,14 +434,14 @@ void Driver::setRasterizerState(const RasterizerState& state)
 void Driver::setBlendState(const BlendState& state)
 {
 	unsigned h = hash(&state, sizeof(state));
-	if(h == _currentContext->blendStateHash) return;
+	if(h == _context->blendStateHash) return;
 
 	if(!state.enable) {
 		glDisable(GL_BLEND);
 	}
 	else {
 		glEnable(GL_BLEND);
-		if(_currentContext->supportSeperateBlend) {
+		if(_context->supportSeperateBlend) {
 			glBlendFuncSeparate(state.colorSrc, state.colorDst, state.alphaSrc, state.alphaDst);
 			glBlendEquationSeparate(state.colorOp, state.alphaOp);
 		} else {
@@ -369,8 +450,8 @@ void Driver::setBlendState(const BlendState& state)
 		}
 	}
 
-	_currentContext->blendState = state;
-	_currentContext->blendStateHash = h;
+	_context->blendState = state;
+	_context->blendStateHash = h;
 }
 
 void Driver::setViewport(float left, float top, float width, float height)
@@ -378,14 +459,14 @@ void Driver::setViewport(float left, float top, float width, float height)
 	float data[] = { left, top, width, height };
 	unsigned h = hash(data, sizeof(data));
 
-	if(_currentContext->viewportHash != h) {
+	if(_context->viewportHash != h) {
 		glViewport((GLint)left, (GLint)top, (GLsizei)width, (GLsizei)height);
-		_currentContext->viewportHash = h;
+		_context->viewportHash = h;
 
-		_currentContext->vpLeft = left;
-		_currentContext->vpTop = left;
-		_currentContext->vpWidth = width;
-		_currentContext->vpHeight = height;
+		_context->vpLeft = left;
+		_context->vpTop = left;
+		_context->vpWidth = width;
+		_context->vpHeight = height;
 	}
 }
 
