@@ -1,0 +1,212 @@
+<html>
+	<head>
+		<title>Canvas polygon test</title>
+		<script type="text/javascript">
+		function draw_rect_path(ctx2d, x0, y0, x1, y1, clockwise)
+		{
+			ctx2d.moveTo(x0, y0);
+			if (clockwise)
+				ctx2d.lineTo(x1, y0);
+			else
+				ctx2d.lineTo(x0, y1);
+			ctx2d.lineTo(x1, y1);
+			if (!clockwise)
+				ctx2d.lineTo(x1, y0);
+			else
+				ctx2d.lineTo(x0, y1);
+			ctx2d.lineTo(x0, y0);
+		}
+				
+		function draw_cw_cw(ctx2d)
+		{
+			ctx2d.fillStyle = "rgb(255, 0, 0)";
+			ctx2d.beginPath();
+			draw_rect_path(ctx2d, 0, 0, 100, 100, true);
+			draw_rect_path(ctx2d, 10, 10, 90, 90, true);
+			ctx2d.closePath();
+			ctx2d.fill();
+			ctx2d.stroke();
+		}
+
+		function draw_cw_acw(ctx2d)
+		{
+			ctx2d.fillStyle = "rgb(255, 0, 0)";
+			ctx2d.beginPath();
+			draw_rect_path(ctx2d, 0, 0, 100, 100, true);
+			draw_rect_path(ctx2d, 10, 10, 90, 90, false);
+			ctx2d.closePath();
+			ctx2d.fill();
+			ctx2d.stroke();
+		}
+		
+		function draw_cw_cw_acw(ctx2d)
+		{
+			ctx2d.fillStyle = "rgb(255, 0, 0)";
+			ctx2d.beginPath();
+			draw_rect_path(ctx2d, 0, 0, 100, 100, true);
+			draw_rect_path(ctx2d, 10, 10, 90, 90, true);
+			draw_rect_path(ctx2d, 20, 20, 80, 80, false);
+			ctx2d.closePath();
+			ctx2d.fill();
+			ctx2d.stroke();
+		}
+
+		function draw_cw_cw_acw_acw(ctx2d)
+		{
+			ctx2d.fillStyle = "rgb(255, 0, 0)";
+			ctx2d.beginPath();
+			draw_rect_path(ctx2d, 0, 0, 100, 100, true);
+			draw_rect_path(ctx2d, 10, 10, 90, 90, true);
+			draw_rect_path(ctx2d, 20, 20, 80, 80, false);
+			draw_rect_path(ctx2d, 30, 30, 70, 70, false);
+			ctx2d.closePath();
+			ctx2d.fill();
+			ctx2d.stroke();
+		}
+		
+		function draw_cw_cw_acw_acw(ctx2d)
+		{
+			ctx2d.fillStyle = "rgb(255, 0, 0)";
+			ctx2d.beginPath();
+			draw_rect_path(ctx2d, 0, 0, 100, 100, true);
+			draw_rect_path(ctx2d, 10, 10, 90, 90, true);
+			draw_rect_path(ctx2d, 20, 20, 80, 80, false);
+			draw_rect_path(ctx2d, 30, 30, 70, 70, false);
+			ctx2d.closePath();
+			ctx2d.fill();
+			ctx2d.stroke();
+		}
+		
+		function gen_pentagram_vertices(r, cx, cy)
+		{
+			var step = 5;
+			var angle_step = 2 * Math.PI / step;
+			var vertices = Array();
+
+			angle = 0;
+			for(var i = 0; i < step; ++i)
+			{
+				vertices.push([ r * Math.sin(angle) + cx, r * Math.cos(angle) + cy]);
+				angle += angle_step;
+			}
+
+			return vertices;
+		}
+
+		function draw_pentagram(ctx2d)
+		{
+			var vertices = gen_pentagram_vertices(50, 50, 50)
+
+			ctx2d.fillStyle = "rgb(255, 0, 0)";
+			ctx2d.beginPath();
+			for(var i = 0; i < vertices.length; ++i)
+			{
+				var idx = i * 2 % vertices.length;
+				ctx2d.lineTo(vertices[idx][0], vertices[idx][1]);
+			}
+			ctx2d.closePath();
+			ctx2d.fill();
+			ctx2d.stroke();
+		}
+		
+		function draw_non_simple_polygon_path(ctx2d, x0, y0, x1, y1)
+		{
+			ctx2d.moveTo(x0, y0);
+			ctx2d.lineTo(x1, y0);
+			ctx2d.lineTo(x0, y1);
+			ctx2d.lineTo(x1, y1);
+			ctx2d.lineTo(x0, y0);			
+		}
+	   
+		function draw_non_simple_polygon(ctx2d)
+		{
+			ctx2d.fillStyle = "rgb(255, 0, 0)";
+			ctx2d.beginPath();
+			var x0 = 0, y0 = 0, x1 = 100, y1 = 100;
+			draw_non_simple_polygon_path(ctx2d, x0, y0, x1, y1);
+			ctx2d.closePath();
+			ctx2d.fill();
+			ctx2d.stroke();
+		}
+		
+		// This non simple polygon has inversed winding(upper & lower parts).
+		// Let's see how stencil works with it.
+		// I expect one part is drawn in reversed direction and hallowen the bg square.
+		// If that is the case, we can implement the stencil inc/dec operations per triangle.
+		function draw_non_simple_polygon_on_rect(ctx2d)
+		{
+			ctx2d.fillStyle = "rgb(255, 0, 0)";
+			ctx2d.beginPath();
+			
+			draw_rect_path(ctx2d, 0, 0, 100, 100, true);
+			
+			var x0 = 20, y0 = 20, x1 = 80, y1 = 80;
+			draw_non_simple_polygon_path(ctx2d, x0, y0, x1, y1);
+			
+			ctx2d.closePath();
+			ctx2d.fill();
+			ctx2d.stroke();
+		}
+		
+		// There is clamping ont he stencil...there should be some bugs
+		function stencil_depth_test(ctx2d, test_depth)
+		{
+			ctx2d.fillStyle = "rgb(255, 0, 0)";
+			ctx2d.beginPath();
+			
+			for(var i = 0; i < test_depth; ++i)
+				draw_rect_path(ctx2d, 10, 10, 90, 90, true);
+				
+			for(var i = 0; i < test_depth; ++i)
+				draw_rect_path(ctx2d, 10, 10, 90, 90, false);
+				
+			ctx2d.closePath();
+			ctx2d.fill();
+			ctx2d.stroke();
+		}
+		
+		function draw()
+		{
+			var canvas = document.getElementById("canvas");
+			var ctx2d = canvas.getContext("2d");
+			
+			draw_cw_cw(ctx2d);
+			ctx2d.translate(0, 120);
+			
+			draw_cw_acw(ctx2d);
+			ctx2d.translate(0, 120);
+			
+			draw_cw_cw_acw(ctx2d);
+			ctx2d.translate(0, 120);
+			
+			draw_cw_cw_acw_acw(ctx2d);
+			ctx2d.translate(120, -3 * 120);
+			
+			draw_pentagram(ctx2d);
+			ctx2d.translate(0, 120);
+			
+			draw_non_simple_polygon(ctx2d);
+			ctx2d.translate(0, 120);
+			
+			draw_non_simple_polygon_on_rect(ctx2d);
+			ctx2d.translate(120, -2 * 120);
+			
+			// traditionally, 0xFF(128)..0..0x7F(127)
+			//                     -1    0  +127
+			// If arithmetic is clamped.....
+			// That means.... 0 + 128 clamped to 127..-128 = -1. not zero.
+			//stencil_depth_test(ctx2d, 0x100 / 2);
+			//ctx2d.translate(0, 120);
+			
+			//stencil_depth_test(ctx2d, 0x10000 / 2);
+			//ctx2d.translate(0, 120);
+			
+			//stencil_depth_test(ctx2d, 0x10000 / 2);
+			//ctx2d.translate(0, 120);
+		}
+		</script>
+	</head>
+	<body onload="draw()">
+		<canvas id="canvas" width="600" height="600"></canvas>
+	</body>
+</html>
