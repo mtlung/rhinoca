@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Rhinoca", "Rhinoca.vcproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Test.vcproj", "{CFD3B3A5-60C1-41CD-8B25-8F5869F24969}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Swf", "Swf.vcproj", "{9C4027C0-ECE1-4685-9110-8F5A76119415}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -25,6 +27,10 @@ Global
 		{CFD3B3A5-60C1-41CD-8B25-8F5869F24969}.Debug|Win32.Build.0 = Debug|Win32
 		{CFD3B3A5-60C1-41CD-8B25-8F5869F24969}.Release|Win32.ActiveCfg = Release|Win32
 		{CFD3B3A5-60C1-41CD-8B25-8F5869F24969}.Release|Win32.Build.0 = Release|Win32
+		{9C4027C0-ECE1-4685-9110-8F5A76119415}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9C4027C0-ECE1-4685-9110-8F5A76119415}.Debug|Win32.Build.0 = Debug|Win32
+		{9C4027C0-ECE1-4685-9110-8F5A76119415}.Release|Win32.ActiveCfg = Release|Win32
+		{9C4027C0-ECE1-4685-9110-8F5A76119415}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
