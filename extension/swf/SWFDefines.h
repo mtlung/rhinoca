@@ -1,6 +1,8 @@
 #ifndef __SWFDefines__h__
 #define __SWFDefines__h__
 
+#include "../../src/rhinoca.h"
+
 //------------------------------------------------------------------------------
 typedef unsigned char UI8;
 typedef unsigned short UI16;
@@ -101,6 +103,33 @@ typedef enum TSwfTagType
 	,	DefineBitsJPEG4		= 90
 	,	DefineFont4			= 91
 } TSwfTagType;
+
+
+struct BitStream
+{
+	rhuint64 read(void* buffer, rhuint64 size, int threadId)
+	{
+		// Read as normal, but need to do something if "currentBit" is not alligned to byte boundary
+	}
+
+	unsigned readBits(rhuint32& output, unsigned bitsToRead, int threadId)
+	{
+		// If buffer has enough bits
+		//    currentBit += bitsToRead
+		//    ....
+
+		// else
+		//	  fill the buffer by calling io_read()
+
+		// output = ....
+
+		// return number of bits successfully read
+	}
+
+	void* file;				// Handle for passing to io_read
+	unsigned currentBit;	// Index to the current bit position in the buffer
+	rhuint32 buffer[2];
+};
 
 
 //------------------------------------------------------------------------------
