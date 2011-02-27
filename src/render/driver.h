@@ -108,6 +108,28 @@ public:
 	static void useMesh(int meshHandle);
 
 // States
+	struct SamplerState
+	{
+		enum Filter {
+			MIN_MAG_POINT,
+			MIN_MAG_LINEAR,
+			MIP_MAG_POINT,
+			MIP_MAG_LINEAR,
+		};
+
+		enum AddressMode {
+			Repeat	= 0x2901,
+			Edge	= 0x812F,
+			Border	= 0x812D,
+		};	// AddressMode
+
+		Filter filter;
+		AddressMode u, v, w;
+	};	// SamplerState
+
+	static void getSamplerState(SamplerState& state, unsigned textureUnit);
+	static void setSamplerState(const SamplerState& state, unsigned textureUnit);
+
 	struct RasterizerState
 	{
 		enum FillMode {
