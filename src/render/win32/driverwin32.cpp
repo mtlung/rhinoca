@@ -222,7 +222,7 @@ void* Driver::createRenderTargetExternal(void* externalHandle)
 	return externalHandle;
 }
 
-void* Driver::createRenderTargetTexture(void** textureHandle, void** depthStencilHandle, unsigned width, unsigned height)
+void* Driver::createRenderTargetTexture(void** textureHandle, void** depthHandle, void** stencilHandle, unsigned width, unsigned height)
 {
 	ASSERT(GL_NO_ERROR == glGetError());
 
@@ -237,15 +237,18 @@ void* Driver::createRenderTargetTexture(void** textureHandle, void** depthStenci
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, (GLuint)*textureHandle, 0);
 	}
 
-	if(depthStencilHandle) {
-		if(!*depthStencilHandle) {	// Generate the depth stencil right here
-			glGenRenderbuffers(1, (GLuint*)depthStencilHandle);
-			glBindRenderbuffer(GL_RENDERBUFFER, (GLuint)*depthStencilHandle);
+	if(depthHandle) {
+		if(!*depthHandle) {	// Generate the depth stencil right here
+			glGenRenderbuffers(1, (GLuint*)depthHandle);
+			glBindRenderbuffer(GL_RENDERBUFFER, (GLuint)*depthHandle);
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
 		}
 
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, (GLuint)*depthStencilHandle);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, (GLuint)*depthHandle);
 	}
+
+	if(stencilHandle)
+		*stencilHandle = *depthHandle;
 
 	ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
 	ASSERT(GL_NO_ERROR == glGetError());

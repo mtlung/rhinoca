@@ -34,9 +34,13 @@ public:
 	///		If *textureHandle is not null, then the it's value will be used as the texture.
 	/// @param depthStencilHandle
 	///		If null, no depth and stencil buffer will be used.
-	///		If *depthStencilHandle is null, this function will create the depth and stencil automatically.
-	///		If *depthStencilHandle is not null, then the it's value will be used as the depth and stencil.
-	static void* createRenderTargetTexture(void** textureHandle, void** depthStencilHandle, unsigned width, unsigned height);
+	///		If *depthHandle is null, this function will create the depth and stencil automatically.
+	///		If *depthHandle is not null, then the it's value will be used as the depth and stencil.
+	static void* createRenderTargetTexture(
+		void** textureHandle,
+		void** depthHandle, void** stencilHandle,
+		unsigned width, unsigned height
+	);
 
 	static void deleteRenderTarget(void* rtHandle);
 

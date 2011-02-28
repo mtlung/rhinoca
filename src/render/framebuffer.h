@@ -22,7 +22,7 @@ public:
 
 // Attibutes
 	void* handle;
-	void* depthStencilHandle;
+	void* depthHandle, *stencilHandle;
 
 	unsigned width, height;
 
