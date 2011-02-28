@@ -126,8 +126,6 @@ HRESULT FileDropHandler::Drop(IDataObject* pDataObject, DWORD grfKeyState, POINT
 	else
 	{
 		*pdwEffect = DROPEFFECT_MOVE;
-		//if (m_rh->isDocumentLoaded())
-			m_rh->closeDocument();
 		m_rh->openDoucment(filePath);
 	}
 

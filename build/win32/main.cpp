@@ -87,6 +87,9 @@ LRESULT CALLBACK wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	Rhinoca* rh = reinterpret_cast<Rhinoca*>(::GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
+	if(!rh)
+		return ::DefWindowProc(hWnd, uMsg, wParam, lParam);
+
 	{
 		RhinocaEvent ev = { uMsg, wParam, lParam, 0, 0 };
 		rhinoca_processEvent(rh, ev);
@@ -252,13 +255,9 @@ int main()
 	::SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG>(rh));
 	::ShowWindow(hWnd, true);
 
-//	rhinoca_openDocument(rh, "html5/test1/test2.html");
-//	rhinoca_openDocument(rh, "html5/test3/test_sprites.html");
 //	rhinoca_openDocument(rh, "html5/test4/test.html");
 //	rhinoca_openDocument(rh, "../../../on9bird/on9birds.html");
-//	rhinoca_openDocument(rh, "../../test/htmlTest/imageTest/test.html");
-	//rhinoca_openDocument(rh, "../../test/htmlTest/vgTest/test.html");
-	//rhinoca_closeDocument(rh);
+	rhinoca_openDocument(rh, "../../test/htmlTest/vgTest/test.html");
 
 	while(true) {
 		MSG message;

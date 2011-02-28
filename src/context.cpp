@@ -72,6 +72,7 @@ static JSFunctionSpec jsConsoleMethods[] = {
 
 Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 	: privateData(NULL)
+	, domWindow(NULL)
 	, width(0), height(0)
 	, renderContex(rc)
 {
@@ -83,19 +84,55 @@ Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 	jsGlobal = JS_NewObject(jsContext, &jsGlobalClass, NULL, NULL);
 	JS_SetGlobalObject(jsContext, jsGlobal);
 
-	VERIFY(JS_InitStandardClasses(jsContext, jsGlobal));
-
-	domWindow = new Dom::DOMWindow(this);
-	domWindow->bind(jsContext, jsGlobal);
-	domWindow->addGcRoot();	// releaseGcRoot() in ~Rhinoca()
-
 //	taskPool.init(1);
 	resourceManager.rhinoca = this;
 	resourceManager.taskPool = &taskPool;
 	Loader::registerLoaders(&resourceManager);
 
 	Dom::registerFactories();
+}
+
+Rhinoca::~Rhinoca()
+{
+	closeDocument();
+
+	JS_DestroyContext(jsContext);
+}
+
+void Rhinoca::update()
+{
+	Render::Driver::forceApplyCurrent();
+
+	if(domWindow)
+		domWindow->update();
+
+	resourceManager.update();
+	taskPool.doSomeTask();
+
+	if(domWindow)
+		domWindow->render();
+
+	JS_MaybeGC(jsContext);
+
+	Render::Driver::useRenderTarget(NULL);
+}
+
+void Rhinoca::collectGarbage()
+{
+	JS_GC(jsContext);
+}
+
+void Rhinoca::_initGlobal()
+{
+	ASSERT(!domWindow);
+
+	VERIFY(JS_InitStandardClasses(jsContext, jsGlobal));
+
 	Dom::registerClasses(jsContext, jsGlobal);
+
+	domWindow = new Dom::DOMWindow(this);
+	domWindow->bind(jsContext, jsGlobal);
+	domWindow->addGcRoot();	// releaseGcRoot() in ~Rhinoca()
 
 	{	// Register the console object
 		jsConsole = JS_DefineObject(jsContext, jsGlobal, "console", &jsConsoleClass, 0, JSPROP_ENUMERATE);
@@ -123,42 +160,6 @@ Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 		jsval rval;
 		VERIFY(JS_EvaluateScript(jsContext, jsGlobal, script, strlen(script), "", 0, &rval));
 	}
-}
-
-Rhinoca::~Rhinoca()
-{
-	VERIFY(JS_RemoveRoot(jsContext, &jsConsole));
-
-	domWindow->releaseGcRoot();
-
-	// NOTE: I found this "clear scope" is necessary in order to not leak memory
-	// This requirement is not mentioned in the Mozilla documentation, I wonder why
-	// JS_DestroyContext() didn't do all the necessary job to clear the global.
-	// Similar problem: http://web.archiveorange.com/archive/v/yxPWTpZYQx37ab1hpyWc
-	JS_ClearScope(jsContext, jsGlobal);
-
-	JS_DestroyContext(jsContext);
-}
-
-void Rhinoca::update()
-{
-	Render::Driver::forceApplyCurrent();
-
-	domWindow->update();
-
-	resourceManager.update();
-	taskPool.doSomeTask();
-
-	domWindow->render();
-
-	JS_MaybeGC(jsContext);
-
-	Render::Driver::useRenderTarget(NULL);
-}
-
-void Rhinoca::collectGarbage()
-{
-	JS_GC(jsContext);
 }
 
 static void appendFileToString(void* file, std::string& str)
@@ -199,6 +200,9 @@ const char* removeBom(Rhinoca* rh, const char* uri, const char* str, unsigned& l
 
 bool Rhinoca::openDoucment(const char* uri)
 {
+	closeDocument();
+	_initGlobal();
+
 	std::string html;
 
 	{	// Reads the html file into memory
@@ -326,4 +330,20 @@ bool Rhinoca::openDoucment(const char* uri)
 
 void Rhinoca::closeDocument()
 {
+	VERIFY(JS_RemoveRoot(jsContext, &jsConsole));
+	jsConsole = NULL;
+
+	if(domWindow)
+		domWindow->releaseGcRoot();
+
+	documentUrl = "";
+	domWindow = NULL;
+
+	// NOTE: I found this "clear scope" is necessary in order to not leak memory
+	// This requirement is not mentioned in the Mozilla documentation, I wonder why
+	// JS_DestroyContext() didn't do all the necessary job to clear the global.
+	// Similar problem: http://web.archiveorange.com/archive/v/yxPWTpZYQx37ab1hpyWc
+	JS_ClearScope(jsContext, jsGlobal);
+
+	JS_GC(jsContext);
 }

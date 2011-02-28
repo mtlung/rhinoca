@@ -168,20 +168,20 @@
 	<References>
 		<ProjectReference
 			ReferencedProjectIdentifier="{42A4219C-C856-470B-BF52-B20035575D91}"
-			RelativePathToProject=".\Rhinoca.vcproj"
+			RelativePathToProject=".\Rhinoca.vc9.vcproj"
 		/>
 	</References>
 	<Files>
-		<File
-			RelativePath=".\main.cpp"
-			>
-		</File>
 		<File
 			RelativePath=".\DropHandler.cpp"
 			>
 		</File>
 		<File
 			RelativePath=".\DropHandler.h"
+			>
+		</File>
+		<File
+			RelativePath=".\main.cpp"
 			>
 		</File>
 	</Files>

@@ -29,6 +29,8 @@ public:
 
 	void collectGarbage();
 
+	void _initGlobal();
+
 // Attributes
 	JSContext* jsContext;
 	JSObject* jsGlobal;

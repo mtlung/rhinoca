@@ -14,6 +14,9 @@ int convertKeyCode(WPARAM virtualKey, LPARAM flags)
 
 void Rhinoca::processEvent(RhinocaEvent ev)
 {
+	if(!domWindow)
+		return;
+
 	WPARAM wParam = ev.value1;
 	LPARAM lParam = ev.value2;
 
