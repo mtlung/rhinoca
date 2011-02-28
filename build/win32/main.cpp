@@ -4,6 +4,7 @@
 #define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <ole2.h>
 #include <gl/gl.h>
 //#define GL_GLEXT_PROTOTYPES
 #include "../../src/render/gl/glext.h"
@@ -11,6 +12,8 @@
 #include <crtdbg.h>
 #include <assert.h>
 #include <malloc.h>
+
+#include "DropHandler.h"
 
 #pragma comment(lib, "OpenGL32")
 #pragma comment(lib, "GLU32")
@@ -228,6 +231,8 @@ int main()
 	_CrtSetBreakAlloc(-1);
 #endif
 
+	OleInitialize(NULL);
+
 	HWND hWnd = createWindow(NULL, _width, _height, false);
 
 	HDC dc;
@@ -241,6 +246,8 @@ int main()
 	rhinoca_setAlertFunc(alertFunc, hWnd);
 	rhinoca_io_setcallback(ioOpen, ioRead, ioClose);
 
+	FileDropHandler dropHandler(hWnd, rh);
+
 	// Associate Rhinoca context as the user-data of the window handle
 	::SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG>(rh));
 	::ShowWindow(hWnd, true);
@@ -250,12 +257,13 @@ int main()
 //	rhinoca_openDocument(rh, "html5/test4/test.html");
 //	rhinoca_openDocument(rh, "../../../on9bird/on9birds.html");
 //	rhinoca_openDocument(rh, "../../test/htmlTest/imageTest/test.html");
-	rhinoca_openDocument(rh, "../../test/htmlTest/vgTest/test.html");
+	//rhinoca_openDocument(rh, "../../test/htmlTest/vgTest/test.html");
+	//rhinoca_closeDocument(rh);
 
 	while(true) {
 		MSG message;
 
-		while(::PeekMessage(&message, hWnd, 0, 0, PM_REMOVE)) {
+		while(::PeekMessage(&message, 0, 0, 0, PM_REMOVE)) {
 			(void)TranslateMessage(&message);
 			(void)DispatchMessage(&message);
 
@@ -315,6 +323,8 @@ int main()
 		glDeleteTextures(1, &renderContext.texture);
 		wglDeleteContext(wglGetCurrentContext());
 	}
+
+	OleUninitialize();
 
 	return 0;
 }

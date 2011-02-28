@@ -176,6 +176,14 @@
 			RelativePath=".\main.cpp"
 			>
 		</File>
+		<File
+			RelativePath=".\DropHandler.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\DropHandler.h"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>
