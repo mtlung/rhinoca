@@ -154,6 +154,7 @@ void HTMLCanvasElement::render()
 
 	CanvasRenderingContext2D* ctx = dynamic_cast<CanvasRenderingContext2D*>(vc->context);
 
+	ctx->clearRect(0, 0, (float)width(), (float)height());
 	ctx->drawImage(texture(), 0, 0);
 }
 
@@ -193,26 +194,15 @@ Texture* HTMLCanvasElement::texture()
 
 void HTMLCanvasElement::setWidth(unsigned w)
 {
-	if(w == width()) return;
-
-	if(!_framebuffer.handle)
-		createTextureFrameBuffer(w, _framebuffer.height);
+	createTextureFrameBuffer(w, _framebuffer.height);
 	_framebuffer.width = w;
-
-	if(_framebuffer.texture)
-		_framebuffer.createTexture(w, height());
 }
 
 void HTMLCanvasElement::setHeight(unsigned h)
 {
-	if(h == height()) return;
-
 	if(!_framebuffer.handle)
 		createTextureFrameBuffer(_framebuffer.width, h);
 	_framebuffer.height = h;
-
-	if(_framebuffer.texture)
-		_framebuffer.createTexture(width(), h);
 }
 
 const char* HTMLCanvasElement::tagName() const

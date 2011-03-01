@@ -260,10 +260,10 @@ void* Driver::createRenderTargetTexture(void** textureHandle, void** depthHandle
 	if(depthHandle) {
 		if(!*depthHandle) {	// Generate the depth stencil right here
 			glGenRenderbuffers(1, (GLuint*)depthHandle);
-			glBindRenderbuffer(GL_RENDERBUFFER, (GLuint)*depthHandle);
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
 		}
 
+		glBindRenderbuffer(GL_RENDERBUFFER, (GLuint)*depthHandle);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, (GLuint)*depthHandle);
 	}
 
@@ -275,8 +275,8 @@ void* Driver::createRenderTargetTexture(void** textureHandle, void** depthHandle
 
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
-	glViewport(0, 0, width, height);
-	glClearColor(1, 1, 1, 1);
+	setViewport(0, 0, width, height);
+	glClearColor(0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)_context->renderTarget);

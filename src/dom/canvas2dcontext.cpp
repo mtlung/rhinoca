@@ -616,7 +616,7 @@ void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 		false,
 		Driver::BlendState::Add, Driver::BlendState::Add,
 		Driver::BlendState::One, Driver::BlendState::Zero,	// Color src, dst
-		Driver::BlendState::One, Driver::BlendState::Zero,	// Alpha src, dst
+		Driver::BlendState::One, Driver::BlendState::One,	// Alpha src, dst
 		Driver::BlendState::EnableAll
 	};
 	Driver::setBlendState(blendState);
@@ -631,7 +631,7 @@ void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 		x + w, y + h,
 		x + 0, y + h,
 		-1,	// z value
-		(rhuint8)0, (rhuint8)0, (rhuint8)0, (rhuint8)0
+		(rhuint8)0, (rhuint8)0, (rhuint8)0, (rhuint8)0	// Clear as transparent black
 	);
 }
 
