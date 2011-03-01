@@ -20,8 +20,6 @@ public:
 
 	void clear();
 
-	void bind();
-
 // Attibutes
 	void* handle;
 	unsigned width, height;

@@ -43,12 +43,4 @@ void Texture::clear()
 	width = height = 0;
 }
 
-void Texture::bind()
-{
-	if(handle) {
-		++hotness;
-		Driver::useTexture(handle);
-	}
-}
-
 }

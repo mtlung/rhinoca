@@ -687,7 +687,15 @@ void CanvasRenderingContext2D::drawImage(
 	srcx *= tw;	srcw *= tw;
 	srcy *= th; srch *= th;
 
-	texture->bind();
+	// Use the texture
+	Driver::SamplerState state = {
+		texture->handle,
+		Driver::SamplerState::MIN_MAG_LINEAR,
+		Driver::SamplerState::Edge,
+		Driver::SamplerState::Edge,
+	};
+	Driver::setSamplerState(0, state);
+	texture->hotness++;
 
 	float sx1 = srcx, sx2 = srcx + srcw;
 	float sy1 = srcy, sy2 = srcy + srch;
@@ -820,10 +828,17 @@ void CanvasRenderingContext2D::rect(float x, float y, float w, float h)
 	moveTo(x, y);
 }
 
+static const Driver::SamplerState noTexture = {
+	NULL,
+	Driver::SamplerState::MIN_MAG_LINEAR,
+	Driver::SamplerState::Edge,
+	Driver::SamplerState::Edge,
+};
+
 void CanvasRenderingContext2D::stroke()
 {
 	canvas->bindFramebuffer();
-	Driver::useTexture(0);
+	Driver::setSamplerState(0, noTexture);
 	vgResizeSurfaceSH(this->width(), this->height());
 
 	const Mat44& m = currentState.transform;
@@ -843,7 +858,7 @@ void CanvasRenderingContext2D::strokeRect(float x, float y, float w, float h)
 	vguRect(openvg->pathSimpleShape, x, y, w, h);
 
 	canvas->bindFramebuffer();
-	Driver::useTexture(0);
+	Driver::setSamplerState(0, noTexture);
 	vgResizeSurfaceSH(this->width(), this->height());
 
 	const Mat44& m = currentState.transform;
@@ -860,7 +875,7 @@ void CanvasRenderingContext2D::strokeRect(float x, float y, float w, float h)
 void CanvasRenderingContext2D::fill()
 {
 	canvas->bindFramebuffer();
-	Driver::useTexture(0);
+	Driver::setSamplerState(0, noTexture);
 	vgResizeSurfaceSH(this->width(), this->height());
 
 	const Mat44& m = currentState.transform;
@@ -880,7 +895,7 @@ void CanvasRenderingContext2D::fillRect(float x, float y, float w, float h)
 	vguRect(openvg->pathSimpleShape, x, y, w, h);
 
 	canvas->bindFramebuffer();
-	Driver::useTexture(0);
+	Driver::setSamplerState(0, noTexture);
 	vgResizeSurfaceSH(this->width(), this->height());
 
 	const Mat44& m = currentState.transform;

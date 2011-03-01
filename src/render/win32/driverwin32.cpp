@@ -23,6 +23,8 @@ PFNGLFRAMEBUFFERRENDERBUFFERPROC glFramebufferRenderbuffer = NULL;
 PFNGLFRAMEBUFFERTEXTURE2DPROC glFramebufferTexture2D = NULL;
 PFNGLCHECKFRAMEBUFFERSTATUSPROC glCheckFramebufferStatus = NULL;
 
+PFNGLACTIVETEXTUREPROC glActiveTexture = NULL;
+
 static bool glInited = false;
 
 namespace Render {
@@ -50,6 +52,8 @@ void Driver::init()
 	GET_FUNC_PTR(glFramebufferRenderbuffer, PFNGLFRAMEBUFFERRENDERBUFFERPROC);
 	GET_FUNC_PTR(glFramebufferTexture2D, PFNGLFRAMEBUFFERTEXTURE2DPROC);
 	GET_FUNC_PTR(glCheckFramebufferStatus, PFNGLCHECKFRAMEBUFFERSTATUSPROC);
+
+	GET_FUNC_PTR(glActiveTexture, PFNGLACTIVETEXTUREPROC);
 }
 
 void Driver::close()
@@ -68,14 +72,17 @@ static unsigned hash(const void* data, unsigned len)
 class Context
 {
 public:
-	bool enableTexture2D;
 	void* renderTarget;
-	void* texture;
 
 	float vpLeft, vpTop, vpWidth, vpHeight;	// Viewport
 	unsigned viewportHash;
 
 	bool vertexArrayEnabled, coordArrayEnabled, colorArrayEnabled;
+
+	static const unsigned samplerCount = 2;
+	Driver::SamplerState samplerStates[samplerCount];
+	unsigned samplerStateHash[samplerCount];
+	unsigned currentSampler;
 
 	Driver::DepthStencilState depthStencilState;
 	unsigned depthStencilStateHash;
@@ -121,16 +128,26 @@ void* Driver::createContext(void* externalHandle)
 {
 	Context* ctx = new Context;
 
-	ctx->enableTexture2D = true;
-	glDisable(GL_TEXTURE_2D);
-
 	ctx->vpLeft = ctx->vpTop = 0;
 	ctx->vpWidth = ctx->vpHeight = 0;
 	ctx->viewportHash = 0;
 
-	enableVertexArray(false, true, ctx);
-	enableColorArray(false, true, ctx);
-	enableCoordArray(false, true, ctx);
+	ctx->vertexArrayEnabled = false;
+	ctx->colorArrayEnabled = false;
+	ctx->coordArrayEnabled = false;
+
+	{	// Sampler
+		ctx->currentSampler = 0;
+		memset(ctx->samplerStates, 0, sizeof(ctx->samplerStates));
+		memset(ctx->samplerStateHash, 0, sizeof(ctx->samplerStateHash));
+
+		for(unsigned i=0; i<ctx->samplerCount; ++i) {
+			ctx->samplerStates[i].textureHandle = NULL;
+			ctx->samplerStates[i].filter = SamplerState::MIN_MAG_POINT;
+			ctx->samplerStates[i].u = SamplerState::Repeat;
+			ctx->samplerStates[i].v = SamplerState::Repeat;
+		}
+	}
 
 	{	// Depth stencil
 		ctx->depthStencilState.depthEnable = false;
@@ -142,15 +159,6 @@ void* Driver::createContext(void* externalHandle)
 		ctx->depthStencilState.stencilFailOp = DepthStencilState::Replace;
 		ctx->depthStencilState.stencilZFailOp = DepthStencilState::Replace;
 		ctx->depthStencilStateHash = 0;
-
-		glDisable(GL_DEPTH_TEST);
-		glDisable(GL_STENCIL_TEST);
-		glStencilFunc(
-			ctx->depthStencilState.stencilFunc,
-			ctx->depthStencilState.stencilRefValue,
-			ctx->depthStencilState.stencilMask
-		);
-		glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
 	}
 
 	{	// Blending
@@ -163,15 +171,9 @@ void* Driver::createContext(void* externalHandle)
 		ctx->blendState.alphaDst = BlendState::Zero;
 		ctx->blendState.wirteMask = BlendState::EnableAll;
 		ctx->blendStateHash = 0;
-
-		glDisable(GL_BLEND);
-		glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
-		glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	}
 
 	ctx->renderTarget = NULL;
-	ctx->texture = NULL;
 
 	return ctx;
 }
@@ -187,16 +189,34 @@ void Driver::deleteContext(void* ctx)
 	delete reinterpret_cast<Context*>(ctx);
 }
 
+static const int _magFilter[] = { GL_NEAREST, GL_LINEAR, GL_NEAREST, GL_LINEAR };
+static const int _minFilter[] = { GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_LINEAR };
+
 void Driver::forceApplyCurrent()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)_context->renderTarget);
 
-	if(_context->enableTexture2D)
-		glEnable(GL_TEXTURE_2D);
-	else
-		glDisable(GL_TEXTURE_2D);
+	{	// Sampler states
+		for(unsigned i=0; i<_context->samplerCount; ++i) {
+			glActiveTexture(GL_TEXTURE0 + i);
+			GLuint handle = reinterpret_cast<GLuint>(_context->samplerStates[i].textureHandle);
 
-	glBindTexture(GL_TEXTURE_2D, (GLuint)_context->texture);
+			if(handle)
+			{
+				glEnable(GL_TEXTURE_2D);
+				glBindTexture(GL_TEXTURE_2D, handle);
+
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, _context->samplerStates[i].u);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, _context->samplerStates[i].v);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _magFilter[_context->samplerStates[i].filter]);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, _minFilter[_context->samplerStates[i].filter]);
+			}
+			else
+				glDisable(GL_TEXTURE_2D);
+		}
+
+		glActiveTexture(GL_TEXTURE0 + _context->currentSampler);
+	}
 
 	glViewport(
 		(GLint)_context->vpLeft,
@@ -206,7 +226,7 @@ void Driver::forceApplyCurrent()
 	);
 
 	enableVertexArray(_context->vertexArrayEnabled, true);
-	enableColorArray(_context->coordArrayEnabled, true);
+	enableColorArray(_context->colorArrayEnabled, true);
 	enableCoordArray(_context->coordArrayEnabled, true);
 }
 
@@ -335,7 +355,7 @@ void* Driver::createTexture(unsigned width, unsigned height, TextureFormat inter
 		);
 
 		// Restore previous binded texture
-		glBindTexture(type, (GLuint)_context->texture);
+		glBindTexture(type, (GLuint)_context->samplerStates[_context->currentSampler].textureHandle);
 	}
 
 	ASSERT(GL_NO_ERROR == glGetError());
@@ -344,33 +364,21 @@ void* Driver::createTexture(unsigned width, unsigned height, TextureFormat inter
 
 void Driver::deleteTexture(void* textureHandle)
 {
-	if(_context->texture == textureHandle)
-		_context->texture = NULL;
-	GLuint handle = reinterpret_cast<GLuint>(textureHandle);
-	if(handle) glDeleteTextures(1, &handle);
+	GLuint handle = (GLuint)textureHandle;
+	if(handle)
+		glDeleteTextures(1, &handle);
+
+	for(unsigned i=0; i<_context->samplerCount; ++i) {
+		if(_context->samplerStates[i].textureHandle == textureHandle)
+			_context->samplerStates[i].textureHandle = 0;
+	}
 }
 
-void Driver::useTexture(void* textureHandle)
-{
-	if(_context->texture == textureHandle) return;
-	_context->texture = textureHandle;
-
-	GLuint handle = reinterpret_cast<GLuint>(textureHandle);
-
-	if(handle) {
-		if(!_context->enableTexture2D) {
-			glEnable(GL_TEXTURE_2D);
-			_context->enableTexture2D = true;
-		}
-	}
-	else {
-		if(_context->enableTexture2D) {
-			glDisable(GL_TEXTURE_2D);
-			_context->enableTexture2D = false;
-		}
-	}
-	glBindTexture(GL_TEXTURE_2D, handle);
-}
+static const Driver::SamplerState noTexture = {
+	NULL,
+	Driver::SamplerState::MIN_MAG_LINEAR,
+	Driver::SamplerState::Edge
+};
 
 // Draw quad
 void Driver::drawQuad(
@@ -378,7 +386,7 @@ void Driver::drawQuad(
 	rhuint8 r, rhuint8 g, rhuint8 b, rhuint8 a
 )
 {
-	Driver::useTexture(NULL);
+	Driver::setSamplerState(0, noTexture);
 
 	enableVertexArray(true);
 	enableColorArray(true);
@@ -464,6 +472,48 @@ void Driver::useMesh(int meshHandle)
 }
 
 // States
+void Driver::setSamplerState(unsigned textureUnit, const SamplerState& state)
+{
+	if(textureUnit != _context->currentSampler)
+		glActiveTexture(GL_TEXTURE0 + textureUnit);
+
+	_context->currentSampler = textureUnit;
+	SamplerState& s = _context->samplerStates[textureUnit];
+
+	// Bind the texture unit
+	if(s.textureHandle != state.textureHandle)
+	{
+		GLuint handle = reinterpret_cast<GLuint>(state.textureHandle);
+
+		if(handle) {
+			if(!s.textureHandle)
+				glEnable(GL_TEXTURE_2D);
+		}
+		else {
+			if(s.textureHandle)
+				glDisable(GL_TEXTURE_2D);
+		}
+		s.textureHandle = state.textureHandle;
+		glBindTexture(GL_TEXTURE_2D, handle);
+	}
+
+	if(!state.textureHandle) return;
+
+	// Setup sampler state
+	unsigned h = hash(&state.filter, sizeof(state)-sizeof(void*));
+
+	if(h == _context->samplerStateHash[textureUnit])
+		return;
+
+	_context->samplerStateHash[textureUnit] = h;
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, state.u);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, state.v);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _magFilter[state.filter]);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, _minFilter[state.filter]);
+}
+
 void Driver::setRasterizerState(const RasterizerState& state)
 {
 }

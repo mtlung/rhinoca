@@ -64,10 +64,9 @@ public:
 		BGRA			= 0x80E1,
 	};
 
+	/// To use the texture, call setSamplerState()
 	static void* createTexture(unsigned width, unsigned height, TextureFormat internalFormat=RGBA, const void* srcData=NULL, TextureFormat srcDataFormat=RGBA);
 	static void deleteTexture(void* textureHandle);
-
-	static void useTexture(void* textureHandle);
 
 // Draw quad
 	/// Specify the vertex in a "ring" order
@@ -111,15 +110,19 @@ public:
 
 	static void useMesh(int meshHandle);
 
+// Transformation
+	static void pushMatrix();
+	static void pophMatrix();
+
 // States
 	struct SamplerState
 	{
 		enum Filter {
-			MIN_MAG_POINT,
-			MIN_MAG_LINEAR,
-			MIP_MAG_POINT,
-			MIP_MAG_LINEAR,
-		};
+			MIN_MAG_POINT	= 0,
+			MIN_MAG_LINEAR	= 1,
+			MIP_MAG_POINT	= 2,
+			MIP_MAG_LINEAR	= 3,
+		};	// Filter
 
 		enum AddressMode {
 			Repeat	= 0x2901,
@@ -127,12 +130,12 @@ public:
 			Border	= 0x812D,
 		};	// AddressMode
 
+		void* textureHandle;
 		Filter filter;
-		AddressMode u, v, w;
+		AddressMode u, v;
 	};	// SamplerState
 
-	static void getSamplerState(SamplerState& state, unsigned textureUnit);
-	static void setSamplerState(const SamplerState& state, unsigned textureUnit);
+	static void setSamplerState(unsigned textureUnit, const SamplerState& state);
 
 	struct RasterizerState
 	{

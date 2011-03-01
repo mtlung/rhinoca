@@ -15,6 +15,7 @@ void rhinoca_init()
 	Render::Driver::init();
 	driverContext = Render::Driver::createContext(0);
 	Render::Driver::useContext(driverContext);
+	Render::Driver::forceApplyCurrent();
 
 	VERIFY(vgCreateContextSH(1, 1));
 }

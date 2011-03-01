@@ -153,6 +153,7 @@ static void* _threadFunc(void* p) {
 
 void TaskPool::init(rhuint threadCount)
 {
+	ASSERT(!_threadHandles);
 	_threadCount = threadCount;
 	_threadHandles = rhnew<rhuint>(threadCount);
 
