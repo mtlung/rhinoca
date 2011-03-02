@@ -146,14 +146,14 @@ void shUpdateColorRampTexture(SHPaint *p)
 {
   SHint s=0;
   SHStop *stop1, *stop2;
-  SHfloat rgba[SH_GRADIENT_TEX_COORDSIZE];
+  SHuint8 rgba[SH_GRADIENT_TEX_COORDSIZE];
   SHint x1=0, x2=0, dx, x;
   SHColor dc, c;
   SHfloat k;
   
   /* Write first pixel color */
   stop1 = &p->stops.items[0];
-  CSTORE_RGBA1D_F(stop1->color, rgba, x1);
+  CSTORE_RGBA1D_8(stop1->color, rgba, x1);
   
   /* Walk stops */
   for (s=1; s<p->stops.size; ++s, x1=x2, stop1=stop2) {
@@ -175,15 +175,15 @@ void shUpdateColorRampTexture(SHPaint *p)
       k = (SHfloat)(x-x1)/dx;
       CSETC(c, stop1->color);
       CADDCK(c, dc, k);
-      CSTORE_RGBA1D_F(c, rgba, x);
+      CSTORE_RGBA1D_8(c, rgba, x);
     }
   }
   
-  /* Update texture image */
-  glBindTexture(GL_TEXTURE_2D, p->texture);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SH_GRADIENT_TEX_SIZE, 1, 0,
-               GL_RGBA, GL_FLOAT, rgba);
+	/* Update texture image */
+	p->texture = (GLuint)Driver::createTexture(
+		(void*)p->texture, SH_GRADIENT_TEX_SIZE, 1,
+		Driver::RGBA, rgba, Driver::RGBA
+	);
 }
 
 void shValidateInputStops(SHPaint *p)
@@ -345,20 +345,7 @@ void shGenerateStops(SHPaint *p, SHfloat minOffset, SHfloat maxOffset,
 
 void shSetGradientTexGLState(SHPaint *p, GLenum texUnit)
 {
-  glBindTexture(GL_TEXTURE_2D, p->texture);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  
-  switch (p->spreadMode) {
-  case VG_COLOR_RAMP_SPREAD_PAD:
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); break;
-  case VG_COLOR_RAMP_SPREAD_REPEAT:
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); break;
-  case VG_COLOR_RAMP_SPREAD_REFLECT:
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT); break;
-  }
-  
-/*	Driver::SamplerState::AddressMode mode;
+	Driver::SamplerState::AddressMode mode;
 	switch (p->spreadMode) {
 	case VG_COLOR_RAMP_SPREAD_PAD:
 		mode = Driver::SamplerState::Edge; break;
@@ -375,13 +362,13 @@ void shSetGradientTexGLState(SHPaint *p, GLenum texUnit)
 		mode,
 	};
 
-	Driver::setSamplerState(texUnit, state);*/
+	Driver::setSamplerState(texUnit - GL_TEXTURE0, state);
 
-  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-  glColor4f(1,1,1,1);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glColor4f(1,1,1,1);
 }
 
-void shSetPatternTexGLState(SHPaint *p, VGContext *c)
+void shSetPatternTexGLState(SHPaint *p, VGContext *c, GLenum texUnit)
 {
   glBindTexture(GL_TEXTURE_2D, ((SHImage*)p->pattern)->texture);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -503,7 +490,6 @@ int shDrawLinearGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
   OFFSET2V(r2, uuy, right); OFFSET2V(r2, uux, maxOffset * n);
   
   /* Draw quad using color-ramp texture */
-  glActiveTexture(texUnit);
   shSetGradientTexGLState(p, texUnit);
   
   glEnable(GL_TEXTURE_2D);
@@ -686,7 +672,6 @@ int shDrawRadialGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
   step = PI/50;
   numsteps = (SHint)SH_CEIL(maxA / step) + 1;
   
-  glActiveTexture(texUnit);
   shSetGradientTexGLState(p, texUnit);
   
   glEnable(GL_TEXTURE_2D);
@@ -782,7 +767,6 @@ int shDrawPatternMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
   sx = 1.0f/(VGfloat)img->texwidth;
   sy = 1.0f/(VGfloat)img->texheight;
   
-  glActiveTexture(texUnit);
   shMatrixToGL(&mi, migl);
   glMatrixMode(GL_TEXTURE);
   glPushMatrix();
@@ -792,7 +776,7 @@ int shDrawPatternMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
   
   /* Draw boundbox with same texture coordinates
      that will get transformed back to paint space */
-  shSetPatternTexGLState(p, context);
+  shSetPatternTexGLState(p, context, texUnit);
   glEnable(GL_TEXTURE_2D);
   glBegin(GL_QUADS);
   
