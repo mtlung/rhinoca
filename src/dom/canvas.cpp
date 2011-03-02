@@ -194,13 +194,14 @@ Texture* HTMLCanvasElement::texture()
 
 void HTMLCanvasElement::setWidth(unsigned w)
 {
-	createTextureFrameBuffer(w, _framebuffer.height);
+	if(!(_framebuffer.handle && !_framebuffer.texture))	// No need to resize external render target
+		createTextureFrameBuffer(w, _framebuffer.height);
 	_framebuffer.width = w;
 }
 
 void HTMLCanvasElement::setHeight(unsigned h)
 {
-	if(!_framebuffer.handle)
+	if(!(_framebuffer.handle && !_framebuffer.texture))	// No need to resize external render target
 		createTextureFrameBuffer(_framebuffer.width, h);
 	_framebuffer.height = h;
 }

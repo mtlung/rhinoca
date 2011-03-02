@@ -31,12 +31,13 @@ void Framebuffer::createTexture(unsigned w, unsigned h)
 {
 	if(width == w && height == h) return;
 
-	texture = new Texture("");
+	if(!texture)
+		texture = new Texture("");
+
 	(void)texture->create(w, h, Render::Driver::ANY, NULL, 0, Render::Driver::RGBA);
 	width = w;
 	height = h;
-	Driver::deleteRenderTarget(handle);
-	handle = Driver::createRenderTargetTexture(&texture->handle, &depthHandle, &stencilHandle, w, h);
+	handle = Driver::createRenderTarget(handle, &texture->handle, &depthHandle, &stencilHandle, w, h);
 }
 
 }	// Render

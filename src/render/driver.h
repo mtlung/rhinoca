@@ -36,7 +36,8 @@ public:
 	///		If null, no depth and stencil buffer will be used.
 	///		If *depthHandle is null, this function will create the depth and stencil automatically.
 	///		If *depthHandle is not null, then the it's value will be used as the depth and stencil.
-	static void* createRenderTargetTexture(
+	static void* createRenderTarget(
+		void* existingRenderTarget,
 		void** textureHandle,
 		void** depthHandle, void** stencilHandle,
 		unsigned width, unsigned height
@@ -65,7 +66,7 @@ public:
 	};
 
 	/// To use the texture, call setSamplerState()
-	static void* createTexture(unsigned width, unsigned height, TextureFormat internalFormat=RGBA, const void* srcData=NULL, TextureFormat srcDataFormat=RGBA);
+	static void* createTexture(void* existingTexture, unsigned width, unsigned height, TextureFormat internalFormat=RGBA, const void* srcData=NULL, TextureFormat srcDataFormat=RGBA);
 	static void deleteTexture(void* textureHandle);
 
 // Draw quad

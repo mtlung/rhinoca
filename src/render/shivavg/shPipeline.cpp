@@ -44,6 +44,7 @@ void shUnpremultiplyFramebuffer()
 }
 
 using namespace Render;
+
 static const Driver::BlendState blendState_Disabled = {
 	false,
 	Driver::BlendState::Add, Driver::BlendState::Add,

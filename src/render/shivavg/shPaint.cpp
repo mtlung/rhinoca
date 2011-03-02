@@ -41,6 +41,8 @@
 
 #include "../driver.h"
 
+using namespace Render;
+
 void SHPaint_ctor(SHPaint *p)
 {
   int i;
@@ -54,7 +56,7 @@ void SHPaint_ctor(SHPaint *p)
   p->tilingMode = VG_TILE_FILL;
   for (i=0; i<4; ++i) p->linearGradient[i] = 0.0f;
   for (i=0; i<5; ++i) p->radialGradient[i] = 0.0f;
-  p->texture = (GLuint)Render::Driver::createTexture(0, 0);
+  p->texture = (GLuint)Render::Driver::createTexture(NULL, 0, 0);
   p->pattern = VG_INVALID_HANDLE;
 }
 
@@ -341,7 +343,7 @@ void shGenerateStops(SHPaint *p, SHfloat minOffset, SHfloat maxOffset,
   }
 }
 
-void shSetGradientTexGLState(SHPaint *p)
+void shSetGradientTexGLState(SHPaint *p, GLenum texUnit)
 {
   glBindTexture(GL_TEXTURE_1D, p->texture);
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -356,6 +358,25 @@ void shSetGradientTexGLState(SHPaint *p)
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT); break;
   }
   
+/*	Driver::SamplerState::AddressMode mode;
+	switch (p->spreadMode) {
+	case VG_COLOR_RAMP_SPREAD_PAD:
+		mode = Driver::SamplerState::Edge; break;
+	case VG_COLOR_RAMP_SPREAD_REPEAT:
+		mode = Driver::SamplerState::Repeat; break;
+	case VG_COLOR_RAMP_SPREAD_REFLECT:
+		glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT); break;
+	}
+
+	Driver::SamplerState state = {
+		(void*)p->texture,
+		Driver::SamplerState::MIN_MAG_LINEAR,
+		mode,
+		mode,
+	};
+
+	Driver::setSamplerState(texUnit, state);*/
+
   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
   glColor4f(1,1,1,1);
 }
@@ -483,7 +504,7 @@ int shDrawLinearGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
   
   /* Draw quad using color-ramp texture */
   glActiveTexture(texUnit);
-  shSetGradientTexGLState(p);
+  shSetGradientTexGLState(p, texUnit);
   
   glEnable(GL_TEXTURE_1D);
   glBegin(GL_QUAD_STRIP);
@@ -666,7 +687,7 @@ int shDrawRadialGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
   numsteps = (SHint)SH_CEIL(maxA / step) + 1;
   
   glActiveTexture(texUnit);
-  shSetGradientTexGLState(p);
+  shSetGradientTexGLState(p, texUnit);
   
   glEnable(GL_TEXTURE_1D);
   glBegin(GL_QUADS);

@@ -23,7 +23,7 @@ bool Texture::create(unsigned w, unsigned h, Format internalFormat, const char* 
 
 	if(w == 0 || h == 0) return false;
 
-	handle = Driver::createTexture(w, h, internalFormat, data, dataFormat);
+	handle = Driver::createTexture(handle, w, h, internalFormat, data, dataFormat);
 
 	if(!Driver::getCapability("npot")) {
 		w = Driver::nextPowerOfTwo(w);

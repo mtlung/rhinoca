@@ -67,7 +67,7 @@ void SHPaint_dtor(SHPaint *p);
 #include "shArrayBase.h"
 
 void shValidateInputStops(SHPaint *p);
-void shSetGradientTexGLState(SHPaint *p);
+void shSetGradientTexGLState(SHPaint *p, GLenum texUnit);
 
 int shDrawLinearGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
                              VGPaintMode mode, GLenum texUnit);

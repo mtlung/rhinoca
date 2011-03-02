@@ -242,17 +242,22 @@ void* Driver::createRenderTargetExternal(void* externalHandle)
 	return externalHandle;
 }
 
-void* Driver::createRenderTargetTexture(void** textureHandle, void** depthHandle, void** stencilHandle, unsigned width, unsigned height)
+void* Driver::createRenderTarget(void* existingRenderTarget, void** textureHandle, void** depthHandle, void** stencilHandle, unsigned width, unsigned height)
 {
 	ASSERT(GL_NO_ERROR == glGetError());
 
 	GLuint handle;
-	glGenFramebuffers(1, &handle);
+
+	if(!existingRenderTarget)
+		glGenFramebuffers(1, &handle);
+	else
+		handle = (GLuint)existingRenderTarget;
+
 	glBindFramebuffer(GL_FRAMEBUFFER, handle);
 
 	if(textureHandle) {
-		if(!*textureHandle)	// Generate the texture right here
-			*textureHandle = createTexture(width, height);
+		// If textureHandle is null, it will generate the texture, otherwise the existing texture will be resized
+		*textureHandle = createTexture(*textureHandle, width, height);
 
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, (GLuint)*textureHandle, 0);
 	}
@@ -275,7 +280,7 @@ void* Driver::createRenderTargetTexture(void** textureHandle, void** depthHandle
 
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
-	setViewport(0, 0, width, height);
+	Driver::setViewport(0, 0, width, height);
 	glClearColor(0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -327,7 +332,7 @@ static Driver::TextureFormat autoChooseFormat(Driver::TextureFormat srcFormat)
 	}
 }
 
-void* Driver::createTexture(unsigned width, unsigned height, TextureFormat internalFormat, const void* srcData, TextureFormat srcDataFormat)
+void* Driver::createTexture(void* existingTexture, unsigned width, unsigned height, TextureFormat internalFormat, const void* srcData, TextureFormat srcDataFormat)
 {
 	ASSERT(GL_NO_ERROR == glGetError());
 
@@ -336,7 +341,11 @@ void* Driver::createTexture(unsigned width, unsigned height, TextureFormat inter
 
 	GLenum type = GL_TEXTURE_2D;
 	GLuint handle;
-	glGenTextures(1, &handle);
+
+	if(!existingTexture)
+		glGenTextures(1, &handle);
+	else
+		handle = (GLuint)existingTexture;
 
 	if(width != 0 && height != 0) {
 		glBindTexture(type, handle);
