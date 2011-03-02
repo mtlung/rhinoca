@@ -180,9 +180,9 @@ void shUpdateColorRampTexture(SHPaint *p)
   }
   
   /* Update texture image */
-  glBindTexture(GL_TEXTURE_1D, p->texture);
+  glBindTexture(GL_TEXTURE_2D, p->texture);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, SH_GRADIENT_TEX_SIZE, 0,
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SH_GRADIENT_TEX_SIZE, 1, 0,
                GL_RGBA, GL_FLOAT, rgba);
 }
 
@@ -345,17 +345,17 @@ void shGenerateStops(SHPaint *p, SHfloat minOffset, SHfloat maxOffset,
 
 void shSetGradientTexGLState(SHPaint *p, GLenum texUnit)
 {
-  glBindTexture(GL_TEXTURE_1D, p->texture);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glBindTexture(GL_TEXTURE_2D, p->texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   
   switch (p->spreadMode) {
   case VG_COLOR_RAMP_SPREAD_PAD:
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); break;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); break;
   case VG_COLOR_RAMP_SPREAD_REPEAT:
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT); break;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); break;
   case VG_COLOR_RAMP_SPREAD_REFLECT:
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT); break;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT); break;
   }
   
 /*	Driver::SamplerState::AddressMode mode;
@@ -365,7 +365,7 @@ void shSetGradientTexGLState(SHPaint *p, GLenum texUnit)
 	case VG_COLOR_RAMP_SPREAD_REPEAT:
 		mode = Driver::SamplerState::Repeat; break;
 	case VG_COLOR_RAMP_SPREAD_REFLECT:
-		glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT); break;
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT); break;
 	}
 
 	Driver::SamplerState state = {
@@ -506,7 +506,7 @@ int shDrawLinearGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
   glActiveTexture(texUnit);
   shSetGradientTexGLState(p, texUnit);
   
-  glEnable(GL_TEXTURE_1D);
+  glEnable(GL_TEXTURE_2D);
   glBegin(GL_QUAD_STRIP);
   
   glMultiTexCoord1f(texUnit, minOffset);
@@ -518,7 +518,7 @@ int shDrawLinearGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
   glVertex2fv((GLfloat*)&l2);
   
   glEnd();
-  glDisable(GL_TEXTURE_1D);
+  glDisable(GL_TEXTURE_2D);
 
   return 1;
 }
@@ -689,7 +689,7 @@ int shDrawRadialGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
   glActiveTexture(texUnit);
   shSetGradientTexGLState(p, texUnit);
   
-  glEnable(GL_TEXTURE_1D);
+  glEnable(GL_TEXTURE_2D);
   glBegin(GL_QUADS);
   
   /* Walk the steps and draw gradient mesh */
@@ -734,7 +734,7 @@ int shDrawRadialGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
   }
   
   glEnd();
-  glDisable(GL_TEXTURE_1D);
+  glDisable(GL_TEXTURE_2D);
 
   return 1;
 }
