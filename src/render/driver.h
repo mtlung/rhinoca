@@ -126,9 +126,10 @@ public:
 		};	// Filter
 
 		enum AddressMode {
-			Repeat	= 0x2901,
-			Edge	= 0x812F,
-			Border	= 0x812D,
+			Repeat			= 0x2901,
+			Edge			= 0x812F,
+			Border			= 0x812D,
+			MirrorRepeat	= 0x8370,
 		};	// AddressMode
 
 		void* textureHandle;

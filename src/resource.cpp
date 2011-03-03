@@ -19,6 +19,11 @@ FixString Resource::uri() const
 	return getKey();
 }
 
+unsigned Resource::refCount() const
+{
+	return _refCount;
+}
+
 ResourceManager::ResourceManager()
 	: rhinoca(NULL)
 	, taskPool(NULL)
@@ -84,17 +89,28 @@ void ResourceManager::update()
 
 	// Every resource will get cooler on every update
 	for(Resource* r = _resources.findMin(); r != NULL; r = r->next()) {
+		// TODO: Will this cause denormailization penality?
 		r->hotness *= 0.5f;
 	}
 }
 
-void ResourceManager::collectUnused()
+void ResourceManager::collectInfrequentlyUsed()
 {
 	ScopeLock lock(_mutex);
 
-	for(Resource* r = _resources.findMin(); r != NULL; r = r->next()) {
-		if(r->hotness == 0)
+	for(Resource* r = _resources.findMin(); r != NULL; )
+	{
+		if(r->refCount() == 1) {
+			Resource* next = r->next();
+			intrusivePtrRelease(r);
+			r = next;
+			continue;
+		}
+
+		if(r->state == Resource::Loaded && r->hotness < 0.001f)
 			r->unload();
+
+		r = r->next();
 	}
 }
 

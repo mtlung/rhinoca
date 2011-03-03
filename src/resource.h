@@ -35,6 +35,8 @@ public:
 	float hotness;	///!< For tracking resource usage and perform unload when resource is scarce
 
 	void* scratch;	///! Hold any temporary needed during loading
+
+	unsigned refCount() const;
 };	// Resource
 
 typedef IntrusivePtr<Resource> ResourcePtr;
@@ -56,7 +58,7 @@ public:
 	void update();
 
 	/// Check for infrequently used resource and unload them
-	void collectUnused();
+	void collectInfrequentlyUsed();
 
 // Factories
 	typedef Resource* (*CreateFunc)(const char* uri, ResourceManager* mgr);
