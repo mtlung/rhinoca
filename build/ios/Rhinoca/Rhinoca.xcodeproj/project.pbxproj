@@ -80,6 +80,7 @@
 		18F0C57F1303A566007752DB /* driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 18F0C57D1303A566007752DB /* driver.cpp */; };
 		18F0C5801303A566007752DB /* driver.h in Headers */ = {isa = PBXBuildFile; fileRef = 18F0C57E1303A566007752DB /* driver.h */; };
 		18F0C73E1304F121007752DB /* driverios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 18F0C73D1304F121007752DB /* driverios.cpp */; };
+		9C91B8D1132545A000195FF7 /* driverdetail.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C91B8D0132545A000195FF7 /* driverdetail.h */; };
 		AA747D9F0F9514B9006C5449 /* Rhinoca_Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = AA747D9E0F9514B9006C5449 /* Rhinoca_Prefix.pch */; };
 		AACBBE4A0F95108600F1A2B1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AACBBE490F95108600F1A2B1 /* Foundation.framework */; };
 /* End PBXBuildFile section */
@@ -176,6 +177,7 @@
 		18F0C57D1303A566007752DB /* driver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = driver.cpp; path = ../../../src/render/driver.cpp; sourceTree = SOURCE_ROOT; };
 		18F0C57E1303A566007752DB /* driver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = driver.h; path = ../../../src/render/driver.h; sourceTree = SOURCE_ROOT; };
 		18F0C73D1304F121007752DB /* driverios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = driverios.cpp; path = ../../../src/render/ios/driverios.cpp; sourceTree = SOURCE_ROOT; };
+		9C91B8D0132545A000195FF7 /* driverdetail.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = driverdetail.h; path = ../../../src/render/driverdetail.h; sourceTree = SOURCE_ROOT; };
 		AA747D9E0F9514B9006C5449 /* Rhinoca_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Rhinoca_Prefix.pch; sourceTree = SOURCE_ROOT; };
 		AACBBE490F95108600F1A2B1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		D2AAC07E0554694100DB518D /* libRhinoca.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRhinoca.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -320,6 +322,7 @@
 			children = (
 				18F0C57D1303A566007752DB /* driver.cpp */,
 				18F0C57E1303A566007752DB /* driver.h */,
+				9C91B8D0132545A000195FF7 /* driverdetail.h */,
 				18F0C73D1304F121007752DB /* driverios.cpp */,
 				187BCC5812FADFB60042FDB1 /* framebuffer.cpp */,
 				187BCC5912FADFB60042FDB1 /* framebuffer.h */,
@@ -389,6 +392,7 @@
 				187BCC6312FADFC70042FDB1 /* render.h in Headers */,
 				187BCC6512FADFC70042FDB1 /* renderqueue.h in Headers */,
 				18F0C5801303A566007752DB /* driver.h in Headers */,
+				9C91B8D1132545A000195FF7 /* driverdetail.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

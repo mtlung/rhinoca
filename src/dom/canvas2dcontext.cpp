@@ -7,6 +7,7 @@
 #include "../vec3.h"
 #include "../render/vg/openvg.h"
 #include "../render/vg/vgu.h"
+#include <string.h>	// For strcasecmp
 
 using namespace Render;
 

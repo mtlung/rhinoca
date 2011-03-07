@@ -236,7 +236,7 @@ void* Driver::createRenderTarget(void* existingRenderTarget, void** textureHandl
 		}
 
 		glBindRenderbuffer(GL_RENDERBUFFER, (GLuint)*depthHandle);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, (GLuint)*depthHandle);
 	}
 
@@ -246,7 +246,7 @@ void* Driver::createRenderTarget(void* existingRenderTarget, void** textureHandl
 		}
 
 		glBindRenderbuffer(GL_RENDERBUFFER, (GLuint)*stencilHandle);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_COMPONENT, width, height);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, width, height);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, (GLuint)*stencilHandle);
 	}
 
@@ -421,51 +421,26 @@ void Driver::drawQuad(
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
-// Mesh
-void Driver::beginMesh(MeshFormat format)
-{
-}
-
-void Driver::vertex3f(float x, float y, float z)
-{
-}
-
-void Driver::normal3f(float x, float y, float z)
-{
-}
-
-void Driver::texUnit(unsigned unit)
-{
-}
-
-void Driver::texCoord2f(float u, float v)
-{
-}
-
-int Driver::endMesh()
+void* Driver::endMesh()
 {
 	return 0;
 }
 
-int Driver::createMeshCopyData(MeshFormat format, const float* vertexBuffer, const short* indexBuffer)
+void* Driver::createMeshCopyData(MeshFormat format, const void* vertexBuffer, const short* indexBuffer)
 {
 	return 0;
 }
 
-int Driver::createMeshUseData(MeshFormat format, const float* vertexBuffer, const short* indexBuffer)
+void* Driver::createMeshUseData(MeshFormat format, const void* vertexBuffer, const short* indexBuffer)
 {
 	return 0;
 }
 
-void Driver::alertMeshDataChanged(int meshHandle)
+void Driver::destroyMesh(void* meshHandle)
 {
 }
 
-void Driver::destroyMesh(int meshHandle)
-{
-}
-
-void Driver::useMesh(int meshHandle)
+void Driver::useMesh(void* meshHandle)
 {
 }
 
@@ -598,7 +573,7 @@ void Driver::setBlendState(const BlendState& state)
 
 	unsigned h = blendStateHash(state);
 	if(h != _context->blendStateHash) {
-		if(ctx->supportSeperateBlend) {
+		if(_context->supportSeperateBlend) {
 			glBlendFuncSeparate(state.colorSrc, state.colorDst, state.alphaSrc, state.alphaDst);
 			glBlendEquationSeparate(state.colorOp, state.alphaOp);
 		} else {
@@ -659,3 +634,4 @@ void Driver::setViewport(unsigned left, unsigned top, unsigned width, unsigned h
 }
 
 }	// Render
+
