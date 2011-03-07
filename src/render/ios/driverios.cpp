@@ -29,14 +29,17 @@ static unsigned hash(const void* data, unsigned len)
 class Context
 {
 public:
-	bool enableTexture2D;
 	void* renderTarget;
-	void* texture;
 
 	float vpLeft, vpTop, vpWidth, vpHeight;	// Viewport
 	unsigned viewportHash;
 
 	bool vertexArrayEnabled, coordArrayEnabled, colorArrayEnabled;
+
+	static const unsigned samplerCount = 2;
+	Driver::SamplerState samplerStates[samplerCount];
+	unsigned samplerStateHash[samplerCount];
+	unsigned currentSampler;
 
 	Driver::DepthStencilState depthStencilState;
 	unsigned depthStencilStateHash;
@@ -91,16 +94,26 @@ void* Driver::createContext(void* externalHandle)
 		strstr(extensions, "GL_OES_blend_equation_separate") != 0 &&
 		strstr(extensions, "GL_OES_blend_func_separate") != 0);
 
-	ctx->enableTexture2D = true;
-	glEnable(GL_TEXTURE_2D);
-
 	ctx->vpLeft = ctx->vpTop = 0;
 	ctx->vpWidth = ctx->vpHeight = 0;
 	ctx->viewportHash = 0;
 
-	enableVertexArray(false, true, ctx);
-	enableColorArray(false, true, ctx);
-	enableCoordArray(false, true, ctx);
+	ctx->vertexArrayEnabled = false;
+	ctx->colorArrayEnabled = false;
+	ctx->coordArrayEnabled = false;
+
+	{	// Sampler
+		ctx->currentSampler = 0;
+		memset(ctx->samplerStates, 0, sizeof(ctx->samplerStates));
+		memset(ctx->samplerStateHash, 0, sizeof(ctx->samplerStateHash));
+
+		for(unsigned i=0; i<ctx->samplerCount; ++i) {
+			ctx->samplerStates[i].textureHandle = NULL;
+			ctx->samplerStates[i].filter = SamplerState::MIN_MAG_POINT;
+			ctx->samplerStates[i].u = SamplerState::Repeat;
+			ctx->samplerStates[i].v = SamplerState::Repeat;
+		}
+	}
 
 	{	// Depth stencil
 		ctx->depthStencilState.depthEnable = false;
@@ -112,15 +125,6 @@ void* Driver::createContext(void* externalHandle)
 		ctx->depthStencilState.stencilFailOp = DepthStencilState::Replace;
 		ctx->depthStencilState.stencilZFailOp = DepthStencilState::Replace;
 		ctx->depthStencilStateHash = 0;
-
-		glDisable(GL_DEPTH_TEST);
-		glDisable(GL_STENCIL_TEST);
-		glStencilFunc(
-			ctx->depthStencilState.stencilFunc,
-			ctx->depthStencilState.stencilRefValue,
-			ctx->depthStencilState.stencilMask
-		);
-		glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
 	}
 
 	{	// Blending
@@ -133,20 +137,9 @@ void* Driver::createContext(void* externalHandle)
 		ctx->blendState.alphaDst = BlendState::Zero;
 		ctx->blendState.wirteMask = BlendState::EnableAll;
 		ctx->blendStateHash = 0;
-
-		glDisable(GL_BLEND);
-		if(ctx->supportSeperateBlend) {
-			glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
-			glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-		} else {
-			glBlendFunc(GL_ONE, GL_ZERO);
-			glBlendEquation(GL_FUNC_ADD);
-		}
-		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	}
 
 	ctx->renderTarget = NULL;
-	ctx->texture = NULL;
 
 	return ctx;
 }
@@ -162,16 +155,34 @@ void Driver::deleteContext(void* ctx)
 	delete reinterpret_cast<Context*>(ctx);
 }
 
+static const int _magFilter[] = { GL_NEAREST, GL_LINEAR, GL_NEAREST, GL_LINEAR };
+static const int _minFilter[] = { GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_LINEAR };
+
 void Driver::forceApplyCurrent()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)_context->renderTarget);
 
-	if(_context->enableTexture2D)
-		glEnable(GL_TEXTURE_2D);
-	else
-		glDisable(GL_TEXTURE_2D);
+	{	// Sampler states
+		for(unsigned i=0; i<_context->samplerCount; ++i) {
+			glActiveTexture(GL_TEXTURE0 + i);
+			GLuint handle = reinterpret_cast<GLuint>(_context->samplerStates[i].textureHandle);
 
-	glBindTexture(GL_TEXTURE_2D, (GLuint)_context->texture);
+			if(handle)
+			{
+				glEnable(GL_TEXTURE_2D);
+				glBindTexture(GL_TEXTURE_2D, handle);
+
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, _context->samplerStates[i].u);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, _context->samplerStates[i].v);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _magFilter[_context->samplerStates[i].filter]);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, _minFilter[_context->samplerStates[i].filter]);
+			}
+			else
+				glDisable(GL_TEXTURE_2D);
+		}
+
+		glActiveTexture(GL_TEXTURE0 + _context->currentSampler);
+	}
 
 	glViewport(
 		(GLint)_context->vpLeft,
@@ -181,7 +192,7 @@ void Driver::forceApplyCurrent()
 	);
 
 	enableVertexArray(_context->vertexArrayEnabled, true);
-	enableColorArray(_context->coordArrayEnabled, true);
+	enableColorArray(_context->colorArrayEnabled, true);
 	enableCoordArray(_context->coordArrayEnabled, true);
 }
 
@@ -199,19 +210,56 @@ void* Driver::createRenderTargetExternal(void* externalHandle)
 	return externalHandle;
 }
 
-void* Driver::createRenderTargetTexture(void* textureHandle)
+void* Driver::createRenderTarget(void* existingRenderTarget, void** textureHandle, void** depthHandle, void** stencilHandle, unsigned width, unsigned height)
 {
 	ASSERT(GL_NO_ERROR == glGetError());
 
 	GLuint handle;
-	glGenFramebuffers(1, &handle);
+
+	if(!existingRenderTarget)
+		glGenFramebuffers(1, &handle);
+	else
+		handle = (GLuint)existingRenderTarget;
+
 	glBindFramebuffer(GL_FRAMEBUFFER, handle);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, (GLuint)textureHandle, 0);
+
+	if(textureHandle) {
+		// If textureHandle is null, it will generate the texture, otherwise the existing texture will be resized
+		*textureHandle = createTexture(*textureHandle, width, height);
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, (GLuint)*textureHandle, 0);
+	}
+
+	if(depthHandle) {
+		if(!*depthHandle) {	// Generate the depth right here
+			glGenRenderbuffers(1, (GLuint*)depthHandle);
+		}
+
+		glBindRenderbuffer(GL_RENDERBUFFER, (GLuint)*depthHandle);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, (GLuint)*depthHandle);
+	}
+
+	if(stencilHandle) {
+		if(!*stencilHandle) {	// Generate the stencil right here
+			glGenRenderbuffers(1, (GLuint*)stencilHandle);
+		}
+
+		glBindRenderbuffer(GL_RENDERBUFFER, (GLuint)*stencilHandle);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_COMPONENT, width, height);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, (GLuint)*stencilHandle);
+	}
 
 	ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
 	ASSERT(GL_NO_ERROR == glGetError());
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+	Driver::setViewport(0, 0, width, height);
+	glClearColor(0, 0, 0, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)_context->renderTarget);
 
 	return reinterpret_cast<void*>(handle);
 }
@@ -259,7 +307,7 @@ static Driver::TextureFormat autoChooseFormat(Driver::TextureFormat srcFormat)
 	}
 }
 
-void* Driver::createTexture(unsigned width, unsigned height, TextureFormat internalFormat, const void* srcData, TextureFormat srcDataFormat)
+void* Driver::createTexture(void* existingTexture, unsigned width, unsigned height, TextureFormat internalFormat, const void* srcData, TextureFormat srcDataFormat)
 {
 	ASSERT(GL_NO_ERROR == glGetError());
 
@@ -276,30 +324,37 @@ void* Driver::createTexture(unsigned width, unsigned height, TextureFormat inter
 
 	GLenum type = GL_TEXTURE_2D;
 	GLuint handle;
-	glGenTextures(1, &handle);
-	glBindTexture(type, handle);
 
-	// In IOS, non power of 2 texture clamp to edge must be used
-	glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	if(!existingTexture)
+		glGenTextures(1, &handle);
+	else
+		handle = (GLuint)existingTexture;
 
-	glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	if(width != 0 && height != 0) {
+		glBindTexture(type, handle);
 
-	glTexImage2D(
-		type, 0, internalFormat, texWidth, texHeight, 0,
-		srcDataFormat,
-		GL_UNSIGNED_BYTE,
-		srcData
-	);
+		// In IOS, non power of 2 texture clamp to edge must be used
+		glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	if(!_context->supportNPOT) {
-		int area[] = { 0, 0, width, height };
-		glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_CROP_RECT_OES, area);
+		glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		glTexImage2D(
+			type, 0, internalFormat, texWidth, texHeight, 0,
+			srcDataFormat,
+			GL_UNSIGNED_BYTE,
+			srcData
+		);
+
+		if(!_context->supportNPOT) {
+			int area[] = { 0, 0, width, height };
+			glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_CROP_RECT_OES, area);
+		}
+
+		// Restore previous binded texture
+		glBindTexture(type, (GLuint)_context->samplerStates[_context->currentSampler].textureHandle);
 	}
-
-	// Restore previous binded texture
-	glBindTexture(type, (GLuint)_context->texture);
 
 	ASSERT(GL_NO_ERROR == glGetError());
 	return reinterpret_cast<void*>(handle);
@@ -307,33 +362,21 @@ void* Driver::createTexture(unsigned width, unsigned height, TextureFormat inter
 
 void Driver::deleteTexture(void* textureHandle)
 {
-	if(_context->texture == textureHandle)
-		_context->texture = NULL;
-	GLuint handle = reinterpret_cast<GLuint>(textureHandle);
-	if(handle) glDeleteTextures(1, &handle);
+	GLuint handle = (GLuint)textureHandle;
+	if(handle)
+		glDeleteTextures(1, &handle);
+
+	for(unsigned i=0; i<_context->samplerCount; ++i) {
+		if(_context->samplerStates[i].textureHandle == textureHandle)
+			_context->samplerStates[i].textureHandle = 0;
+	}
 }
 
-void Driver::useTexture(void* textureHandle)
-{
-	if(_context->texture == textureHandle) return;
-	_context->texture = textureHandle;
-
-	GLuint handle = reinterpret_cast<GLuint>(textureHandle);
-
-	if(handle) {
-		if(!_context->enableTexture2D) {
-			glEnable(GL_TEXTURE_2D);
-			_context->enableTexture2D = true;
-		}
-	}
-	else {
-		if(_context->enableTexture2D) {
-			glDisable(GL_TEXTURE_2D);
-			_context->enableTexture2D = false;
-		}
-	}
-	glBindTexture(GL_TEXTURE_2D, handle);
-}
+static const Driver::SamplerState noTexture = {
+	NULL,
+	Driver::SamplerState::MIN_MAG_LINEAR,
+	Driver::SamplerState::Edge
+};
 
 // Draw quad
 void Driver::drawQuad(
@@ -341,7 +384,7 @@ void Driver::drawQuad(
 	rhuint8 r, rhuint8 g, rhuint8 b, rhuint8 a
 )
 {
-	Driver::useTexture(NULL);
+	Driver::setSamplerState(0, noTexture);
 
 	enableVertexArray(true);
 	enableColorArray(true);
@@ -427,21 +470,135 @@ void Driver::useMesh(int meshHandle)
 }
 
 // States
+void Driver::setSamplerState(unsigned textureUnit, const SamplerState& state)
+{
+	if(textureUnit != _context->currentSampler)
+		glActiveTexture(GL_TEXTURE0 + textureUnit);
+
+	_context->currentSampler = textureUnit;
+	SamplerState& s = _context->samplerStates[textureUnit];
+
+	// Bind the texture unit
+	if(s.textureHandle != state.textureHandle)
+	{
+		GLuint handle = reinterpret_cast<GLuint>(state.textureHandle);
+
+		if(handle) {
+			if(!s.textureHandle)
+				glEnable(GL_TEXTURE_2D);
+		}
+		else {
+			if(s.textureHandle)
+				glDisable(GL_TEXTURE_2D);
+		}
+		s.textureHandle = state.textureHandle;
+		glBindTexture(GL_TEXTURE_2D, handle);
+	}
+
+	if(!state.textureHandle) return;
+
+	// Setup sampler state
+	unsigned h = hash(&state.filter, sizeof(state)-sizeof(void*));
+
+	if(h == _context->samplerStateHash[textureUnit])
+		return;
+
+//	_context->samplerStateHash[textureUnit] = h;
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, state.u);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, state.v);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _magFilter[state.filter]);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, _minFilter[state.filter]);
+}
+
 void Driver::setRasterizerState(const RasterizerState& state)
 {
 }
 
-void Driver::setBlendState(const BlendState& state)
+void Driver::getDepthStencilState(DepthStencilState& state)
+{
+	state = _context->depthStencilState;
+}
+
+void Driver::setDepthStencilState(const DepthStencilState& state)
 {
 	unsigned h = hash(&state, sizeof(state));
-	if(h == _context->blendStateHash) return;
+	if(h == _context->depthStencilStateHash) return;
 
-	if(!state.enable) {
-		glDisable(GL_BLEND);
+	if(!state.stencilEnable) {
+		glDisable(GL_STENCIL_TEST);
 	}
 	else {
-		glEnable(GL_BLEND);
-		if(_context->supportSeperateBlend) {
+		glEnable(GL_STENCIL_TEST);
+		glStencilFunc(
+			state.stencilFunc,
+			state.stencilRefValue,
+			state.stencilMask
+		);
+		glStencilOp(state.stencilFailOp, state.stencilZFailOp, state.stencilPassOp);
+	}
+
+	_context->depthStencilState = state;
+	_context->depthStencilStateHash = h;
+}
+
+void Driver::setDepthTestEnable(bool b)
+{
+	if(_context->depthStencilState.depthEnable == b)
+		return;
+
+	if(b) glEnable(GL_DEPTH_TEST);
+	else glDisable(GL_DEPTH_TEST);
+
+	_context->depthStencilState.depthEnable = b;
+	_context->depthStencilStateHash = hash(&_context->depthStencilState, sizeof(DepthStencilState));
+}
+
+void Driver::setStencilTestEnable(bool b)
+{
+	if(_context->depthStencilState.stencilEnable == b)
+		return;
+
+	if(b) glEnable(GL_STENCIL_TEST);
+	else glDisable(GL_STENCIL_TEST);
+
+	_context->depthStencilState.stencilEnable = b;
+	_context->depthStencilStateHash = hash(&_context->depthStencilState, sizeof(DepthStencilState));
+}
+
+void Driver::getBlendState(BlendState& state)
+{
+	state = _context->blendState;
+}
+
+// Only hash BlendOp and BlendValue
+static unsigned blendStateHash(const Driver::BlendState& state)
+{
+	unsigned h = hash(
+		&state.colorOp,
+		offsetof(Driver::BlendState, Driver::BlendState::wirteMask) -
+		offsetof(Driver::BlendState, Driver::BlendState::colorOp)
+	);
+	return h;
+}
+
+void Driver::setBlendState(const BlendState& state)
+{
+	setBlendEnable(state.enable);
+
+	if(state.wirteMask != _context->blendState.wirteMask) {
+		glColorMask(
+			(state.wirteMask & BlendState::EnableRed) > 0,
+			(state.wirteMask & BlendState::EnableGreen) > 0,
+			(state.wirteMask & BlendState::EnableBlue) > 0,
+			(state.wirteMask & BlendState::EnableAlpha) > 0
+		);
+	}
+
+	unsigned h = blendStateHash(state);
+	if(h != _context->blendStateHash) {
+		if(ctx->supportSeperateBlend) {
 			glBlendFuncSeparate(state.colorSrc, state.colorDst, state.alphaSrc, state.alphaDst);
 			glBlendEquationSeparate(state.colorOp, state.alphaOp);
 		} else {
@@ -452,6 +609,32 @@ void Driver::setBlendState(const BlendState& state)
 
 	_context->blendState = state;
 	_context->blendStateHash = h;
+}
+
+void Driver::setBlendEnable(bool b)
+{
+	if(_context->blendState.enable == b)
+		return;
+
+	if(b) glEnable(GL_BLEND);
+	else glDisable(GL_BLEND);
+
+	_context->blendState.enable = b;
+}
+
+void Driver::setColorWriteMask(Driver::BlendState::ColorWriteEnable mask)
+{
+	if(mask == _context->blendState.wirteMask)
+		return;
+
+	_context->blendState.wirteMask = mask;
+
+	glColorMask(
+		(mask & BlendState::EnableRed) > 0,
+		(mask & BlendState::EnableGreen) > 0,
+		(mask & BlendState::EnableBlue) > 0,
+		(mask & BlendState::EnableAlpha) > 0
+	);
 }
 
 void Driver::setViewport(float left, float top, float width, float height)

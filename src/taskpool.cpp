@@ -367,6 +367,7 @@ void TaskPool::_doTask(TaskProxy* p, int tId)
 	_retainTask(p);
 	{	ScopeUnlock unlock(mutex);
 		task->run(this);
+		task = NULL;	// The task may be deleted, never use the pointer up to this point
 	}
 
 	if(TaskProxy* parent = p->parent)
