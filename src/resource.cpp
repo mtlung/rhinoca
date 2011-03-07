@@ -55,7 +55,10 @@ ResourcePtr ResourceManager::load(const char* uri)
 		for(int i=0; !r && i<_factoryCount; ++i)
 			r = _factories[i].create(uri, this);
 
-		if(!r) return NULL;
+		if(!r) {
+			print(rhinoca, "No loader for \"%s\" can be found\n", uri);
+			return NULL;
+		}
 		VERIFY(_resources.insertUnique(*r));
 
 		// We will keep the resource alive such that the time for a Resource destruction

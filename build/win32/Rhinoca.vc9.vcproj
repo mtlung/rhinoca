@@ -276,6 +276,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\render\driverdetail.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\render\win32\driverwin32.cpp"
 				>
 			</File>

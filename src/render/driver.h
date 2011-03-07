@@ -18,6 +18,8 @@ public:
 
 	static void forceApplyCurrent();
 
+	static const unsigned maxTextureUnit = 2;
+
 // Capability
 	// Supported cap:
 	// npot
@@ -96,20 +98,20 @@ public:
 	};
 
 	static void beginMesh(MeshFormat format);
-	static	void vertex3f(float x, float y, float z);
+	static	rhuint8 vertex3f(float x, float y, float z);
 	static	void normal3f(float x, float y, float z);
+	static  void color4b(rhuint8 r, rhuint8 g, rhuint8 b, rhuint8 a);
 	static	void texUnit(unsigned unit);
 	static	void texCoord2f(float u, float v);
-	static int endMesh();
+	static  void addTriangle(rhuint8 v1, rhuint8 v2, rhuint8 v3);
+	static void* endMesh();
 
-	static int createMeshCopyData(MeshFormat format, const float* vertexBuffer, const short* indexBuffer);
+	static void* createMeshCopyData(MeshFormat format, const void* vertexBuffer, const short* indexBuffer);
+	static void* createMeshUseData(MeshFormat format, const void* vertexBuffer, const short* indexBuffer);
 
-	static int createMeshUseData(MeshFormat format, const float* vertexBuffer, const short* indexBuffer);
-	static void alertMeshDataChanged(int meshHandle);
+	static void destroyMesh(void* meshHandle);
 
-	static void destroyMesh(int meshHandle);
-
-	static void useMesh(int meshHandle);
+	static void useMesh(void* meshHandle);
 
 // Transformation
 	static void pushMatrix();
@@ -242,6 +244,14 @@ public:
 	static void setViewport(float left, float top, float width, float height);
 	static void setViewport(unsigned left, unsigned top, unsigned width, unsigned height);
 };	// Driver
+
+class Material
+{
+public:
+	virtual ~Material() {}
+	virtual void preRender() = 0;
+	virtual void postRender() = 0;
+};	// Material
 
 }	// Render
 

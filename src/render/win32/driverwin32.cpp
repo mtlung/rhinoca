@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "../driver.h"
+#include "../driverdetail.h"
 #include "../../common.h"
 #include "../../Vec3.h"
 
@@ -79,9 +80,8 @@ public:
 
 	bool vertexArrayEnabled, coordArrayEnabled, colorArrayEnabled;
 
-	static const unsigned samplerCount = 2;
-	Driver::SamplerState samplerStates[samplerCount];
-	unsigned samplerStateHash[samplerCount];
+	Driver::SamplerState samplerStates[Driver::maxTextureUnit];
+	unsigned samplerStateHash[Driver::maxTextureUnit];
 	unsigned currentSampler;
 
 	Driver::DepthStencilState depthStencilState;
@@ -89,9 +89,16 @@ public:
 
 	Driver::BlendState blendState;
 	unsigned blendStateHash;
+
+	MeshBuilder meshBuilder;
 };	// Context
 
 static Context* _context = NULL;
+
+MeshBuilder* currentMeshBuilder()
+{
+	return &_context->meshBuilder;
+}
 
 static void enableVertexArray(bool b, bool force=false, Context* c = _context)
 {
@@ -141,7 +148,7 @@ void* Driver::createContext(void* externalHandle)
 		memset(ctx->samplerStates, 0, sizeof(ctx->samplerStates));
 		memset(ctx->samplerStateHash, 0, sizeof(ctx->samplerStateHash));
 
-		for(unsigned i=0; i<ctx->samplerCount; ++i) {
+		for(unsigned i=0; i<Driver::maxTextureUnit; ++i) {
 			ctx->samplerStates[i].textureHandle = NULL;
 			ctx->samplerStates[i].filter = SamplerState::MIN_MAG_POINT;
 			ctx->samplerStates[i].u = SamplerState::Repeat;
@@ -197,7 +204,7 @@ void Driver::forceApplyCurrent()
 	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)_context->renderTarget);
 
 	{	// Sampler states
-		for(unsigned i=0; i<_context->samplerCount; ++i) {
+		for(unsigned i=0; i<Driver::maxTextureUnit; ++i) {
 			glActiveTexture(GL_TEXTURE0 + i);
 			GLuint handle = reinterpret_cast<GLuint>(_context->samplerStates[i].textureHandle);
 
@@ -377,7 +384,7 @@ void Driver::deleteTexture(void* textureHandle)
 	if(handle)
 		glDeleteTextures(1, &handle);
 
-	for(unsigned i=0; i<_context->samplerCount; ++i) {
+	for(unsigned i=0; i<Driver::maxTextureUnit; ++i) {
 		if(_context->samplerStates[i].textureHandle == textureHandle)
 			_context->samplerStates[i].textureHandle = 0;
 	}
@@ -433,50 +440,26 @@ void Driver::drawQuad(
 }
 
 // Mesh
-void Driver::beginMesh(MeshFormat format)
-{
-}
-
-void Driver::vertex3f(float x, float y, float z)
-{
-}
-
-void Driver::normal3f(float x, float y, float z)
-{
-}
-
-void Driver::texUnit(unsigned unit)
-{
-}
-
-void Driver::texCoord2f(float u, float v)
-{
-}
-
-int Driver::endMesh()
+void* Driver::endMesh()
 {
 	return 0;
 }
 
-int Driver::createMeshCopyData(MeshFormat format, const float* vertexBuffer, const short* indexBuffer)
+void* Driver::createMeshCopyData(MeshFormat format, const void* vertexBuffer, const short* indexBuffer)
 {
 	return 0;
 }
 
-int Driver::createMeshUseData(MeshFormat format, const float* vertexBuffer, const short* indexBuffer)
+void* Driver::createMeshUseData(MeshFormat format, const void* vertexBuffer, const short* indexBuffer)
 {
 	return 0;
 }
 
-void Driver::alertMeshDataChanged(int meshHandle)
+void Driver::destroyMesh(void* meshHandle)
 {
 }
 
-void Driver::destroyMesh(int meshHandle)
-{
-}
-
-void Driver::useMesh(int meshHandle)
+void Driver::useMesh(void* meshHandle)
 {
 }
 
@@ -514,7 +497,7 @@ void Driver::setSamplerState(unsigned textureUnit, const SamplerState& state)
 	if(h == _context->samplerStateHash[textureUnit])
 		return;
 
-	_context->samplerStateHash[textureUnit] = h;
+//	_context->samplerStateHash[textureUnit] = h;
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, state.u);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, state.v);
@@ -582,7 +565,6 @@ void Driver::getBlendState(BlendState& state)
 {
 	state = _context->blendState;
 }
-
 
 // Only hash BlendOp and BlendValue
 static unsigned blendStateHash(const Driver::BlendState& state)
