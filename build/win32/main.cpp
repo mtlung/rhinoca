@@ -122,7 +122,7 @@ HWND createWindow(HWND existingWindow, int& width, int& height, bool fullScreen)
 	HMODULE hModule = ::GetModuleHandle(NULL);
 
 	// Register window class
-	WNDCLASS wc;
+	WNDCLASSW wc;
 	::ZeroMemory(&wc, sizeof(wc));
 	// CS_OWNDC is an optimization, see page 659 of OpenGL SuperBible 4th edition
 	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
@@ -132,7 +132,7 @@ HWND createWindow(HWND existingWindow, int& width, int& height, bool fullScreen)
 	wc.hCursor = ::LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = NULL;	// (HBRUSH)(COLOR_WINDOW);
 
-	VERIFY(::RegisterClass(&wc) != 0);
+	VERIFY(::RegisterClassW(&wc) != 0);
 
 	if(existingWindow == 0)
 	{
