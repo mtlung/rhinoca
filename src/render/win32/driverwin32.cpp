@@ -7,6 +7,9 @@
 #include <gl/gl.h>
 #include "../gl/glext.h"
 
+#pragma comment(lib, "OpenGL32")
+#pragma comment(lib, "GLU32")
+
 PFNGLBLENDFUNCSEPARATEPROC glBlendFuncSeparate = NULL;
 PFNGLBLENDEQUATIONSEPARATEPROC glBlendEquationSeparate = NULL;
 

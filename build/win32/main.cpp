@@ -15,9 +15,6 @@
 
 #include "DropHandler.h"
 
-#pragma comment(lib, "OpenGL32")
-#pragma comment(lib, "GLU32")
-
 #ifdef NDEBUG
 #	define ASSERT(Expression) ((void)0)
 #	define VERIFY(Expression) ((void)(Expression))
