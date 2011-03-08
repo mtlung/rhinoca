@@ -106,6 +106,14 @@
   <ItemGroup>
     <ClInclude Include="..\..\test\pch.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Rhinoca.vc10.vcxproj">
+      <Project>{42a4219c-c856-470b-bf52-b20035575d91}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Swf.vc10.vcxproj">
+      <Project>{9c4027c0-ece1-4685-9110-8f5a76119415}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

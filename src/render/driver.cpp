@@ -86,7 +86,7 @@ void Driver::beginMesh(MeshFormat format)
 	builder->indexCount = 0;
 }
 
-rhuint8 Driver::vertex3f(float x, float y, float z)
+rhuint16 Driver::vertex3f(float x, float y, float z)
 {
 	MeshBuilder* builder = currentMeshBuilder();
 
@@ -150,7 +150,7 @@ rhuint8 Driver::vertex3f(float x, float y, float z)
 	return builder->vertexCount++;
 }
 
-void Driver::addTriangle(rhuint8 v1, rhuint8 v2, rhuint8 v3)
+void Driver::addTriangle(rhuint16 v1, rhuint16 v2, rhuint16 v3)
 {
 	MeshBuilder* builder = currentMeshBuilder();
 
@@ -168,7 +168,17 @@ void Driver::addTriangle(rhuint8 v1, rhuint8 v2, rhuint8 v3)
 		);
 	}
 
+	rhuint16* ib = builder->indexBuffer + builder->indexCount;
+	ib[0] = v1;
+	ib[1] = v2;
+	ib[2] = v3;
 	builder->indexCount += 3;
+}
+
+void Driver::addQuard(rhuint16 v1, rhuint16 v2, rhuint16 v3, rhuint16 v4)
+{
+	addTriangle(v1, v2, v3);
+	addTriangle(v3, v4, v1);
 }
 
 void Driver::normal3f(float x, float y, float z)

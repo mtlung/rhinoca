@@ -8,8 +8,10 @@ struct Mesh
 	Driver::MeshFormat format;
 
 	// Either buffer or handle will be not null
-	char* buffer;	// Pointer to buffer data in CPU memory
-	void* handle;	// Handle to API sepecific handle (data in GPU)
+	char* vb, *ib;	// Pointer to buffer data in CPU memory
+	void* vh, *ih;	// Handle to API sepecific handle (data in GPU)
+
+	unsigned vertexCount, indexCount;
 };
 
 struct MeshBuilder

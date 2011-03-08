@@ -98,12 +98,13 @@ public:
 	};
 
 	static void beginMesh(MeshFormat format);
-	static	rhuint8 vertex3f(float x, float y, float z);
+	static	rhuint16 vertex3f(float x, float y, float z);
 	static	void normal3f(float x, float y, float z);
 	static  void color4b(rhuint8 r, rhuint8 g, rhuint8 b, rhuint8 a);
 	static	void texUnit(unsigned unit);
 	static	void texCoord2f(float u, float v);
-	static  void addTriangle(rhuint8 v1, rhuint8 v2, rhuint8 v3);
+	static  void addTriangle(rhuint16 v1, rhuint16 v2, rhuint16 v3);
+	static  void addQuard(rhuint16 v1, rhuint16 v2, rhuint16 v3, rhuint16 v4);
 	static void* endMesh();
 
 	static void* createMeshCopyData(MeshFormat format, const void* vertexBuffer, const short* indexBuffer);

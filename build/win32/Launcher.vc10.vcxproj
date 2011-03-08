@@ -93,18 +93,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ProjectReference Include="Rhinoca.vc9.vcxproj">
-      <Project>{42a4219c-c856-470b-bf52-b20035575d91}</Project>
-      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
-      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="DropHandler.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DropHandler.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Rhinoca.vc10.vcxproj">
+      <Project>{42a4219c-c856-470b-bf52-b20035575d91}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

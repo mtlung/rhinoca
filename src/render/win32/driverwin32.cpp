@@ -12,22 +12,22 @@
 
 PFNGLBLENDFUNCSEPARATEPROC glBlendFuncSeparate = NULL;
 PFNGLBLENDEQUATIONSEPARATEPROC glBlendEquationSeparate = NULL;
-
 PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer = NULL;
 PFNGLGENFRAMEBUFFERSPROC glGenFramebuffers = NULL;
 PFNGLDELETEFRAMEBUFFERSPROC glDeleteFramebuffers = NULL;
-
 PFNGLGENRENDERBUFFERSPROC glGenRenderbuffers = NULL;
 PFNGLBINDRENDERBUFFERPROC glBindRenderbuffer = NULL;
 PFNGLDELETERENDERBUFFERSPROC glDeleteRenderbuffers = NULL;
-
 PFNGLRENDERBUFFERSTORAGEPROC glRenderbufferStorage = NULL;
 PFNGLFRAMEBUFFERRENDERBUFFERPROC glFramebufferRenderbuffer = NULL;
-
 PFNGLFRAMEBUFFERTEXTURE2DPROC glFramebufferTexture2D = NULL;
 PFNGLCHECKFRAMEBUFFERSTATUSPROC glCheckFramebufferStatus = NULL;
 
 PFNGLACTIVETEXTUREPROC glActiveTexture = NULL;
+
+PFNGLGENBUFFERSPROC glGenBuffers = NULL;
+PFNGLBINDBUFFERPROC glBindBuffer = NULL;
+PFNGLDELETEBUFFERSPROC glDeleteBuffers = NULL;
 
 static bool glInited = false;
 
@@ -58,6 +58,10 @@ void Driver::init()
 	GET_FUNC_PTR(glCheckFramebufferStatus, PFNGLCHECKFRAMEBUFFERSTATUSPROC);
 
 	GET_FUNC_PTR(glActiveTexture, PFNGLACTIVETEXTUREPROC);
+
+	GET_FUNC_PTR(glGenBuffers, PFNGLGENBUFFERSPROC);
+	GET_FUNC_PTR(glBindBuffer, PFNGLBINDBUFFERPROC);
+	GET_FUNC_PTR(glDeleteBuffers, PFNGLDELETEBUFFERSPROC);
 }
 
 void Driver::close()
@@ -450,20 +454,41 @@ void* Driver::endMesh()
 
 void* Driver::createMeshCopyData(MeshFormat format, const void* vertexBuffer, const short* indexBuffer)
 {
-	return 0;
+	Mesh* mesh = new Mesh;
+	mesh->format = format;
+	mesh->vb = NULL;
+	mesh->ib = NULL;
+	glGenBuffers(1, (GLuint*)&mesh->vh);
+	glGenBuffers(1, (GLuint*)&mesh->ih);
+
+	glBindBuffer(GL_ARRAY_BUFFER, (GLuint)mesh->vh);
+//	glBufferData(GL_ARRAY_BUFFER, bufferSize(i), data[i], bufferUsage);
+
+	return mesh;
 }
 
 void* Driver::createMeshUseData(MeshFormat format, const void* vertexBuffer, const short* indexBuffer)
 {
-	return 0;
+	Mesh* mesh = new Mesh;
+	mesh->format = format;
+	mesh->vb = (char*)vertexBuffer;
+	mesh->ib = (char*)indexBuffer;
+	mesh->vh = 0;
+	mesh->ih = 0;
+	return mesh;
 }
 
 void Driver::destroyMesh(void* meshHandle)
 {
+	Mesh* mesh = reinterpret_cast<Mesh*>(meshHandle);
+
+	rhinoca_free(mesh->vb);
+	rhinoca_free(mesh->ib);
 }
 
 void Driver::useMesh(void* meshHandle)
 {
+	Mesh* mesh = reinterpret_cast<Mesh*>(meshHandle);
 }
 
 // States
