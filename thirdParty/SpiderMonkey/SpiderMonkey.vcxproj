@@ -1,0 +1,156 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>js32</ProjectName>
+    <ProjectGuid>{67D1FADD-F84D-4135-B371-4E6B445C33C3}</ProjectGuid>
+    <RootNamespace>SpiderMonkey</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\General.props" />
+    <Import Project="..\Release.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\General.props" />
+    <Import Project="..\Debug.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../../Bin\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../../Bin\</OutDir>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;XP_WIN;JSFILE;_X86_=1;EXPORT_JS_API;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SmallerTypeCheck>false</SmallerTypeCheck>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <DisableSpecificWarnings>4100;4127;4214;4706;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)$(ProjectName)d.dll</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ImportLibrary>../../lib/$(TargetName).lib</ImportLibrary>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;XP_WIN;JSFILE;_X86_=1;EXPORT_JS_API;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <DisableSpecificWarnings>4100;4127;4214;4706;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ImportLibrary>../../lib/$(TargetName).lib</ImportLibrary>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="jsapi.c" />
+    <ClCompile Include="jsarena.c" />
+    <ClCompile Include="jsarray.c" />
+    <ClCompile Include="jsatom.c" />
+    <ClCompile Include="jsbool.c" />
+    <ClCompile Include="jscntxt.c" />
+    <ClCompile Include="jsdate.c" />
+    <ClCompile Include="jsdbgapi.c" />
+    <ClCompile Include="jsdhash.c" />
+    <ClCompile Include="jsdtoa.c" />
+    <ClCompile Include="jsemit.c" />
+    <ClCompile Include="jsexn.c" />
+    <ClCompile Include="jsfun.c" />
+    <ClCompile Include="jsgc.c" />
+    <ClCompile Include="jshash.c" />
+    <ClCompile Include="jsinterp.c" />
+    <ClCompile Include="jsinvoke.c" />
+    <ClCompile Include="jsiter.c" />
+    <ClCompile Include="jslock.c" />
+    <ClCompile Include="jslog2.c" />
+    <ClCompile Include="jslong.c" />
+    <ClCompile Include="jsmath.c" />
+    <ClCompile Include="jsnum.c" />
+    <ClCompile Include="jsobj.c" />
+    <ClCompile Include="jsopcode.c" />
+    <ClCompile Include="jsparse.c" />
+    <ClCompile Include="jsprf.c" />
+    <ClCompile Include="jsregexp.c" />
+    <ClCompile Include="jsscan.c" />
+    <ClCompile Include="jsscope.c" />
+    <ClCompile Include="jsscript.c" />
+    <ClCompile Include="jsstr.c" />
+    <ClCompile Include="jsutil.c" />
+    <ClCompile Include="jsxdrapi.c" />
+    <ClCompile Include="jsxml.c" />
+    <ClCompile Include="prmjtime.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="jsapi.h" />
+    <ClInclude Include="jsarena.h" />
+    <ClInclude Include="jsarray.h" />
+    <ClInclude Include="jsatom.h" />
+    <ClInclude Include="jsbool.h" />
+    <ClInclude Include="jscntxt.h" />
+    <ClInclude Include="jsdate.h" />
+    <ClInclude Include="jsdbgapi.h" />
+    <ClInclude Include="jsdhash.h" />
+    <ClInclude Include="jsdtoa.h" />
+    <ClInclude Include="jsemit.h" />
+    <ClInclude Include="jsexn.h" />
+    <ClInclude Include="jsfun.h" />
+    <ClInclude Include="jsgc.h" />
+    <ClInclude Include="jshash.h" />
+    <ClInclude Include="jsinterp.h" />
+    <ClInclude Include="jsiter.h" />
+    <ClInclude Include="jslock.h" />
+    <ClInclude Include="jslong.h" />
+    <ClInclude Include="jsmath.h" />
+    <ClInclude Include="jsnum.h" />
+    <ClInclude Include="jsobj.h" />
+    <ClInclude Include="jsopcode.h" />
+    <ClInclude Include="jsparse.h" />
+    <ClInclude Include="jsprf.h" />
+    <ClInclude Include="jsregexp.h" />
+    <ClInclude Include="jsscan.h" />
+    <ClInclude Include="jsscope.h" />
+    <ClInclude Include="jsscript.h" />
+    <ClInclude Include="jsstr.h" />
+    <ClInclude Include="jsutil.h" />
+    <ClInclude Include="jsxdrapi.h" />
+    <ClInclude Include="jsxml.h" />
+    <ClInclude Include="prmjtime.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
