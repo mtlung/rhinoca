@@ -22,3 +22,4 @@ build/ios/Rhinoca/build
 glob:*.xcodeproj/*.pbxuser
 glob:*.xcodeproj/*.perspectivev3
 glob:thirdParty/SpiderMonkey/Win32
+glob:*.vc10.sdf
