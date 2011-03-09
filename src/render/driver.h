@@ -89,36 +89,58 @@ public:
 		rhuint8 r, rhuint8 g, rhuint8 b, rhuint8 a
 	);
 
-// Mesh
-	enum MeshFormat {
+// Vertex/Index buffer
+	enum VertexFormat {
 		P_UV0,
 		P_C,
 		P_C_UV0,
 		P_N_UV0_UV1,
 	};
 
-	static void beginMesh(MeshFormat format);
+	enum PrimitiveType {
+		Triangle,
+	};
+
+	static void beginVertex(VertexFormat format);
 	static	rhuint16 vertex3f(float x, float y, float z);
 	static	void normal3f(float x, float y, float z);
 	static  void color4b(rhuint8 r, rhuint8 g, rhuint8 b, rhuint8 a);
 	static	void texUnit(unsigned unit);
 	static	void texCoord2f(float u, float v);
-	static  void addTriangle(rhuint16 v1, rhuint16 v2, rhuint16 v3);
-	static  void addQuard(rhuint16 v1, rhuint16 v2, rhuint16 v3, rhuint16 v4);
-	static void* endMesh();
+	static void* endVertex();
 
-	static void* createMeshCopyData(MeshFormat format, const void* vertexBuffer, const short* indexBuffer);
-	static void* createMeshUseData(MeshFormat format, const void* vertexBuffer, const short* indexBuffer);
+	static void* createVertexCopyData(VertexFormat format, const void* vertexData, unsigned vertexCount);	// Free the data yourself
+	static void* createVertexUseData(VertexFormat format, const void* vertexData, unsigned vertexCount);	// Free the data yourself
+	static void destroyVertex(void* vertexHandle);
 
-	static void destroyMesh(void* meshHandle);
+	static void beginIndex();
+	static  void addIndex(rhuint16 idx);
+	static  void addIndex(rhuint16* idx, unsigned indexCount);
+	static void* endIndex();
 
-	static void useMesh(void* meshHandle);
+	static void* createIndexCopyData(const void* indexData, unsigned indexCount);	// Free the data yourself
+	static void* createIndexUseData(const void* indexData, unsigned indexCount);	// Free the data yourself
+	static void destroyIndex(void* indexHandle);
 
 // Transformation
 	static void pushMatrix();
 	static void pophMatrix();
 
-// States
+// Input assembler state
+	struct InputAssemblerState
+	{
+		enum PrimitiveType {
+			Triangles,
+		};
+
+		PrimitiveType primitiveType;
+		void* vertexBuffer;
+		void* indexBuffer;
+	};	// InputAssemblerState
+
+	static void setInputAssemblerState(const InputAssemblerState& state);
+
+// Sampler state
 	struct SamplerState
 	{
 		enum Filter {
@@ -126,14 +148,14 @@ public:
 			MIN_MAG_LINEAR	= 1,
 			MIP_MAG_POINT	= 2,
 			MIP_MAG_LINEAR	= 3,
-		};	// Filter
+		};
 
 		enum AddressMode {
 			Repeat			= 0x2901,
 			Edge			= 0x812F,
 			Border			= 0x812D,
 			MirrorRepeat	= 0x8370,
-		};	// AddressMode
+		};
 
 		void* textureHandle;
 		Filter filter;
@@ -142,6 +164,7 @@ public:
 
 	static void setSamplerState(unsigned textureUnit, const SamplerState& state);
 
+// Rasterizer state
 	struct RasterizerState
 	{
 		enum FillMode {
@@ -162,6 +185,7 @@ public:
 
 	static void setRasterizerState(const RasterizerState& state);
 
+// Depth stenchil state
 	struct DepthStencilState
 	{
 		enum CompareFunc {
@@ -173,7 +197,7 @@ public:
 			NotEqual	= 0x0205,
 			GEqual		= 0x0206,
 			Always		= 0x0207,
-		};	// StencilFunc
+		};
 
 		enum StencilOp {
 			Zero		= 0,
@@ -199,6 +223,7 @@ public:
 	static void setDepthTestEnable(bool b);
 	static void setStencilTestEnable(bool b);
 
+// Blend state
 	struct BlendState
 	{
 		enum BlendValue {
@@ -242,8 +267,12 @@ public:
 	static void setBlendEnable(bool b);
 	static void setColorWriteMask(BlendState::ColorWriteEnable mask);
 
+// View port state
 	static void setViewport(float left, float top, float width, float height);
 	static void setViewport(unsigned left, unsigned top, unsigned width, unsigned height);
+
+// Draw command
+	static void drawIndexed(unsigned indexCount, unsigned startingIndex);
 };	// Driver
 
 class Material

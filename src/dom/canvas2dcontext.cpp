@@ -175,7 +175,7 @@ static JSBool drawImage(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, j
 	JS_ValueToObject(cx, argv[0], &imgObj);
 
 	// Determine the source is an image or a canvas
-	Texture* texture;
+	Texture* texture = NULL;
 	if(JS_InstanceOf(cx, imgObj, &HTMLImageElement::jsClass, NULL)) {
 		HTMLImageElement* img = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx ,imgObj));
 		texture = img->texture.get();

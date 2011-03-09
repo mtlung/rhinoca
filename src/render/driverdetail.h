@@ -3,23 +3,31 @@
 
 namespace Render {
 
-struct Mesh
+struct VertexBuffer
 {
-	Driver::MeshFormat format;
-
-	// Either buffer or handle will be not null
-	char* vb, *ib;	// Pointer to buffer data in CPU memory
-	void* vh, *ih;	// Handle to API sepecific handle (data in GPU)
-
-	unsigned vertexCount, indexCount;
+	// Either data or handle will be not null
+	void* data;
+	void* handle;
+	unsigned count;
+	Driver::VertexFormat format;
 };
 
-struct MeshBuilder
+struct IndexBuffer
 {
-	MeshBuilder();
-	~MeshBuilder();
+	// Either data or handle will be not null
+	void* data;
+	void* handle;
+	unsigned count;
+};
 
-	Driver::MeshFormat format;
+unsigned vertexSizeForFormat(Driver::VertexFormat format);
+
+struct BufferBuilder
+{
+	BufferBuilder();
+	~BufferBuilder();
+
+	Driver::VertexFormat format;
 
 	// Current values
 	float normal[3];
@@ -27,17 +35,16 @@ struct MeshBuilder
 	unsigned texUnit;
 	float uv[Driver::maxTextureUnit][2];
 
-	unsigned vertexCount;
-	unsigned indexCount;
-
-	unsigned vertexCapacity;	// How many vertex does the current buffer can store
-	unsigned indexCapacity;		// How many index does the current buffer can store
-
 	char* vertexBuffer;
+	unsigned vertexCount;
+	unsigned vertexCapacity;	// How many vertex does the current buffer can store
+
 	rhuint16* indexBuffer;
+	unsigned indexCount;
+	unsigned indexCapacity;		// How many index does the current buffer can store
 };
 
-MeshBuilder* currentMeshBuilder();
+BufferBuilder* currentBufferBuilder();
 
 }	// Render
 

@@ -63,7 +63,7 @@ bool Color::parse(const char* str)
 
 	{	// #RGBA
 		int r_, g_, b_, a_;
-		if(sscanf(buf, "#%1x%1x%1x", &r_, &g_, &b_, &a_) == 4) {
+		if(sscanf(buf, "#%1x%1x%1x%1x", &r_, &g_, &b_, &a_) == 4) {
 			r = float(r_ * 0x10 + r_) / 255;
 			g = float(g_ * 0x10 + g_) / 255;
 			b = float(b_ * 0x10 + b_) / 255;

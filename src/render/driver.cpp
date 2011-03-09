@@ -50,21 +50,20 @@ void Driver::drawQuad(
 	);
 }
 
-MeshBuilder::MeshBuilder()
+BufferBuilder::BufferBuilder()
 	: texUnit(0)
-	, vertexCount(0), indexCount(0)
-	, vertexCapacity(0), indexCapacity(0)
-	, vertexBuffer(NULL), indexBuffer(NULL)
+	, vertexBuffer(NULL), vertexCount(0), vertexCapacity(0)
+	, indexBuffer(NULL), indexCount(0), indexCapacity(0)
 {
 }
 
-MeshBuilder::~MeshBuilder()
+BufferBuilder::~BufferBuilder()
 {
 	rhinoca_free(vertexBuffer);
 	rhinoca_free(indexBuffer);
 }
 
-unsigned vertexSizeForFormat(Driver::MeshFormat format)
+unsigned vertexSizeForFormat(Driver::VertexFormat format)
 {
 	static const unsigned sf = sizeof(float);
 	static const unsigned sb = 1;
@@ -78,17 +77,16 @@ unsigned vertexSizeForFormat(Driver::MeshFormat format)
 	}
 }
 
-void Driver::beginMesh(MeshFormat format)
+void Driver::beginVertex(VertexFormat format)
 {
-	MeshBuilder* builder = currentMeshBuilder();
+	BufferBuilder* builder = currentBufferBuilder();
 	builder->format = format;
 	builder->vertexCount = 0;
-	builder->indexCount = 0;
 }
 
 rhuint16 Driver::vertex3f(float x, float y, float z)
 {
-	MeshBuilder* builder = currentMeshBuilder();
+	BufferBuilder* builder = currentBufferBuilder();
 
 	ASSERT("Too many vertice" && builder->vertexCount < rhuint16(-1));
 
@@ -150,16 +148,56 @@ rhuint16 Driver::vertex3f(float x, float y, float z)
 	return builder->vertexCount++;
 }
 
-void Driver::addTriangle(rhuint16 v1, rhuint16 v2, rhuint16 v3)
+void Driver::normal3f(float x, float y, float z)
 {
-	MeshBuilder* builder = currentMeshBuilder();
+	BufferBuilder* builder = currentBufferBuilder();
+	builder->normal[0] = x;
+	builder->normal[1] = y;
+	builder->normal[2] = z;
+}
+
+void Driver::texUnit(unsigned unit)
+{
+	BufferBuilder* builder = currentBufferBuilder();
+	builder->texUnit = unit;
+}
+
+void Driver::texCoord2f(float u, float v)
+{
+	BufferBuilder* builder = currentBufferBuilder();
+	float* uv = builder->uv[builder->texUnit];
+	uv[0] = u;
+	uv[1] = v;
+}
+
+void* Driver::endVertex()
+{
+	BufferBuilder* builder = currentBufferBuilder();
+
+	return Driver::createVertexCopyData(builder->format, builder->vertexBuffer, builder->vertexCount);
+}
+
+void Driver::beginIndex()
+{
+	BufferBuilder* builder = currentBufferBuilder();
+	builder->indexCount = 0;
+}
+
+void Driver::addIndex(rhuint16 idx)
+{
+	addIndex(&idx, 1);
+}
+
+void Driver::addIndex(rhuint16* idx, unsigned indexCount)
+{
+	BufferBuilder* builder = currentBufferBuilder();
 
 	// Prepare index buffer memory
-	if(builder->indexCapacity < builder->indexCount + 3) {
+	if(builder->indexCapacity < builder->indexCount + indexCount) {
 		if(builder->indexCapacity == 0)
-			builder->indexCapacity = 64;
+			builder->indexCapacity = 64 + indexCount;
 		else
-			builder->indexCapacity *= 2;
+			builder->indexCapacity = (builder->indexCount + indexCount) * 2;
 
 		builder->indexBuffer = (rhuint16*)rhinoca_realloc(
 			builder->indexBuffer,
@@ -169,38 +207,18 @@ void Driver::addTriangle(rhuint16 v1, rhuint16 v2, rhuint16 v3)
 	}
 
 	rhuint16* ib = builder->indexBuffer + builder->indexCount;
-	ib[0] = v1;
-	ib[1] = v2;
-	ib[2] = v3;
-	builder->indexCount += 3;
+
+	for(unsigned i=0; i<indexCount; ++i)
+		ib[i] = idx[i];
+
+	builder->indexCount += indexCount;
 }
 
-void Driver::addQuard(rhuint16 v1, rhuint16 v2, rhuint16 v3, rhuint16 v4)
+void* Driver::endIndex()
 {
-	addTriangle(v1, v2, v3);
-	addTriangle(v3, v4, v1);
-}
+	BufferBuilder* builder = currentBufferBuilder();
 
-void Driver::normal3f(float x, float y, float z)
-{
-	MeshBuilder* builder = currentMeshBuilder();
-	builder->normal[0] = x;
-	builder->normal[1] = y;
-	builder->normal[2] = z;
-}
-
-void Driver::texUnit(unsigned unit)
-{
-	MeshBuilder* builder = currentMeshBuilder();
-	builder->texUnit = unit;
-}
-
-void Driver::texCoord2f(float u, float v)
-{
-	MeshBuilder* builder = currentMeshBuilder();
-	float* uv = builder->uv[builder->texUnit];
-	uv[0] = u;
-	uv[1] = v;
+	return Driver::createIndexCopyData(builder->indexBuffer, builder->indexCount);
 }
 
 }	// Render

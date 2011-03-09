@@ -28,6 +28,7 @@ PFNGLACTIVETEXTUREPROC glActiveTexture = NULL;
 PFNGLGENBUFFERSPROC glGenBuffers = NULL;
 PFNGLBINDBUFFERPROC glBindBuffer = NULL;
 PFNGLDELETEBUFFERSPROC glDeleteBuffers = NULL;
+PFNGLBUFFERDATAPROC glBufferData = NULL;
 
 static bool glInited = false;
 
@@ -62,6 +63,7 @@ void Driver::init()
 	GET_FUNC_PTR(glGenBuffers, PFNGLGENBUFFERSPROC);
 	GET_FUNC_PTR(glBindBuffer, PFNGLBINDBUFFERPROC);
 	GET_FUNC_PTR(glDeleteBuffers, PFNGLDELETEBUFFERSPROC);
+	GET_FUNC_PTR(glBufferData, PFNGLBUFFERDATAPROC);
 }
 
 void Driver::close()
@@ -87,6 +89,9 @@ public:
 
 	bool vertexArrayEnabled, coordArrayEnabled, colorArrayEnabled;
 
+	Driver::InputAssemblerState inputAssemblerState;
+	GLuint currentVertexBuffer, currentIndexBuffer;
+
 	Driver::SamplerState samplerStates[Driver::maxTextureUnit];
 	unsigned samplerStateHash[Driver::maxTextureUnit];
 	unsigned currentSampler;
@@ -97,14 +102,14 @@ public:
 	Driver::BlendState blendState;
 	unsigned blendStateHash;
 
-	MeshBuilder meshBuilder;
+	BufferBuilder bufferBuilder;
 };	// Context
 
 static Context* _context = NULL;
 
-MeshBuilder* currentMeshBuilder()
+BufferBuilder* currentBufferBuilder()
 {
-	return &_context->meshBuilder;
+	return &_context->bufferBuilder;
 }
 
 static void enableVertexArray(bool b, bool force=false, Context* c = _context)
@@ -149,6 +154,14 @@ void* Driver::createContext(void* externalHandle)
 	ctx->vertexArrayEnabled = false;
 	ctx->colorArrayEnabled = false;
 	ctx->coordArrayEnabled = false;
+
+	{	// Input assembler
+		ctx->inputAssemblerState.vertexBuffer = NULL;
+		ctx->inputAssemblerState.indexBuffer = NULL;
+		ctx->inputAssemblerState.primitiveType = Driver::InputAssemblerState::Triangles;
+		ctx->currentVertexBuffer = 0;
+		ctx->currentIndexBuffer = 0;
+	}
 
 	{	// Sampler
 		ctx->currentSampler = 0;
@@ -209,6 +222,16 @@ static const int _minFilter[] = { GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEARE
 void Driver::forceApplyCurrent()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)_context->renderTarget);
+
+	{	// Input assembler
+		VertexBuffer* vb = reinterpret_cast<VertexBuffer*>(_context->inputAssemblerState.indexBuffer);
+		GLuint hvb = vb ? (GLuint)vb->handle | (GLuint)vb->data: 0;
+		glBindBuffer(GL_ARRAY_BUFFER, hvb);
+
+		IndexBuffer* ib = reinterpret_cast<IndexBuffer*>(_context->inputAssemblerState.indexBuffer);
+		GLuint hib = ib ? (GLuint)ib->handle | (GLuint)ib->data: 0;
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, hib);
+	}
 
 	{	// Sampler states
 		for(unsigned i=0; i<Driver::maxTextureUnit; ++i) {
@@ -286,7 +309,7 @@ void* Driver::createRenderTarget(void* existingRenderTarget, void** textureHandl
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, (GLuint)*depthHandle);
 	}
 
-	if(stencilHandle)
+	if(stencilHandle && depthHandle)
 		*stencilHandle = *depthHandle;
 
 	ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
@@ -446,52 +469,95 @@ void Driver::drawQuad(
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
-// Mesh
-void* Driver::endMesh()
+// Vertex buffer
+void* Driver::createVertexCopyData(VertexFormat format, const void* vertexData, unsigned vertexCount)
 {
-	return 0;
+	VertexBuffer* vb = new VertexBuffer;
+	vb->format = format;
+	vb->count = vertexCount;
+	vb->data = NULL;
+
+	glGenBuffers(1, (GLuint*)&vb->handle);
+	glBindBuffer(GL_ARRAY_BUFFER, (GLuint)vb->handle);
+	glBufferData(GL_ARRAY_BUFFER, vertexSizeForFormat(format) * vertexCount, vertexData, GL_STATIC_DRAW);
+
+	return vb;
 }
 
-void* Driver::createMeshCopyData(MeshFormat format, const void* vertexBuffer, const short* indexBuffer)
+void* Driver::createVertexUseData(VertexFormat format, const void* vertexData, unsigned vertexCount)
 {
-	Mesh* mesh = new Mesh;
-	mesh->format = format;
-	mesh->vb = NULL;
-	mesh->ib = NULL;
-	glGenBuffers(1, (GLuint*)&mesh->vh);
-	glGenBuffers(1, (GLuint*)&mesh->ih);
-
-	glBindBuffer(GL_ARRAY_BUFFER, (GLuint)mesh->vh);
-//	glBufferData(GL_ARRAY_BUFFER, bufferSize(i), data[i], bufferUsage);
-
-	return mesh;
+	VertexBuffer* vb = new VertexBuffer;
+	vb->format = format;
+	vb->count = vertexCount;
+	vb->data = (void*)vertexData;
+	vb->handle = 0;
+	return vb;
 }
 
-void* Driver::createMeshUseData(MeshFormat format, const void* vertexBuffer, const short* indexBuffer)
+void Driver::destroyVertex(void* vertexHandle)
 {
-	Mesh* mesh = new Mesh;
-	mesh->format = format;
-	mesh->vb = (char*)vertexBuffer;
-	mesh->ib = (char*)indexBuffer;
-	mesh->vh = 0;
-	mesh->ih = 0;
-	return mesh;
+	VertexBuffer* vb = reinterpret_cast<VertexBuffer*>(vertexHandle);
+
+	// The external data should free by user
+	// rhinoca_free(vb->data);
+
+	glDeleteBuffers(1, (GLuint*)&vb->handle);
+
+	delete vb;
 }
 
-void Driver::destroyMesh(void* meshHandle)
+// Index buffer
+void* Driver::createIndexCopyData(const void* indexData, unsigned indexCount)
 {
-	Mesh* mesh = reinterpret_cast<Mesh*>(meshHandle);
+	IndexBuffer* ib = new IndexBuffer;
+	ib->count = indexCount;
+	ib->data = NULL;
 
-	rhinoca_free(mesh->vb);
-	rhinoca_free(mesh->ib);
+	glGenBuffers(1, (GLuint*)&ib->handle);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, (GLuint)ib->handle);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(rhuint16) * indexCount, indexData, GL_STATIC_DRAW);
+
+	return ib;
 }
 
-void Driver::useMesh(void* meshHandle)
+void* Driver::createIndexUseData(const void* indexData, unsigned indexCount)
 {
-	Mesh* mesh = reinterpret_cast<Mesh*>(meshHandle);
+	IndexBuffer* ib = new IndexBuffer;
+	ib->count = indexCount;
+	ib->data = (void*)indexData;
+	ib->handle = 0;
+	return ib;
 }
 
-// States
+void Driver::destroyIndex(void* indexHandle)
+{
+	IndexBuffer* ib = reinterpret_cast<IndexBuffer*>(indexHandle);
+
+	// The external data should free by user
+	// rhinoca_free(ib->data);
+
+	glDeleteBuffers(1, (GLuint*)&ib->handle);
+
+	delete ib;
+}
+
+void Driver::setInputAssemblerState(const InputAssemblerState& state)
+{
+	VertexBuffer* vb = reinterpret_cast<VertexBuffer*>(state.vertexBuffer);
+	GLuint hvb = (GLuint)vb->data |	(GLuint)vb->handle;
+	_context->currentVertexBuffer = hvb;
+	if(hvb != _context->currentVertexBuffer)
+		glBindBuffer(GL_ARRAY_BUFFER, hvb);
+
+	IndexBuffer* ib = reinterpret_cast<IndexBuffer*>(state.indexBuffer);
+	GLuint hib = (GLuint)ib->data |	(GLuint)ib->handle;
+	_context->currentIndexBuffer = hib;
+	if(hib != _context->currentIndexBuffer)
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, hib);
+
+	_context->inputAssemblerState = state;
+}
+
 void Driver::setSamplerState(unsigned textureUnit, const SamplerState& state)
 {
 	if(textureUnit != _context->currentSampler)
@@ -673,6 +739,10 @@ void Driver::setViewport(float left, float top, float width, float height)
 void Driver::setViewport(unsigned left, unsigned top, unsigned width, unsigned height)
 {
 	setViewport(float(left), float(top), float(width), float(height));
+}
+
+void Driver::drawIndexed(unsigned indexCount, unsigned startingIndex)
+{
 }
 
 }	// Render
