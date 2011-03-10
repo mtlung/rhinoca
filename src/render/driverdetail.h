@@ -9,6 +9,7 @@ struct VertexBuffer
 	void* data;
 	void* handle;
 	unsigned count;
+	unsigned stride;
 	Driver::VertexFormat format;
 };
 

@@ -55,6 +55,9 @@ BufferBuilder::BufferBuilder()
 	, vertexBuffer(NULL), vertexCount(0), vertexCapacity(0)
 	, indexBuffer(NULL), indexCount(0), indexCapacity(0)
 {
+	memset(normal, 0, sizeof(normal));
+	memset(uv, 0, sizeof(uv));
+	color[0] = color[1] = color[2] = color[3] = 255;
 }
 
 BufferBuilder::~BufferBuilder()
@@ -69,6 +72,7 @@ unsigned vertexSizeForFormat(Driver::VertexFormat format)
 	static const unsigned sb = 1;
 
 	switch(format) {
+	case Driver::P: return 3*sf;	// 12 bytes
 	case Driver::P_UV0: return 3*sf + 2*sf;	// 20 bytes
 	case Driver::P_C: return 3*sf + 4*sb;	// 16 bytes
 	case Driver::P_C_UV0: return 3*sf + 4*sb + 2*sf;	// 24 bytes
@@ -156,6 +160,15 @@ void Driver::normal3f(float x, float y, float z)
 	builder->normal[2] = z;
 }
 
+void Driver::color4b(rhuint8 r, rhuint8 g, rhuint8 b, rhuint8 a)
+{
+	BufferBuilder* builder = currentBufferBuilder();
+	builder->color[0] = r;
+	builder->color[1] = g;
+	builder->color[2] = b;
+	builder->color[3] = a;
+}
+
 void Driver::texUnit(unsigned unit)
 {
 	BufferBuilder* builder = currentBufferBuilder();
@@ -174,7 +187,7 @@ void* Driver::endVertex()
 {
 	BufferBuilder* builder = currentBufferBuilder();
 
-	return Driver::createVertexCopyData(builder->format, builder->vertexBuffer, builder->vertexCount);
+	return Driver::createVertexCopyData(builder->format, builder->vertexBuffer, builder->vertexCount, vertexSizeForFormat(builder->format));
 }
 
 void Driver::beginIndex()

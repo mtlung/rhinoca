@@ -91,14 +91,11 @@ public:
 
 // Vertex/Index buffer
 	enum VertexFormat {
+		P,
 		P_UV0,
 		P_C,
 		P_C_UV0,
 		P_N_UV0_UV1,
-	};
-
-	enum PrimitiveType {
-		Triangle,
 	};
 
 	static void beginVertex(VertexFormat format);
@@ -109,8 +106,8 @@ public:
 	static	void texCoord2f(float u, float v);
 	static void* endVertex();
 
-	static void* createVertexCopyData(VertexFormat format, const void* vertexData, unsigned vertexCount);	// Free the data yourself
-	static void* createVertexUseData(VertexFormat format, const void* vertexData, unsigned vertexCount);	// Free the data yourself
+	static void* createVertexCopyData(VertexFormat format, const void* vertexData, unsigned vertexCount, unsigned stride);	// Free the data yourself
+	static void* createVertexUseData(VertexFormat format, const void* vertexData, unsigned vertexCount, unsigned stride);	// Free the data yourself
 	static void destroyVertex(void* vertexHandle);
 
 	static void beginIndex();
@@ -130,7 +127,9 @@ public:
 	struct InputAssemblerState
 	{
 		enum PrimitiveType {
-			Triangles,
+			Triangles		= 0x0004,
+			TriangleStrip	= 0x0005,
+			TriangleFan		= 0x0006,
 		};
 
 		PrimitiveType primitiveType;
