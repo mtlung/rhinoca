@@ -289,6 +289,7 @@ public:
 	static void setViewport(unsigned left, unsigned top, unsigned width, unsigned height);
 
 // Draw command
+	static void draw(unsigned vertexCount, unsigned startingVertex);
 	static void drawIndexed(unsigned indexCount, unsigned startingIndex);
 };	// Driver
 
