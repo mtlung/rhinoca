@@ -575,6 +575,8 @@ CanvasRenderingContext2D::CanvasRenderingContext2D(HTMLCanvasElement* c)
 	openvg->fillPaint = vgCreatePaint();
 	vgSetPaint(openvg->strokePaint, VG_STROKE_PATH);
 	vgSetPaint(openvg->fillPaint, VG_FILL_PATH);
+
+	vgSeti(VG_FILL_RULE, VG_NON_ZERO);
 }
 
 CanvasRenderingContext2D::~CanvasRenderingContext2D()

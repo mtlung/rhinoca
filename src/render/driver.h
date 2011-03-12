@@ -213,6 +213,8 @@ public:
 				Replace		= 0x1E01,
 				Incr		= 0x1E02,
 				Decr		= 0x1E03,
+				IncrWrap	= 0x8507,
+				DecrWrap	= 0x8508,
 			};
 
 			rhuint8 stencilRefValue;
