@@ -1,0 +1,90 @@
+<!DOCTYPE HTML>
+<title>Test5</title>
+<!-- Download from http://3.paulhamill.com/node/36 -->
+<body onload="init()">
+<h1>Test5</h1>
+<canvas id="canv" class="output" width="600" height="400" style="width:600px;height:400px" frontBufferOnly="false"><p>canvas element not supported in this browser</p></canvas>
+<script>
+var width = 600;
+var height = 400;
+var y1 = 0;
+var bflip = false;
+var elt;
+var context;
+function Item(x,y,w,h,vy,c){
+  this.x = x;
+  this.y = y;
+  this.w = w;
+  this.h = h;
+  this.vy = vy;
+  this.c = c;
+}
+var items = new Array();
+function init() {
+  elt = document.getElementById('canv');
+  context = elt.getContext('2d');
+  for (var i = 0; i < 20; i++) {
+    var x = Math.floor(Math.random()*(width+1)); // 0-width;
+    var y = Math.floor(Math.random()*(height+1)); // 0-height;
+    var w = Math.floor(Math.random()*30)+1; // 1-30;
+    var h = Math.floor(Math.random()*51)+50; // 50-100
+    var vy = Math.floor(Math.random()*9)-4; // -4 - 4
+    if (vy == 0) vy = 0.5;
+    // random color
+    var c = "rgba(";
+    for (var j = 0; j < 3; j++) {
+      var v = Math.floor(Math.random()*256); // 0-255;
+      c += v + ",";
+    }
+    c += "0.8)";
+    var it = new Item(x, y, w, h, vy, c);
+    items.push(it);
+  }
+  setInterval("draw();", 16);
+}
+function draw() {
+  // background
+  var g = context.createLinearGradient(0, 0, 0, height);
+  g.addColorStop(0, '#cdf');
+  g.addColorStop(1, '#00f');
+  context.fillStyle = g;
+  context.fillRect(0, 0, width, height);
+
+  // animated gradient
+  var g2 = context.createLinearGradient(0, 0, 0, height/2);
+  if (!bflip) {
+    g2.addColorStop(0, '#f00');
+    g2.addColorStop((y1/100), '#0f0');
+    g2.addColorStop(1, '#00f');
+  } else {
+    g2.addColorStop(0, '#f00');
+    g2.addColorStop(1.0-(y1/100), '#0f0');
+    g2.addColorStop(1, '#00f');
+  }
+  context.fillStyle = g2;
+  context.save();
+  context.translate(width/4, height/4);
+  var d = new Date();
+  context.rotate(Math.sin(d.getTime()/1000)/6);
+  context.fillRect(0, 0, width/2, height/2);
+  context.restore();
+
+  for (i in items) {
+    context.fillStyle = items[i].c;
+    context.beginPath();
+    context.arc(items[i].x,items[i].y,items[i].w,0,Math.PI*2,true);
+    context.fill();
+
+    items[i].y = items[i].y+items[i].vy;
+    if (items[i].y>height+items[i].w) items[i].y = -items[i].w;
+    else if (items[i].y<-items[i].w) items[i].y = height+items[i].w;
+  }
+
+  y1++;
+  if (y1>100) {
+    y1 = 0;
+    bflip = !bflip;
+  }
+}
+</script>
+
