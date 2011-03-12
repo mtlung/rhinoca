@@ -2,6 +2,7 @@
 #define __DOME_WINDOW_H__
 
 #include "../jsbindable.h"
+#include "../linklist.h"
 #include "../map.h"
 #include "../timer.h"
 
@@ -34,6 +35,25 @@ public:
 	static JSClass jsClass;
 };	// TimerCallback
 
+// http://webstuff.nfshost.com/anim-timing/Overview.html
+class FrameRequestCallback : public JsBindable, public LinkListBase::Node<FrameRequestCallback>
+{
+public:
+	typedef LinkListBase::Node<FrameRequestCallback> super;
+
+	FrameRequestCallback();
+	~FrameRequestCallback();
+
+	void bind(JSContext* cx, JSObject* parent);
+
+	void removeThis();
+
+	jsval closure;				///< The js function closure to be invoked
+	JSObject* thatObject;
+
+	static JSClass jsClass;
+};	// FrameRequestCallback
+
 /// Reference: http://www.w3schools.com/jsref/obj_window.asp
 class DOMWindow : public JsBindable
 {
@@ -62,6 +82,9 @@ public:
 
 	typedef Map<TimerCallback> TimerCallbacks;
 	TimerCallbacks timerCallbacks;
+
+	typedef LinkList<FrameRequestCallback> FrameRequestCallbacks;
+	FrameRequestCallbacks frameRequestCallbacks;
 
 	static JSClass jsClass;
 };	// JsBindable

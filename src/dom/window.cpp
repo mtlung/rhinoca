@@ -91,7 +91,7 @@ JSBool setInterval(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval*
 	cb->setNextInvokeTime(float(self->timer.seconds()) + cb->interval);
 
 	self->timerCallbacks.insert(*cb);
-	cb->addGcRoot();	// releaseGcRoot() in ~TimerCallback::removeThis()
+	cb->addGcRoot();	// releaseGcRoot() in TimerCallback::removeThis()
 
 	*rval = OBJECT_TO_JSVAL(cb->jsObject);
 
@@ -118,10 +118,47 @@ JSBool clearInterval(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsva
 	VERIFY(JS_ValueToObject(cx, argv[0], &jsTimerCallback));
 	if(!JS_InstanceOf(cx, jsTimerCallback, &TimerCallback::jsClass, argv)) return JS_FALSE;
 
-	TimerCallback* timerCallback = reinterpret_cast<TimerCallback*>(JS_GetPrivate(cx, jsTimerCallback));
+	TimerCallback* cb = reinterpret_cast<TimerCallback*>(JS_GetPrivate(cx, jsTimerCallback));
 
-	if(timerCallback->isInMap())
-		timerCallback->removeThis();
+	if(cb->isInMap())
+		cb->removeThis();
+
+	return JS_TRUE;
+}
+
+// NOTE: For simplicity, we ignore the second parameter to requestAnimationFrame
+JSBool requestAnimationFrame(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	DOMWindow* self = reinterpret_cast<DOMWindow*>(JS_GetPrivate(cx, obj));
+
+	FrameRequestCallback* cb = new FrameRequestCallback;
+	cb->bind(cx, NULL);
+
+	if(!JSVAL_IS_OBJECT(argv[0]))
+		return JS_FALSE;
+
+	cb->closure = argv[0];
+	VERIFY(JS_AddNamedRoot(cx, &cb->closure, "Closure of FrameRequestCallback"));
+
+	self->frameRequestCallbacks.pushFront(*cb);
+
+	cb->addGcRoot();	// releaseGcRoot() in FrameRequestCallback::removeThis()
+
+	*rval = OBJECT_TO_JSVAL(cb->jsObject);
+
+	return JS_TRUE;
+}
+
+JSBool cancelRequestAnimationFrame(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	JSObject* jsAnimCallback = NULL;
+	VERIFY(JS_ValueToObject(cx, argv[0], &jsAnimCallback));
+	if(!JS_InstanceOf(cx, jsAnimCallback, &TimerCallback::jsClass, argv)) return JS_FALSE;
+
+	FrameRequestCallback* cb = reinterpret_cast<FrameRequestCallback*>(JS_GetPrivate(cx, jsAnimCallback));
+
+	if(cb->isInList())
+		cb->removeThis();
 
 	return JS_TRUE;
 }
@@ -132,6 +169,8 @@ static JSFunctionSpec methods[] = {
 	{"setInterval", setInterval, 2,0,0},
 	{"clearTimeout", clearTimeout, 1,0,0},
 	{"clearInterval", clearInterval, 1,0,0},
+	{"requestAnimationFrame", requestAnimationFrame, 2,0,0},
+	{"cancelRequestAnimationFrame", cancelRequestAnimationFrame, 1,0,0},
 	{0}
 };
 
@@ -148,8 +187,12 @@ DOMWindow::~DOMWindow()
 {
 	document->releaseGcRoot();
 
+	// Explicit call node's removeThis() since it's not a virtual function
 	while(TimerCallback* cb = timerCallbacks.findMin())
 		cb->removeThis();
+
+	while(!frameRequestCallbacks.isEmpty())
+		frameRequestCallbacks.begin()->removeThis();
 
 	delete virtualCanvas;
 
@@ -171,9 +214,20 @@ void DOMWindow::bind(JSContext* cx, JSObject* parent)
 
 void DOMWindow::update()
 {
-	if(timerCallbacks.isEmpty()) return;
+	// Invoke animation request callbacks
+	for(FrameRequestCallback* cb = frameRequestCallbacks.begin(); cb != frameRequestCallbacks.end();)
+	{
+		jsval rval;
+		ASSERT(cb->closure);
+		JS_CallFunctionValue(jsContext, jsObject, cb->closure, 0, NULL, &rval);
+		FrameRequestCallback* bk = cb;
+		cb = cb->next();
+		bk->removeThis();
+	}
+
 	float now = (float)timer.seconds();
 
+	// Invoke timer callbacks
 	while(TimerCallback* cb = timerCallbacks.findMin())
 	{
 		if(now < cb->nextInvokeTime())
@@ -181,9 +235,9 @@ void DOMWindow::update()
 
 		jsval rval;
 		if(cb->jsScript)
-			JS_ExecuteScript(cb->jsContext, jsObject, cb->jsScript, &rval);
+			JS_ExecuteScript(jsContext, jsObject, cb->jsScript, &rval);
 		else
-			JS_CallFunctionValue(cb->jsContext, jsObject, cb->closure, 0, NULL, &rval);
+			JS_CallFunctionValue(jsContext, jsObject, cb->closure, 0, NULL, &rval);
 
 		if(cb->interval > 0) {
 			float t = cb->nextInvokeTime();
@@ -258,6 +312,40 @@ void TimerCallback::removeThis()
 	jsScriptObject = NULL;
 	VERIFY(JS_RemoveRoot(jsContext, &closure));
 	VERIFY(JS_RemoveRoot(jsContext, &jsScriptObject));
+	releaseGcRoot();
+}
+
+JSClass FrameRequestCallback::jsClass = {
+	"FrameRequestCallback", JSCLASS_HAS_PRIVATE,
+	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	JS_EnumerateStub, JS_ResolveStub,
+	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
+};
+
+FrameRequestCallback::FrameRequestCallback()
+	: closure(NULL)
+{
+}
+
+FrameRequestCallback::~FrameRequestCallback()
+{
+	ASSERT(closure == 0);
+}
+
+void FrameRequestCallback::bind(JSContext* cx, JSObject* parent)
+{
+	ASSERT(!jsContext);
+	jsContext = cx;
+	jsObject = JS_NewObject(cx, &jsClass, NULL, NULL);
+	VERIFY(JS_SetPrivate(cx, jsObject, this));
+	addReference();
+}
+
+void FrameRequestCallback::removeThis()
+{
+	super::removeThis();
+	closure = NULL;
+	VERIFY(JS_RemoveRoot(jsContext, &closure));
 	releaseGcRoot();
 }
 
