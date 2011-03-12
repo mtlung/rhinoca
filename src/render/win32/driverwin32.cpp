@@ -22,6 +22,8 @@ PFNGLRENDERBUFFERSTORAGEPROC glRenderbufferStorage = NULL;
 PFNGLFRAMEBUFFERRENDERBUFFERPROC glFramebufferRenderbuffer = NULL;
 PFNGLFRAMEBUFFERTEXTURE2DPROC glFramebufferTexture2D = NULL;
 PFNGLCHECKFRAMEBUFFERSTATUSPROC glCheckFramebufferStatus = NULL;
+PFNGLSTENCILOPSEPARATEPROC glStencilFuncSeparate = NULL;
+PFNGLSTENCILFUNCSEPARATEPROC glStencilOpSeparate = NULL;
 
 PFNGLACTIVETEXTUREPROC glActiveTexture = NULL;
 
@@ -59,6 +61,8 @@ void Driver::init()
 	GET_FUNC_PTR(glFramebufferRenderbuffer, PFNGLFRAMEBUFFERRENDERBUFFERPROC);
 	GET_FUNC_PTR(glFramebufferTexture2D, PFNGLFRAMEBUFFERTEXTURE2DPROC);
 	GET_FUNC_PTR(glCheckFramebufferStatus, PFNGLCHECKFRAMEBUFFERSTATUSPROC);
+	GET_FUNC_PTR(glStencilFuncSeparate, PFNGLSTENCILOPSEPARATEPROC);
+	GET_FUNC_PTR(glStencilOpSeparate, PFNGLSTENCILFUNCSEPARATEPROC);
 
 	GET_FUNC_PTR(glActiveTexture, PFNGLACTIVETEXTUREPROC);
 
@@ -183,12 +187,7 @@ void* Driver::createContext(void* externalHandle)
 	{	// Depth stencil
 		ctx->depthStencilState.depthEnable = false;
 		ctx->depthStencilState.stencilEnable = false;
-		ctx->depthStencilState.stencilRefValue = 0;
-		ctx->depthStencilState.stencilMask = rhuint8(-1);
-		ctx->depthStencilState.stencilFunc = DepthStencilState::Always;
-		ctx->depthStencilState.stencilPassOp = DepthStencilState::Replace;
-		ctx->depthStencilState.stencilFailOp = DepthStencilState::Replace;
-		ctx->depthStencilState.stencilZFailOp = DepthStencilState::Replace;
+		ctx->depthStencilState.stencilFront = Driver::DepthStencilState::StencilState(rhuint8(0), rhuint8(-1), DepthStencilState::Always, DepthStencilState::StencilState::Replace);
 		ctx->depthStencilStateHash = 0;
 	}
 
@@ -693,12 +692,21 @@ void Driver::setDepthStencilState(const DepthStencilState& state)
 	}
 	else {
 		glEnable(GL_STENCIL_TEST);
-		glStencilFunc(
-			state.stencilFunc,
-			state.stencilRefValue,
-			state.stencilMask
+		glStencilFuncSeparate(
+			GL_FRONT,
+			state.stencilFront.stencilFunc,
+			state.stencilFront.stencilRefValue,
+			state.stencilFront.stencilMask
 		);
-		glStencilOp(state.stencilFailOp, state.stencilZFailOp, state.stencilPassOp);
+		glStencilFuncSeparate(
+			GL_BACK,
+			state.stencilBack.stencilFunc,
+			state.stencilBack.stencilRefValue,
+			state.stencilBack.stencilMask
+		);
+
+		glStencilOpSeparate(GL_FRONT, state.stencilFront.stencilFailOp, state.stencilFront.stencilZFailOp, state.stencilFront.stencilPassOp);
+		glStencilOpSeparate(GL_BACK, state.stencilBack.stencilFailOp, state.stencilBack.stencilZFailOp, state.stencilBack.stencilPassOp);
 	}
 
 	_context->depthStencilState = state;

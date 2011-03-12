@@ -1,6 +1,7 @@
 #ifndef __RENDER_DRIVER_H__
 #define __RENDER_DRIVER_H__
 
+#include <stddef.h>
 #include "../rhinoca.h"
 
 namespace Render {
@@ -198,23 +199,38 @@ public:
 			Always		= 0x0207,
 		};
 
-		enum StencilOp {
-			Zero		= 0,
-			Invert		= 0x150A,
-			Keep		= 0x1E00,
-			Replace		= 0x1E01,
-			Incr		= 0x1E02,
-			Decr		= 0x1E03,
-		};
-
 		bool depthEnable;
 		CompareFunc depthFunc;
 
 		bool stencilEnable;
-		rhuint8 stencilRefValue;
-		rhuint8 stencilMask;
-		CompareFunc stencilFunc;
-		StencilOp stencilFailOp, stencilZFailOp, stencilPassOp;
+
+		struct StencilState
+		{
+			enum StencilOp {
+				Zero		= 0,
+				Invert		= 0x150A,
+				Keep		= 0x1E00,
+				Replace		= 0x1E01,
+				Incr		= 0x1E02,
+				Decr		= 0x1E03,
+			};
+
+			rhuint8 stencilRefValue;
+			rhuint8 stencilMask;
+			CompareFunc stencilFunc;
+			StencilOp stencilFailOp, stencilZFailOp, stencilPassOp;
+
+			StencilState();
+			StencilState(rhuint8 stencilRefValue, rhuint8 stencilMask, CompareFunc stencilFunc, StencilOp stencilOp);
+			StencilState(rhuint8 stencilRefValue, rhuint8 stencilMask, CompareFunc stencilFunc, StencilOp stencilFailOp, StencilOp stencilZFailOp, StencilOp stencilPassOp);
+		};
+
+		StencilState stencilFront, stencilBack;
+
+		DepthStencilState();
+		DepthStencilState(bool depthEnable, CompareFunc depthFunc, bool stencilEnable, StencilState frontAndBack);
+		DepthStencilState(bool depthEnable, CompareFunc depthFunc, bool stencilEnable, StencilState front, StencilState back);
+		
 	};	// DepthStencilState
 
 	static void getDepthStencilState(DepthStencilState& state);

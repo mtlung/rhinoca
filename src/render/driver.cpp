@@ -6,6 +6,59 @@
 
 namespace Render {
 
+Driver::DepthStencilState::DepthStencilState()
+{
+	memset(this, 0, sizeof(*this));
+}
+
+
+Driver::DepthStencilState::DepthStencilState(bool depthEnable, CompareFunc depthFunc, bool stencilEnable, StencilState frontAndBack)
+{
+	this->depthEnable = depthEnable;
+	this->depthFunc = depthFunc;
+	this->stencilEnable = stencilEnable;
+	this->stencilFront = frontAndBack;
+	this->stencilBack = frontAndBack;
+}
+
+Driver::DepthStencilState::DepthStencilState(bool depthEnable, CompareFunc depthFunc, bool stencilEnable, StencilState front, StencilState back)
+{
+	this->depthEnable = depthEnable;
+	this->depthFunc = depthFunc;
+	this->stencilEnable = stencilEnable;
+	this->stencilFront = front;
+	this->stencilBack = back;
+}
+
+Driver::DepthStencilState::StencilState::StencilState()
+{
+	memset(this, 0, sizeof(*this));
+}
+
+Driver::DepthStencilState::StencilState::StencilState(rhuint8 stencilRefValue, rhuint8 stencilMask,
+                                                      CompareFunc stencilFunc,
+                                                      StencilOp stencilOp)
+{
+	this->stencilRefValue = stencilRefValue;
+	this->stencilMask = stencilMask;
+	this->stencilFunc = stencilFunc;
+	this->stencilFailOp = stencilOp;
+	this->stencilZFailOp = stencilOp;
+	this->stencilPassOp = stencilOp;
+}
+
+Driver::DepthStencilState::StencilState::StencilState(rhuint8 stencilRefValue, rhuint8 stencilMask,
+                                                      CompareFunc stencilFunc,
+                                                      StencilOp stencilFailOp, StencilOp stencilZFailOp, StencilOp stencilPassOp)
+{
+	this->stencilRefValue = stencilRefValue;
+	this->stencilMask = stencilMask;
+	this->stencilFunc = stencilFunc;
+	this->stencilFailOp = stencilFailOp;
+	this->stencilZFailOp = stencilZFailOp;
+	this->stencilPassOp = stencilPassOp;
+}
+
 unsigned Driver::nextPowerOfTwo(unsigned x)
 {
 	x = x - 1;

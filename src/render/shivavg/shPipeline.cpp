@@ -125,37 +125,43 @@ static const Driver::BlendState blendState_SrcOver = {
 	Driver::BlendState::EnableAll
 };
 
-static const Driver::DepthStencilState stencilState_drawOdd = {
+static const Driver::DepthStencilState stencilState_drawOdd = Driver::DepthStencilState(
 	true, Driver::DepthStencilState::Always,
-	true, 1, 1, Driver::DepthStencilState::Equal,
-	Driver::DepthStencilState::Zero,
-	Driver::DepthStencilState::Zero,
-	Driver::DepthStencilState::Zero
-};
+	true, 
+	Driver::DepthStencilState::StencilState(
+		1, 1, Driver::DepthStencilState::Equal,
+		Driver::DepthStencilState::StencilState::Zero
+	)
+);
 
-static const Driver::DepthStencilState stencilState_tesselateTo = {
+static const Driver::DepthStencilState stencilState_tesselateTo = Driver::DepthStencilState(
 	true, Driver::DepthStencilState::Always,
-	true, 0, 0, Driver::DepthStencilState::Always,
-	Driver::DepthStencilState::Invert,
-	Driver::DepthStencilState::Invert,
-	Driver::DepthStencilState::Invert
-};
+	true,
+	Driver::DepthStencilState::StencilState(
+		0, 0, Driver::DepthStencilState::Always,
+		Driver::DepthStencilState::StencilState::Invert
+	)
+);
 
-static const Driver::DepthStencilState stencilState_strokeTo = {
+static const Driver::DepthStencilState stencilState_strokeTo = Driver::DepthStencilState(
 	true, Driver::DepthStencilState::Always,
-	true, 1, 1, Driver::DepthStencilState::NotEqual,
-	Driver::DepthStencilState::Keep,
-	Driver::DepthStencilState::Incr,
-	Driver::DepthStencilState::Incr
-};
+	true,
+	Driver::DepthStencilState::StencilState(
+		1, 1, Driver::DepthStencilState::NotEqual,
+		Driver::DepthStencilState::StencilState::Keep,
+		Driver::DepthStencilState::StencilState::Incr,
+		Driver::DepthStencilState::StencilState::Incr
+	)
+);
 
-static const Driver::DepthStencilState stencilState_quadTo = {
+static const Driver::DepthStencilState stencilState_quadTo = Driver::DepthStencilState(
 	true, Driver::DepthStencilState::Always,
-	true, 1, 1, Driver::DepthStencilState::Always,
-	Driver::DepthStencilState::Replace,
-	Driver::DepthStencilState::Replace,
-	Driver::DepthStencilState::Replace
-};
+	true,
+	Driver::DepthStencilState::StencilState(
+		1, 1, Driver::DepthStencilState::Always,
+		Driver::DepthStencilState::StencilState::Replace
+	)
+);
 
 void updateBlendingStateGL(VGContext *c, int alphaIsOne)
 {
