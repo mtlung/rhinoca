@@ -17,6 +17,16 @@
 			ctx2d.lineTo(x0, y0);
 		}
 
+		function draw_cw(ctx2d)
+		{
+			ctx2d.fillStyle = "rgb(255, 0, 0)";
+			ctx2d.beginPath();
+			draw_rect_path(ctx2d, 0, 0, 100, 100, true);
+			ctx2d.closePath();
+			ctx2d.fill();
+			ctx2d.stroke();
+		}
+		
 		function draw_cw_cw(ctx2d)
 		{
 			ctx2d.fillStyle = "rgb(255, 0, 0)";
@@ -170,6 +180,9 @@
 			var canvas = document.getElementById("canvas");
 			var ctx2d = canvas.getContext("2d");
 
+			draw_cw(ctx2d);
+			ctx2d.translate(0, 120);
+			
 			draw_cw_cw(ctx2d);
 			ctx2d.translate(0, 120);
 
@@ -177,10 +190,10 @@
 			ctx2d.translate(0, 120);
 
 			draw_cw_cw_acw(ctx2d);
-			ctx2d.translate(0, 120);
-
-			draw_cw_cw_acw_acw(ctx2d);
 			ctx2d.translate(120, -3 * 120);
+			
+			draw_cw_cw_acw_acw(ctx2d);
+			ctx2d.translate(0, 120);
 
 			draw_pentagram(ctx2d);
 			ctx2d.translate(0, 120);
