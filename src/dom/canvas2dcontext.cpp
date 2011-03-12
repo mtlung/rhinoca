@@ -548,6 +548,7 @@ static JSFunctionSpec methods[] = {
 struct CanvasRenderingContext2D::OpenVG
 {
 	VGPath path;			/// The path for generic use
+	bool pathEmpty;
 	VGPath pathSimpleShape;	/// The path allocated for simple shape usage
 	VGPaint strokePaint;
 	VGPaint fillPaint;
@@ -782,6 +783,7 @@ void CanvasRenderingContext2D::setTransform(float m11, float m12, float m21, flo
 void CanvasRenderingContext2D::beginPath()
 {
 	vgClearPath(openvg->path, VG_PATH_CAPABILITY_ALL);
+	openvg->pathEmpty = true;
 }
 
 void CanvasRenderingContext2D::closePath()
@@ -796,13 +798,17 @@ void CanvasRenderingContext2D::moveTo(float x, float y)
 	VGubyte seg = VG_MOVE_TO;
 	VGfloat data[] = { x, y };
 	vgAppendPathData(openvg->path, 1, &seg, data);
+
+	openvg->pathEmpty = false;
 }
 
 void CanvasRenderingContext2D::lineTo(float x, float y)
 {
-	VGubyte seg = VG_LINE_TO_ABS;
+	VGubyte seg = openvg->pathEmpty ? VG_MOVE_TO : VG_LINE_TO_ABS;
 	VGfloat data[] = { x, y };
 	vgAppendPathData(openvg->path, 1, &seg, data);
+
+	openvg->pathEmpty = false;
 }
 
 void CanvasRenderingContext2D::quadrativeCureTo(float cpx, float cpy, float x, float y)
