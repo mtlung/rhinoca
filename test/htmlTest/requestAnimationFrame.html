@@ -3,9 +3,6 @@
 // example code from mr doob : http://mrdoob.com/lab/javascript/requestanimationframe/
 var canvas, context;
 
-init();
-animate();
-
 function init() {
 	canvas = document.createElement('canvas');
 	canvas.width = 256;
@@ -14,13 +11,14 @@ function init() {
 	document.body.appendChild( canvas );
 }
 
-function animate() {
-	window.requestAnimationFrame( animate );
-	draw();
+function animate(time) {
+	window.requestAnimationFrame(animate);
+	draw(time);
 }
 
-function draw() {
-	var time = new Date().getTime() * 0.002;
+function draw(time) {
+//	var time = new Date().getTime() * 0.002;
+	time *= 0.002;
 	var x = Math.sin(time) * 96 + 128;
 	var y = Math.cos(time * 0.9) * 96 + 128;
 
@@ -33,4 +31,14 @@ function draw() {
 	context.closePath();
 	context.fill();
 }
+
+function testCancelAnimation() {
+	var cb = window.requestAnimationFrame(animate);
+	window.cancelRequestAnimationFrame(cb);
+}
+
+testCancelAnimation();
+init();
+animate();
+
 </script></body></html>

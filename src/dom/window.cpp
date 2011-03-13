@@ -153,7 +153,7 @@ JSBool cancelRequestAnimationFrame(JSContext* cx, JSObject* obj, uintN argc, jsv
 {
 	JSObject* jsAnimCallback = NULL;
 	VERIFY(JS_ValueToObject(cx, argv[0], &jsAnimCallback));
-	if(!JS_InstanceOf(cx, jsAnimCallback, &TimerCallback::jsClass, argv)) return JS_FALSE;
+	if(!JS_InstanceOf(cx, jsAnimCallback, &FrameRequestCallback::jsClass, argv)) return JS_FALSE;
 
 	FrameRequestCallback* cb = reinterpret_cast<FrameRequestCallback*>(JS_GetPrivate(cx, jsAnimCallback));
 
@@ -214,12 +214,16 @@ void DOMWindow::bind(JSContext* cx, JSObject* parent)
 
 void DOMWindow::update()
 {
+	rhuint64 usSince1970 = Timer::microSecondsSince1970();
+
 	// Invoke animation request callbacks
 	for(FrameRequestCallback* cb = frameRequestCallbacks.begin(); cb != frameRequestCallbacks.end();)
 	{
 		jsval rval;
 		ASSERT(cb->closure);
-		JS_CallFunctionValue(jsContext, jsObject, cb->closure, 0, NULL, &rval);
+		jsval argv;
+		VERIFY(JS_NewNumberValue(jsContext, double(usSince1970 / 1000), &argv));
+		JS_CallFunctionValue(jsContext, jsObject, cb->closure, 1, &argv, &rval);
 		FrameRequestCallback* bk = cb;
 		cb = cb->next();
 		bk->removeThis();

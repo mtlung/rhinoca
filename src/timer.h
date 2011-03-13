@@ -17,6 +17,7 @@ public:
 	rhuint64 reset();
 
 	static rhuint64 ticksSinceProgramStatup();
+	static rhuint64 microSecondsSince1970();
 
 	static float ticksToSeconds(rhuint64 ticks);
 	static rhuint64 secondsToTicks(float seconds);
