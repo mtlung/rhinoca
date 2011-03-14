@@ -6,72 +6,16 @@
 
 #include <gl/gl.h>
 #include "../gl/glext.h"
+#include "extensionswin32.h"
 
 #pragma comment(lib, "OpenGL32")
 #pragma comment(lib, "GLU32")
 
-PFNGLBLENDFUNCSEPARATEPROC glBlendFuncSeparate = NULL;
-PFNGLBLENDEQUATIONSEPARATEPROC glBlendEquationSeparate = NULL;
-PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer = NULL;
-PFNGLGENFRAMEBUFFERSPROC glGenFramebuffers = NULL;
-PFNGLDELETEFRAMEBUFFERSPROC glDeleteFramebuffers = NULL;
-PFNGLGENRENDERBUFFERSPROC glGenRenderbuffers = NULL;
-PFNGLBINDRENDERBUFFERPROC glBindRenderbuffer = NULL;
-PFNGLDELETERENDERBUFFERSPROC glDeleteRenderbuffers = NULL;
-PFNGLRENDERBUFFERSTORAGEPROC glRenderbufferStorage = NULL;
-PFNGLFRAMEBUFFERRENDERBUFFERPROC glFramebufferRenderbuffer = NULL;
-PFNGLFRAMEBUFFERTEXTURE2DPROC glFramebufferTexture2D = NULL;
-PFNGLCHECKFRAMEBUFFERSTATUSPROC glCheckFramebufferStatus = NULL;
-PFNGLSTENCILOPSEPARATEPROC glStencilFuncSeparate = NULL;
-PFNGLSTENCILFUNCSEPARATEPROC glStencilOpSeparate = NULL;
-
-PFNGLACTIVETEXTUREPROC glActiveTexture = NULL;
-
-PFNGLGENBUFFERSPROC glGenBuffers = NULL;
-PFNGLBINDBUFFERPROC glBindBuffer = NULL;
-PFNGLDELETEBUFFERSPROC glDeleteBuffers = NULL;
-PFNGLBUFFERDATAPROC glBufferData = NULL;
-
-PFNGLCLIENTACTIVETEXTUREPROC glClientActiveTexture = NULL;
-
-static bool glInited = false;
-
 namespace Render {
-
-#define GET_FUNC_PTR(ptr, type) \
-	if(!(ptr = (type) wglGetProcAddress(#ptr))) \
-	{	ptr = (type) wglGetProcAddress(#ptr"EXT");	}
 
 void Driver::init()
 {
-	if(glInited)
-		return;
-
-	glInited = true;
-
-	GET_FUNC_PTR(glBlendFuncSeparate, PFNGLBLENDFUNCSEPARATEPROC);
-	GET_FUNC_PTR(glBlendEquationSeparate, PFNGLBLENDEQUATIONSEPARATEPROC);
-	GET_FUNC_PTR(glBindFramebuffer, PFNGLBINDFRAMEBUFFERPROC);
-	GET_FUNC_PTR(glGenFramebuffers, PFNGLGENFRAMEBUFFERSPROC);
-	GET_FUNC_PTR(glDeleteFramebuffers, PFNGLDELETEFRAMEBUFFERSPROC);
-	GET_FUNC_PTR(glGenRenderbuffers, PFNGLGENRENDERBUFFERSPROC);	
-	GET_FUNC_PTR(glBindRenderbuffer, PFNGLBINDRENDERBUFFERPROC);
-	GET_FUNC_PTR(glDeleteRenderbuffers, PFNGLDELETERENDERBUFFERSPROC);
-	GET_FUNC_PTR(glRenderbufferStorage, PFNGLRENDERBUFFERSTORAGEPROC);
-	GET_FUNC_PTR(glFramebufferRenderbuffer, PFNGLFRAMEBUFFERRENDERBUFFERPROC);
-	GET_FUNC_PTR(glFramebufferTexture2D, PFNGLFRAMEBUFFERTEXTURE2DPROC);
-	GET_FUNC_PTR(glCheckFramebufferStatus, PFNGLCHECKFRAMEBUFFERSTATUSPROC);
-	GET_FUNC_PTR(glStencilFuncSeparate, PFNGLSTENCILOPSEPARATEPROC);
-	GET_FUNC_PTR(glStencilOpSeparate, PFNGLSTENCILFUNCSEPARATEPROC);
-
-	GET_FUNC_PTR(glActiveTexture, PFNGLACTIVETEXTUREPROC);
-
-	GET_FUNC_PTR(glGenBuffers, PFNGLGENBUFFERSPROC);
-	GET_FUNC_PTR(glBindBuffer, PFNGLBINDBUFFERPROC);
-	GET_FUNC_PTR(glDeleteBuffers, PFNGLDELETEBUFFERSPROC);
-	GET_FUNC_PTR(glBufferData, PFNGLBUFFERDATAPROC);
-
-	GET_FUNC_PTR(glClientActiveTexture, PFNGLCLIENTACTIVETEXTUREPROC);
+	initExtensions();
 }
 
 void Driver::close()
@@ -162,7 +106,7 @@ static void enableNormalArray(bool b, bool force=false, Context* c = _context)
 
 static void bindVertexBuffer(GLuint vb)
 {
-	if(true || _context->currentVertexBuffer != vb) {
+	if(_context->currentVertexBuffer != vb) {
 		glBindBuffer(GL_ARRAY_BUFFER, vb);
 		_context->currentVertexBuffer = vb;
 	}
@@ -170,7 +114,7 @@ static void bindVertexBuffer(GLuint vb)
 
 static void bindIndexBuffer(GLuint ib)
 {
-	if(true || _context->currentIndexBuffer != ib) {
+	if(_context->currentIndexBuffer != ib) {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 		_context->currentIndexBuffer = ib;
 	}
@@ -473,7 +417,7 @@ void Driver::drawQuad(
 		{ x3,y3,z, r,g,b,a },
 		{ x4,y4,z, r,g,b,a }
 	};
-	void* vb = Driver::createVertexCopyData(Driver::P_C, vertex, 4, sizeof(Vertex));
+	void* vb = Driver::createVertexUseData(Driver::P_C, vertex, 4, sizeof(Vertex));
 
 	InputAssemblerState state = { Driver::InputAssemblerState::TriangleFan, vb, NULL };
 	Driver::setInputAssemblerState(state);

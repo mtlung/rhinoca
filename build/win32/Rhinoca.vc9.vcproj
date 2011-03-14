@@ -284,6 +284,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\render\win32\extensionswin32.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\render\framebuffer.cpp"
 				>
 			</File>
