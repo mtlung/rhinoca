@@ -481,6 +481,8 @@ void* Driver::createVertexUseData(VertexFormat format, const void* vertexData, u
 // TODO: Implements object pool
 void Driver::destroyVertex(void* vertexHandle)
 {
+	bindVertexBuffer(0);
+
 	VertexBuffer* vb = reinterpret_cast<VertexBuffer*>(vertexHandle);
 
 	// The external data should free by user
@@ -516,6 +518,8 @@ void* Driver::createIndexUseData(const void* indexData, unsigned indexCount)
 
 void Driver::destroyIndex(void* indexHandle)
 {
+	bindIndexBuffer(0);
+
 	IndexBuffer* ib = reinterpret_cast<IndexBuffer*>(indexHandle);
 
 	// The external data should free by user
