@@ -17,6 +17,7 @@ public:
 // Attributes
 	int screenX, screenY;
 	int clientX, clientY;
+	int pageX, pageY;
 	bool ctrlKey, shiftKey, altKey, metaKey;
 	unsigned button;
 
