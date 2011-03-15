@@ -238,19 +238,17 @@ static void shDrawVertices(SHPath *p, GLenum mode)
 	int start = 0;
 	int size = 0;
 
-	void* vb = Driver::createVertexUseData(Driver::P2f, p->vertices.items, p->vertices.size, 2*sizeof(float));
+	void* vb = Driver::createVertexUseData(Driver::P2f, p->vertices.items, p->vertices.size, sizeof(SHVertex));
 	Driver::InputAssemblerState state = { (Render::Driver::InputAssemblerState::PrimitiveType)mode, vb, NULL };
+	Driver::setInputAssemblerState(state);
 
-	/* We separate vertex arrays by contours to properly
-	   handle the fill modes */
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(2, GL_FLOAT, sizeof(SHVertex), p->vertices.items);
-
+	// We separate vertex arrays by contours to properly handle the fill modes
 	while (start < p->vertices.size) {
 		size = p->vertices.items[start].flags;
 		Driver::draw(size, start);
 		start += size;
 	}
+	Driver::destroyVertex(vb);
 }
 
 /*-------------------------------------------------------------

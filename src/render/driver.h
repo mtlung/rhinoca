@@ -233,7 +233,6 @@ public:
 		DepthStencilState();
 		DepthStencilState(bool depthEnable, CompareFunc depthFunc, bool stencilEnable, StencilState frontAndBack);
 		DepthStencilState(bool depthEnable, CompareFunc depthFunc, bool stencilEnable, StencilState front, StencilState back);
-		
 	};	// DepthStencilState
 
 	static void getDepthStencilState(DepthStencilState& state);
