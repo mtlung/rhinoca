@@ -1,6 +1,7 @@
 #ifndef __PlaceObject2TagParser__h__
 #define __PlaceObject2TagParser__h__
 
+
 #include "SWFTagParser.h"
 
 //------------------------------------------------------------------------------
@@ -12,7 +13,7 @@ public:
 
 protected:
 	// return the bytes readed
-	int	ReadMatrix(const char *data);
+	static int	ReadMatrix(const char *data);
 };
 
 //------------------------------------------------------------------------------

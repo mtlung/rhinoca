@@ -4,7 +4,6 @@
 #include "SWFParserUtils.h"
 
 #include <stdio.h>
-
 #include <cassert>
 
 //------------------------------------------------------------------------------
@@ -16,33 +15,43 @@ TSwfTagType	PlaceObject2TagParser::GetTagType() const
 //------------------------------------------------------------------------------
 bool PlaceObject2TagParser::Parse(const char * data, long length)
 {
-	UI8 flags = ReadData<UI8>(data, 0);
-	assert( 1 == sizeof( UI8 ) );
-	long localOffset = sizeof(UI8);
+	long byteOffset = 0;
+	
+	bool PlaceFlagHasClipActions	= false;
+	bool PlaceFlagHasClipDepth		= false;
+	bool PlaceFlagHasName			= false;
+	bool PlaceFlagHasRatio			= false;
+	bool PlaceFlagHasColorTransform = false;
+	bool PlaceFlagHasMatrix			= false;
+	bool PlaceFlagHasCharacter		= false;
+	bool PlaceFlagMove				= false;
 
-	UI16 depth = ReadData<UI16>(data, localOffset);
-	localOffset += sizeof(UI16);
+	char firstByte = *data;
 
-	bool PlaceFlagHasClipActions	= ReadBit( flags, 7 );
-	bool PlaceFlagHasClipDepth		= ReadBit( flags, 6 );
-	bool PlaceFlagHasName			= ReadBit( flags, 5 );
-	bool PlaceFlagHasRatio			= ReadBit( flags, 4 );
-	bool PlaceFlagHasColorTransform = ReadBit( flags, 3 );
-	bool PlaceFlagHasMatrix			= ReadBit( flags, 2 );
-	bool PlaceFlagHasCharacter		= ReadBit( flags, 1 );
-	bool PlaceFlagMove				= ReadBit( flags, 0 );
+	BitReader::ReadBoolBit( PlaceFlagHasClipActions, data, 0);
+	BitReader::ReadBoolBit( PlaceFlagHasClipDepth, data, 1);
+	BitReader::ReadBoolBit( PlaceFlagHasName, data, 2);
+	BitReader::ReadBoolBit( PlaceFlagHasRatio, data, 3);
+	BitReader::ReadBoolBit( PlaceFlagHasColorTransform, data, 4);
+	BitReader::ReadBoolBit( PlaceFlagHasMatrix, data, 5);
+	BitReader::ReadBoolBit( PlaceFlagHasCharacter, data, 6);
+	BitReader::ReadBoolBit( PlaceFlagMove, data, 7);
+	
+	byteOffset = 1;
 
+	UI16 depth = ReadData<UI16>(data, 1);
+	byteOffset += sizeof(UI16);
+				
 	bool read = true;
 	if( PlaceFlagHasCharacter )
 	{
-		read = false;
+		UI16 CharacterId = ReadData<UI16>( data, byteOffset);
+		byteOffset += sizeof(UI16);		
 	}
 	if( PlaceFlagHasMatrix )
 	{
-		int byteReaded = this->ReadMatrix( data );
-		localOffset += byteReaded;
-
-
+		int byteReaded = ReadMatrix( data + byteOffset );
+		byteOffset += byteReaded;
 		read = false;
 	}
 	if( PlaceFlagHasColorTransform )
@@ -55,24 +64,21 @@ bool PlaceObject2TagParser::Parse(const char * data, long length)
 	}
 	if( read && PlaceFlagHasName )
 	{
-		const char * name = (const char *)(data + localOffset);
+		const char * name = (const char *)(data + byteOffset);
 		printf("name=%s\n", name);
 	}
 	return true;
 }
 
+// MATRIX RECORD
+// reference: http://www.adobe.com/content/dam/Adobe/en/devnet/swf/pdf/swf_file_format_spec_v10.pdf 
+// p.20
+//------------------------------------------------------------------------------
+// TODO:Implement the BitReader::ReadFloatBits which this function call
+//------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 int	PlaceObject2TagParser::ReadMatrix(const char *data)
 {
-	UI8 firstByte = ReadData<UI8>( data, 0 );
-	bool hasScale = ReadBit( firstByte, 7 );
-	if( hasScale )
-	{
-
-
-	}
-
-	return 0;
+	return ParserUtils::ReadMatrix(data);	
 }
 //------------------------------------------------------------------------------
-

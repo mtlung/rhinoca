@@ -1,12 +1,122 @@
 #include "pch.h"
 #include "SWFParserUtils.h"
 
-#include <math.h>
 #include <cassert>
+#include <map>
+#include <math.h>
+//------------------------------------------------------------------------------
+unsigned BitReader::ReadBoolBit( bool & result, const char * buffer, unsigned offsetInBits)
+{
+	int byteSkip	= offsetInBits / 8;
+	int posInByte	= 7 - offsetInBits % 8;
+	assert( 0<=posInByte && posInByte<8);
 
-#ifndef NULL
-#	define NULL 0
-#endif
+	const char * data = (buffer+byteSkip);
+	unsigned bitReaded = 0;
+	result = 0;
+	UI8 maskes[] = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };	
+		
+	UI8 mask = maskes[posInByte];		
+	char value = *data;
+	unsigned int bit = (*data) & mask;
+	bit = bit >> posInByte;
+	assert( bit == 0 || bit == 1 );
+	result = bit;
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+unsigned BitReader::ReadIntBits(  long & result
+								,	const char * buffer
+								,	unsigned offsetInBits
+								,	unsigned bitCount								
+								)
+{
+
+	char firstByte = *buffer;
+	char secondBute = *(buffer+1);
+
+	assert( bitCount > 0 );
+	if( bitCount == 0 )
+	{
+		result = 0;
+		return 0;
+	}
+
+	int byteSkip	= offsetInBits / 8;
+	int posInByte	= 7 - offsetInBits % 8;
+	assert( 0<=posInByte && posInByte<8);
+
+	const char * data = (buffer+byteSkip);
+	unsigned bitReaded = 0;
+	result = 0;
+	UI8 maskes[] = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };	
+		
+	bool isNegative = false;
+
+	UI8 mask = maskes[posInByte];				
+	unsigned int bit = (*data) & mask;
+	bit = bit >> posInByte;
+	if( 1 == bit )
+		isNegative = true;
+		
+	-- posInByte;
+	if( posInByte<0)
+	{
+		posInByte = 7;
+		++data;
+	}
+
+	bitReaded = 1;
+		
+	for(int j=1;j<bitCount;++j)
+	{
+		UI8 mask = maskes[posInByte];				
+		unsigned int bit = (*data) & mask;
+		bit = bit >> posInByte;
+		assert( bit>=0 && bit<=1 );
+		if( isNegative )
+		{
+			bit = ! bit;
+		}
+		result = (result<<1) | bit;			
+		--posInByte;
+		if( posInByte < 0 )
+		{
+			posInByte = 7;
+			++ data;
+		}
+		++bitReaded;
+	}
+	if( isNegative )
+	{
+		result += 1;
+		result = -result;
+	}		
+	return bitReaded;
+}
+
+//------------------------------------------------------------------------------
+// TODO:Not Implemented
+//------------------------------------------------------------------------------
+unsigned BitReader::ReadFixedBits(  float & result
+						,	const char * buffer
+						,	unsigned offsetInBits
+						,	unsigned bitCount								
+						)
+{
+	assert( 16==bitCount || 32==bitCount );
+
+	unsigned halfCount = bitCount >> 1;
+
+	assert( 8==halfCount || 16==halfCount );
+
+	long integralPart = 0;
+
+	// the upper half is just integral part read it 
+	BitReader::ReadIntBits( integralPart, buffer, offsetInBits, halfCount);
+	return bitCount;
+}
 
 //------------------------------------------------------------------------------
 bool ReadBit( const UI8 data, unsigned char position )
@@ -14,9 +124,10 @@ bool ReadBit( const UI8 data, unsigned char position )
 	assert( position <= 7 );
 	UI8 maskes[] = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };
 	UI8 mask = maskes[position];	// 1 << position;
-	return (data & mask) > 0;
+	return data & mask;	
 }
 
+/*
 //------------------------------------------------------------------------------
 const char * TagTypeToString( int tag )
 {
@@ -120,40 +231,136 @@ const char * TagTypeToString( int tag )
 	};
 	return map[tag];
 }
+*/
 
 //------------------------------------------------------------------------------
-int	ReadRECT( RECT * rect, char * buffer )
+const char * TagTypeToString( int tag )
+{
+	// reference: http://www.adobe.com/content/dam/Adobe/en/devnet/swf/pdf/swf_file_format_spec_v10.pdf 
+	// p.271
+	// notice that some key is missing (e.g. 3) by definition
+	static std::map<int, const char *> map;
+	map[0] = "End";
+	map[1] = "ShowFrame";
+	map[2] = "DefineShape";
+	map[4] = "PlaceObject";
+	map[5] = "RemoveObject";
+	map[6] = "DefineBits";
+	map[7] = "DefineButton";
+	map[8] = "JPEGTables";
+	map[9] = "SetBackgroundColor";
+	map[10] = "DefineFont";
+	map[11] = "DefineText";
+	map[12] = "DoAction";
+	map[13] = "DefineFontInfo";
+	map[14] = "DefineSound";
+	map[15] = "StartSound";
+	map[17] = "DefineButtonSound";
+	map[18] = "SoundStreamHead";
+	map[19] = "SoundStreamBlock";
+	map[20] = "DefineBitsLossless";
+	map[21] = "DefineBitsJPEG2";
+	map[22] = "DefineShape2";
+	map[23] = "DefineButtonCxform";
+	map[24] = "Protect";
+	map[26] = "PlaceObject2";
+	map[28] = "RemoveObject2";
+	map[32] = "DefineShape3";
+	map[33] = "DefineText2";
+	map[34] = "DefineButton2";
+	map[35] = "DefineBitsJPEG3";
+	map[36] = "DefineBitsLossless2";
+	map[37] = "DefineEditText";
+	map[39] = "DefineSprite";
+	map[43] = "FrameLabel";
+	map[45] = "SoundStreamHead2";
+	map[46] = "DefineMorphShape";
+	map[48] = "DefineFont2";
+	map[56] = "ExportAssets";
+	map[57] = "ImportAssets";
+	map[58] = "EnableDebugger";
+	map[59] = "DoInitAction";
+	map[60] = "DefineVideoStream";
+	map[61] = "VideoFrame";
+	map[62] = "DefineFontInfo2";
+	map[64] = "EnableDebugger2";
+	map[65] = "ScriptLimits";
+	map[66] = "SetTabIndex";
+	map[69] = "FileAttributes";
+	map[70] = "PlaceObject3";
+	map[71] = "ImportAssets2";
+	map[73] = "DefineFontAlignZones";
+	map[74] = "CSMTextSettings";
+	map[75] = "DefineFont3";
+	map[76] = "SymbolClass";
+	map[77] = "Metadata";
+	map[78] = "DefineScalingGrid";
+	map[82] = "DoABC";
+	map[83] = "DefineShape4";
+	map[84] = "DefineMorphShape2";
+	map[86] = "DefineSceneAndFrameLabelData";
+	map[87] = "DefineBinaryData";
+	map[88] = "DefineFontName";
+	map[89] = "StartSound2";
+	map[90] = "DefineBitsJPEG4";
+	map[91] = "DefineFont4";
+	std::map<int, const char *>::iterator it = map.find( tag );
+	if( it != map.end() )
+		return (*it).second;
+	return NULL;
+}
+
+//------------------------------------------------------------------------------
+int	ReadRECT( RECT * rect, const char * buffer )
 {
 	unsigned nBits = (unsigned char) buffer[0];
-	unsigned short mask = 255 << (8-5);
-	unsigned short bits = nBits & mask;
-	bits = bits >> (8-5);
+	unsigned short mask = 255 << (8-5);	
+	unsigned short bits = nBits & mask; 
+	bits = bits >> (8-5);	
+	assert( bits <= 31 );	
 	int nByte = (int)ceil( (float)(4 * bits + 5)/ 8 );
 
-	assert( bits <= 31 );
+	long xMin = 0;
+	long xMax = 0;
+	long yMin = 0;
+	long yMax = 0;
+	
+	BitReader::ReadIntBits( xMin, buffer, 5 + 0*bits, bits);
+	BitReader::ReadIntBits( xMax, buffer, 5 + 1*bits, bits);
+	BitReader::ReadIntBits( yMin, buffer, 5 + 2*bits, bits);
+	BitReader::ReadIntBits( yMax, buffer, 5 + 3*bits, bits);
+		
+	rect->xMin = xMin;
+	rect->xMax = xMax;
+	rect->yMin = yMin;
+	rect->yMax = yMax;
 
-	rect->xMin = 0;
+	float xMinInPixels = (float)xMin / 20.0f;
+	float xMaxInPixels = (float)xMax / 20.0f;
+	float yMinInPixels = (float)yMin / 20.0f;
+	float yMaxInPixels = (float)yMax / 20.0f;
+
 	return nByte;
 }
 
 //------------------------------------------------------------------------------
-int ReadTagCodeAndLength(
+int ReadTagCodeAndLength( 
 							char * buffer
 						,	long offset
 						,	unsigned short * type
-						,	unsigned int * length
+						,	unsigned int * length 
 						)
 {
 	int read = 0;
 	unsigned short tagCodeAndLength = 0;
 	tagCodeAndLength = ReadData<UI16>(buffer, offset);
-	read += sizeof( unsigned short);
+	read += sizeof( unsigned short);	
 
 	// the upper 10 bits is the type of the tag
 	unsigned short mask = 0xFFFF;
 	mask = mask << (16 - 10);
 	unsigned short t = tagCodeAndLength & mask;
-	*type = t >> (16-10);
+	*type = t >> (16-10);	
 
 	// the lower 6 bits is the length of the tag
 	unsigned short mask2 = mask >> (16-6);
@@ -162,3 +369,96 @@ int ReadTagCodeAndLength(
 	return read;
 }
 //------------------------------------------------------------------------------
+
+
+// MATRIX RECORD
+// reference: http://www.adobe.com/content/dam/Adobe/en/devnet/swf/pdf/swf_file_format_spec_v10.pdf 
+// p.20
+//------------------------------------------------------------------------------
+// TODO:Implement the BitReader::ReadFloatBits which this function call
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+int	ParserUtils::ReadMatrix(const char *data)
+{
+	int readed = 0;
+	unsigned offset = 0;
+	
+	bool hasScale		= false;	
+	readed = BitReader::ReadBoolBit( hasScale, data, offset);
+	assert( 1==readed);
+	offset += readed;
+
+	// SCALE : optional
+	long result = 0;
+	if( hasScale )
+	{		
+		long NScaleBits = 0;
+		int readed = BitReader::ReadIntBits( NScaleBits, data, offset, 5);
+		offset += 5;
+		assert( 5 == readed );
+
+		assert( 16==NScaleBits || 32==NScaleBits);
+		
+		float scaleX = 0.0f;
+		float scaleY = 0.0f;
+		readed = BitReader::ReadFixedBits( scaleX, data, offset, NScaleBits);
+		assert( readed == NScaleBits );
+		offset += NScaleBits;
+
+		readed = BitReader::ReadFixedBits( scaleY, data, offset, NScaleBits);
+		assert( readed == NScaleBits );
+		offset += NScaleBits;
+	}
+
+	// ROTATION : optional
+	bool hasRotation	= false;
+	readed = BitReader::ReadBoolBit(hasRotation, data, offset);
+	assert( 1==readed);
+	offset += readed;
+
+	if( hasRotation )
+	{
+		long NRotateBits = 0;
+		int readed = BitReader::ReadIntBits( NRotateBits, data, offset, 5);
+		offset += 5;
+		assert( 5 == readed );
+
+		assert( 16==NRotateBits || 32==NRotateBits );
+
+		float rotateX = 0.0f;
+		float rotateY = 0.0f;
+		readed = BitReader::ReadFixedBits( rotateX, data, offset, NRotateBits);
+		assert( readed == NRotateBits );
+		offset += NRotateBits;
+
+		readed = BitReader::ReadFixedBits( rotateY, data, offset, NRotateBits);
+		assert( readed == NRotateBits );
+		offset += NRotateBits;		
+	}
+
+	// TRANSLATION : mandatory
+
+	long NTranslateBits = 0;	
+	readed = BitReader::ReadIntBits( NTranslateBits, data, offset, 5);
+	assert( 5 == readed );
+	offset += 5;	
+	
+	long t0 = 0;
+	long t1 = 0;
+	BitReader::ReadIntBits( t0, data, offset, NTranslateBits);
+	offset += NTranslateBits;
+
+	BitReader::ReadIntBits( t1, data, offset, NTranslateBits);
+	offset += NTranslateBits;
+	
+	// translation unit is in twips
+	long TranslateX = t0;
+	long TranslateY = t1;
+
+	float fx = (float) t0 / 20.0f;
+	float fy = (float) t1 / 20.0f;
+
+
+	printf("tx ty : %d %d\n", t0, t1);
+	return (int)ceil( (float)(offset / 8) );
+}

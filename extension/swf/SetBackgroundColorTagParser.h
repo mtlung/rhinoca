@@ -3,6 +3,8 @@
 
 #include "SWFTagParser.h"
 
+
+
 //------------------------------------------------------------------------------
 class SetBackgroundColorTagParser : public SWFTagParser
 {

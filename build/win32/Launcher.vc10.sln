@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+# Visual C++ Express 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Launcher", "Launcher.vc10.vcxproj", "{7175DD79-008E-4012-BA7A-B5D5D8604B68}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Rhinoca", "Rhinoca.vc10.vcxproj", "{42A4219C-C856-470B-BF52-B20035575D91}"
@@ -8,6 +8,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Test.vc10.vcxproj", "{CFD3B3A5-60C1-41CD-8B25-8F5869F24969}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Swf", "Swf.vc10.vcxproj", "{9C4027C0-ECE1-4685-9110-8F5A76119415}"
+	ProjectSection(ProjectDependencies) = postProject
+		{42A4219C-C856-470B-BF52-B20035575D91} = {42A4219C-C856-470B-BF52-B20035575D91}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

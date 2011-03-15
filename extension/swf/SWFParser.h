@@ -7,7 +7,7 @@
 class SWFParser
 {
 public:
-	bool	Parse(const char *filename);
+	bool	Parse(const char *filename);	
 };
 
 //------------------------------------------------------------------------------
