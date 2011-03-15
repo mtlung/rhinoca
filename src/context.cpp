@@ -213,7 +213,7 @@ bool Rhinoca::openDoucment(const char* uri)
 	}
 
 	Dom::ElementFactory& factory = Dom::ElementFactory::singleton();
-	Dom::Node* currentNode = domWindow->document->rootNode();
+	Dom::Node* currentNode = domWindow->document;
 
 	documentUrl = uri;
 	XmlParser parser;

@@ -257,8 +257,6 @@ void DOMWindow::update()
 void DOMWindow::render()
 {
 	if(!document) return;
-	Node* root = document->rootNode();
-	if(!root) return;
 
 	// Resize the virtual canvas if needed
 	if(virtualCanvas->width() != width())
@@ -266,7 +264,7 @@ void DOMWindow::render()
 	if(virtualCanvas->height() != height())
 		virtualCanvas->setHeight(height());
 
-	for(NodeIterator i(document->rootNode()); !i.ended(); i.next()) {
+	for(NodeIterator i(document); !i.ended(); i.next()) {
 		i->render();
 	}
 }

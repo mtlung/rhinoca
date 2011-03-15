@@ -2,7 +2,6 @@
 #include "document.h"
 #include "body.h"
 #include "element.h"
-#include "node.h"
 #include "../common.h"
 #include "../context.h"
 #include <string.h>
@@ -69,30 +68,24 @@ static JSFunctionSpec methods[] = {
 
 HTMLDocument::HTMLDocument(Rhinoca* rh)
 	: rhinoca(rh)
-	, _rootNode(NULL)
 {
+	ownerDocument = this;
 }
 
 HTMLDocument::~HTMLDocument()
 {
-	_rootNode->removeThis();
 }
 
 void HTMLDocument::bind(JSContext* cx, JSObject* parent)
 {
 	ASSERT(!jsContext);
 	jsContext = cx;
-	jsObject = JS_DefineObject(cx, parent, "document", &jsClass, 0, JSPROP_ENUMERATE);
+	jsObject = JS_DefineObject(cx, parent, "document", &jsClass, Node::createPrototype(), JSPROP_ENUMERATE);
 	VERIFY(JS_SetPrivate(cx, jsObject, this));
 	VERIFY(JS_DefineFunctions(cx, jsObject, methods));
 	VERIFY(JS_DefineProperties(cx, jsObject, properties));
 
 	addReference();
-
-	_rootNode = new Node;
-	_rootNode->bind(jsContext, NULL);
-	_rootNode->addGcRoot();	// releaseGcRoot() in ~HTMLDocument()
-	_rootNode->ownerDocument = this;
 }
 
 Element* HTMLDocument::createElement(const char* eleType)
@@ -104,7 +97,7 @@ Element* HTMLDocument::createElement(const char* eleType)
 Element* HTMLDocument::getElementById(const char* id)
 {
 	StringHash h(id, 0);
-	for(NodeIterator i(_rootNode); !i.ended(); i.next()) {
+	for(NodeIterator i(this); !i.ended(); i.next()) {
 		if(Element* e = dynamic_cast<Element*>(i.current())) {
 			if(e->id.hashValue() == h)
 				return e;
@@ -120,7 +113,7 @@ DOMWindow* HTMLDocument::window()
 
 HTMLBodyElement* HTMLDocument::body()
 {
-	for(NodeIterator i(_rootNode); !i.ended(); i.next()) {
+	for(NodeIterator i(this); !i.ended(); i.next()) {
 		if(Element* e = dynamic_cast<Element*>(i.current())) {
 			if(strcmp(e->tagName(), "BODY") == 0)
 				return dynamic_cast<HTMLBodyElement*>(i.current());
