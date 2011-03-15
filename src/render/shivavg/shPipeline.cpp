@@ -221,10 +221,11 @@ void updateBlendingStateGL(VGContext *c, int alphaIsOne)
 
 static void shDrawStroke(SHPath *p)
 {
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glVertexPointer(2, GL_FLOAT, 0, p->stroke.items);
-  glDrawArrays(GL_TRIANGLES, 0, p->stroke.size);
-//  glDisableClientState(GL_VERTEX_ARRAY);
+	void* vb = Driver::createVertexUseData(Driver::P2f, p->stroke.items, p->stroke.size, 2*sizeof(float));
+	Driver::InputAssemblerState state = { Driver::InputAssemblerState::Triangles, vb, NULL };
+	Driver::setInputAssemblerState(state);
+	Driver::draw(p->stroke.size);
+	Driver::destroyVertex(vb);
 }
 
 /*-----------------------------------------------------------
@@ -234,21 +235,22 @@ static void shDrawStroke(SHPath *p)
 
 static void shDrawVertices(SHPath *p, GLenum mode)
 {
-  int start = 0;
-  int size = 0;
-  
-  /* We separate vertex arrays by contours to properly
-     handle the fill modes */
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glVertexPointer(2, GL_FLOAT, sizeof(SHVertex), p->vertices.items);
-  
-  while (start < p->vertices.size) {
-    size = p->vertices.items[start].flags;
-    glDrawArrays(mode, start, size);
-    start += size;
-  }
-  
-//  glDisableClientState(GL_VERTEX_ARRAY);
+	int start = 0;
+	int size = 0;
+
+	void* vb = Driver::createVertexUseData(Driver::P2f, p->vertices.items, p->vertices.size, 2*sizeof(float));
+	Driver::InputAssemblerState state = { (Render::Driver::InputAssemblerState::PrimitiveType)mode, vb, NULL };
+
+	/* We separate vertex arrays by contours to properly
+	   handle the fill modes */
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(2, GL_FLOAT, sizeof(SHVertex), p->vertices.items);
+
+	while (start < p->vertices.size) {
+		size = p->vertices.items[start].flags;
+		Driver::draw(size, start);
+		start += size;
+	}
 }
 
 /*-------------------------------------------------------------

@@ -126,6 +126,7 @@ unsigned vertexSizeForFormat(Driver::VertexFormat format)
 
 	switch(format) {
 	case Driver::P: return 3*sf;	// 12 bytes
+	case Driver::P2f: return 2*sf;	// 8 bytes
 	case Driver::P_UV0: return 3*sf + 2*sf;	// 20 bytes
 	case Driver::P_C: return 3*sf + 4*sb;	// 16 bytes
 	case Driver::P_C_UV0: return 3*sf + 4*sb + 2*sf;	// 24 bytes

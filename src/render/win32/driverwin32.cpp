@@ -423,8 +423,6 @@ void Driver::drawQuad(
 	Driver::setInputAssemblerState(state);
 	Driver::draw(4, 0);
 
-	enableColorArray(false, true);
-
 	Driver::destroyVertex(vb);
 }
 
@@ -445,8 +443,6 @@ void Driver::drawQuad(
 	InputAssemblerState state = { Driver::InputAssemblerState::TriangleFan, vb, NULL };
 	Driver::setInputAssemblerState(state);
 	Driver::draw(4, 0);
-
-	enableColorArray(false, true);
 
 	Driver::destroyVertex(vb);
 }
@@ -577,17 +573,18 @@ void Driver::setInputAssemblerState(const InputAssemblerState& state)
 	}
 
 	{	// Assign position
+		unsigned fCount = vb->format == P2f ? 2 : 3;
 		GLuint hvb = (GLuint)vb->data |	(GLuint)vb->handle;
 		enableVertexArray(true);
 		if(vb->data) {
 			ASSERT(!vb->handle);
 			bindVertexBuffer(0);
-			glVertexPointer(3, GL_FLOAT, vb->stride, vb->data);
+			glVertexPointer(fCount, GL_FLOAT, vb->stride, vb->data);
 		}
 		else if(vb->handle) {
 			ASSERT(!vb->data);
 			bindVertexBuffer(hvb);
-			glVertexPointer(3, GL_FLOAT, vb->stride, 0);
+			glVertexPointer(fCount, GL_FLOAT, vb->stride, 0);
 		}
 		else {
 			ASSERT(false);
@@ -801,7 +798,8 @@ void Driver::draw(unsigned vertexCount, unsigned startingVertex)
 	InputAssemblerState& state = _context->inputAssemblerState;
 	VertexBuffer* vb = reinterpret_cast<VertexBuffer*>(state.vertexBuffer);
 
-	glDrawArrays(state.primitiveType, startingVertex, vb->count);
+	ASSERT(vertexCount <= vb->count);
+	glDrawArrays(state.primitiveType, startingVertex, vertexCount);
 }
 
 void Driver::drawIndexed(unsigned indexCount, unsigned startingIndex)

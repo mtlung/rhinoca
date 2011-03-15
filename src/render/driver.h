@@ -93,6 +93,7 @@ public:
 // Vertex/Index buffer
 	enum VertexFormat {
 		P,
+		P2f,	// Position with 2 float
 		P_UV0,
 		P_C,
 		P_C_UV0,
@@ -289,8 +290,11 @@ public:
 	static void setViewport(unsigned left, unsigned top, unsigned width, unsigned height);
 
 // Draw command
-	static void draw(unsigned vertexCount, unsigned startingVertex);
-	static void drawIndexed(unsigned indexCount, unsigned startingIndex);
+	// Draw using the binded vertex buffer
+	static void draw(unsigned vertexCount, unsigned startingVertex=0);
+
+	// Draw using the binded vertex and index buffers
+	static void drawIndexed(unsigned indexCount, unsigned startingIndex=0);
 };	// Driver
 
 class Material
