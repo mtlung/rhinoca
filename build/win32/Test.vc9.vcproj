@@ -170,14 +170,18 @@
 	<References>
 		<ProjectReference
 			ReferencedProjectIdentifier="{42A4219C-C856-470B-BF52-B20035575D91}"
-			RelativePathToProject=".\Rhinoca.vcproj"
+			RelativePathToProject=".\Rhinoca.vc9.vcproj"
 		/>
 		<ProjectReference
 			ReferencedProjectIdentifier="{9C4027C0-ECE1-4685-9110-8F5A76119415}"
-			RelativePathToProject=".\Swf.vcproj"
+			RelativePathToProject=".\Swf.vc9.vcproj"
 		/>
 	</References>
 	<Files>
+		<File
+			RelativePath="..\..\test\ipendpointtest.cpp"
+			>
+		</File>
 		<File
 			RelativePath="..\..\test\main.cpp"
 			>
@@ -208,6 +212,10 @@
 		</File>
 		<File
 			RelativePath="..\..\test\resourcetest.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\test\sockettest.cpp"
 			>
 		</File>
 		<File

@@ -3,7 +3,9 @@
 
 #ifdef _MSC_VER
 
+#define _WINSOCKAPI	// stops windows.h including winsock.h
 #include <windows.h>
+#undef _WINSOCKAPI_
 #include <gl/gl.h>
 
 #define XP_WIN
