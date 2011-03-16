@@ -4,6 +4,7 @@
 #include "rhinoca.h"
 #include "intrusiveptr.h"
 #include <assert.h>
+#include <stdlib.h>	// For _countof
 
 #ifdef NDEBUG
 #	define ASSERT(Expression) ((void)0)
