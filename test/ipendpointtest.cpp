@@ -30,7 +30,7 @@ TEST_FIXTURE(IPEndPointTestFixture, Construct)
 	CHECK(ep1.parse("0.0.0.0:0"));
 	CHECK(ep1.parse("127.0.0.1:80"));
 	CHECK(ep1.parse("localhost:80"));
-//	CHECK(ep1.parse("yahoo.com:45678"));
+	CHECK(ep1.parse("yahoo.com:45678"));
 
 	// Invalid address
 	CHECK(!ep1.parse("253.254.255.256:80"));
@@ -46,8 +46,8 @@ TEST_FIXTURE(IPEndPointTestFixture, Getter)
 	CHECK(ep1.address() == IPAddress::getLoopBack());
 	CHECK(ep1.port() == 80);
 
-	//TIPEndPoint ep2("127.001:65535");
-	//CHECK(ep2.GetAddress() == TIPAddress("127.0.0.1"));
+	//IPEndPoint ep2("127.001:65535");
+	//CHECK(ep2.GetAddress() == IPAddress("127.0.0.1"));
 	//CHECK(ep2.GetPort() == 65535);
 
 	CHECK(ep1.parse("google.com:80"));

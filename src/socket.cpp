@@ -233,29 +233,22 @@ IPEndPoint::IPEndPoint(const IPAddress& address, rhuint16 port)
 
 bool IPEndPoint::parse(const char* addressAndPort)
 {
-/*	std::string str(addressAndPort);
+	char address[64];
+	char port[64];
+	if(strlen(addressAndPort) >= sizeof(address)) return false;
 
-	// Get position of colon
-	size_t pos = str.find(":");
-
-	if (pos != std::string::npos) {
-		std::string strIP = str.substr(0, pos);
-		if(!mAddress.parse(strIP.c_str()))
+	if(sscanf(addressAndPort, "%[^:]:%s", &address, &port) == 2) {
+		if(!mAddress.parse(address))
 			return false;
 
-		// Check existence of port number after colon
-		if (str.length() > pos+1) {
-			int port;
-			if(str2Int(str.substr(pos+1).c_str(), port))
-				setPort(rhuint16(port));
-			else
-				return false;
-		}
-	} else {
-		return mAddress.parse(addressAndPort);
+		int portNum;
+		if(sscanf(port, "%d", &portNum) != 1) return false;
+
+		setPort(rhuint16(portNum));
+		return true;
 	}
-*/
-	return true;
+
+	return mAddress.parse(address);
 }
 
 IPAddress& IPEndPoint::address() {
