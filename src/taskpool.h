@@ -50,6 +50,7 @@ public:
 
 	void setAffinity(TaskId id, int affinity);
 
+	/// The task will not being it's physical run until finishAdd() invoked
 	void finishAdd(TaskId id);
 
 	/// Add the task, set the properties and finish the add, all in a single function call

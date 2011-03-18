@@ -69,6 +69,7 @@ TaskPool::TaskProxy* TaskPool::TaskList::alloc()
 
 	TaskProxy* ret = freeBegin;
 	freeBegin = ret->nextFree;
+	ret->nextFree = NULL;
 
 	ret->id = idCounter;
 	ASSERT(ret->task == NULL);
@@ -78,9 +79,15 @@ TaskPool::TaskProxy* TaskPool::TaskList::alloc()
 
 void TaskPool::TaskList::free(TaskProxy* id)
 {
+#ifndef NDEBUG
+	for(TaskProxy* p = freeBegin; p; p = p->nextFree)
+		ASSERT(p != id);
+#endif
+
 	*id = TaskProxy();
 	id->nextFree = freeBegin;
 	freeBegin = id;
+	ASSERT(count > 0);
 	--count;
 }
 
@@ -285,7 +292,10 @@ void TaskPool::wait(TaskId id)
 {
 	int tId = threadId();
 	ScopeLock lock(mutex);
-	_wait(_findProxyById(id), tId);
+	if(TaskProxy* p = _findProxyById(id)) {
+		_removePendingTask(p);
+		_wait(p, tId);
+	}
 }
 
 void TaskPool::_wait(TaskProxy* p, int tId)
@@ -359,12 +369,14 @@ void TaskPool::_doTask(TaskProxy* p, int tId)
 
 	_removePendingTask(p);
 
+	// NOTE: _wait() may trigger many things, therefore we need to _retainTask() here
+	_retainTask(p);
+
 	if(TaskProxy* dep = p->dependency) {
 		if(dep->id == p->dependencyId)
 			_wait(dep, tId);
 	}
 
-	_retainTask(p);
 	{	ScopeUnlock unlock(mutex);
 		task->run(this);
 		task = NULL;	// The task may be deleted, never use the pointer up to this point
