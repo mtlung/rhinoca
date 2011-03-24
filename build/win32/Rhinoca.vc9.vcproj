@@ -461,6 +461,14 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\src\httpstream.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\src\httpstream.h"
+			>
+		</File>
+		<File
 			RelativePath="..\..\src\intrusiveptr.h"
 			>
 		</File>

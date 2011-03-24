@@ -75,6 +75,8 @@ public:
 	typedef void (*Callback)(TaskPool* taskPool, void* userData);
 	void addCallback(TaskId id, Callback callback, void* userData, int affinity);
 
+	static void sleep(int milliSeconds);
+
 // Attributes
 	/// To get the current thread id, which is use for setting affinity
 	static int threadId();

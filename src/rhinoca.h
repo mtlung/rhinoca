@@ -108,9 +108,15 @@ RHINOCA_API void rhinoca_processEvent(Rhinoca* rh, RhinocaEvent ev);
 
 // IO functions
 typedef void* (*rhinoca_io_open)(Rhinoca* rh, const char* uri, int threadId);
+typedef bool (*rhinoca_io_ready)(void* file, rhuint64 size, int threadId);
 typedef rhuint64 (*rhinoca_io_read)(void* file, void* buffer, rhuint64 size, int threadId);
 typedef void (*rhinoca_io_close)(void* file, int threadId);
-void rhinoca_io_setcallback(rhinoca_io_open open, rhinoca_io_read read, rhinoca_io_close close);
+RHINOCA_API void rhinoca_io_setcallback(rhinoca_io_open open, rhinoca_io_ready ready, rhinoca_io_read read, rhinoca_io_close close);
+
+RHINOCA_API void* rhinoca_http_open(Rhinoca* rh, const char* uri, int threadId);
+RHINOCA_API bool rhinoca_http_ready(void* file, rhuint64 size, int threadId);
+RHINOCA_API rhuint64 rhinoca_http_read(void* file, void* buffer, rhuint64 size, int threadId);
+RHINOCA_API void rhinoca_http_close(void* file, int threadId);
 
 // Memory allocation
 RHINOCA_API void* rhinoca_malloc(rhuint size);

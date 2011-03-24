@@ -8,6 +8,23 @@
 struct sockaddr;
 typedef unsigned socket_t;
 
+// Unify the error code used in Linux and win32
+#if defined(RHINOCA_WINDOWS)
+#	define EALREADY		WSAEALREADY		// Operation already in progress
+#	define ECONNABORTED	WSAECONNABORTED	// Software caused connection abort
+#	define ECONNRESET	WSAECONNRESET	// Connection reset by peer
+#	define EHOSTDOWN	WSAEHOSTDOWN	// Host is down
+#	define EHOSTUNREACH	WSAEHOSTUNREACH	// No route to host
+#	define EINPROGRESS	WSAEINPROGRESS	// Operation now in progress
+#	define ENETDOWN		WSAENETDOWN		// Network is down
+#	define ENETRESET	WSAENETRESET	// Network dropped connection on reset
+#	define ENOBUFS		WSAENOBUFS		// No buffer space available (recoverable)
+#	define ENOTCONN		WSAENOTCONN		// Socket is not connected
+#	define ENOTSOCK		WSAENOTSOCK		// Socket operation on nonsocket
+#	define ETIMEDOUT	WSAETIMEDOUT	// Connection timed out
+#	define EWOULDBLOCK	WSAEWOULDBLOCK	// Operation would block (recoverable)
+#endif
+
 class IPAddress
 {
 public:
@@ -76,7 +93,10 @@ protected:
 	IPAddress mAddress;
 };	// IPEndPoint
 
-//! Cross-platform BSD socket class
+/// Cross-platform BSD socket class
+/// Reference:
+/// Differences Between Windows and Unix Non-Blocking Sockets
+/// http://itamarst.org/writings/win32sockets.html
 class BsdSocket : Noncopyable
 {
 public:
@@ -111,7 +131,7 @@ public:
 	/*!	Places the socket in a listening state
 		\param backlog Specifies the number of incoming connections that can be queued for acceptance
 	 */
-	ErrorCode listen(size_t backlog=5);
+	ErrorCode listen(unsigned backlog=5);
 
 	/*!	Creates a new Socket for a newly created connection.
 		Accept extracts the first connection on the queue of pending connections on this socket.
@@ -123,16 +143,16 @@ public:
 	ErrorCode connect(const IPEndPoint& endPoint);
 
 	//!	Returns -1 for any error
-	int send(const void* data, size_t len, int flags=0);
+	int send(const void* data, unsigned len, int flags=0);
 
 	//!	Returns -1 for any error
-	int receive(void* buf, size_t len, int flags=0);
+	int receive(void* buf, unsigned len, int flags=0);
 
 	//!	Returns -1 for any error
-	int sendTo(const void* data, size_t len, const IPEndPoint& destEndPoint, int flags=0);
+	int sendTo(const void* data, unsigned len, const IPEndPoint& destEndPoint, int flags=0);
 
 	//!	Returns -1 for any error
-	int receiveFrom(void* buf, size_t len, IPEndPoint& srcEndPoint, int flags=0);
+	int receiveFrom(void* buf, unsigned len, IPEndPoint& srcEndPoint, int flags=0);
 
 	/*	To assure that all data is sent and received on a connected socket before it is closed,
 		an application should use ShutDownXXX() to close connection before calling close().
@@ -183,15 +203,6 @@ public:
 		\return true if there is system error. Otherwise false.
 	 */
 	bool IsError();
-
-	/*! Store the system error code to the parameter.
-		\param errorCode the place the return error code will be stored in
-		\return at this moment this method always returns 0.
-	 */
-	bool GetErrorCode(int& errorCode) const;
-
-	//!
-	bool GetSocketErrorCode(int& errorCode) const;
 
 	//!	Check the error code whether it indicating a socket operations is in progress.
 	static bool inProgress(int code);

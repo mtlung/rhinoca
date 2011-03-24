@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "rhinoca.h"
 #include "context.h"
+#include "socket.h"
 #include "render/driver.h"
 #include "render/vg/openvg.h"
 #include <stdarg.h>	// For va_list
@@ -18,6 +19,8 @@ void rhinoca_init()
 	Render::Driver::forceApplyCurrent();
 
 	VERIFY(vgCreateContextSH(1, 1));
+
+	VERIFY(BsdSocket::initApplication() == 0);
 }
 
 void rhinoca_close()
@@ -28,6 +31,8 @@ void rhinoca_close()
 	jsrt = NULL;
 	vgDestroyContextSH();
 	Render::Driver::deleteContext(driverContext);
+
+	VERIFY(BsdSocket::closeApplication() == 0);
 }
 
 Rhinoca* rhinoca_create(RhinocaRenderContext* renderContext)
@@ -96,12 +101,14 @@ void rhinoca_processEvent(Rhinoca* context, RhinocaEvent ev)
 
 // IO
 rhinoca_io_open io_open;
+rhinoca_io_ready io_ready;
 rhinoca_io_read io_read;
 rhinoca_io_close io_close;
 
-void rhinoca_io_setcallback(rhinoca_io_open open, rhinoca_io_read read, rhinoca_io_close close)
+void rhinoca_io_setcallback(rhinoca_io_open open, rhinoca_io_ready ready, rhinoca_io_read read, rhinoca_io_close close)
 {
 	io_open = open;
+	io_ready = ready;
 	io_read = read;
 	io_close = close;
 }

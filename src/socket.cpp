@@ -42,19 +42,6 @@
 // Unify the error code used in Linux and win32
 #if defined(RHINOCA_WINDOWS)
 #	define OK			S_OK
-#	define EALREADY		WSAEALREADY		// Operation already in progress
-#	define ECONNABORTED	WSAECONNABORTED	// Software caused connection abort
-#	define ECONNRESET	WSAECONNRESET	// Connection reset by peer
-#	define EHOSTDOWN	WSAEHOSTDOWN	// Host is down
-#	define EHOSTUNREACH	WSAEHOSTUNREACH	// No route to host
-#	define EINPROGRESS	WSAEINPROGRESS	// Operation now in progress
-#	define ENETDOWN		WSAENETDOWN		// Network is down
-#	define ENETRESET	WSAENETRESET	// Network dropped connection on reset
-#	define ENOBUFS		WSAENOBUFS		// No buffer space available (recoverable)
-#	define ENOTCONN		WSAENOTCONN		// Socket is not connected
-#	define ENOTSOCK		WSAENOTSOCK		// Socket operation on nonsocket
-#	define ETIMEDOUT	WSAETIMEDOUT	// Connection timed out
-#	define EWOULDBLOCK	WSAEWOULDBLOCK	// Operation would block (recoverable)
 #else
 #	define OK			0
 #	define SOCKET_ERROR -1
@@ -76,7 +63,7 @@ static int getLastError()
 #endif
 }
 
-static int toInt(size_t s) {
+static int toInt(unsigned s) {
 	return (s >= 0x7fffffff) ? 0x7fffffff : (int)s;
 }
 
@@ -192,11 +179,11 @@ rhuint64 IPAddress::getInt() const
 	std::ostringstream os;
 
 	const sockaddr& addr = nativeAddr();
-	// Note that the cast from uint8_t to size_t is necessary
-	os	<< size_t(uint8_t(addr.sa_data[2])) << '.'
-		<< size_t(uint8_t(addr.sa_data[3])) << '.'
-		<< size_t(uint8_t(addr.sa_data[4])) << '.'
-		<< size_t(uint8_t(addr.sa_data[5]));
+	// Note that the cast from uint8_t to unsigned is necessary
+	os	<< unsigned(uint8_t(addr.sa_data[2])) << '.'
+		<< unsigned(uint8_t(addr.sa_data[3])) << '.'
+		<< unsigned(uint8_t(addr.sa_data[4])) << '.'
+		<< unsigned(uint8_t(addr.sa_data[5]));
 
 	return os.str();
 }*/
@@ -379,7 +366,7 @@ ErrorCode BsdSocket::bind(const IPEndPoint& endPoint)
 		OK : getLastError();
 }
 
-ErrorCode BsdSocket::listen(size_t backlog)
+ErrorCode BsdSocket::listen(unsigned backlog)
 {
 	return lastError =
 		::listen(fd(), int(backlog)) == OK ?
@@ -408,21 +395,32 @@ ErrorCode BsdSocket::connect(const IPEndPoint& endPoint)
 		OK : getLastError();
 }
 
-int BsdSocket::send(const void* data, size_t len, int flags)
+int BsdSocket::send(const void* data, unsigned len, int flags)
 {
-	int ret = ::send(fd(), (const char*)data, toInt(len), flags);
-	lastError = ret < 0 ? getLastError() : OK;
-	return ret;
+	unsigned remain = len;
+	unsigned sent = 0;
+	const char* p = (const char*)data;
+	while(remain > 0) {
+		int ret = ::send(fd(), p, toInt(remain), flags);
+		if(ret < 0) {
+			lastError = getLastError();
+			return ret;
+		}
+		remain -= ret;
+		sent += ret;
+		p += ret;
+	}
+	return sent;
 }
 
-int BsdSocket::receive(void* buf, size_t len, int flags)
+int BsdSocket::receive(void* buf, unsigned len, int flags)
 {
 	int ret = ::recv(fd(), (char*)buf, toInt(len), flags);
 	lastError = ret < 0 ? getLastError() : OK;
 	return ret;
 }
 
-int BsdSocket::sendTo(const void* data, size_t len, const IPEndPoint& destEndPoint, int flags)
+int BsdSocket::sendTo(const void* data, unsigned len, const IPEndPoint& destEndPoint, int flags)
 {
 	sockaddr addr = destEndPoint.address().nativeAddr();
 	int ret = ::sendto(fd(), (const char*)data, toInt(len), flags, &addr, sizeof(addr));
@@ -430,7 +428,7 @@ int BsdSocket::sendTo(const void* data, size_t len, const IPEndPoint& destEndPoi
 	return ret;
 }
 
-int BsdSocket::receiveFrom(void* buf, size_t len, IPEndPoint& srcEndPoint, int flags)
+int BsdSocket::receiveFrom(void* buf, unsigned len, IPEndPoint& srcEndPoint, int flags)
 {
 	sockaddr& addr = srcEndPoint.address().nativeAddr();
 	socklen_t bufSize = sizeof(addr);

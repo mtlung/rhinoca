@@ -127,7 +127,7 @@ TaskPool::~TaskPool()
 	rhdelete(_threadHandles);
 }
 
-static void mysleep(int ms)
+void TaskPool::sleep(int ms)
 {
 #ifdef RHINOCA_WINDOWS
 		::Sleep(DWORD(ms));
@@ -142,7 +142,7 @@ void _run(TaskPool* pool)
 		pool->doSomeTask();
 
 		// TODO: Use condition variable
-		mysleep(1);
+		TaskPool::sleep(1);
 	}
 }
 
@@ -322,7 +322,7 @@ void TaskPool::_wait(TaskProxy* p, int tId)
 				// If no more task can do we sleep for a while
 				// NOTE: Temporary release mutex to avoid deal lock
 				ScopeUnlock unlock(mutex);
-				mysleep(1);
+				TaskPool::sleep(1);
 			}
 		}
 	}
