@@ -81,6 +81,10 @@
 		18F0C5801303A566007752DB /* driver.h in Headers */ = {isa = PBXBuildFile; fileRef = 18F0C57E1303A566007752DB /* driver.h */; };
 		18F0C73E1304F121007752DB /* driverios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 18F0C73D1304F121007752DB /* driverios.cpp */; };
 		9C91B8D1132545A000195FF7 /* driverdetail.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C91B8D0132545A000195FF7 /* driverdetail.h */; };
+		9CB22F8A136B254A004D8BB2 /* httpstream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CB22F88136B254A004D8BB2 /* httpstream.cpp */; };
+		9CB22F8B136B254A004D8BB2 /* httpstream.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CB22F89136B254A004D8BB2 /* httpstream.h */; };
+		9CB22F8E136B2735004D8BB2 /* socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CB22F8C136B2735004D8BB2 /* socket.cpp */; };
+		9CB22F8F136B2735004D8BB2 /* socket.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CB22F8D136B2735004D8BB2 /* socket.h */; };
 		AA747D9F0F9514B9006C5449 /* Rhinoca_Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = AA747D9E0F9514B9006C5449 /* Rhinoca_Prefix.pch */; };
 		AACBBE4A0F95108600F1A2B1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AACBBE490F95108600F1A2B1 /* Foundation.framework */; };
 /* End PBXBuildFile section */
@@ -178,6 +182,10 @@
 		18F0C57E1303A566007752DB /* driver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = driver.h; path = ../../../src/render/driver.h; sourceTree = SOURCE_ROOT; };
 		18F0C73D1304F121007752DB /* driverios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = driverios.cpp; path = ../../../src/render/ios/driverios.cpp; sourceTree = SOURCE_ROOT; };
 		9C91B8D0132545A000195FF7 /* driverdetail.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = driverdetail.h; path = ../../../src/render/driverdetail.h; sourceTree = SOURCE_ROOT; };
+		9CB22F88136B254A004D8BB2 /* httpstream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = httpstream.cpp; path = ../../../src/httpstream.cpp; sourceTree = "<group>"; };
+		9CB22F89136B254A004D8BB2 /* httpstream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = httpstream.h; path = ../../../src/httpstream.h; sourceTree = "<group>"; };
+		9CB22F8C136B2735004D8BB2 /* socket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = socket.cpp; path = ../../../src/socket.cpp; sourceTree = "<group>"; };
+		9CB22F8D136B2735004D8BB2 /* socket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = socket.h; path = ../../../src/socket.h; sourceTree = "<group>"; };
 		AA747D9E0F9514B9006C5449 /* Rhinoca_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Rhinoca_Prefix.pch; sourceTree = SOURCE_ROOT; };
 		AACBBE490F95108600F1A2B1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		D2AAC07E0554694100DB518D /* libRhinoca.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRhinoca.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -235,6 +243,8 @@
 				187BCBC212FAAC8F0042FDB1 /* context.cpp */,
 				187BC9DA12F9B5710042FDB1 /* context.h */,
 				187BCBC612FAADC70042FDB1 /* context_ios.h */,
+				9CB22F88136B254A004D8BB2 /* httpstream.cpp */,
+				9CB22F89136B254A004D8BB2 /* httpstream.h */,
 				187BC9EF12F9B6660042FDB1 /* intrusiveptr.h */,
 				187BC9F012F9B6660042FDB1 /* jsbindable.cpp */,
 				187BC9F112F9B6660042FDB1 /* jsbindable.h */,
@@ -254,6 +264,8 @@
 				187BCA1812F9B8B40042FDB1 /* rhinoca.h */,
 				187BCA1912F9B8B40042FDB1 /* rhstring.cpp */,
 				187BCA1A12F9B8B40042FDB1 /* rhstring.h */,
+				9CB22F8C136B2735004D8BB2 /* socket.cpp */,
+				9CB22F8D136B2735004D8BB2 /* socket.h */,
 				187BCA1B12F9B8B40042FDB1 /* sort.h */,
 				187BCA2912F9B9180042FDB1 /* taskpool.cpp */,
 				187BCA2A12F9B9180042FDB1 /* taskpool.h */,
@@ -393,6 +405,8 @@
 				187BCC6512FADFC70042FDB1 /* renderqueue.h in Headers */,
 				18F0C5801303A566007752DB /* driver.h in Headers */,
 				9C91B8D1132545A000195FF7 /* driverdetail.h in Headers */,
+				9CB22F8B136B254A004D8BB2 /* httpstream.h in Headers */,
+				9CB22F8F136B2735004D8BB2 /* socket.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -497,6 +511,8 @@
 				187BCDEB12FBD2B90042FDB1 /* nsimageloader.mm in Sources */,
 				18F0C57F1303A566007752DB /* driver.cpp in Sources */,
 				18F0C73E1304F121007752DB /* driverios.cpp in Sources */,
+				9CB22F8A136B254A004D8BB2 /* httpstream.cpp in Sources */,
+				9CB22F8E136B2735004D8BB2 /* socket.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -514,16 +530,15 @@
 		1DEB921F08733DC00010E9CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				COPY_PHASE_STRIP = NO;
 				DSTROOT = /tmp/Rhinoca.dst;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = Rhinoca_Prefix.pch;
+				GCC_VERSION = "";
 				INSTALL_PATH = /usr/local/lib;
 				PRODUCT_NAME = Rhinoca;
 			};
@@ -532,12 +547,11 @@
 		1DEB922008733DC00010E9CD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				DSTROOT = /tmp/Rhinoca.dst;
-				GCC_MODEL_TUNING = G5;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = Rhinoca_Prefix.pch;
+				GCC_VERSION = "";
 				INSTALL_PATH = /usr/local/lib;
 				PRODUCT_NAME = Rhinoca;
 			};

@@ -23,6 +23,8 @@ typedef unsigned socket_t;
 #	define ENOTSOCK		WSAENOTSOCK		// Socket operation on nonsocket
 #	define ETIMEDOUT	WSAETIMEDOUT	// Connection timed out
 #	define EWOULDBLOCK	WSAEWOULDBLOCK	// Operation would block (recoverable)
+#else
+#   include <sys/errno.h>
 #endif
 
 class IPAddress

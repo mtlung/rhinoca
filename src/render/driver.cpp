@@ -3,6 +3,7 @@
 #include "driverdetail.h"
 #include "../mat44.h"
 #include "../common.h"
+#include <memory>
 
 namespace Render {
 

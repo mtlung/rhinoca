@@ -16,7 +16,7 @@ void Driver::init()
 void Driver::close()
 {
 }
-
+/*
 static unsigned hash(const void* data, unsigned len)
 {
 	unsigned h = 0;
@@ -632,6 +632,6 @@ void Driver::setViewport(unsigned left, unsigned top, unsigned width, unsigned h
 {
 	setViewport(float(left), float(top), float(width), float(height));
 }
-
+*/
 }	// Render
 

@@ -3,6 +3,8 @@
 #include "socket.h"
 #include "taskpool.h"
 
+#include <string.h>
+
 /// Notes on http 1.0 protocol:
 /// Http 1.0 protocol contains an optional "Content-Length" attribute, but
 /// if it's not present, the end of the data will indicated by a gracefull disconnection.
@@ -48,6 +50,7 @@ void* rhinoca_http_open(Rhinoca* rh, const char* uri, int threadId)
 		"User_Agent: HTTPTool/1.0\r\n"
 		"\r\n";
 
+    int ret = 0;
 	IPAddress adr;
 	HttpStream* s = new HttpStream;
 
@@ -72,7 +75,7 @@ void* rhinoca_http_open(Rhinoca* rh, const char* uri, int threadId)
 	VERIFY(s->socket.create(BsdSocket::TCP) == 0);
 	s->socket.setBlocking(false);
 
-	int ret = s->socket.connect(IPEndPoint(adr, 80));
+	ret = s->socket.connect(IPEndPoint(adr, 80));
 	if(ret != 0 && !BsdSocket::inProgress(s->socket.lastError))
 		goto OnError;
 
@@ -88,6 +91,7 @@ bool rhinoca_http_ready(void* file, rhuint64 size, int threadId)
 {
 	ASSERT(file);
 
+    int ret = 0;
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
 
 	static const unsigned headerBufSize = 128;
@@ -96,7 +100,7 @@ bool rhinoca_http_ready(void* file, rhuint64 size, int threadId)
 		goto OnError;
 
 	if(!s->headerSent) {
-		int ret = s->socket.send(s->getCmd, strlen(s->getCmd));
+		ret = s->socket.send(s->getCmd, strlen(s->getCmd));
 		if(ret < 0 && s->socket.lastError == ENOTCONN)
 			return false;
 
@@ -109,7 +113,7 @@ bool rhinoca_http_ready(void* file, rhuint64 size, int threadId)
 	if(!s->headerReceived) {
 		prepareForRead(s, headerBufSize);
 
-		int ret = s->socket.receive(s->buffer + s->bufSize, headerBufSize);
+		ret = s->socket.receive(s->buffer + s->bufSize, headerBufSize);
 		if(ret < 0 && BsdSocket::inProgress(s->socket.lastError))
 			return false;
 		if(ret == 0)
@@ -164,7 +168,7 @@ bool rhinoca_http_ready(void* file, rhuint64 size, int threadId)
 	ASSERT(s->headerReceived);
 
 	prepareForRead(s, (unsigned)size);
-	int ret = s->socket.receive(s->buffer + s->bufSize, (unsigned)size - s->bufSize);
+	ret = s->socket.receive(s->buffer + s->bufSize, (unsigned)size - s->bufSize);
 	if(ret < 0 && BsdSocket::inProgress(s->socket.lastError))
 		return false;
 	if(ret < 0)

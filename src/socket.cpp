@@ -18,6 +18,7 @@
 #	include <sys/socket.h>
 #	include <sys/types.h>
 #	include <unistd.h>
+#   include <string.h>  // For memset
 #endif
 
 // A good guide on socket programming:
@@ -224,7 +225,7 @@ bool IPEndPoint::parse(const char* addressAndPort)
 	char port[64];
 	if(strlen(addressAndPort) >= sizeof(address)) return false;
 
-	if(sscanf(addressAndPort, "%[^:]:%s", &address, &port) == 2) {
+	if(sscanf(addressAndPort, "%[^:]:%s", &address[0], &port[0]) == 2) {
 		if(!mAddress.parse(address))
 			return false;
 

@@ -150,6 +150,8 @@ rhuint64 Timer::ticksSinceProgramStatup()
 	return ret;
 }
 
+#if defined(_WIN32)
+
 // Borrows from SpiderMonkey prmjtime.c
 //#define JSLL_INIT(hi, lo)  ((hi ## LL << 32) + lo ## LL)
 #define FILETIME2INT64(ft) (((rhuint64)ft.dwHighDateTime) << 32LL | (rhuint64)ft.dwLowDateTime)
@@ -161,3 +163,17 @@ rhuint64 Timer::microSecondsSince1970()
 	::GetSystemTimeAsFileTime(&ft);
 	return (FILETIME2INT64(ft)-win2un)/10L;
 }
+
+#else
+
+#include <sys/time.h>
+
+rhuint64 Timer::microSecondsSince1970()
+{
+    timeval tim;
+    gettimeofday(&tim, NULL);
+    
+    return (rhuint64)tim.tv_sec * 1000 + tim.tv_usec;
+}
+
+#endif
