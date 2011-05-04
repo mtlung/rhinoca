@@ -2,6 +2,7 @@
 #include "httpstream.h"
 #include "socket.h"
 #include "taskpool.h"
+#include "timer.h"
 
 #include <string.h>
 
@@ -9,6 +10,10 @@
 /// Http 1.0 protocol contains an optional "Content-Length" attribute, but
 /// if it's not present, the end of the data will indicated by a gracefull disconnection.
 /// See: http://www.xml.com/pub/a/ws/2003/11/25/protocols.html
+/// HTTP Make Really Easy
+/// http://www.jmarshall.com/easy/http/
+/// A list of HTTP client library
+/// http://curl.haxx.se/libcurl/competitors.html
 struct HttpStream
 {
 	BsdSocket socket;
@@ -193,10 +198,16 @@ rhuint64 rhinoca_http_read(void* file, void* buffer, rhuint64 size, int threadId
 {
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
 
+	float timeout = 3;
+	DeltaTimer timer;
 	while(!s->headerReceived || s->bufSize < size) {
 		if(rhinoca_http_ready(file, size, threadId))
 			break;
 		TaskPool::sleep(0);
+		timeout -= timer.getDelta();
+
+		if(timeout <= 0)
+			s->httpError = true;
 	}
 
 	if(!s->headerReceived) return 0;

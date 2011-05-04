@@ -177,3 +177,20 @@ rhuint64 Timer::microSecondsSince1970()
 }
 
 #endif
+
+DeltaTimer::DeltaTimer() {
+	lastTime = timer.seconds();
+}
+
+DeltaTimer::DeltaTimer(float firstDelta) {
+	lastTime = timer.seconds() - firstDelta;
+}
+
+float DeltaTimer::getDelta() const
+{
+	float currentTime = timer.seconds();
+	// Suppose the minus operation won't produce negative result
+	float dt = currentTime - lastTime;
+	lastTime = currentTime;
+	return dt;
+}
