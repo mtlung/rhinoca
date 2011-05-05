@@ -16,6 +16,7 @@
 /// http://curl.haxx.se/libcurl/competitors.html
 struct HttpStream
 {
+	~HttpStream() { rhinoca_free(buffer); }
 	BsdSocket socket;
 	char* buffer;
 	bool headerSent;

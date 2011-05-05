@@ -198,27 +198,63 @@ bool initOpenGl(HWND hWnd, HDC& dc)
 	return ::wglMakeCurrent(dc, rc) == TRUE;
 }
 
+struct CompoundFS
+{
+	enum Type {
+		Local,
+		Http
+	} type;
+	void* handle;
+};
+
 static void* ioOpen(Rhinoca* rh, const char* uri, int threadId)
 {
-	FILE* f = fopen(uri, "rb");
-	return f;
+	CompoundFS* fs = new CompoundFS;
+	if(strstr(uri, "http://") == uri) {
+		fs->type = CompoundFS::Http;
+		fs->handle = rhinoca_http_open(rh, uri, threadId);
+	}
+	else {
+		fs->type = CompoundFS::Local;
+		fs->handle = fopen(uri, "rb");
+	}
+
+	return fs;
 }
 
 static bool ioReady(void* file, rhuint64 size, int threadId)
 {
+	CompoundFS* fs = reinterpret_cast<CompoundFS*>(file);
+
+	if(fs->type == CompoundFS::Http)
+		return rhinoca_http_ready(fs->handle, size, threadId);
+
 	return true;
 }
 
 static rhuint64 ioRead(void* file, void* buffer, rhuint64 size, int threadId)
 {
-	FILE* f = reinterpret_cast<FILE*>(file);
+	CompoundFS* fs = reinterpret_cast<CompoundFS*>(file);
+
+	if(fs->type == CompoundFS::Http)
+		return rhinoca_http_read(fs->handle, buffer, size, threadId);
+
+	FILE* f = reinterpret_cast<FILE*>(fs->handle);
 	return (rhuint64)fread(buffer, 1, (size_t)size, f);
 }
 
 static void ioClose(void* file, int threadId)
 {
-	FILE* f = reinterpret_cast<FILE*>(file);
-	fclose(f);
+	CompoundFS* fs = reinterpret_cast<CompoundFS*>(file);
+
+	if(fs->type == CompoundFS::Http)
+		rhinoca_http_close(fs->handle, threadId);
+	else {
+		FILE* f = reinterpret_cast<FILE*>(file);
+		fclose(f);
+	}
+
+	delete fs;
 }
 
 void alertFunc(Rhinoca* rh, void* userData, const char* str)
@@ -260,7 +296,8 @@ int main()
 //	rhinoca_openDocument(rh, "html5/test4/test.html");
 //	rhinoca_openDocument(rh, "../../../on9bird/on9birds.html");
 //	rhinoca_openDocument(rh, "../../test/htmlTest/vgTest/test.html");
-	rhinoca_openDocument(rh, "../../test/htmlTest/imageTest/test.html");
+//	rhinoca_openDocument(rh, "../../test/htmlTest/requestAnimationFrame.html");
+	rhinoca_openDocument(rh, "http://localhost/rhinoca/test/htmlTest/imageTest/test.html");
 
 	while(true) {
 		MSG message;
