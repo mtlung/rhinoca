@@ -159,7 +159,7 @@ bool Mutex::tryLock()
 
 RecursiveMutex::RecursiveMutex(int spinCount)
 {
-	// TODO: Support spin lock on posix
+	// TODO: Support spin lock on Posix
 	(void)spinCount;
 
 	pthread_mutexattr_t attr;

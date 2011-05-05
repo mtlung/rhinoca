@@ -8,7 +8,7 @@
 
 /// Notes on http 1.0 protocol:
 /// Http 1.0 protocol contains an optional "Content-Length" attribute, but
-/// if it's not present, the end of the data will indicated by a gracefull disconnection.
+/// if it's not present, the end of the data will indicated by a graceful disconnection.
 /// See: http://www.xml.com/pub/a/ws/2003/11/25/protocols.html
 /// HTTP Make Really Easy
 /// http://www.jmarshall.com/easy/http/
@@ -139,7 +139,7 @@ bool rhinoca_http_ready(void* file, rhuint64 size, int threadId)
 		messageContent += (sizeof(headerSeperator) - 1);	// -1 for the null terminator
 		s->headerReceived = true;
 
-		// Nullify the seperator between header and body
+		// Nullify the separator between header and body
 		messageContent[-1] = '\0';
 
 		// Check for status
@@ -159,7 +159,7 @@ bool rhinoca_http_ready(void* file, rhuint64 size, int threadId)
 				s->expectedTotalSize = unsigned(-1);
 
 			unsigned bodySize = s->bufSize - (messageContent - s->buffer);
-			// Move the received (if any) body content to the begining of our buffer
+			// Move the received (if any) body content to the beginning of our buffer
 			memmove(s->buffer, messageContent, bodySize);
 			s->bufSize = bodySize;
 
@@ -224,7 +224,7 @@ rhuint64 rhinoca_http_read(void* file, void* buffer, rhuint64 size, int threadId
 	s->bufSize -= dataToMove;
 	s->userReadCount += dataToMove;
 
-	printf("readed: %u\n", s->userReadCount);
+	printf("read: %u\n", s->userReadCount);
 
 	return dataToMove;
 }

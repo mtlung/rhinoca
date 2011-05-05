@@ -40,7 +40,7 @@ public:
 
 	/// You can addChild() and dependsOn() in-between beginAdd() and finishAdd()
 	/// The task will begin to process as soon as possible
-	TaskId beginAdd(Task* task, int affinity=0);
+	TaskId beginAdd(Task* task, int affinity=0, TaskId reuseId=0);
 
 	/// A task is consider completed only if all it's children are completed
 	void addChild(TaskId parent, TaskId child);
@@ -54,7 +54,7 @@ public:
 	void finishAdd(TaskId id);
 
 	/// Add the task, set the properties and finish the add, all in a single function call
-	TaskId addFinalized(Task* task, TaskId parent=0, TaskId dependency=0, int affinity=0);
+	TaskId addFinalized(Task* task, TaskId parent=0, TaskId dependency=0, int affinity=0, TaskId reuseId=0);
 
 	/// @note The TaskId may be reused for another task that you
 	/// were NOT waiting for, but that's not the problem since the

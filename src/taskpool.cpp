@@ -173,13 +173,15 @@ void TaskPool::init(rhuint threadCount)
 	}
 }
 
-TaskId TaskPool::beginAdd(Task* task, int affinity)
+TaskId TaskPool::beginAdd(Task* task, int affinity, TaskId reuseId)
 {
 	ScopeLock lock(mutex);
 
 	TaskProxy* proxy = taskList.alloc();
 	proxy->task = task;
 	proxy->affinity = affinity;
+
+	if(reuseId != 0) proxy->id = reuseId;
 
 	if(_openTasks) _openTasks->prevOpen = proxy;
 	proxy->nextOpen = _openTasks;
@@ -240,7 +242,7 @@ void TaskPool::finishAdd(TaskId id)
 	}
 }
 
-TaskId TaskPool::addFinalized(Task* task, TaskId parent, TaskId dependency, int affinity)
+TaskId TaskPool::addFinalized(Task* task, TaskId parent, TaskId dependency, int affinity, TaskId reuseId)
 {
 	ScopeLock lock(mutex);
 
@@ -248,6 +250,8 @@ TaskId TaskPool::addFinalized(Task* task, TaskId parent, TaskId dependency, int 
 	proxy->task = task;
 	proxy->affinity = affinity;
 	proxy->finalized = true;
+
+	if(reuseId != 0) proxy->id = reuseId;
 
 	if(parent != 0) {
 		TaskProxy* parentProxy = _findProxyById(parent);

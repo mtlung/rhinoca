@@ -204,6 +204,11 @@ static void* ioOpen(Rhinoca* rh, const char* uri, int threadId)
 	return f;
 }
 
+static bool ioReady(void* file, rhuint64 size, int threadId)
+{
+	return true;
+}
+
 static rhuint64 ioRead(void* file, void* buffer, rhuint64 size, int threadId)
 {
 	FILE* f = reinterpret_cast<FILE*>(file);
@@ -244,7 +249,7 @@ int main()
 
 	Rhinoca* rh = rhinoca_create(&renderContext);
 	rhinoca_setAlertFunc(alertFunc, hWnd);
-	rhinoca_io_setcallback(ioOpen, ioRead, ioClose);
+	rhinoca_io_setcallback(ioOpen, ioReady, ioRead, ioClose);
 
 	FileDropHandler dropHandler(hWnd, rh);
 
@@ -254,7 +259,8 @@ int main()
 
 //	rhinoca_openDocument(rh, "html5/test4/test.html");
 //	rhinoca_openDocument(rh, "../../../on9bird/on9birds.html");
-	rhinoca_openDocument(rh, "../../test/htmlTest/vgTest/test.html");
+//	rhinoca_openDocument(rh, "../../test/htmlTest/vgTest/test.html");
+	rhinoca_openDocument(rh, "../../test/htmlTest/imageTest/test.html");
 
 	while(true) {
 		MSG message;

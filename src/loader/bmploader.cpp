@@ -20,9 +20,10 @@ class BmpLoader : public Task
 {
 public:
 	BmpLoader(Texture* t, ResourceManager* mgr)
-		: texture(t), manager(mgr)
+		: stream(NULL), texture(t), manager(mgr)
 		, width(0), height(0)
 		, pixelData(NULL), pixelDataSize(0), pixelDataFormat(Driver::RGBA)
+		, headerLoaded(false), flipVertical(false)
 	{}
 
 	~BmpLoader() {
@@ -31,15 +32,26 @@ public:
 
 	virtual void run(TaskPool* taskPool);
 
+protected:
 	void load(TaskPool* taskPool);
 	void commit(TaskPool* taskPool);
 
+	void loadHeader();
+	void loadPixelData();
+	void reSchedule();
+
+	void* stream;
 	Texture* texture;
 	ResourceManager* manager;
 	rhuint width, height;
 	char* pixelData;
 	rhuint pixelDataSize;
 	Texture::Format pixelDataFormat;
+
+	bool headerLoaded;
+	bool flipVertical;
+	BITMAPFILEHEADER fileHeader;
+	BITMAPINFOHEADER infoHeader;
 };
 
 void BmpLoader::run(TaskPool* taskPool)
@@ -52,22 +64,48 @@ void BmpLoader::run(TaskPool* taskPool)
 
 void BmpLoader::load(TaskPool* taskPool)
 {
-	texture->scratch = this;
+	if(headerLoaded)
+		loadPixelData();
+	else
+		loadHeader();
+}
+
+void BmpLoader::commit(TaskPool* taskPool)
+{
+	int tId = TaskPool::threadId();
+	if(stream) io_close(stream, tId);
+	stream = NULL;
+
+	ASSERT(texture->scratch == this);
+	texture->scratch = NULL;
+
+	if(texture->create(width, height, Driver::ANY, pixelData, pixelDataSize, pixelDataFormat))
+		texture->state = Resource::Loaded;
+	else
+		texture->state = Resource::Aborted;
+
+	delete this;
+}
+
+void BmpLoader::loadHeader()
+{
 	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
-	void* f = io_open(rh, texture->uri(), tId);
-	if(!f) goto Abort;
+	if(!stream)
+		stream = io_open(rh, texture->uri(), tId);
 
 	// Windows.h gives us these types to work with the Bitmap files
 	ASSERT(sizeof(BITMAPFILEHEADER) == 14);
 	ASSERT(sizeof(BITMAPINFOHEADER) == 40);
-	BITMAPFILEHEADER fileHeader;
-	BITMAPINFOHEADER infoHeader;
 	memset(&fileHeader, 0, sizeof(fileHeader));
 
+	// If data not ready, give up in this round and do it again in next schedule
+	if(!io_ready(rh, sizeof(fileHeader) + sizeof(infoHeader), tId))
+		return reSchedule();
+
 	// Read the file header
-	io_read(f, &fileHeader, sizeof(fileHeader), tId);
+	io_read(stream, &fileHeader, sizeof(fileHeader), tId);
 
 	// Check against the magic 2 bytes.
 	// The value of 'BM' in integer is 19778 (assuming little endian)
@@ -76,7 +114,7 @@ void BmpLoader::load(TaskPool* taskPool)
 		goto Abort;
 	}
 
-	io_read(f, &infoHeader, sizeof(infoHeader), tId);
+	io_read(stream, &infoHeader, sizeof(infoHeader), tId);
 	width = infoHeader.biWidth;
 
 	pixelDataFormat = Driver::BGR;
@@ -91,7 +129,6 @@ void BmpLoader::load(TaskPool* taskPool)
 		goto Abort;
 	}
 
-	bool flipVertical;
 	if(infoHeader.biHeight > 0) {
 		height = infoHeader.biHeight;
 		flipVertical = true;
@@ -101,11 +138,31 @@ void BmpLoader::load(TaskPool* taskPool)
 		flipVertical = false;
 	}
 
+	loadPixelData();
+	return;
+
+Abort:
+	texture->state = Resource::Aborted;
+	texture->scratch = this;
+}
+
+void BmpLoader::loadPixelData()
+{
+	int tId = TaskPool::threadId();
+	Rhinoca* rh = manager->rhinoca;
+
+	if(!stream) goto Abort;
+
 	// Memory usage for one row of image
 	const rhuint rowByte = width * (sizeof(char) * 3);
 
 	ASSERT(!pixelData);
 	pixelDataSize = rowByte * height;
+
+	// If data not ready, give up in this round and do it again in next schedule
+	if(!io_ready(rh, pixelDataSize, tId))
+		return reSchedule();
+
 	pixelData = (char*)rhinoca_malloc(pixelDataSize);
 
 	if(!pixelData) {
@@ -120,31 +177,23 @@ void BmpLoader::load(TaskPool* taskPool)
 		const rhuint invertedH = flipVertical ? height - 1 - h : h;
 
 		char* p = pixelData + (invertedH * rowByte);
-		if(io_read(f, p, rowByte, tId) != rowByte) {
+		if(io_read(stream, p, rowByte, tId) != rowByte) {
 			print(rh, "BitmapLoader: End of file, bitmap data incomplete");
 			goto Abort;
 		}
 	}
 
-	io_close(f, tId);
+	texture->scratch = this;
 	return;
 
 Abort:
-	if(f) io_close(f, tId);
 	texture->state = Resource::Aborted;
+	texture->scratch = this;
 }
 
-void BmpLoader::commit(TaskPool* taskPool)
+void BmpLoader::reSchedule()
 {
-	ASSERT(texture->scratch == this);
-	texture->scratch = NULL;
-
-	if(texture->create(width, height, Driver::ANY, pixelData, pixelDataSize, pixelDataFormat))
-		texture->state = Resource::Loaded;
-	else
-		texture->state = Resource::Aborted;
-
-	delete this;
+	manager->taskPool->addFinalized(this, 0, 0, 0, texture->taskReady);
 }
 
 bool loadBmp(Resource* resource, ResourceManager* mgr)
@@ -156,8 +205,10 @@ bool loadBmp(Resource* resource, ResourceManager* mgr)
 	Texture* texture = dynamic_cast<Texture*>(resource);
 
 	BmpLoader* loaderTask = new BmpLoader(texture, mgr);
-	texture->taskReady = taskPool->addFinalized(loaderTask);
+
+	texture->taskReady = taskPool->beginAdd(loaderTask);
 	texture->taskLoaded = taskPool->addFinalized(loaderTask, 0, texture->taskReady, taskPool->mainThreadId());
+	taskPool->finishAdd(texture->taskReady);
 
 	return true;
 }

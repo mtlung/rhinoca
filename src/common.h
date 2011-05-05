@@ -35,6 +35,7 @@ inline T* rhrenew(const T* ptr, rhuint oldCount, rhuint newCount) {
 
 // IO
 extern rhinoca_io_open io_open;
+extern rhinoca_io_ready io_ready;
 extern rhinoca_io_read io_read;
 extern rhinoca_io_close io_close;
 extern rhinoca_printFunc print;
@@ -50,7 +51,7 @@ int strcasecmp(const char* s1, const char* s2);
 #endif
 
 /*!	Macro to get the count of element of an array
-	For the Vsiaul Studio, in use the provided _countof macro defined in
+	For the Visual Studio, in use the provided _countof macro defined in
 	stdlib.h, which can prevent many miss use of it.
 	\sa http://blogs.msdn.com/the1/archive/2004/05/07/128242.aspx
  */
