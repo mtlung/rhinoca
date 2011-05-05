@@ -101,7 +101,7 @@ void BmpLoader::loadHeader()
 	memset(&fileHeader, 0, sizeof(fileHeader));
 
 	// If data not ready, give up in this round and do it again in next schedule
-	if(!io_ready(rh, sizeof(fileHeader) + sizeof(infoHeader), tId))
+	if(!io_ready(stream, sizeof(fileHeader) + sizeof(infoHeader), tId))
 		return reSchedule();
 
 	// Read the file header

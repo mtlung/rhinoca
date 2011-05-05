@@ -30,6 +30,7 @@ struct HttpStream
 	char getCmd[256];
 
 	Rhinoca* rh;
+	DeltaTimer timer;
 };
 
 static void prepareForRead(HttpStream* s, unsigned readSize)
@@ -200,15 +201,17 @@ rhuint64 rhinoca_http_read(void* file, void* buffer, rhuint64 size, int threadId
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
 
 	float timeout = 3;
-	DeltaTimer timer;
 	while(!s->headerReceived || s->bufSize < size) {
 		if(rhinoca_http_ready(file, size, threadId))
 			break;
 		TaskPool::sleep(0);
-		timeout -= timer.getDelta();
 
-		if(timeout <= 0)
-			s->httpError = true;
+		// Detect timeout for connecting to remote host
+		if(!s->headerReceived) {
+			timeout -= s->timer.getDelta();
+			if(timeout <= 0)
+				s->httpError = true;
+		}
 	}
 
 	if(!s->headerReceived) return 0;
