@@ -139,7 +139,6 @@ bool rhinoca_http_ready(void* file, rhuint64 size, int threadId)
 			return false;
 
 		messageContent += (sizeof(headerSeperator) - 1);	// -1 for the null terminator
-		s->headerReceived = true;
 
 		// Nullify the separator between header and body
 		messageContent[-1] = '\0';
@@ -149,7 +148,7 @@ bool rhinoca_http_ready(void* file, rhuint64 size, int threadId)
 		if(sscanf(s->buffer, "HTTP/%*c.%*c %d %*[^\n]", &serverRetCode) != 1)
 			goto OnError;
 
-		if( serverRetCode == 302 ||	// Found
+		if( serverRetCode == 302 ||	// Found (http redirect)
 			serverRetCode == 200)	// Ok
 		{
 			// Get the content length
@@ -165,7 +164,7 @@ bool rhinoca_http_ready(void* file, rhuint64 size, int threadId)
 			memmove(s->buffer, messageContent, bodySize);
 			s->bufSize = bodySize;
 
-//			printf("header received\n");
+			s->headerReceived = true;
 		}
 	}
 

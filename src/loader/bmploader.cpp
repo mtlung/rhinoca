@@ -92,8 +92,8 @@ void BmpLoader::loadHeader()
 	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
-	if(!stream)
-		stream = io_open(rh, texture->uri(), tId);
+	if(!stream) stream = io_open(rh, texture->uri(), tId);
+	if(!stream) goto Abort;
 
 	// Windows.h gives us these types to work with the Bitmap files
 	ASSERT(sizeof(BITMAPFILEHEADER) == 14);
@@ -160,7 +160,7 @@ void BmpLoader::loadPixelData()
 	pixelDataSize = rowByte * height;
 
 	// If data not ready, give up in this round and do it again in next schedule
-	if(!io_ready(rh, pixelDataSize, tId))
+	if(!io_ready(stream, pixelDataSize, tId))
 		return reSchedule();
 
 	pixelData = (char*)rhinoca_malloc(pixelDataSize);

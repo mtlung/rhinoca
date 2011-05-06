@@ -39,6 +39,7 @@ public:
 
 	void onPngInfoReady();
 
+	void* stream;
 	Texture* texture;
 	ResourceManager* manager;
 	rhuint width, height;
@@ -136,7 +137,7 @@ static void end_callback(png_structp png_ptr, png_infop)
 }
 
 PngLoader::PngLoader(Texture* t, ResourceManager* mgr)
-	: texture(t), manager(mgr)
+	: stream(NULL), texture(t), manager(mgr)
 	, width(0), height(0)
 	, pixelData(NULL), pixelDataSize(0), rowBytes(0), pixelDataFormat(Driver::RGBA)
 	, png_ptr(NULL), info_ptr(NULL)
@@ -171,12 +172,11 @@ void PngLoader::run(TaskPool* taskPool)
 
 void PngLoader::load(TaskPool* taskPool)
 {
-	texture->scratch = this;
 	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
-	void* f = io_open(rh, texture->uri(), tId);
-	if(!f) goto Abort;
+	if(!stream) stream = io_open(rh, texture->uri(), tId);
+	if(!stream) goto Abort;
 
 	char buff[1024*8];
 	unsigned readCount = 0;
@@ -186,18 +186,27 @@ void PngLoader::load(TaskPool* taskPool)
 		goto Abort;
 
 	do {
-		readCount = (unsigned)io_read(f, buff, sizeof(buff), tId);
+		if(!io_ready(stream, sizeof(buff), tId)) {
+			// Re-schedule the load operation
+			manager->taskPool->addFinalized(this, 0, 0, 0, texture->taskReady);
+			return;
+		}
+
+		readCount = (unsigned)io_read(stream, buff, sizeof(buff), tId);
 		png_process_data(png_ptr, info_ptr, (png_bytep)buff, readCount);
 
 		if(_aborted) goto Abort;
 	} while(readCount > 0 && !_loadFinished);
 
-	io_close(f, tId);
+	io_close(stream, tId);
+	texture->scratch = this;
+
 	return;
 
 Abort:
-	if(f) io_close(f, tId);
+	if(stream) io_close(stream, tId);
 	texture->state = Resource::Aborted;
+	texture->scratch = this;
 }
 
 void PngLoader::commit(TaskPool* taskPool)
