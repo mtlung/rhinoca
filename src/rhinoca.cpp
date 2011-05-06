@@ -100,10 +100,72 @@ void rhinoca_processEvent(Rhinoca* context, RhinocaEvent ev)
 }
 
 // IO
-rhinoca_io_open io_open;
-rhinoca_io_ready io_ready;
-rhinoca_io_read io_read;
-rhinoca_io_close io_close;
+struct CompoundFS
+{
+	enum Type {
+		Local,
+		Http
+	} type;
+	void* handle;
+};
+
+static void* default_ioOpen(Rhinoca* rh, const char* uri, int threadId)
+{
+	if(uri[0] == '\0')
+		return NULL;
+
+	CompoundFS* fs = new CompoundFS;
+	if(strstr(uri, "http://") == uri) {
+		fs->type = CompoundFS::Http;
+		fs->handle = rhinoca_http_open(rh, uri, threadId);
+	}
+	else {
+		fs->type = CompoundFS::Local;
+		fs->handle = fopen(uri, "rb");
+	}
+
+	return fs;
+}
+
+static bool default_ioReady(void* file, rhuint64 size, int threadId)
+{
+	CompoundFS* fs = reinterpret_cast<CompoundFS*>(file);
+
+	if(fs->type == CompoundFS::Http)
+		return rhinoca_http_ready(fs->handle, size, threadId);
+
+	return true;
+}
+
+static rhuint64 default_ioRead(void* file, void* buffer, rhuint64 size, int threadId)
+{
+	CompoundFS* fs = reinterpret_cast<CompoundFS*>(file);
+
+	if(fs->type == CompoundFS::Http)
+		return rhinoca_http_read(fs->handle, buffer, size, threadId);
+
+	FILE* f = reinterpret_cast<FILE*>(fs->handle);
+	return (rhuint64)fread(buffer, 1, (size_t)size, f);
+}
+
+static void default_ioClose(void* file, int threadId)
+{
+	CompoundFS* fs = reinterpret_cast<CompoundFS*>(file);
+
+	if(fs->type == CompoundFS::Http)
+		rhinoca_http_close(fs->handle, threadId);
+	else {
+		FILE* f = reinterpret_cast<FILE*>(file);
+		fclose(f);
+	}
+
+	delete fs;
+}
+
+rhinoca_io_open io_open = default_ioOpen;
+rhinoca_io_ready io_ready = default_ioReady;
+rhinoca_io_read io_read = default_ioRead;
+rhinoca_io_close io_close = default_ioClose;
 
 void rhinoca_io_setcallback(rhinoca_io_open open, rhinoca_io_ready ready, rhinoca_io_read read, rhinoca_io_close close)
 {
