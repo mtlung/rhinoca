@@ -38,7 +38,6 @@ protected:
 
 	void loadHeader();
 	void loadPixelData();
-	void reSchedule();
 
 	void* stream;
 	Texture* texture;
@@ -138,6 +137,7 @@ void BmpLoader::loadHeader()
 		flipVertical = false;
 	}
 
+	headerLoaded = true;
 	loadPixelData();
 	return;
 
@@ -189,11 +189,6 @@ void BmpLoader::loadPixelData()
 Abort:
 	texture->state = Resource::Aborted;
 	texture->scratch = this;
-}
-
-void BmpLoader::reSchedule()
-{
-	manager->taskPool->addFinalized(this, 0, 0, 0, texture->taskReady);
 }
 
 bool loadBmp(Resource* resource, ResourceManager* mgr)

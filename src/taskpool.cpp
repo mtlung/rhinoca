@@ -16,6 +16,7 @@ public:
 	volatile TaskId id;		///< 0 for invalid id
 	Task* task;				///< Once complete it will set to NULL
 	bool finalized;			///< Attributes like dependency, affinity, parent cannot be set after the task is finalized
+	bool reSchedule;		///< Indicate this task need to put back to the pool
 	int affinity;
 	TaskProxy* parent;		///< A task is consider completed only if all it's children are completed.
 	TaskProxy* dependency;	///< This task cannot be start until the depending task completes.
@@ -30,7 +31,7 @@ public:
 TaskPool::TaskProxy::TaskProxy()
 	: id(0)
 	, task(NULL)
-	, finalized(false)
+	, finalized(false), reSchedule(false)
 	, affinity(0)
 	, parent(NULL)
 	, dependency(NULL), dependencyId(0)
@@ -173,7 +174,7 @@ void TaskPool::init(rhuint threadCount)
 	}
 }
 
-TaskId TaskPool::beginAdd(Task* task, int affinity, TaskId reuseId)
+TaskId TaskPool::beginAdd(Task* task, int affinity)
 {
 	ScopeLock lock(mutex);
 
@@ -181,15 +182,11 @@ TaskId TaskPool::beginAdd(Task* task, int affinity, TaskId reuseId)
 	proxy->task = task;
 	proxy->affinity = affinity;
 
-	if(reuseId != 0) proxy->id = reuseId;
-
 	if(_openTasks) _openTasks->prevOpen = proxy;
 	proxy->nextOpen = _openTasks;
 	_openTasks = proxy;
 
-	if(_pendingTasks) _pendingTasks->prevPending = proxy;
-	proxy->nextPending = _pendingTasks;
-	_pendingTasks = proxy;
+	_addPendingTask(proxy);
 
 	_retainTask(proxy);	// Don't let this task to finish, before we call finishAdd()
 
@@ -242,7 +239,7 @@ void TaskPool::finishAdd(TaskId id)
 	}
 }
 
-TaskId TaskPool::addFinalized(Task* task, TaskId parent, TaskId dependency, int affinity, TaskId reuseId)
+TaskId TaskPool::addFinalized(Task* task, TaskId parent, TaskId dependency, int affinity)
 {
 	ScopeLock lock(mutex);
 
@@ -250,8 +247,6 @@ TaskId TaskPool::addFinalized(Task* task, TaskId parent, TaskId dependency, int 
 	proxy->task = task;
 	proxy->affinity = affinity;
 	proxy->finalized = true;
-
-	if(reuseId != 0) proxy->id = reuseId;
 
 	if(parent != 0) {
 		TaskProxy* parentProxy = _findProxyById(parent);
@@ -270,9 +265,7 @@ TaskId TaskPool::addFinalized(Task* task, TaskId parent, TaskId dependency, int 
 	proxy->nextOpen = _openTasks;
 	_openTasks = proxy;
 
-	if(_pendingTasks) _pendingTasks->prevPending = proxy;
-	proxy->nextPending = _pendingTasks;
-	_pendingTasks = proxy;
+	_addPendingTask(proxy);
 
 	return proxy->id;
 }
@@ -382,8 +375,15 @@ void TaskPool::_doTask(TaskProxy* p, int tId)
 	}
 
 	{	ScopeUnlock unlock(mutex);
+		p->reSchedule = false;
+		task->_proxy = p;
 		task->run(this);
 		task = NULL;	// The task may be deleted, never use the pointer up to this point
+	}
+
+	// Check if the task should re-schedule
+	if(p->reSchedule) {
+		_addPendingTask(p);
 	}
 
 	if(TaskProxy* parent = p->parent)
@@ -431,6 +431,13 @@ void TaskPool::_removeOpenTask(TaskProxy* p)
 	taskList.free(p);
 }
 
+void TaskPool::_addPendingTask(TaskProxy* p)
+{
+	if(_pendingTasks) _pendingTasks->prevPending = p;
+	p->nextPending = _pendingTasks;
+	_pendingTasks = p;
+}
+
 void TaskPool::_removePendingTask(TaskProxy* p)
 {
 	ASSERT(mutex.isLocked());
@@ -459,4 +466,11 @@ void TaskPool::addCallback(TaskId id, Callback callback, void* userData, int aff
 	t->callback = callback;
 	t->userData = userData;
 	addFinalized(t, 0, id, affinity);
+}
+
+void Task::reSchedule()
+{
+	TaskPool::TaskProxy* p = reinterpret_cast<TaskPool::TaskProxy*>(this->_proxy);
+	p->task = this;
+	p->reSchedule = true;
 }

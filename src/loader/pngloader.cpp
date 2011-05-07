@@ -188,7 +188,7 @@ void PngLoader::load(TaskPool* taskPool)
 	do {
 		if(!io_ready(stream, sizeof(buff), tId)) {
 			// Re-schedule the load operation
-			manager->taskPool->addFinalized(this, 0, 0, 0, texture->taskReady);
+			reSchedule();
 			return;
 		}
 

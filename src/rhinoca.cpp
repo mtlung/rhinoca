@@ -155,7 +155,7 @@ static void default_ioClose(void* file, int threadId)
 	if(fs->type == CompoundFS::Http)
 		rhinoca_http_close(fs->handle, threadId);
 	else {
-		FILE* f = reinterpret_cast<FILE*>(file);
+		FILE* f = reinterpret_cast<FILE*>(fs->handle);
 		fclose(f);
 	}
 

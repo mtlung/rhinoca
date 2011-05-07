@@ -13,7 +13,7 @@ public:
 
 	/// Derived class will do actual work in this function.
 	/// User should call 'delete this;' in this function if
-	/// the Task is not going to resure.
+	/// the Task is not going to reuse.
 	virtual void run(TaskPool* taskPool) = 0;
 
 	/// When there are idling thread in the TaskPool, it may request
@@ -22,6 +22,15 @@ public:
 
 	void* operator new(size_t size) { return rhinoca_malloc(size); }
 	void operator delete(void* ptr) { rhinoca_free(ptr); }
+
+protected:
+	/// Put the task back to the pool, usefull when the task cannot complete immediatly.
+	/// Make sure you won't delete 'this' in 'run()'
+	void reSchedule();
+
+private:
+	friend class TaskPool;
+	void* _proxy;	/// For use with reSchedule()
 };	// Task
 
 typedef rhuint TaskId;
@@ -30,6 +39,7 @@ class TaskPool
 {
 protected:
 	class TaskItem;
+	friend class Task;
 
 public:
 	TaskPool();
@@ -40,7 +50,7 @@ public:
 
 	/// You can addChild() and dependsOn() in-between beginAdd() and finishAdd()
 	/// The task will begin to process as soon as possible
-	TaskId beginAdd(Task* task, int affinity=0, TaskId reuseId=0);
+	TaskId beginAdd(Task* task, int affinity=0);
 
 	/// A task is consider completed only if all it's children are completed
 	void addChild(TaskId parent, TaskId child);
@@ -54,7 +64,7 @@ public:
 	void finishAdd(TaskId id);
 
 	/// Add the task, set the properties and finish the add, all in a single function call
-	TaskId addFinalized(Task* task, TaskId parent=0, TaskId dependency=0, int affinity=0, TaskId reuseId=0);
+	TaskId addFinalized(Task* task, TaskId parent=0, TaskId dependency=0, int affinity=0);
 
 	/// @note The TaskId may be reused for another task that you
 	/// were NOT waiting for, but that's not the problem since the
@@ -105,6 +115,9 @@ protected:
 
 	void _removeOpenTask(TaskProxy* p);
 
+	void _addPendingTask(TaskProxy* p);
+
+	// Remove pending task from the front
 	void _removePendingTask(TaskProxy* p);
 
 	class TaskList
