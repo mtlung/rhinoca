@@ -320,7 +320,7 @@ void TaskPool::_wait(TaskProxy* p, int tId)
 
 	TaskId id = p->id;
 	p->isWaiting = true;
-	if(p->affinity == 0 || p->affinity == tId) {
+	if(_matchAffinity(p, tId)) {
 		_doTask(p, tId);
 		if(p->id == id)
 			goto DoOtherTasks;
@@ -334,7 +334,7 @@ void TaskPool::_wait(TaskProxy* p, int tId)
 			TaskProxy* p2 = _pendingTasksHead->nextPending;
 
 			// Search for a task which it's dependency (if any) is not already running by the upper callstack, to prevent dead lock
-			while(p2->dependency && !p2->dependency->task) {
+			while(!_matchAffinity(p2, tId) || p2->dependency && !p2->dependency->task) {
 				p2 = p2->nextPending;
 				continue;
 			}
@@ -374,7 +374,8 @@ void TaskPool::doSomeTask()
 		// Don't pick a task to do if it's dependency is waiting for finish, to prevent deal lock
 		const bool isAlreadyWaiting = p->dependency && p->dependency->isWaiting;
 
-		if(p->affinity == 0 || p->affinity == tId && !isAlreadyWaiting) {
+		if(_matchAffinity(p, tId) && !isAlreadyWaiting)
+		{
 			// NOTE: After _doTask(), the 'next' pointer becomes invalid
 			_doTask(p, tId);
 
@@ -496,6 +497,15 @@ void TaskPool::_removePendingTask(TaskProxy* p)
 	p->prevPending->nextPending = p->nextPending;
 	p->nextPending->prevPending = p->prevPending;
 	p->prevPending = p->nextPending = NULL;
+}
+
+bool TaskPool::_matchAffinity(TaskProxy* p, int tId)
+{
+	if(p->affinity < 0)	// Only this thread cannot run
+		return _threadCount == 0 ? true : ~p->affinity != tId;
+
+	return	p->affinity == 0 ||		// Any thread can run
+			p->affinity == tId;		// Only this thread can run
 }
 
 // NOTE: This function is purely build on top of other public interface of TaskPool ^.^

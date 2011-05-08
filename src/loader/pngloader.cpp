@@ -231,8 +231,10 @@ bool loadPng(Resource* resource, ResourceManager* mgr)
 	Texture* texture = dynamic_cast<Texture*>(resource);
 
 	PngLoader* loaderTask = new PngLoader(texture, mgr);
-	texture->taskReady = taskPool->addFinalized(loaderTask);
+
+	texture->taskReady = taskPool->beginAdd(loaderTask, ~taskPool->mainThreadId());
 	texture->taskLoaded = taskPool->addFinalized(loaderTask, 0, texture->taskReady, taskPool->mainThreadId());
+	taskPool->finishAdd(texture->taskReady);
 
 	return true;
 }

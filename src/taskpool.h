@@ -50,6 +50,10 @@ public:
 
 	/// You can addChild() and dependsOn() in-between beginAdd() and finishAdd()
 	/// The task will begin to process as soon as possible
+	/// \param affinity
+	///		= 0 : any thread can run this task
+	///		= threadId : the only thread that can run this task
+	///		= ~threadId : the only thread that can NOT run this task
 	TaskId beginAdd(Task* task, int affinity=0);
 
 	/// A task is consider completed only if all it's children are completed
@@ -117,6 +121,8 @@ protected:
 
 	// Remove pending task from the front
 	void _removePendingTask(TaskProxy* p);
+
+	bool _matchAffinity(TaskProxy* p, int threadId);
 
 	class TaskList
 	{

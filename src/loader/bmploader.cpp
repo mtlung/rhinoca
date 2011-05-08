@@ -201,7 +201,7 @@ bool loadBmp(Resource* resource, ResourceManager* mgr)
 
 	BmpLoader* loaderTask = new BmpLoader(texture, mgr);
 
-	texture->taskReady = taskPool->beginAdd(loaderTask);
+	texture->taskReady = taskPool->beginAdd(loaderTask, ~taskPool->mainThreadId());
 	texture->taskLoaded = taskPool->addFinalized(loaderTask, 0, texture->taskReady, taskPool->mainThreadId());
 	taskPool->finishAdd(texture->taskReady);
 
