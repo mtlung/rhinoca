@@ -60,6 +60,9 @@ public:
 	/// Check for infrequently used resource and unload them
 	void collectInfrequentlyUsed();
 
+	/// Abort all loading operation, allow a faster shut down of the engine
+	void abortAllLoader();
+
 // Factories
 	typedef Resource* (*CreateFunc)(const char* uri, ResourceManager* mgr);
 	typedef bool (*LoadFunc)(Resource* resource, ResourceManager* mgr);

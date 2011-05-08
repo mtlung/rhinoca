@@ -83,7 +83,10 @@ void JpegLoader::load(TaskPool* taskPool)
 	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
-	void* f = io_open(rh, texture->uri(), tId);
+	void* f = NULL;
+
+	if(texture->state == Resource::Aborted) goto Abort;
+	f = io_open(rh, texture->uri(), tId);
 	if(!f) goto Abort;
 
 	_decoder = new jpeg_decoder(_stream = new Stream(f, tId), true);

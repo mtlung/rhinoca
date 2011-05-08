@@ -35,13 +35,26 @@ ResourceManager::ResourceManager()
 
 ResourceManager::~ResourceManager()
 {
-	Resource* r = NULL;
-	while(r = _resources.findMin()) {
-		taskPool->wait(r->taskLoaded);
+	abortAllLoader();
+
+	for(Resource* r=_resources.findMin(); r;) {
+		Resource* next = r->next();
 		intrusivePtrRelease(r);
+		r = next;
 	}
 
 	rhdelete(_factories);
+}
+
+void ResourceManager::abortAllLoader()
+{
+	// NOTE: Seperate into 2 passes can make sure all loading task are set to abort
+	for(Resource* r=_resources.findMin(); r; r=r->next()) {
+		if(r->state == Resource::Loading)
+			r->state = Resource::Aborted;
+	}
+	for(Resource* r=_resources.findMin(); r; r=r->next())
+		taskPool->wait(r->taskLoaded);
 }
 
 ResourcePtr ResourceManager::load(const char* uri)

@@ -26,7 +26,9 @@ public:
 		, headerLoaded(false), flipVertical(false)
 	{}
 
-	~BmpLoader() {
+	~BmpLoader()
+	{
+		if(stream) io_close(stream, TaskPool::threadId());
 		rhinoca_free(pixelData);
 	}
 
@@ -72,8 +74,6 @@ void BmpLoader::load(TaskPool* taskPool)
 void BmpLoader::commit(TaskPool* taskPool)
 {
 	int tId = TaskPool::threadId();
-	if(stream) io_close(stream, tId);
-	stream = NULL;
 
 	ASSERT(texture->scratch == this);
 	texture->scratch = NULL;
@@ -151,6 +151,7 @@ void BmpLoader::loadPixelData()
 	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
+	if(texture->state == Resource::Aborted) goto Abort;
 	if(!stream) goto Abort;
 
 	// Memory usage for one row of image

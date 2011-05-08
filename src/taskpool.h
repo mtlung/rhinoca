@@ -78,10 +78,14 @@ public:
 
 	/// If you know your thread have some idle time,
 	/// call this function to help consuming the task queue
-	void doSomeTask();
+	/// timeout = 0 for no timeout
+	void doSomeTask(float timeout=0);
 
 	/// Return false if the TaskPool is going to shutdown
 	bool keepRun() const;
+
+	/// Wait till they are finished
+	void waitAll();
 
 	/// Callback to invoke when a task finish
 	typedef void (*Callback)(TaskPool* taskPool, void* userData);
@@ -101,7 +105,7 @@ protected:
 	class TaskProxy;
 
 	friend void _run(TaskPool*);
-	void _doTask(TaskProxy* id, int threadId);
+	void _doTask(TaskProxy* id, int threadId, bool allowWait);
 
 	void _wait(TaskProxy* id, int threadId);
 

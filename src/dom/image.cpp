@@ -26,6 +26,8 @@ static void onReadyCallback(TaskPool* taskPool, void* userData)
 	const char* event = (self->texture->state == Texture::Aborted) ? "onerror" : "onready";
 	if(JS_GetProperty(self->jsContext, self->jsObject, event, &closure) && closure != JSVAL_VOID)
 		JS_CallFunctionValue(self->jsContext, self->jsObject, closure, 0, NULL, &rval);
+
+	self->releaseGcRoot();
 }
 
 static void onLoadCallback(TaskPool* taskPool, void* userData)
@@ -37,6 +39,8 @@ static void onLoadCallback(TaskPool* taskPool, void* userData)
 	const char* event = (self->texture->state == Texture::Aborted) ? "onerror" : "onload";
 	if(JS_GetProperty(self->jsContext, self->jsObject, event, &closure) && closure != JSVAL_VOID)
 		JS_CallFunctionValue(self->jsContext, self->jsObject, closure, 0, NULL, &rval);
+
+	self->releaseGcRoot();
 }
 
 static JSBool getSrc(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
@@ -67,6 +71,10 @@ static JSBool setSrc(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 		int tId = TaskPool::threadId();
 		mgr.taskPool->addCallback(self->texture->taskReady, onReadyCallback, self, tId);
 		mgr.taskPool->addCallback(self->texture->taskLoaded, onLoadCallback, self, tId);
+
+		// Prevent HTMLImageElement beging GC before the callback finished.
+		self->addGcRoot();
+		self->addGcRoot();
 	}
 	else
 		print(self->ownerDocument->rhinoca, "Failed to load: '%s'\n", path.c_str());

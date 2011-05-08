@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "taskpool.h"
 #include "platform.h"
+#include "timer.h"
 
 // Inspired by BitSquid engine:
 // http://bitsquid.blogspot.com/2010/03/task-management-practical-example.html
@@ -152,7 +153,7 @@ void TaskPool::sleep(int ms)
 void _run(TaskPool* pool)
 {
 	while(pool->keepRun()) {
-		pool->doSomeTask();
+		pool->doSomeTask(0);
 
 		// TODO: Use condition variable
 		TaskPool::sleep(1);
@@ -302,6 +303,15 @@ void TaskPool::wait(TaskId id)
 	}
 }
 
+void TaskPool::waitAll()
+{
+	int tId = threadId();
+	ScopeLock lock(mutex);
+
+	while(_openTasks)
+		_wait(_openTasks, tId);
+}
+
 #if DEBUG_PRINT
 static int _debugWaitCount = 0;
 static const int _debugMaxIndent = 10;
@@ -321,7 +331,7 @@ void TaskPool::_wait(TaskProxy* p, int tId)
 	TaskId id = p->id;
 	p->isWaiting = true;
 	if(_matchAffinity(p, tId)) {
-		_doTask(p, tId);
+		_doTask(p, tId, true);
 		if(p->id == id)
 			goto DoOtherTasks;
 	}
@@ -340,7 +350,7 @@ void TaskPool::_wait(TaskProxy* p, int tId)
 			}
 
 			if(p2 != _pendingTasksTail)
-				_doTask(p2, tId);
+				_doTask(p2, tId, true);
 			else {
 				// If no more task can do we sleep for a while
 				// NOTE: Must release mutex to avoid deal lock
@@ -362,14 +372,25 @@ bool TaskPool::isDone(TaskId id)
 	return _findProxyById(id) == NULL;
 }
 
-void TaskPool::doSomeTask()
+void TaskPool::doSomeTask(float timeout)
 {
+	Timer timer;
+	const float beginTime = timer.seconds();
+
 	int tId = threadId();
 	ScopeLock lock(mutex);
 
 	TaskProxy* p = _pendingTasksHead->nextPending;
-	while(p != _pendingTasksTail) {
+	while(p && p != _pendingTasksTail) {
 		TaskProxy* next = p->nextPending;
+
+		// Check it the task has any dependency, skip if necessary
+		if(timeout > 0) if(TaskProxy* dep = p->dependency) {
+			if(dep->id == p->dependencyId) {
+				p = dep;
+				continue;
+			}
+		}
 
 		// Don't pick a task to do if it's dependency is waiting for finish, to prevent deal lock
 		const bool isAlreadyWaiting = p->dependency && p->dependency->isWaiting;
@@ -377,20 +398,26 @@ void TaskPool::doSomeTask()
 		if(_matchAffinity(p, tId) && !isAlreadyWaiting)
 		{
 			// NOTE: After _doTask(), the 'next' pointer becomes invalid
-			_doTask(p, tId);
+			_doTask(p, tId, timeout == 0);
 
 			// NOTE: Each time _doTask() is invoked, we start to search task
 			// at the beginning, to avoid the problem of 'next' become invalid,
 			// may be in-efficient, but easier to implement.
 			p = _pendingTasksHead->nextPending;
 		}
-		else
+		else {
+			if(timeout > 0 && timer.seconds() > beginTime + timeout)
+				return;
+
+			ScopeUnlock unlock(mutex);
+			sleep(1);
 			p = next;
+		}
 	}
 }
 
 // NOTE: Recursive and re-entrant
-void TaskPool::_doTask(TaskProxy* p, int tId)
+void TaskPool::_doTask(TaskProxy* p, int tId, bool allowWait)
 {
 	ASSERT(mutex.isLocked());
 	
@@ -409,8 +436,9 @@ void TaskPool::_doTask(TaskProxy* p, int tId)
 	_retainTask(p);
 
 	if(TaskProxy* dep = p->dependency) {
-		if(dep->id == p->dependencyId)
+		if(dep->id == p->dependencyId) {
 			_wait(dep, tId);
+		}
 	}
 
 	task->_proxy = p;
@@ -494,8 +522,8 @@ void TaskPool::_addPendingTask(TaskProxy* p)
 void TaskPool::_removePendingTask(TaskProxy* p)
 {
 	ASSERT(mutex.isLocked());
-	p->prevPending->nextPending = p->nextPending;
-	p->nextPending->prevPending = p->prevPending;
+	if(p->prevPending) p->prevPending->nextPending = p->nextPending;
+	if(p->nextPending) p->nextPending->prevPending = p->prevPending;
 	p->prevPending = p->nextPending = NULL;
 }
 

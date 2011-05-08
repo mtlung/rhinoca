@@ -107,7 +107,8 @@ void Rhinoca::update()
 		domWindow->update();
 
 	resourceManager.update();
-	taskPool.doSomeTask();
+
+	taskPool.doSomeTask(1.0f / 60);
 
 	if(domWindow)
 		domWindow->render();
@@ -330,6 +331,11 @@ bool Rhinoca::openDoucment(const char* uri)
 
 void Rhinoca::closeDocument()
 {
+	resourceManager.abortAllLoader();
+
+	// Clear all tasks before the VM shutdown, since any task would use the VM
+	taskPool.waitAll();
+
 	VERIFY(JS_RemoveRoot(jsContext, &jsConsole));
 	jsConsole = NULL;
 

@@ -157,6 +157,8 @@ PngLoader::PngLoader(Texture* t, ResourceManager* mgr)
 
 PngLoader::~PngLoader()
 {
+	if(stream) io_close(stream, TaskPool::threadId());
+
 	rhinoca_free(pixelData);
 	// libpng will handle for null input pointers
 	png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
@@ -175,6 +177,7 @@ void PngLoader::load(TaskPool* taskPool)
 	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
+	if(texture->state == Resource::Aborted) goto Abort;
 	if(!stream) stream = io_open(rh, texture->uri(), tId);
 	if(!stream) goto Abort;
 
@@ -198,13 +201,11 @@ void PngLoader::load(TaskPool* taskPool)
 		if(_aborted) goto Abort;
 	} while(readCount > 0 && !_loadFinished);
 
-	io_close(stream, tId);
 	texture->scratch = this;
 
 	return;
 
 Abort:
-	if(stream) io_close(stream, tId);
 	texture->state = Resource::Aborted;
 	texture->scratch = this;
 }
