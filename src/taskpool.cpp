@@ -5,6 +5,8 @@
 // Inspired by BitSquid engine:
 // http://bitsquid.blogspot.com/2010/03/task-management-practical-example.html
 
+#define DEBUG_PRINT 0
+
 class TaskPool::TaskProxy
 {
 public:
@@ -16,8 +18,9 @@ public:
 	volatile TaskId id;		///< 0 for invalid id
 	Task* task;				///< Once complete it will set to NULL
 	bool finalized;			///< Attributes like dependency, affinity, parent cannot be set after the task is finalized
-	bool reSchedule;		///< Indicate this task need to put back to the pool
+	bool isWaiting;			///< Indicate this task is already waiting to finish
 	int affinity;
+	TaskPool* taskPool;
 	TaskProxy* parent;		///< A task is consider completed only if all it's children are completed.
 	TaskProxy* dependency;	///< This task cannot be start until the depending task completes.
 	TaskId dependencyId;	///< The dependency valid only if dependency->id == dependencyId
@@ -31,8 +34,9 @@ public:
 TaskPool::TaskProxy::TaskProxy()
 	: id(0)
 	, task(NULL)
-	, finalized(false), reSchedule(false)
+	, finalized(false), isWaiting(false)
 	, affinity(0)
+	, taskPool(NULL)
 	, parent(NULL)
 	, dependency(NULL), dependencyId(0)
 	, openChildCount(0)
@@ -95,11 +99,16 @@ void TaskPool::TaskList::free(TaskProxy* id)
 TaskPool::TaskPool()
 	: _keepRun(true)
 	, _openTasks(NULL)
-	, _pendingTasks(NULL)
+	, _pendingTasksHead(NULL), _pendingTasksTail(NULL)
 	, _threadCount(0)
 	, _threadHandles(NULL)
 	, _mainThreadId(TaskPool::threadId())
 {
+	_pendingTasksHead = new TaskProxy();
+	_pendingTasksTail = new TaskProxy();
+
+	_pendingTasksHead->nextPending = _pendingTasksTail;
+	_pendingTasksTail->prevPending = _pendingTasksHead;
 }
 
 TaskPool::~TaskPool()
@@ -126,6 +135,9 @@ TaskPool::~TaskPool()
 	}
 
 	rhdelete(_threadHandles);
+
+	delete _pendingTasksHead;
+	delete _pendingTasksTail;
 }
 
 void TaskPool::sleep(int ms)
@@ -179,6 +191,7 @@ TaskId TaskPool::beginAdd(Task* task, int affinity)
 	ScopeLock lock(mutex);
 
 	TaskProxy* proxy = taskList.alloc();
+	proxy->taskPool = this;
 	proxy->task = task;
 	proxy->affinity = affinity;
 
@@ -221,13 +234,6 @@ void TaskPool::dependsOn(TaskId src, TaskId on)
 	srcProxy->dependencyId = on;
 }
 
-void TaskPool::setAffinity(TaskId id, int affinity)
-{
-	ScopeLock lock(mutex);
-	if(TaskProxy* p = _findProxyById(id))
-		p->affinity = affinity;
-}
-
 void TaskPool::finishAdd(TaskId id)
 {
 	ScopeLock lock(mutex);
@@ -244,6 +250,7 @@ TaskId TaskPool::addFinalized(Task* task, TaskId parent, TaskId dependency, int 
 	ScopeLock lock(mutex);
 
 	TaskProxy* proxy = taskList.alloc();
+	proxy->taskPool = this;
 	proxy->task = task;
 	proxy->affinity = affinity;
 	proxy->finalized = true;
@@ -295,13 +302,24 @@ void TaskPool::wait(TaskId id)
 	}
 }
 
+#if DEBUG_PRINT
+static int _debugWaitCount = 0;
+static const int _debugMaxIndent = 10;
+static const char _debugIndent[_debugMaxIndent+1] = "          ";
+#endif
+
 void TaskPool::_wait(TaskProxy* p, int tId)
 {
 	ASSERT(mutex.isLocked());
 	if(!p) return;
 
-//	Task* taskToWait = p->task;
+#if DEBUG_PRINT
+	printf("%sBegin _wait(%d)\n", _debugIndent + _debugMaxIndent - _debugWaitCount, p->id);
+	++_debugWaitCount;
+#endif
+
 	TaskId id = p->id;
+	p->isWaiting = true;
 	if(p->affinity == 0 || p->affinity == tId) {
 		_doTask(p, tId);
 		if(p->id == id)
@@ -313,16 +331,29 @@ void TaskPool::_wait(TaskProxy* p, int tId)
 	DoOtherTasks:
 		// If p->id not equals to id, it means the task is already finished long ago, and the proxy get reused.
 		while(p->id == id) {
-			if(this->_pendingTasks)
-				_doTask(this->_pendingTasks, tId);
+			TaskProxy* p2 = _pendingTasksHead->nextPending;
+
+			// Search for a task which it's dependency (if any) is not already running by the upper callstack, to prevent dead lock
+			while(p2->dependency && !p2->dependency->task) {
+				p2 = p2->nextPending;
+				continue;
+			}
+
+			if(p2 != _pendingTasksTail)
+				_doTask(p2, tId);
 			else {
 				// If no more task can do we sleep for a while
-				// NOTE: Temporary release mutex to avoid deal lock
+				// NOTE: Must release mutex to avoid deal lock
 				ScopeUnlock unlock(mutex);
 				TaskPool::sleep(1);
 			}
 		}
 	}
+
+#if DEBUG_PRINT
+	--_debugWaitCount;
+	printf("%sEnd _wait(%d)\n", _debugIndent + _debugMaxIndent - _debugWaitCount, p->id);
+#endif
 }
 
 bool TaskPool::isDone(TaskId id)
@@ -336,18 +367,21 @@ void TaskPool::doSomeTask()
 	int tId = threadId();
 	ScopeLock lock(mutex);
 
-	TaskProxy* p = _pendingTasks;
-	while(p) {
+	TaskProxy* p = _pendingTasksHead->nextPending;
+	while(p != _pendingTasksTail) {
 		TaskProxy* next = p->nextPending;
 
-		if(p->affinity == 0 || p->affinity == tId) {
+		// Don't pick a task to do if it's dependency is waiting for finish, to prevent deal lock
+		const bool isAlreadyWaiting = p->dependency && p->dependency->isWaiting;
+
+		if(p->affinity == 0 || p->affinity == tId && !isAlreadyWaiting) {
 			// NOTE: After _doTask(), the 'next' pointer becomes invalid
 			_doTask(p, tId);
 
 			// NOTE: Each time _doTask() is invoked, we start to search task
 			// at the beginning, to avoid the problem of 'next' become invalid,
 			// may be in-efficient, but easier to implement.
-			p = _pendingTasks;
+			p = _pendingTasksHead->nextPending;
 		}
 		else
 			p = next;
@@ -360,6 +394,10 @@ void TaskPool::_doTask(TaskProxy* p, int tId)
 	ASSERT(mutex.isLocked());
 	
 	if(!p || !p->task) return;
+
+#if DEBUG_PRINT
+	printf("%sBegin _doTask(%d)\n", _debugIndent + _debugMaxIndent - _debugWaitCount, p->id);
+#endif
 
 	Task* task = p->task;
 	p->task = NULL;
@@ -374,17 +412,16 @@ void TaskPool::_doTask(TaskProxy* p, int tId)
 			_wait(dep, tId);
 	}
 
+	task->_proxy = p;
+
 	{	ScopeUnlock unlock(mutex);
-		p->reSchedule = false;
-		task->_proxy = p;
 		task->run(this);
 		task = NULL;	// The task may be deleted, never use the pointer up to this point
 	}
 
-	// Check if the task should re-schedule
-	if(p->reSchedule) {
-		_addPendingTask(p);
-	}
+#if DEBUG_PRINT
+	printf("%sEnd _doTask(%d)\n", _debugIndent + _debugMaxIndent - _debugWaitCount, p->id);
+#endif
 
 	if(TaskProxy* parent = p->parent)
 		_releaseTask(parent);
@@ -433,17 +470,31 @@ void TaskPool::_removeOpenTask(TaskProxy* p)
 
 void TaskPool::_addPendingTask(TaskProxy* p)
 {
-	if(_pendingTasks) _pendingTasks->prevPending = p;
-	p->nextPending = _pendingTasks;
-	_pendingTasks = p;
+	ASSERT(mutex.isLocked());
+
+	static const bool addOnTail = true;
+
+	if(addOnTail) {
+		TaskProxy* beg = _pendingTasksHead->nextPending;
+		p->nextPending = beg;
+		p->prevPending = _pendingTasksHead;
+		beg->prevPending = p;
+		_pendingTasksHead->nextPending = p;
+	}
+	else {
+		TaskProxy* end = _pendingTasksTail->prevPending;
+		p->prevPending = end;
+		p->nextPending = _pendingTasksTail;
+		end->nextPending = p;
+		_pendingTasksTail->prevPending = p;
+	}
 }
 
 void TaskPool::_removePendingTask(TaskProxy* p)
 {
 	ASSERT(mutex.isLocked());
-	if(p->prevPending) p->prevPending->nextPending = p->nextPending;
-	if(p->nextPending) p->nextPending->prevPending = p->prevPending;
-	if(p == _pendingTasks) _pendingTasks = p->nextPending;
+	p->prevPending->nextPending = p->nextPending;
+	p->nextPending->prevPending = p->prevPending;
 	p->prevPending = p->nextPending = NULL;
 }
 
@@ -471,6 +522,13 @@ void TaskPool::addCallback(TaskId id, Callback callback, void* userData, int aff
 void Task::reSchedule()
 {
 	TaskPool::TaskProxy* p = reinterpret_cast<TaskPool::TaskProxy*>(this->_proxy);
+
+	ScopeLock lock(p->taskPool->mutex);
+
 	p->task = this;
-	p->reSchedule = true;
+	p->taskPool->_addPendingTask(p);
+
+#if DEBUG_PRINT
+	printf("%sreSchedule(%d)\n", _debugIndent + _debugMaxIndent - _debugWaitCount, p->id);
+#endif
 }

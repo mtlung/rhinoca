@@ -58,8 +58,6 @@ public:
 	/// A task cannot be start until it's depending task completes
 	void dependsOn(TaskId src, TaskId on);
 
-	void setAffinity(TaskId id, int affinity);
-
 	/// The task will not being it's physical run until finishAdd() invoked
 	void finishAdd(TaskId id);
 
@@ -138,8 +136,9 @@ protected:
 	TaskList taskList;
 
 	bool _keepRun;
-	TaskProxy* _openTasks;		///< Tasks which are not completed yet.
-	TaskProxy* _pendingTasks;	///< Tasks which are not assigned to any worker yet.
+	TaskProxy* _openTasks;			///< Tasks which are not completed yet.
+	TaskProxy* _pendingTasksHead;	///< Tasks which are not assigned to any worker yet, head of link list.
+	TaskProxy* _pendingTasksTail;	///< Tasks which are not assigned to any worker yet, tail of link list.
 
 	rhuint _threadCount;
 	rhuint* _threadHandles;

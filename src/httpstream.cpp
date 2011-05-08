@@ -227,7 +227,7 @@ rhuint64 rhinoca_http_read(void* file, void* buffer, rhuint64 size, int threadId
 	s->bufSize -= dataToMove;
 	s->userReadCount += dataToMove;
 
-	printf("read: %u\n", s->userReadCount);
+//	printf("read: %u\n", s->userReadCount);
 
 	return dataToMove;
 }

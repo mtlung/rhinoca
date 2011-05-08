@@ -84,7 +84,7 @@ Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 	jsGlobal = JS_NewObject(jsContext, &jsGlobalClass, NULL, NULL);
 	JS_SetGlobalObject(jsContext, jsGlobal);
 
-//	taskPool.init(1);
+	taskPool.init(1);
 	resourceManager.rhinoca = this;
 	resourceManager.taskPool = &taskPool;
 	Loader::registerLoaders(&resourceManager);
