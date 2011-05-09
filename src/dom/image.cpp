@@ -58,10 +58,14 @@ static JSBool setSrc(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	if(!jss) return JS_FALSE;
 	char* str = JS_GetStringBytes(jss);
 
-	// Assume relative path to the document
-	Path path = self->ownerDocument->rhinoca->documentUrl.c_str();
-	path = path.getBranchPath();
-	path /= str;
+	Path path;
+	if(Path(str).hasRootDirectory())	// Absolute path
+		path = str;
+	else {
+		// Relative path to the document
+		path = self->ownerDocument->rhinoca->documentUrl.c_str();
+		path = path.getBranchPath() / str;
+	}
 
 	ResourceManager& mgr = self->ownerDocument->rhinoca->resourceManager;
 	self->texture = mgr.loadAs<Texture>(path.c_str());
@@ -72,7 +76,7 @@ static JSBool setSrc(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 		mgr.taskPool->addCallback(self->texture->taskReady, onReadyCallback, self, tId);
 		mgr.taskPool->addCallback(self->texture->taskLoaded, onLoadCallback, self, tId);
 
-		// Prevent HTMLImageElement beging GC before the callback finished.
+		// Prevent HTMLImageElement begging GC before the callback finished.
 		self->addGcRoot();
 		self->addGcRoot();
 	}

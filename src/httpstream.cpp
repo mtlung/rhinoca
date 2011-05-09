@@ -54,7 +54,8 @@ void* rhinoca_http_open(Rhinoca* rh, const char* uri, int threadId)
 
 	const char getFmt[] =
 		"GET %s HTTP/1.0\r\n"
-		"User_Agent: HTTPTool/1.0\r\n"
+		"Host: %s\r\n"	// Required for http 1.1
+		"User-Agent: Rhinoca\r\n"
 		"\r\n";
 
     int ret = 0;
@@ -62,7 +63,7 @@ void* rhinoca_http_open(Rhinoca* rh, const char* uri, int threadId)
 	HttpStream* s = new HttpStream;
 
 	if(strlen(uri) > sizeof(s->getCmd) - sizeof(getFmt)) goto OnError;
-	if(sprintf(s->getCmd, getFmt, path) < 0) goto OnError;
+	if(sprintf(s->getCmd, getFmt, path, host) < 0) goto OnError;
 
 	s->buffer = NULL;
 	s->headerSent = false;

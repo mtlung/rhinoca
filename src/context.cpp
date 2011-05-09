@@ -283,7 +283,7 @@ bool Rhinoca::openDoucment(const char* uri)
 
 				if(srcUrl = parser.attributeValueIgnoreCase("src"))
 				{
-					scriptUrl = scriptUrl.getBranchPath() / srcUrl;
+					scriptUrl = Path(srcUrl).hasRootDirectory() ? srcUrl : scriptUrl.getBranchPath() / srcUrl;
 					if(void* file = io_open(this, scriptUrl.c_str(), 0)) {
 						appendFileToString(file, script);
 						io_close(file, 0);
