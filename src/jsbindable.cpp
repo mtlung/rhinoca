@@ -17,6 +17,7 @@ JsBindable::~JsBindable()
 
 void JsBindable::addGcRoot()
 {
+	addReference();
 	ASSERT(jsContext);
 	if(typeName.empty())
 		VERIFY(JS_AddRoot(jsContext, &jsObject));
@@ -28,6 +29,7 @@ void JsBindable::releaseGcRoot()
 {
 	ASSERT(jsContext);
 	VERIFY(JS_RemoveRoot(jsContext, &jsObject));
+	releaseReference();
 }
 
 void JsBindable::addReference()
