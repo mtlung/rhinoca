@@ -20,7 +20,7 @@ public:
 
 	void useExternal(RhinocaRenderContext* context);
 
-// Attibutes
+// Attributes
 	void* handle;
 	void* depthHandle, *stencilHandle;
 

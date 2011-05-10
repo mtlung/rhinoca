@@ -17,7 +17,7 @@ public:
 
 	/// Don't destruct a Node (or it's derived class) directly, it
 	/// should be preformed by the GC.
-	~Node();
+	virtual ~Node();
 
 // Operations
 	void bind(JSContext* cx, JSObject* parent);

@@ -99,7 +99,7 @@ void Node::bind(JSContext* cx, JSObject* parent)
 	VERIFY(JS_SetPrivate(cx, jsObject, this));
 	VERIFY(JS_DefineFunctions(cx, jsObject, methods));
 	VERIFY(JS_DefineProperties(cx, jsObject, properties));
-	addReference();
+	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
 JSObject* Node::createPrototype()
@@ -108,7 +108,7 @@ JSObject* Node::createPrototype()
 	JSObject* proto = JS_NewObject(jsContext, &jsClass, NULL, NULL);
 	VERIFY(JS_SetPrivate(jsContext, proto, this));
 	VERIFY(JS_DefineFunctions(jsContext, proto, methods));
-	addReference();
+	addReference();	// releaseReference() in JsBindable::finalize()
 	return proto;
 }
 

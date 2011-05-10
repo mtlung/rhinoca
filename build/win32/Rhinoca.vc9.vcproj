@@ -152,6 +152,14 @@
 			Name="dom"
 			>
 			<File
+				RelativePath="..\..\src\dom\audio.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\audio.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\dom\body.cpp"
 				>
 			</File>
@@ -229,6 +237,14 @@
 			</File>
 			<File
 				RelativePath="..\..\src\dom\keyevent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\media.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\media.h"
 				>
 			</File>
 			<File
@@ -438,6 +454,14 @@
 		</Filter>
 		<File
 			RelativePath="..\..\src\atomic.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\src\audiobuffer.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\src\audiobuffer.h"
 			>
 		</File>
 		<File

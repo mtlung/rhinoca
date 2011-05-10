@@ -20,7 +20,7 @@ public:
 
 	void clear();
 
-// Attibutes
+// Attributes
 	void* handle;
 	unsigned width, height;
 

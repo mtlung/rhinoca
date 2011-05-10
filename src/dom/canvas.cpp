@@ -139,7 +139,7 @@ void HTMLCanvasElement::createContext(const char* ctxName)
 
 	if(strcasecmp(ctxName, "2d") == 0) {
 		context = new CanvasRenderingContext2D(this);
-		context->addReference();
+		context->addReference();	// releaseReference() in ~HTMLCanvasElement()
 	}
 }
 

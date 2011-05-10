@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "audio.h"
 #include "body.h"
 #include "canvas.h"
 #include "div.h"
@@ -17,6 +18,7 @@ void registerFactories()
 {
 	ElementFactory& f = ElementFactory::singleton();
 
+	f.addFactory(&HTMLAudioElement::factoryCreate);
 	f.addFactory(&HTMLBodyElement::factoryCreate);
 	f.addFactory(&HTMLCanvasElement::factoryCreate);
 	f.addFactory(&HTMLDivElement::factoryCreate);
