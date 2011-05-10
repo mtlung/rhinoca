@@ -167,7 +167,7 @@ static void appendFileToString(void* file, std::string& str)
 {
 	char buf[128];
 	rhuint64 readCount;
-	while(readCount = io_read(file, buf, sizeof(buf), 0))
+	while((readCount = io_read(file, buf, sizeof(buf), 0)))
 		str.append(buf, (size_t)readCount);
 }
 
@@ -281,7 +281,7 @@ bool Rhinoca::openDoucment(const char* uri)
 				unsigned lineNo = 0;
 				const char* srcUrl = NULL;
 
-				if(srcUrl = parser.attributeValueIgnoreCase("src"))
+				if((srcUrl = parser.attributeValueIgnoreCase("src")))
 				{
 					scriptUrl = Path(srcUrl).hasRootDirectory() ? srcUrl : scriptUrl.getBranchPath() / srcUrl;
 					if(void* file = io_open(this, scriptUrl.c_str(), 0)) {

@@ -184,7 +184,6 @@ static void ioClose(void* file, int threadId)
 
 	rh = rhinoca_create(&renderContext);
 	rhinoca_setSize(rh, width, height);
-	rhinoca_io_setcallback(ioOpen, ioRead, ioClose);
 
 	rhinoca_openDocument(rh, "test.html");
 	assert(GL_NO_ERROR == glGetError());

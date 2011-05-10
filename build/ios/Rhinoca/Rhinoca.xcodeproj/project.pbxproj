@@ -81,6 +81,18 @@
 		18F0C5801303A566007752DB /* driver.h in Headers */ = {isa = PBXBuildFile; fileRef = 18F0C57E1303A566007752DB /* driver.h */; };
 		18F0C73E1304F121007752DB /* driverios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 18F0C73D1304F121007752DB /* driverios.cpp */; };
 		9C91B8D1132545A000195FF7 /* driverdetail.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C91B8D0132545A000195FF7 /* driverdetail.h */; };
+		9C93C8FB137981D300682898 /* audiobuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C93C8F9137981D300682898 /* audiobuffer.cpp */; };
+		9C93C8FC137981D300682898 /* audiobuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C93C8FA137981D300682898 /* audiobuffer.h */; };
+		9C93C8FF1379825F00682898 /* media.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C93C8FD1379825F00682898 /* media.cpp */; };
+		9C93C9001379825F00682898 /* media.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C93C8FE1379825F00682898 /* media.h */; };
+		9C93C921137987CE00682898 /* linklist.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C93C91F137987CD00682898 /* linklist.cpp */; };
+		9C93C922137987CE00682898 /* linklist.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C93C920137987CE00682898 /* linklist.h */; };
+		9C93C9251379884500682898 /* audio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C93C9231379884500682898 /* audio.cpp */; };
+		9C93C9261379884500682898 /* audio.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C93C9241379884500682898 /* audio.h */; };
+		9C93C9291379885300682898 /* canvasgradient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C93C9271379885300682898 /* canvasgradient.cpp */; };
+		9C93C92A1379885300682898 /* canvasgradient.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C93C9281379885300682898 /* canvasgradient.h */; };
+		9C93C92D1379886000682898 /* color.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C93C92B1379886000682898 /* color.cpp */; };
+		9C93C92E1379886000682898 /* color.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C93C92C1379886000682898 /* color.h */; };
 		9CB22F8A136B254A004D8BB2 /* httpstream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CB22F88136B254A004D8BB2 /* httpstream.cpp */; };
 		9CB22F8B136B254A004D8BB2 /* httpstream.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CB22F89136B254A004D8BB2 /* httpstream.h */; };
 		9CB22F8E136B2735004D8BB2 /* socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CB22F8C136B2735004D8BB2 /* socket.cpp */; };
@@ -182,6 +194,18 @@
 		18F0C57E1303A566007752DB /* driver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = driver.h; path = ../../../src/render/driver.h; sourceTree = SOURCE_ROOT; };
 		18F0C73D1304F121007752DB /* driverios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = driverios.cpp; path = ../../../src/render/ios/driverios.cpp; sourceTree = SOURCE_ROOT; };
 		9C91B8D0132545A000195FF7 /* driverdetail.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = driverdetail.h; path = ../../../src/render/driverdetail.h; sourceTree = SOURCE_ROOT; };
+		9C93C8F9137981D300682898 /* audiobuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = audiobuffer.cpp; path = ../../../src/audiobuffer.cpp; sourceTree = "<group>"; };
+		9C93C8FA137981D300682898 /* audiobuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = audiobuffer.h; path = ../../../src/audiobuffer.h; sourceTree = "<group>"; };
+		9C93C8FD1379825F00682898 /* media.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = media.cpp; path = ../../../src/dom/media.cpp; sourceTree = "<group>"; };
+		9C93C8FE1379825F00682898 /* media.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = media.h; path = ../../../src/dom/media.h; sourceTree = "<group>"; };
+		9C93C91F137987CD00682898 /* linklist.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = linklist.cpp; path = ../../../src/linklist.cpp; sourceTree = "<group>"; };
+		9C93C920137987CE00682898 /* linklist.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = linklist.h; path = ../../../src/linklist.h; sourceTree = "<group>"; };
+		9C93C9231379884500682898 /* audio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = audio.cpp; path = ../../../src/dom/audio.cpp; sourceTree = "<group>"; };
+		9C93C9241379884500682898 /* audio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = audio.h; path = ../../../src/dom/audio.h; sourceTree = "<group>"; };
+		9C93C9271379885300682898 /* canvasgradient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = canvasgradient.cpp; path = ../../../src/dom/canvasgradient.cpp; sourceTree = "<group>"; };
+		9C93C9281379885300682898 /* canvasgradient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = canvasgradient.h; path = ../../../src/dom/canvasgradient.h; sourceTree = "<group>"; };
+		9C93C92B1379886000682898 /* color.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = color.cpp; path = ../../../src/dom/color.cpp; sourceTree = "<group>"; };
+		9C93C92C1379886000682898 /* color.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = color.h; path = ../../../src/dom/color.h; sourceTree = "<group>"; };
 		9CB22F88136B254A004D8BB2 /* httpstream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = httpstream.cpp; path = ../../../src/httpstream.cpp; sourceTree = "<group>"; };
 		9CB22F89136B254A004D8BB2 /* httpstream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = httpstream.h; path = ../../../src/httpstream.h; sourceTree = "<group>"; };
 		9CB22F8C136B2735004D8BB2 /* socket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = socket.cpp; path = ../../../src/socket.cpp; sourceTree = "<group>"; };
@@ -238,6 +262,8 @@
 				187BCA4812F9BBD20042FDB1 /* dom */,
 				187BCAB612F9BF450042FDB1 /* loader */,
 				187BC9CD12F9B4560042FDB1 /* atomic.h */,
+				9C93C8F9137981D300682898 /* audiobuffer.cpp */,
+				9C93C8FA137981D300682898 /* audiobuffer.h */,
 				187BC9CE12F9B4560042FDB1 /* common.cpp */,
 				187BC9CF12F9B4560042FDB1 /* common.h */,
 				187BCBC212FAAC8F0042FDB1 /* context.cpp */,
@@ -248,6 +274,8 @@
 				187BC9EF12F9B6660042FDB1 /* intrusiveptr.h */,
 				187BC9F012F9B6660042FDB1 /* jsbindable.cpp */,
 				187BC9F112F9B6660042FDB1 /* jsbindable.h */,
+				9C93C91F137987CD00682898 /* linklist.cpp */,
+				9C93C920137987CE00682898 /* linklist.h */,
 				187BC9F712F9B6730042FDB1 /* map.cpp */,
 				187BC9F812F9B6730042FDB1 /* map.h */,
 				187BC9F912F9B6730042FDB1 /* mat44.cpp */,
@@ -290,12 +318,18 @@
 		187BCA4812F9BBD20042FDB1 /* dom */ = {
 			isa = PBXGroup;
 			children = (
+				9C93C9231379884500682898 /* audio.cpp */,
+				9C93C9241379884500682898 /* audio.h */,
 				187BCA5512F9BBE20042FDB1 /* body.cpp */,
 				187BCA5612F9BBE20042FDB1 /* body.h */,
 				187BCA5712F9BBE20042FDB1 /* canvas.cpp */,
 				187BCA5812F9BBE20042FDB1 /* canvas.h */,
 				187BCC9F12FAE7F50042FDB1 /* canvas2dcontext.cpp */,
 				187BCA6412F9BC270042FDB1 /* canvas2dcontext.h */,
+				9C93C9271379885300682898 /* canvasgradient.cpp */,
+				9C93C9281379885300682898 /* canvasgradient.h */,
+				9C93C92B1379886000682898 /* color.cpp */,
+				9C93C92C1379886000682898 /* color.h */,
 				187BCA6512F9BC270042FDB1 /* div.cpp */,
 				187BCA6612F9BC270042FDB1 /* div.h */,
 				187BCA6F12F9BC600042FDB1 /* document.cpp */,
@@ -306,6 +340,8 @@
 				187BCA7412F9BC600042FDB1 /* image.h */,
 				187BCA8912F9BEEA0042FDB1 /* keyevent.cpp */,
 				187BCA8A12F9BEEA0042FDB1 /* keyevent.h */,
+				9C93C8FD1379825F00682898 /* media.cpp */,
+				9C93C8FE1379825F00682898 /* media.h */,
 				187BCA8B12F9BEEA0042FDB1 /* mouseevent.cpp */,
 				187BCA8C12F9BEEA0042FDB1 /* mouseevent.h */,
 				187BCA9312F9BEFB0042FDB1 /* node.cpp */,
@@ -407,6 +443,12 @@
 				9C91B8D1132545A000195FF7 /* driverdetail.h in Headers */,
 				9CB22F8B136B254A004D8BB2 /* httpstream.h in Headers */,
 				9CB22F8F136B2735004D8BB2 /* socket.h in Headers */,
+				9C93C8FC137981D300682898 /* audiobuffer.h in Headers */,
+				9C93C9001379825F00682898 /* media.h in Headers */,
+				9C93C922137987CE00682898 /* linklist.h in Headers */,
+				9C93C9261379884500682898 /* audio.h in Headers */,
+				9C93C92A1379885300682898 /* canvasgradient.h in Headers */,
+				9C93C92E1379886000682898 /* color.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -513,6 +555,12 @@
 				18F0C73E1304F121007752DB /* driverios.cpp in Sources */,
 				9CB22F8A136B254A004D8BB2 /* httpstream.cpp in Sources */,
 				9CB22F8E136B2735004D8BB2 /* socket.cpp in Sources */,
+				9C93C8FB137981D300682898 /* audiobuffer.cpp in Sources */,
+				9C93C8FF1379825F00682898 /* media.cpp in Sources */,
+				9C93C921137987CE00682898 /* linklist.cpp in Sources */,
+				9C93C9251379884500682898 /* audio.cpp in Sources */,
+				9C93C9291379885300682898 /* canvasgradient.cpp in Sources */,
+				9C93C92D1379886000682898 /* color.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -538,7 +586,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = Rhinoca_Prefix.pch;
-				GCC_VERSION = "";
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				INSTALL_PATH = /usr/local/lib;
 				PRODUCT_NAME = Rhinoca;
 			};
@@ -551,7 +599,7 @@
 				DSTROOT = /tmp/Rhinoca.dst;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = Rhinoca_Prefix.pch;
-				GCC_VERSION = "";
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				INSTALL_PATH = /usr/local/lib;
 				PRODUCT_NAME = Rhinoca;
 			};

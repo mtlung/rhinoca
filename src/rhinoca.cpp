@@ -5,6 +5,7 @@
 #include "render/driver.h"
 #include "render/vg/openvg.h"
 #include <stdarg.h>	// For va_list
+#include <string.h>
 
 // Context
 JSRuntime* jsrt = NULL;

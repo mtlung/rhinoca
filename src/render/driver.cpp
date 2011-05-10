@@ -178,6 +178,7 @@ rhuint16 Driver::vertex3f(float x, float y, float z)
 		case P_N_UV0_UV1:
 			n = (float*)(builder->vertexBuffer + builder->vertexCount * vertexSize + 3 * sizeof(float));
 			break;
+		default: break;
 		}
 
 		if(n) {
@@ -194,6 +195,7 @@ rhuint16 Driver::vertex3f(float x, float y, float z)
 		case P_C_UV0:
 			c = (rhuint8*)(builder->vertexBuffer + builder->vertexCount * vertexSize + 3 * sizeof(float));
 			break;
+		default: break;
 		}
 
 		if(c) {

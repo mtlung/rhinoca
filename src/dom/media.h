@@ -26,7 +26,7 @@ public:
 	///			audio/ogg; codecs='vorbis'
 	///			audio/x-wav
 	/// Returns: "" or "probably" or "maybe"
-	virtual const char* canPlayType(const char* type) const { return false; }
+	virtual const char* canPlayType(const char* type) const { return ""; }
 
 	/// HAVE_NOTHING = 0
 	/// HAVE_METADATA = 1

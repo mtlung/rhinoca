@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "color.h"
 #include "../common.h"
+#include <ctype.h>	// for tolower(char)
+#include <string.h>	// for strcasecmp
 
 namespace Dom {
 
@@ -36,8 +38,6 @@ bool Color::parse(const char* str)
 		++p;
 	}
 	buf[len] = '\0';
-
-	int scanfRet = 0;
 
 	{	// #RRGGBBAA
 		int r_, g_, b_, a_;
@@ -131,7 +131,7 @@ bool Color::parse(const char* str)
 
 	for(unsigned i=0; i<COUNTOF(namedColors); ++i)
 		if(strcasecmp(buf, namedColors[i].name) == 0) {
-			namedColors[i].color;
+			*this = namedColors[i].color;
 			return true;
 		}
 

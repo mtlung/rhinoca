@@ -7,12 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		182CEADC1306EBFA00AE335A /* kunio.gif in Resources */ = {isa = PBXBuildFile; fileRef = 182CEAD51306EBFA00AE335A /* kunio.gif */; };
-		182CEADD1306EBFA00AE335A /* kunio.png in Resources */ = {isa = PBXBuildFile; fileRef = 182CEAD61306EBFA00AE335A /* kunio.png */; };
-		182CEAE11306EBFA00AE335A /* test2.html in Resources */ = {isa = PBXBuildFile; fileRef = 182CEADB1306EBFA00AE335A /* test2.html */; };
-		182CEB571306EFCC00AE335A /* Animation.txt in Resources */ = {isa = PBXBuildFile; fileRef = 182CEB541306EFCC00AE335A /* Animation.txt */; };
-		182CEB581306EFCC00AE335A /* FrameTimer.txt in Resources */ = {isa = PBXBuildFile; fileRef = 182CEB551306EFCC00AE335A /* FrameTimer.txt */; };
-		182CEB591306EFCC00AE335A /* SpriteSheet.txt in Resources */ = {isa = PBXBuildFile; fileRef = 182CEB561306EFCC00AE335A /* SpriteSheet.txt */; };
 		182F552F13039084003805A7 /* rhino_gray.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 182F552913039084003805A7 /* rhino_gray.jpg */; };
 		182F553013039084003805A7 /* rhino_gray.png in Resources */ = {isa = PBXBuildFile; fileRef = 182F552A13039084003805A7 /* rhino_gray.png */; };
 		182F553113039084003805A7 /* rhino.bmp in Resources */ = {isa = PBXBuildFile; fileRef = 182F552B13039084003805A7 /* rhino.bmp */; };
@@ -61,12 +55,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		182CEAD51306EBFA00AE335A /* kunio.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = kunio.gif; sourceTree = "<group>"; };
-		182CEAD61306EBFA00AE335A /* kunio.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = kunio.png; sourceTree = "<group>"; };
-		182CEADB1306EBFA00AE335A /* test2.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = test2.html; sourceTree = "<group>"; };
-		182CEB541306EFCC00AE335A /* Animation.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Animation.txt; path = /Volumes/KINGSTON/html5/html5/test2/js/Animation.txt; sourceTree = "<absolute>"; };
-		182CEB551306EFCC00AE335A /* FrameTimer.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = FrameTimer.txt; path = /Volumes/KINGSTON/html5/html5/test2/js/FrameTimer.txt; sourceTree = "<absolute>"; };
-		182CEB561306EFCC00AE335A /* SpriteSheet.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = SpriteSheet.txt; path = /Volumes/KINGSTON/html5/html5/test2/js/SpriteSheet.txt; sourceTree = "<absolute>"; };
 		182F552913039084003805A7 /* rhino_gray.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = rhino_gray.jpg; path = ../../../test/htmlTest/imageTest/rhino_gray.jpg; sourceTree = SOURCE_ROOT; };
 		182F552A13039084003805A7 /* rhino_gray.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = rhino_gray.png; path = ../../../test/htmlTest/imageTest/rhino_gray.png; sourceTree = SOURCE_ROOT; };
 		182F552B13039084003805A7 /* rhino.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; name = rhino.bmp; path = ../../../test/htmlTest/imageTest/rhino.bmp; sourceTree = SOURCE_ROOT; };
@@ -126,33 +114,6 @@
 				28EC4C5711D54ECE0027AA9F /* LauncherViewController.mm */,
 			);
 			path = Classes;
-			sourceTree = "<group>";
-		};
-		182CEAD31306EBFA00AE335A /* test2 */ = {
-			isa = PBXGroup;
-			children = (
-				182CEAD41306EBFA00AE335A /* img */,
-				182CEAD71306EBFA00AE335A /* js */,
-				182CEADB1306EBFA00AE335A /* test2.html */,
-			);
-			name = test2;
-			path = ../../../test/htmlTest/test2;
-			sourceTree = SOURCE_ROOT;
-		};
-		182CEAD41306EBFA00AE335A /* img */ = {
-			isa = PBXGroup;
-			children = (
-				182CEAD51306EBFA00AE335A /* kunio.gif */,
-				182CEAD61306EBFA00AE335A /* kunio.png */,
-			);
-			path = img;
-			sourceTree = "<group>";
-		};
-		182CEAD71306EBFA00AE335A /* js */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = js;
 			sourceTree = "<group>";
 		};
 		182F5538130390D1003805A7 /* Products */ = {
@@ -217,10 +178,6 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				182CEB541306EFCC00AE335A /* Animation.txt */,
-				182CEB551306EFCC00AE335A /* FrameTimer.txt */,
-				182CEB561306EFCC00AE335A /* SpriteSheet.txt */,
-				182CEAD31306EBFA00AE335A /* test2 */,
 				182F552913039084003805A7 /* rhino_gray.jpg */,
 				182F552A13039084003805A7 /* rhino_gray.png */,
 				182F552B13039084003805A7 /* rhino.bmp */,
@@ -332,12 +289,6 @@
 				182F553213039084003805A7 /* rhino.jpg in Resources */,
 				182F553313039084003805A7 /* rhino.png in Resources */,
 				182F553413039084003805A7 /* test.html in Resources */,
-				182CEADC1306EBFA00AE335A /* kunio.gif in Resources */,
-				182CEADD1306EBFA00AE335A /* kunio.png in Resources */,
-				182CEAE11306EBFA00AE335A /* test2.html in Resources */,
-				182CEB571306EFCC00AE335A /* Animation.txt in Resources */,
-				182CEB581306EFCC00AE335A /* FrameTimer.txt in Resources */,
-				182CEB591306EFCC00AE335A /* SpriteSheet.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -376,6 +327,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = Launcher_Prefix.pch;
 				"GCC_THUMB_SUPPORT[arch=armv6]" = "";
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				INFOPLIST_FILE = "Launcher-Info.plist";
 				PRODUCT_NAME = Launcher;
 			};
@@ -389,6 +341,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = Launcher_Prefix.pch;
 				"GCC_THUMB_SUPPORT[arch=armv6]" = "";
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				INFOPLIST_FILE = "Launcher-Info.plist";
 				PRODUCT_NAME = Launcher;
 				VALIDATE_PRODUCT = YES;
