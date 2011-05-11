@@ -452,16 +452,20 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="audio"
+			>
+			<File
+				RelativePath="..\..\src\audio\audiobuffer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\audio\audiobuffer.h"
+				>
+			</File>
+		</Filter>
 		<File
 			RelativePath="..\..\src\atomic.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\audiobuffer.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\audiobuffer.h"
 			>
 		</File>
 		<File
