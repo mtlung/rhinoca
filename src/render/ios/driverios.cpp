@@ -1,8 +1,11 @@
 #include "../driver.h"
-#include "../gl.h"
+#include "../driverdetail.h"
 #include "../../common.h"
 #include "../../Vec3.h"
 #include <string.h>
+
+#include "../gl.h"
+
 
 // Reference:
 // Optimization guid: http://iphone-3d-programming.labs.oreilly.com/ch09.html
@@ -16,7 +19,7 @@ void Driver::init()
 void Driver::close()
 {
 }
-/*
+
 static unsigned hash(const void* data, unsigned len)
 {
 	unsigned h = 0;
@@ -34,11 +37,13 @@ public:
 	float vpLeft, vpTop, vpWidth, vpHeight;	// Viewport
 	unsigned viewportHash;
 
-	bool vertexArrayEnabled, coordArrayEnabled, colorArrayEnabled;
+	bool vertexArrayEnabled, coordArrayEnabled, colorArrayEnabled, normalArrayEnabled;
 
-	static const unsigned samplerCount = 2;
-	Driver::SamplerState samplerStates[samplerCount];
-	unsigned samplerStateHash[samplerCount];
+	Driver::InputAssemblerState inputAssemblerState;
+	GLuint currentVertexBuffer, currentIndexBuffer;	// May be pointer to memory or ogl handle
+
+	Driver::SamplerState samplerStates[Driver::maxTextureUnit];
+	unsigned samplerStateHash[Driver::maxTextureUnit];
 	unsigned currentSampler;
 
 	Driver::DepthStencilState depthStencilState;
@@ -49,9 +54,16 @@ public:
 
 	bool supportNPOT;
 	bool supportSeperateBlend;
+
+	BufferBuilder bufferBuilder;
 };	// Context
 
 static Context* _context = NULL;
+
+BufferBuilder* currentBufferBuilder()
+{
+	return &_context->bufferBuilder;
+}
 
 static void enableVertexArray(bool b, bool force=false, Context* c = _context)
 {
@@ -83,6 +95,32 @@ static void enableCoordArray(bool b, bool force=false, Context* c = _context)
 	c->coordArrayEnabled = b;
 }
 
+static void enableNormalArray(bool b, bool force=false, Context* c = _context)
+{
+	if(b && (force || !c->normalArrayEnabled))
+		glEnableClientState(GL_NORMAL_ARRAY);
+	else if(!b && (force || c->normalArrayEnabled))
+		glDisableClientState(GL_NORMAL_ARRAY);
+
+	c->normalArrayEnabled = b;
+}
+
+static void bindVertexBuffer(GLuint vb)
+{
+	if(_context->currentVertexBuffer != vb) {
+		glBindBuffer(GL_ARRAY_BUFFER, vb);
+		_context->currentVertexBuffer = vb;
+	}
+}
+
+static void bindIndexBuffer(GLuint ib)
+{
+	if(_context->currentIndexBuffer != ib) {
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
+		_context->currentIndexBuffer = ib;
+	}
+}
+
 // Context
 void* Driver::createContext(void* externalHandle)
 {
@@ -101,13 +139,22 @@ void* Driver::createContext(void* externalHandle)
 	ctx->vertexArrayEnabled = false;
 	ctx->colorArrayEnabled = false;
 	ctx->coordArrayEnabled = false;
+	ctx->normalArrayEnabled = false;
+
+	{	// Input assembler
+		ctx->inputAssemblerState.vertexBuffer = NULL;
+		ctx->inputAssemblerState.indexBuffer = NULL;
+		ctx->inputAssemblerState.primitiveType = Driver::InputAssemblerState::Triangles;
+		ctx->currentVertexBuffer = 0;
+		ctx->currentIndexBuffer = 0;
+	}
 
 	{	// Sampler
 		ctx->currentSampler = 0;
 		memset(ctx->samplerStates, 0, sizeof(ctx->samplerStates));
 		memset(ctx->samplerStateHash, 0, sizeof(ctx->samplerStateHash));
 
-		for(unsigned i=0; i<ctx->samplerCount; ++i) {
+		for(unsigned i=0; i<Driver::maxTextureUnit; ++i) {
 			ctx->samplerStates[i].textureHandle = NULL;
 			ctx->samplerStates[i].filter = SamplerState::MIN_MAG_POINT;
 			ctx->samplerStates[i].u = SamplerState::Repeat;
@@ -118,12 +165,7 @@ void* Driver::createContext(void* externalHandle)
 	{	// Depth stencil
 		ctx->depthStencilState.depthEnable = false;
 		ctx->depthStencilState.stencilEnable = false;
-		ctx->depthStencilState.stencilRefValue = 0;
-		ctx->depthStencilState.stencilMask = rhuint8(-1);
-		ctx->depthStencilState.stencilFunc = DepthStencilState::Always;
-		ctx->depthStencilState.stencilPassOp = DepthStencilState::Replace;
-		ctx->depthStencilState.stencilFailOp = DepthStencilState::Replace;
-		ctx->depthStencilState.stencilZFailOp = DepthStencilState::Replace;
+		ctx->depthStencilState.stencilFront = Driver::DepthStencilState::StencilState(rhuint8(0), rhuint8(-1), DepthStencilState::Always, DepthStencilState::StencilState::Replace);
 		ctx->depthStencilStateHash = 0;
 	}
 
@@ -162,8 +204,25 @@ void Driver::forceApplyCurrent()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)_context->renderTarget);
 
+	{	// Input assembler
+		VertexBuffer* vb = reinterpret_cast<VertexBuffer*>(_context->inputAssemblerState.indexBuffer);
+		GLuint hvb = vb ? (GLuint)vb->handle | (GLuint)vb->data: 0;
+		glBindBuffer(GL_ARRAY_BUFFER, hvb);
+		_context->currentVertexBuffer = hvb;
+
+		IndexBuffer* ib = reinterpret_cast<IndexBuffer*>(_context->inputAssemblerState.indexBuffer);
+		GLuint hib = ib ? (GLuint)ib->handle | (GLuint)ib->data: 0;
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, hib);
+		_context->currentIndexBuffer = hib;
+
+		enableVertexArray(_context->vertexArrayEnabled, true);
+		enableColorArray(_context->colorArrayEnabled, true);
+		enableCoordArray(_context->coordArrayEnabled, true);
+		enableNormalArray(_context->normalArrayEnabled, true);
+	}
+
 	{	// Sampler states
-		for(unsigned i=0; i<_context->samplerCount; ++i) {
+		for(unsigned i=0; i<Driver::maxTextureUnit; ++i) {
 			glActiveTexture(GL_TEXTURE0 + i);
 			GLuint handle = reinterpret_cast<GLuint>(_context->samplerStates[i].textureHandle);
 
@@ -190,10 +249,6 @@ void Driver::forceApplyCurrent()
 		(GLsizei)_context->vpWidth,
 		(GLsizei)_context->vpHeight
 	);
-
-	enableVertexArray(_context->vertexArrayEnabled, true);
-	enableColorArray(_context->colorArrayEnabled, true);
-	enableCoordArray(_context->coordArrayEnabled, true);
 }
 
 // Capability
@@ -366,7 +421,7 @@ void Driver::deleteTexture(void* textureHandle)
 	if(handle)
 		glDeleteTextures(1, &handle);
 
-	for(unsigned i=0; i<_context->samplerCount; ++i) {
+	for(unsigned i=0; i<Driver::maxTextureUnit; ++i) {
 		if(_context->samplerStates[i].textureHandle == textureHandle)
 			_context->samplerStates[i].textureHandle = 0;
 	}
@@ -386,17 +441,19 @@ void Driver::drawQuad(
 {
 	Driver::setSamplerState(0, noTexture);
 
-	enableVertexArray(true);
-	enableColorArray(true);
-	enableCoordArray(false);
+	struct Vertex { float x,y,z; rhuint8 r,g,b,a; } vertex[] = {
+		{ x1,y1,z, r,g,b,a },
+		{ x2,y2,z, r,g,b,a },
+		{ x3,y3,z, r,g,b,a },
+		{ x4,y4,z, r,g,b,a }
+	};
+	void* vb = Driver::createVertexUseData(Driver::P_C, vertex, 4, sizeof(Vertex));
 
-	rhuint8 rgba[] = { r,g,b,a, r,g,b,a, r,g,b,a, r,g,b,a };
-	glColorPointer(4, GL_UNSIGNED_BYTE, 0, rgba);
+	InputAssemblerState state = { Driver::InputAssemblerState::TriangleFan, vb, NULL };
+	Driver::setInputAssemblerState(state);
+	Driver::draw(4, 0);
 
-	float xyz[] = { x1, y1, z, x2, y2, z, x3, y3, z, x4, y4, z };
-	glVertexPointer(3, GL_FLOAT, 0, xyz);
-
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	Driver::destroyVertex(vb);
 }
 
 void Driver::drawQuad(
@@ -405,46 +462,175 @@ void Driver::drawQuad(
 	rhuint8 r, rhuint8 g, rhuint8 b, rhuint8 a
 )
 {
-	enableVertexArray(true);
-	enableColorArray(true);
-	enableCoordArray(true);
+	struct Vertex { float x,y,z; rhuint8 r,g,b,a; float u,v; } vertex[] = {
+		{ x1,y1,z, r,g,b,a, u1,v1 },
+		{ x2,y2,z, r,g,b,a, u2,v2 },
+		{ x3,y3,z, r,g,b,a, u3,v3 },
+		{ x4,y4,z, r,g,b,a, u4,v4 }
+	};
+	void* vb = Driver::createVertexUseData(Driver::P_C_UV0, vertex, 4, sizeof(Vertex));
 
-	rhuint8 rgba[] = { r,g,b,a, r,g,b,a, r,g,b,a, r,g,b,a };
-	glColorPointer(4, GL_UNSIGNED_BYTE, 0, rgba);
+	InputAssemblerState state = { Driver::InputAssemblerState::TriangleFan, vb, NULL };
+	Driver::setInputAssemblerState(state);
+	Driver::draw(4, 0);
 
-	float uv[] = { u1, v1, u2, v2, u3, v3, u4, v4 };
-	glTexCoordPointer(2, GL_FLOAT, 0, uv);
-
-	float xyz[] = { x1, y1, z, x2, y2, z, x3, y3, z, x4, y4, z };
-	glVertexPointer(3, GL_FLOAT, 0, xyz);
-
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	Driver::destroyVertex(vb);
 }
 
-void* Driver::endMesh()
+// Vertex buffer
+void* Driver::createVertexCopyData(VertexFormat format, const void* vertexData, unsigned vertexCount, unsigned stride)
 {
-	return 0;
+	VertexBuffer* vb = new VertexBuffer;
+	vb->format = format;
+	vb->count = vertexCount;
+	vb->data = NULL;
+	vb->stride = stride;
+
+	glGenBuffers(1, (GLuint*)&vb->handle);
+	bindVertexBuffer((GLuint)vb->handle);
+	glBufferData(GL_ARRAY_BUFFER, vertexSizeForFormat(format) * vertexCount, vertexData, GL_STATIC_DRAW);
+
+	return vb;
 }
 
-void* Driver::createMeshCopyData(MeshFormat format, const void* vertexBuffer, const short* indexBuffer)
+void* Driver::createVertexUseData(VertexFormat format, const void* vertexData, unsigned vertexCount, unsigned stride)
 {
-	return 0;
+	VertexBuffer* vb = new VertexBuffer;
+	vb->format = format;
+	vb->count = vertexCount;
+	vb->data = (void*)vertexData;
+	vb->stride = stride;
+	vb->handle = 0;
+	return vb;
 }
 
-void* Driver::createMeshUseData(MeshFormat format, const void* vertexBuffer, const short* indexBuffer)
+// TODO: Implements object pool
+void Driver::destroyVertex(void* vertexHandle)
 {
-	return 0;
+	bindVertexBuffer(0);
+
+	VertexBuffer* vb = reinterpret_cast<VertexBuffer*>(vertexHandle);
+
+	// The external data should free by user
+	// rhinoca_free(vb->data);
+
+	glDeleteBuffers(1, (GLuint*)&vb->handle);
+
+	delete vb;
 }
 
-void Driver::destroyMesh(void* meshHandle)
+// Index buffer
+void* Driver::createIndexCopyData(const void* indexData, unsigned indexCount)
 {
+	IndexBuffer* ib = new IndexBuffer;
+	ib->count = indexCount;
+	ib->data = NULL;
+
+	glGenBuffers(1, (GLuint*)&ib->handle);
+	bindIndexBuffer((GLuint)ib->handle);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(rhuint16) * indexCount, indexData, GL_STATIC_DRAW);
+
+	return ib;
 }
 
-void Driver::useMesh(void* meshHandle)
+void* Driver::createIndexUseData(const void* indexData, unsigned indexCount)
 {
+	IndexBuffer* ib = new IndexBuffer;
+	ib->count = indexCount;
+	ib->data = (void*)indexData;
+	ib->handle = 0;
+	return ib;
 }
 
-// States
+void Driver::destroyIndex(void* indexHandle)
+{
+	bindIndexBuffer(0);
+
+	IndexBuffer* ib = reinterpret_cast<IndexBuffer*>(indexHandle);
+
+	// The external data should free by user
+	// rhinoca_free(ib->data);
+
+	glDeleteBuffers(1, (GLuint*)&ib->handle);
+
+	delete ib;
+}
+
+void Driver::setInputAssemblerState(const InputAssemblerState& state)
+{
+	VertexBuffer* vb = reinterpret_cast<VertexBuffer*>(state.vertexBuffer);
+	unsigned offset = 0;
+
+	{	// Assign color
+		switch(vb->format) {
+		case P_C:
+		case P_C_UV0:
+			enableColorArray(true);
+			offset = 3 * sizeof(float);
+			if(vb->data) offset += unsigned(vb->data);
+			glColorPointer(4, GL_UNSIGNED_BYTE, vb->stride, (GLvoid*)offset);
+			break;
+		default:
+			enableColorArray(false);
+		}
+	}
+
+	{	// Assign tex coord
+		switch(vb->format) {
+		case P_C_UV0:
+			enableCoordArray(true);
+			offset = 3 * sizeof(float) + 4;
+			if(vb->data) offset += unsigned(vb->data);
+			glClientActiveTexture(GL_TEXTURE0);
+			glTexCoordPointer(2, GL_FLOAT, vb->stride, (GLvoid*)offset);
+			break;
+		default:
+			enableCoordArray(false);
+		}
+	}
+
+	{	// Assign normal
+		switch(vb->format) {
+		case P_N_UV0_UV1:
+			enableNormalArray(true);
+			offset = 3 * sizeof(float);
+			if(vb->data) offset += unsigned(vb->data);
+			glNormalPointer(GL_FLOAT, vb->stride, (GLvoid*)offset);
+			break;
+		default:
+			enableNormalArray(false);
+		}
+	}
+
+	{	// Assign position
+		unsigned fCount = vb->format == P2f ? 2 : 3;
+		GLuint hvb = (GLuint)vb->data |	(GLuint)vb->handle;
+		enableVertexArray(true);
+		if(vb->data) {
+			ASSERT(!vb->handle);
+			bindVertexBuffer(0);
+			glVertexPointer(fCount, GL_FLOAT, vb->stride, vb->data);
+		}
+		else if(vb->handle) {
+			ASSERT(!vb->data);
+			bindVertexBuffer(hvb);
+			glVertexPointer(fCount, GL_FLOAT, vb->stride, 0);
+		}
+		else {
+			ASSERT(false);
+		}
+	}
+
+	if(IndexBuffer* ib = reinterpret_cast<IndexBuffer*>(state.indexBuffer)) {
+		if(ib->handle)
+			bindIndexBuffer((GLuint)ib->handle);
+		else
+			bindIndexBuffer(0);
+	}
+
+	_context->inputAssemblerState = state;
+}
+
 void Driver::setSamplerState(unsigned textureUnit, const SamplerState& state)
 {
 	if(textureUnit != _context->currentSampler)
@@ -632,6 +818,25 @@ void Driver::setViewport(unsigned left, unsigned top, unsigned width, unsigned h
 {
 	setViewport(float(left), float(top), float(width), float(height));
 }
-*/
-}	// Render
 
+void Driver::draw(unsigned vertexCount, unsigned startingVertex)
+{
+	InputAssemblerState& state = _context->inputAssemblerState;
+	VertexBuffer* vb = reinterpret_cast<VertexBuffer*>(state.vertexBuffer);
+
+	ASSERT(vertexCount <= vb->count);
+	glDrawArrays(state.primitiveType, startingVertex, vertexCount);
+}
+
+void Driver::drawIndexed(unsigned indexCount, unsigned startingIndex)
+{
+	InputAssemblerState& state = _context->inputAssemblerState;
+	IndexBuffer* ib = reinterpret_cast<IndexBuffer*>(state.indexBuffer);
+
+	if(ib->handle)
+		glDrawElements(state.primitiveType, indexCount, GL_UNSIGNED_SHORT, (GLvoid*)startingIndex);
+	else if(ib->data)
+		glDrawElements(state.primitiveType, indexCount, GL_UNSIGNED_SHORT, ((rhuint16*)ib->data) + startingIndex);
+}
+
+}	// Render
