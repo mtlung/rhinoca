@@ -158,8 +158,35 @@ SHfloat getMaxFloat();
 /* OpenGL headers */
 
 #if defined(__APPLE__)
-#  include <OpenGL/gl.h>
-#  include <OpenGL/glu.h>
+#  include <Availability.h>
+#  include <TargetConditionals.h>
+#  if TARGET_OS_IPHONE
+#    include <OpenGLES/ES1/gl.h>
+#    include <OpenGLES/ES1/glext.h>
+#    include <OpenGLES/ES2/gl.h>
+#    include <OpenGLES/ES2/glext.h>
+#    define glBegin(a)
+#    define glEnd(a)
+#    define gluOrtho2D(a,b,c,d)
+#    define glColor4fv(a)
+#    define glTexCoord1f(a)
+#    define glTexCoord2f(a,b)
+#    define glTexGeni(a,b,c)
+#    define glTexGenfv(a,b,c)
+#    define glVertex2fv(a)
+#    define gluScaleImage(a,b,c,d,e,f,g,h,i)
+#    define GL_QUADS 0
+#    define GL_S 0
+#    define GL_T 0
+#    define GL_TEXTURE_GEN_S 0
+#    define GL_TEXTURE_GEN_T 0
+#    define GL_TEXTURE_GEN_MODE 0
+#    define GL_OBJECT_PLANE 0
+#    define GL_OBJECT_LINEAR 0
+#  else
+#    include <OpenGL/gl.h>
+#    include <OpenGL/glu.h>
+#  endif
 #elif defined(_WIN32)
 #  include <GL/gl.h>
 #  include <GL/glu.h>

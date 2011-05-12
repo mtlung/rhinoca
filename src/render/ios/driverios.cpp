@@ -693,11 +693,11 @@ void Driver::setDepthStencilState(const DepthStencilState& state)
 	else {
 		glEnable(GL_STENCIL_TEST);
 		glStencilFunc(
-			state.stencilFunc,
-			state.stencilRefValue,
-			state.stencilMask
+			state.stencilFront.stencilFunc,
+			state.stencilFront.stencilRefValue,
+			state.stencilFront.stencilMask
 		);
-		glStencilOp(state.stencilFailOp, state.stencilZFailOp, state.stencilPassOp);
+		glStencilOp(state.stencilFront.stencilFailOp, state.stencilFront.stencilZFailOp, state.stencilFront.stencilPassOp);
 	}
 
 	_context->depthStencilState = state;
@@ -738,8 +738,8 @@ static unsigned blendStateHash(const Driver::BlendState& state)
 {
 	unsigned h = hash(
 		&state.colorOp,
-		offsetof(Driver::BlendState, Driver::BlendState::wirteMask) -
-		offsetof(Driver::BlendState, Driver::BlendState::colorOp)
+		offsetof(Driver::BlendState, wirteMask) -
+		offsetof(Driver::BlendState, colorOp)
 	);
 	return h;
 }

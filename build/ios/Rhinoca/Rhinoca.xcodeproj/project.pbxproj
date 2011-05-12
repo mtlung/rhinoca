@@ -26,7 +26,6 @@
 		187BCA0E12F9B6CD0042FDB1 /* platform.h in Headers */ = {isa = PBXBuildFile; fileRef = 187BCA0912F9B6CD0042FDB1 /* platform.h */; };
 		187BCA1C12F9B8B40042FDB1 /* resource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 187BCA1512F9B8B40042FDB1 /* resource.cpp */; };
 		187BCA1D12F9B8B40042FDB1 /* resource.h in Headers */ = {isa = PBXBuildFile; fileRef = 187BCA1612F9B8B40042FDB1 /* resource.h */; };
-		187BCA1E12F9B8B40042FDB1 /* rhinoca.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 187BCA1712F9B8B40042FDB1 /* rhinoca.cpp */; };
 		187BCA1F12F9B8B40042FDB1 /* rhinoca.h in Headers */ = {isa = PBXBuildFile; fileRef = 187BCA1812F9B8B40042FDB1 /* rhinoca.h */; };
 		187BCA2012F9B8B40042FDB1 /* rhstring.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 187BCA1912F9B8B40042FDB1 /* rhstring.cpp */; };
 		187BCA2112F9B8B40042FDB1 /* rhstring.h in Headers */ = {isa = PBXBuildFile; fileRef = 187BCA1A12F9B8B40042FDB1 /* rhstring.h */; };
@@ -81,8 +80,6 @@
 		18F0C5801303A566007752DB /* driver.h in Headers */ = {isa = PBXBuildFile; fileRef = 18F0C57E1303A566007752DB /* driver.h */; };
 		18F0C73E1304F121007752DB /* driverios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 18F0C73D1304F121007752DB /* driverios.cpp */; };
 		9C91B8D1132545A000195FF7 /* driverdetail.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C91B8D0132545A000195FF7 /* driverdetail.h */; };
-		9C93C8FB137981D300682898 /* audiobuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C93C8F9137981D300682898 /* audiobuffer.cpp */; };
-		9C93C8FC137981D300682898 /* audiobuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C93C8FA137981D300682898 /* audiobuffer.h */; };
 		9C93C8FF1379825F00682898 /* media.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C93C8FD1379825F00682898 /* media.cpp */; };
 		9C93C9001379825F00682898 /* media.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C93C8FE1379825F00682898 /* media.h */; };
 		9C93C921137987CE00682898 /* linklist.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C93C91F137987CD00682898 /* linklist.cpp */; };
@@ -97,6 +94,28 @@
 		9CB22F8B136B254A004D8BB2 /* httpstream.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CB22F89136B254A004D8BB2 /* httpstream.h */; };
 		9CB22F8E136B2735004D8BB2 /* socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CB22F8C136B2735004D8BB2 /* socket.cpp */; };
 		9CB22F8F136B2735004D8BB2 /* socket.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CB22F8D136B2735004D8BB2 /* socket.h */; };
+		9CC68C9A137C2E4F00448AEB /* shArrayBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CC68C85137C2E4F00448AEB /* shArrayBase.h */; };
+		9CC68C9B137C2E4F00448AEB /* shArrays.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC68C86137C2E4F00448AEB /* shArrays.cpp */; };
+		9CC68C9C137C2E4F00448AEB /* shArrays.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CC68C87137C2E4F00448AEB /* shArrays.h */; };
+		9CC68C9D137C2E4F00448AEB /* shContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC68C88137C2E4F00448AEB /* shContext.cpp */; };
+		9CC68C9E137C2E4F00448AEB /* shContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CC68C89137C2E4F00448AEB /* shContext.h */; };
+		9CC68C9F137C2E4F00448AEB /* shDefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CC68C8A137C2E4F00448AEB /* shDefs.h */; };
+		9CC68CA0137C2E4F00448AEB /* shExtensions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC68C8B137C2E4F00448AEB /* shExtensions.cpp */; };
+		9CC68CA1137C2E4F00448AEB /* shExtensions.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CC68C8C137C2E4F00448AEB /* shExtensions.h */; };
+		9CC68CA2137C2E4F00448AEB /* shGeometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC68C8D137C2E4F00448AEB /* shGeometry.cpp */; };
+		9CC68CA3137C2E4F00448AEB /* shGeometry.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CC68C8E137C2E4F00448AEB /* shGeometry.h */; };
+		9CC68CA4137C2E4F00448AEB /* shImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC68C8F137C2E4F00448AEB /* shImage.cpp */; };
+		9CC68CA5137C2E4F00448AEB /* shImage.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CC68C90137C2E4F00448AEB /* shImage.h */; };
+		9CC68CA6137C2E4F00448AEB /* shPaint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC68C91137C2E4F00448AEB /* shPaint.cpp */; };
+		9CC68CA7137C2E4F00448AEB /* shPaint.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CC68C92137C2E4F00448AEB /* shPaint.h */; };
+		9CC68CA8137C2E4F00448AEB /* shParams.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC68C93137C2E4F00448AEB /* shParams.cpp */; };
+		9CC68CA9137C2E4F00448AEB /* shPath.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC68C94137C2E4F00448AEB /* shPath.cpp */; };
+		9CC68CAA137C2E4F00448AEB /* shPath.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CC68C95137C2E4F00448AEB /* shPath.h */; };
+		9CC68CAB137C2E4F00448AEB /* shPipeline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC68C96137C2E4F00448AEB /* shPipeline.cpp */; };
+		9CC68CAC137C2E4F00448AEB /* shVectors.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC68C97137C2E4F00448AEB /* shVectors.cpp */; };
+		9CC68CAD137C2E4F00448AEB /* shVectors.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CC68C98137C2E4F00448AEB /* shVectors.h */; };
+		9CC68CAE137C2E4F00448AEB /* shVgu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC68C99137C2E4F00448AEB /* shVgu.cpp */; };
+		9CCBEE76137C192100C0BF4F /* rhinoca.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CCBEE75137C192100C0BF4F /* rhinoca.mm */; };
 		AA747D9F0F9514B9006C5449 /* Rhinoca_Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = AA747D9E0F9514B9006C5449 /* Rhinoca_Prefix.pch */; };
 		AACBBE4A0F95108600F1A2B1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AACBBE490F95108600F1A2B1 /* Foundation.framework */; };
 /* End PBXBuildFile section */
@@ -139,7 +158,6 @@
 		187BCA0912F9B6CD0042FDB1 /* platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = platform.h; path = ../../../src/platform.h; sourceTree = SOURCE_ROOT; };
 		187BCA1512F9B8B40042FDB1 /* resource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = resource.cpp; path = ../../../src/resource.cpp; sourceTree = SOURCE_ROOT; };
 		187BCA1612F9B8B40042FDB1 /* resource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = resource.h; path = ../../../src/resource.h; sourceTree = SOURCE_ROOT; };
-		187BCA1712F9B8B40042FDB1 /* rhinoca.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = rhinoca.cpp; path = ../../../src/rhinoca.cpp; sourceTree = SOURCE_ROOT; };
 		187BCA1812F9B8B40042FDB1 /* rhinoca.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = rhinoca.h; path = ../../../src/rhinoca.h; sourceTree = SOURCE_ROOT; };
 		187BCA1912F9B8B40042FDB1 /* rhstring.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = rhstring.cpp; path = ../../../src/rhstring.cpp; sourceTree = SOURCE_ROOT; };
 		187BCA1A12F9B8B40042FDB1 /* rhstring.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = rhstring.h; path = ../../../src/rhstring.h; sourceTree = SOURCE_ROOT; };
@@ -194,8 +212,6 @@
 		18F0C57E1303A566007752DB /* driver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = driver.h; path = ../../../src/render/driver.h; sourceTree = SOURCE_ROOT; };
 		18F0C73D1304F121007752DB /* driverios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = driverios.cpp; path = ../../../src/render/ios/driverios.cpp; sourceTree = SOURCE_ROOT; };
 		9C91B8D0132545A000195FF7 /* driverdetail.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = driverdetail.h; path = ../../../src/render/driverdetail.h; sourceTree = SOURCE_ROOT; };
-		9C93C8F9137981D300682898 /* audiobuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = audiobuffer.cpp; path = ../../../src/audiobuffer.cpp; sourceTree = "<group>"; };
-		9C93C8FA137981D300682898 /* audiobuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = audiobuffer.h; path = ../../../src/audiobuffer.h; sourceTree = "<group>"; };
 		9C93C8FD1379825F00682898 /* media.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = media.cpp; path = ../../../src/dom/media.cpp; sourceTree = "<group>"; };
 		9C93C8FE1379825F00682898 /* media.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = media.h; path = ../../../src/dom/media.h; sourceTree = "<group>"; };
 		9C93C91F137987CD00682898 /* linklist.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = linklist.cpp; path = ../../../src/linklist.cpp; sourceTree = "<group>"; };
@@ -210,6 +226,28 @@
 		9CB22F89136B254A004D8BB2 /* httpstream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = httpstream.h; path = ../../../src/httpstream.h; sourceTree = "<group>"; };
 		9CB22F8C136B2735004D8BB2 /* socket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = socket.cpp; path = ../../../src/socket.cpp; sourceTree = "<group>"; };
 		9CB22F8D136B2735004D8BB2 /* socket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = socket.h; path = ../../../src/socket.h; sourceTree = "<group>"; };
+		9CC68C85137C2E4F00448AEB /* shArrayBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = shArrayBase.h; path = ../../../src/render/shivavg/shArrayBase.h; sourceTree = "<group>"; };
+		9CC68C86137C2E4F00448AEB /* shArrays.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = shArrays.cpp; path = ../../../src/render/shivavg/shArrays.cpp; sourceTree = "<group>"; };
+		9CC68C87137C2E4F00448AEB /* shArrays.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = shArrays.h; path = ../../../src/render/shivavg/shArrays.h; sourceTree = "<group>"; };
+		9CC68C88137C2E4F00448AEB /* shContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = shContext.cpp; path = ../../../src/render/shivavg/shContext.cpp; sourceTree = "<group>"; };
+		9CC68C89137C2E4F00448AEB /* shContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = shContext.h; path = ../../../src/render/shivavg/shContext.h; sourceTree = "<group>"; };
+		9CC68C8A137C2E4F00448AEB /* shDefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = shDefs.h; path = ../../../src/render/shivavg/shDefs.h; sourceTree = "<group>"; };
+		9CC68C8B137C2E4F00448AEB /* shExtensions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = shExtensions.cpp; path = ../../../src/render/shivavg/shExtensions.cpp; sourceTree = "<group>"; };
+		9CC68C8C137C2E4F00448AEB /* shExtensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = shExtensions.h; path = ../../../src/render/shivavg/shExtensions.h; sourceTree = "<group>"; };
+		9CC68C8D137C2E4F00448AEB /* shGeometry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = shGeometry.cpp; path = ../../../src/render/shivavg/shGeometry.cpp; sourceTree = "<group>"; };
+		9CC68C8E137C2E4F00448AEB /* shGeometry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = shGeometry.h; path = ../../../src/render/shivavg/shGeometry.h; sourceTree = "<group>"; };
+		9CC68C8F137C2E4F00448AEB /* shImage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = shImage.cpp; path = ../../../src/render/shivavg/shImage.cpp; sourceTree = "<group>"; };
+		9CC68C90137C2E4F00448AEB /* shImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = shImage.h; path = ../../../src/render/shivavg/shImage.h; sourceTree = "<group>"; };
+		9CC68C91137C2E4F00448AEB /* shPaint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = shPaint.cpp; path = ../../../src/render/shivavg/shPaint.cpp; sourceTree = "<group>"; };
+		9CC68C92137C2E4F00448AEB /* shPaint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = shPaint.h; path = ../../../src/render/shivavg/shPaint.h; sourceTree = "<group>"; };
+		9CC68C93137C2E4F00448AEB /* shParams.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = shParams.cpp; path = ../../../src/render/shivavg/shParams.cpp; sourceTree = "<group>"; };
+		9CC68C94137C2E4F00448AEB /* shPath.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = shPath.cpp; path = ../../../src/render/shivavg/shPath.cpp; sourceTree = "<group>"; };
+		9CC68C95137C2E4F00448AEB /* shPath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = shPath.h; path = ../../../src/render/shivavg/shPath.h; sourceTree = "<group>"; };
+		9CC68C96137C2E4F00448AEB /* shPipeline.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = shPipeline.cpp; path = ../../../src/render/shivavg/shPipeline.cpp; sourceTree = "<group>"; };
+		9CC68C97137C2E4F00448AEB /* shVectors.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = shVectors.cpp; path = ../../../src/render/shivavg/shVectors.cpp; sourceTree = "<group>"; };
+		9CC68C98137C2E4F00448AEB /* shVectors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = shVectors.h; path = ../../../src/render/shivavg/shVectors.h; sourceTree = "<group>"; };
+		9CC68C99137C2E4F00448AEB /* shVgu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = shVgu.cpp; path = ../../../src/render/shivavg/shVgu.cpp; sourceTree = "<group>"; };
+		9CCBEE75137C192100C0BF4F /* rhinoca.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = rhinoca.mm; path = ../../../src/rhinoca.mm; sourceTree = "<group>"; };
 		AA747D9E0F9514B9006C5449 /* Rhinoca_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Rhinoca_Prefix.pch; sourceTree = SOURCE_ROOT; };
 		AACBBE490F95108600F1A2B1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		D2AAC07E0554694100DB518D /* libRhinoca.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRhinoca.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -262,8 +300,6 @@
 				187BCA4812F9BBD20042FDB1 /* dom */,
 				187BCAB612F9BF450042FDB1 /* loader */,
 				187BC9CD12F9B4560042FDB1 /* atomic.h */,
-				9C93C8F9137981D300682898 /* audiobuffer.cpp */,
-				9C93C8FA137981D300682898 /* audiobuffer.h */,
 				187BC9CE12F9B4560042FDB1 /* common.cpp */,
 				187BC9CF12F9B4560042FDB1 /* common.h */,
 				187BCBC212FAAC8F0042FDB1 /* context.cpp */,
@@ -288,7 +324,7 @@
 				187BCA0912F9B6CD0042FDB1 /* platform.h */,
 				187BCA1512F9B8B40042FDB1 /* resource.cpp */,
 				187BCA1612F9B8B40042FDB1 /* resource.h */,
-				187BCA1712F9B8B40042FDB1 /* rhinoca.cpp */,
+				9CCBEE75137C192100C0BF4F /* rhinoca.mm */,
 				187BCA1812F9B8B40042FDB1 /* rhinoca.h */,
 				187BCA1912F9B8B40042FDB1 /* rhstring.cpp */,
 				187BCA1A12F9B8B40042FDB1 /* rhstring.h */,
@@ -368,6 +404,7 @@
 		187BCC2C12FABB050042FDB1 /* render */ = {
 			isa = PBXGroup;
 			children = (
+				9CC68C84137C2E3E00448AEB /* shivavg */,
 				18F0C57D1303A566007752DB /* driver.cpp */,
 				18F0C57E1303A566007752DB /* driver.h */,
 				9C91B8D0132545A000195FF7 /* driverdetail.h */,
@@ -391,6 +428,34 @@
 				AA747D9E0F9514B9006C5449 /* Rhinoca_Prefix.pch */,
 			);
 			name = "Other Sources";
+			sourceTree = "<group>";
+		};
+		9CC68C84137C2E3E00448AEB /* shivavg */ = {
+			isa = PBXGroup;
+			children = (
+				9CC68C85137C2E4F00448AEB /* shArrayBase.h */,
+				9CC68C86137C2E4F00448AEB /* shArrays.cpp */,
+				9CC68C87137C2E4F00448AEB /* shArrays.h */,
+				9CC68C88137C2E4F00448AEB /* shContext.cpp */,
+				9CC68C89137C2E4F00448AEB /* shContext.h */,
+				9CC68C8A137C2E4F00448AEB /* shDefs.h */,
+				9CC68C8B137C2E4F00448AEB /* shExtensions.cpp */,
+				9CC68C8C137C2E4F00448AEB /* shExtensions.h */,
+				9CC68C8D137C2E4F00448AEB /* shGeometry.cpp */,
+				9CC68C8E137C2E4F00448AEB /* shGeometry.h */,
+				9CC68C8F137C2E4F00448AEB /* shImage.cpp */,
+				9CC68C90137C2E4F00448AEB /* shImage.h */,
+				9CC68C91137C2E4F00448AEB /* shPaint.cpp */,
+				9CC68C92137C2E4F00448AEB /* shPaint.h */,
+				9CC68C93137C2E4F00448AEB /* shParams.cpp */,
+				9CC68C94137C2E4F00448AEB /* shPath.cpp */,
+				9CC68C95137C2E4F00448AEB /* shPath.h */,
+				9CC68C96137C2E4F00448AEB /* shPipeline.cpp */,
+				9CC68C97137C2E4F00448AEB /* shVectors.cpp */,
+				9CC68C98137C2E4F00448AEB /* shVectors.h */,
+				9CC68C99137C2E4F00448AEB /* shVgu.cpp */,
+			);
+			name = shivavg;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -443,12 +508,21 @@
 				9C91B8D1132545A000195FF7 /* driverdetail.h in Headers */,
 				9CB22F8B136B254A004D8BB2 /* httpstream.h in Headers */,
 				9CB22F8F136B2735004D8BB2 /* socket.h in Headers */,
-				9C93C8FC137981D300682898 /* audiobuffer.h in Headers */,
 				9C93C9001379825F00682898 /* media.h in Headers */,
 				9C93C922137987CE00682898 /* linklist.h in Headers */,
 				9C93C9261379884500682898 /* audio.h in Headers */,
 				9C93C92A1379885300682898 /* canvasgradient.h in Headers */,
 				9C93C92E1379886000682898 /* color.h in Headers */,
+				9CC68C9A137C2E4F00448AEB /* shArrayBase.h in Headers */,
+				9CC68C9C137C2E4F00448AEB /* shArrays.h in Headers */,
+				9CC68C9E137C2E4F00448AEB /* shContext.h in Headers */,
+				9CC68C9F137C2E4F00448AEB /* shDefs.h in Headers */,
+				9CC68CA1137C2E4F00448AEB /* shExtensions.h in Headers */,
+				9CC68CA3137C2E4F00448AEB /* shGeometry.h in Headers */,
+				9CC68CA5137C2E4F00448AEB /* shImage.h in Headers */,
+				9CC68CA7137C2E4F00448AEB /* shPaint.h in Headers */,
+				9CC68CAA137C2E4F00448AEB /* shPath.h in Headers */,
+				9CC68CAD137C2E4F00448AEB /* shVectors.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -527,7 +601,6 @@
 				187BCA0A12F9B6CD0042FDB1 /* mutex.cpp in Sources */,
 				187BCA0C12F9B6CD0042FDB1 /* path.cpp in Sources */,
 				187BCA1C12F9B8B40042FDB1 /* resource.cpp in Sources */,
-				187BCA1E12F9B8B40042FDB1 /* rhinoca.cpp in Sources */,
 				187BCA2012F9B8B40042FDB1 /* rhstring.cpp in Sources */,
 				187BCA3112F9B9190042FDB1 /* taskpool.cpp in Sources */,
 				187BCA3312F9B9190042FDB1 /* timer.cpp in Sources */,
@@ -555,12 +628,23 @@
 				18F0C73E1304F121007752DB /* driverios.cpp in Sources */,
 				9CB22F8A136B254A004D8BB2 /* httpstream.cpp in Sources */,
 				9CB22F8E136B2735004D8BB2 /* socket.cpp in Sources */,
-				9C93C8FB137981D300682898 /* audiobuffer.cpp in Sources */,
 				9C93C8FF1379825F00682898 /* media.cpp in Sources */,
 				9C93C921137987CE00682898 /* linklist.cpp in Sources */,
 				9C93C9251379884500682898 /* audio.cpp in Sources */,
 				9C93C9291379885300682898 /* canvasgradient.cpp in Sources */,
 				9C93C92D1379886000682898 /* color.cpp in Sources */,
+				9CCBEE76137C192100C0BF4F /* rhinoca.mm in Sources */,
+				9CC68C9B137C2E4F00448AEB /* shArrays.cpp in Sources */,
+				9CC68C9D137C2E4F00448AEB /* shContext.cpp in Sources */,
+				9CC68CA0137C2E4F00448AEB /* shExtensions.cpp in Sources */,
+				9CC68CA2137C2E4F00448AEB /* shGeometry.cpp in Sources */,
+				9CC68CA4137C2E4F00448AEB /* shImage.cpp in Sources */,
+				9CC68CA6137C2E4F00448AEB /* shPaint.cpp in Sources */,
+				9CC68CA8137C2E4F00448AEB /* shParams.cpp in Sources */,
+				9CC68CA9137C2E4F00448AEB /* shPath.cpp in Sources */,
+				9CC68CAB137C2E4F00448AEB /* shPipeline.cpp in Sources */,
+				9CC68CAC137C2E4F00448AEB /* shVectors.cpp in Sources */,
+				9CC68CAE137C2E4F00448AEB /* shVgu.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

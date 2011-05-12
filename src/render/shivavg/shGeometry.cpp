@@ -350,7 +350,6 @@ static void shSubdivideSegment(SHPath *p, VGPathSegment segment,
 void shFlattenPath(SHPath *p, SHint surfaceSpace)
 {
   SHint contourStart = -1;
-  SHint surfSpace = surfaceSpace;
   SHint *userData[2];
   SHint processFlags =
     SH_PROCESS_SIMPLIFY_LINES |

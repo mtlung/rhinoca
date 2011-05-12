@@ -15,7 +15,7 @@ JSClass HTMLMediaElement::jsClass = {
 
 static JSBool getSrc(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
-	HTMLMediaElement* self = reinterpret_cast<HTMLMediaElement*>(JS_GetPrivate(cx, obj));
+//	HTMLMediaElement* self = reinterpret_cast<HTMLMediaElement*>(JS_GetPrivate(cx, obj));
 //	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->texture->uri().c_str()));
 	return JS_TRUE;
 }

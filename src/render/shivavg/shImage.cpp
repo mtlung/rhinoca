@@ -982,9 +982,9 @@ VG_API_CALL void vgSetPixels(VGint dx, VGint dy,
                0,0,sx,sy, width, height);
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glRasterPos2i(dx, dy);
-  glDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-  glRasterPos2i(0,0);
+//  glRasterPos2i(dx, dy);
+//  glDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+//  glRasterPos2i(0,0);
   
   free(pixels);
 
@@ -1040,9 +1040,9 @@ VG_API_CALL void vgWritePixels(const void * data, VGint dataStride,
                0,0,0,0, width, height);
   
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glRasterPos2i(dx, dy);
-  glDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-  glRasterPos2i(0,0);
+//  glRasterPos2i(dx, dy);
+//  glDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+//  glRasterPos2i(0,0);
   
   free(pixels);
 
@@ -1170,9 +1170,9 @@ VG_API_CALL void vgCopyPixels(VGint dx, VGint dy,
   
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glRasterPos2i(dx, dy);
-  glCopyPixels(sx, sy, width, height, GL_COLOR);
-  glRasterPos2i(0, 0);
+//  glRasterPos2i(dx, dy);
+//  glCopyPixels(sx, sy, width, height, GL_COLOR);
+//  glRasterPos2i(0, 0);
   
   VG_RETURN(VG_NO_RETVAL);
 }

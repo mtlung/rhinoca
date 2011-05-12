@@ -121,8 +121,16 @@ static void* default_ioOpen(Rhinoca* rh, const char* uri, int threadId)
 		fs->handle = rhinoca_http_open(rh, uri, threadId);
 	}
 	else {
+#if defined(RHINOCA_IOS)
+		NSString* fullPath = [[NSBundle mainBundle] pathForResource:[NSString stringWithUTF8String:uri] ofType:nil];
+		if(!fullPath) return NULL;
+		
+		fs->type = CompoundFS::Local;
+		fs->handle = fopen([fullPath UTF8String], "rb");
+#else
 		fs->type = CompoundFS::Local;
 		fs->handle = fopen(uri, "rb");
+#endif
 	}
 
 	return fs;

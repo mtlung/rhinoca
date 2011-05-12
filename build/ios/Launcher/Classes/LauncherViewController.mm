@@ -111,27 +111,6 @@ static void setupFbo(unsigned width, unsigned height)
 	assert(GL_NO_ERROR == glGetError());
 }
 
-static void* ioOpen(Rhinoca* rh, const char* uri, int threadId)
-{
-	NSString* fullPath = [[NSBundle mainBundle] pathForResource:[NSString stringWithUTF8String:uri] ofType:nil];
-	if(!fullPath) return NULL;
-
-	FILE* f = fopen([fullPath UTF8String], "rb");
-	return f;
-}
-
-static rhuint64 ioRead(void* file, void* buffer, rhuint64 size, int threadId)
-{
-	FILE* f = reinterpret_cast<FILE*>(file);
-	return (rhuint64)fread(buffer, 1, (size_t)size, f);
-}
-
-static void ioClose(void* file, int threadId)
-{
-	FILE* f = reinterpret_cast<FILE*>(file);
-	fclose(f);
-}
-
 @interface LauncherViewController ()
 @property (nonatomic, retain) EAGLContext *context;
 @property (nonatomic, assign) CADisplayLink *displayLink;
@@ -185,7 +164,7 @@ static void ioClose(void* file, int threadId)
 	rh = rhinoca_create(&renderContext);
 	rhinoca_setSize(rh, width, height);
 
-	rhinoca_openDocument(rh, "test.html");
+	rhinoca_openDocument(rh, "http://localhost/rhinoca/test/htmlTest/imageTest/test.html");
 	assert(GL_NO_ERROR == glGetError());
 }
 
