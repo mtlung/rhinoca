@@ -585,13 +585,15 @@ VG_API_CALL void vgDrawImage(VGImage image)
     /* Draw textured quad */
     glEnable(GL_TEXTURE_2D);
     
-    glBegin(GL_QUADS);
-    glVertex2i(0, 0);
-    glVertex2i(i->width, 0);
-    glVertex2i(i->width, i->height);
-    glVertex2i(0, i->height);
-    glEnd();
-    
+    Render::Driver::drawQuad(
+      0, 0,
+      (float)i->width, 0,
+      (float)i->width, (float)i->height,
+      0, (float)i->height,
+      0.0f,
+      (rhuint8)255u, (rhuint8)255u, (rhuint8)255u, (rhuint8)255u
+    );
+
     glDisable(GL_TEXTURE_2D);
   }
   

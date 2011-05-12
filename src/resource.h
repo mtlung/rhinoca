@@ -7,7 +7,7 @@
 #include "taskpool.h"
 
 class Resource
-	// NOTE: No need to use atomic interger as the refCount if no worker thread
+	// NOTE: No need to use atomic integer as the refCount if no worker thread
 	// will hold strong reference to Resource
 	: public IntrusiveSharedObject<rhuint>
 	, public MapBase<FixString>::Node<Resource>
@@ -48,6 +48,7 @@ public:
 	~ResourceManager();
 
 // Operations
+	/// This function is async, you need to wait for the resource's TaskId to do synchronization
 	/// @note: Recursive and re-entrant
 	ResourcePtr load(const char* uri);
 

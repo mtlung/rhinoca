@@ -430,6 +430,7 @@ void TaskPool::_doTask(TaskProxy* p, int tId, bool allowWait)
 	Task* task = p->task;
 	p->task = NULL;
 
+	ASSERT(p->finalized);
 	_removePendingTask(p);
 
 	// NOTE: _wait() may trigger many things, therefore we need to _retainTask() here
@@ -482,6 +483,7 @@ void TaskPool::_retainTask(TaskProxy* p)
 void TaskPool::_releaseTask(TaskProxy* p)
 {
 	ASSERT(mutex.isLocked());
+	ASSERT(p->finalized);
 	p->openChildCount--;
 	if(p->openChildCount == 0 && !p->task)
 		_removeOpenTask(p);
@@ -529,6 +531,9 @@ void TaskPool::_removePendingTask(TaskProxy* p)
 
 bool TaskPool::_matchAffinity(TaskProxy* p, int tId)
 {
+	if(!p->finalized)
+		return false;
+
 	if(p->affinity < 0)	// Only this thread cannot run
 		return _threadCount == 0 ? true : ~p->affinity != tId;
 

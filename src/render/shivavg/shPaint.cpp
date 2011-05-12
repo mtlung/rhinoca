@@ -393,6 +393,18 @@ void shSetPatternTexGLState(SHPaint *p, VGContext *c, GLenum texUnit)
 	glColor4f(1,1,1,1);
 }
 
+static void fillBoundingBox(SHVector2* corners, SHColor* c)
+{
+  Driver::drawQuad(
+    corners[0].x, corners[0].y,
+    corners[1].x, corners[1].y,
+    corners[2].x, corners[2].y,
+    corners[3].x, corners[3].y,
+    1,	// z value
+    c->r, c->g, c->b, c->a
+  );
+}
+
 int shDrawLinearGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
                              VGPaintMode mode, GLenum texUnit)
 {
@@ -451,9 +463,7 @@ int shDrawLinearGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
     
     /* Fill boundbox with color at offset 1 */
     SHColor *c = &p->stops.items[p->stops.size-1].color;
-    glColor4fv((GLfloat*)c); glBegin(GL_QUADS);
-    for (i=0; i<4; ++i) glVertex2fv((GLfloat*)&corners[i]);
-    glEnd();
+    fillBoundingBox(corners, c);
     return 1;
   }
   
@@ -587,9 +597,7 @@ int shDrawRadialGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
     
     /* Fill boundbox with color at offset 1 */
     SHColor *c = &p->stops.items[p->stops.size-1].color;
-    glColor4fv((GLfloat*)c); glBegin(GL_QUADS);
-    for (i=0; i<4; ++i) glVertex2fv((GLfloat*)&corners[i]);
-    glEnd();
+    fillBoundingBox(corners, c);
     return 1;
   }
   
@@ -749,9 +757,7 @@ int shDrawPatternMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
     
     /* Fill boundbox with tile fill color */
     SHColor *c = &context->tileFillColor;
-    glColor4fv((GLfloat*)c); glBegin(GL_QUADS);
-    for (i=0; i<4; ++i) glVertex2fv((GLfloat*)&corners[i]);
-    glEnd();
+    fillBoundingBox(corners, c);
     return 1;
   }
   
