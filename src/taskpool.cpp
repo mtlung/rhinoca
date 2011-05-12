@@ -285,11 +285,13 @@ bool TaskPool::keepRun() const
 
 int TaskPool::threadId()
 {
+	int id;
 #ifdef RHINOCA_WINDOWS
-	return ::GetCurrentThreadId();
+	id = ::GetCurrentThreadId();
 #else
-	return int(::pthread_self());
+	id = int(::pthread_self());
 #endif
+	return id > 0 ? id : -id;	// Ensure all id are positive number
 }
 
 // NOTE: Recursive and re-entrant
