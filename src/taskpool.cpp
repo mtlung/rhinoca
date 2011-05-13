@@ -362,7 +362,7 @@ void TaskPool::_wait(TaskProxy* p, int tId)
 				// If no more task can do we sleep for a while
 				// NOTE: Must release mutex to avoid deal lock
 				ScopeUnlock unlock(mutex);
-				TaskPool::sleep(1);
+				TaskPool::sleep(0);
 			}
 		}
 	}
@@ -406,8 +406,10 @@ void TaskPool::doSomeTask(float timeout)
 				return;
 
 			ScopeUnlock unlock(mutex);
-			sleep(1);
-			p = next;
+			sleep(0);
+
+			// Hunt for most dependening job, to prevent job stavation.
+			p = p->dependency ? p->dependency : next;
 		}
 	}
 }
