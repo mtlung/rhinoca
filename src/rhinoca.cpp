@@ -133,6 +133,11 @@ static void* default_ioOpen(Rhinoca* rh, const char* uri, int threadId)
 #endif
 	}
 
+	if(!fs->handle) {
+		delete fs;
+		fs = NULL;
+	}
+
 	return fs;
 }
 
