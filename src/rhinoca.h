@@ -110,8 +110,14 @@ RHINOCA_API void rhinoca_processEvent(Rhinoca* rh, RhinocaEvent ev);
 typedef void* (*rhinoca_io_open)(Rhinoca* rh, const char* uri, int threadId);
 typedef bool (*rhinoca_io_ready)(void* file, rhuint64 size, int threadId);
 typedef rhuint64 (*rhinoca_io_read)(void* file, void* buffer, rhuint64 size, int threadId);
+typedef int (*rhinoca_io_seek)(void* file, rhuint64 offset, int origin, int threadId);		/// Returns 1 for success, 0 for fail, -1 not supported. Origin: SEEK_SET, SEEK_CUR, SEEK_END.
 typedef void (*rhinoca_io_close)(void* file, int threadId);
-RHINOCA_API void rhinoca_io_setcallback(rhinoca_io_open open, rhinoca_io_ready ready, rhinoca_io_read read, rhinoca_io_close close);
+RHINOCA_API void rhinoca_io_setcallback(rhinoca_io_open open, rhinoca_io_ready ready, rhinoca_io_read read, rhinoca_io_seek seek, rhinoca_io_close close);
+RHINOCA_API rhinoca_io_open rhinoca_get_io_open();
+RHINOCA_API rhinoca_io_ready rhinoca_get_io_ready();
+RHINOCA_API rhinoca_io_read rhinoca_get_io_read();
+RHINOCA_API rhinoca_io_seek rhinoca_get_io_seek();
+RHINOCA_API rhinoca_io_close rhinoca_get_io_close();
 
 RHINOCA_API void* rhinoca_http_open(Rhinoca* rh, const char* uri, int threadId);
 RHINOCA_API bool rhinoca_http_ready(void* file, rhuint64 size, int threadId);

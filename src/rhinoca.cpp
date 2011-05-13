@@ -162,6 +162,17 @@ static rhuint64 default_ioRead(void* file, void* buffer, rhuint64 size, int thre
 	return (rhuint64)fread(buffer, 1, (size_t)size, f);
 }
 
+static int default_ioSeek(void* file, rhuint64 offset, int origin, int threadId)
+{
+	CompoundFS* fs = reinterpret_cast<CompoundFS*>(file);
+
+	if(fs->type == CompoundFS::Http)
+		return -1;	// Currently http stream don't support seek
+
+	FILE* f = reinterpret_cast<FILE*>(fs->handle);
+	return fseek(f, (long int)offset, origin) == 0 ? 1 : 0;
+}
+
 static void default_ioClose(void* file, int threadId)
 {
 	CompoundFS* fs = reinterpret_cast<CompoundFS*>(file);
@@ -179,15 +190,23 @@ static void default_ioClose(void* file, int threadId)
 rhinoca_io_open io_open = default_ioOpen;
 rhinoca_io_ready io_ready = default_ioReady;
 rhinoca_io_read io_read = default_ioRead;
+rhinoca_io_seek io_seek = default_ioSeek;
 rhinoca_io_close io_close = default_ioClose;
 
-void rhinoca_io_setcallback(rhinoca_io_open open, rhinoca_io_ready ready, rhinoca_io_read read, rhinoca_io_close close)
+void rhinoca_io_setcallback(rhinoca_io_open open, rhinoca_io_ready ready, rhinoca_io_read read, rhinoca_io_seek seek, rhinoca_io_close close)
 {
 	io_open = open;
 	io_ready = ready;
 	io_read = read;
+	io_seek = seek;
 	io_close = close;
 }
+
+rhinoca_io_open rhinoca_get_io_open()	{ return io_open; }
+rhinoca_io_ready rhinoca_get_io_ready()	{ return io_ready; }
+rhinoca_io_read rhinoca_get_io_read()	{ return io_read; }
+rhinoca_io_seek rhinoca_get_io_seek()	{ return io_seek; }
+rhinoca_io_close rhinoca_get_io_close()	{ return io_close; }
 
 // Memory allocation
 void* rhinoca_realloca(void* ptr, unsigned int oldSize, unsigned int size);
