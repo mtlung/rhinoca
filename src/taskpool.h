@@ -24,7 +24,7 @@ public:
 	void operator delete(void* ptr) { rhinoca_free(ptr); }
 
 protected:
-	/// Put the task back to the pool, usefull when the task cannot complete immediatly.
+	/// Put the task back to the pool, useful when the task cannot complete immediately.
 	/// Make sure you won't delete 'this' in 'run()'
 	void reSchedule();
 
@@ -105,7 +105,7 @@ protected:
 	class TaskProxy;
 
 	friend void _run(TaskPool*);
-	void _doTask(TaskProxy* id, int threadId, bool allowWait);
+	void _doTask(TaskProxy* id, int threadId);
 
 	void _wait(TaskProxy* id, int threadId);
 
@@ -115,8 +115,8 @@ protected:
 	/// the task has been finished and prevent the proxy from being reused.
 	void _retainTask(TaskProxy* p);
 
-	/// If the retain count reach zero, it means absolutly no one (potentially)
-	/// intrested in the task any more, the proxy can be safely reused.
+	/// If the retain count reach zero, it means absolutely no one (potentially)
+	/// interested in the task any more, the proxy can be safely reused.
 	void _releaseTask(TaskProxy* p);
 
 	void _removeOpenTask(TaskProxy* p);
@@ -127,6 +127,8 @@ protected:
 	void _removePendingTask(TaskProxy* p);
 
 	bool _matchAffinity(TaskProxy* p, int threadId);
+
+	bool _hasOutstandingDependency(TaskProxy* p);
 
 	class TaskList
 	{

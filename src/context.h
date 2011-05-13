@@ -6,11 +6,6 @@
 #include "rhstring.h"
 #include "dom/window.h"
 
-extern rhinoca_io_open io_open;
-extern rhinoca_io_read io_read;
-extern rhinoca_io_close io_close;
-extern rhinoca_printFunc print;
-
 extern JSRuntime* jsrt;
 
 struct Rhinoca

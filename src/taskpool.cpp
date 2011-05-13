@@ -19,7 +19,6 @@ public:
 	volatile TaskId id;		///< 0 for invalid id
 	Task* task;				///< Once complete it will set to NULL
 	bool finalized;			///< Attributes like dependency, affinity, parent cannot be set after the task is finalized
-	bool isWaiting;			///< Indicate this task is already waiting to finish
 	int affinity;
 	TaskPool* taskPool;
 	TaskProxy* parent;		///< A task is consider completed only if all it's children are completed.
@@ -35,7 +34,7 @@ public:
 TaskPool::TaskProxy::TaskProxy()
 	: id(0)
 	, task(NULL)
-	, finalized(false), isWaiting(false)
+	, finalized(false)
 	, affinity(0)
 	, taskPool(NULL)
 	, parent(NULL)
@@ -331,28 +330,34 @@ void TaskPool::_wait(TaskProxy* p, int tId)
 #endif
 
 	TaskId id = p->id;
-	p->isWaiting = true;
+
+	// NOTE: No need to check for dependency, making the dependency chain faster
+	// to clear up, at the expense of deeper callstack.
 	if(_matchAffinity(p, tId)) {
-		_doTask(p, tId, true);
+		_doTask(p, tId);
+
+		// Check if the task has been re-scheduled or having child tasks such that
+		// the task is still not consider finished.
 		if(p->id == id)
 			goto DoOtherTasks;
 	}
 	else {
-		// Do other tasks until the task in question was finish
-		// When the task get finished, p->task becomes null
+		// Do other tasks until the task in question has finished
+		// by other threads or it's child got finished too.
 	DoOtherTasks:
-		// If p->id not equals to id, it means the task is already finished long ago, and the proxy get reused.
+		// If p->id not equals to id, it means the task is really finished,
+		// and the proxy may get reused with a new id.
 		while(p->id == id) {
 			TaskProxy* p2 = _pendingTasksHead->nextPending;
 
-			// Search for a task which it's dependency (if any) is not already running by the upper callstack, to prevent dead lock
-			while(!_matchAffinity(p2, tId) || p2->dependency && !p2->dependency->task) {
+			// Search for a task having no dependency, to prevent dead lock
+			while(p2 && (!_matchAffinity(p2, tId) || _hasOutstandingDependency(p2))) {
 				p2 = p2->nextPending;
 				continue;
 			}
 
-			if(p2 != _pendingTasksTail)
-				_doTask(p2, tId, true);
+			if(p2 && p2 != _pendingTasksTail)
+				_doTask(p2, tId);
 			else {
 				// If no more task can do we sleep for a while
 				// NOTE: Must release mutex to avoid deal lock
@@ -386,21 +391,10 @@ void TaskPool::doSomeTask(float timeout)
 	while(p && p != _pendingTasksTail) {
 		TaskProxy* next = p->nextPending;
 
-		// Check it the task has any dependency, skip if necessary
-		if(timeout > 0) if(TaskProxy* dep = p->dependency) {
-			if(dep->id == p->dependencyId) {
-				p = dep;
-				continue;
-			}
-		}
-
-		// Don't pick a task to do if it's dependency is waiting for finish, to prevent deal lock
-		const bool isAlreadyWaiting = p->dependency && p->dependency->isWaiting;
-
-		if(_matchAffinity(p, tId) && !isAlreadyWaiting)
+		if(_matchAffinity(p, tId) && !_hasOutstandingDependency(p))
 		{
 			// NOTE: After _doTask(), the 'next' pointer becomes invalid
-			_doTask(p, tId, timeout == 0);
+			_doTask(p, tId);
 
 			// NOTE: Each time _doTask() is invoked, we start to search task
 			// at the beginning, to avoid the problem of 'next' become invalid,
@@ -419,7 +413,7 @@ void TaskPool::doSomeTask(float timeout)
 }
 
 // NOTE: Recursive and re-entrant
-void TaskPool::_doTask(TaskProxy* p, int tId, bool allowWait)
+void TaskPool::_doTask(TaskProxy* p, int tId)
 {
 	ASSERT(mutex.isLocked());
 	
@@ -541,6 +535,12 @@ bool TaskPool::_matchAffinity(TaskProxy* p, int tId)
 
 	return	p->affinity == 0 ||		// Any thread can run
 			p->affinity == tId;		// Only this thread can run
+}
+
+bool TaskPool::_hasOutstandingDependency(TaskPool::TaskProxy* p)
+{
+	return	p->dependency &&
+		p->dependency->id == p->dependencyId;	// Check if task finished
 }
 
 // NOTE: This function is purely build on top of other public interface of TaskPool ^.^
