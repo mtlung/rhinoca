@@ -32,6 +32,10 @@
 
 #include "../driver.h"
 
+// Replacement for texture coordinate generation using texture matrix
+// http://www.fernlightning.com/doku.php?id=randd:opengles
+#define USE_TEXCOORD_GEN 0
+
 void shPremultiplyFramebuffer()
 {
   /* Multiply target color with its own alpha */
@@ -515,12 +519,26 @@ VG_API_CALL void vgDrawImage(VGImage image)
   /* Generate image texture coords automatically */
   texGenS[0] = 1.0f / i->texwidth;
   texGenT[1] = 1.0f / i->texheight;
+
+#if USE_TEXCOORD_GEN
   glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
   glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
   glTexGenfv(GL_S, GL_OBJECT_PLANE, texGenS);
   glTexGenfv(GL_T, GL_OBJECT_PLANE, texGenT);
   glEnable(GL_TEXTURE_GEN_S);
   glEnable(GL_TEXTURE_GEN_T);
+#else
+  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+  glMatrixMode(GL_TEXTURE);
+  GLfloat m[4][4] = {
+    { texGenS[0], texGenT[0], 0, 0 },
+    { texGenS[1], texGenT[1], 0, 0 },
+    { texGenS[2], texGenT[2], 1, 0 },
+    { texGenS[3], texGenT[3], 0, 1 }
+  };
+  glLoadMatrixf((GLfloat *)m);
+  glMatrixMode(GL_MODELVIEW);
+#endif
   
   /* Pick fill paint */
   fill = (context->fillPaint ? context->fillPaint : &context->defaultPaint);
@@ -597,9 +615,16 @@ VG_API_CALL void vgDrawImage(VGImage image)
     glDisable(GL_TEXTURE_2D);
   }
   
-  
+#if USE_TEXCOORD_GEN
   glDisable(GL_TEXTURE_GEN_S);
   glDisable(GL_TEXTURE_GEN_T);
+#else
+  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+  glMatrixMode(GL_TEXTURE);
+  glLoadIdentity();
+  glMatrixMode(GL_MODELVIEW);
+#endif
+
   glPopMatrix();
   
   VG_RETURN(VG_NO_RETVAL);

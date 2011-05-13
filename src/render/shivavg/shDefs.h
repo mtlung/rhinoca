@@ -171,18 +171,9 @@ SHfloat getMaxFloat();
 #    define glColor4fv(a)
 #    define glTexCoord1f(a)
 #    define glTexCoord2f(a,b)
-#    define glTexGeni(a,b,c)
-#    define glTexGenfv(a,b,c)
 #    define glVertex2fv(a)
 #    define gluScaleImage(a,b,c,d,e,f,g,h,i)
 #    define GL_QUADS 0
-#    define GL_S 0
-#    define GL_T 0
-#    define GL_TEXTURE_GEN_S 0
-#    define GL_TEXTURE_GEN_T 0
-#    define GL_TEXTURE_GEN_MODE 0
-#    define GL_OBJECT_PLANE 0
-#    define GL_OBJECT_LINEAR 0
 #  else
 #    include <OpenGL/gl.h>
 #    include <OpenGL/glu.h>
