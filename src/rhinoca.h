@@ -67,6 +67,7 @@ typedef unsigned short rhuint16;
 typedef unsigned int rhuint32;
 typedef unsigned long long rhuint64;
 #endif
+typedef rhuint8 rhbyte;
 
 struct Rhinoca;
 typedef struct Rhinoca Rhinoca;

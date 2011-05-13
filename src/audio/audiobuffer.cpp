@@ -1,8 +1,11 @@
 #include "pch.h"
 #include "audiobuffer.h"
+#include "audioloader.h"
 
 AudioBuffer::AudioBuffer(const char* uri)
 	: Resource(uri)
+	, duration(0)
+	, frequency(0)
 {
 }
 
@@ -10,6 +13,11 @@ AudioBuffer::~AudioBuffer()
 {
 	for(unsigned i=0; i<subBuffers.size(); ++i)
 		rhinoca_free(subBuffers[i].handle);
+
+	if(scratch) {
+		AudioLoader* loader = reinterpret_cast<AudioLoader*>(scratch);
+		delete loader;
+	}
 }
 
 void AudioBuffer::insertSubBuffer(unsigned begin, unsigned end, void* data)

@@ -463,6 +463,14 @@
 				RelativePath="..\..\src\audio\audiobuffer.h"
 				>
 			</File>
+			<File
+				RelativePath="..\..\src\audio\audioloader.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\audio\waveloader.cpp"
+				>
+			</File>
 		</Filter>
 		<File
 			RelativePath="..\..\src\atomic.h"

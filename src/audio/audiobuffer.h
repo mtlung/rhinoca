@@ -1,5 +1,5 @@
-#ifndef __AUDIOBUFFER_H__
-#define __AUDIOBUFFER_H__
+#ifndef __AUDIO_AUDIOBUFFER_H__
+#define __AUDIO_AUDIOBUFFER_H__
 
 #include "../resource.h"
 #include "../vector.h"
@@ -18,7 +18,7 @@ public:
 
 	/// For an audio position, it gives you the index to the first fitted sub-buffer,
 	/// returns -1 if no data available.
-	/// If the returned sub-buffer didn't fullfill the requesting length, call
+	/// If the returned sub-buffer didn't fulfill the requesting length, call
 	/// this function again with the new 'begin' position.
 	int requestDataForPosition(unsigned position);
 
@@ -26,6 +26,9 @@ public:
 	void collectGarbage();
 
 // Attributes
+	unsigned duration;	/// Zero for unknown duration, in unit of samples
+	unsigned frequency;
+
 	struct SubBuffer
 	{
 		unsigned posBegin, posEnd;
@@ -39,4 +42,4 @@ public:
 
 typedef IntrusivePtr<AudioBuffer> AudioBufferPtr;
 
-#endif	// __AUDIOBUFFER_H__
+#endif	// __AUDIO_AUDIOBUFFER_H__
