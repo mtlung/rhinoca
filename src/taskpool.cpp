@@ -298,10 +298,8 @@ void TaskPool::wait(TaskId id)
 {
 	int tId = threadId();
 	ScopeLock lock(mutex);
-	if(TaskProxy* p = _findProxyById(id)) {
-		_removePendingTask(p);
+	if(TaskProxy* p = _findProxyById(id))
 		_wait(p, tId);
-	}
 }
 
 void TaskPool::waitAll()
