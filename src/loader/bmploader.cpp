@@ -92,7 +92,10 @@ void BmpLoader::loadHeader()
 	Rhinoca* rh = manager->rhinoca;
 
 	if(!stream) stream = io_open(rh, texture->uri(), tId);
-	if(!stream) goto Abort;
+	if(!stream) {
+		print(rh, "BmpLoader: Fail to open file '%s'\n", texture->uri().c_str());
+		goto Abort;
+	}
 
 	// Windows.h gives us these types to work with the Bitmap files
 	ASSERT(sizeof(BITMAPFILEHEADER) == 14);

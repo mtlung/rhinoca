@@ -91,7 +91,10 @@ void WaveLoader::loadHeader()
 	Rhinoca* rh = manager->rhinoca;
 
 	if(!stream) stream = io_open(rh, buffer->uri(), tId);
-	if(!stream) goto Abort;
+	if(!stream) {
+		print(rh, "WaveLoader: Fail to open file '%s'\n", buffer->uri().c_str());
+		goto Abort;
+	}
 
 	while(true) {
 		char chunkId[5] = {0};

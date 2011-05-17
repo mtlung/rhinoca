@@ -87,7 +87,10 @@ void JpegLoader::load(TaskPool* taskPool)
 
 	if(texture->state == Resource::Aborted) goto Abort;
 	f = io_open(rh, texture->uri(), tId);
-	if(!f) goto Abort;
+	if(!f) {
+		print(rh, "JpegLoader: Fail to open file '%s'\n", texture->uri().c_str());
+		goto Abort;
+	}
 
 	_decoder = new jpeg_decoder(_stream = new Stream(f, tId), true);
 

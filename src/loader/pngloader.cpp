@@ -179,7 +179,10 @@ void PngLoader::load(TaskPool* taskPool)
 
 	if(texture->state == Resource::Aborted) goto Abort;
 	if(!stream) stream = io_open(rh, texture->uri(), tId);
-	if(!stream) goto Abort;
+	if(!stream) {
+		print(rh, "PngLoader: Fail to open file '%s'\n", texture->uri().c_str());
+		goto Abort;
+	}
 
 	char buff[1024*8];
 	unsigned readCount = 0;
