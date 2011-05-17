@@ -13,7 +13,7 @@ struct WaveFormatEx
 	rhint16 blockAlign;
 	rhint16 bitsPerSample;
 	rhint16 size;
-} ;
+};
 
 struct WaveFormatExtensible
 {
@@ -26,7 +26,7 @@ struct WaveFormatExtensible
 	} samples;
 	rhint32 channelMask;
 	rhbyte subFormat[16];
-} ;
+};
 
 Resource* createWave(const char* uri, ResourceManager* mgr)
 {
@@ -42,9 +42,8 @@ public:
 		: stream(NULL)
 		, buffer(buf)
 		, manager(mgr)
-		, state(0)
+		, headerLoaded(false)
 		, dataChunkSize(0)
-		, bufferData(NULL)
 		, taskLoadMetaData(0)
 	{
 	}
@@ -52,29 +51,22 @@ public:
 	~WaveLoader()
 	{
 		if(stream) io_close(stream, TaskPool::threadId());
-		rhinoca_free(bufferData);
 	}
 
 	void loadDataForRange(unsigned begin, unsigned end);
 
 	void run(TaskPool* taskPool);
 
-	bool loadHeader();
-	void commitHeader();
-	bool loadData();
+	void loadHeader();
+	void loadData();
 
 	void* stream;
 	AudioBuffer* buffer;
 	ResourceManager* manager;
 
-	/// Indicate the state of the load:
-	/// 0 -> loading header
-	/// 1 -> committing header to AudioBuffer
-	/// 2 -> loading audio data
-	int state;
+	bool headerLoaded;
 	unsigned dataChunkSize;
 	WaveFormatExtensible format;
-	void* bufferData;
 
 	TaskId taskLoadMetaData;
 };
@@ -86,58 +78,32 @@ void WaveLoader::loadDataForRange(unsigned begin, unsigned end)
 
 void WaveLoader::run(TaskPool* taskPool)
 {
-	int tId = TaskPool::threadId();
-	Rhinoca* rh = manager->rhinoca;
-
-	buffer->scratch = this;
-
-	if(buffer->state == Resource::Aborted) goto Abort;
-	if(!stream) stream = io_open(rh, buffer->uri(), tId);
-	if(!stream) goto Abort;
-
-	switch(state) {
-	case 0:
-		if(!loadHeader()) goto Abort;
-		break;
-	case 1:
-		commitHeader();
-		break;
-	case 2:
-		if(!loadData()) goto Abort;
-		break;
-	default:
-		ASSERT(false);
-		break;
-	}
-
-	return;
-
-Abort:
-	buffer->scratch = NULL;
-	buffer->state = Resource::Aborted;
-	delete this;
+	if(!buffer->scratch)
+		loadHeader();
+	else
+		loadData();
 }
 
-bool WaveLoader::loadHeader()
+void WaveLoader::loadHeader()
 {
 	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
+
+	if(!stream) stream = io_open(rh, buffer->uri(), tId);
+	if(!stream) goto Abort;
 
 	while(true) {
 		char chunkId[5] = {0};
 		rhint32 chunkSize;
 
-		if(!io_ready(stream, sizeof(chunkId) + sizeof(chunkSize) + sizeof(WaveFormatExtensible), tId)) {
-			// Re-schedule the load operation
-			reSchedule();
-			return true;
-		}
+		if(!io_ready(stream, sizeof(chunkId) + sizeof(chunkSize) + sizeof(WaveFormatExtensible), tId))
+			return reSchedule();
 
 		if(	io_read(stream, chunkId, 4, tId) != 4 ||
 			io_read(stream, &chunkSize, sizeof(rhint32), tId) != sizeof(rhint32))
 		{
 			print(rh, "WaveLoader: End of file, fail to load header");
-			return false;
+			goto Abort;
 		}
 
 		if(strcasecmp(chunkId, "RIFF") == 0)
@@ -149,62 +115,61 @@ bool WaveLoader::loadHeader()
 		{
 			io_read(stream, &format, chunkSize, tId);
 
-			// set format data to buffer
-/*			buffer->setChannels( fmt.format.channels );
-			buffer->setSamplePerSec( fmt.format.samplesPerSec );
-			buffer->setAvgBytesPerSec( fmt.format.avgBytesPerSec );
-			buffer->setBlockAlign( fmt.format.blockAlign );
-			buffer->setBitsPerSample( fmt.format.bitsPerSample );
-			buffer->setSize( fmt.format.size );*/
 		}
 		else if(strcasecmp(chunkId, "DATA") == 0)
 		{
-			state = 1;
 			dataChunkSize = chunkSize;
-			return true;
-//			mBufferSize = chunkSize;
-//			buffer->initBuffers( mBufferSize );
-//			mAudioData = buffer->getCurrentBuffer(); //new byte_t[mBufferSize];
 
-//			is->read( reinterpret_cast<char*>(mAudioData), sizeof(char) * mBufferSize );
+			AudioBuffer::Format f = {
+				format.format.channels,
+				format.format.samplesPerSec,
+				format.format.bitsPerSample,
+				format.format.blockAlign,
+				dataChunkSize / format.format.blockAlign
+			};
+
+			// NOTE: AudioBuffer::setFormat() is thread safe
+			buffer->setFormat(f);
+
+			break;
 		}
 		else
-			io_seek(stream, chunkSize, SEEK_CUR, tId);
+			VERIFY(io_seek(stream, chunkSize, SEEK_CUR, tId));
 	}
 
-	return true;
+	buffer->scratch = this;
+	return;
+
+Abort:
+	buffer->state = Resource::Aborted;
+	buffer->scratch = this;
 }
 
-void WaveLoader::commitHeader()
-{
-	state = 2;
-
-	buffer->frequency = format.format.samplesPerSec;
-	buffer->duration = dataChunkSize / format.format.blockAlign;
-}
-
-bool WaveLoader::loadData()
+void WaveLoader::loadData()
 {
 	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
-	if(!io_ready(stream, dataChunkSize, tId)) {
-		reSchedule();
-		return true;
-	}
+	if(buffer->state == Resource::Aborted) goto Abort;
+	if(!stream) goto Abort;
 
-	bufferData = rhinoca_malloc(dataChunkSize);
+	if(!io_ready(stream, dataChunkSize, tId))
+		return reSchedule();
 
-	if(	io_read(stream, bufferData, dataChunkSize, tId) != dataChunkSize)
+	void* bufferData = buffer->getWritePointerForRange(0, dataChunkSize / format.format.blockAlign);
+
+	if(io_read(stream, bufferData, dataChunkSize, tId) != dataChunkSize)
 	{
 		print(rh, "WaveLoader: End of file, only partial load of audio data");
-		return false;
+		goto Abort;
 	}
 
-	buffer->insertSubBuffer(0, buffer->duration, bufferData);
-	bufferData = NULL;
+	buffer->commitWriteForRange(0, dataChunkSize / format.format.blockAlign);
+	return;
 
-	return true;
+Abort:
+	buffer->state = Resource::Aborted;
+	buffer->scratch = this;
 }
 
 bool loadWave(Resource* resource, ResourceManager* mgr)
@@ -217,8 +182,7 @@ bool loadWave(Resource* resource, ResourceManager* mgr)
 
 	WaveLoader* loaderTask = new WaveLoader(buffer, mgr);
 
-	loaderTask->taskLoadMetaData = taskPool->addFinalized(loaderTask, 0, 0, ~taskPool->mainThreadId());	// Load meta data
-	buffer->taskReady = taskPool->addFinalized(loaderTask, 0, loaderTask->taskLoadMetaData, taskPool->mainThreadId());	// Commit meta data
+	buffer->taskReady = taskPool->addFinalized(loaderTask, 0, 0, ~taskPool->mainThreadId());					// Load meta data
 	buffer->taskLoaded = taskPool->addFinalized(loaderTask, 0, buffer->taskReady, ~taskPool->mainThreadId());	// All load completes
 
 	return true;

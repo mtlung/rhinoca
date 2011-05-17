@@ -5,39 +5,58 @@
 #include "../vector.h"
 
 /// Basically this class store chunks of audio data,
-/// 
+/// All the functions can be invoked in multi-thread environment.
 class AudioBuffer : public Resource
 {
 public:
 	explicit AudioBuffer(const char* uri);
 	virtual ~AudioBuffer();
 
-// Operations
-	/// data should be allocated using rhinoca_malloc()
-	void insertSubBuffer(unsigned begin, unsigned end, void* data);
+	struct Format {
+		unsigned channels;
+		unsigned samplesPerSecond;
+		unsigned bitsPerSample;
+		unsigned blockAlignment;	/// >= channels * self->bitsPerSample / 8
+		unsigned totalSamples;		/// Zero for unknown duration
+	};
 
-	/// For an audio position, it gives you the index to the first fitted sub-buffer,
-	/// returns -1 if no data available.
-	/// If the returned sub-buffer didn't fulfill the requesting length, call
-	/// this function again with the new 'begin' position.
-	int requestDataForPosition(unsigned position);
+// Operations
+	void setFormat(const Format& format);
+
+	void getFormat(Format& format);
+
+	unsigned sizeInByteForSamples(unsigned samples) const;
+
+	/// Returns a block of memory for the specific sample range.
+	void* getWritePointerForRange(unsigned begin, unsigned end);
+
+	/// For loader to tell the buffer data is written to the memory allocated via getWritePointerForRange()
+	void commitWriteForRange(unsigned begin, unsigned end);
+
+	/// Is data ready for read, null if data not ready.
+	void* getReadPointerForRange(unsigned begin, unsigned end, unsigned& readableSamples, unsigned& readableBytes, Format& format);
 
 	/// Remove sub-buffer that is not used for a period of time.
 	void collectGarbage();
 
 // Attributes
-	unsigned duration;	/// Zero for unknown duration, in unit of samples
-	unsigned frequency;
+	void* loader;	/// Implementation specific loader
+
+protected:
+	Format format;
 
 	struct SubBuffer
 	{
 		unsigned posBegin, posEnd;
 		unsigned sizeInByte;
 		float hotless;
-		void* handle;
+		bool readyForRead;
+		rhbyte* data;
 	};
 
 	Vector<SubBuffer> subBuffers;
+
+	mutable Mutex mutex;
 };	// AudioBuffer
 
 typedef IntrusivePtr<AudioBuffer> AudioBufferPtr;

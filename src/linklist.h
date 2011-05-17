@@ -32,14 +32,14 @@
 	To add an element into multiple list (or similar intrusive container such as Map):
 	\code
 	struct ClientInfo {
-		struct Client : public LinkListBase::NodeBase {
+		struct Client : public LinkListBase::Node<ClientInfo::Client> {
 			MCD_DECLAR_GET_OUTER_OBJ(ClientInfo, mClient);
 			void destroyThis() {
 				delete getOuterSafe();
 			}
 		} mClient;
 
-		struct Server : public LinkListBase::NodeBase {
+		struct Server : public LinkListBase::Node<ClientInfo::Server> {
 			MCD_DECLAR_GET_OUTER_OBJ(ClientInfo, mServer);
 			void destroyThis() {
 				delete getOuterSafe();

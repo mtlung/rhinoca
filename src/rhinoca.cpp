@@ -2,6 +2,7 @@
 #include "rhinoca.h"
 #include "context.h"
 #include "socket.h"
+#include "audio/audiodevice.h"
 #include "render/driver.h"
 #include "render/vg/openvg.h"
 #include <stdarg.h>	// For va_list
@@ -22,6 +23,8 @@ void rhinoca_init()
 	VERIFY(vgCreateContextSH(1, 1));
 
 	VERIFY(BsdSocket::initApplication() == 0);
+
+	audiodevice_init();
 }
 
 void rhinoca_close()
@@ -34,6 +37,8 @@ void rhinoca_close()
 	Render::Driver::deleteContext(driverContext);
 
 	VERIFY(BsdSocket::closeApplication() == 0);
+
+	audiodevice_close();
 }
 
 Rhinoca* rhinoca_create(RhinocaRenderContext* renderContext)

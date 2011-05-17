@@ -4,6 +4,7 @@
 #include "platform.h"
 #include "rhinoca.h"
 #include "xmlparser.h"
+#include "audio/audiodevice.h"
 #include "dom/document.h"
 #include "dom/element.h"
 #include "dom/keyevent.h"
@@ -75,6 +76,7 @@ Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 	, domWindow(NULL)
 	, width(0), height(0)
 	, renderContex(rc)
+	, audioDevice(NULL)
 {
 	jsContext = JS_NewContext(jsrt, 8192);
 	JS_SetOptions(jsContext, JS_GetOptions(jsContext) | JSOPTION_STRICT);
@@ -89,6 +91,11 @@ Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 	resourceManager.taskPool = &taskPool;
 	Loader::registerLoaders(&resourceManager);
 
+	audioDevice = audiodevice_create();
+
+//	AudioSound* sound = audiodevice_createSound(audioDevice, "../../test/media/Speech On.wav", &resourceManager);
+//	audiodevice_playSound(audioDevice, sound);
+
 	Dom::registerFactories();
 }
 
@@ -97,6 +104,8 @@ Rhinoca::~Rhinoca()
 	closeDocument();
 
 	JS_DestroyContext(jsContext);
+
+	audiodevice_destroy(audioDevice);
 }
 
 void Rhinoca::update()
@@ -107,6 +116,8 @@ void Rhinoca::update()
 		domWindow->update();
 
 	resourceManager.update();
+
+	audiodevice_update(audioDevice);
 
 	taskPool.doSomeTask(1.0f / 60);
 

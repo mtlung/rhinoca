@@ -379,13 +379,18 @@ bool TaskPool::isDone(TaskId id)
 
 void TaskPool::doSomeTask(float timeout)
 {
-	Timer timer;
-	const float beginTime = timer.seconds();
-
-	int tId = threadId();
 	ScopeLock lock(mutex);
 
 	TaskProxy* p = _pendingTasksHead->nextPending;
+
+	// Early exit
+	if(p == _pendingTasksTail)
+		return;
+
+	Timer timer;
+	const float beginTime = timer.seconds();
+	int tId = threadId();
+
 	while(p && p != _pendingTasksTail) {
 		TaskProxy* next = p->nextPending;
 

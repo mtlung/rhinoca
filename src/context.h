@@ -8,6 +8,8 @@
 
 extern JSRuntime* jsrt;
 
+struct AudioDevice;
+
 struct Rhinoca
 {
 public:
@@ -38,6 +40,8 @@ public:
 	unsigned width, height;
 
 	RhinocaRenderContext* renderContex;
+
+	AudioDevice* audioDevice;
 
 	TaskPool taskPool;
 	ResourceManager resourceManager;
