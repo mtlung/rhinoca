@@ -4,6 +4,7 @@
 #include "../context.h"
 #include "../path.h"
 #include "../resource.h"
+#include "../xmlparser.h"
 #include "../render/texture.h"
 
 using namespace Render;
@@ -58,30 +59,7 @@ static JSBool setSrc(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	if(!jss) return JS_FALSE;
 	char* str = JS_GetStringBytes(jss);
 
-	Path path;
-	if(Path(str).hasRootDirectory())	// Absolute path
-		path = str;
-	else {
-		// Relative path to the document
-		path = self->ownerDocument->rhinoca->documentUrl.c_str();
-		path = path.getBranchPath() / str;
-	}
-
-	ResourceManager& mgr = self->ownerDocument->rhinoca->resourceManager;
-	self->texture = mgr.loadAs<Texture>(path.c_str());
-
-	// Register callbacks
-	if(self->texture) {
-		int tId = TaskPool::threadId();
-		mgr.taskPool->addCallback(self->texture->taskReady, onReadyCallback, self, tId);
-		mgr.taskPool->addCallback(self->texture->taskLoaded, onLoadCallback, self, tId);
-
-		// Prevent HTMLImageElement begging GC before the callback finished.
-		self->addGcRoot();
-		self->addGcRoot();
-	}
-	else
-		print(self->ownerDocument->rhinoca, "Failed to load: '%s'\n", path.c_str());
+	self->setSrc(self->ownerDocument->rhinoca, str);
 
 	return JS_TRUE;
 }
@@ -186,7 +164,39 @@ void HTMLImageElement::registerClass(JSContext* cx, JSObject* parent)
 
 Element* HTMLImageElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
-	return strcasecmp(type, "IMG") == 0 ? new HTMLImageElement : NULL;
+	HTMLImageElement* img = strcasecmp(type, "IMG") == 0 ? new HTMLImageElement : NULL;
+	if(!img) return NULL;
+
+	if(!img->jsContext)
+		img->bind(rh->jsContext, NULL);
+
+	// Parse HTMLImageElement attributes
+	if(const char* s = parser->attributeValueIgnoreCase("src"))
+		img->setSrc(rh, s);
+
+	return img;
+}
+
+void HTMLImageElement::setSrc(Rhinoca* rh, const char* uri)
+{
+	Path path;
+	fixRelativePath(uri, rh->documentUrl.c_str(), path);
+
+	ResourceManager& mgr = rh->resourceManager;
+	texture = mgr.loadAs<Texture>(path.c_str());
+
+	// Register callbacks
+	if(texture) {
+		int tId = TaskPool::threadId();
+		mgr.taskPool->addCallback(texture->taskReady, onReadyCallback, this, tId);
+		mgr.taskPool->addCallback(texture->taskLoaded, onLoadCallback, this, tId);
+
+		// Prevent HTMLImageElement begging GC before the callback finished.
+		addGcRoot();
+		addGcRoot();
+	}
+	else
+		print(rh, "Failed to load: '%s'\n", path.c_str());
 }
 
 rhuint HTMLImageElement::width() const

@@ -3,6 +3,7 @@
 
 #include "node.h"
 
+class Path;
 class XmlParser;
 
 namespace Dom {
@@ -17,6 +18,9 @@ public:
 	JSObject* createPrototype();
 
 	static void registerClass(JSContext* cx, JSObject* parent);
+
+	/// Helper function to convert a uri into a usable path for ResourceManager
+	void fixRelativePath(const char* uri, const char* docUri, Path& path);
 
 // Attributes
 	FixString id;

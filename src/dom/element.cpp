@@ -1,5 +1,8 @@
 #include "pch.h"
 #include "element.h"
+#include "document.h"
+#include "../context.h"
+#include "../path.h"
 
 static JSBool JS_ValueToRhInt32(JSContext *cx, jsval v, rhint32 *ip)
 {
@@ -97,6 +100,17 @@ JSObject* Element::createPrototype()
 void Element::registerClass(JSContext* cx, JSObject* parent)
 {
 	JS_InitClass(cx, parent, NULL, &jsClass, NULL, 0, NULL, NULL, NULL, NULL);
+}
+
+void Element::fixRelativePath(const char* uri, const char* docUri, Path& path)
+{
+	if(Path(uri).hasRootDirectory())	// Absolute path
+		path = uri;
+	else {
+		// Relative path to the document
+		path = docUri;
+		path = path.getBranchPath() / uri;
+	}
 }
 
 const char* Element::tagName() const

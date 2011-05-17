@@ -26,6 +26,8 @@ public:
 // Attributes
 	Render::TexturePtr texture;
 
+	void setSrc(Rhinoca* rh, const char* uri);
+
 	unsigned width() const;
 	unsigned height() const;
 	unsigned naturalWidth() const;
