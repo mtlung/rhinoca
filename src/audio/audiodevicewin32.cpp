@@ -16,15 +16,6 @@
 	http://stackoverflow.com/questions/434599/openal-how-does-one-jump-to-a-particular-offset-more-than-once
  */
 
-/*	Main flow of logic:
-	- User code request play, set apprioate flags
-	- AudioDevice::update():
-	  * Find any allocated AL buffer for AudioSound
-	    if none, allocate one from the fix size pool
-	  * Check if the audio data is ready
-		  if ready, put into AL audio queue
-		  else, ask loader to load and break;
- */
 #if defined(RHINOCA_VC)
 #	pragma comment(lib, "OpenAL32")
 #endif
@@ -84,7 +75,7 @@ struct AudioSound : public LinkListBase::Node<AudioSound>
 	explicit AudioSound(AudioDevice* d)
 		: device(d)
 		, isPlay(false)
-		, isPause(false)
+		, isPause(true)	// NOTE: Paused by default
 		, isLoop(false)
 		, currentSamplePosition(0)
 	{
@@ -252,7 +243,14 @@ void AudioSound::unqueueBuffer()
 
 void audioSound_destroy(AudioSound* sound)
 {
-	sound->destroyThis();
+	if(sound)
+		sound->destroyThis();
+}
+
+const char* audioSound_getUri(AudioSound* sound)
+{
+	if(!sound->audioBuffer) return "";
+	return sound->audioBuffer->getKey().c_str();
 }
 
 AudioSound* AudioDevice::createSound(const char* uri, ResourceManager* resourceMgr)
@@ -357,11 +355,42 @@ void AudioDevice::update()
 
 				int state;
 				alGetSourcei(sound.handle, AL_SOURCE_STATE, &state);
-				if(state == AL_INITIAL)
+				if(state == AL_INITIAL) {
 					alSourcePlay(sound.handle);
+					if(sound.isPause)
+						alSourcePause(sound.handle);
+				}
 
 				checkAndPrintError("alSourceQueueBuffers failed: ");
 				sound.alBufferIndice[i].queued = true;
+			}
+		}
+
+		{	// State update
+			ALint state;
+			alGetSourcei(sound.handle, AL_SOURCE_STATE, &state);
+
+			switch(state) {
+			case AL_PLAYING:
+				if(sound.isPause)
+					alSourcePause(sound.handle);
+				break;
+			case AL_PAUSED:
+				if(sound.isPlay && !sound.isPause) {
+					alSourcePlay(sound.handle);
+					sound.activeListNode.removeThis();
+				}
+				break;
+			case AL_STOPPED:
+				if(sound.isPlay && sound.isLoop) {
+					alSourceRewind(sound.handle);
+					alSourcePlay(sound.handle);
+					if(sound.isPause)
+						alSourcePause(sound.handle);
+				}
+				break;
+			default:
+				break;
 			}
 		}
 
@@ -431,19 +460,58 @@ void audiodevice_destroy(AudioDevice* device)
 
 AudioSound* audiodevice_createSound(AudioDevice* device, const char* uri, ResourceManager* resourceMgr)
 {
+	if(!device) return NULL;
+
 	device->makeContextCurrent();
 	return device->createSound(uri, resourceMgr);
 }
 
 void audiodevice_playSound(AudioDevice* device, AudioSound* sound)
 {
-	if(sound->isPlay) return;
+	if(!sound->activeListNode.isInList())
+		device->_activeSoundList.pushBack(sound->activeListNode);
 
-	device->makeContextCurrent();
-	device->_activeSoundList.pushBack(sound->activeListNode);
-//	alSourcePlay(sound->handle);
-//	checkAndPrintError("alSourcePlay failed: ");
+	checkAndPrintError("alSourcePlay failed: ");
 	sound->isPlay = true;
+	sound->isPause = false;
+}
+
+void audiodevice_pauseSound(AudioDevice* device, AudioSound* sound)
+{
+	sound->isPause = true;
+}
+
+void audiodevice_stopSound(AudioDevice* device, AudioSound* sound)
+{
+	sound->isPlay = false;
+}
+
+void audiodevice_setSoundLoop(AudioDevice* device, AudioSound* sound, bool loop)
+{
+	sound->isLoop = loop;
+}
+
+bool audiodevice_getSoundLoop(AudioDevice* device, AudioSound* sound)
+{
+	return sound->isLoop;
+}
+
+void audiodevice_setSoundCurrentTime(AudioDevice* device, AudioSound* sound, float time)
+{
+}
+
+float audiodevice_getSoundCurrentTime(AudioDevice* device, AudioSound* sound)
+{
+	return 0;
+}
+
+void audiodevice_setSoundVolumn(AudioDevice* device, AudioSound* sound, float volumn)
+{
+}
+
+float audiodevice_getSoundVolumn(AudioDevice* device, AudioSound* sound)
+{
+	return 1;
 }
 
 void audiodevice_update(AudioDevice* device)

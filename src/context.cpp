@@ -93,9 +93,6 @@ Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 
 	audioDevice = audiodevice_create();
 
-//	AudioSound* sound = audiodevice_createSound(audioDevice, "../../test/media/Speech On.wav", &resourceManager);
-//	audiodevice_playSound(audioDevice, sound);
-
 	Dom::registerFactories();
 }
 

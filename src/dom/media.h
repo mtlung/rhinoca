@@ -17,11 +17,18 @@ public:
 
 	static void registerClass(JSContext* cx, JSObject* parent);
 
+	virtual void setSrc(const char* uri) {}
+	virtual const char* getSrc() { return ""; }
+
 	void load();
-	void play();
-	void pause();
+	virtual void play() {}
+	virtual void pause() {}
+
+	void parseMediaElementAttributes(Rhinoca* rh, XmlParser* parser);
 
 // Attributes
+	FixString src;
+
 	/// type:	audio/mpeg
 	///			audio/ogg; codecs='vorbis'
 	///			audio/x-wav

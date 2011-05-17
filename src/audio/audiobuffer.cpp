@@ -81,7 +81,9 @@ void* AudioBuffer::getReadPointerForRange(unsigned begin, unsigned end, unsigned
 	for(unsigned i=0; i<subBuffers.size(); ++i) {
 		SubBuffer& b = subBuffers[i];
 		if(b.posBegin <= begin && b.posEnd >= end) {
-			ASSERT(b.readyForRead);
+			// Data is reading but not yet finished
+			if(!b.readyForRead)
+				return NULL;
 
 			readableSamples = b.posEnd - begin;
 			readableBytes = readableSamples * format.blockAlignment;

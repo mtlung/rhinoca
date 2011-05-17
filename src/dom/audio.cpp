@@ -4,6 +4,7 @@
 #include "../context.h"
 #include "../path.h"
 #include "../resource.h"
+#include "../xmlparser.h"
 
 namespace Dom {
 
@@ -14,7 +15,20 @@ JSClass HTMLAudioElement::jsClass = {
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
+static JSBool getLoop(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	HTMLAudioElement* self = reinterpret_cast<HTMLAudioElement*>(JS_GetPrivate(cx, obj));
+	*vp = BOOLEAN_TO_JSVAL(self->getLoop()); return JS_TRUE;
+}
+
+static JSBool setLoop(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	HTMLAudioElement* self = reinterpret_cast<HTMLAudioElement*>(JS_GetPrivate(cx, obj));
+	self->setLoop(JSVAL_TO_BOOLEAN(*vp) == JS_TRUE); return JS_TRUE;
+}
+
 static JSPropertySpec properties[] = {
+	{"loop", 0, 0, getLoop, setLoop},
 	{0}
 };
 
@@ -22,10 +36,11 @@ static JSBool construct(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, j
 {
 	if(!JS_IsConstructing(cx)) return JS_FALSE;	// Not called as constructor? (called without new)
 
-	HTMLAudioElement* audio = new HTMLAudioElement;
+	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
+
+	HTMLAudioElement* audio = new HTMLAudioElement(rh->audioDevice, &rh->resourceManager);
 	audio->bind(cx, NULL);
 
-	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
 	audio->ownerDocument = rh->domWindow->document;
 
 	*rval = OBJECT_TO_JSVAL(audio->jsObject);
@@ -37,12 +52,14 @@ static JSFunctionSpec methods[] = {
 	{0}
 };
 
-HTMLAudioElement::HTMLAudioElement()
+HTMLAudioElement::HTMLAudioElement(AudioDevice* device, ResourceManager* mgr)
+	: _sound(NULL), _device(device), _resourceManager(mgr)
 {
 }
 
 HTMLAudioElement::~HTMLAudioElement()
 {
+	audioSound_destroy(_sound);
 }
 
 void HTMLAudioElement::bind(JSContext* cx, JSObject* parent)
@@ -63,12 +80,64 @@ void HTMLAudioElement::registerClass(JSContext* cx, JSObject* parent)
 
 Element* HTMLAudioElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
-	return strcasecmp(type, "AUDIO") == 0 ? new HTMLAudioElement : NULL;
+	HTMLAudioElement* audio = strcasecmp(type, "AUDIO") == 0 ? new HTMLAudioElement(rh->audioDevice, &rh->resourceManager) : NULL;
+	if(!audio) return NULL;
+
+	audio->parseMediaElementAttributes(rh, parser);
+
+	// HTMLAudioElement specific attributes
+	if(bool loop = parser->attributeValueAsBoolIgnoreCase("loop"))
+		audiodevice_setSoundLoop(audio->_device, audio->_sound, loop);
+
+	return audio;
 }
 
 const char* HTMLAudioElement::tagName() const
 {
 	return "AUDIO";
+}
+
+void HTMLAudioElement::setSrc(const char* uri)
+{
+	if(_sound)
+		audioSound_destroy(_sound);
+
+	_sound = audiodevice_createSound(_device, uri, _resourceManager);
+	src = uri;
+}
+
+const char* HTMLAudioElement::getSrc()
+{
+	if(!_sound)
+		return "";
+
+	return audioSound_getUri(_sound);
+}
+
+void HTMLAudioElement::play()
+{
+	if(_sound)
+		audiodevice_playSound(_device, _sound);
+}
+
+void HTMLAudioElement::pause()
+{
+	if(_sound)
+		audiodevice_pauseSound(_device, _sound);
+}
+
+void HTMLAudioElement::setLoop(bool loop)
+{
+	if(_sound)
+		audiodevice_setSoundLoop(_device, _sound, loop);
+}
+
+bool HTMLAudioElement::getLoop()
+{
+	if(_sound)
+		return audiodevice_getSoundLoop(_device, _sound);
+	else
+		return false;
 }
 
 }	// namespace Dom

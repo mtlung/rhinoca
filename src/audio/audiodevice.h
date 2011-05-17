@@ -10,6 +10,7 @@ struct AudioSound;
 typedef struct AudioSound AudioSound;
 
 void audioSound_destroy(AudioSound* sound);
+const char* audioSound_getUri(AudioSound* sound);
 
 struct AudioDevice;
 typedef struct AudioDevice AudioDevice;
@@ -27,6 +28,14 @@ AudioSound* audiodevice_createSound(AudioDevice* device, const char* uri, Resour
 
 // Work with sound
 void audiodevice_playSound(AudioDevice* device, AudioSound* sound);
+void audiodevice_pauseSound(AudioDevice* device, AudioSound* sound);
+void audiodevice_stopSound(AudioDevice* device, AudioSound* sound);
+void audiodevice_setSoundLoop(AudioDevice* device, AudioSound* sound, bool loop);
+bool audiodevice_getSoundLoop(AudioDevice* device, AudioSound* sound);
+void audiodevice_setSoundCurrentTime(AudioDevice* device, AudioSound* sound, float time);
+float audiodevice_getSoundCurrentTime(AudioDevice* device, AudioSound* sound);
+void audiodevice_setSoundVolumn(AudioDevice* device, AudioSound* sound, float volumn);
+float audiodevice_getSoundVolumn(AudioDevice* device, AudioSound* sound);
 
 // Loading
 typedef void* (*audiodevice_loadCallback)(void* userData, AudioBuffer* audioData, unsigned begin, unsigned end);	// Invoked when the audio device think it's time to load some data
