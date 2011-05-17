@@ -153,6 +153,7 @@ void WaveLoader::loadData()
 {
 	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
+	void* bufferData = NULL;
 
 	if(buffer->state == Resource::Aborted) goto Abort;
 	if(!stream) goto Abort;
@@ -160,7 +161,7 @@ void WaveLoader::loadData()
 	if(!io_ready(stream, dataChunkSize, tId))
 		return reSchedule();
 
-	void* bufferData = buffer->getWritePointerForRange(0, dataChunkSize / format.format.blockAlign);
+	bufferData = buffer->getWritePointerForRange(0, dataChunkSize / format.format.blockAlign);
 
 	if(io_read(stream, bufferData, dataChunkSize, tId) != dataChunkSize)
 	{

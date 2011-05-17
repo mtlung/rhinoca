@@ -167,6 +167,11 @@ bool rhinoca_http_ready(void* file, rhuint64 size, int threadId)
 
 			s->headerReceived = true;
 		}
+		else
+		{
+			print(s->rh, "Http stream receive server error code '%d'\n", serverRetCode);
+			goto OnError;
+		}
 	}
 
 	if(s->bufSize >= size)

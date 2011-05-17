@@ -4,8 +4,14 @@
 #include "../linklist.h"
 #include "../resource.h"
 #include "../vector.h"
-#include "../../thirdparty/OpenAL/al.h"
-#include "../../thirdparty/OpenAL/alc.h"
+
+#if defined(RHINOCA_IOS)
+#	include <OpenAL/al.h>
+#	include <OpenAL/alc.h>
+#else
+#	include "../../thirdparty/OpenAL/al.h"
+#	include "../../thirdparty/OpenAL/alc.h"
+#endif
 
 /*	Some usefull links about OpenAL:
 	Offset

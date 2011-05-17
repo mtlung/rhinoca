@@ -115,7 +115,10 @@ void NSImageLoader::load(TaskPool* taskPool)
 	CGDataProviderRef dataProvider;
 
 	void* f = io_open(rh, texture->uri(), tId);
-	if(!f) goto Abort;
+	if(!f) {
+		print(rh, "NSImageLoader: Fail to open file '%s'\n", texture->uri().c_str());
+		goto Abort;
+	}
 
 	pixelDataFormat = Driver::BGR;
 

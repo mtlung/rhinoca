@@ -116,6 +116,9 @@
 		9CC68CAD137C2E4F00448AEB /* shVectors.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CC68C98137C2E4F00448AEB /* shVectors.h */; };
 		9CC68CAE137C2E4F00448AEB /* shVgu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC68C99137C2E4F00448AEB /* shVgu.cpp */; };
 		9CCBEE76137C192100C0BF4F /* rhinoca.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CCBEE75137C192100C0BF4F /* rhinoca.mm */; };
+		9CD8886E1382DFC9003751E2 /* audiodevice.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CD8886C1382DFC9003751E2 /* audiodevice.h */; };
+		9CD8886F1382DFC9003751E2 /* audiodevicewin32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CD8886D1382DFC9003751E2 /* audiodevicewin32.cpp */; };
+		9CD888711382E07A003751E2 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CD888701382E07A003751E2 /* OpenAL.framework */; };
 		9CF4B71D137D692C0025CF8E /* audiobuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CF4B719137D692C0025CF8E /* audiobuffer.cpp */; };
 		9CF4B71E137D692C0025CF8E /* audiobuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CF4B71A137D692C0025CF8E /* audiobuffer.h */; };
 		9CF4B71F137D692C0025CF8E /* audioloader.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CF4B71B137D692C0025CF8E /* audioloader.h */; };
@@ -252,6 +255,9 @@
 		9CC68C98137C2E4F00448AEB /* shVectors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = shVectors.h; path = ../../../src/render/shivavg/shVectors.h; sourceTree = "<group>"; };
 		9CC68C99137C2E4F00448AEB /* shVgu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = shVgu.cpp; path = ../../../src/render/shivavg/shVgu.cpp; sourceTree = "<group>"; };
 		9CCBEE75137C192100C0BF4F /* rhinoca.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = rhinoca.mm; path = ../../../src/rhinoca.mm; sourceTree = "<group>"; };
+		9CD8886C1382DFC9003751E2 /* audiodevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = audiodevice.h; path = ../../../src/audio/audiodevice.h; sourceTree = "<group>"; };
+		9CD8886D1382DFC9003751E2 /* audiodevicewin32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = audiodevicewin32.cpp; path = ../../../src/audio/audiodevicewin32.cpp; sourceTree = "<group>"; };
+		9CD888701382E07A003751E2 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		9CF4B719137D692C0025CF8E /* audiobuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = audiobuffer.cpp; path = ../../../src/audio/audiobuffer.cpp; sourceTree = "<group>"; };
 		9CF4B71A137D692C0025CF8E /* audiobuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = audiobuffer.h; path = ../../../src/audio/audiobuffer.h; sourceTree = "<group>"; };
 		9CF4B71B137D692C0025CF8E /* audioloader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = audioloader.h; path = ../../../src/audio/audioloader.h; sourceTree = "<group>"; };
@@ -267,6 +273,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AACBBE4A0F95108600F1A2B1 /* Foundation.framework in Frameworks */,
+				9CD888711382E07A003751E2 /* OpenAL.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -284,6 +291,7 @@
 		0867D691FE84028FC02AAC07 /* Rhinoca */ = {
 			isa = PBXGroup;
 			children = (
+				9CD888701382E07A003751E2 /* OpenAL.framework */,
 				182F564C130397F9003805A7 /* SpiderMonkey.xcodeproj */,
 				08FB77AEFE84172EC02AAC07 /* Classes */,
 				32C88DFF0371C24200C91783 /* Other Sources */,
@@ -472,6 +480,8 @@
 			children = (
 				9CF4B719137D692C0025CF8E /* audiobuffer.cpp */,
 				9CF4B71A137D692C0025CF8E /* audiobuffer.h */,
+				9CD8886C1382DFC9003751E2 /* audiodevice.h */,
+				9CD8886D1382DFC9003751E2 /* audiodevicewin32.cpp */,
 				9CF4B71B137D692C0025CF8E /* audioloader.h */,
 				9CF4B71C137D692C0025CF8E /* waveloader.cpp */,
 			);
@@ -545,6 +555,7 @@
 				9CC68CAD137C2E4F00448AEB /* shVectors.h in Headers */,
 				9CF4B71E137D692C0025CF8E /* audiobuffer.h in Headers */,
 				9CF4B71F137D692C0025CF8E /* audioloader.h in Headers */,
+				9CD8886E1382DFC9003751E2 /* audiodevice.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -669,6 +680,7 @@
 				9CC68CAE137C2E4F00448AEB /* shVgu.cpp in Sources */,
 				9CF4B71D137D692C0025CF8E /* audiobuffer.cpp in Sources */,
 				9CF4B720137D692C0025CF8E /* waveloader.cpp in Sources */,
+				9CD8886F1382DFC9003751E2 /* audiodevicewin32.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
