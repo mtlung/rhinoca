@@ -30,7 +30,8 @@ public:
 // Attributes
 	JSContext* jsContext;
 	JSObject* jsObject;
-	int refCount;
+	int refCount;		/// Governing when the object will be deleted
+	int gcRootCount;	/// Control when the Javascript engine will giveup ownership
 	FixString typeName;
 
 	static void finalize(JSContext* cx, JSObject* obj);

@@ -6,17 +6,22 @@ JsBindable::JsBindable()
 	: jsContext(NULL)
 	, jsObject(NULL)
 	, refCount(0)
+	, gcRootCount(0)
 {}
 
 JsBindable::~JsBindable()
 {
 	ASSERT(refCount == 0);
+	ASSERT(gcRootCount == 0);
 //	ASSERT(!jsContext);
 //	ASSERT(!jsObject);
 }
 
 void JsBindable::addGcRoot()
 {
+	if(++gcRootCount > 1)
+		return;
+
 	addReference();	// releaseReference() in JsBindable::releaseGcRoot()
 	ASSERT(jsContext);
 	if(typeName.empty())
@@ -27,6 +32,9 @@ void JsBindable::addGcRoot()
 
 void JsBindable::releaseGcRoot()
 {
+	if(--gcRootCount > 0)
+		return;
+
 	ASSERT(jsContext);
 	VERIFY(JS_RemoveRoot(jsContext, &jsObject));
 	releaseReference();
