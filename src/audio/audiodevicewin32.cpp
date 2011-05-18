@@ -13,7 +13,7 @@
 #	include "../../thirdparty/OpenAL/alc.h"
 #endif
 
-/*	Some usefull links about OpenAL:
+/*	Some useful links about OpenAL:
 	Offset
 	http://www.nabble.com/AL_*_OFFSET-resolution-td14216950.html
 	Calculate the current playing time:
@@ -62,6 +62,7 @@ struct AlBuffer
 		: dataReady(false)
 		, referenceCount(0)
 		, begin(0), end(0)
+		, handle(0)
 	{}
 
 	~AlBuffer()
@@ -171,6 +172,7 @@ struct AudioDevice
 
 AudioSound::~AudioSound()
 {
+	// alDeleteSources() should handle stopping and unqueue buffer for us
 	alDeleteSources(1, &handle);
 
 	for(unsigned i=0; i<MAX_AL_BUFFERS; ++i) {
@@ -237,7 +239,9 @@ void AudioSound::unqueueBuffer()
 	checkAndPrintError("alSourceUnqueueBuffers failed: ");
 
 	for(unsigned i=0; i<AudioSound::MAX_AL_BUFFERS; ++i) {
-		AlBuffer& b = device->_alBuffers[alBufferIndice[i].index];
+		int idx = alBufferIndice[i].index;
+		if(idx < 0) continue;
+		AlBuffer& b = device->_alBuffers[idx];
 		if(b.handle == bufferHandle) {
 			alBufferIndice[i].index = -1;
 			alBufferIndice[i].queued = false;
@@ -271,8 +275,12 @@ AudioSound* AudioDevice::createSound(const char* uri, ResourceManager* resourceM
 
 int AudioDevice::allocateAlBufferFor(AudioBuffer* src, unsigned begin, unsigned& end)
 {
+	ASSERT(src);
+
 	for(unsigned i=0; i<MAX_AL_BUFFERS; ++i) {
 		AlBuffer& b = _alBuffers[i];
+
+		// Reuse existing
 		if(b.srcData == src) {
 			if(b.begin <= begin) {
 				end = b.end;
@@ -280,8 +288,13 @@ int AudioDevice::allocateAlBufferFor(AudioBuffer* src, unsigned begin, unsigned&
 				return i;
 			}
 		}
+	}
 
-		if(!b.srcData) {
+	// No free buffer, try to find unused one or free one with zero referenceCount
+	for(unsigned i=0; i<MAX_AL_BUFFERS; ++i) {
+		AlBuffer& b = _alBuffers[i];
+		if(!b.srcData || b.referenceCount == 0) {
+			b.dataReady = false;
 			b.srcData = src;
 			b.begin = begin;
 			b.end = end;
@@ -290,7 +303,9 @@ int AudioDevice::allocateAlBufferFor(AudioBuffer* src, unsigned begin, unsigned&
 		}
 	}
 
-	// No free buffer
+	// No more buffer to play around, the last audio request will be ignored
+	print(NULL, "Not enough audio buffers for simultaneous sound play, last audio play request will be ignored\n");
+
 	return -1;
 }
 
@@ -341,7 +356,6 @@ void AudioDevice::update()
 		alGetSourcei(sound.handle, AL_BUFFERS_PROCESSED, &buffersProcessed);
 
 		while(buffersProcessed--) {
-			// Remove old buffer from queue and put a new one
 			sound.unqueueBuffer();
 		}
 
@@ -394,6 +408,8 @@ void AudioDevice::update()
 					if(sound.isPause)
 						alSourcePause(sound.handle);
 				}
+				else
+					sound.activeListNode.removeThis();
 				break;
 			default:
 				break;
