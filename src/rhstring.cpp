@@ -2,7 +2,35 @@
 #include "rhstring.h"
 #include "atomic.h"
 #include "mutex.h"
+#include "vector.h"
+#include <string.h>
 #include <vector>
+
+char* replaceCharacterWithStr(const char* str, const char charArray[], const char** replacements)
+{
+	unsigned orgLen = strlen(str);
+	unsigned charCount = strlen(charArray);
+
+	Vector<char> buf;
+	buf.reserve(orgLen);
+
+	while(*str != '\0')
+	{
+		for(unsigned i=0; i<charCount; ++i) {
+			if(*str == charArray[i]) {
+				for(const char* s = replacements[i]; *s != '\0'; ++s)
+					buf.push_back(*s);
+			}
+			else
+				buf.push_back(*str);
+		}
+		++str;
+	}
+
+	char* ret = (char*)rhinoca_malloc(buf.size() + 1);
+	strcpy(ret, &buf[0]);
+	return ret;
+}
 
 StringHash::StringHash(const char* buf, size_t len)
 {
@@ -146,7 +174,7 @@ public:
 			}
 		}
 
-		std::swap(newBuckets, mBuckets);
+		mBuckets.swap(newBuckets);
 	}
 
 	mutable Mutex mMutex;

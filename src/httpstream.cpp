@@ -44,10 +44,19 @@ static void prepareForRead(HttpStream* s, unsigned readSize)
 
 void* rhinoca_http_open(Rhinoca* rh, const char* uri, int threadId)
 {
+	// Perform character encoding
+	const char* encode[] = { "%20" };
+	uri = replaceCharacterWithStr(uri, " ", encode);
+
 	// Parse http://host
+	// NOTE: Buffer overflow may occur for sscanf
 	char host[128] = "";
-	char path[256] = "";
+	char path[512] = "";
 	sscanf(uri, "http://%[^/]%s", host, path);
+
+	unsigned uriLen = strlen(uri);
+	rhinoca_free((void*)uri);
+	uri = NULL;
 
 	if(path[0] == '\0')
 		strcpy(path, "/");
@@ -62,7 +71,7 @@ void* rhinoca_http_open(Rhinoca* rh, const char* uri, int threadId)
 	IPAddress adr;
 	HttpStream* s = new HttpStream;
 
-	if(strlen(uri) > sizeof(s->getCmd) - sizeof(getFmt)) goto OnError;
+	if(uriLen > sizeof(s->getCmd) - sizeof(getFmt)) goto OnError;
 	if(sprintf(s->getCmd, getFmt, path, host) < 0) goto OnError;
 
 	s->buffer = NULL;

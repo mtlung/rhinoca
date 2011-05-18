@@ -4,6 +4,8 @@
 #include "common.h"
 #include "rhinoca.h"
 
+char* replaceCharacterWithStr(const char* str, const char charArray[], const char** replacements);
+
 class StringHash;
 
 /*!	A string class that ensure only one memory block is allocated for each unique string,

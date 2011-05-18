@@ -17,6 +17,10 @@ public:
 
 	Vector(const Vector<T>& v) { copy(v); }
 
+	explicit Vector(rhuint initSize, const T& fill = T()) {
+		resize(initSize, fill);
+	}
+
 	~Vector()
 	{
 		for(rhuint i = 0; i < _size; i++) {
@@ -96,6 +100,13 @@ public:
 	inline T& back() const { ASSERT(_size > 0); return _vals[_size - 1]; }
 
 	inline T& operator[](rhuint pos) const{ ASSERT(pos < _size); return _vals[pos]; }
+
+	void swap(Vector& rhs)
+	{
+		T* v = _vals; _vals = rhs._vals; rhs._vals = v;
+		rhuint s = _size; _size = rhs._size; rhs._size = s;
+		rhuint a = _allocated; _allocated = rhs._allocated; rhs._allocated = a;
+	}
 
 	T* _vals;
 
