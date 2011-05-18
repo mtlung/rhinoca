@@ -17,7 +17,9 @@ public:
 
 	Vector(const Vector<T>& v) { copy(v); }
 
-	explicit Vector(rhuint initSize, const T& fill = T()) {
+	explicit Vector(rhuint initSize, const T& fill = T())
+		: _vals(NULL), _size(0), _allocated(0)
+	{
 		resize(initSize, fill);
 	}
 

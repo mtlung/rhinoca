@@ -4,7 +4,6 @@
 #include "mutex.h"
 #include "vector.h"
 #include <string.h>
-#include <vector>
 
 char* replaceCharacterWithStr(const char* str, const char charArray[], const char** replacements)
 {
@@ -28,7 +27,7 @@ char* replaceCharacterWithStr(const char* str, const char charArray[], const cha
 	}
 
 	char* ret = (char*)rhinoca_malloc(buf.size() + 1);
-	strcpy(ret, &buf[0]);
+	strncpy(ret, &buf[0], buf.size())[buf.size()] = '\0';
 	return ret;
 }
 
@@ -161,7 +160,7 @@ public:
 
 	void resizeBucket(size_t bucketSize)
 	{
-		std::vector<Node*> newBuckets(bucketSize, NULL);
+		Vector<Node*> newBuckets(bucketSize, NULL);
 
 		ASSERT(mMutex.isLocked());
 		for(size_t i=0; i<mBuckets.size(); ++i) {
@@ -179,7 +178,7 @@ public:
 
 	mutable Mutex mMutex;
 	size_t mCount;	//!< The actuall number of elements in this table, can be <=> mBuckets.size()
-	std::vector<Node*> mBuckets;
+	Vector<Node*> mBuckets;
 	Node& mNullNode;
 };	// FixStringHashTable
 
