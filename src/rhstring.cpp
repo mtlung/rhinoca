@@ -15,14 +15,18 @@ char* replaceCharacterWithStr(const char* str, const char charArray[], const cha
 
 	while(*str != '\0')
 	{
+		bool converted = false;
 		for(unsigned i=0; i<charCount; ++i) {
 			if(*str == charArray[i]) {
 				for(const char* s = replacements[i]; *s != '\0'; ++s)
 					buf.push_back(*s);
+				converted = true;
+				break;
 			}
-			else
-				buf.push_back(*str);
 		}
+		if(!converted)
+			buf.push_back(*str);
+
 		++str;
 	}
 

@@ -4,6 +4,12 @@
 #include "common.h"
 #include "rhinoca.h"
 
+/*!	Replace certain characters in a string with a pre-defined set of string.
+	One example is the encoding of URL:
+	const char* uri = "http://www.abc.com/abc 123&456.htm"
+	const char* encode[] = { "%20", "%22", "%23", "%24", "%25", "%26", "%3C", "%3E" };
+	uri = replaceCharacterWithStr(uri, " \"#$%&<>", encode);
+ */
 char* replaceCharacterWithStr(const char* str, const char charArray[], const char** replacements);
 
 class StringHash;

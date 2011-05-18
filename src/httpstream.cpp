@@ -45,8 +45,9 @@ static void prepareForRead(HttpStream* s, unsigned readSize)
 void* rhinoca_http_open(Rhinoca* rh, const char* uri, int threadId)
 {
 	// Perform character encoding
-	const char* encode[] = { "%20" };
-	uri = replaceCharacterWithStr(uri, " ", encode);
+	// http://www.blooberry.com/indexdot/html/topics/urlencoding.htm
+	const char* encode[] = { "%20", "%22", "%23", "%24", "%25", "%26", "%3C", "%3E" };
+	uri = replaceCharacterWithStr(uri, " \"#$%&<>", encode);
 
 	// Parse http://host
 	// NOTE: Buffer overflow may occur for sscanf
