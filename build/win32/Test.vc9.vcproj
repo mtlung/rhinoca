@@ -172,10 +172,6 @@
 			ReferencedProjectIdentifier="{42A4219C-C856-470B-BF52-B20035575D91}"
 			RelativePathToProject=".\Rhinoca.vc9.vcproj"
 		/>
-		<ProjectReference
-			ReferencedProjectIdentifier="{9C4027C0-ECE1-4685-9110-8F5A76119415}"
-			RelativePathToProject=".\Swf.vc9.vcproj"
-		/>
 	</References>
 	<Files>
 		<File
@@ -216,10 +212,6 @@
 		</File>
 		<File
 			RelativePath="..\..\test\sockettest.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\test\swfparsingtest.cpp"
 			>
 		</File>
 		<File

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "context.h"
+#include "loader.h"
 #include "path.h"
 #include "platform.h"
 #include "rhinoca.h"
@@ -10,7 +11,6 @@
 #include "dom/keyevent.h"
 #include "dom/mouseevent.h"
 #include "dom/registerfactories.h"
-#include "loader/loader.h"
 #include "render/driver.h"
 
 #ifdef RHINOCA_IOS

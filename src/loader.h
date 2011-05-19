@@ -1,7 +1,7 @@
 #ifndef __LOADER_LOADER_H__
 #define __LOADER_LOADER_H__
 
-#include "../rhinoca.h"
+#include "rhinoca.h"
 
 class Resource;
 class ResourceManager;

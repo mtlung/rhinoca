@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "loader.h"
-#include "../resource.h"
+#include "resource.h"
 
 namespace Loader {
 
