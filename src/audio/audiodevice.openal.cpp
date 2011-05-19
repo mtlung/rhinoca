@@ -402,6 +402,7 @@ void AudioDevice::update()
 				}
 				break;
 			case AL_STOPPED:
+				// NOTE: This is a "just in case" handling for looping sound
 				if(sound.isPlay && sound.isLoop) {
 					alSourceRewind(sound.handle);
 					alSourcePlay(sound.handle);
@@ -511,6 +512,7 @@ void audiodevice_stopSound(AudioDevice* device, AudioSound* sound)
 void audiodevice_setSoundLoop(AudioDevice* device, AudioSound* sound, bool loop)
 {
 	sound->isLoop = loop;
+	alSourcei(sound->handle, AL_LOOPING, loop ? AL_TRUE : AL_FALSE);
 }
 
 bool audiodevice_getSoundLoop(AudioDevice* device, AudioSound* sound)
@@ -527,13 +529,16 @@ float audiodevice_getSoundCurrentTime(AudioDevice* device, AudioSound* sound)
 	return 0;
 }
 
-void audiodevice_setSoundVolumn(AudioDevice* device, AudioSound* sound, float volumn)
+void audiodevice_setSoundvolume(AudioDevice* device, AudioSound* sound, float volume)
 {
+	alSourcef(sound->handle, AL_GAIN, volume);
 }
 
-float audiodevice_getSoundVolumn(AudioDevice* device, AudioSound* sound)
+float audiodevice_getSoundvolume(AudioDevice* device, AudioSound* sound)
 {
-	return 1;
+	float ret = 0;
+	alGetSourcef(sound->handle, AL_GAIN, &ret);
+	return ret;
 }
 
 void audiodevice_update(AudioDevice* device)

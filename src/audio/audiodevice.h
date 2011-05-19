@@ -34,8 +34,8 @@ void audiodevice_setSoundLoop(AudioDevice* device, AudioSound* sound, bool loop)
 bool audiodevice_getSoundLoop(AudioDevice* device, AudioSound* sound);
 void audiodevice_setSoundCurrentTime(AudioDevice* device, AudioSound* sound, float time);
 float audiodevice_getSoundCurrentTime(AudioDevice* device, AudioSound* sound);
-void audiodevice_setSoundVolumn(AudioDevice* device, AudioSound* sound, float volumn);
-float audiodevice_getSoundVolumn(AudioDevice* device, AudioSound* sound);
+void audiodevice_setSoundvolume(AudioDevice* device, AudioSound* sound, float volume);
+float audiodevice_getSoundvolume(AudioDevice* device, AudioSound* sound);
 
 // Loading
 typedef void* (*audiodevice_loadCallback)(void* userData, AudioBuffer* audioData, unsigned begin, unsigned end);	// Invoked when the audio device think it's time to load some data
