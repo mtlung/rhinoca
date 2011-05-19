@@ -5,7 +5,7 @@
 #include "../resource.h"
 #include "../vector.h"
 
-#if defined(RHINOCA_IOS)
+#if defined(RHINOCA_APPLE)
 #	include <OpenAL/al.h>
 #	include <OpenAL/alc.h>
 #else
@@ -24,6 +24,26 @@
 
 #if defined(RHINOCA_VC)
 #	pragma comment(lib, "OpenAL32")
+#endif
+
+// Apple suggest to use it's OpenAL extension to avoid extra buffer memory copy
+// http://developer.apple.com/library/ios/#technotes/tn2199/_index.html
+#if defined(RHINOCA_APPLE)
+typedef ALvoid AL_APIENTRY (*alBufferDataStaticProcPtr) (const ALint bid, ALenum format, ALvoid* data, ALsizei size, ALsizei freq);
+ALvoid alBufferDataStatic(const ALint bid, ALenum format, ALvoid* data, ALsizei size, ALsizei freq)
+{
+	static alBufferDataStaticProcPtr proc = NULL;
+    
+    if(!proc)
+        proc = (alBufferDataStaticProcPtr)alcGetProcAddress(NULL, "alBufferDataStatic");
+
+    if(proc)
+        proc(bid, format, data, size, freq);
+	else
+		alBufferData(bid, format, data, size, freq);
+}
+
+#define alBufferData alBufferDataStatic
 #endif
 
 static const char* getALErrorString(ALenum err)
