@@ -457,7 +457,7 @@ extern int my_prof(int slot);
 //#define stb_prof my_prof
 
 #ifndef stb_prof
-#define stb_prof(x)  0
+#define stb_prof(x)
 #endif
 
 #if defined(STB_VORBIS_NO_PUSHDATA_API)
@@ -1020,6 +1020,7 @@ static int start_page_no_capturepattern(vorb *f)
    // assume we _don't_ know any the sample position of any segments
    f->end_seg_with_known_loc = -2;
    if (loc0 != ~0 || loc1 != ~0) {
+      int i;
       // determine which packet is the last one that will complete
       for (i=f->segment_count-1; i >= 0; --i)
          if (f->segments[i] < 255)
@@ -1743,7 +1744,6 @@ static void decode_residue(vorb *f, float *residue_buffers[], int ch, int n, int
          memset(residue_buffers[i], 0, sizeof(float) * n);
 
    if (rtype == 2 && ch != 1) {
-      int len = ch * n;
       for (j=0; j < ch; ++j)
          if (!do_not_decode[j])
             break;
@@ -1997,7 +1997,7 @@ void dct_iv_slow(float *buffer, int n)
    float mcos[16384];
    float x[2048];
    int i,j;
-   int n2 = n >> 1, nmask = (n << 3) - 1;
+   int nmask = (n << 3) - 1;
    memcpy(x, buffer, sizeof(*x) * n);
    for (i=0; i < 8*n; ++i)
       mcos[i] = (float) cos(M_PI / 4 * i / n);
@@ -2249,7 +2249,6 @@ static __forceinline void iter_54(float *z)
 
 static void imdct_step3_inner_s_loop_ld654(int n, float *e, int i_off, float *A, int base_n)
 {
-   int k_off = -8;
    int a_off = base_n >> 3;
    float A2 = A[0+a_off];
    float *z = e + i_off;
@@ -2295,7 +2294,7 @@ static void imdct_step3_inner_s_loop_ld654(int n, float *e, int i_off, float *A,
 static void inverse_mdct(float *buffer, int n, vorb *f, int blocktype)
 {
    int n2 = n >> 1, n4 = n >> 2, n8 = n >> 3, l;
-   int n3_4 = n - n4, ld;
+   int ld;
    // @OPTIMIZE: reduce register pressure by using fewer variables?
    int save_point = temp_alloc_save(f);
    float *buf2 = (float *) temp_alloc(f, n2 * sizeof(*buf2));
@@ -4742,7 +4741,7 @@ static void compute_samples(int mask, short *output, int num_c, float **data, in
    }
 }
 
-static int channel_selector[3][2] = { {0}, {PLAYBACK_MONO}, {PLAYBACK_LEFT, PLAYBACK_RIGHT} };
+//static int channel_selector[3][2] = { {0}, {PLAYBACK_MONO}, {PLAYBACK_LEFT, PLAYBACK_RIGHT} };
 static void compute_stereo_samples(short *output, int num_c, float **data, int d_offset, int len)
 {
    #define BUFFER_SIZE  32

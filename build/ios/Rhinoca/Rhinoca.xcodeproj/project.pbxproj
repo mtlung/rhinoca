@@ -61,8 +61,6 @@
 		187BCA9C12F9BEFB0042FDB1 /* registerfactories.h in Headers */ = {isa = PBXBuildFile; fileRef = 187BCA9612F9BEFB0042FDB1 /* registerfactories.h */; };
 		187BCA9D12F9BEFB0042FDB1 /* window.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 187BCA9712F9BEFB0042FDB1 /* window.cpp */; };
 		187BCA9E12F9BEFB0042FDB1 /* window.h in Headers */ = {isa = PBXBuildFile; fileRef = 187BCA9812F9BEFB0042FDB1 /* window.h */; };
-		187BCABE12F9BF450042FDB1 /* loader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 187BCAB912F9BF450042FDB1 /* loader.cpp */; };
-		187BCABF12F9BF450042FDB1 /* loader.h in Headers */ = {isa = PBXBuildFile; fileRef = 187BCABA12F9BF450042FDB1 /* loader.h */; };
 		187BCBC312FAAC8F0042FDB1 /* context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 187BCBC212FAAC8F0042FDB1 /* context.cpp */; };
 		187BCBC712FAADC70042FDB1 /* context_ios.h in Headers */ = {isa = PBXBuildFile; fileRef = 187BCBC612FAADC70042FDB1 /* context_ios.h */; };
 		187BCC3912FABB1D0042FDB1 /* texture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 187BCC3712FABB1D0042FDB1 /* texture.cpp */; };
@@ -75,10 +73,13 @@
 		187BCC6412FADFC70042FDB1 /* renderqueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 187BCC6012FADFC70042FDB1 /* renderqueue.cpp */; };
 		187BCC6512FADFC70042FDB1 /* renderqueue.h in Headers */ = {isa = PBXBuildFile; fileRef = 187BCC6112FADFC70042FDB1 /* renderqueue.h */; };
 		187BCCA012FAE7F50042FDB1 /* canvas2dcontext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 187BCC9F12FAE7F50042FDB1 /* canvas2dcontext.cpp */; };
-		187BCDEB12FBD2B90042FDB1 /* nsimageloader.mm in Sources */ = {isa = PBXBuildFile; fileRef = 187BCDEA12FBD2B90042FDB1 /* nsimageloader.mm */; };
 		18F0C57F1303A566007752DB /* driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 18F0C57D1303A566007752DB /* driver.cpp */; };
 		18F0C5801303A566007752DB /* driver.h in Headers */ = {isa = PBXBuildFile; fileRef = 18F0C57E1303A566007752DB /* driver.h */; };
 		18F0C73E1304F121007752DB /* driverios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 18F0C73D1304F121007752DB /* driverios.cpp */; };
+		9C3B3BD3138558E400E3AE02 /* nsimageloader.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B3BD2138558E400E3AE02 /* nsimageloader.mm */; };
+		9C3B3BD61385590000E3AE02 /* loader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B3BD41385590000E3AE02 /* loader.cpp */; };
+		9C3B3BD71385590000E3AE02 /* loader.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C3B3BD51385590000E3AE02 /* loader.h */; };
+		9C3B3BD91385592800E3AE02 /* audiodevice.openal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B3BD81385592800E3AE02 /* audiodevice.openal.cpp */; };
 		9C91B8D1132545A000195FF7 /* driverdetail.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C91B8D0132545A000195FF7 /* driverdetail.h */; };
 		9C93C8FF1379825F00682898 /* media.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C93C8FD1379825F00682898 /* media.cpp */; };
 		9C93C9001379825F00682898 /* media.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C93C8FE1379825F00682898 /* media.h */; };
@@ -116,8 +117,10 @@
 		9CC68CAD137C2E4F00448AEB /* shVectors.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CC68C98137C2E4F00448AEB /* shVectors.h */; };
 		9CC68CAE137C2E4F00448AEB /* shVgu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC68C99137C2E4F00448AEB /* shVgu.cpp */; };
 		9CCBEE76137C192100C0BF4F /* rhinoca.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CCBEE75137C192100C0BF4F /* rhinoca.mm */; };
+		9CD80F3913897ED3003C1056 /* oggloader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CD80F3613897ED3003C1056 /* oggloader.cpp */; };
+		9CD80F3A13897ED3003C1056 /* stb_vorbis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CD80F3713897ED3003C1056 /* stb_vorbis.cpp */; };
+		9CD80F3B13897ED3003C1056 /* stb_vorbis.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CD80F3813897ED3003C1056 /* stb_vorbis.h */; };
 		9CD8886E1382DFC9003751E2 /* audiodevice.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CD8886C1382DFC9003751E2 /* audiodevice.h */; };
-		9CD8886F1382DFC9003751E2 /* audiodevicewin32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CD8886D1382DFC9003751E2 /* audiodevicewin32.cpp */; };
 		9CD888711382E07A003751E2 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CD888701382E07A003751E2 /* OpenAL.framework */; };
 		9CF4B71D137D692C0025CF8E /* audiobuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CF4B719137D692C0025CF8E /* audiobuffer.cpp */; };
 		9CF4B71E137D692C0025CF8E /* audiobuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CF4B71A137D692C0025CF8E /* audiobuffer.h */; };
@@ -200,8 +203,6 @@
 		187BCA9612F9BEFB0042FDB1 /* registerfactories.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = registerfactories.h; path = ../../../src/dom/registerfactories.h; sourceTree = SOURCE_ROOT; };
 		187BCA9712F9BEFB0042FDB1 /* window.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = window.cpp; path = ../../../src/dom/window.cpp; sourceTree = SOURCE_ROOT; };
 		187BCA9812F9BEFB0042FDB1 /* window.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = window.h; path = ../../../src/dom/window.h; sourceTree = SOURCE_ROOT; };
-		187BCAB912F9BF450042FDB1 /* loader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = loader.cpp; sourceTree = "<group>"; };
-		187BCABA12F9BF450042FDB1 /* loader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = loader.h; sourceTree = "<group>"; };
 		187BCBC212FAAC8F0042FDB1 /* context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = context.cpp; path = ../../../src/context.cpp; sourceTree = SOURCE_ROOT; };
 		187BCBC612FAADC70042FDB1 /* context_ios.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = context_ios.h; path = ../../../src/context_ios.h; sourceTree = SOURCE_ROOT; };
 		187BCC3712FABB1D0042FDB1 /* texture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = texture.cpp; path = ../../../src/render/texture.cpp; sourceTree = SOURCE_ROOT; };
@@ -214,10 +215,13 @@
 		187BCC6012FADFC70042FDB1 /* renderqueue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = renderqueue.cpp; path = ../../../src/render/renderqueue.cpp; sourceTree = SOURCE_ROOT; };
 		187BCC6112FADFC70042FDB1 /* renderqueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = renderqueue.h; path = ../../../src/render/renderqueue.h; sourceTree = SOURCE_ROOT; };
 		187BCC9F12FAE7F50042FDB1 /* canvas2dcontext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = canvas2dcontext.cpp; path = ../../../src/dom/canvas2dcontext.cpp; sourceTree = SOURCE_ROOT; };
-		187BCDEA12FBD2B90042FDB1 /* nsimageloader.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = nsimageloader.mm; sourceTree = "<group>"; };
 		18F0C57D1303A566007752DB /* driver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = driver.cpp; path = ../../../src/render/driver.cpp; sourceTree = SOURCE_ROOT; };
 		18F0C57E1303A566007752DB /* driver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = driver.h; path = ../../../src/render/driver.h; sourceTree = SOURCE_ROOT; };
 		18F0C73D1304F121007752DB /* driverios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = driverios.cpp; path = ../../../src/render/ios/driverios.cpp; sourceTree = SOURCE_ROOT; };
+		9C3B3BD2138558E400E3AE02 /* nsimageloader.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = nsimageloader.mm; path = ../../../src/render/nsimageloader.mm; sourceTree = "<group>"; };
+		9C3B3BD41385590000E3AE02 /* loader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = loader.cpp; path = ../../../src/loader.cpp; sourceTree = "<group>"; };
+		9C3B3BD51385590000E3AE02 /* loader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = loader.h; path = ../../../src/loader.h; sourceTree = "<group>"; };
+		9C3B3BD81385592800E3AE02 /* audiodevice.openal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = audiodevice.openal.cpp; path = ../../../src/audio/audiodevice.openal.cpp; sourceTree = "<group>"; };
 		9C91B8D0132545A000195FF7 /* driverdetail.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = driverdetail.h; path = ../../../src/render/driverdetail.h; sourceTree = SOURCE_ROOT; };
 		9C93C8FD1379825F00682898 /* media.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = media.cpp; path = ../../../src/dom/media.cpp; sourceTree = "<group>"; };
 		9C93C8FE1379825F00682898 /* media.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = media.h; path = ../../../src/dom/media.h; sourceTree = "<group>"; };
@@ -255,8 +259,10 @@
 		9CC68C98137C2E4F00448AEB /* shVectors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = shVectors.h; path = ../../../src/render/shivavg/shVectors.h; sourceTree = "<group>"; };
 		9CC68C99137C2E4F00448AEB /* shVgu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = shVgu.cpp; path = ../../../src/render/shivavg/shVgu.cpp; sourceTree = "<group>"; };
 		9CCBEE75137C192100C0BF4F /* rhinoca.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = rhinoca.mm; path = ../../../src/rhinoca.mm; sourceTree = "<group>"; };
+		9CD80F3613897ED3003C1056 /* oggloader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = oggloader.cpp; path = ../../../src/audio/oggloader.cpp; sourceTree = "<group>"; };
+		9CD80F3713897ED3003C1056 /* stb_vorbis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = stb_vorbis.cpp; path = ../../../src/audio/stb_vorbis.cpp; sourceTree = "<group>"; };
+		9CD80F3813897ED3003C1056 /* stb_vorbis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_vorbis.h; path = ../../../src/audio/stb_vorbis.h; sourceTree = "<group>"; };
 		9CD8886C1382DFC9003751E2 /* audiodevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = audiodevice.h; path = ../../../src/audio/audiodevice.h; sourceTree = "<group>"; };
-		9CD8886D1382DFC9003751E2 /* audiodevicewin32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = audiodevicewin32.cpp; path = ../../../src/audio/audiodevicewin32.cpp; sourceTree = "<group>"; };
 		9CD888701382E07A003751E2 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		9CF4B719137D692C0025CF8E /* audiobuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = audiobuffer.cpp; path = ../../../src/audio/audiobuffer.cpp; sourceTree = "<group>"; };
 		9CF4B71A137D692C0025CF8E /* audiobuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = audiobuffer.h; path = ../../../src/audio/audiobuffer.h; sourceTree = "<group>"; };
@@ -315,7 +321,6 @@
 				9CF4B718137D69190025CF8E /* audio */,
 				187BCC2C12FABB050042FDB1 /* render */,
 				187BCA4812F9BBD20042FDB1 /* dom */,
-				187BCAB612F9BF450042FDB1 /* loader */,
 				187BC9CD12F9B4560042FDB1 /* atomic.h */,
 				187BC9CE12F9B4560042FDB1 /* common.cpp */,
 				187BC9CF12F9B4560042FDB1 /* common.h */,
@@ -329,6 +334,8 @@
 				187BC9F112F9B6660042FDB1 /* jsbindable.h */,
 				9C93C91F137987CD00682898 /* linklist.cpp */,
 				9C93C920137987CE00682898 /* linklist.h */,
+				9C3B3BD41385590000E3AE02 /* loader.cpp */,
+				9C3B3BD51385590000E3AE02 /* loader.h */,
 				187BC9F712F9B6730042FDB1 /* map.cpp */,
 				187BC9F812F9B6730042FDB1 /* map.h */,
 				187BC9F912F9B6730042FDB1 /* mat44.cpp */,
@@ -407,17 +414,6 @@
 			name = dom;
 			sourceTree = "<group>";
 		};
-		187BCAB612F9BF450042FDB1 /* loader */ = {
-			isa = PBXGroup;
-			children = (
-				187BCAB912F9BF450042FDB1 /* loader.cpp */,
-				187BCABA12F9BF450042FDB1 /* loader.h */,
-				187BCDEA12FBD2B90042FDB1 /* nsimageloader.mm */,
-			);
-			name = loader;
-			path = ../../../src/loader;
-			sourceTree = SOURCE_ROOT;
-		};
 		187BCC2C12FABB050042FDB1 /* render */ = {
 			isa = PBXGroup;
 			children = (
@@ -429,6 +425,7 @@
 				187BCC5812FADFB60042FDB1 /* framebuffer.cpp */,
 				187BCC5912FADFB60042FDB1 /* framebuffer.h */,
 				187BCC4B12FADEF50042FDB1 /* gl.h */,
+				9C3B3BD2138558E400E3AE02 /* nsimageloader.mm */,
 				187BCC5E12FADFC70042FDB1 /* render.cpp */,
 				187BCC5F12FADFC70042FDB1 /* render.h */,
 				187BCC6012FADFC70042FDB1 /* renderqueue.cpp */,
@@ -481,8 +478,11 @@
 				9CF4B719137D692C0025CF8E /* audiobuffer.cpp */,
 				9CF4B71A137D692C0025CF8E /* audiobuffer.h */,
 				9CD8886C1382DFC9003751E2 /* audiodevice.h */,
-				9CD8886D1382DFC9003751E2 /* audiodevicewin32.cpp */,
+				9C3B3BD81385592800E3AE02 /* audiodevice.openal.cpp */,
 				9CF4B71B137D692C0025CF8E /* audioloader.h */,
+				9CD80F3613897ED3003C1056 /* oggloader.cpp */,
+				9CD80F3713897ED3003C1056 /* stb_vorbis.cpp */,
+				9CD80F3813897ED3003C1056 /* stb_vorbis.h */,
 				9CF4B71C137D692C0025CF8E /* waveloader.cpp */,
 			);
 			name = audio;
@@ -527,7 +527,6 @@
 				187BCA9A12F9BEFB0042FDB1 /* node.h in Headers */,
 				187BCA9C12F9BEFB0042FDB1 /* registerfactories.h in Headers */,
 				187BCA9E12F9BEFB0042FDB1 /* window.h in Headers */,
-				187BCABF12F9BF450042FDB1 /* loader.h in Headers */,
 				187BCBC712FAADC70042FDB1 /* context_ios.h in Headers */,
 				187BCC3A12FABB1D0042FDB1 /* texture.h in Headers */,
 				187BCC4C12FADEF50042FDB1 /* gl.h in Headers */,
@@ -556,6 +555,8 @@
 				9CF4B71E137D692C0025CF8E /* audiobuffer.h in Headers */,
 				9CF4B71F137D692C0025CF8E /* audioloader.h in Headers */,
 				9CD8886E1382DFC9003751E2 /* audiodevice.h in Headers */,
+				9C3B3BD71385590000E3AE02 /* loader.h in Headers */,
+				9CD80F3B13897ED3003C1056 /* stb_vorbis.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -649,14 +650,12 @@
 				187BCA9912F9BEFB0042FDB1 /* node.cpp in Sources */,
 				187BCA9B12F9BEFB0042FDB1 /* registerfactories.cpp in Sources */,
 				187BCA9D12F9BEFB0042FDB1 /* window.cpp in Sources */,
-				187BCABE12F9BF450042FDB1 /* loader.cpp in Sources */,
 				187BCBC312FAAC8F0042FDB1 /* context.cpp in Sources */,
 				187BCC3912FABB1D0042FDB1 /* texture.cpp in Sources */,
 				187BCC5A12FADFB60042FDB1 /* framebuffer.cpp in Sources */,
 				187BCC6212FADFC70042FDB1 /* render.cpp in Sources */,
 				187BCC6412FADFC70042FDB1 /* renderqueue.cpp in Sources */,
 				187BCCA012FAE7F50042FDB1 /* canvas2dcontext.cpp in Sources */,
-				187BCDEB12FBD2B90042FDB1 /* nsimageloader.mm in Sources */,
 				18F0C57F1303A566007752DB /* driver.cpp in Sources */,
 				18F0C73E1304F121007752DB /* driverios.cpp in Sources */,
 				9CB22F8A136B254A004D8BB2 /* httpstream.cpp in Sources */,
@@ -680,7 +679,11 @@
 				9CC68CAE137C2E4F00448AEB /* shVgu.cpp in Sources */,
 				9CF4B71D137D692C0025CF8E /* audiobuffer.cpp in Sources */,
 				9CF4B720137D692C0025CF8E /* waveloader.cpp in Sources */,
-				9CD8886F1382DFC9003751E2 /* audiodevicewin32.cpp in Sources */,
+				9C3B3BD3138558E400E3AE02 /* nsimageloader.mm in Sources */,
+				9C3B3BD61385590000E3AE02 /* loader.cpp in Sources */,
+				9C3B3BD91385592800E3AE02 /* audiodevice.openal.cpp in Sources */,
+				9CD80F3913897ED3003C1056 /* oggloader.cpp in Sources */,
+				9CD80F3A13897ED3003C1056 /* stb_vorbis.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

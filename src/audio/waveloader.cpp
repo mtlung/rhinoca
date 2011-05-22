@@ -157,19 +157,21 @@ void WaveLoader::loadData()
 	if(!io_ready(stream, dataChunkSize, tId))
 		return reSchedule();
 
-	unsigned end = dataChunkSize / format.format.blockAlign;
-	unsigned bytesToWrite = 0;
-	bufferData = buffer->getWritePointerForRange(0, end, bytesToWrite);
+	{	unsigned end = dataChunkSize / format.format.blockAlign;
+		unsigned bytesToWrite = 0;
+		bufferData = buffer->getWritePointerForRange(0, end, bytesToWrite);
 
-	ASSERT(bytesToWrite == dataChunkSize);
+		ASSERT(bytesToWrite == dataChunkSize);
 
-	if(io_read(stream, bufferData, dataChunkSize, tId) != dataChunkSize)
-	{
-		print(rh, "WaveLoader: End of file, only partial load of audio data");
-		goto Abort;
+		if(io_read(stream, bufferData, dataChunkSize, tId) != dataChunkSize)
+		{
+			print(rh, "WaveLoader: End of file, only partial load of audio data");
+			goto Abort;
+		}
+
+		buffer->commitWriteForRange(0, dataChunkSize / format.format.blockAlign);
 	}
 
-	buffer->commitWriteForRange(0, dataChunkSize / format.format.blockAlign);
 	return;
 
 Abort:
