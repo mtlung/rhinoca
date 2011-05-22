@@ -26,8 +26,8 @@ bool loadJpeg(Resource* resource, ResourceManager* mgr);
 
 #endif
 
-//Resource* createOgg(const char* uri, ResourceManager* mgr);
-//bool loadOgg(Resource* resource, ResourceManager* mgr);
+Resource* createOgg(const char* uri, ResourceManager* mgr);
+bool loadOgg(Resource* resource, ResourceManager* mgr);
 
 Resource* createWave(const char* uri, ResourceManager* mgr);
 bool loadWave(Resource* resource, ResourceManager* mgr);

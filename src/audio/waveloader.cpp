@@ -45,7 +45,6 @@ public:
 		, manager(mgr)
 		, headerLoaded(false)
 		, dataChunkSize(0)
-		, taskLoadMetaData(0)
 	{
 	}
 
@@ -68,8 +67,6 @@ public:
 	bool headerLoaded;
 	unsigned dataChunkSize;
 	WaveFormatExtensible format;
-
-	TaskId taskLoadMetaData;
 };
 
 void WaveLoader::loadDataForRange(unsigned begin, unsigned end)
@@ -113,12 +110,11 @@ void WaveLoader::loadHeader()
 		if(strcasecmp(chunkId, "RIFF") == 0)
 		{
 			char format[5] = {0};
-			io_read(stream, format, 4, tId);
+			VERIFY(io_read(stream, format, 4, tId) == 4);
 		}
 		else if(strcasecmp(chunkId, "FMT ") == 0)
 		{
-			io_read(stream, &format, chunkSize, tId);
-
+			VERIFY(io_read(stream, &format, chunkSize, tId) == chunkSize);
 		}
 		else if(strcasecmp(chunkId, "DATA") == 0)
 		{
@@ -161,7 +157,11 @@ void WaveLoader::loadData()
 	if(!io_ready(stream, dataChunkSize, tId))
 		return reSchedule();
 
-	bufferData = buffer->getWritePointerForRange(0, dataChunkSize / format.format.blockAlign);
+	unsigned end = dataChunkSize / format.format.blockAlign;
+	unsigned bytesToWrite = 0;
+	bufferData = buffer->getWritePointerForRange(0, end, bytesToWrite);
+
+	ASSERT(bytesToWrite == dataChunkSize);
 
 	if(io_read(stream, bufferData, dataChunkSize, tId) != dataChunkSize)
 	{

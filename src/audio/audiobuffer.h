@@ -28,9 +28,11 @@ public:
 	unsigned sizeInByteForSamples(unsigned samples) const;
 
 	/// Returns a block of memory for the specific sample range.
-	void* getWritePointerForRange(unsigned begin, unsigned end);
+	/// Sometimes the buffer returned is less then the request, so you need to consult bytesToWrite.
+	void* getWritePointerForRange(unsigned begin, unsigned& end, unsigned& bytesToWrite);
 
 	/// For loader to tell the buffer data is written to the memory allocated via getWritePointerForRange()
+	/// To avoid memory waste, the better to be the same as specified in getWritePointerForRange()
 	void commitWriteForRange(unsigned begin, unsigned end);
 
 	/// Is data ready for read, null if data not ready.
@@ -40,7 +42,7 @@ public:
 	void collectGarbage();
 
 // Attributes
-	void* loader;	/// Implementation specific loader
+	unsigned totalSamples() const;
 
 protected:
 	Format format;

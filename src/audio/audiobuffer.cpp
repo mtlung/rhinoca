@@ -38,21 +38,25 @@ unsigned AudioBuffer::sizeInByteForSamples(unsigned samples) const
 	return format.blockAlignment * samples;
 }
 
-void* AudioBuffer::getWritePointerForRange(unsigned begin, unsigned end)
+void* AudioBuffer::getWritePointerForRange(unsigned begin, unsigned& end, unsigned& bytesToWrite)
 {
 	ScopeLock lock(mutex);
 
 	for(unsigned i=0; i<subBuffers.size(); ++i) {
 		SubBuffer& b = subBuffers[i];
-		if(b.posBegin <= begin && b.posEnd >= end) {
-			unsigned offset = format.blockAlignment * (begin - b.posBegin);
+		if(b.posBegin <= begin && begin < b.posEnd) {
+			end = b.posEnd;
+			bytesToWrite = format.blockAlignment * (end - begin);
+			const unsigned offset = format.blockAlignment * (begin - b.posBegin);
 			return b.data + offset;
 		}
 	}
 
-	unsigned size = format.blockAlignment * (end - begin);
-	rhbyte* p = (rhbyte*)rhinoca_malloc(size);
-	SubBuffer b = { begin, end, size, 999.0f, false, p };
+	bytesToWrite = format.blockAlignment * (end - begin);
+	rhbyte* p = (rhbyte*)rhinoca_malloc(bytesToWrite);
+	SubBuffer b = { begin, end, bytesToWrite, 999.0f, false, p };
+
+	ASSERT(p);
 	subBuffers.push_back(b);
 
 	return p;
@@ -64,8 +68,11 @@ void AudioBuffer::commitWriteForRange(unsigned begin, unsigned end)
 
 	for(unsigned i=0; i<subBuffers.size(); ++i) {
 		SubBuffer& b = subBuffers[i];
-		if(b.posBegin == begin && b.posEnd == end) {
+		if(!b.readyForRead && b.posBegin == begin && end <= b.posEnd) {
+			// Call realloc to reclaim wated space
+			rhinoca_realloc(b.data, format.blockAlignment * (b.posEnd - b.posBegin), format.blockAlignment * (end - begin));
 			b.readyForRead = true;
+			b.posEnd = end;
 			return;
 		}
 	}
@@ -80,7 +87,7 @@ void* AudioBuffer::getReadPointerForRange(unsigned begin, unsigned end, unsigned
 	// Look for existing loaded buffer
 	for(unsigned i=0; i<subBuffers.size(); ++i) {
 		SubBuffer& b = subBuffers[i];
-		if(b.posBegin <= begin && b.posEnd >= end) {
+		if(b.posBegin <= begin && begin < b.posEnd) {
 			// Data is reading but not yet finished
 			if(!b.readyForRead)
 				return NULL;
@@ -115,4 +122,10 @@ void AudioBuffer::collectGarbage()
 			b = empty;
 		}
 	}
+}
+
+unsigned AudioBuffer::totalSamples() const
+{
+	ScopeLock lock(mutex);
+	return format.totalSamples;
 }

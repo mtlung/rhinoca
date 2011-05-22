@@ -104,7 +104,8 @@ struct AudioSound : public LinkListBase::Node<AudioSound>
 		, isPlay(false)
 		, isPause(true)	// NOTE: Paused by default
 		, isLoop(false)
-		, currentSamplePosition(0)
+		, queueSampleStartPosition(0)
+		, nextALBufLoadPosition(0)
 	{
 		alGenSources(1, &handle);
 	}
@@ -133,7 +134,12 @@ struct AudioSound : public LinkListBase::Node<AudioSound>
 	bool isPlay;
 	bool isPause;
 	bool isLoop;
-	unsigned currentSamplePosition;
+	unsigned queueSampleStartPosition;
+	unsigned nextALBufLoadPosition;
+
+	unsigned totalSamples() const {
+		return audioBuffer->totalSamples();
+	}
 
 	struct BufferIndex
 	{
@@ -175,7 +181,7 @@ struct AudioDevice
 
 	AudioSound* createSound(const char* uri, ResourceManager* resourceMgr);
 
-	int allocateAlBufferFor(AudioBuffer* src, unsigned begin, unsigned& end);
+	int allocateAlBufferFor(AudioBuffer* src, unsigned begin, unsigned end);
 	void freeAlBuffer(int index);
 
 	void update();
@@ -218,30 +224,32 @@ int AudioSound::tryLoadNextBuffer()
 		return -1;
 
 	// Search the next sample position to load for
-	unsigned nextLoadPosition = currentSamplePosition;
 	for(unsigned i=0; i<MAX_AL_BUFFERS; ++i) {
 		int j = alBufferIndice[i].index;
 		if(j < 0) continue;
 
 		AlBuffer& b = device->_alBuffers[j];
-		if(b.end > nextLoadPosition)
-			nextLoadPosition = b.end + 1;
+		if(b.end > nextALBufLoadPosition)
+			nextALBufLoadPosition = b.end + 1;
 	}
 
 	AudioBuffer::Format format;
 	audioBuffer->getFormat(format);
 
 	// Audio format not ready
-	if(format.totalSamples == 0)
+	if(format.channels == 0)
 		return -1;
 
 	// The existing buffers already cover the whole range
-	if(nextLoadPosition >= format.totalSamples)
+	if(nextALBufLoadPosition >= format.totalSamples && format.totalSamples > 0)
 		return -1;
+
+	// Try to load one second of sound data if the length of the audio is unknown
+	unsigned sampleToLoad = format.totalSamples > 0 ? format.totalSamples : 1 * format.samplesPerSecond + nextALBufLoadPosition;
 
 	// Query the device for any existing buffer for the requesting source and range,
 	// return a new one if none had found.
-	int index = device->allocateAlBufferFor(audioBuffer.get(), nextLoadPosition, format.totalSamples);
+	const int index = device->allocateAlBufferFor(audioBuffer.get(), nextALBufLoadPosition, sampleToLoad);
 
 	if(index < 0)
 		return -1;
@@ -293,20 +301,17 @@ AudioSound* AudioDevice::createSound(const char* uri, ResourceManager* resourceM
 	return sound;
 }
 
-int AudioDevice::allocateAlBufferFor(AudioBuffer* src, unsigned begin, unsigned& end)
+int AudioDevice::allocateAlBufferFor(AudioBuffer* src, unsigned begin, unsigned end)
 {
 	ASSERT(src);
 
 	for(unsigned i=0; i<MAX_AL_BUFFERS; ++i) {
 		AlBuffer& b = _alBuffers[i];
 
-		// Reuse existing
-		if(b.srcData == src) {
-			if(b.begin <= begin) {
-				end = b.end;
-				b.referenceCount++;
-				return i;
-			}
+		// Reuse existing perfect matching duration buffer (mostly for non-streamming sound)
+		if(b.begin == begin && b.end == end && b.srcData == src && b.dataReady) {
+			b.referenceCount++;
+			return i;
 		}
 	}
 
@@ -380,10 +385,10 @@ void AudioDevice::update()
 		}
 
 		// Try to fill available buffer slots
-		for(unsigned i=0; i<AudioSound::MAX_AL_BUFFERS; ++i) {
-			if(sound.alBufferIndice[i].index < 0)
-				sound.tryLoadNextBuffer();
-		}
+//		for(unsigned i=0; i<AudioSound::MAX_AL_BUFFERS; ++i) {
+//			if(sound.alBufferIndice[i].index < 0)
+//				sound.tryLoadNextBuffer();
+//		}
 
 		// If data is ready, queue the buffer to OpenAL
 		for(unsigned i=0; i<AudioSound::MAX_AL_BUFFERS; ++i) {
@@ -403,6 +408,9 @@ void AudioDevice::update()
 
 				checkAndPrintError("alSourceQueueBuffers failed: ");
 				sound.alBufferIndice[i].queued = true;
+
+				sound.nextALBufLoadPosition = b.end + 1;
+				sound.tryLoadNextBuffer();
 			}
 		}
 
@@ -411,6 +419,9 @@ void AudioDevice::update()
 			alGetSourcei(sound.handle, AL_SOURCE_STATE, &state);
 
 			switch(state) {
+			case AL_INITIAL:
+				sound.tryLoadNextBuffer();
+				break;
 			case AL_PLAYING:
 				if(sound.isPause)
 					alSourcePause(sound.handle);
@@ -422,10 +433,16 @@ void AudioDevice::update()
 				}
 				break;
 			case AL_STOPPED:
-				// NOTE: This is a "just in case" handling for looping sound
-				if(sound.isPlay && sound.isLoop) {
+				// Detect the sound is stopped due to lack of buffer or really stopped.
+				if(sound.totalSamples() == 0) {
+					alSourcePlay(sound.handle);
+					if(sound.isPause)
+						alSourcePause(sound.handle);
+				}
+				else if(sound.isPlay && sound.isLoop) {
 					alSourceRewind(sound.handle);
 					alSourcePlay(sound.handle);
+					sound.nextALBufLoadPosition = 0;
 					if(sound.isPause)
 						alSourcePause(sound.handle);
 				}
@@ -454,6 +471,7 @@ void AudioDevice::update()
 			if(void* readPtr = b.srcData->getReadPointerForRange(b.begin, b.end, readableSamples, readableBytes, format)) {
 				alBufferData(b.handle, getAlFormat(format), readPtr, readableBytes, format.samplesPerSecond);
 				b.dataReady = true;
+				b.end = b.begin + readableSamples;
 			}
 		}
 	}
@@ -532,7 +550,8 @@ void audiodevice_stopSound(AudioDevice* device, AudioSound* sound)
 void audiodevice_setSoundLoop(AudioDevice* device, AudioSound* sound, bool loop)
 {
 	sound->isLoop = loop;
-	alSourcei(sound->handle, AL_LOOPING, loop ? AL_TRUE : AL_FALSE);
+	// We don't use OpenAl's loop because it doesn't handle streamming.
+//	alSourcei(sound->handle, AL_LOOPING, loop ? AL_TRUE : AL_FALSE);
 }
 
 bool audiodevice_getSoundLoop(AudioDevice* device, AudioSound* sound)
@@ -546,7 +565,17 @@ void audiodevice_setSoundCurrentTime(AudioDevice* device, AudioSound* sound, flo
 
 float audiodevice_getSoundCurrentTime(AudioDevice* device, AudioSound* sound)
 {
-	return 0;
+	AudioBuffer::Format format;
+	sound->audioBuffer->getFormat(format);
+
+	ALint offset;
+	alGetSourcei(sound->handle, AL_SAMPLE_OFFSET, &offset);
+	offset += sound->queueSampleStartPosition;
+
+	int seconds = offset / format.samplesPerSecond;
+	float fraction = float(offset % format.samplesPerSecond) / format.samplesPerSecond;
+
+	return float(seconds) + fraction;
 }
 
 void audiodevice_setSoundvolume(AudioDevice* device, AudioSound* sound, float volume)

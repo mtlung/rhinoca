@@ -12,11 +12,12 @@
 
 #define XP_WIN
 #include <assert.h>
+#include <stddef.h>
 #include <stdio.h>
 #ifdef _DEBUG
 #	define DEBUG
 #endif
-#include "../thirdParty/SpiderMonkey/jsapi.h"
+//#include "../thirdParty/SpiderMonkey/jsapi.h"
 #undef XP_WIN
 
 #endif	// _MSC_VER

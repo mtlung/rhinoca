@@ -464,6 +464,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\audio\oggloader.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\audio\stb_vorbis.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\audio\stb_vorbis.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\audio\waveloader.cpp"
 				>
 			</File>

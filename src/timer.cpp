@@ -153,7 +153,7 @@ rhuint64 Timer::ticksSinceProgramStatup()
 #if defined(_WIN32)
 
 // Borrows from SpiderMonkey prmjtime.c
-//#define JSLL_INIT(hi, lo)  ((hi ## LL << 32) + lo ## LL)
+#define JSLL_INIT(hi, lo)  ((hi ## LL << 32) + lo ## LL)
 #define FILETIME2INT64(ft) (((rhuint64)ft.dwHighDateTime) << 32LL | (rhuint64)ft.dwLowDateTime)
 static const rhint64 win2un = JSLL_INIT(0x19DB1DE, 0xD53E8000);
 
