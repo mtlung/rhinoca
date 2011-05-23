@@ -52,7 +52,7 @@ public:
 		delete _stream;
 	}
 
-	virtual void run(TaskPool* taskPool);
+	override void run(TaskPool* taskPool);
 
 	void load(TaskPool* taskPool);
 	void commit(TaskPool* taskPool);

@@ -17,7 +17,7 @@ JSClass HTMLMediaElement::jsClass = {
 static JSBool getSrc(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	HTMLMediaElement* self = reinterpret_cast<HTMLMediaElement*>(JS_GetPrivate(cx, obj));
-	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->getSrc()));
+	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->src()));
 	return JS_TRUE;
 }
 
@@ -39,7 +39,7 @@ static JSBool setSrc(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 static JSBool getReadyState(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	HTMLMediaElement* self = reinterpret_cast<HTMLMediaElement*>(JS_GetPrivate(cx, obj));
-	*vp = INT_TO_JSVAL(self->readyState()); return JS_TRUE;
+	*vp = INT_TO_JSVAL(self->readyState); return JS_TRUE;
 }
 
 static JSBool getAutoplay(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
@@ -74,9 +74,30 @@ static JSBool pause(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval
 	return JS_TRUE;
 }
 
+static JSBool canPlayType(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	HTMLMediaElement* self = reinterpret_cast<HTMLMediaElement*>(JS_GetPrivate(cx, obj));
+
+	JSString* jss = JS_ValueToString(cx, argv[0]);
+	if(!jss) return JS_FALSE;
+	char* str = JS_GetStringBytes(jss);
+
+	if( stricmp(str, "audio/mpeg") == 0 ||
+		stricmp(str, "audio/ogg") == 0 ||
+		stricmp(str, "audio/x-wav") == 0)
+	{
+		*rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, "probably"));
+	}
+	else
+		*rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, ""));
+
+	return JS_TRUE;
+}
+
 static JSFunctionSpec methods[] = {
 	{"play", play, 0,0,0},
 	{"pause", pause, 0,0,0},
+	{"canPlayType", canPlayType, 1,0,0},
 	{0}
 };
 

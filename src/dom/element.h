@@ -27,7 +27,7 @@ public:
 	bool visible;
 	rhint32 top, left;
 
-	virtual const char* tagName() const;
+	override const char* tagName() const;
 
 	static JSClass jsClass;
 };	// Element

@@ -8,7 +8,7 @@ class MyTask : public Task
 {
 public:
 	MyTask(int id=0) : _id(id) {}
-	virtual void run(TaskPool* taskPool)
+	override void run(TaskPool* taskPool)
 	{
 		float val =0.1f;
 		for(int i=0; i<10000; ++i)

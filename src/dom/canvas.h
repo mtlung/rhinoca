@@ -24,7 +24,7 @@ public:
 
 	void createContext(const char* ctxName);
 
-	virtual void render();
+	override void render();
 
 	static void registerClass(JSContext* cx, JSObject* parent);
 	static Element* factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser);
@@ -48,7 +48,7 @@ public:
 	void setWidth(unsigned width);
 	void setHeight(unsigned height);
 
-	virtual const char* tagName() const;
+	override const char* tagName() const;
 
 	static JSClass jsClass;
 

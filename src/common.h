@@ -51,6 +51,8 @@ int strcasecmp(const char* s1, const char* s2);
 #define FORCE_INLINE inline
 #endif
 
+#define override virtual
+
 /*!	Macro to get the count of element of an array
 	For the Visual Studio, in use the provided _countof macro defined in
 	stdlib.h, which can prevent many miss use of it.

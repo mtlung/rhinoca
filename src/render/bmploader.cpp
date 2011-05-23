@@ -32,7 +32,7 @@ public:
 		rhinoca_free(pixelData);
 	}
 
-	virtual void run(TaskPool* taskPool);
+	override void run(TaskPool* taskPool);
 
 protected:
 	void load(TaskPool* taskPool);

@@ -18,7 +18,7 @@ JSClass HTMLAudioElement::jsClass = {
 static JSBool getLoop(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	HTMLAudioElement* self = reinterpret_cast<HTMLAudioElement*>(JS_GetPrivate(cx, obj));
-	*vp = BOOLEAN_TO_JSVAL(self->getLoop()); return JS_TRUE;
+	*vp = BOOLEAN_TO_JSVAL(self->loop()); return JS_TRUE;
 }
 
 static JSBool setLoop(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
@@ -103,10 +103,10 @@ void HTMLAudioElement::setSrc(const char* uri)
 		audioSound_destroy(_sound);
 
 	_sound = audiodevice_createSound(_device, uri, _resourceManager);
-	src = uri;
+	_src = uri;
 }
 
-const char* HTMLAudioElement::getSrc()
+const char* HTMLAudioElement::src() const
 {
 	if(!_sound)
 		return "";
@@ -132,7 +132,7 @@ void HTMLAudioElement::setLoop(bool loop)
 		audiodevice_setSoundLoop(_device, _sound, loop);
 }
 
-bool HTMLAudioElement::getLoop()
+bool HTMLAudioElement::loop() const
 {
 	if(_sound)
 		return audiodevice_getSoundLoop(_device, _sound);

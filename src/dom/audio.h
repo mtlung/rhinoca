@@ -18,19 +18,19 @@ public:
 	static void registerClass(JSContext* cx, JSObject* parent);
 	static Element* factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser);
 
-	virtual void setSrc(const char* uri);
-	virtual const char* getSrc();
-
-	virtual void play();
-	virtual void pause();
+	override void play();
+	override void pause();
 
 // Attributes
-	virtual const char* tagName() const;
+	override const char* tagName() const;
 
 	static JSClass jsClass;
 
-	void setLoop(bool loop);
-	bool getLoop();
+	override const char* src() const;
+	override void setSrc(const char* uri);
+
+	override bool loop() const;
+	override void setLoop(bool loop);
 
 	AudioSound* _sound;
 	AudioDevice* _device;

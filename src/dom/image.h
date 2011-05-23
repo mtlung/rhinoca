@@ -33,7 +33,7 @@ public:
 	unsigned naturalWidth() const;
 	unsigned naturalHeight() const;
 
-	virtual const char* tagName() const;
+	override const char* tagName() const;
 
 	static JSClass jsClass;
 

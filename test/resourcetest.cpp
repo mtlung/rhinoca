@@ -23,7 +23,7 @@ bool load(Resource* resource, ResourceManager* mgr)
 	{
 	public:
 		LoadTask(MyResource* r) : resource(r) {}
-		virtual void run(TaskPool* taskPool)
+		override void run(TaskPool* taskPool)
 		{
 			resource->dummyData = 123;
 			delete this;
@@ -36,7 +36,7 @@ bool load(Resource* resource, ResourceManager* mgr)
 	{
 	public:
 		CommitTask(MyResource* r) : resource(r) {}
-		virtual void run(TaskPool* taskPool)
+		override void run(TaskPool* taskPool)
 		{
 			resource->state = Resource::Loaded;
 			delete this;
