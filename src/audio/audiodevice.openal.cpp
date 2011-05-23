@@ -13,7 +13,7 @@
 #	include "../../thirdparty/OpenAL/alc.h"
 #endif
 
-/*	Some usefull links about OpenAL:
+/*	Some useful links about OpenAL:
 	Offset
 	http://www.nabble.com/AL_*_OFFSET-resolution-td14216950.html
 	Calculate the current playing time:
@@ -229,8 +229,8 @@ int AudioSound::tryLoadNextBuffer()
 		if(j < 0) continue;
 
 		AlBuffer& b = device->_alBuffers[j];
-		if(b.end > nextALBufLoadPosition)
-			nextALBufLoadPosition = b.end + 1;
+		if(b.end >= nextALBufLoadPosition)
+			nextALBufLoadPosition = b.end;
 	}
 
 	AudioBuffer::Format format;
@@ -308,7 +308,7 @@ int AudioDevice::allocateAlBufferFor(AudioBuffer* src, unsigned begin, unsigned 
 	for(unsigned i=0; i<MAX_AL_BUFFERS; ++i) {
 		AlBuffer& b = _alBuffers[i];
 
-		// Reuse existing perfect matching duration buffer (mostly for non-streamming sound)
+		// Reuse existing perfect matching duration buffer (mostly for non-streaming sound)
 		if(b.begin == begin && b.end == end && b.srcData == src && b.dataReady) {
 			b.referenceCount++;
 			return i;
@@ -382,6 +382,7 @@ void AudioDevice::update()
 
 		while(buffersProcessed--) {
 			sound.unqueueBuffer();
+			sound.tryLoadNextBuffer();
 		}
 
 		// Try to fill available buffer slots
@@ -409,7 +410,7 @@ void AudioDevice::update()
 				checkAndPrintError("alSourceQueueBuffers failed: ");
 				sound.alBufferIndice[i].queued = true;
 
-				sound.nextALBufLoadPosition = b.end + 1;
+				sound.nextALBufLoadPosition = b.end;
 				sound.tryLoadNextBuffer();
 			}
 		}
@@ -550,7 +551,7 @@ void audiodevice_stopSound(AudioDevice* device, AudioSound* sound)
 void audiodevice_setSoundLoop(AudioDevice* device, AudioSound* sound, bool loop)
 {
 	sound->isLoop = loop;
-	// We don't use OpenAl's loop because it doesn't handle streamming.
+	// We don't use OpenAl's loop because it doesn't handle streaming.
 //	alSourcei(sound->handle, AL_LOOPING, loop ? AL_TRUE : AL_FALSE);
 }
 

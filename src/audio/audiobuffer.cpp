@@ -69,7 +69,7 @@ void AudioBuffer::commitWriteForRange(unsigned begin, unsigned end)
 	for(unsigned i=0; i<subBuffers.size(); ++i) {
 		SubBuffer& b = subBuffers[i];
 		if(!b.readyForRead && b.posBegin == begin && end <= b.posEnd) {
-			// Call realloc to reclaim wated space
+			// Call realloc to reclaim wasted space
 			rhinoca_realloc(b.data, format.blockAlignment * (b.posEnd - b.posBegin), format.blockAlignment * (end - begin));
 			b.readyForRead = true;
 			b.posEnd = end;

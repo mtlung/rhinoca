@@ -119,7 +119,10 @@ void OggLoader::run(TaskPool* taskPool)
 		loadData();
 }
 
-static unsigned _dataChunkSize = 1024 * 2;
+// This will be the approximate duration (in seconds) of a audio buffer segment to send to audio device
+static const float _bufferDuration = 3.0f;
+
+static const unsigned _dataChunkSize = 1024 * 8;
 
 void OggLoader::loadHeader()
 {
@@ -150,7 +153,7 @@ void OggLoader::loadHeader()
 		else if(!vorbis || error != 0)
 			goto Abort;
 
-		// Reading of header succes
+		// Reading of header success
 		ringBuffer.commitRead(byteUsed);
 		ringBuffer.collectUnusedSpace();
 		vorbisInfo = stb_vorbis_get_info(vorbis);
@@ -197,12 +200,12 @@ void OggLoader::loadData()
 			return;
 		}
 
-		const unsigned proximateBufDuration = 1 * format.samplesPerSecond;
+		const unsigned proximateBufDuration = _bufferDuration * format.samplesPerSecond;
 		unsigned bytesToWrite = 0;
 		const int numChannels = vorbisInfo.channels <= 2 ? vorbisInfo.channels : 2; 
 		p = ringBuffer.read(readCount);
 
-		// Loop untill we used up the available buffer we already read
+		// Loop until we used up the available buffer we already read
 		for(bool needMoreData = false; !needMoreData; )
 		{
 			unsigned audioBufBegin = currentSamplePos;
@@ -224,10 +227,18 @@ void OggLoader::loadData()
 			while(true)
 			{
 				byteUsed = stb_vorbis_decode_frame_pushdata(vorbis, p, readCount, NULL, &outputs, &sampleCount);
-				stb_vorbis_channels_short_interleaved(numChannels, (short*)bufferData, vorbisInfo.channels, outputs, 0, sampleCount);
 
-				int tmp = stb_vorbis_get_sample_offset(vorbis);
-				tmp = tmp;
+				// Summit the buffer decoded so far if we come across at AudioBuffer boundary
+				if(currentSamplePos + sampleCount > audioBufEnd) {
+					buffer->commitWriteForRange(audioBufBegin, currentSamplePos);
+					audioBufBegin = currentSamplePos;
+					audioBufEnd = currentSamplePos + proximateBufDuration;
+					bufferData = buffer->getWritePointerForRange(currentSamplePos, audioBufEnd, bytesToWrite);
+					if(!bufferData)
+						goto Abort;
+				}
+
+				stb_vorbis_channels_short_interleaved(numChannels, (short*)bufferData, vorbisInfo.channels, outputs, 0, sampleCount);
 
 				if(byteUsed == 0) {
 					const int error = stb_vorbis_get_error(vorbis);
@@ -239,21 +250,13 @@ void OggLoader::loadData()
 						goto Abort;
 				}
 
-				// Break if more than enough samples
-				// TODO: Not working yet
-				if(currentSamplePos + sampleCount > audioBufEnd) {
-					stb_vorbis_flush_pushdata(vorbis);
-					break;
-				}
-
 				p += byteUsed;
-				currentSamplePos += sampleCount;
 				readCount -= byteUsed;
+				currentSamplePos += sampleCount;
 				ringBuffer.commitRead(byteUsed);
+				bufferData = (short*)(bufferData) + sampleCount * numChannels;
 
 				ASSERT(stb_vorbis_get_sample_offset(vorbis) == currentSamplePos);
-
-				printf("Remaining readCoun:%i\n", readCount);
 			}
 
 			if(audioBufBegin != currentSamplePos)
