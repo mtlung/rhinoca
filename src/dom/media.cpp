@@ -82,9 +82,9 @@ static JSBool canPlayType(JSContext* cx, JSObject* obj, uintN argc, jsval* argv,
 	if(!jss) return JS_FALSE;
 	char* str = JS_GetStringBytes(jss);
 
-	if( stricmp(str, "audio/mpeg") == 0 ||
-		stricmp(str, "audio/ogg") == 0 ||
-		stricmp(str, "audio/x-wav") == 0)
+	if( strcasecmp(str, "audio/mpeg") == 0 ||
+		strcasecmp(str, "audio/ogg") == 0 ||
+		strcasecmp(str, "audio/x-wav") == 0)
 	{
 		*rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, "probably"));
 	}
