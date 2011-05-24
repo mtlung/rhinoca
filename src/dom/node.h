@@ -24,10 +24,23 @@ public:
 	JSObject* createPrototype();
 
 	/// Appends a new child node to the end of the list of children.
-	void appendChild(Node* child);
+	/// If newChild is already in the tree, it is first removed.
+	/// Returns newChild.
+	Node* appendChild(Node* newChild);
 
 	/// Inserts a new child node before an existing child node.
-	void insertBefore(Node* newChild, Node* refChild);
+	/// If refChild is null, newChild is inserted at the end of.
+	/// If newChild is already in the tree, it is first removed.
+	/// Returns newChild on success.
+	Node* insertBefore(Node* newChild, Node* refChild);
+
+	/// Replace an existing child with another.
+	/// If newChild is already in the tree, it is first removed.
+	/// Returns oldChild on success.
+	Node* replaceChild(Node* oldChild, Node* newChild);
+
+	/// Returns the removed child on success.
+	Node* removeChild(Node* child);
 
 	/// Will not delete the C++ object, actual delete is done during JS GC.
 	void removeThis();
@@ -66,7 +79,7 @@ public:
 
 	explicit NodeIterator(Node* start, Node* current);
 
-	/// NOTE: Assumming the iterator is valid and so the returned pointer will not be null.
+	/// NOTE: Assuming the iterator is valid and so the returned pointer will not be null.
 	Node* operator->() { return _current; }
 
 	/// Return the current element.

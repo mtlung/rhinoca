@@ -17,14 +17,19 @@ static JSBool appendChild(JSContext* cx, JSObject* obj, uintN argc, jsval* argv,
 
 	JSObject* jsChild = NULL;
 	VERIFY(JS_ValueToObject(cx, argv[0], &jsChild));
+	if(!jsChild) return JS_TRUE;
 
-//	if(!JS_InstanceOf(cx, jsChild, &Node::jsClass, argv)) return JS_FALSE;
+//	if(!JS_InstanceOf(cx, jsChild, &Node::jsClass, argv)) return JS_TRUE;
 	Node* child = reinterpret_cast<Node*>(JS_GetPrivate(cx, jsChild));
 
-	self->appendChild(child);
+	*rval = OBJECT_TO_JSVAL(self->appendChild(child));
+	return JS_TRUE;
+}
 
-	*rval = OBJECT_TO_JSVAL(child->jsObject);
-
+static JSBool hasChildNodes(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	*rval = BOOLEAN_TO_JSVAL(self->hasChildNodes());
 	return JS_TRUE;
 }
 
@@ -34,26 +39,65 @@ static JSBool insertBefore(JSContext* cx, JSObject* obj, uintN argc, jsval* argv
 
 	JSObject* jsNewChild = NULL;
 	VERIFY(JS_ValueToObject(cx, argv[0], &jsNewChild));
+	if(!jsNewChild) return JS_TRUE;
 
-	if(!JS_InstanceOf(cx, jsNewChild, &Node::jsClass, argv)) return JS_FALSE;
+	if(!JS_InstanceOf(cx, jsNewChild, &Node::jsClass, argv)) return JS_TRUE;
 	Node* newChild = reinterpret_cast<Node*>(JS_GetPrivate(cx, jsNewChild));
 
 	JSObject* jsRefChild = NULL;
 	VERIFY(JS_ValueToObject(cx, argv[1], &jsRefChild));
 
-	if(!JS_InstanceOf(cx, jsRefChild, &Node::jsClass, argv)) return JS_FALSE;
+	if(!JS_InstanceOf(cx, jsRefChild, &Node::jsClass, argv)) return JS_TRUE;
 	Node* refChild = reinterpret_cast<Node*>(JS_GetPrivate(cx, jsRefChild));
 
-	self->insertBefore(newChild, refChild);
+	*rval = OBJECT_TO_JSVAL(self->insertBefore(newChild, refChild));
+	return JS_TRUE;
+}
 
-	*rval = OBJECT_TO_JSVAL(jsNewChild);
+static JSBool removeChild(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
 
+	JSObject* jsChild = NULL;
+	VERIFY(JS_ValueToObject(cx, argv[0], &jsChild));
+	if(!jsChild) return JS_TRUE;
+
+//	if(!JS_InstanceOf(cx, jsChild, &Node::jsClass, argv)) return JS_TRUE;
+	Node* child = reinterpret_cast<Node*>(JS_GetPrivate(cx, jsChild));
+
+	*rval = OBJECT_TO_JSVAL(self->removeChild(child));
+	return JS_TRUE;
+}
+
+static JSBool replaceChild(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+
+	JSObject* jsOldChild = NULL;
+	VERIFY(JS_ValueToObject(cx, argv[0], &jsOldChild));
+	if(!jsOldChild) return JS_TRUE;
+
+//	if(!JS_InstanceOf(cx, jsOldChild, &Node::jsClass, argv)) return JS_TRUE;
+	Node* oldChild = reinterpret_cast<Node*>(JS_GetPrivate(cx, jsOldChild));
+
+	JSObject* jsNewChild = NULL;
+	VERIFY(JS_ValueToObject(cx, argv[0], &jsNewChild));
+	if(!jsNewChild) return JS_TRUE;
+
+//	if(!JS_InstanceOf(cx, jsNewChild, &Node::jsClass, argv)) return JS_TRUE;
+	Node* newChild = reinterpret_cast<Node*>(JS_GetPrivate(cx, jsNewChild));
+
+	*rval = OBJECT_TO_JSVAL(self->replaceChild(oldChild, newChild));
 	return JS_TRUE;
 }
 
 static JSFunctionSpec methods[] = {
 	{"appendChild", appendChild, 1,0,0},
+//	{"cloneNode", cloneNode, 0,0,0},
+	{"hasChildNodes", hasChildNodes, 0,0,0},	// https://developer.mozilla.org/en/DOM/Node.hasChildNodes
 	{"insertBefore", insertBefore, 2,0,0},
+	{"removeChild", removeChild, 1,0,0},		// https://developer.mozilla.org/en/DOM/Node.removeChild
+	{"replaceChild", replaceChild, 2,0,0},
 	{0}
 };
 
@@ -112,50 +156,66 @@ JSObject* Node::createPrototype()
 	return proto;
 }
 
-void Node::appendChild(Node* child)
+Node* Node::appendChild(Node* newChild)
 {
-	ASSERT(!child->parentNode);
+	// 'newChild' may already bind to JS
+	if(!newChild->jsContext)
+		newChild->bind(jsContext, NULL);
+	newChild->addGcRoot();	// releaseGcRoot() in Node::removeThis()
 
-	child->parentNode = this;
+	newChild->removeThis();
+	newChild->parentNode = this;
 
 	if(Node* n = lastChild())
-		n->nextSibling = child;
-	else
-		firstChild = child;
-
-	child->ownerDocument = ownerDocument;
-
-	// 'child' may already bind to JS
-	if(!child->jsContext)
-		child->bind(jsContext, NULL);
-
-	child->addGcRoot();	// releaseGcRoot() in Node::removeThis()
-}
-
-void Node::insertBefore(Node* newChild, Node* refChild)
-{
-	ASSERT(!newChild->parentNode);
-	ASSERT(refChild->parentNode == this);
-
-	newChild->parentNode = this;
-	newChild->nextSibling = refChild;
-
-	if(Node* n = refChild->previousSibling())
 		n->nextSibling = newChild;
 	else
 		firstChild = newChild;
 
 	newChild->ownerDocument = ownerDocument;
+	return newChild;
+}
+
+Node* Node::insertBefore(Node* newChild, Node* refChild)
+{
+	if(!newChild) return NULL;
+	if(refChild && refChild->parentNode != this) return NULL;
 
 	if(!newChild->jsContext)
 		newChild->bind(jsContext, NULL);
-
 	newChild->addGcRoot();	// releaseGcRoot() in Node::removeThis()
+
+	newChild->removeThis();
+	newChild->parentNode = this;
+	newChild->nextSibling = refChild;
+
+	if(!refChild)
+		lastChild()->nextSibling = newChild;
+	else if(Node* n = refChild->previousSibling())
+		n->nextSibling = newChild;
+	else
+		firstChild = newChild;
+
+	newChild->ownerDocument = ownerDocument;
+	return newChild;
+}
+
+Node* Node::replaceChild(Node* oldChild, Node* newChild)
+{
+	insertBefore(newChild, oldChild->nextSibling);
+	oldChild->removeThis();
+	return oldChild;
+}
+
+Node* Node::removeChild(Node* child)
+{
+	if(!child || child->parentNode != this) return NULL;
+	child->removeThis();
+	return child;
 }
 
 void Node::removeThis()
 {
-//	if(!parentNode) return;
+	if(!parentNode) return;
 
 	if(Node* previous = previousSibling())
 		previous->nextSibling = nextSibling;

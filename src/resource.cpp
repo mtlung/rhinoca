@@ -48,7 +48,7 @@ ResourceManager::~ResourceManager()
 
 void ResourceManager::abortAllLoader()
 {
-	// NOTE: Seperate into 2 passes can make sure all loading task are set to abort
+	// NOTE: Separate into 2 passes can make sure all loading task are set to abort
 	for(Resource* r=_resources.findMin(); r; r=r->next()) {
 		if(r->state == Resource::Loading)
 			r->state = Resource::Aborted;
@@ -105,7 +105,7 @@ void ResourceManager::update()
 
 	// Every resource will get cooler on every update
 	for(Resource* r = _resources.findMin(); r != NULL; r = r->next()) {
-		// TODO: Will this cause denormailization penality?
+		// TODO: Will this cause denormailization penalty?
 		r->hotness *= 0.5f;
 	}
 }
