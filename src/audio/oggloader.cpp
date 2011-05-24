@@ -256,7 +256,9 @@ void OggLoader::loadData()
 				ringBuffer.commitRead(byteUsed);
 				bufferData = (short*)(bufferData) + sampleCount * numChannels;
 
-				ASSERT(stb_vorbis_get_sample_offset(vorbis) == currentSamplePos);
+				// NOTE: Seems there is a bug in reporting the sample offset at the last packet
+				// there I added the condition (readCount == 0) to by-pass the bug
+				ASSERT(readCount == 0 || stb_vorbis_get_sample_offset(vorbis) == currentSamplePos);
 			}
 
 			if(audioBufBegin != currentSamplePos)
