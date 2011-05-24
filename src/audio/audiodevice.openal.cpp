@@ -376,6 +376,9 @@ void AudioDevice::update()
 			continue;
 		}
 
+		ASSERT(sound.audioBuffer);
+		sound.audioBuffer->hotness++;
+
 		// Request the number of OpenAL Buffers have been processed (played) on the Source
 		ALint buffersProcessed = 0;
 		alGetSourcei(sound.handle, AL_BUFFERS_PROCESSED, &buffersProcessed);

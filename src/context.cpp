@@ -113,6 +113,7 @@ void Rhinoca::update()
 		domWindow->update();
 
 	resourceManager.update();
+	resourceManager.collectInfrequentlyUsed();
 
 	audiodevice_update(audioDevice);
 
@@ -159,8 +160,9 @@ void Rhinoca::_initGlobal()
 			"function clearTimeout(cb) { window.clearTimeout(cb); };"
 			"function log(msg){setTimeout(function(){throw new Error(msg);},0);}"
 
-			"var Image = HTMLImageElement;"
+			"var Audio = HTMLAudioElement;"
 			"var Canvas = HTMLCanvasElement;"
+			"var Image = HTMLImageElement;"
 
 			"var navigator = { userAgent: {"
 			"	indexOf : function(str) { return -1; }, match : function(str) { return false; }"

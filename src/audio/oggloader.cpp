@@ -197,6 +197,7 @@ void OggLoader::loadData()
 		if(readCount == 0) {	// EOF
 			format.totalSamples = currentSamplePos;
 			buffer->setFormat(format);
+			buffer->state = Resource::Loaded;
 			return;
 		}
 

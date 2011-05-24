@@ -170,6 +170,7 @@ void WaveLoader::loadData()
 		}
 
 		buffer->commitWriteForRange(0, dataChunkSize / format.format.blockAlign);
+		buffer->state = Resource::Loaded;
 	}
 
 	return;

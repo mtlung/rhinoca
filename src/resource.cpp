@@ -116,15 +116,18 @@ void ResourceManager::collectInfrequentlyUsed()
 
 	for(Resource* r = _resources.findMin(); r != NULL; )
 	{
-		if(r->refCount() == 1) {
+		if(r->refCount() == 1 && r->state != Resource::Loading) {
 			Resource* next = r->next();
 			intrusivePtrRelease(r);
 			r = next;
 			continue;
 		}
 
-		if(r->state == Resource::Loaded && r->hotness < 0.001f)
+		if(r->hotness < 0.00001f &&
+			(r->state == Resource::Loaded || r->state == Resource::Aborted))
+		{
 			r->unload();
+		}
 
 		r = r->next();
 	}

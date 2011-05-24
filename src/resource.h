@@ -28,7 +28,7 @@ public:
 	FixString uri() const;
 
 	enum State { NotLoaded, Loading, Ready, Loaded, Unloaded, Aborted };
-	State state;
+	State state;	///!< Important: changing of this value must be performed on main thread
 
 	TaskId taskReady, taskLoaded;
 

@@ -23,7 +23,7 @@ public:
 		: stream(NULL), texture(t), manager(mgr)
 		, width(0), height(0)
 		, pixelData(NULL), pixelDataSize(0), pixelDataFormat(Driver::RGBA)
-		, headerLoaded(false), flipVertical(false)
+		, aborted(false), headerLoaded(false), readyToCommit(false), flipVertical(false)
 	{}
 
 	~BmpLoader()
@@ -49,7 +49,9 @@ protected:
 	rhuint pixelDataSize;
 	Texture::Format pixelDataFormat;
 
+	bool aborted;
 	bool headerLoaded;
+	bool readyToCommit;
 	bool flipVertical;
 	BITMAPFILEHEADER fileHeader;
 	BITMAPINFOHEADER infoHeader;
@@ -57,7 +59,7 @@ protected:
 
 void BmpLoader::run(TaskPool* taskPool)
 {
-	if(!texture->scratch)
+	if(!readyToCommit)
 		load(taskPool);
 	else
 		commit(taskPool);
@@ -75,10 +77,7 @@ void BmpLoader::commit(TaskPool* taskPool)
 {
 	int tId = TaskPool::threadId();
 
-	ASSERT(texture->scratch == this);
-	texture->scratch = NULL;
-
-	if(texture->create(width, height, Driver::ANY, pixelData, pixelDataSize, pixelDataFormat))
+	if(!aborted && texture->create(width, height, Driver::ANY, pixelData, pixelDataSize, pixelDataFormat))
 		texture->state = Resource::Loaded;
 	else
 		texture->state = Resource::Aborted;
@@ -145,8 +144,7 @@ void BmpLoader::loadHeader()
 	return;
 
 Abort:
-	texture->state = Resource::Aborted;
-	texture->scratch = this;
+	aborted = true;
 }
 
 void BmpLoader::loadPixelData()
@@ -154,8 +152,7 @@ void BmpLoader::loadPixelData()
 	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
-	if(texture->state == Resource::Aborted) goto Abort;
-	if(!stream) goto Abort;
+	if(aborted || !stream) goto Abort;
 
 	// Memory usage for one row of image
 	const rhuint rowByte = width * (sizeof(char) * 3);
@@ -187,12 +184,12 @@ void BmpLoader::loadPixelData()
 		}
 	}
 
-	texture->scratch = this;
+	readyToCommit = true;
 	return;
 
 Abort:
-	texture->state = Resource::Aborted;
-	texture->scratch = this;
+	readyToCommit = true;
+	aborted = true;
 }
 
 bool loadBmp(Resource* resource, ResourceManager* mgr)
