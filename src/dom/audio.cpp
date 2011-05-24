@@ -43,8 +43,7 @@ static JSBool construct(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, j
 
 	audio->ownerDocument = rh->domWindow->document;
 
-	*rval = OBJECT_TO_JSVAL(audio->jsObject);
-
+	*rval = *audio;
 	return JS_TRUE;
 }
 
@@ -66,7 +65,7 @@ void HTMLAudioElement::bind(JSContext* cx, JSObject* parent)
 {
 	ASSERT(!jsContext);
 	jsContext = cx;
-	jsObject = JS_NewObject(cx, &jsClass, HTMLMediaElement::createPrototype(), NULL);
+	jsObject = JS_NewObject(cx, &jsClass, HTMLMediaElement::createPrototype(), parent);
 	VERIFY(JS_SetPrivate(cx, jsObject, this));
 	VERIFY(JS_DefineFunctions(cx, jsObject, methods));
 	VERIFY(JS_DefineProperties(cx, jsObject, properties));

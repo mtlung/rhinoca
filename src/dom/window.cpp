@@ -65,7 +65,7 @@ JSBool setTimeout(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* 
 	self->timerCallbacks.insert(*cb);
 	cb->addGcRoot();	// releaseGcRoot() in ~TimerCallback::removeThis()
 
-	*rval = OBJECT_TO_JSVAL(cb->jsObject);
+	*rval = *cb;
 
 	return JS_TRUE;
 }
@@ -93,7 +93,7 @@ JSBool setInterval(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval*
 	self->timerCallbacks.insert(*cb);
 	cb->addGcRoot();	// releaseGcRoot() in TimerCallback::removeThis()
 
-	*rval = OBJECT_TO_JSVAL(cb->jsObject);
+	*rval = *cb;
 
 	return JS_TRUE;
 }
@@ -144,7 +144,7 @@ JSBool requestAnimationFrame(JSContext* cx, JSObject* obj, uintN argc, jsval* ar
 
 	cb->addGcRoot();	// releaseGcRoot() in FrameRequestCallback::removeThis()
 
-	*rval = OBJECT_TO_JSVAL(cb->jsObject);
+	*rval = *cb;
 
 	return JS_TRUE;
 }
@@ -301,7 +301,7 @@ void TimerCallback::bind(JSContext* cx, JSObject* parent)
 {
 	ASSERT(!jsContext);
 	jsContext = cx;
-	jsObject = JS_NewObject(cx, &jsClass, NULL, NULL);
+	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
 	VERIFY(JS_SetPrivate(cx, jsObject, this));
 	addReference();
 }
@@ -338,7 +338,7 @@ void FrameRequestCallback::bind(JSContext* cx, JSObject* parent)
 {
 	ASSERT(!jsContext);
 	jsContext = cx;
-	jsObject = JS_NewObject(cx, &jsClass, NULL, NULL);
+	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
 	VERIFY(JS_SetPrivate(cx, jsObject, this));
 	addReference();
 }

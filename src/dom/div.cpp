@@ -25,7 +25,7 @@ void HTMLDivElement::bind(JSContext* cx, JSObject* parent)
 {
 	ASSERT(!jsContext);
 	jsContext = cx;
-	jsObject = JS_NewObject(cx, &jsClass, Element::createPrototype(), NULL);
+	jsObject = JS_NewObject(cx, &jsClass, Element::createPrototype(), parent);
 	VERIFY(JS_SetPrivate(cx, jsObject, this));
 //	VERIFY(JS_DefineFunctions(cx, jsObject, methods));
 //	VERIFY(JS_DefineProperties(cx, jsObject, properties));

@@ -28,7 +28,7 @@ static JSBool elementGetStyle(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	ElementStyle* style = new ElementStyle;
 	style->element = self;
 	style->bind(cx, self->jsObject);
-	*vp = OBJECT_TO_JSVAL(style->jsObject);
+	*vp = *style;
 
 	return JS_TRUE;
 }
@@ -218,7 +218,7 @@ void ElementStyle::bind(JSContext* cx, JSObject* parent)
 {
 	ASSERT(!jsContext);
 	jsContext = cx;
-	jsObject = JS_NewObject(cx, &jsClass, NULL, NULL);
+	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
 	VERIFY(JS_SetPrivate(cx, jsObject, this));
 	VERIFY(JS_DefineProperties(cx, jsObject, properties));
 	addReference();

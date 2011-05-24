@@ -22,7 +22,7 @@ static JSBool getBody(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	if(!body)
 		*vp = JSVAL_NULL;
 	else
-		*vp = OBJECT_TO_JSVAL(body->jsObject);
+		*vp = *body;
 	return JS_TRUE;
 }
 
@@ -40,7 +40,7 @@ static JSBool createElement(JSContext* cx, JSObject* obj, uintN argc, jsval* arg
 	if(Element* ele = doc->createElement(str))
 	{
 		ele->bind(cx, NULL);
-		*rval = OBJECT_TO_JSVAL(ele->jsObject);
+		*rval = *ele;
 	}
 	else
 		*rval = JSVAL_VOID;
@@ -55,7 +55,7 @@ static JSBool getElementById(JSContext* cx, JSObject* obj, uintN argc, jsval* ar
 	HTMLDocument* doc = reinterpret_cast<HTMLDocument*>(JS_GetPrivate(cx, obj));
 	Element* ele = doc->getElementById(str);
 
-	*rval = ele ? OBJECT_TO_JSVAL(ele->jsObject) : JSVAL_VOID;
+	*rval = *ele;
 
 	return JS_TRUE;
 }

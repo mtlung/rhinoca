@@ -62,7 +62,7 @@ void Rhinoca::processEvent(RhinocaEvent ev)
 			Dom::KeyEvent* e = new Dom::KeyEvent;
 			e->keyCode = keyCode;
 			e->bind(document->jsContext, NULL);
-			argv = OBJECT_TO_JSVAL(e->jsObject);
+			argv = *e;
 			JS_CallFunctionValue(document->jsContext, document->jsObject, closure, 1, &argv, &rval);
 		}
 	}
@@ -79,7 +79,7 @@ void Rhinoca::processEvent(RhinocaEvent ev)
 			e->pageX = LOWORD(lParam);
 			e->pageY = HIWORD(lParam);
 			e->bind(itr->jsContext, NULL);
-			argv = OBJECT_TO_JSVAL(e->jsObject);
+			argv = *e;
 			JS_CallFunctionValue(itr->jsContext, NULL, closure, 1, &argv, &rval);
 		}
 	}

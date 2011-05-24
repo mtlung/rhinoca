@@ -264,6 +264,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\dom\nodelist.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\nodelist.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\dom\registerfactories.cpp"
 				>
 			</File>

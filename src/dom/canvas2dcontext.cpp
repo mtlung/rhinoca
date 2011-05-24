@@ -23,7 +23,7 @@ JSClass CanvasRenderingContext2D::jsClass = {
 static JSBool getCanvas(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
-	*vp = OBJECT_TO_JSVAL(self->canvas->jsObject);
+	*vp = *self->canvas;
 	return JS_TRUE;
 }
 
@@ -428,7 +428,7 @@ static JSBool createLinearGradient(JSContext* cx, JSObject* obj, uintN argc, jsv
 
 	g->createLinear((float)x1, (float)y1, (float)x2, (float)y2);
 
-	*rval = OBJECT_TO_JSVAL(g->jsObject);
+	*rval = *g;
 
 	return JS_TRUE;
 }
@@ -452,7 +452,7 @@ static JSBool createRadialGradient(JSContext* cx, JSObject* obj, uintN argc, jsv
 
 	g->createRadial((float)x1, (float)y1, (float)r1, (float)x2, (float)y2, (float)r2);
 
-	*rval = OBJECT_TO_JSVAL(g->jsObject);
+	*rval = *g;
 
 	return JS_TRUE;
 }
@@ -594,7 +594,7 @@ void CanvasRenderingContext2D::bind(JSContext* cx, JSObject* parent)
 {
 	ASSERT(!jsContext);
 	jsContext = cx;
-	jsObject = JS_NewObject(cx, &jsClass, NULL, NULL);
+	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
 	VERIFY(JS_SetPrivate(cx, jsObject, this));
 	VERIFY(JS_DefineFunctions(cx, jsObject, methods));
 	VERIFY(JS_DefineProperties(cx, jsObject, properties));

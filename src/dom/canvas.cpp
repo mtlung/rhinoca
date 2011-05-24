@@ -59,7 +59,7 @@ static JSBool construct(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, j
 	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
 	img->ownerDocument = rh->domWindow->document;
 
-	*rval = OBJECT_TO_JSVAL(img->jsObject);
+	*rval = *img;
 
 	return JS_TRUE;
 }
@@ -80,7 +80,7 @@ static JSBool getContext(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, 
 	}
 
 	if(self->context) {
-		*rval = OBJECT_TO_JSVAL(self->context->jsObject);
+		*rval = *self->context;
 		return JS_TRUE;
 	}
 
@@ -110,7 +110,7 @@ void HTMLCanvasElement::bind(JSContext* cx, JSObject* parent)
 {
 	ASSERT(!jsContext);
 	jsContext = cx;
-	jsObject = JS_NewObject(cx, &jsClass, Element::createPrototype(), NULL);
+	jsObject = JS_NewObject(cx, &jsClass, Element::createPrototype(), parent);
 	VERIFY(JS_SetPrivate(cx, jsObject, this));
 	VERIFY(JS_DefineFunctions(cx, jsObject, methods));
 	VERIFY(JS_DefineProperties(cx, jsObject, properties));

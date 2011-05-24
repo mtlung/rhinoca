@@ -78,7 +78,7 @@ void MouseEvent::bind(JSContext* cx, JSObject* parent)
 {
 	ASSERT(!jsContext);
 	jsContext = cx;
-	jsObject = JS_NewObject(cx, &jsClass, NULL, NULL);
+	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
 	VERIFY(JS_SetPrivate(cx, jsObject, this));
 	VERIFY(JS_DefineProperties(cx, jsObject, properties));
 	addReference();

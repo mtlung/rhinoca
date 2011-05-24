@@ -53,6 +53,12 @@ void JsBindable::releaseReference()
 	delete this;
 }
 
+JsBindable::operator jsval()
+{
+	if(!this) return JSVAL_NULL;
+	return OBJECT_TO_JSVAL(jsObject ? jsObject : JSVAL_NULL);
+}
+
 void* JsBindable::operator new(size_t size)
 {
 	return rhinoca_malloc(size);

@@ -6,6 +6,7 @@
 
 namespace Dom {
 
+class NodeList;
 class HTMLDocument;
 
 /// Reference: http://www.w3schools.com/dom/dom_node.asp
@@ -51,6 +52,8 @@ public:
 // Attributes
 	FixString nodeName;
 	HTMLDocument* ownerDocument;
+
+	NodeList* childNodes();
 
 	Node* parentNode;
 	Node* firstChild;

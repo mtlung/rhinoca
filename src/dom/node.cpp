@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "node.h"
+#include "nodelist.h"
 #include "document.h"
 
 namespace Dom {
@@ -22,7 +23,7 @@ static JSBool appendChild(JSContext* cx, JSObject* obj, uintN argc, jsval* argv,
 //	if(!JS_InstanceOf(cx, jsChild, &Node::jsClass, argv)) return JS_TRUE;
 	Node* child = reinterpret_cast<Node*>(JS_GetPrivate(cx, jsChild));
 
-	*rval = OBJECT_TO_JSVAL(self->appendChild(child));
+	*rval = *self->appendChild(child);
 	return JS_TRUE;
 }
 
@@ -50,7 +51,7 @@ static JSBool insertBefore(JSContext* cx, JSObject* obj, uintN argc, jsval* argv
 	if(!JS_InstanceOf(cx, jsRefChild, &Node::jsClass, argv)) return JS_TRUE;
 	Node* refChild = reinterpret_cast<Node*>(JS_GetPrivate(cx, jsRefChild));
 
-	*rval = OBJECT_TO_JSVAL(self->insertBefore(newChild, refChild));
+	*rval = *self->insertBefore(newChild, refChild);
 	return JS_TRUE;
 }
 
@@ -65,7 +66,7 @@ static JSBool removeChild(JSContext* cx, JSObject* obj, uintN argc, jsval* argv,
 //	if(!JS_InstanceOf(cx, jsChild, &Node::jsClass, argv)) return JS_TRUE;
 	Node* child = reinterpret_cast<Node*>(JS_GetPrivate(cx, jsChild));
 
-	*rval = OBJECT_TO_JSVAL(self->removeChild(child));
+	*rval = *self->removeChild(child);
 	return JS_TRUE;
 }
 
@@ -87,7 +88,7 @@ static JSBool replaceChild(JSContext* cx, JSObject* obj, uintN argc, jsval* argv
 //	if(!JS_InstanceOf(cx, jsNewChild, &Node::jsClass, argv)) return JS_TRUE;
 	Node* newChild = reinterpret_cast<Node*>(JS_GetPrivate(cx, jsNewChild));
 
-	*rval = OBJECT_TO_JSVAL(self->replaceChild(oldChild, newChild));
+	*rval = *self->replaceChild(oldChild, newChild);
 	return JS_TRUE;
 }
 
@@ -101,23 +102,39 @@ static JSFunctionSpec methods[] = {
 	{0}
 };
 
+static JSBool childNodes(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	*vp = *self->childNodes();
+	return JS_TRUE;
+}
+
 static JSBool nodeName(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
-	Node* node = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
-	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, node->nodeName.c_str()));
+	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->nodeName.c_str()));
 	return JS_TRUE;
 }
 
 static JSBool ownerDocument(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
-	Node* node = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
-	*vp = OBJECT_TO_JSVAL(node->ownerDocument->jsObject);
+	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	*vp = *self->ownerDocument;
+	return JS_TRUE;
+}
+
+static JSBool parentNode(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	*vp = *self->parentNode;
 	return JS_TRUE;
 }
 
 static JSPropertySpec properties[] = {
+	{"childNodes", 0, 0, childNodes, JS_PropertyStub},
 	{"nodeName", 0, 0, nodeName, JS_PropertyStub},
 	{"ownerDocument", 0, 0, ownerDocument, JS_PropertyStub},
+	{"parentNode", 0, 0, parentNode, JS_PropertyStub},
 	{0}
 };
 
@@ -152,6 +169,7 @@ JSObject* Node::createPrototype()
 	JSObject* proto = JS_NewObject(jsContext, &jsClass, NULL, NULL);
 	VERIFY(JS_SetPrivate(jsContext, proto, this));
 	VERIFY(JS_DefineFunctions(jsContext, proto, methods));
+	VERIFY(JS_DefineProperties(jsContext, proto, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 	return proto;
 }
@@ -227,6 +245,13 @@ void Node::removeThis()
 	nextSibling = NULL;
 
 	releaseGcRoot();
+}
+
+NodeList* Node::childNodes()
+{
+	NodeList* list = new NodeList(this, NULL);
+	list->bind(jsContext, NULL);
+	return list;
 }
 
 Node* Node::lastChild()

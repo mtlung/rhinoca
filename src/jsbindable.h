@@ -24,6 +24,8 @@ public:
 	void addReference();
 	void releaseReference();
 
+	operator jsval();
+
 	void* operator new(size_t);
 	void operator delete(void*);
 
