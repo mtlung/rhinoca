@@ -27,7 +27,7 @@ static JSBool elementGetStyle(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 
 	ElementStyle* style = new ElementStyle;
 	style->element = self;
-	style->bind(cx, self->jsObject);
+	style->bind(cx, *self);
 	*vp = *style;
 
 	return JS_TRUE;
@@ -54,7 +54,7 @@ static JSBool getAttribute(JSContext* cx, JSObject* obj, uintN argc, jsval* argv
 
 	if(JSString* jss = JS_ValueToString(cx, argv[0])) {
 		char* str = JS_GetStringBytes(jss);
-		return JS_GetProperty(cx, self->jsObject, str, rval);
+		return JS_GetProperty(cx, *self, str, rval);
 	}
 
 	return JS_FALSE;
@@ -68,7 +68,7 @@ static JSBool setAttribute(JSContext* cx, JSObject* obj, uintN argc, jsval* argv
 
 	if(JSString* jss = JS_ValueToString(cx, argv[0])) {
 		char* str = JS_GetStringBytes(jss);
-		return JS_SetProperty(cx, self->jsObject, str, &argv[1]);
+		return JS_SetProperty(cx, *self, str, &argv[1]);
 	}
 
 	return JS_FALSE;
@@ -219,8 +219,8 @@ void ElementStyle::bind(JSContext* cx, JSObject* parent)
 	ASSERT(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
-	VERIFY(JS_SetPrivate(cx, jsObject, this));
-	VERIFY(JS_DefineProperties(cx, jsObject, properties));
+	VERIFY(JS_SetPrivate(cx, *this, this));
+	VERIFY(JS_DefineProperties(cx, *this, properties));
 	addReference();
 }
 

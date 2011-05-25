@@ -25,6 +25,7 @@ static JSBool alert(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval
 		DOMWindow* self = reinterpret_cast<DOMWindow*>(JS_GetPrivate(cx, obj));
 		char* str = JS_GetStringBytes(jss);
 		alertFunc(self->rhinoca, alertFuncUserData, str);
+		JS_GC(cx);
 		return JS_TRUE;
 	}
 	return JS_FALSE;
@@ -204,8 +205,8 @@ void DOMWindow::bind(JSContext* cx, JSObject* parent)
 	ASSERT(!jsContext);
 	jsContext = cx;
 	jsObject = JS_DefineObject(cx, parent, "window", &jsClass, 0, JSPROP_ENUMERATE);
-	VERIFY(JS_SetPrivate(cx, jsObject, this));
-	VERIFY(JS_DefineFunctions(cx, jsObject, methods));
+	VERIFY(JS_SetPrivate(cx, *this, this));
+	VERIFY(JS_DefineFunctions(cx, *this, methods));
 	addReference();
 
 	document->bind(cx, parent);
@@ -223,7 +224,7 @@ void DOMWindow::update()
 		ASSERT(cb->closure);
 		jsval argv;
 		VERIFY(JS_NewNumberValue(jsContext, double(usSince1970 / 1000), &argv));
-		JS_CallFunctionValue(jsContext, jsObject, cb->closure, 1, &argv, &rval);
+		JS_CallFunctionValue(jsContext, *this, cb->closure, 1, &argv, &rval);
 		FrameRequestCallback* bk = cb;
 		cb = cb->next();
 		bk->removeThis();
@@ -239,9 +240,9 @@ void DOMWindow::update()
 
 		jsval rval;
 		if(cb->jsScript)
-			JS_ExecuteScript(jsContext, jsObject, cb->jsScript, &rval);
+			JS_ExecuteScript(jsContext, *this, cb->jsScript, &rval);
 		else
-			JS_CallFunctionValue(jsContext, jsObject, cb->closure, 0, NULL, &rval);
+			JS_CallFunctionValue(jsContext, *this, cb->closure, 0, NULL, &rval);
 
 		if(cb->interval > 0) {
 			float t = cb->nextInvokeTime();
@@ -302,7 +303,7 @@ void TimerCallback::bind(JSContext* cx, JSObject* parent)
 	ASSERT(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
-	VERIFY(JS_SetPrivate(cx, jsObject, this));
+	VERIFY(JS_SetPrivate(cx, *this, this));
 	addReference();
 }
 
@@ -339,7 +340,7 @@ void FrameRequestCallback::bind(JSContext* cx, JSObject* parent)
 	ASSERT(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
-	VERIFY(JS_SetPrivate(cx, jsObject, this));
+	VERIFY(JS_SetPrivate(cx, *this, this));
 	addReference();
 }
 

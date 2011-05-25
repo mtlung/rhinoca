@@ -25,8 +25,8 @@ static void onReadyCallback(TaskPool* taskPool, void* userData)
 	jsval rval;
 	jsval closure;
 	const char* event = (self->texture->state == Texture::Aborted) ? "onerror" : "onready";
-	if(JS_GetProperty(self->jsContext, self->jsObject, event, &closure) && closure != JSVAL_VOID)
-		JS_CallFunctionValue(self->jsContext, self->jsObject, closure, 0, NULL, &rval);
+	if(JS_GetProperty(self->jsContext, *self, event, &closure) && closure != JSVAL_VOID)
+		JS_CallFunctionValue(self->jsContext, *self, closure, 0, NULL, &rval);
 
 	self->releaseGcRoot();
 }
@@ -38,8 +38,8 @@ static void onLoadCallback(TaskPool* taskPool, void* userData)
 	jsval rval;
 	jsval closure;
 	const char* event = (self->texture->state == Texture::Aborted) ? "onerror" : "onload";
-	if(JS_GetProperty(self->jsContext, self->jsObject, event, &closure) && closure != JSVAL_VOID)
-		JS_CallFunctionValue(self->jsContext, self->jsObject, closure, 0, NULL, &rval);
+	if(JS_GetProperty(self->jsContext, *self, event, &closure) && closure != JSVAL_VOID)
+		JS_CallFunctionValue(self->jsContext, *self, closure, 0, NULL, &rval);
 
 	self->releaseGcRoot();
 }
@@ -151,9 +151,9 @@ void HTMLImageElement::bind(JSContext* cx, JSObject* parent)
 	ASSERT(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, Element::createPrototype(), parent);
-	VERIFY(JS_SetPrivate(cx, jsObject, this));
-	VERIFY(JS_DefineFunctions(cx, jsObject, methods));
-	VERIFY(JS_DefineProperties(cx, jsObject, properties));
+	VERIFY(JS_SetPrivate(cx, *this, this));
+	VERIFY(JS_DefineFunctions(cx, *this, methods));
+	VERIFY(JS_DefineProperties(cx, *this, properties));
 	addReference();
 }
 

@@ -332,8 +332,8 @@ bool Rhinoca::openDoucment(const char* uri)
 	{
 		jsval rval;
 		jsval closure;
-		if(JS_GetProperty(jsContext, domWindow->jsObject, "onload", &closure) && closure != JSVAL_VOID)
-			JS_CallFunctionValue(jsContext, domWindow->jsObject, closure, 0, NULL, &rval);
+		if(JS_GetProperty(jsContext, *domWindow, "onload", &closure) && closure != JSVAL_VOID)
+			JS_CallFunctionValue(jsContext, *domWindow, closure, 0, NULL, &rval);
 	}
 
 	return true;

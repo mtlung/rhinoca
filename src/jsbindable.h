@@ -25,6 +25,7 @@ public:
 	void releaseReference();
 
 	operator jsval();
+	operator JSObject*() { return jsObject; }
 
 	void* operator new(size_t);
 	void operator delete(void*);

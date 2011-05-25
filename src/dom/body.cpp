@@ -26,9 +26,9 @@ void HTMLBodyElement::bind(JSContext* cx, JSObject* parent)
 	ASSERT(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, Element::createPrototype(), parent);
-	VERIFY(JS_SetPrivate(cx, jsObject, this));
-//	VERIFY(JS_DefineFunctions(cx, jsObject, methods));
-//	VERIFY(JS_DefineProperties(cx, jsObject, properties));
+	VERIFY(JS_SetPrivate(cx, *this, this));
+//	VERIFY(JS_DefineFunctions(cx, *this, methods));
+//	VERIFY(JS_DefineProperties(cx, *this, properties));
 	addReference();
 }
 

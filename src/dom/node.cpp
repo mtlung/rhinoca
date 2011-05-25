@@ -6,7 +6,7 @@
 namespace Dom {
 
 JSClass Node::jsClass = {
-	"Node", JSCLASS_HAS_PRIVATE,
+	"Node", JSCLASS_HAS_PRIVATE | JSCLASS_MARK_IS_TRACE,
 	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
@@ -127,11 +127,13 @@ static JSBool parentNode(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
 	*vp = *self->parentNode;
+//	self->releaseGcRoot();
+//	self->parentNode->releaseGcRoot();
 	return JS_TRUE;
 }
 
 static JSPropertySpec properties[] = {
-	{"childNodes", 0, 0, childNodes, JS_PropertyStub},
+	{"childNodes", 0, JSPROP_READONLY, childNodes, NULL},
 	{"nodeName", 0, 0, nodeName, JS_PropertyStub},
 	{"ownerDocument", 0, 0, ownerDocument, JS_PropertyStub},
 	{"parentNode", 0, 0, parentNode, JS_PropertyStub},
@@ -157,9 +159,9 @@ void Node::bind(JSContext* cx, JSObject* parent)
 	ASSERT(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
-	VERIFY(JS_SetPrivate(cx, jsObject, this));
-	VERIFY(JS_DefineFunctions(cx, jsObject, methods));
-	VERIFY(JS_DefineProperties(cx, jsObject, properties));
+	VERIFY(JS_SetPrivate(cx, *this, this));
+	VERIFY(JS_DefineFunctions(cx, *this, methods));
+	VERIFY(JS_DefineProperties(cx, *this, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
@@ -250,7 +252,8 @@ void Node::removeThis()
 NodeList* Node::childNodes()
 {
 	NodeList* list = new NodeList(this, NULL);
-	list->bind(jsContext, NULL);
+	// NOTE: We pass this as the parent of NodeList, to preventthis to be destroy before NodeList
+	list->bind(jsContext, *this);
 	return list;
 }
 
