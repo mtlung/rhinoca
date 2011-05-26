@@ -5,11 +5,23 @@
 
 namespace Dom {
 
+static void traceDataOp(JSTracer* trc, JSObject* obj)
+{
+	Node* node = reinterpret_cast<Node*>(JS_GetPrivate(trc->context, obj));
+	if(node->firstChild)
+		JS_CallTracer(trc, node->firstChild->jsObject, JSTRACE_OBJECT);
+	if(node->nextSibling)
+		JS_CallTracer(trc, node->nextSibling->jsObject, JSTRACE_OBJECT);
+}
+
 JSClass Node::jsClass = {
 	"Node", JSCLASS_HAS_PRIVATE | JSCLASS_MARK_IS_TRACE,
 	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
-	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
+	JS_ConvertStub, JsBindable::finalize,
+	0, 0, 0, 0, 0, 0,
+	JS_CLASS_TRACE(traceDataOp),
+	0
 };
 
 static JSBool appendChild(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
@@ -127,16 +139,14 @@ static JSBool parentNode(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
 	*vp = *self->parentNode;
-//	self->releaseGcRoot();
-//	self->parentNode->releaseGcRoot();
 	return JS_TRUE;
 }
 
 static JSPropertySpec properties[] = {
-	{"childNodes", 0, JSPROP_READONLY, childNodes, NULL},
+	{"childNodes", 0, JSPROP_READONLY, childNodes, JS_PropertyStub},	// NOTE: Current implementation will not return the same NodeList object on each call of childNodes
 	{"nodeName", 0, 0, nodeName, JS_PropertyStub},
-	{"ownerDocument", 0, 0, ownerDocument, JS_PropertyStub},
-	{"parentNode", 0, 0, parentNode, JS_PropertyStub},
+	{"ownerDocument", 0, JSPROP_READONLY, ownerDocument, JS_PropertyStub},
+	{"parentNode", 0, JSPROP_READONLY, parentNode, JS_PropertyStub},
 	{0}
 };
 
@@ -181,7 +191,7 @@ Node* Node::appendChild(Node* newChild)
 	// 'newChild' may already bind to JS
 	if(!newChild->jsContext)
 		newChild->bind(jsContext, NULL);
-	newChild->addGcRoot();	// releaseGcRoot() in Node::removeThis()
+	newChild->addReference();	// releaseReference() in Node::removeThis()
 
 	newChild->removeThis();
 	newChild->parentNode = this;
@@ -202,7 +212,7 @@ Node* Node::insertBefore(Node* newChild, Node* refChild)
 
 	if(!newChild->jsContext)
 		newChild->bind(jsContext, NULL);
-	newChild->addGcRoot();	// releaseGcRoot() in Node::removeThis()
+	newChild->addReference();	// releaseReference() in Node::removeThis()
 
 	newChild->removeThis();
 	newChild->parentNode = this;
@@ -246,14 +256,13 @@ void Node::removeThis()
 	parentNode = NULL;
 	nextSibling = NULL;
 
-	releaseGcRoot();
+	releaseReference();
 }
 
 NodeList* Node::childNodes()
 {
 	NodeList* list = new NodeList(this, NULL);
-	// NOTE: We pass this as the parent of NodeList, to preventthis to be destroy before NodeList
-	list->bind(jsContext, *this);
+	list->bind(jsContext, NULL);
 	return list;
 }
 
