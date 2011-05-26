@@ -91,8 +91,9 @@ Node* NodeList::item(unsigned index)
 
 	if(filter) {
 		for(; !itr.ended(); ) {
-			if((*filter)(itr, userData) && (i++) == index)
-				return itr.current();
+			Node* n = (*filter)(itr, userData);
+			if(n && (i++) == index)
+				return n;
 		}
 	}
 	else {

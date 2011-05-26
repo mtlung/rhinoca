@@ -121,6 +121,27 @@ static JSBool childNodes(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	return JS_TRUE;
 }
 
+static JSBool firstChild(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	*vp = *self->firstChild;
+	return JS_TRUE;
+}
+
+static JSBool lastChild(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	*vp = *self->lastChild();
+	return JS_TRUE;
+}
+
+static JSBool nextSibling(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	*vp = *self->nextSibling;
+	return JS_TRUE;
+}
+
 static JSBool nodeName(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
@@ -142,11 +163,22 @@ static JSBool parentNode(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	return JS_TRUE;
 }
 
+static JSBool previousSibling(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	*vp = *self->previousSibling();
+	return JS_TRUE;
+}
+
 static JSPropertySpec properties[] = {
 	{"childNodes", 0, JSPROP_READONLY, childNodes, JS_PropertyStub},	// NOTE: Current implementation will not return the same NodeList object on each call of childNodes
-	{"nodeName", 0, 0, nodeName, JS_PropertyStub},
+	{"firstChild", 0, JSPROP_READONLY, firstChild, JS_PropertyStub},
+	{"lastChild", 0, JSPROP_READONLY, lastChild, JS_PropertyStub},
+	{"nextSibling", 0, JSPROP_READONLY, nextSibling, JS_PropertyStub},
+	{"nodeName", 0, JSPROP_READONLY, nodeName, JS_PropertyStub},
 	{"ownerDocument", 0, JSPROP_READONLY, ownerDocument, JS_PropertyStub},
 	{"parentNode", 0, JSPROP_READONLY, parentNode, JS_PropertyStub},
+	{"previousSibling", 0, JSPROP_READONLY, previousSibling, JS_PropertyStub},
 	{0}
 };
 
@@ -259,10 +291,11 @@ void Node::removeThis()
 	releaseReference();
 }
 
-static bool childNodesFilter(NodeIterator& iter, void* userData)
+static Node* childNodesFilter(NodeIterator& iter, void* userData)
 {
+	Node* ret = iter.current();
 	iter.skipChildren();
-	return true;
+	return ret;
 }
 
 NodeList* Node::childNodes()

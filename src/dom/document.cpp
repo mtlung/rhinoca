@@ -119,15 +119,16 @@ Element* HTMLDocument::getElementById(const char* id)
 	return NULL;
 }
 
-static bool getElementsByTagNameFilter(NodeIterator& iter, void* userData)
+static Node* getElementsByTagNameFilter(NodeIterator& iter, void* userData)
 {
 	FixString s((rhuint32)userData);
-	if(Element* ele = dynamic_cast<Element*>(iter.current(), iter.next())) {
-		if(ele->tagName() == s)
-			return true;
-	}
+	Element* ele = dynamic_cast<Element*>(iter.current());
+	iter.next();
 
-	return false;
+	if(ele && ele->tagName() == s)
+		return ele;
+
+	return NULL;
 }
 
 NodeList* HTMLDocument::getElementsByTagName(const char* tagName)

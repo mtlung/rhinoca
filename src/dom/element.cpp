@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "element.h"
 #include "document.h"
+#include "nodelist.h"
 #include "../context.h"
 #include "../path.h"
 
@@ -74,9 +75,21 @@ static JSBool setAttribute(JSContext* cx, JSObject* obj, uintN argc, jsval* argv
 	return JS_FALSE;
 }
 
+static JSBool getElementsByTagName(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	Element* self = reinterpret_cast<Element*>(JS_GetPrivate(cx, obj));
+	JSString* jss = JS_ValueToString(cx, argv[0]);
+	char* str = JS_GetStringBytes(jss);
+	toupper(str);
+	*rval = *self->getElementsByTagName(str);
+
+	return JS_TRUE;
+}
+
 static JSFunctionSpec elementMethods[] = {
 	{"getAttribute", getAttribute, 1,0,0},
 	{"setAttribute", setAttribute, 2,0,0},
+	{"getElementsByTagName", getElementsByTagName, 1,0,0},
 	{0}
 };
 
@@ -100,6 +113,25 @@ JSObject* Element::createPrototype()
 void Element::registerClass(JSContext* cx, JSObject* parent)
 {
 	JS_InitClass(cx, parent, NULL, &jsClass, NULL, 0, NULL, NULL, NULL, NULL);
+}
+
+static Node* getElementsByTagNameFilter_(NodeIterator& iter, void* userData)
+{
+	FixString s((rhuint32)userData);
+	Element* ele = dynamic_cast<Element*>(iter.current());
+	iter.next();
+
+	if(ele && ele->tagName() == s)
+		return ele;
+
+	return NULL;
+}
+
+NodeList* Element::getElementsByTagName(const char* tagName)
+{
+	NodeList* list = new NodeList(this, getElementsByTagNameFilter_, (void*)StringHash(tagName, 0).hash);
+	list->bind(jsContext, NULL);
+	return list;
 }
 
 void Element::fixRelativePath(const char* uri, const char* docUri, Path& path)
