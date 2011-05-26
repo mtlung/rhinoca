@@ -9,9 +9,22 @@ static void traceDataOp(JSTracer* trc, JSObject* obj)
 	JS_CallTracer(trc, nodeList->root->jsObject, JSTRACE_OBJECT);
 }
 
+static JSBool getProperty(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	NodeList* self = reinterpret_cast<NodeList*>(JS_GetPrivate(cx, obj));
+
+	int32 index;
+	if(JS_ValueToInt32(cx, id, &index)) {
+		*vp = *self->item(index);
+		return JS_TRUE;
+	}
+
+	return JS_FALSE;
+}
+
 JSClass NodeList::jsClass = {
 	"NodeList", JSCLASS_HAS_PRIVATE | JSCLASS_MARK_IS_TRACE,
-	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	JS_PropertyStub, JS_PropertyStub, getProperty, JS_PropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize,
 	0, 0, 0, 0, 0, 0,
