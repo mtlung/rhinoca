@@ -22,7 +22,7 @@ public:
 	override void pause();
 
 // Attributes
-	override const char* tagName() const;
+	override const FixString& tagName() const;
 
 	static JSClass jsClass;
 

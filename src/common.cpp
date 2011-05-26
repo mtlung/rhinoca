@@ -97,8 +97,18 @@ double atof(const char* p, double onErr)
 
 void tolower(char* str)
 {
-	while(str != '\0')
+	while(*str != '\0') {
 		*str = (char)tolower(*str);
+		++str;
+	}
+}
+
+void toupper(char* str)
+{
+	while(*str != '\0') {
+		*str = (char)toupper(*str);
+		++str;
+	}
 }
 
 #if defined(_MSC_VER)

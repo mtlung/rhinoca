@@ -37,9 +37,11 @@ Element* HTMLBodyElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser
 	return strcasecmp(type, "BODY") == 0 ? new HTMLBodyElement : NULL;
 }
 
-const char* HTMLBodyElement::tagName() const
+static const FixString _tagName = "BODY";
+
+const FixString& HTMLBodyElement::tagName() const
 {
-	return "BODY";
+	return _tagName;
 }
 
 }	// namespace Dom

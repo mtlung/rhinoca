@@ -259,9 +259,15 @@ void Node::removeThis()
 	releaseReference();
 }
 
+static bool childNodesFilter(NodeIterator& iter, void* userData)
+{
+	iter.skipChildren();
+	return true;
+}
+
 NodeList* Node::childNodes()
 {
-	NodeList* list = new NodeList(this, NULL);
+	NodeList* list = new NodeList(this, childNodesFilter);
 	list->bind(jsContext, NULL);
 	return list;
 }

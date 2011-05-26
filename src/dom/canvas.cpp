@@ -206,9 +206,11 @@ void HTMLCanvasElement::setHeight(unsigned h)
 	_framebuffer.height = h;
 }
 
-const char* HTMLCanvasElement::tagName() const
+static const FixString _tagName = "CANVAS";
+
+const FixString& HTMLCanvasElement::tagName() const
 {
-	return "CANVAS";
+	return _tagName;
 }
 
 HTMLCanvasElement::Context::Context(HTMLCanvasElement* c)

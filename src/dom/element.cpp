@@ -113,9 +113,11 @@ void Element::fixRelativePath(const char* uri, const char* docUri, Path& path)
 	}
 }
 
-const char* Element::tagName() const
+static const FixString _tagName = "ELEMENT";
+
+const FixString& Element::tagName() const
 {
-	return "ELEMENT";
+	return _tagName;
 }
 
 ElementFactory::ElementFactory()

@@ -61,6 +61,9 @@ public:
 
 	bool empty() const;
 
+	FixString upperCase() const;
+	FixString lowerCase() const;
+
 	bool operator==(const StringHash& stringHash) const;
 	bool operator==(const FixString& rhs) const;
 	bool operator> (const FixString& rhs) const;

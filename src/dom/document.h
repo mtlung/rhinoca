@@ -8,6 +8,7 @@ namespace Dom {
 class Element;
 class DOMWindow;
 class HTMLBodyElement;
+class NodeList;
 
 // Reference: http://www.w3schools.com/dom/dom_document.asp
 class HTMLDocument : public Node
@@ -22,6 +23,8 @@ public:
 	Element* createElement(const char* eleType);
 
 	Element* getElementById(const char* id);
+
+	NodeList* getElementsByTagName(const char* tagName);
 
 // Attributes
 	Rhinoca* rhinoca;

@@ -219,9 +219,11 @@ rhuint HTMLImageElement::naturalHeight() const
 	return texture ? texture->height : 0;
 }
 
-const char* HTMLImageElement::tagName() const
+static const FixString _tagName = "IMG";
+
+const FixString& HTMLImageElement::tagName() const
 {
-	return "IMG";
+	return _tagName;
 }
 
 }	// namespace Dom

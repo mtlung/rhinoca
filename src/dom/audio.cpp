@@ -91,9 +91,11 @@ Element* HTMLAudioElement::factoryCreate(Rhinoca* rh, const char* type, XmlParse
 	return audio;
 }
 
-const char* HTMLAudioElement::tagName() const
+static FixString _tagName = "AUDIO";
+
+const FixString& HTMLAudioElement::tagName() const
 {
-	return "AUDIO";
+	return _tagName;
 }
 
 void HTMLAudioElement::setSrc(const char* uri)

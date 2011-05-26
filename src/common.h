@@ -43,6 +43,7 @@ extern rhinoca_printFunc print;
 
 double atof(const char* str, double onErr);
 void tolower(char* str);
+void toupper(char* str);
 
 #if defined(_MSC_VER)
 #define FORCE_INLINE __forceinline

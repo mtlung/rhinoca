@@ -60,9 +60,10 @@ static JSPropertySpec properties[] = {
 	{0}
 };
 
-NodeList::NodeList(Node* node, Filter filter)
+NodeList::NodeList(Node* node, Filter filter, void* fileterUserData)
 	: root(node)
-	, filter(NULL)
+	, filter(filter)
+	, userData(fileterUserData)
 {
 	ASSERT(root);
 }
@@ -90,7 +91,7 @@ Node* NodeList::item(unsigned index)
 
 	if(filter) {
 		for(; !itr.ended(); ) {
-			if((*filter)(itr) && (i++) == index)
+			if((*filter)(itr, userData) && (i++) == index)
 				return itr.current();
 		}
 	}
@@ -112,7 +113,7 @@ unsigned NodeList::length()
 
 	if(filter) {
 		for(; !itr.ended(); ) {
-			if((*filter)(itr))
+			if((*filter)(itr, userData))
 				++count;
 		}
 	}

@@ -13,8 +13,8 @@ class Node;
 class NodeList : public JsBindable
 {
 public:
-	typedef bool (*Filter)(NodeIterator& iter);
-	explicit NodeList(Node* node, Filter filter=NULL);
+	typedef bool (*Filter)(NodeIterator& iter, void* userData);
+	explicit NodeList(Node* node, Filter filter=NULL, void* fileterUserData=NULL);
 
 	~NodeList();
 
@@ -29,6 +29,7 @@ public:
 	Node* root;
 
 	Filter filter;
+	void* userData;
 
 	static JSClass jsClass;
 };	// NodeList

@@ -272,6 +272,28 @@ bool FixString::empty() const {
 	return *mNode->stringValue() == '\0';
 }
 
+FixString FixString::upperCase() const
+{
+	// TODO: Can make use of stack allocator
+	char* newStr = (char*)rhinoca_malloc(size() + 1);
+	strcpy(newStr, c_str());	// strcpy should copy \0
+	toupper(newStr);
+	FixString ret(newStr);
+	rhinoca_free(newStr);
+	return ret;
+}
+
+FixString FixString::lowerCase() const
+{
+	// TODO: Can make use of stack allocator
+	char* newStr = (char*)rhinoca_malloc(size() + 1);
+	strcpy(newStr, c_str());	// strcpy should copy \0
+	tolower(newStr);
+	FixString ret(newStr);
+	rhinoca_free(newStr);
+	return ret;
+}
+
 bool FixString::operator==(const StringHash& h) const	{	return hashValue() == h;	}
 bool FixString::operator==(const FixString& rhs) const	{	return hashValue() == rhs.hashValue();	}
 bool FixString::operator> (const FixString& rhs) const	{	return hashValue() > rhs.hashValue();	}

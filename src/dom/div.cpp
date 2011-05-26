@@ -37,9 +37,11 @@ Element* HTMLDivElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser*
 	return strcasecmp(type, "DIV") == 0 ? new HTMLDivElement : NULL;
 }
 
-const char* HTMLDivElement::tagName() const
+static const FixString _tagName = "DIV";
+
+const FixString& HTMLDivElement::tagName() const
 {
-	return "DIV";
+	return _tagName;
 }
 
 }	// namespace Dom

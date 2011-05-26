@@ -2,6 +2,7 @@
 #include "document.h"
 #include "body.h"
 #include "element.h"
+#include "nodelist.h"
 #include "../common.h"
 #include "../context.h"
 #include <string.h>
@@ -35,9 +36,9 @@ static JSBool createElement(JSContext* cx, JSObject* obj, uintN argc, jsval* arg
 {
 	JSString* jss = JS_ValueToString(cx, argv[0]);
 	char* str = JS_GetStringBytes(jss);
-	HTMLDocument* doc = reinterpret_cast<HTMLDocument*>(JS_GetPrivate(cx, obj));
+	HTMLDocument* self = reinterpret_cast<HTMLDocument*>(JS_GetPrivate(cx, obj));
 	
-	if(Element* ele = doc->createElement(str))
+	if(Element* ele = self->createElement(str))
 	{
 		ele->bind(cx, NULL);
 		*rval = *ele;
@@ -52,10 +53,21 @@ static JSBool getElementById(JSContext* cx, JSObject* obj, uintN argc, jsval* ar
 {
 	JSString* jss = JS_ValueToString(cx, argv[0]);
 	char* str = JS_GetStringBytes(jss);
-	HTMLDocument* doc = reinterpret_cast<HTMLDocument*>(JS_GetPrivate(cx, obj));
-	Element* ele = doc->getElementById(str);
+	HTMLDocument* self = reinterpret_cast<HTMLDocument*>(JS_GetPrivate(cx, obj));
+	Element* ele = self->getElementById(str);
 
 	*rval = *ele;
+
+	return JS_TRUE;
+}
+
+static JSBool getElementsByTagName(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	HTMLDocument* self = reinterpret_cast<HTMLDocument*>(JS_GetPrivate(cx, obj));
+	JSString* jss = JS_ValueToString(cx, argv[0]);
+	char* str = JS_GetStringBytes(jss);
+	toupper(str);
+	*rval = *self->getElementsByTagName(str);
 
 	return JS_TRUE;
 }
@@ -63,6 +75,7 @@ static JSBool getElementById(JSContext* cx, JSObject* obj, uintN argc, jsval* ar
 static JSFunctionSpec methods[] = {
 	{"createElement", createElement, 1,0,0},
 	{"getElementById", getElementById, 1,0,0},
+	{"getElementsByTagName", getElementsByTagName, 1,0,0},
 	{0}
 };
 
@@ -104,6 +117,24 @@ Element* HTMLDocument::getElementById(const char* id)
 		}
 	}
 	return NULL;
+}
+
+static bool getElementsByTagNameFilter(NodeIterator& iter, void* userData)
+{
+	FixString s((rhuint32)userData);
+	if(Element* ele = dynamic_cast<Element*>(iter.current(), iter.next())) {
+		if(ele->tagName() == s)
+			return true;
+	}
+
+	return false;
+}
+
+NodeList* HTMLDocument::getElementsByTagName(const char* tagName)
+{
+	NodeList* list = new NodeList(this, getElementsByTagNameFilter, (void*)StringHash(tagName, 0).hash);
+	list->bind(jsContext, NULL);
+	return list;
 }
 
 DOMWindow* HTMLDocument::window()
