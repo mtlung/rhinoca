@@ -287,6 +287,14 @@
 				RelativePath="..\..\src\dom\window.h"
 				>
 			</File>
+			<File
+				RelativePath="..\..\src\dom\windowlocation.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\windowlocation.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="render"

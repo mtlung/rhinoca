@@ -3,6 +3,7 @@
 #include "canvas.h"
 #include "document.h"
 #include "node.h"
+#include "windowlocation.h"
 #include "../common.h"
 #include "../context.h"
 
@@ -175,6 +176,20 @@ static JSFunctionSpec methods[] = {
 	{0}
 };
 
+static JSBool location(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	Window* self = reinterpret_cast<Window*>(JS_GetPrivate(cx, obj));
+	WindowLocation* wLoc = new WindowLocation(self);
+	wLoc->bind(cx, NULL);
+	*vp = *wLoc;
+	return JS_TRUE;
+}
+
+static JSPropertySpec properties[] = {
+	{"location", 0, JSPROP_READONLY, location, JS_PropertyStub},
+	{0}
+};
+
 Window::Window(Rhinoca* rh)
 	: rhinoca(rh)
 {
@@ -207,6 +222,7 @@ void Window::bind(JSContext* cx, JSObject* parent)
 	jsObject = JS_DefineObject(cx, parent, "window", &jsClass, 0, JSPROP_ENUMERATE);
 	VERIFY(JS_SetPrivate(cx, *this, this));
 	VERIFY(JS_DefineFunctions(cx, *this, methods));
+	VERIFY(JS_DefineProperties(cx, *this, properties));
 	addReference();
 
 	document->bind(cx, parent);

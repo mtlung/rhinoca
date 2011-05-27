@@ -7,11 +7,11 @@ namespace Dom {
 
 static void traceDataOp(JSTracer* trc, JSObject* obj)
 {
-	Node* node = reinterpret_cast<Node*>(JS_GetPrivate(trc->context, obj));
-	if(node->firstChild)
-		JS_CallTracer(trc, node->firstChild->jsObject, JSTRACE_OBJECT);
-	if(node->nextSibling)
-		JS_CallTracer(trc, node->nextSibling->jsObject, JSTRACE_OBJECT);
+	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(trc->context, obj));
+	if(self->firstChild)
+		JS_CallTracer(trc, self->firstChild->jsObject, JSTRACE_OBJECT);
+	if(self->nextSibling)
+		JS_CallTracer(trc, self->nextSibling->jsObject, JSTRACE_OBJECT);
 }
 
 JSClass Node::jsClass = {
