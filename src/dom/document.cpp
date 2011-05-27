@@ -138,7 +138,7 @@ NodeList* HTMLDocument::getElementsByTagName(const char* tagName)
 	return list;
 }
 
-DOMWindow* HTMLDocument::window()
+Window* HTMLDocument::window()
 {
 	return rhinoca->domWindow;
 }

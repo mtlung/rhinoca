@@ -22,4 +22,4 @@ public:
 
 }	// namespace Dom
 
-#endif	// __DOME_KEYEVENT_H__
+#endif	// __DOM_KEYEVENT_H__

@@ -1,5 +1,5 @@
-#ifndef __DOME_WINDOW_H__
-#define __DOME_WINDOW_H__
+#ifndef __DOM_WINDOW_H__
+#define __DOM_WINDOW_H__
 
 #include "../jsbindable.h"
 #include "../linklist.h"
@@ -55,11 +55,11 @@ public:
 };	// FrameRequestCallback
 
 /// Reference: http://www.w3schools.com/jsref/obj_window.asp
-class DOMWindow : public JsBindable
+class Window : public JsBindable
 {
 public:
-	explicit DOMWindow(Rhinoca* rh);
-	~DOMWindow();
+	explicit Window(Rhinoca* rh);
+	~Window();
 
 // Operations
 	void bind(JSContext* cx, JSObject* parent);
@@ -87,8 +87,8 @@ public:
 	FrameRequestCallbacks frameRequestCallbacks;
 
 	static JSClass jsClass;
-};	// JsBindable
+};	// Window
 
 }	// namespace Dom
 
-#endif	// __DOME_WINDOW_H__
+#endif	// __DOM_WINDOW_H__

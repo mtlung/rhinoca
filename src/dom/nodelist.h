@@ -1,5 +1,5 @@
-#ifndef __DOME_NODELIST_H__
-#define __DOME_NODELIST_H__
+#ifndef __DOM_NODELIST_H__
+#define __DOM_NODELIST_H__
 
 #include "Node.h"
 
@@ -36,4 +36,4 @@ public:
 
 }	// namespace Dom
 
-#endif	// __DOME_NODELIST_H__
+#endif	// __DOM_NODELIST_H__

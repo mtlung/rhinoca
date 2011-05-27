@@ -42,4 +42,4 @@ public:
 
 }	// namespace Dom
 
-#endif	// __DOME_IMAGE_H__
+#endif	// __DOM_IMAGE_H__

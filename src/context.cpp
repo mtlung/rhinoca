@@ -140,7 +140,7 @@ void Rhinoca::_initGlobal()
 
 	Dom::registerClasses(jsContext, jsGlobal);
 
-	domWindow = new Dom::DOMWindow(this);
+	domWindow = new Dom::Window(this);
 	domWindow->bind(jsContext, jsGlobal);
 	domWindow->addGcRoot();	// releaseGcRoot() in ~Rhinoca()
 

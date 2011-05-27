@@ -1,5 +1,5 @@
-#ifndef __DOME_NODE_H__
-#define __DOME_NODE_H__
+#ifndef __DOM_NODE_H__
+#define __DOM_NODE_H__
 
 #include "../jsbindable.h"
 #include "../rhstring.h"
@@ -105,4 +105,4 @@ protected:
 
 }	// namespace Dom
 
-#endif	// __DOME_NODE_H__
+#endif	// __DOM_NODE_H__

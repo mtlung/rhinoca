@@ -11,8 +11,8 @@ extern void* alertFuncUserData;
 
 namespace Dom {
 
-JSClass DOMWindow::jsClass = {
-	"DOMWindow", JSCLASS_HAS_PRIVATE,
+JSClass Window::jsClass = {
+	"Window", JSCLASS_HAS_PRIVATE,
 	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
@@ -22,7 +22,7 @@ static JSBool alert(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval
 {
 	JSString* jss = JS_ValueToString(cx, argv[0]);
 	if(alertFunc && jss) {
-		DOMWindow* self = reinterpret_cast<DOMWindow*>(JS_GetPrivate(cx, obj));
+		Window* self = reinterpret_cast<Window*>(JS_GetPrivate(cx, obj));
 		char* str = JS_GetStringBytes(jss);
 		alertFunc(self->rhinoca, alertFuncUserData, str);
 		JS_GC(cx);
@@ -47,7 +47,7 @@ JSBool setTimeout(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* 
 {
 	int32 timeout;	// In unit of millisecond
 	if(!JS_ValueToInt32(cx, argv[1], &timeout)) return JS_FALSE;
-	DOMWindow* self = reinterpret_cast<DOMWindow*>(JS_GetPrivate(cx, obj));
+	Window* self = reinterpret_cast<Window*>(JS_GetPrivate(cx, obj));
 
 	TimerCallback* cb = new TimerCallback;
 	cb->bind(cx, NULL);
@@ -75,7 +75,7 @@ JSBool setInterval(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval*
 {
 	int32 interval;	// In unit of millisecond
 	if(!JS_ValueToInt32(cx, argv[1], &interval)) return JS_FALSE;
-	DOMWindow* self = reinterpret_cast<DOMWindow*>(JS_GetPrivate(cx, obj));
+	Window* self = reinterpret_cast<Window*>(JS_GetPrivate(cx, obj));
 
 	TimerCallback* cb = new TimerCallback;
 	cb->bind(cx, NULL);
@@ -130,7 +130,7 @@ JSBool clearInterval(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsva
 // NOTE: For simplicity, we ignore the second parameter to requestAnimationFrame
 JSBool requestAnimationFrame(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
 {
-	DOMWindow* self = reinterpret_cast<DOMWindow*>(JS_GetPrivate(cx, obj));
+	Window* self = reinterpret_cast<Window*>(JS_GetPrivate(cx, obj));
 
 	FrameRequestCallback* cb = new FrameRequestCallback;
 	cb->bind(cx, NULL);
@@ -175,7 +175,7 @@ static JSFunctionSpec methods[] = {
 	{0}
 };
 
-DOMWindow::DOMWindow(Rhinoca* rh)
+Window::Window(Rhinoca* rh)
 	: rhinoca(rh)
 {
 	document = new HTMLDocument(rh);
@@ -184,7 +184,7 @@ DOMWindow::DOMWindow(Rhinoca* rh)
 	virtualCanvas->createContext("2d");
 }
 
-DOMWindow::~DOMWindow()
+Window::~Window()
 {
 	document->releaseGcRoot();
 
@@ -200,7 +200,7 @@ DOMWindow::~DOMWindow()
 	JS_GC(jsContext);
 }
 
-void DOMWindow::bind(JSContext* cx, JSObject* parent)
+void Window::bind(JSContext* cx, JSObject* parent)
 {
 	ASSERT(!jsContext);
 	jsContext = cx;
@@ -210,10 +210,10 @@ void DOMWindow::bind(JSContext* cx, JSObject* parent)
 	addReference();
 
 	document->bind(cx, parent);
-	document->addGcRoot();	// releaseGcRoot() in ~DOMWindow()
+	document->addGcRoot();	// releaseGcRoot() in ~Window()
 }
 
-void DOMWindow::update()
+void Window::update()
 {
 	rhuint64 usSince1970 = Timer::microSecondsSince1970();
 
@@ -255,7 +255,7 @@ void DOMWindow::update()
 	}
 }
 
-void DOMWindow::render()
+void Window::render()
 {
 	if(!document) return;
 
@@ -270,12 +270,12 @@ void DOMWindow::render()
 	}
 }
 
-unsigned DOMWindow::width() const
+unsigned Window::width() const
 {
 	return rhinoca->width;
 }
 
-unsigned DOMWindow::height() const
+unsigned Window::height() const
 {
 	return rhinoca->height;
 }

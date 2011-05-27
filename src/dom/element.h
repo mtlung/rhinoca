@@ -1,5 +1,5 @@
-#ifndef __DOME_ELEMENT_H__
-#define __DOME_ELEMENT_H__
+#ifndef __DOM_ELEMENT_H__
+#define __DOM_ELEMENT_H__
 
 #include "node.h"
 
@@ -71,4 +71,4 @@ public:
 
 }	// namespace Dom
 
-#endif	// __DOME_ELEMENT_H__
+#endif	// __DOM_ELEMENT_H__

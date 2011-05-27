@@ -149,7 +149,7 @@ void HTMLCanvasElement::render()
 	// draw operation is already put on the window
 	if(!_framebuffer.texture) return;
 
-	DOMWindow* window = ownerDocument->window();
+	Window* window = ownerDocument->window();
 	HTMLCanvasElement* vc = window->virtualCanvas;
 
 	CanvasRenderingContext2D* ctx = dynamic_cast<CanvasRenderingContext2D*>(vc->context);

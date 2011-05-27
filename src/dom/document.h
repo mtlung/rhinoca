@@ -1,12 +1,12 @@
-#ifndef __DOME_DOCUMENT_H__
-#define __DOME_DOCUMENT_H__
+#ifndef __DOM_DOCUMENT_H__
+#define __DOM_DOCUMENT_H__
 
 #include "node.h"
 
 namespace Dom {
 
 class Element;
-class DOMWindow;
+class Window;
 class HTMLBodyElement;
 class NodeList;
 
@@ -29,7 +29,7 @@ public:
 // Attributes
 	Rhinoca* rhinoca;
 
-	DOMWindow* window();
+	Window* window();
 
 	HTMLBodyElement* body();
 
@@ -38,4 +38,4 @@ public:
 
 }	// namespace Dom
 
-#endif	// __DOME_DOCUMENT_H__
+#endif	// __DOM_DOCUMENT_H__
