@@ -21,6 +21,24 @@ JSClass WindowLocation::jsClass = {
 	0
 };
 
+static JSBool assign(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	WindowLocation* self = reinterpret_cast<WindowLocation*>(JS_GetPrivate(cx, obj));
+	Rhinoca* rh = self->window->rhinoca;
+	if(JSString* jss = JS_ValueToString(cx, argv[0])) {
+		char* str = JS_GetStringBytes(jss);
+		rh->openDoucment(str);
+		return JS_TRUE;
+	}
+	return JS_FALSE;
+}
+
+static JSFunctionSpec methods[] = {
+	{"assign", assign, 1,0,0},
+	{"replace", assign, 1,0,0},
+	{0}
+};
+
 static JSBool href(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	WindowLocation* self = reinterpret_cast<WindowLocation*>(JS_GetPrivate(cx, obj));
@@ -57,6 +75,7 @@ void WindowLocation::bind(JSContext* cx, JSObject* parent)
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
 	VERIFY(JS_SetPrivate(cx, *this, this));
+	VERIFY(JS_DefineFunctions(cx, *this, methods));
 	VERIFY(JS_DefineProperties(cx, *this, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
