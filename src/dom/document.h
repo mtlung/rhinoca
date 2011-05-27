@@ -18,7 +18,7 @@ public:
 	~HTMLDocument();
 
 // Operations
-	void bind(JSContext* cx, JSObject* parent);
+	override void bind(JSContext* cx, JSObject* parent);
 
 	Element* createElement(const char* eleType);
 

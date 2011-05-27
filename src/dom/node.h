@@ -21,7 +21,7 @@ public:
 	virtual ~Node();
 
 // Operations
-	void bind(JSContext* cx, JSObject* parent);
+	override void bind(JSContext* cx, JSObject* parent);
 	JSObject* createPrototype();
 
 	/// Appends a new child node to the end of the list of children.

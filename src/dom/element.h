@@ -61,7 +61,7 @@ class ElementStyle : public JsBindable
 {
 public:
 // Operations
-	void bind(JSContext* cx, JSObject* parent);
+	override void bind(JSContext* cx, JSObject* parent);
 
 // Attributes
 	Element* element;

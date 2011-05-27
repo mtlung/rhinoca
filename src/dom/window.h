@@ -19,7 +19,7 @@ public:
 	TimerCallback();
 	~TimerCallback();
 
-	void bind(JSContext* cx, JSObject* parent);
+	override void bind(JSContext* cx, JSObject* parent);
 
 	void removeThis();
 
@@ -44,7 +44,7 @@ public:
 	FrameRequestCallback();
 	~FrameRequestCallback();
 
-	void bind(JSContext* cx, JSObject* parent);
+	override void bind(JSContext* cx, JSObject* parent);
 
 	void removeThis();
 
@@ -62,7 +62,7 @@ public:
 	~Window();
 
 // Operations
-	void bind(JSContext* cx, JSObject* parent);
+	override void bind(JSContext* cx, JSObject* parent);
 
 	void update();
 

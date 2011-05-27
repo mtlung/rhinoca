@@ -15,7 +15,7 @@ public:
 	~HTMLCanvasElement();
 
 // Operations
-	void bind(JSContext* cx, JSObject* parent);
+	override void bind(JSContext* cx, JSObject* parent);
 
 	void bindFramebuffer();
 

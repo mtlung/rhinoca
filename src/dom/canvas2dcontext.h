@@ -16,7 +16,7 @@ public:
 	~CanvasRenderingContext2D();
 
 // Operations
-	void bind(JSContext* cx, JSObject* parent);
+	override void bind(JSContext* cx, JSObject* parent);
 
 	void beginLayer();
 	void endLayer();

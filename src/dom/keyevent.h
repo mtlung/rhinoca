@@ -12,7 +12,7 @@ public:
 	~KeyEvent();
 
 // Operations
-	void bind(JSContext* cx, JSObject* parent);
+	override void bind(JSContext* cx, JSObject* parent);
 
 // Attributes
 	int keyCode;
