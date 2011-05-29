@@ -26,7 +26,6 @@ static JSBool alert(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval
 		Window* self = reinterpret_cast<Window*>(JS_GetPrivate(cx, obj));
 		char* str = JS_GetStringBytes(jss);
 		alertFunc(self->rhinoca, alertFuncUserData, str);
-		JS_GC(cx);
 		return JS_TRUE;
 	}
 	return JS_FALSE;

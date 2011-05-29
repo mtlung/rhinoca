@@ -1,11 +1,11 @@
 #ifndef __DOM_MOUSEEVENT_H__
 #define __DOM_MOUSEEVENT_H__
 
-#include "../jsbindable.h"
+#include "event.h"
 
 namespace Dom {
 
-class MouseEvent : public JsBindable
+class MouseEvent : public UIEvent
 {
 public:
 	MouseEvent();

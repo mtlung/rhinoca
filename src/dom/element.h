@@ -32,6 +32,11 @@ public:
 
 	override const FixString& tagName() const;
 
+	virtual int clientTop() const { return top; }
+	virtual int clientLeft() const { return left; }
+	virtual int clientWidth() const { return 0; }
+	virtual int clientHeight() const { return 0; }
+
 	static JSClass jsClass;
 };	// Element
 

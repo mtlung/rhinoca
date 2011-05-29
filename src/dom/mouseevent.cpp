@@ -4,11 +4,106 @@
 
 namespace Dom {
 
+static JSBool JS_GetValue(JSContext *cx, jsval jv, bool& val)
+{
+	if(JS_ValueToBoolean(cx, jv, (JSBool*)&val) == JS_FALSE)
+		return JS_FALSE;
+	return JS_TRUE;
+}
+
+static JSBool JS_GetValue(JSContext *cx, jsval jv, int& val)
+{
+	int32 i;
+	if(JS_ValueToInt32(cx, jv, &i) == JS_FALSE)
+		return JS_FALSE;
+	val = i;
+	return JS_TRUE;
+}
+
+static JSBool JS_GetValue(JSContext *cx, jsval jv, unsigned& val)
+{
+	uint32 i;
+	if(JS_ValueToECMAUint32(cx, jv, &i) == JS_FALSE)
+		return JS_FALSE;
+	val = i;
+	return JS_TRUE;
+}
+
+static JSBool JS_GetValue(JSContext *cx, jsval jv, FixString& val)
+{
+	if(JSString* jss = JS_ValueToString(cx, jv)) {
+		val = JS_GetStringBytes(jss);
+		return JS_TRUE;
+	}
+	return JS_FALSE;
+}
+
 JSClass MouseEvent::jsClass = {
 	"MouseEvent", JSCLASS_HAS_PRIVATE,
 	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
+};
+
+static JSBool initMouseEvent(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	MouseEvent* self = reinterpret_cast<MouseEvent*>(JS_GetPrivate(cx, obj));
+
+	// Arg: type
+	if(JS_GetValue(cx, argv[0], self->type) == JS_FALSE)
+		return JS_FALSE;
+
+	// Arg: canBubble
+	if(JS_GetValue(cx, argv[1], self->bubbles) == JS_FALSE)
+		return JS_FALSE;
+
+	// TODO:
+	// Arg: cancelable 
+	// Arg: view
+	// Arg: detail
+
+	// Arg: screenX
+	if(JS_GetValue(cx, argv[5], self->screenX) == JS_FALSE)
+		return JS_FALSE;
+
+	// Arg: screenX
+	if(JS_GetValue(cx, argv[6], self->screenY) == JS_FALSE)
+		return JS_FALSE;
+
+	// Arg: clientX
+	if(JS_GetValue(cx, argv[7], self->clientX) == JS_FALSE)
+		return JS_FALSE;
+
+	// Arg: clientY
+	if(JS_GetValue(cx, argv[8], self->clientY) == JS_FALSE)
+		return JS_FALSE;
+
+	// Arg: ctrlKey
+	if(JS_GetValue(cx, argv[9], self->ctrlKey) == JS_FALSE)
+		return JS_FALSE;
+
+	// Arg: altKey
+	if(JS_GetValue(cx, argv[10], self->altKey) == JS_FALSE)
+		return JS_FALSE;
+
+	// Arg: shiftKey
+	if(JS_GetValue(cx, argv[11], self->shiftKey) == JS_FALSE)
+		return JS_FALSE;
+
+	// Arg: metaKey
+	if(JS_GetValue(cx, argv[12], self->metaKey) == JS_FALSE)
+		return JS_FALSE;
+
+	// Arg: button
+	if(JS_GetValue(cx, argv[13], self->button) == JS_FALSE)
+		return JS_FALSE;
+
+	return JS_TRUE;
+}
+
+static JSFunctionSpec methods[] = {
+	{"initMouseEvent", initMouseEvent, 15,0,0},	// https://developer.mozilla.org/en/DOM/event.initMouseEvent
+	{0}
 };
 
 enum PropertyKey {
@@ -78,8 +173,9 @@ void MouseEvent::bind(JSContext* cx, JSObject* parent)
 {
 	ASSERT(!jsContext);
 	jsContext = cx;
-	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
+	jsObject = JS_NewObject(cx, &jsClass, Event::createPrototype(), parent);
 	VERIFY(JS_SetPrivate(cx, *this, this));
+	VERIFY(JS_DefineFunctions(cx, *this, methods));
 	VERIFY(JS_DefineProperties(cx, *this, properties));
 	addReference();
 }

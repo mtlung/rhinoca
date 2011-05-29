@@ -6,11 +6,12 @@
 namespace Dom {
 
 class Element;
+class Event;
 class Window;
 class HTMLBodyElement;
 class NodeList;
 
-// Reference: http://www.w3schools.com/dom/dom_document.asp
+/// Reference: http://www.w3schools.com/dom/dom_document.asp
 class HTMLDocument : public Node
 {
 public:
@@ -25,6 +26,9 @@ public:
 	Element* getElementById(const char* id);
 
 	NodeList* getElementsByTagName(const char* tagName);
+
+	/// See https://developer.mozilla.org/En/DOM/Document.createEvent for list of valid type
+	Event* createEvent(const char* type);
 
 // Attributes
 	Rhinoca* rhinoca;

@@ -1,6 +1,7 @@
 #ifndef __DOM_NODE_H__
 #define __DOM_NODE_H__
 
+#include "event.h"
 #include "../jsbindable.h"
 #include "../rhstring.h"
 
@@ -11,7 +12,7 @@ class HTMLDocument;
 
 /// Reference: http://www.w3schools.com/dom/dom_node.asp
 /// Reference: https://developer.mozilla.org/en/Gecko_DOM_Reference
-class Node : public JsBindable
+class Node : public EventTarget, public JsBindable
 {
 public:
 	Node();

@@ -22,6 +22,20 @@ JSClass Element::jsClass = {
 	JS_ConvertStub,  JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
+static JSBool clientWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	Element* self = reinterpret_cast<Element*>(JS_GetPrivate(cx, obj));
+	*vp = INT_TO_JSVAL(self->clientWidth());
+	return JS_TRUE;
+}
+
+static JSBool clientHeight(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	Element* self = reinterpret_cast<Element*>(JS_GetPrivate(cx, obj));
+	*vp = INT_TO_JSVAL(self->clientHeight());
+	return JS_TRUE;
+}
+
 static JSBool elementGetStyle(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	Element* self = reinterpret_cast<Element*>(JS_GetPrivate(cx, obj));
@@ -42,8 +56,10 @@ static JSBool tagName(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 }
 
 static JSPropertySpec elementProperties[] = {
-	{"style", 0, 0, elementGetStyle, JS_PropertyStub},
-	{"tagName", 0, 0, tagName, JS_PropertyStub},
+	{"clientWidth", 0, JSPROP_READONLY, clientWidth, JS_PropertyStub},
+	{"clientHeight", 0, JSPROP_READONLY, clientHeight, JS_PropertyStub},
+	{"style", 0, JSPROP_READONLY, elementGetStyle, JS_PropertyStub},
+	{"tagName", 0, JSPROP_READONLY, tagName, JS_PropertyStub},
 	{0}
 };
 

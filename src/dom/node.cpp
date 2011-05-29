@@ -8,6 +8,9 @@ namespace Dom {
 static void traceDataOp(JSTracer* trc, JSObject* obj)
 {
 	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(trc->context, obj));
+
+	self->EventTarget::jsTrace(trc);
+
 	if(self->firstChild)
 		JS_CallTracer(trc, self->firstChild->jsObject, JSTRACE_OBJECT);
 	if(self->nextSibling)
@@ -104,6 +107,24 @@ static JSBool replaceChild(JSContext* cx, JSObject* obj, uintN argc, jsval* argv
 	return JS_TRUE;
 }
 
+static JSBool addEventListener(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	return self->addEventListener(cx, argv[0], argv[1], argv[2]);
+}
+
+static JSBool removeEventListener(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	return self->removeEventListener(cx, argv[0], argv[1], argv[2]);
+}
+
+static JSBool dispatchEvent(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	return self->dispatchEvent(cx, argv[0]);
+}
+
 static JSFunctionSpec methods[] = {
 	{"appendChild", appendChild, 1,0,0},
 //	{"cloneNode", cloneNode, 0,0,0},
@@ -111,6 +132,9 @@ static JSFunctionSpec methods[] = {
 	{"insertBefore", insertBefore, 2,0,0},
 	{"removeChild", removeChild, 1,0,0},		// https://developer.mozilla.org/en/DOM/Node.removeChild
 	{"replaceChild", replaceChild, 2,0,0},
+	{"addEventListener", addEventListener, 3,0,0},
+	{"removeEventListener", removeEventListener, 3,0,0},
+	{"dispatchEvent", dispatchEvent, 1,0,0},
 	{0}
 };
 

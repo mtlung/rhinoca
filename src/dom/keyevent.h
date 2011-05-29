@@ -1,11 +1,11 @@
 #ifndef __DOM_KEYEVENT_H__
 #define __DOM_KEYEVENT_H__
 
-#include "../jsbindable.h"
+#include "event.h"
 
 namespace Dom {
 
-class KeyEvent : public JsBindable
+class KeyEvent : public UIEvent
 {
 public:
 	KeyEvent();

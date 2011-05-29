@@ -50,6 +50,9 @@ public:
 
 	override const FixString& tagName() const;
 
+	override int clientWidth() const { return _framebuffer.width; }
+	override int clientHeight() const { return _framebuffer.height; }
+
 	static JSClass jsClass;
 
 protected:

@@ -2,6 +2,8 @@
 #include "document.h"
 #include "body.h"
 #include "element.h"
+#include "keyevent.h"
+#include "mouseevent.h"
 #include "nodelist.h"
 #include "../common.h"
 #include "../context.h"
@@ -51,9 +53,11 @@ static JSBool createElement(JSContext* cx, JSObject* obj, uintN argc, jsval* arg
 
 static JSBool getElementById(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
 {
-	JSString* jss = JS_ValueToString(cx, argv[0]);
-	char* str = JS_GetStringBytes(jss);
 	HTMLDocument* self = reinterpret_cast<HTMLDocument*>(JS_GetPrivate(cx, obj));
+
+	JSString* jss = JS_ValueToString(cx, argv[0]);
+	if(!jss) return JS_FALSE;
+	char* str = JS_GetStringBytes(jss);
 	Element* ele = self->getElementById(str);
 
 	*rval = *ele;
@@ -64,7 +68,9 @@ static JSBool getElementById(JSContext* cx, JSObject* obj, uintN argc, jsval* ar
 static JSBool getElementsByTagName(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
 {
 	HTMLDocument* self = reinterpret_cast<HTMLDocument*>(JS_GetPrivate(cx, obj));
+
 	JSString* jss = JS_ValueToString(cx, argv[0]);
+	if(!jss) return JS_FALSE;
 	char* str = JS_GetStringBytes(jss);
 	toupper(str);
 	*rval = *self->getElementsByTagName(str);
@@ -72,10 +78,24 @@ static JSBool getElementsByTagName(JSContext* cx, JSObject* obj, uintN argc, jsv
 	return JS_TRUE;
 }
 
+static JSBool createEvent(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	HTMLDocument* self = reinterpret_cast<HTMLDocument*>(JS_GetPrivate(cx, obj));
+
+	JSString* jss = JS_ValueToString(cx, argv[0]);
+	if(!jss) return JS_FALSE;
+	char* str = JS_GetStringBytes(jss);
+
+	*rval = *self->createEvent(str);
+
+	return JS_TRUE;
+}
+
 static JSFunctionSpec methods[] = {
 	{"createElement", createElement, 1,0,0},
-	{"getElementById", getElementById, 1,0,0},
 	{"getElementsByTagName", getElementsByTagName, 1,0,0},
+	{"getElementById", getElementById, 1,0,0},
+	{"createEvent", createEvent, 1,0,0},
 	{0}
 };
 
@@ -136,6 +156,21 @@ NodeList* HTMLDocument::getElementsByTagName(const char* tagName)
 	NodeList* list = new NodeList(this, getElementsByTagNameFilter, (void*)StringHash(tagName, 0).hash);
 	list->bind(jsContext, NULL);
 	return list;
+}
+
+Event* HTMLDocument::createEvent(const char* type)
+{
+	StringHash hash(type, 0);
+
+	Event* e = NULL;
+
+	if(hash == StringHash("MouseEvent") || hash == StringHash("MouseEvents"))
+		e = new MouseEvent;
+	else if(hash == StringHash("KeyEvents") || hash == StringHash("KeyboardEvent"))
+		e = new KeyEvent;
+
+	e->bind(jsContext, NULL);
+	return e;
 }
 
 Window* HTMLDocument::window()

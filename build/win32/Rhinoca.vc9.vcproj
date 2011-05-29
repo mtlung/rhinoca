@@ -224,6 +224,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\dom\event.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\event.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\dom\image.cpp"
 				>
 			</File>

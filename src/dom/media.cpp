@@ -116,7 +116,7 @@ JSObject* HTMLMediaElement::createPrototype()
 	VERIFY(JS_SetPrivate(jsContext, proto, this));
 	VERIFY(JS_DefineFunctions(jsContext, proto, methods));
 	VERIFY(JS_DefineProperties(jsContext, proto, properties));
-	addReference();
+	addReference();	// releaseReference() in JsBindable::finalize()
 	return proto;
 }
 
