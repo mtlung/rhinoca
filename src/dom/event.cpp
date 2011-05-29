@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "event.h"
+#include "../vector.h"
 
 namespace Dom {
 
@@ -144,7 +145,12 @@ bool EventTarget::dispatchEvent(Event* evt)
 	ASSERT(evt);
 
 	for(EventListener* l = _eventListeners.begin(); l != _eventListeners.end(); l = l->next()) {
-		if(evt->type == l->_type)
+		// Check for capture/bubble phase
+		bool correctPhase = evt->eventPhase == Event::AT_TARGET;
+		correctPhase |= l->_useCapture == (evt->eventPhase == Event::CAPTURING_PHASE);
+
+		// Check for correct event type
+		if(correctPhase && evt->type == l->_type)
 			l->handleEvent(evt);
 	}
 
@@ -157,7 +163,35 @@ JSBool EventTarget::dispatchEvent(JSContext* cx, jsval evt)
 	if(JS_ValueToObject(cx, evt, &obj) != JS_TRUE) return JS_FALSE;
 	Event* ev = reinterpret_cast<Event*>(JS_GetPrivate(cx, obj));
 
-	dispatchEvent(ev);
+	// Build the event propagation list
+	// See http://docstore.mik.ua/orelly/webprog/dhtml/ch06_05.htm
+	Vector<EventTarget*> list(1, this);
+
+	for(EventTarget* t = this->eventTargetTraverseUp(); t; t = t->eventTargetTraverseUp()) {
+		if(!t->_eventListeners.isEmpty())
+			list.push_back(t);
+	}
+
+	// Add reference to all EventTarget before doing any callback 
+	for(unsigned i=0; i<list.size(); ++i)
+		list[i]->eventTargetAddReference();
+
+	// Perform capture phase (traverse down), inculding target
+	for(unsigned i=list.size(); i--; ) {
+		ev->eventPhase = list[i] == this ? Event::AT_TARGET : Event::CAPTURING_PHASE;
+		list[i]->dispatchEvent(ev);
+	}
+
+	// Perform bubble phase (traverse up), exculding target
+	for(unsigned i=1; i<list.size(); ++i) {
+		ev->eventPhase = list[i] == this ? Event::AT_TARGET : Event::BUBBLING_PHASE;
+		list[i]->dispatchEvent(ev);
+	}
+
+	// Now we can release the reference
+	for(unsigned i=0; i<list.size(); ++i)
+		list[i]->eventTargetReleaseReference();
+
 	return JS_TRUE;
 }
 

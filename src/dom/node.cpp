@@ -315,6 +315,19 @@ void Node::removeThis()
 	releaseReference();
 }
 
+EventTarget* Node::eventTargetTraverseUp()
+{
+	return parentNode;
+}
+
+void Node::eventTargetAddReference() {
+	addReference();
+}
+
+void Node::eventTargetReleaseReference() {
+	releaseReference();
+}
+
 static Node* childNodesFilter(NodeIterator& iter, void* userData)
 {
 	Node* ret = iter.current();

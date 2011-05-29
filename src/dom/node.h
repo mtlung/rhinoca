@@ -12,7 +12,7 @@ class HTMLDocument;
 
 /// Reference: http://www.w3schools.com/dom/dom_node.asp
 /// Reference: https://developer.mozilla.org/en/Gecko_DOM_Reference
-class Node : public EventTarget, public JsBindable
+class Node : public JsBindable, public EventTarget
 {
 public:
 	Node();
@@ -50,7 +50,13 @@ public:
 	/// Render this node to the window
 	virtual void render() {}
 
+protected:
+	override EventTarget* eventTargetTraverseUp();
+	override void eventTargetAddReference();
+	override void eventTargetReleaseReference();
+
 // Attributes
+public:
 	FixString nodeName;
 	HTMLDocument* ownerDocument;
 

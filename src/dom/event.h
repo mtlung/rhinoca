@@ -74,7 +74,7 @@ class EventTarget
 {
 public:
 	EventTarget();
-	~EventTarget();
+	virtual ~EventTarget();
 
 // Operations
 	/// Registers a single event listener on this target.
@@ -92,6 +92,13 @@ public:
 	JSBool dispatchEvent(JSContext* cx, jsval evt);
 
 	void jsTrace(JSTracer* trc);
+
+protected:
+	/// Traverse up the DOM tree to the next EventTarget, returns NULL if the root is reached
+	virtual EventTarget* eventTargetTraverseUp() = 0;
+
+	virtual void eventTargetAddReference() = 0;
+	virtual void eventTargetReleaseReference() = 0;
 
 // Attributes
 protected:
