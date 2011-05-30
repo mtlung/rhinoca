@@ -182,6 +182,9 @@ JSBool EventTarget::dispatchEvent(JSContext* cx, jsval evt)
 		list[i]->dispatchEvent(ev);
 	}
 
+	// TODO: Should the bubble phase use the most updated tree structure?
+	// as it might changed it the capture phase?
+
 	// Perform bubble phase (traverse up), exculding target
 	for(unsigned i=1; i<list.size(); ++i) {
 		ev->eventPhase = list[i] == this ? Event::AT_TARGET : Event::BUBBLING_PHASE;
