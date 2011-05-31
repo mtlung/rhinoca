@@ -271,6 +271,7 @@ void AudioSound::unqueueBuffer()
 		if(idx < 0) continue;
 		AlBuffer& b = device->_alBuffers[idx];
 		if(b.handle == bufferHandle) {
+			queueSampleStartPosition = b.end;
 			alBufferIndice[i].index = -1;
 			alBufferIndice[i].queued = false;
 			b.referenceCount--;
@@ -404,7 +405,12 @@ void AudioDevice::update()
 
 				int state;
 				alGetSourcei(sound.handle, AL_SOURCE_STATE, &state);
+
+				// We go inside this if the audio is:
+				// 1) First time being play
+				// 2) After a seek request (NOT implemented yet)
 				if(state == AL_INITIAL) {
+					sound.queueSampleStartPosition = b.begin;
 					alSourcePlay(sound.handle);
 					if(sound.isPause)
 						alSourcePause(sound.handle);
@@ -424,6 +430,8 @@ void AudioDevice::update()
 
 			switch(state) {
 			case AL_INITIAL:
+				// NOTE: This state should rarely encountered in this switch-case block, 
+				// since it's already handled near alSourceQueueBuffers()
 				sound.tryLoadNextBuffer();
 				break;
 			case AL_PLAYING:
@@ -447,6 +455,7 @@ void AudioDevice::update()
 					alSourceRewind(sound.handle);
 					alSourcePlay(sound.handle);
 					sound.nextALBufLoadPosition = 0;
+					sound.queueSampleStartPosition = 0;
 					if(sound.isPause)
 						alSourcePause(sound.handle);
 				}
@@ -571,6 +580,10 @@ float audiodevice_getSoundCurrentTime(AudioDevice* device, AudioSound* sound)
 {
 	AudioBuffer::Format format;
 	sound->audioBuffer->getFormat(format);
+
+	// Prevent divide by zero
+	if(format.samplesPerSecond == 0)
+		return 0;
 
 	ALint offset;
 	alGetSourcei(sound->handle, AL_SAMPLE_OFFSET, &offset);

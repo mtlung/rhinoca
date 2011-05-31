@@ -127,6 +127,14 @@ void HTMLAudioElement::pause()
 		audiodevice_pauseSound(_device, _sound);
 }
 
+double HTMLAudioElement::currentTime() const
+{
+	if(_sound)
+		return audiodevice_getSoundCurrentTime(_device, _sound);
+	else
+		return 0;
+}
+
 void HTMLAudioElement::setLoop(bool loop)
 {
 	if(_sound)

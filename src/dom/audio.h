@@ -29,6 +29,8 @@ public:
 	override const char* src() const;
 	override void setSrc(const char* uri);
 
+	override double currentTime() const;
+
 	override bool loop() const;
 	override void setLoop(bool loop);
 

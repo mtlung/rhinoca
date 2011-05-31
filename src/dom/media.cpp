@@ -54,9 +54,25 @@ static JSBool setAutoplay(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	self->setAutoplay(JSVAL_TO_BOOLEAN(*vp) == JS_TRUE); return JS_TRUE;
 }
 
+static JSBool getCurrentTime(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	HTMLMediaElement* self = reinterpret_cast<HTMLMediaElement*>(JS_GetPrivate(cx, obj));
+	*vp = DOUBLE_TO_JSVAL(JS_NewDouble(cx, self->currentTime())); return JS_TRUE;
+}
+
+static JSBool setCurrentTime(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	HTMLMediaElement* self = reinterpret_cast<HTMLMediaElement*>(JS_GetPrivate(cx, obj));
+	double a;
+	if(JS_ValueToNumber(cx, *vp, &a) == JS_FALSE)
+		return JS_FALSE;
+	self->setCurrentTime(a); return JS_TRUE;
+}
+
 static JSPropertySpec properties[] = {
 	{"src", 0, 0, getSrc, setSrc},
 	{"autoplay", 0, 0, getAutoplay, setAutoplay},
+	{"currentTime", 0, 0, getCurrentTime, setCurrentTime},
 	{0}
 };
 
