@@ -6,6 +6,8 @@
 
 // Documentation for DOM event model:
 // http://www.w3.org/TR/DOM-Level-2-Events/events.html
+// Good explanation on event:
+// http://www.howtocreate.co.uk/tutorials/javascript/domevents
 
 namespace Dom {
 
@@ -56,9 +58,10 @@ protected:
 class JsFunctionEventListener : public EventListener
 {
 public:
-	JsFunctionEventListener(JSContext* ctx, jsval closure);
-
+	JsFunctionEventListener(JSContext* ctx);
 	~JsFunctionEventListener();
+
+	JSBool init(jsval stringOrFunc);
 
 	override void handleEvent(Event* evt);
 
@@ -67,7 +70,19 @@ protected:
 	override void jsTrace(JSTracer* trc);
 
 	JSContext* _jsContext;
-	jsval _jsClosure;	///< The js function closure to be invoked
+	jsval _jsClosure;			///< The js function closure to be invoked
+	JSScript* _jsScript;		///< The compile script to be invoked
+	JSObject* _jsScriptObject;	///< To manage the life-time of jsScript
+};	// JsFunctionEventListener
+
+class ElementAttributeEventListener : public JsFunctionEventListener
+{
+public:
+	ElementAttributeEventListener(JSContext* ctx, const char* eventAttributeName);
+
+protected:
+	override void* identifier() { return (void*)_eventAttributeName.hashValue(); }
+	FixString _eventAttributeName;
 };	// JsFunctionEventListener
 
 class EventTarget
@@ -82,18 +97,22 @@ public:
 	/// the same target but with different event types or capture parameters.
 	void addEventListener(const char* type, EventListener* listener, bool useCapture);
 	JSBool addEventListener(JSContext* cx, jsval type, jsval func, jsval useCapture);
+	JSBool addEventListenerAsAttribute(JSContext* cx, const char* eventAttributeName, jsval stringOrFunc);
 
 	void removeEventListener(const char* type, void* listenerIdentifier, bool useCapture);
 	JSBool removeEventListener(JSContext* cx, jsval type, jsval func, jsval useCapture);
+	JSBool removeEventListenerAsAttribute(JSContext* cx, const char* eventAttributeName);
 
 	void removeAllEventListener();
 
-	bool dispatchEvent(Event* evt);
-	JSBool dispatchEvent(JSContext* cx, jsval evt);
+	/// Will perform capture and bubbling
+	JSBool dispatchEvent(Event* evt);
 
 	void jsTrace(JSTracer* trc);
 
 protected:
+	bool _dispatchEventNoCaptureBubble(Event* evt);
+
 	/// Traverse up the DOM tree to the next EventTarget, returns NULL if the root is reached
 	virtual EventTarget* eventTargetTraverseUp() = 0;
 
@@ -101,6 +120,9 @@ protected:
 	virtual void eventTargetReleaseReference() = 0;
 
 // Attributes
+public:
+	bool hasListener() const { return !_eventListeners.isEmpty(); }
+
 protected:
 	typedef LinkList<EventListener> EventListeners;
 	EventListeners _eventListeners;

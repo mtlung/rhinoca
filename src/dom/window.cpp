@@ -2,10 +2,12 @@
 #include "window.h"
 #include "canvas.h"
 #include "document.h"
+#include "mouseevent.h"
 #include "node.h"
 #include "windowlocation.h"
 #include "../common.h"
 #include "../context.h"
+#include "../vector.h"
 
 extern rhinoca_alertFunc alertFunc;
 extern void* alertFuncUserData;
@@ -226,6 +228,40 @@ void Window::bind(JSContext* cx, JSObject* parent)
 
 	document->bind(cx, parent);
 	document->addGcRoot();	// releaseGcRoot() in ~Window()
+}
+
+void Window::dispatchEvent(Event* e)
+{
+	// Get a list of traversed node first
+	Vector<Node*> nodes;
+	for(Dom::NodeIterator itr(document); !itr.ended(); itr.next())
+		if(itr->hasListener())
+			nodes.push_back(itr.current());
+
+	// Handling of mouse events
+	// TODO: Generate 'secondary' events like mouse clicked (down and up in the same position)
+	if(MouseEvent* mouse = dynamic_cast<MouseEvent*>(e))
+	{
+		// Loop from the back of nodes to see where the mouse fall into the element's rectangle
+		// TODO: Handling of stack context and z-index
+		for(unsigned i=nodes.size(); i--; )
+		{
+			if(Element* ele = dynamic_cast<Element*>(nodes[i])) {
+				if(ele->clientLeft() <= mouse->clientX && mouse->clientX <= ele->clientRight())
+				if(ele->clientTop() <= mouse->clientY && mouse->clientY <= ele->clientBottom()) {
+					e->target = ele;
+					ele->dispatchEvent(e);
+					return;
+				}
+			}
+			// If no element to handle the event, the document should handle it
+			else if(HTMLDocument* doc = dynamic_cast<HTMLDocument*>(nodes[i])) {
+				e->target = doc;
+				doc->dispatchEvent(e);
+				return;
+			}
+		}
+	}
 }
 
 void Window::update()

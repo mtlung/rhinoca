@@ -389,12 +389,6 @@ void AudioDevice::update()
 			sound.tryLoadNextBuffer();
 		}
 
-		// Try to fill available buffer slots
-//		for(unsigned i=0; i<AudioSound::MAX_AL_BUFFERS; ++i) {
-//			if(sound.alBufferIndice[i].index < 0)
-//				sound.tryLoadNextBuffer();
-//		}
-
 		// If data is ready, queue the buffer to OpenAL
 		for(unsigned i=0; i<AudioSound::MAX_AL_BUFFERS; ++i) {
 			int idx = sound.alBufferIndice[i].index;

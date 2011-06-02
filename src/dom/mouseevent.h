@@ -19,7 +19,7 @@ public:
 	int clientX, clientY;
 	int pageX, pageY;
 	bool ctrlKey, shiftKey, altKey, metaKey;
-	unsigned button;
+	unsigned button;	/// 1: left button, 2: middle button, 3: right button
 
 	static JSClass jsClass;
 };	// KeyEvent

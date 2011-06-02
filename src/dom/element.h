@@ -37,6 +37,9 @@ public:
 	virtual int clientWidth() const { return 0; }
 	virtual int clientHeight() const { return 0; }
 
+	int clientRight() const { return clientLeft() + clientWidth(); }
+	int clientBottom() const { return clientTop() + clientHeight(); }
+
 	static JSClass jsClass;
 };	// Element
 

@@ -8,6 +8,7 @@
 
 namespace Dom {
 
+class Event;
 class HTMLDocument;
 class HTMLCanvasElement;
 
@@ -63,6 +64,8 @@ public:
 
 // Operations
 	override void bind(JSContext* cx, JSObject* parent);
+
+	void dispatchEvent(Event* e);
 
 	void update();
 

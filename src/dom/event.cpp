@@ -45,8 +45,9 @@ JSObject* Event::createPrototype()
 	return proto;
 }
 
-JsFunctionEventListener::JsFunctionEventListener(JSContext* ctx, jsval closure)
-	: _jsContext(ctx), _jsClosure(closure)
+JsFunctionEventListener::JsFunctionEventListener(JSContext* ctx)
+	: _jsContext(ctx), _jsClosure(0)
+	, _jsScript(NULL), _jsScriptObject(NULL)
 {
 }
 
@@ -54,16 +55,49 @@ JsFunctionEventListener::~JsFunctionEventListener()
 {
 }
 
+JSBool JsFunctionEventListener::init(jsval stringOrFunc)
+{
+	JSContext* cx = _jsContext;
+
+	// Compile if the incoming param is string instead of function
+	if(JSVAL_IS_STRING(stringOrFunc)) {
+		JSString* jss = JS_ValueToString(cx, stringOrFunc);
+		_jsScript = JS_CompileScript(cx, JS_GetGlobalObject(cx), JS_GetStringBytes(jss), JS_GetStringLength(jss), NULL, 0);
+		if(!_jsScript) return JS_FALSE;
+		_jsScriptObject = JS_NewScriptObject(cx, _jsScript);
+		if(!_jsScriptObject) { JS_DestroyScript(cx, _jsScript); return JS_FALSE; }
+	}
+	else if(JS_ValueToFunction(cx, stringOrFunc)) {
+		_jsClosure = stringOrFunc;
+	}
+	else
+		return JS_FALSE;
+
+	return JS_TRUE;
+}
+
 void JsFunctionEventListener::handleEvent(Event* evt)
 {
 	jsval argv, rval;
 	argv = *evt;
-	JS_CallFunctionValue(_jsContext, NULL, _jsClosure, 1, &argv, &rval);
+	if(_jsClosure)
+		JS_CallFunctionValue(_jsContext, NULL, _jsClosure, 1, &argv, &rval);
+	else if(_jsScript)
+		JS_ExecuteScript(_jsContext, JS_GetGlobalObject(_jsContext), _jsScript, &rval);
 }
 
 void JsFunctionEventListener::jsTrace(JSTracer* trc)
 {
-	JS_CallTracer(trc, JSVAL_TO_GCTHING(_jsClosure), JSVAL_TRACE_KIND(_jsClosure));
+	if(_jsClosure)
+		JS_CallTracer(trc, JSVAL_TO_GCTHING(_jsClosure), JSVAL_TRACE_KIND(_jsClosure));
+	if(_jsScriptObject)
+		JS_CallTracer(trc, _jsScriptObject, JSTRACE_OBJECT);
+}
+
+ElementAttributeEventListener::ElementAttributeEventListener(JSContext* ctx, const char* eventAttributeName)
+	: JsFunctionEventListener(ctx)
+	, _eventAttributeName(eventAttributeName)
+{
 }
 
 EventTarget::EventTarget()
@@ -100,11 +134,34 @@ JSBool EventTarget::addEventListener(JSContext* cx, jsval type, jsval func, jsva
 	JSBool capture;
 	if(!JS_ValueToBoolean(cx, useCapture, &capture)) return JS_FALSE;
 
-	if(!JS_ValueToFunction(cx, func)) return JS_FALSE;
+	JsFunctionEventListener* listener = new JsFunctionEventListener(cx);
+	
+	if(listener->init(func))
+		addEventListener(str, listener, capture == JS_TRUE);
+	else {
+		delete listener;
+		return JS_FALSE;
+	}
 
-	JsFunctionEventListener* listener = new JsFunctionEventListener(cx, func);
+	return JS_TRUE;
+}
 
-	addEventListener(str, listener, capture == JS_TRUE);
+JSBool EventTarget::addEventListenerAsAttribute(JSContext* cx, const char* eventAttributeName, jsval stringOrFunc)
+{
+	if(JSVAL_IS_NULL(stringOrFunc) || JSVAL_IS_VOID(stringOrFunc))
+		return JS_TRUE;
+
+	ElementAttributeEventListener* listener = new ElementAttributeEventListener(cx, eventAttributeName);
+
+	if(listener->init(stringOrFunc)) {
+		// Skip the 'on' of the event attribute will become the eventType
+		const char* eventType = eventAttributeName + 2;
+		addEventListener(eventType, listener, true);
+	}
+	else {
+		delete listener;
+		return JS_FALSE;
+	}
 
 	return JS_TRUE;
 }
@@ -135,12 +192,18 @@ JSBool EventTarget::removeEventListener(JSContext* cx, jsval type, jsval func, j
 	return JS_TRUE;
 }
 
+JSBool EventTarget::removeEventListenerAsAttribute(JSContext* cx, const char* eventAttributeName)
+{
+	removeEventListener(eventAttributeName + 2, (void*)FixString(eventAttributeName).hashValue(), true);
+	return JS_TRUE;
+}
+
 void EventTarget::removeAllEventListener()
 {
 	_eventListeners.destroyAll();
 }
 
-bool EventTarget::dispatchEvent(Event* evt)
+bool EventTarget::_dispatchEventNoCaptureBubble(Event* evt)
 {
 	ASSERT(evt);
 
@@ -157,12 +220,8 @@ bool EventTarget::dispatchEvent(Event* evt)
 	return true;
 }
 
-JSBool EventTarget::dispatchEvent(JSContext* cx, jsval evt)
+JSBool EventTarget::dispatchEvent(Event* ev)
 {
-	JSObject* obj = NULL;
-	if(JS_ValueToObject(cx, evt, &obj) != JS_TRUE) return JS_FALSE;
-	Event* ev = reinterpret_cast<Event*>(JS_GetPrivate(cx, obj));
-
 	// Build the event propagation list
 	// See http://docstore.mik.ua/orelly/webprog/dhtml/ch06_05.htm
 	Vector<EventTarget*> list(1, this);
@@ -176,19 +235,19 @@ JSBool EventTarget::dispatchEvent(JSContext* cx, jsval evt)
 	for(unsigned i=0; i<list.size(); ++i)
 		list[i]->eventTargetAddReference();
 
-	// Perform capture phase (traverse down), inculding target
+	// Perform capture phase (traverse down), including target
 	for(unsigned i=list.size(); i--; ) {
 		ev->eventPhase = list[i] == this ? Event::AT_TARGET : Event::CAPTURING_PHASE;
-		list[i]->dispatchEvent(ev);
+		list[i]->_dispatchEventNoCaptureBubble(ev);
 	}
 
 	// TODO: Should the bubble phase use the most updated tree structure?
 	// as it might changed it the capture phase?
 
-	// Perform bubble phase (traverse up), exculding target
+	// Perform bubble phase (traverse up), excluding target
 	for(unsigned i=1; i<list.size(); ++i) {
 		ev->eventPhase = list[i] == this ? Event::AT_TARGET : Event::BUBBLING_PHASE;
-		list[i]->dispatchEvent(ev);
+		list[i]->_dispatchEventNoCaptureBubble(ev);
 	}
 
 	// Now we can release the reference

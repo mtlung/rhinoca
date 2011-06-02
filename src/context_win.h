@@ -44,13 +44,13 @@ void Rhinoca::processEvent(RhinocaEvent ev)
 		break;
 
 	case WM_LBUTTONDOWN:
-		mouseEvent = "onmousedown";
+		mouseEvent = "mousedown";
 		break;
 	case WM_LBUTTONUP:
-		mouseEvent = "onmouseup";
+		mouseEvent = "mouseup";
 		break;
 	case WM_MOUSEMOVE:
-		mouseEvent = "onmousemove";
+		mouseEvent = "mousemove";
 		break;
 	}
 
@@ -67,20 +67,26 @@ void Rhinoca::processEvent(RhinocaEvent ev)
 		}
 	}
 
-	if(mouseEvent) for(Dom::NodeIterator itr(domWindow->document); !itr.ended(); itr.next())
+	if(mouseEvent)
 	{
-		jsval argv, closure, rval;
-		if(JS_GetProperty(itr->jsContext, itr->jsObject, mouseEvent, &closure) && closure != JSVAL_VOID) {
-			Dom::MouseEvent* e = new Dom::MouseEvent;
-			e->screenX = LOWORD(lParam);
-			e->screenY = HIWORD(lParam);
-			e->clientX = LOWORD(lParam);
-			e->clientY = HIWORD(lParam);
-			e->pageX = LOWORD(lParam);
-			e->pageY = HIWORD(lParam);
-			e->bind(itr->jsContext, NULL);
-			argv = *e;
-			JS_CallFunctionValue(itr->jsContext, NULL, closure, 1, &argv, &rval);
-		}
+		Dom::MouseEvent* e = new Dom::MouseEvent;
+		e->type = mouseEvent;
+		e->screenX = LOWORD(lParam);
+		e->screenY = HIWORD(lParam);
+		e->clientX = LOWORD(lParam);
+		e->clientY = HIWORD(lParam);
+		e->pageX = LOWORD(lParam);
+		e->pageY = HIWORD(lParam);
+		e->shiftKey = (wParam & MK_SHIFT) > 0;
+		e->altKey = (GetKeyState(VK_MENU) & 0x8000) > 0;
+		e->ctrlKey = (wParam & MK_CONTROL) > 0;
+		e->button =
+			1 * ((wParam & MK_LBUTTON) > 0) +
+			2 * ((wParam & MK_MBUTTON) > 0) +
+			3 * ((wParam & MK_RBUTTON) > 0);
+
+		e->bind(domWindow->jsContext, NULL);
+
+		domWindow->dispatchEvent(e);
 	}
 }

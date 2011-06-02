@@ -2,6 +2,7 @@
 #include "node.h"
 #include "nodelist.h"
 #include "document.h"
+#include "../array.h"
 
 namespace Dom {
 
@@ -122,7 +123,12 @@ static JSBool removeEventListener(JSContext* cx, JSObject* obj, uintN argc, jsva
 static JSBool dispatchEvent(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
 {
 	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
-	return self->dispatchEvent(cx, argv[0]);
+
+	JSObject* _obj = NULL;
+	if(JS_ValueToObject(cx, argv[0], &_obj) != JS_TRUE) return JS_FALSE;
+	Event* ev = reinterpret_cast<Event*>(JS_GetPrivate(cx, _obj));
+
+	return self->dispatchEvent(ev);
 }
 
 static JSFunctionSpec methods[] = {
@@ -194,6 +200,27 @@ static JSBool previousSibling(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	return JS_TRUE;
 }
 
+const Array<const char*, 3> _eventAttributeTable = {
+	"onmouseup",
+	"onmousedown",
+	"onmousemove"
+};
+
+static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	// TODO: Implement
+	return JS_FALSE;
+}
+
+static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	id /= 2 + 0;	// Account for having both get and set functions
+
+	self->removeEventListenerAsAttribute(cx, _eventAttributeTable[id]);
+	return self->addEventListenerAsAttribute(cx, _eventAttributeTable[id], *vp);
+}
+
 static JSPropertySpec properties[] = {
 	{"childNodes", 0, JSPROP_READONLY, childNodes, JS_PropertyStub},	// NOTE: Current implementation will not return the same NodeList object on each call of childNodes
 	{"firstChild", 0, JSPROP_READONLY, firstChild, JS_PropertyStub},
@@ -203,6 +230,12 @@ static JSPropertySpec properties[] = {
 	{"ownerDocument", 0, JSPROP_READONLY, ownerDocument, JS_PropertyStub},
 	{"parentNode", 0, JSPROP_READONLY, parentNode, JS_PropertyStub},
 	{"previousSibling", 0, JSPROP_READONLY, previousSibling, JS_PropertyStub},
+
+
+	// Event attributes
+	{_eventAttributeTable[0], 0, 0, getEventAttribute, setEventAttribute},
+	{_eventAttributeTable[1], 1, 0, getEventAttribute, setEventAttribute},
+	{_eventAttributeTable[2], 2, 0, getEventAttribute, setEventAttribute},
 	{0}
 };
 
