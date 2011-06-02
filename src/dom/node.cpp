@@ -217,7 +217,6 @@ static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsval id, jsval* v
 	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
 	id /= 2 + 0;	// Account for having both get and set functions
 
-	self->removeEventListenerAsAttribute(cx, _eventAttributeTable[id]);
 	return self->addEventListenerAsAttribute(cx, _eventAttributeTable[id], *vp);
 }
 
