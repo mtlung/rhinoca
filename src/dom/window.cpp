@@ -1,10 +1,12 @@
 #include "pch.h"
 #include "window.h"
+#include "body.h"
 #include "canvas.h"
 #include "document.h"
 #include "mouseevent.h"
 #include "node.h"
 #include "windowlocation.h"
+#include "../array.h"
 #include "../common.h"
 #include "../context.h"
 #include "../vector.h"
@@ -14,11 +16,24 @@ extern void* alertFuncUserData;
 
 namespace Dom {
 
+static void traceDataOp(JSTracer* trc, JSObject* obj)
+{
+	Window* self = reinterpret_cast<Window*>(JS_GetPrivate(trc->context, obj));
+
+	self->EventTarget::jsTrace(trc);
+
+	if(self->document)
+		JS_CallTracer(trc, self->document->jsObject, JSTRACE_OBJECT);
+}
+
 JSClass Window::jsClass = {
-	"Window", JSCLASS_HAS_PRIVATE,
+	"Window", JSCLASS_HAS_PRIVATE | JSCLASS_MARK_IS_TRACE,
 	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
-	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
+	JS_ConvertStub, JsBindable::finalize,
+	0, 0, 0, 0, 0, 0,
+	JS_CLASS_TRACE(traceDataOp),
+	0
 };
 
 static JSBool alert(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
@@ -186,8 +201,29 @@ static JSBool location(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	return JS_TRUE;
 }
 
+const Array<const char*, 3> _eventAttributeTable = {
+	"onload",
+};
+
+static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	// Not implemented
+	return JS_FALSE;
+}
+
+static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	Window* self = reinterpret_cast<Window*>(JS_GetPrivate(cx, obj));
+	id /= 2 + 0;	// Account for having both get and set functions
+
+	return self->addEventListenerAsAttribute(cx, _eventAttributeTable[id], *vp);
+}
+
 static JSPropertySpec properties[] = {
 	{"location", 0, JSPROP_READONLY, location, JS_PropertyStub},
+
+	// Event attributes
+	{_eventAttributeTable[0], 0, 0, getEventAttribute, setEventAttribute},
 	{0}
 };
 
@@ -202,8 +238,6 @@ Window::Window(Rhinoca* rh)
 
 Window::~Window()
 {
-	document->releaseGcRoot();
-
 	// Explicit call node's removeThis() since it's not a virtual function
 	while(TimerCallback* cb = timerCallbacks.findMin())
 		cb->removeThis();
@@ -227,11 +261,12 @@ void Window::bind(JSContext* cx, JSObject* parent)
 	addReference();
 
 	document->bind(cx, parent);
-	document->addGcRoot();	// releaseGcRoot() in ~Window()
 }
 
 void Window::dispatchEvent(Event* e)
 {
+	ASSERT(e->jsObject);
+
 	// Get a list of traversed node first
 	Vector<Node*> nodes;
 	for(Dom::NodeIterator itr(document); !itr.ended(); itr.next())
@@ -246,7 +281,15 @@ void Window::dispatchEvent(Event* e)
 		// TODO: Handling of stack context and z-index
 		for(unsigned i=nodes.size(); i--; )
 		{
-			if(Element* ele = dynamic_cast<Element*>(nodes[i])) {
+			if(Element* ele = dynamic_cast<Element*>(nodes[i]))
+			{
+				// TODO: Temp solution, before we assign the body element with correct width and height
+				if(ele->tagName() == FixString("BODY")) {
+					e->target = ele;
+					ele->dispatchEvent(e);
+					return;
+				}
+
 				if(ele->clientLeft() <= mouse->clientX && mouse->clientX <= ele->clientRight())
 				if(ele->clientTop() <= mouse->clientY && mouse->clientY <= ele->clientBottom()) {
 					e->target = ele;
@@ -254,14 +297,11 @@ void Window::dispatchEvent(Event* e)
 					return;
 				}
 			}
-			// If no element to handle the event, the document should handle it
-			else if(HTMLDocument* doc = dynamic_cast<HTMLDocument*>(nodes[i])) {
-				e->target = doc;
-				doc->dispatchEvent(e);
-				return;
-			}
 		}
 	}
+
+	if(e->target)
+		e->target->dispatchEvent(e);
 }
 
 void Window::update()

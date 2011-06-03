@@ -2,6 +2,7 @@
 #include "element.h"
 #include "document.h"
 #include "nodelist.h"
+#include "../array.h"
 #include "../context.h"
 #include "../path.h"
 
@@ -55,11 +56,36 @@ static JSBool tagName(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	return JS_TRUE;
 }
 
+const Array<const char*, 3> _eventAttributeTable = {
+	"onmouseup",
+	"onmousedown",
+	"onmousemove"
+};
+
+static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	// Not implemented
+	return JS_FALSE;
+}
+
+static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	id /= 2 + 0;	// Account for having both get and set functions
+
+	return self->addEventListenerAsAttribute(cx, _eventAttributeTable[id], *vp);
+}
+
 static JSPropertySpec elementProperties[] = {
 	{"clientWidth", 0, JSPROP_READONLY, clientWidth, JS_PropertyStub},
 	{"clientHeight", 0, JSPROP_READONLY, clientHeight, JS_PropertyStub},
 	{"style", 0, JSPROP_READONLY, elementGetStyle, JS_PropertyStub},
 	{"tagName", 0, JSPROP_READONLY, tagName, JS_PropertyStub},
+
+	// Event attributes
+	{_eventAttributeTable[0], 0, 0, getEventAttribute, setEventAttribute},
+	{_eventAttributeTable[1], 1, 0, getEventAttribute, setEventAttribute},
+	{_eventAttributeTable[2], 2, 0, getEventAttribute, setEventAttribute},
 	{0}
 };
 

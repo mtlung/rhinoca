@@ -8,6 +8,7 @@
 #include "audio/audiodevice.h"
 #include "dom/document.h"
 #include "dom/element.h"
+#include "dom/event.h"
 #include "dom/keyevent.h"
 #include "dom/mouseevent.h"
 #include "dom/registerfactories.h"
@@ -274,17 +275,7 @@ bool Rhinoca::openDoucment(const char* uri)
 		case Event::EndElement:
 		{
 			parser.popAttributes();
-			if(strcasecmp(parser.elementName(), "body") == 0)
-			{
-				if(const char* str = parser.attributeValueIgnoreCase("onload")) {
-					std::string script = "window.onload=function(){";
-					script += str;
-					script += "};";
-					jsval rval;
-					JS_EvaluateScript(jsContext, jsGlobal, script.c_str(), script.size(), uri, 0, &rval);
-				}
-			}
-			else if(strcasecmp(parser.elementName(), "script") == 0)
+			if(strcasecmp(parser.elementName(), "script") == 0)
 			{
 				std::string script;
 				Path scriptUrl = documentUrl.c_str();
@@ -328,12 +319,15 @@ bool Rhinoca::openDoucment(const char* uri)
 		}
 	}
 
-	// Run windows.onload
+	// Run window.onload
 	{
-		jsval rval;
-		jsval closure;
-		if(JS_GetProperty(jsContext, *domWindow, "onload", &closure) && closure != JSVAL_VOID)
-			JS_CallFunctionValue(jsContext, *domWindow, closure, 0, NULL, &rval);
+		Dom::Event* ev = new Dom::Event;
+		ev->type = "load";
+		ev->bubbles = false;
+		ev->target = domWindow;
+		ev->bind(jsContext, NULL);
+
+		domWindow->dispatchEvent(ev);
 	}
 
 	return true;

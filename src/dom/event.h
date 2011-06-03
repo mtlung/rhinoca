@@ -19,7 +19,11 @@ public:
 	Event();
 
 // Operations
+	override void bind(JSContext* cx, JSObject* parent);
 	JSObject* createPrototype();
+
+	/// Stop the event from bubbling up
+	void stopPropagation();
 
 // Attributes
 	enum Phase {
@@ -35,6 +39,10 @@ public:
 	EventTarget* currentTarget;
 	bool bubbles;
 	bool cancelable;
+
+protected:
+	friend class EventTarget;
+	bool _stopPropagation;
 
 	static JSClass jsClass;
 };	// Event
@@ -114,10 +122,10 @@ protected:
 	bool _dispatchEventNoCaptureBubble(Event* evt);
 
 	/// Traverse up the DOM tree to the next EventTarget, returns NULL if the root is reached
-	virtual EventTarget* eventTargetTraverseUp() = 0;
+	virtual EventTarget* eventTargetTraverseUp() { return NULL; }
 
-	virtual void eventTargetAddReference() = 0;
-	virtual void eventTargetReleaseReference() = 0;
+	virtual void eventTargetAddReference() {}
+	virtual void eventTargetReleaseReference() {}
 
 // Attributes
 public:

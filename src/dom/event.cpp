@@ -11,7 +11,15 @@ JSClass Event::jsClass = {
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
+static JSBool stopPropagation(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	Event* self = reinterpret_cast<Event*>(JS_GetPrivate(cx, obj));
+	self->stopPropagation();
+	return JS_TRUE;
+}
+
 static JSFunctionSpec methods[] = {
+	{"stopPropagation", stopPropagation, 0,0,0},
 	{0}
 };
 
@@ -31,7 +39,19 @@ Event::Event()
 	: eventPhase(NONE)
 	, target(NULL), currentTarget(NULL)
 	, bubbles(false), cancelable(false)
+	, _stopPropagation(false)
 {
+}
+
+void Event::bind(JSContext* cx, JSObject* parent)
+{
+	ASSERT(!jsContext);
+	jsContext = cx;
+	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
+	VERIFY(JS_SetPrivate(cx, *this, this));
+	VERIFY(JS_DefineFunctions(cx, *this, methods));
+	VERIFY(JS_DefineProperties(cx, *this, properties));
+	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
 JSObject* Event::createPrototype()
@@ -43,6 +63,11 @@ JSObject* Event::createPrototype()
 	VERIFY(JS_DefineProperties(jsContext, proto, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 	return proto;
+}
+
+void Event::stopPropagation()
+{
+	_stopPropagation = true;
 }
 
 JsFunctionEventListener::JsFunctionEventListener(JSContext* ctx)
@@ -156,7 +181,9 @@ JSBool EventTarget::addEventListenerAsAttribute(JSContext* cx, const char* event
 	if(listener->init(stringOrFunc)) {
 		// Skip the 'on' of the event attribute will become the eventType
 		const char* eventType = eventAttributeName + 2;
-		addEventListener(eventType, listener, true);
+
+		// NOTE: Event attribute use bubbling by default
+		addEventListener(eventType, listener, false);
 	}
 	else {
 		delete listener;
@@ -194,7 +221,7 @@ JSBool EventTarget::removeEventListener(JSContext* cx, jsval type, jsval func, j
 
 JSBool EventTarget::removeEventListenerAsAttribute(JSContext* cx, const char* eventAttributeName)
 {
-	removeEventListener(eventAttributeName + 2, (void*)FixString(eventAttributeName).hashValue(), true);
+	removeEventListener(eventAttributeName + 2, (void*)FixString(eventAttributeName).hashValue(), false);
 	return JS_TRUE;
 }
 
@@ -245,7 +272,7 @@ JSBool EventTarget::dispatchEvent(Event* ev)
 	// as it might changed it the capture phase?
 
 	// Perform bubble phase (traverse up), excluding target
-	for(unsigned i=1; i<list.size(); ++i) {
+	for(unsigned i=1; i<list.size() && !ev->_stopPropagation; ++i) {
 		ev->eventPhase = list[i] == this ? Event::AT_TARGET : Event::BUBBLING_PHASE;
 		list[i]->_dispatchEventNoCaptureBubble(ev);
 	}

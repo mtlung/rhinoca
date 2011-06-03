@@ -1,6 +1,7 @@
 #ifndef __DOM_WINDOW_H__
 #define __DOM_WINDOW_H__
 
+#include "event.h"
 #include "../jsbindable.h"
 #include "../linklist.h"
 #include "../map.h"
@@ -56,7 +57,7 @@ public:
 };	// FrameRequestCallback
 
 /// Reference: http://www.w3schools.com/jsref/obj_window.asp
-class Window : public JsBindable
+class Window : public JsBindable, public EventTarget
 {
 public:
 	explicit Window(Rhinoca* rh);

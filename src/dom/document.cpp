@@ -21,11 +21,7 @@ JSClass HTMLDocument::jsClass = {
 static JSBool getBody(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	HTMLDocument* self = reinterpret_cast<HTMLDocument*>(JS_GetPrivate(cx, obj));
-	HTMLBodyElement* body = self->body();
-	if(!body)
-		*vp = JSVAL_NULL;
-	else
-		*vp = *body;
+	*vp = *self->body();
 	return JS_TRUE;
 }
 
