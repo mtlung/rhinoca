@@ -509,8 +509,7 @@ function initDom() {
 	return sjs.dom;
 }
 
-//window.addEventListener("load", init, false);
-window.onload = init;
+window.addEventListener("load", init, false);
 window.sjs = sjs;
 
 //})();
