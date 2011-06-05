@@ -8,6 +8,7 @@
 namespace Dom {
 
 class CanvasGradient;
+class ImageData;
 
 class CanvasRenderingContext2D : public HTMLCanvasElement::Context
 {
@@ -135,6 +136,17 @@ public:
 
 	/// Further constrains the clipping region to the given path.
 	void clip();
+
+// Pixel manipulation
+	/// Returns an ImageData object with the given dimensions. All the pixels in the returned object are transparent black.
+	ImageData* createImageData(unsigned width, unsigned height);
+
+	/// Returns an ImageData object with the same dimensions as the argument. All the pixels in the returned object are transparent black.
+	ImageData* createImageData(ImageData* imageData);
+
+	ImageData* getImageData(unsigned sx, unsigned sy, unsigned sw, unsigned sh);
+
+	void putImageData(ImageData* data, unsigned dx, unsigned dy, unsigned dirtyX, unsigned dirtyY, unsigned dirtyWidth, unsigned dirtyHeight);
 
 // Attributes
 	unsigned width() const { return canvas->width(); }

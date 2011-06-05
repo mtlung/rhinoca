@@ -294,6 +294,11 @@ public:
 
 	// Draw using the binded vertex and index buffers
 	static void drawIndexed(unsigned indexCount, unsigned startingIndex=0);
+
+// Pixel manipulation
+	static void readPixels(unsigned x, unsigned y, unsigned width, unsigned height, TextureFormat format, unsigned char* data);
+
+	static void writePixels(unsigned x, unsigned y, unsigned width, unsigned height, TextureFormat format, const unsigned char* data);
 };	// Driver
 
 class Material

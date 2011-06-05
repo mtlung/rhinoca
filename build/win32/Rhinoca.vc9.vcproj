@@ -192,6 +192,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\dom\canvaspixelarray.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\canvaspixelarray.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\dom\color.cpp"
 				>
 			</File>
@@ -237,6 +245,14 @@
 			</File>
 			<File
 				RelativePath="..\..\src\dom\image.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\imagedata.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\imagedata.h"
 				>
 			</File>
 			<File

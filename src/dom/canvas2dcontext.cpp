@@ -1,8 +1,10 @@
 #include "pch.h"
 #include "canvas2dcontext.h"
+#include "canvaspixelarray.h"
 #include "canvasgradient.h"
 #include "color.h"
 #include "image.h"
+#include "imagedata.h"
 #include "../mat44.h"
 #include "../vec3.h"
 #include "../render/vg/openvg.h"
@@ -511,6 +513,85 @@ static JSBool fillRect(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, js
 	return JS_TRUE;
 }
 
+static JSBool createImageData(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	JSObject* imgDataParam = NULL;
+	ImageData* imgData = NULL;
+
+	if(JS_ValueToObject(cx, argv[0], &imgDataParam) && JS_InstanceOf(cx, imgDataParam, &ImageData::jsClass, argv)) {
+		ImageData* imgData = reinterpret_cast<ImageData*>(JS_GetPrivate(cx, imgDataParam));
+		imgData = self->createImageData(imgData);
+	}
+	else if(argc >= 2) {
+		int32 sw, sh;
+		if(JS_ValueToInt32(cx, argv[0], &sw) && JS_ValueToInt32(cx, argv[1], &sh))
+			imgData = self->createImageData(sw, sh);
+	}
+
+	if(imgData) {
+		imgData->bind(cx, NULL);
+		return JS_TRUE;
+	}
+
+	return JS_FALSE;
+}
+
+static JSBool getImageData(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	int32 x, y, w, h;
+	JS_ValueToInt32(cx, argv[0], &x);
+	JS_ValueToInt32(cx, argv[1], &y);
+	JS_ValueToInt32(cx, argv[2], &w);
+	JS_ValueToInt32(cx, argv[3], &h);
+	ImageData* imgData = self->getImageData(x, y, w, h);
+	imgData->bind(cx, NULL);
+
+	*rval = *imgData;
+
+	return JS_TRUE;
+}
+
+static JSBool putImageData(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+{
+	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
+	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	if(!self) return JS_FALSE;
+
+	JSObject* imgDataParam = NULL;
+	if(!JS_ValueToObject(cx, argv[0], &imgDataParam) || !JS_InstanceOf(cx, imgDataParam, &ImageData::jsClass, argv))
+		return JS_FALSE;
+
+	ImageData* imgData = reinterpret_cast<ImageData*>(JS_GetPrivate(cx, imgDataParam));
+
+	int32 dx, dy;
+	int32 dirtyX = 0, dirtyY = 0;
+	int32 dirtyWidth = imgData->width;
+	int32 dirtyHeight = imgData->height;
+
+	JS_ValueToInt32(cx, argv[1], &dx);
+	JS_ValueToInt32(cx, argv[2], &dy);
+
+	if(argc >= 7) {
+		// TODO: Deal with negative values, as state in the spec
+		JS_ValueToInt32(cx, argv[3], &dirtyX);
+		JS_ValueToInt32(cx, argv[4], &dirtyY);
+		JS_ValueToInt32(cx, argv[5], &dirtyWidth);
+		JS_ValueToInt32(cx, argv[6], &dirtyHeight);
+	}
+
+	self->putImageData(imgData, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight);
+
+	return JS_TRUE;
+}
+
 static JSFunctionSpec methods[] = {
 	{"clearRect", clearRect, 4,0,0},
 	{"beginLayer", beginLayer, 0,0,0},
@@ -540,6 +621,10 @@ static JSFunctionSpec methods[] = {
 	{"strokeRect", strokeRect, 4,0,0},
 	{"fill", fill, 0,0,0},
 	{"fillRect", fillRect, 4,0,0},
+
+	{"createImageData", createImageData, 1,0,0},
+	{"getImageData", getImageData, 4,0,0},
+	{"putImageData", putImageData, 3,0,0},
 
 	{0}
 };
@@ -1013,6 +1098,40 @@ void CanvasRenderingContext2D::setGlobalAlpha(float alpha)
 	setFillColor((float*)&fc);
 
 	_globalAlpha = alpha;
+}
+
+ImageData* CanvasRenderingContext2D::createImageData(unsigned width, unsigned height)
+{
+	ImageData* imgData = new ImageData;
+	imgData->init(width, height, NULL);
+
+	for(unsigned i=0; i<imgData->data->length; ++i)
+		imgData->data->rawData[i] = 0;
+
+	return imgData;
+}
+
+ImageData* CanvasRenderingContext2D::createImageData(ImageData* imageData)
+{
+	return createImageData(imageData->width, imageData->height);
+}
+
+ImageData* CanvasRenderingContext2D::getImageData(unsigned sx, unsigned sy, unsigned sw, unsigned sh)
+{
+	ImageData* imgData = new ImageData;
+	imgData->init(width(), height(), NULL);
+
+	Driver::readPixels(sx, sy, sw, sh, Driver::RGBA, imgData->data->rawData);
+
+	return imgData;
+}
+
+void CanvasRenderingContext2D::putImageData(ImageData* data, unsigned dx, unsigned dy, unsigned dirtyX, unsigned dirtyY, unsigned dirtyWidth, unsigned dirtyHeight)
+{
+	ASSERT("Not implemented" && dirtyX == 0 && dirtyY == 0);
+	ASSERT("Not implemented" && dirtyWidth == data->width && dirtyHeight == data->height);
+
+	Driver::writePixels(dx, dy, dirtyWidth, dirtyHeight, Driver::RGBA, data->data->rawData);
 }
 
 }	// namespace Dom
