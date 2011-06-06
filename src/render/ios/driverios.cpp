@@ -295,7 +295,7 @@ void* Driver::createRenderTarget(void* existingRenderTarget, void** textureHandl
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, (GLuint)*depthHandle);
 	}
 
-	if(stencilHandle) {
+/*	if(stencilHandle) {
 		if(!*stencilHandle) {	// Generate the stencil right here
 			glGenRenderbuffers(1, (GLuint*)stencilHandle);
 		}
@@ -303,7 +303,7 @@ void* Driver::createRenderTarget(void* existingRenderTarget, void** textureHandl
 		glBindRenderbuffer(GL_RENDERBUFFER, (GLuint)*stencilHandle);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, width, height);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, (GLuint)*stencilHandle);
-	}
+	}*/
 
 	ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
 	ASSERT(GL_NO_ERROR == glGetError());
@@ -837,6 +837,22 @@ void Driver::drawIndexed(unsigned indexCount, unsigned startingIndex)
 		glDrawElements(state.primitiveType, indexCount, GL_UNSIGNED_SHORT, (GLvoid*)startingIndex);
 	else if(ib->data)
 		glDrawElements(state.primitiveType, indexCount, GL_UNSIGNED_SHORT, ((rhuint16*)ib->data) + startingIndex);
+}
+
+void Driver::readPixels(unsigned x, unsigned y, unsigned width, unsigned height, TextureFormat format, unsigned char* data)
+{
+	glPixelStorei(GL_PACK_ALIGNMENT,1);
+//	GLint lastBuffer;
+//	glGetIntegerv(GL_READ_BUFFER, &lastBuffer);
+	glReadPixels((GLint)x, (GLint)y, (GLsizei)width, (GLsizei)height, (GLenum)format, GL_UNSIGNED_BYTE, data);
+//	glReadBuffer(lastBuffer);
+}
+
+void Driver::writePixels(unsigned x, unsigned y, unsigned width, unsigned height, TextureFormat format, const unsigned char* data)
+{
+	glPixelStorei(GL_PACK_ALIGNMENT,1);
+//	glRasterPos2i((GLint)x, (GLint)y);
+//	glDrawPixels((GLsizei)width, (GLsizei)height, (GLenum)format, GL_UNSIGNED_BYTE, data);
 }
 
 }	// Render
