@@ -816,13 +816,15 @@ void Driver::drawIndexed(unsigned indexCount, unsigned startingIndex)
 void Driver::readPixels(unsigned x, unsigned y, unsigned width, unsigned height, TextureFormat format, unsigned char* data)
 {
 	GLint lastBuffer;
-	glGetIntegerv(GL_READ_BUFFER, &lastBuffer);
+	glPixelStorei(GL_PACK_ALIGNMENT,1);
+//	glGetIntegerv(GL_READ_BUFFER, &lastBuffer);
 	glReadPixels((GLint)x, (GLint)y, (GLsizei)width, (GLsizei)height, (GLenum)format, GL_UNSIGNED_BYTE, data);
-	glReadBuffer(lastBuffer);
+//	glReadBuffer(lastBuffer);
 }
 
 void Driver::writePixels(unsigned x, unsigned y, unsigned width, unsigned height, TextureFormat format, const unsigned char* data)
 {
+	glPixelStorei(GL_PACK_ALIGNMENT,1);
 	glRasterPos2i((GLint)x, (GLint)y);
 	glDrawPixels((GLsizei)width, (GLsizei)height, (GLenum)format, GL_UNSIGNED_BYTE, data);
 }

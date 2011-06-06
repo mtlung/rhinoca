@@ -14,7 +14,7 @@ JSClass HTMLBodyElement::jsClass = {
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-const Array<const char*, 3> _eventAttributeTable = {
+const char* _eventAttributeTable[] = {
 	"onload",
 };
 

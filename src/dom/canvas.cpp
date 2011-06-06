@@ -32,14 +32,18 @@ static JSBool getHeight(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 static JSBool setWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	HTMLCanvasElement* self = reinterpret_cast<HTMLCanvasElement*>(JS_GetPrivate(cx, obj));
-	self->setWidth(JSVAL_TO_INT(*vp));
+	int32 width;
+	if(!JS_ValueToInt32(cx, *vp, &width)) return JS_FALSE;
+	self->setWidth(width);
 	return JS_TRUE;
 }
 
 static JSBool setHeight(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	HTMLCanvasElement* self = reinterpret_cast<HTMLCanvasElement*>(JS_GetPrivate(cx, obj));
-	self->setHeight(JSVAL_TO_INT(*vp));
+	int32 height;
+	if(!JS_ValueToInt32(cx, *vp, &height)) return JS_FALSE;
+	self->setHeight(height);
 	return JS_TRUE;
 }
 

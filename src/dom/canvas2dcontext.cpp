@@ -1119,8 +1119,9 @@ ImageData* CanvasRenderingContext2D::createImageData(ImageData* imageData)
 ImageData* CanvasRenderingContext2D::getImageData(unsigned sx, unsigned sy, unsigned sw, unsigned sh)
 {
 	ImageData* imgData = new ImageData;
-	imgData->init(width(), height(), NULL);
+	imgData->init(sw, sh, NULL);
 
+	canvas->bindFramebuffer();
 	Driver::readPixels(sx, sy, sw, sh, Driver::RGBA, imgData->data->rawData);
 
 	return imgData;
@@ -1130,6 +1131,9 @@ void CanvasRenderingContext2D::putImageData(ImageData* data, unsigned dx, unsign
 {
 	ASSERT("Not implemented" && dirtyX == 0 && dirtyY == 0);
 	ASSERT("Not implemented" && dirtyWidth == data->width && dirtyHeight == data->height);
+
+	canvas->bindFramebuffer();
+	Driver::setSamplerState(0, noTexture);
 
 	Driver::writePixels(dx, dy, dirtyWidth, dirtyHeight, Driver::RGBA, data->data->rawData);
 }
