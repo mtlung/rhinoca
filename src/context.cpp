@@ -81,6 +81,7 @@ Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 {
 	jsContext = JS_NewContext(jsrt, 8192);
 	JS_SetOptions(jsContext, JS_GetOptions(jsContext) | JSOPTION_STRICT);
+	JS_SetOptions(jsContext, JS_GetOptions(jsContext) & ~JSOPTION_ANONFUNFIX);
 	JS_SetContextPrivate(jsContext, this);
 	JS_SetErrorReporter(jsContext, jsReportError);
 
@@ -227,7 +228,13 @@ bool Rhinoca::openDoucment(const char* uri)
 	Dom::ElementFactory& factory = Dom::ElementFactory::singleton();
 	Dom::Node* currentNode = domWindow->document;
 
-	documentUrl = uri;
+	// Make documentUrl always in absolute path
+	Path path = uri;
+	if(!path.hasRootDirectory()) {
+		path = Path::getCurrentPath() / path;
+	}
+
+	documentUrl = path.c_str();
 	XmlParser parser;
 	parser.parse(const_cast<char*>(html.c_str()));
 

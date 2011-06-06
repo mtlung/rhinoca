@@ -116,6 +116,11 @@ public:
 	//!	A comparison function that gives int as the result just like what strCaseCmp() does.
 	int compare(const Path& rhs) const;
 
+	/*!	Get the current path of the running process.
+		\note It will return an empty path if the operation fail.
+	 */
+	static Path getCurrentPath();
+
 protected:
 	string_type mStr;
 };	// Path

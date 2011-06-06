@@ -217,3 +217,35 @@ int Path::compare(const Path& rhs) const
 {
 	return strcasecmp(c_str(), rhs.c_str());
 }
+
+Path Path::getCurrentPath()
+{
+#ifdef _WIN32
+	// TODO: Use GetCurrentDirectoryW since it directly support unicode
+
+	DWORD sz;
+	char dummy[1];	// Use a dummy to avoid a warning in Intel Thread Checker: passing NULL to GetCurrentDirectoryA
+
+	// Query the required buffer size
+	if((sz = ::GetCurrentDirectoryA(0, dummy)) == 0)
+		return Path();
+
+	char* buf = (char*)rhinoca_malloc(sz * sizeof(char));
+	if(::GetCurrentDirectoryA(sz, buf) == 0)
+		return Path();
+
+	Path ret(buf);
+	rhinoca_free(buf);
+	return ret.normalize();
+#else
+	// For other system we assume it have a UTF-8 locale
+
+	char* buffer = getcwd(NULL, 0);
+
+	if(!buffer)
+		return Path();
+
+	Path ret(buffer);
+	return ret.normalize();
+#endif
+}
