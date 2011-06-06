@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "body.h"
 #include "document.h"
-#include "../array.h"
 #include "../context.h"
 #include <string.h>
 
@@ -14,7 +13,7 @@ JSClass HTMLBodyElement::jsClass = {
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-const char* _eventAttributeTable[] = {
+static const char* _eventAttributeTable[] = {
 	"onload",
 };
 
@@ -27,7 +26,7 @@ static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsval id, jsval* v
 static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	HTMLBodyElement* self = reinterpret_cast<HTMLBodyElement*>(JS_GetPrivate(cx, obj));
-	id /= 2 + 0;	// Account for having both get and set functions
+	id = id / 2 + 0;	// Account for having both get and set functions
 
 	// NOTE: Redirect body.onload to window.onload
 	return self->ownerDocument->window()->addEventListenerAsAttribute(cx, _eventAttributeTable[id], *vp);

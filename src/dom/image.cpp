@@ -22,12 +22,13 @@ static void onReadyCallback(TaskPool* taskPool, void* userData)
 {
 	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(userData);
 
-	jsval rval;
-	jsval closure;
-	const char* event = (self->texture->state == Texture::Aborted) ? "onerror" : "onready";
-	if(JS_GetProperty(self->jsContext, *self, event, &closure) && closure != JSVAL_VOID)
-		JS_CallFunctionValue(self->jsContext, *self, closure, 0, NULL, &rval);
+	Dom::Event* ev = new Dom::Event;
+	ev->type = (self->texture->state == Texture::Aborted) ? "error" : "ready";
+	ev->bubbles = false;
+	ev->target = self;
+	ev->bind(self->jsContext, NULL);
 
+	self->dispatchEvent(ev);
 	self->releaseGcRoot();
 }
 
@@ -35,12 +36,13 @@ static void onLoadCallback(TaskPool* taskPool, void* userData)
 {
 	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(userData);
 
-	jsval rval;
-	jsval closure;
-	const char* event = (self->texture->state == Texture::Aborted) ? "onerror" : "onload";
-	if(JS_GetProperty(self->jsContext, *self, event, &closure) && closure != JSVAL_VOID)
-		JS_CallFunctionValue(self->jsContext, *self, closure, 0, NULL, &rval);
+	Dom::Event* ev = new Dom::Event;
+	ev->type = (self->texture->state == Texture::Aborted) ? "error" : "load";
+	ev->bubbles = false;
+	ev->target = self;
+	ev->bind(self->jsContext, NULL);
 
+	self->dispatchEvent(ev);
 	self->releaseGcRoot();
 }
 
@@ -73,7 +75,9 @@ static JSBool getWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 static JSBool setWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
-	self->_width = JSVAL_TO_INT(vp); return JS_TRUE;
+	int32 width;
+	if(!JS_ValueToInt32(cx, *vp, &width)) return JS_FALSE;
+	self->_width = width; return JS_TRUE;
 }
 
 static JSBool getHeight(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
@@ -85,7 +89,9 @@ static JSBool getHeight(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 static JSBool setHeight(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 {
 	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
-	self->_height = JSVAL_TO_INT(vp); return JS_TRUE;
+	int32 height;
+	if(!JS_ValueToInt32(cx, *vp, &height)) return JS_FALSE;
+	self->_height = height; return JS_TRUE;
 }
 
 static JSBool naturalWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
@@ -107,6 +113,40 @@ static JSBool complete(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	*vp = BOOLEAN_TO_JSVAL(ret); return JS_TRUE;
 }
 
+static const char* _eventAttributeTable[] = {
+	"onready",
+	"onload",
+	"onerror"
+};
+
+static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+{
+	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
+	id = id / 2 + 0;	// Account for having both get and set functions
+
+	self->addEventListenerAsAttribute(cx, _eventAttributeTable[id], *vp);
+
+	// In case the Image is already loaded when we assign the callback, invoke the callback immediately
+	Dom::Event* ev = NULL;
+	const Texture::State state = self->texture->state;
+
+	if(state == Texture::Ready && id == 0) goto Dispatch;
+	if(state == Texture::Loaded && id == 1) goto Dispatch;
+	if(state == Texture::Aborted && id == 2) goto Dispatch;
+	goto Return;
+
+Dispatch:
+	ev = new Dom::Event;
+	ev->type = _eventAttributeTable[id] + 2;	// +2 to skip the "on" ("onload" -> "load")
+	ev->bubbles = false;
+	ev->target = self;
+	ev->bind(cx, NULL);
+	self->dispatchEvent(ev);
+
+Return:
+	return JS_PropertyStub(cx, obj, id, vp);
+}
+
 static JSPropertySpec properties[] = {
 	{"src", 0, 0, getSrc, setSrc},
 	{"width", 0, 0, getWidth, setWidth},
@@ -114,6 +154,11 @@ static JSPropertySpec properties[] = {
 	{"naturalWidth", 0, 0, naturalWidth, JS_PropertyStub},
 	{"naturalHeight", 0, 0, naturalHeight, JS_PropertyStub},
 	{"complete", 0, 0, complete, JS_PropertyStub},
+
+	// Event attributes
+	{_eventAttributeTable[0], 0, 0, JS_PropertyStub, setEventAttribute},
+	{_eventAttributeTable[1], 1, 0, JS_PropertyStub, setEventAttribute},
+	{_eventAttributeTable[2], 2, 0, JS_PropertyStub, setEventAttribute},
 	{0}
 };
 

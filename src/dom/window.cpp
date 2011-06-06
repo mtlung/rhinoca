@@ -6,7 +6,6 @@
 #include "mouseevent.h"
 #include "node.h"
 #include "windowlocation.h"
-#include "../array.h"
 #include "../common.h"
 #include "../context.h"
 #include "../vector.h"
@@ -201,7 +200,7 @@ static JSBool location(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	return JS_TRUE;
 }
 
-const Array<const char*, 3> _eventAttributeTable = {
+static const char* _eventAttributeTable[] = {
 	"onload",
 };
 

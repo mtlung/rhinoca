@@ -2,7 +2,6 @@
 #include "element.h"
 #include "document.h"
 #include "nodelist.h"
-#include "../array.h"
 #include "../context.h"
 #include "../path.h"
 
@@ -56,7 +55,7 @@ static JSBool tagName(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	return JS_TRUE;
 }
 
-const Array<const char*, 3> _eventAttributeTable = {
+static const char* _eventAttributeTable[] = {
 	"onmouseup",
 	"onmousedown",
 	"onmousemove"
