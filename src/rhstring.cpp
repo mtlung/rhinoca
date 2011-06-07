@@ -127,7 +127,8 @@ String& String::erase(size_type offset, size_type count)
 
 String::size_type String::find(char c, size_type offset) const
 {
-	return find(&c, offset);
+	char str[] = { c, '\0' };
+	return find(str, offset);
 }
 
 String::size_type String::find(const char* str, size_type offset) const
@@ -138,7 +139,8 @@ String::size_type String::find(const char* str, size_type offset) const
 
 String::size_type String::rfind(char c, size_type offset) const
 {
-	return rfind(&c, offset);
+	char str[] = { c, '\0' };
+	return rfind(str, offset);
 }
 
 String::size_type String::rfind(const char* str, size_type offset) const

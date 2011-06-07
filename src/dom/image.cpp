@@ -128,6 +128,9 @@ static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsval id, jsval* v
 
 	// In case the Image is already loaded when we assign the callback, invoke the callback immediately
 	Dom::Event* ev = NULL;
+
+	if(!self->texture) goto Return;
+
 	const Texture::State state = self->texture->state;
 
 	if(state == Texture::Ready && id == 0) goto Dispatch;
