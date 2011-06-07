@@ -13,6 +13,7 @@
 #include "dom/mouseevent.h"
 #include "dom/registerfactories.h"
 #include "render/driver.h"
+#include <string.h>	// for strlen() and strcasecmp()
 
 #ifdef RHINOCA_IOS
 #	include "context_ios.h"

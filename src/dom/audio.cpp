@@ -5,6 +5,7 @@
 #include "../path.h"
 #include "../resource.h"
 #include "../xmlparser.h"
+#include <string.h>	// for strcasecmp
 
 namespace Dom {
 

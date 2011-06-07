@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "path.h"
 #include "common.h"
+#include <string.h>	// for strcasecmp()
 
 namespace {
 

@@ -76,7 +76,7 @@ String& String::operator=(const String& str)
 void String::resize(unsigned size)
 {
 	if(size == 0)
-		this->swap(String());
+		clear();
 	else {
 		_cstr = (char*)rhinoca_realloc(_length ? _cstr : NULL, _length + 1, size + 1);
 		_length = size;
@@ -120,7 +120,7 @@ String& String::erase(size_type offset, size_type count)
 		_cstr[_length] = '\0';
 	}
 	else
-		this->swap(String());
+		clear();
 
 	return *this;
 }
@@ -168,7 +168,7 @@ String& String::operator+=(const char* str)
 
 String& String::operator+=(const String& str)
 {
-	if(const unsigned len = strlen(str._cstr)) {
+	if(!str.empty()) {
 		_cstr = (char*)rhinoca_realloc(_length ? _cstr : NULL, _length + 1, _length + str._length + 1);
 		VERIFY(strcat(_cstr, str._cstr) == _cstr);
 		_length += str._length;
