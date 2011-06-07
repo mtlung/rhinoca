@@ -1,7 +1,7 @@
 #ifndef __PATH_H__
 #define __PATH_H__
 
-#include <string>
+#include "rhstring.h"
 
 /*!	A path class that is similar the one provided in boost.
 	\note Comparison of Path in windows is case in-sensitive.
@@ -10,7 +10,7 @@ class Path
 {
 public:
 	typedef char char_type;
-	typedef std::basic_string<char_type> string_type;
+	typedef String string_type;
 
 	Path() {}
 
@@ -99,7 +99,7 @@ public:
 	}
 
 	/*!	Beware that comparison may not be accurate if the path are not normalized.
-		Also, comparsion on Windows platforms are case in-sensitive.
+		Also, comparison on Windows platforms are case in-sensitive.
 	 */
 	bool operator==(const Path& rhs) const {
 		return compare(rhs) == 0;

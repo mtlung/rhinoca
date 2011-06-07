@@ -73,7 +73,7 @@ static size_t leafPos(const Path::string_type& str, size_t endPos) // endPos is 
 
 #ifdef _WIN32
 	if(pos == Path::string_type::npos)
-		pos = str.find_last_of(':', endPos - 2);
+		pos = str.rfind(':', endPos - 2);
 #endif	// _WIN32
 
 	return (pos == Path::string_type::npos	// path itself must be a leaf (or empty)

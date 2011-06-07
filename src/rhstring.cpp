@@ -5,6 +5,173 @@
 #include "vector.h"
 #include <string.h>
 
+static char* _emptyString = "";
+
+String::String()
+	: _cstr(_emptyString)
+	, _length(0)
+{
+}
+
+String::String(const char* str)
+{
+	_length = strlen(str);
+	_cstr = (char*)rhinoca_malloc(_length + 1);
+	VERIFY(strncpy(_cstr, str, _length) == _cstr);
+	_cstr[_length] = '\0';
+}
+
+String::String(const char* str, unsigned count)
+{
+	ASSERT(count <= strlen(str));
+	_length = count;
+	_cstr = (char*)rhinoca_malloc(_length + 1);
+	VERIFY(strncpy(_cstr, str, _length) == _cstr);
+	_cstr[_length] = '\0';
+}
+
+String::String(const String& str)
+{
+	_length = str._length;
+	_cstr = (char*)rhinoca_malloc(_length + 1);
+	VERIFY(strncpy(_cstr, str._cstr, _length) == _cstr);
+	_cstr[_length] = '\0';
+}
+
+String::~String()
+{
+	if(_length > 0)
+		rhinoca_free(_cstr);
+}
+
+String& String::operator=(const char* str)
+{
+	String tmp(str);
+	this->swap(tmp);
+	return *this;
+}
+
+String& String::operator=(const String& str)
+{
+	String tmp(str);
+	this->swap(tmp);
+	return *this;
+}
+
+void String::resize(unsigned size)
+{
+	if(size == 0)
+		this->swap(String());
+	else {
+		_cstr = (char*)rhinoca_realloc(_length ? _cstr : NULL, _length + 1, size + 1);
+		_length = size;
+		_cstr[_length] = '\0';
+	}
+}
+
+void String::clear()
+{
+	erase(0);
+}
+
+String& String::erase(size_type offset, size_type count)
+{
+	if(_length == 0)
+		return *this;
+
+	ASSERT(offset < _length);
+	if(count > _length - offset)
+		count = _length - offset;
+
+	if(const unsigned newLen = _length - count) {
+		char* a = _cstr + offset;
+		char* b = a + count;
+		memmove(a, b, _cstr + _length - b);
+		_cstr = (char*)rhinoca_realloc(_length ? _cstr : NULL, _length + 1, newLen + 1);
+		_length = newLen;
+		_cstr[_length] = '\0';
+	}
+	else
+		this->swap(String());
+
+	return *this;
+}
+
+String::size_type String::find(char c, size_type offset) const
+{
+	return find(&c, offset);
+}
+
+String::size_type String::find(const char* str, size_type offset) const
+{
+	const char* ret = strstr(_cstr + offset, str);
+	return ret ? ret - _cstr : npos;
+}
+
+String::size_type String::rfind(char c, size_type offset) const
+{
+	return rfind(&c, offset);
+}
+
+String::size_type String::rfind(const char* str, size_type offset) const
+{
+	const char* ret = rstrstr(_cstr + offset, str);
+	return ret ? ret - _cstr : npos;
+}
+
+String String::substr(size_type offset, size_type count) const
+{
+	if(count == npos)
+		return String(_cstr + offset);
+	return String(_cstr + offset, count);
+}
+
+String& String::operator+=(const char* str)
+{
+	if(const unsigned len = strlen(str)) {
+		_cstr = (char*)rhinoca_realloc(_length ? _cstr : NULL, _length + 1, _length + len + 1);
+		VERIFY(strcat(_cstr, str) == _cstr);
+		_length += len;
+	}
+	return *this;
+}
+
+String& String::operator+=(const String& str)
+{
+	if(const unsigned len = strlen(str._cstr)) {
+		_cstr = (char*)rhinoca_realloc(_length ? _cstr : NULL, _length + 1, _length + str._length + 1);
+		VERIFY(strcat(_cstr, str._cstr) == _cstr);
+		_length += str._length;
+	}
+	return *this;
+}
+
+void String::swap(String& rhs)
+{
+	char* s = _cstr;
+	unsigned l = _length;
+
+	_cstr = rhs._cstr;
+	_length = rhs._length;
+
+	rhs._cstr = s;
+	rhs._length = l;
+}
+
+char* rstrstr(char* __restrict str1, const char* __restrict str2)
+{
+	size_t  s1len = strlen(str1);
+	size_t  s2len = strlen(str2);
+	char* s;
+
+	if(s2len > s1len)
+		return NULL;
+	for(s = str1 + s1len - s2len; s >= str1; --s)
+		if(strncmp(s, str2, s2len) == 0)
+			return s;
+	return NULL;
+}
+
 char* replaceCharacterWithStr(const char* str, const char charArray[], const char** replacements)
 {
 	unsigned orgLen = strlen(str);

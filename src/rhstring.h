@@ -4,6 +4,60 @@
 #include "common.h"
 #include "rhinoca.h"
 
+// A light weight replacement for std::string
+class String
+{
+public:
+	String();
+	String(const char* str);
+	String(const char* str, unsigned count);
+	String(const String& str);
+	~String();
+
+	String& operator=(const char* str);
+	String& operator=(const String& str);
+
+	typedef unsigned size_type;
+
+// Operations
+	void resize(unsigned size);
+
+	void clear();
+	String& erase(size_type offset, size_type count=npos);
+
+	size_type find(char c, size_type offset=0) const;
+	size_type find(const char* str, size_type offset=0) const;
+
+	size_type rfind(char c, size_type offset=0) const;
+	size_type rfind(const char* str, size_type offset=0) const;
+
+	String substr(size_type offset=0, size_type count=npos) const;
+
+	String& operator+=(const char* str);
+	String& operator+=(const String& str);
+
+	void swap(String& rhs);
+
+// Attributes
+	size_type size() const { return _length; }
+	bool empty() const { return _length == 0; }
+
+	char* c_str() { return _cstr; }
+	const char* c_str() const { return _cstr; }
+
+	char& operator[](unsigned index) { ASSERT(index < _length); return _cstr[index]; }
+	char operator[](unsigned index) const { ASSERT(index < _length); return _cstr[index]; }
+
+	static const size_type npos = size_type(-1);
+
+protected:
+	char* _cstr;
+	unsigned _length;
+};	// String
+
+/// Reverse version of strstr
+char* rstrstr(char* str1, const char* str2);
+
 /*!	Replace certain characters in a string with a pre-defined set of string.
 	One example is the encoding of URL:
 	const char* uri = "http://www.abc.com/abc 123&456.htm"
