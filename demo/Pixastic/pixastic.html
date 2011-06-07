@@ -1,0 +1,38 @@
+<html>
+<head>
+<title>Pixastic image processing demo</title>
+<script src="pixastic.core.js"></script>
+<script src="blurfast.js"></script>
+<script src="emboss.js"></script>
+<script src="pointillize.js"></script>
+<script>
+function draw() {
+	var ctx = document.getElementById('canvas').getContext('2d');
+
+	var srcImg = new Image();
+	srcImg.src = 'rhino.jpg';
+
+	srcImg.onload = function() {
+		var x = 0; var y = 0;
+		var img1 = srcImg;
+		ctx.drawImage(img1, x, y);
+
+		x += srcImg.width + 20; y = 0;
+		var img2 = Pixastic.process(srcImg, "blurfast", {amount:0.2});
+		ctx.drawImage(img2, x, y);
+
+		x = 0; y += srcImg.height + 20;
+		var img3 = Pixastic.process(srcImg, "pointillize", {radius:4,density:1,noise:1,transparent:false});
+		ctx.drawImage(img3, x, y);
+
+		x += srcImg.width + 20; y += 0;
+		var img4 = Pixastic.process(srcImg, "emboss", {strength:2,blend:true});
+		ctx.drawImage(img4, x, y);
+	}
+}
+</script>
+</head>
+<body onload="draw();">
+	<canvas id="canvas" width="600" height="600" frontBufferOnly="true"></canvas>
+</body>
+</html>
