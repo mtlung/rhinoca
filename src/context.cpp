@@ -20,8 +20,6 @@
 #	include "context_win.h"
 #endif
 
-#include <string>
-
 #ifdef RHINOCA_VC
 #	ifndef NDEBUG
 #		pragma comment(lib, "js32d")
@@ -175,7 +173,7 @@ void Rhinoca::_initGlobal()
 	}
 }
 
-static void appendFileToString(void* file, std::string& str)
+static void appendFileToString(void* file, String& str)
 {
 	char buf[128];
 	rhuint64 readCount;
@@ -216,7 +214,7 @@ bool Rhinoca::openDoucment(const char* uri)
 	closeDocument();
 	_initGlobal();
 
-	std::string html;
+	String html;
 
 	{	// Reads the html file into memory
 		void* file = io_open(this, uri, 0);
@@ -264,7 +262,7 @@ bool Rhinoca::openDoucment(const char* uri)
 			if(strcasecmp(parser.elementName(), "body") == 0)
 			{
 				if(const char* str = parser.attributeValueIgnoreCase("onload")) {
-					std::string script = "window.onload=function(){";
+					String script = "window.onload=function(){";
 					script += str;
 					script += "};";
 					jsval rval;
@@ -284,7 +282,7 @@ bool Rhinoca::openDoucment(const char* uri)
 			parser.popAttributes();
 			if(strcasecmp(parser.elementName(), "script") == 0)
 			{
-				std::string script;
+				String script;
 				Path scriptUrl = documentUrl.c_str();
 				unsigned lineNo = 0;
 				const char* srcUrl = NULL;

@@ -4,7 +4,18 @@
 #include "rhinoca.h"
 
 #if defined(RHINOCA_VC)
-#	include <intrin.h>
+// Replace the huge <intrin.h> with just 4 lines of declaration
+//#	include <intrin.h>
+#if defined(__cplusplus)
+extern "C" {
+#endif
+long __cdecl _InterlockedIncrement(long volatile *);
+long __cdecl _InterlockedDecrement(long volatile *);
+#pragma intrinsic(_InterlockedIncrement)
+#pragma intrinsic(_InterlockedDecrement)
+#if defined(__cplusplus)
+}
+#endif
 #elif defined(RHINOCA_APPLE)
 #	include <libkern/OSAtomic.h>
 #endif

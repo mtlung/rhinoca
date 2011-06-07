@@ -22,6 +22,8 @@ public:
 // Operations
 	void resize(unsigned size);
 
+	String& append(const char* str, size_type count);
+
 	void clear();
 	String& erase(size_type offset, size_type count=npos);
 

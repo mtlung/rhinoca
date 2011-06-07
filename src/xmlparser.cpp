@@ -2,7 +2,7 @@
 #include "xmlparser.h"
 #include <memory.h>	// For memcpy
 #include <stack>
-#include <vector>
+#include "vector.h"
 
 // Adopted from Irrlicht engine's xml parser
 // http://www.ambiera.com/irrxml/
@@ -74,7 +74,7 @@ class XmlParser::Impl
 		const char* value;
 	};	// Attribute
 
-	typedef std::vector<Attribute> Attributes;
+	typedef Vector<Attribute> Attributes;
 
 public:
 	Impl() : mIsEmptyElement(false)

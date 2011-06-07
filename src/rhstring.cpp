@@ -16,26 +16,41 @@ String::String()
 String::String(const char* str)
 {
 	_length = strlen(str);
-	_cstr = (char*)rhinoca_malloc(_length + 1);
-	VERIFY(strncpy(_cstr, str, _length) == _cstr);
-	_cstr[_length] = '\0';
+
+	if(_length) {
+		_cstr = (char*)rhinoca_malloc(_length + 1);
+		VERIFY(strncpy(_cstr, str, _length) == _cstr);
+		_cstr[_length] = '\0';
+	}
+	else
+		_cstr = _emptyString;
 }
 
 String::String(const char* str, unsigned count)
 {
 	ASSERT(count <= strlen(str));
 	_length = count;
-	_cstr = (char*)rhinoca_malloc(_length + 1);
-	VERIFY(strncpy(_cstr, str, _length) == _cstr);
-	_cstr[_length] = '\0';
+
+	if(_length) {
+		_cstr = (char*)rhinoca_malloc(_length + 1);
+		VERIFY(strncpy(_cstr, str, _length) == _cstr);
+		_cstr[_length] = '\0';
+	}
+	else
+		_cstr = _emptyString;
 }
 
 String::String(const String& str)
 {
 	_length = str._length;
-	_cstr = (char*)rhinoca_malloc(_length + 1);
-	VERIFY(strncpy(_cstr, str._cstr, _length) == _cstr);
-	_cstr[_length] = '\0';
+
+	if(_length) {
+		_cstr = (char*)rhinoca_malloc(_length + 1);
+		VERIFY(strncpy(_cstr, str._cstr, _length) == _cstr);
+		_cstr[_length] = '\0';
+	}
+	else
+		_cstr = _emptyString;
 }
 
 String::~String()
@@ -67,6 +82,19 @@ void String::resize(unsigned size)
 		_length = size;
 		_cstr[_length] = '\0';
 	}
+}
+
+String& String::append(const char* str, size_type count)
+{
+	if(count > 0) {
+		ASSERT(count <= strlen(str));
+		_cstr = (char*)rhinoca_realloc(_length ? _cstr : NULL, _length + 1, _length + count + 1);
+		memcpy(_cstr + _length, str, count);
+		_length += count;
+		_cstr[_length] = '\0';
+	}
+
+	return *this;
 }
 
 void String::clear()
@@ -348,7 +376,7 @@ public:
 	}
 
 	mutable Mutex mMutex;
-	size_t mCount;	//!< The actuall number of elements in this table, can be <=> mBuckets.size()
+	size_t mCount;	//!< The actual number of elements in this table, can be <=> mBuckets.size()
 	Vector<Node*> mBuckets;
 	Node& mNullNode;
 };	// FixStringHashTable

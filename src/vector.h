@@ -8,6 +8,9 @@
 template<typename T> class Vector
 {
 public:
+	typedef T* iterator;
+	typedef const T* const_iterator;
+
 	Vector()
 	{
 		_vals = NULL;
@@ -15,7 +18,11 @@ public:
 		_allocated = 0;
 	}
 
-	Vector(const Vector<T>& v) { copy(v); }
+	Vector(const Vector<T>& v)
+		: _vals(NULL), _size(0), _allocated(0)
+	{
+		copy(v);
+	}
 
 	explicit Vector(rhuint initSize, const T& fill = T())
 		: _vals(NULL), _size(0), _allocated(0)
@@ -31,6 +38,13 @@ public:
 		rhdelete(_vals);
 	}
 
+	Vector& operator=(const Vector& rhs)
+	{
+		copy(rhs);
+		return *this;
+	}
+
+// Operations
 	void copy(const Vector<T>& v)
 	{
 		resize(v._size);
@@ -60,15 +74,11 @@ public:
 		}
 	}
 
+	void clear() { _size = 0; }
+
 	void shrinktofit() { if(_size > 4) { _realloc(_size); } }
 
-	T& top() const { ASSERT(_size > 0); return _vals[_size - 1]; }
-
-	inline rhuint size() const { return _size; }
-
-	bool empty() const { return (_size <= 0); }
-
-	inline T& push_back(const T& val = T())
+	T& push_back(const T& val = T())
 	{
 		if(_allocated <= _size) {
 			_realloc(_size * 2);
@@ -76,7 +86,7 @@ public:
 		return *(new ((void *)&_vals[_size++]) T(val));
 	}
 
-	inline void pop_back() { ASSERT(_size > 0); _size--; _vals[_size].~T(); }
+	void pop_back() { ASSERT(_size > 0); _size--; _vals[_size].~T(); }
 
 	void insert(rhuint idx, const T& val)
 	{
@@ -84,7 +94,7 @@ public:
 		for(rhuint i = _size - 1; i > idx; i--) {
 			_vals[i] = _vals[i - 1];
 		}
-    	_vals[idx] = val;
+		_vals[idx] = val;
 	}
 
 	void remove(rhuint idx)
@@ -97,11 +107,25 @@ public:
 		--_size;
 	}
 
+// Attributes
+	iterator begin() { return _vals; }
+	const_iterator begin() const { return _vals; }
+
+	iterator end() { return _vals + _size; }
+	const_iterator end() const { return _vals + _size; }
+
+	rhuint size() const { return _size; }
+
+	bool empty() const { return (_size <= 0); }
+
 	rhuint capacity() { return _allocated; }
 
-	inline T& back() const { ASSERT(_size > 0); return _vals[_size - 1]; }
+	T& top() const { ASSERT(_size > 0); return _vals[_size - 1]; }
 
-	inline T& operator[](rhuint pos) const{ ASSERT(pos < _size); return _vals[pos]; }
+	T& back() const { ASSERT(_size > 0); return _vals[_size - 1]; }
+
+	T& at(rhuint pos) const{ ASSERT(pos < _size); return _vals[pos]; }
+	T& operator[](rhuint pos) const{ ASSERT(pos < _size); return _vals[pos]; }
 
 	void swap(Vector& rhs)
 	{
