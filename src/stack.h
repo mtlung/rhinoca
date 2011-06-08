@@ -23,7 +23,7 @@ public:
 	T& top() { return _vector.back(); }
 	const T& top() const { return _vector.back(); }
 
-	T& back() const { ASSERT(_size > 0); return _vals[_size - 1]; }
+	T& back() const { return _vector.back(); }
 
 protected:
 	Vector<T> _vector;

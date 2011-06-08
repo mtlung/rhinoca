@@ -84,6 +84,7 @@
 		9C3B3BD61385590000E3AE02 /* loader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B3BD41385590000E3AE02 /* loader.cpp */; };
 		9C3B3BD71385590000E3AE02 /* loader.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C3B3BD51385590000E3AE02 /* loader.h */; };
 		9C3B3BD91385592800E3AE02 /* audiodevice.openal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B3BD81385592800E3AE02 /* audiodevice.openal.cpp */; };
+		9C81DC8A139FC94500952557 /* stack.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C81DC89139FC94500952557 /* stack.h */; };
 		9C91B8D1132545A000195FF7 /* driverdetail.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C91B8D0132545A000195FF7 /* driverdetail.h */; };
 		9C93C8FF1379825F00682898 /* media.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C93C8FD1379825F00682898 /* media.cpp */; };
 		9C93C9001379825F00682898 /* media.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C93C8FE1379825F00682898 /* media.h */; };
@@ -236,6 +237,7 @@
 		9C3B3BD41385590000E3AE02 /* loader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = loader.cpp; path = ../../../src/loader.cpp; sourceTree = "<group>"; };
 		9C3B3BD51385590000E3AE02 /* loader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = loader.h; path = ../../../src/loader.h; sourceTree = "<group>"; };
 		9C3B3BD81385592800E3AE02 /* audiodevice.openal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = audiodevice.openal.cpp; path = ../../../src/audio/audiodevice.openal.cpp; sourceTree = "<group>"; };
+		9C81DC89139FC94500952557 /* stack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stack.h; path = ../../../src/stack.h; sourceTree = "<group>"; };
 		9C91B8D0132545A000195FF7 /* driverdetail.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = driverdetail.h; path = ../../../src/render/driverdetail.h; sourceTree = SOURCE_ROOT; };
 		9C93C8FD1379825F00682898 /* media.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = media.cpp; path = ../../../src/dom/media.cpp; sourceTree = "<group>"; };
 		9C93C8FE1379825F00682898 /* media.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = media.h; path = ../../../src/dom/media.h; sourceTree = "<group>"; };
@@ -375,6 +377,7 @@
 				9CB22F8C136B2735004D8BB2 /* socket.cpp */,
 				9CB22F8D136B2735004D8BB2 /* socket.h */,
 				187BCA1B12F9B8B40042FDB1 /* sort.h */,
+				9C81DC89139FC94500952557 /* stack.h */,
 				187BCA2912F9B9180042FDB1 /* taskpool.cpp */,
 				187BCA2A12F9B9180042FDB1 /* taskpool.h */,
 				187BCA2B12F9B9180042FDB1 /* timer.cpp */,
@@ -592,6 +595,7 @@
 				9CBF7B331393F3DC0041806B /* event.h in Headers */,
 				9C39095F139D489A001119F1 /* canvaspixelarray.h in Headers */,
 				9C390963139D48A7001119F1 /* imagedata.h in Headers */,
+				9C81DC8A139FC94500952557 /* stack.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

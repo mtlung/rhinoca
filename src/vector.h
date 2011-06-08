@@ -6,7 +6,7 @@
 #ifndef _NEW_
 // Define our own placement new and delete operator such that we need not to include <new>
 //#include <new>
-inline void* operator new(rhuint, void* where) { return where; }
+inline void* operator new(size_t, void* where) { return where; }
 inline void operator delete(void*, void*) {}
 #endif	// _NEW_
 
