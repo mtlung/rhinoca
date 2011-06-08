@@ -1,8 +1,8 @@
 #include "pch.h"
 #include "../src/taskpool.h"
 #include "../src/timer.h"
+#include "../src/vector.h"
 #include <stdlib.h>
-#include <vector>
 
 static const bool benchmark = false;
 static const rhuint testSize = benchmark ? 10000000 : 1000;
@@ -54,7 +54,7 @@ static void mergeSortSingleThread(int* data, int* scratch, int begin, int end)
 
 TEST(TaskPoolSingleThreadMergeSortTest)
 {
-	std::vector<int> data(testSize), scratch(testSize);
+	Vector<int> data(testSize), scratch(testSize);
 	for(rhuint i=0; i<data.size(); ++i)
 		data[i] = rand() % data.size();
 
@@ -149,7 +149,7 @@ TEST(TaskPoolMultiThreadMergeSortTest)
 	TaskPool taskPool;
 	taskPool.init(3);
 
-	std::vector<int> data(testSize), scratch(testSize);;
+	Vector<int> data(testSize), scratch(testSize);;
 	for(rhuint i=0; i<data.size(); ++i)
 		data[i] = rand() % data.size();
 

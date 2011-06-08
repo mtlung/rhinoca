@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "map.h"
-#include <memory>	// For std::swap (VC only needs <utilty> but gcc need <memory>)
 
 namespace Impl {
 

@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "xmlparser.h"
 #include <memory.h>	// For memcpy
-#include <stack>
+#include "stack.h"
 #include "vector.h"
 
 // Adopted from Irrlicht engine's xml parser
@@ -412,7 +412,7 @@ public:
 
 	Attributes mAttributes;
 
-	std::stack<Attributes> mStack;
+	Stack<Attributes> mStack;
 };	// Impl
 
 XmlParser::XmlParser()

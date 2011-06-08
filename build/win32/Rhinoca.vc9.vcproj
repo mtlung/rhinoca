@@ -43,6 +43,7 @@
 				Optimization="0"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;WIN32"
 				MinimalRebuild="true"
+				ExceptionHandling="0"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
@@ -108,6 +109,7 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;WIN32"
+				ExceptionHandling="0"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
@@ -678,6 +680,10 @@
 		</File>
 		<File
 			RelativePath="..\..\src\socket.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\src\stack.h"
 			>
 		</File>
 		<File

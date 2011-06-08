@@ -2,7 +2,13 @@
 #define __VECTOR_H__
 
 #include "common.h"
-#include <new>	// Visual studio need this header for placement new!
+
+#ifndef _NEW_
+// Define our own placement new and delete operator such that we need not to include <new>
+//#include <new>
+inline void* operator new(rhuint, void* where) { return where; }
+inline void operator delete(void*, void*) {}
+#endif	// _NEW_
 
 // Mini vector class, supports objects by value
 template<typename T> class Vector
@@ -107,6 +113,13 @@ public:
 		--_size;
 	}
 
+	void swap(Vector& rhs)
+	{
+		T* v = _vals; _vals = rhs._vals; rhs._vals = v;
+		rhuint s = _size; _size = rhs._size; rhs._size = s;
+		rhuint a = _allocated; _allocated = rhs._allocated; rhs._allocated = a;
+	}
+
 // Attributes
 	iterator begin() { return _vals; }
 	const_iterator begin() const { return _vals; }
@@ -120,19 +133,17 @@ public:
 
 	rhuint capacity() { return _allocated; }
 
-	T& top() const { ASSERT(_size > 0); return _vals[_size - 1]; }
+	T& top() { ASSERT(_size > 0); return _vals[_size - 1]; }
+	const T& top() const { ASSERT(_size > 0); return _vals[_size - 1]; }
 
-	T& back() const { ASSERT(_size > 0); return _vals[_size - 1]; }
+	T& back() { ASSERT(_size > 0); return _vals[_size - 1]; }
+	const T& back() const { ASSERT(_size > 0); return _vals[_size - 1]; }
 
-	T& at(rhuint pos) const{ ASSERT(pos < _size); return _vals[pos]; }
-	T& operator[](rhuint pos) const{ ASSERT(pos < _size); return _vals[pos]; }
+	T& at(rhuint pos) { ASSERT(pos < _size); return _vals[pos]; }
+	const T& at(rhuint pos) const { ASSERT(pos < _size); return _vals[pos]; }
 
-	void swap(Vector& rhs)
-	{
-		T* v = _vals; _vals = rhs._vals; rhs._vals = v;
-		rhuint s = _size; _size = rhs._size; rhs._size = s;
-		rhuint a = _allocated; _allocated = rhs._allocated; rhs._allocated = a;
-	}
+	T& operator[](rhuint pos) { ASSERT(pos < _size); return _vals[pos]; }
+	const T& operator[](rhuint pos) const { ASSERT(pos < _size); return _vals[pos]; }
 
 	T* _vals;
 
@@ -148,4 +159,4 @@ private:
 	rhuint _allocated;
 };	// Vector
 
-#endif
+#endif	// __VECTOR_H__
