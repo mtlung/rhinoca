@@ -6,32 +6,32 @@ namespace Dom {
 
 JSClass Event::jsClass = {
 	"Event", JSCLASS_HAS_PRIVATE,
-	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-static JSBool stopPropagation(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool stopPropagation(JSContext* cx, uintN argc, jsval* vp)
 {
-	Event* self = reinterpret_cast<Event*>(JS_GetPrivate(cx, obj));
+	Event* self = getJsBindable<Event>(cx, vp);
 	self->stopPropagation();
 	return JS_TRUE;
 }
 
 static JSFunctionSpec methods[] = {
-	{"stopPropagation", stopPropagation, 0,0,0},
+	{"stopPropagation", stopPropagation, 0,0},
 	{0}
 };
 
-static JSBool type(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool type(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	Event* self = reinterpret_cast<Event*>(JS_GetPrivate(cx, obj));
+	Event* self = getJsBindable<Event>(cx, obj);
 	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->type.c_str()));
 	return JS_TRUE;
 }
 
 static JSPropertySpec properties[] = {
-	{"type", 0, JSPROP_READONLY, type, JS_PropertyStub},
+	{"type", 0, JSPROP_READONLY, type, JS_StrictPropertyStub},
 	{0}
 };
 
@@ -71,8 +71,8 @@ void Event::stopPropagation()
 }
 
 JsFunctionEventListener::JsFunctionEventListener(JSContext* ctx)
-	: _jsContext(ctx), _jsClosure(0)
-	, _jsScript(NULL), _jsScriptObject(NULL)
+	: _jsContext(ctx), _jsClosure(JSVAL_NULL)
+	, _jsScript(NULL)
 {
 }
 
@@ -86,11 +86,9 @@ JSBool JsFunctionEventListener::init(jsval stringOrFunc)
 
 	// Compile if the incoming param is string instead of function
 	if(JSVAL_IS_STRING(stringOrFunc)) {
-		JSString* jss = JS_ValueToString(cx, stringOrFunc);
-		_jsScript = JS_CompileScript(cx, JS_GetGlobalObject(cx), JS_GetStringBytes(jss), JS_GetStringLength(jss), NULL, 0);
+		JsString s(cx, stringOrFunc);
+		_jsScript = JS_CompileScript(cx, JS_GetGlobalObject(cx), s.c_str(), s.size(), NULL, 0);
 		if(!_jsScript) return JS_FALSE;
-		_jsScriptObject = JS_NewScriptObject(cx, _jsScript);
-		if(!_jsScriptObject) { JS_DestroyScript(cx, _jsScript); return JS_FALSE; }
 	}
 	else if(JS_ValueToFunction(cx, stringOrFunc)) {
 		_jsClosure = stringOrFunc;
@@ -105,7 +103,7 @@ void JsFunctionEventListener::handleEvent(Event* evt)
 {
 	jsval argv, rval;
 	argv = *evt;
-	if(_jsClosure)
+	if(!JSVAL_IS_NULL(_jsClosure))
 		JS_CallFunctionValue(_jsContext, NULL, _jsClosure, 1, &argv, &rval);
 	else if(_jsScript)
 		JS_ExecuteScript(_jsContext, JS_GetGlobalObject(_jsContext), _jsScript, &rval);
@@ -113,10 +111,10 @@ void JsFunctionEventListener::handleEvent(Event* evt)
 
 void JsFunctionEventListener::jsTrace(JSTracer* trc)
 {
-	if(_jsClosure)
-		JS_CallTracer(trc, JSVAL_TO_GCTHING(_jsClosure), JSVAL_TRACE_KIND(_jsClosure));
-	if(_jsScriptObject)
-		JS_CallTracer(trc, _jsScriptObject, JSTRACE_OBJECT);
+	if(!JSVAL_IS_NULL(_jsClosure))
+		JS_CALL_VALUE_TRACER(trc, _jsClosure, "JsFunctionEventListener._jsClosure");
+	if(_jsScript)
+		JS_CALL_OBJECT_TRACER(trc, _jsScript, "JsFunctionEventListener._jsScript");
 }
 
 ElementAttributeEventListener::ElementAttributeEventListener(JSContext* ctx, const char* eventAttributeName)
@@ -152,9 +150,8 @@ void EventTarget::addEventListener(const char* type, EventListener* listener, bo
 
 JSBool EventTarget::addEventListener(JSContext* cx, jsval type, jsval func, jsval useCapture)
 {
-	JSString* jss = JS_ValueToString(cx, type);
+	JsString jss(cx, type);
 	if(!jss) return JS_FALSE;
-	char* str = JS_GetStringBytes(jss);
 
 	JSBool capture;
 	if(!JS_ValueToBoolean(cx, useCapture, &capture)) return JS_FALSE;
@@ -162,7 +159,7 @@ JSBool EventTarget::addEventListener(JSContext* cx, jsval type, jsval func, jsva
 	JsFunctionEventListener* listener = new JsFunctionEventListener(cx);
 	
 	if(listener->init(func))
-		addEventListener(str, listener, capture == JS_TRUE);
+		addEventListener(jss.c_str(), listener, capture == JS_TRUE);
 	else {
 		delete listener;
 		return JS_FALSE;
@@ -205,16 +202,15 @@ void EventTarget::removeEventListener(const char* type, void* listenerIdentifier
 
 JSBool EventTarget::removeEventListener(JSContext* cx, jsval type, jsval func, jsval useCapture)
 {
-	JSString* jss = JS_ValueToString(cx, type);
+	JsString jss(cx, type);
 	if(!jss) return JS_FALSE;
-	char* str = JS_GetStringBytes(jss);
 
 	JSBool capture;
 	if(!JS_ValueToBoolean(cx, useCapture, &capture)) return JS_FALSE;
 
 	if(!JS_ValueToFunction(cx, func)) return JS_FALSE;
 
-	removeEventListener(str, (void*)func, capture == JS_TRUE);
+	removeEventListener(jss.c_str(), JSVAL_TO_OBJECT(func), capture == JS_TRUE);
 
 	return JS_TRUE;
 }
@@ -286,8 +282,9 @@ JSBool EventTarget::dispatchEvent(Event* ev)
 
 void EventTarget::jsTrace(JSTracer* trc)
 {
-	for(EventListener* l = _eventListeners.begin(); l != _eventListeners.end(); l = l->next())
+	for(EventListener* l = _eventListeners.begin(); l != _eventListeners.end(); l = l->next()) {
 		l->jsTrace(trc);
+	}
 }
 
 }	// namespace Dom

@@ -4,6 +4,9 @@
 #include "rhstring.h"
 
 #define XP_WIN
+#ifdef _DEBUG
+#	define DEBUG
+#endif
 #include "../thirdParty/SpiderMonkey/jsapi.h"
 #undef XP_WIN
 
@@ -39,5 +42,70 @@ public:
 
 	static void finalize(JSContext* cx, JSObject* obj);
 };	// JsBindable
+
+/// Get JsBindable from JSObject
+extern JsBindable* getJsBindable(JSContext* cx, JSObject* obj, JSClass* jsClass);
+
+template<class T>
+static T* getJsBindable(JSContext* cx, JSObject* obj)
+{
+	JsBindable* b = getJsBindable(cx, obj, &T::jsClass);
+	return static_cast<T*>(b);
+}
+
+/// Get the 'this' pointer for the current JS function
+template<class T>
+static T* getJsBindable(JSContext* cx, jsval* vp)
+{
+	JsBindable* ret = getJsBindable<T>(cx, JS_THIS_OBJECT(cx, vp));
+	ASSERT(dynamic_cast<T*>(ret));
+	return static_cast<T*>(ret);
+}
+
+/// Get the i-th parameter as JsBindable
+template<class T>
+static T* getJsBindable(JSContext* cx, jsval* vp, unsigned paramIdx)
+{
+	return getJsBindable<T>(cx, JSVAL_TO_OBJECT(JS_ARGV(cx, vp)[paramIdx]));
+}
+
+class JsString
+{
+public:
+	JsString(JSContext* cx, jsval v);
+	JsString(JSContext* cx, jsval* vp, unsigned paramIdx);
+	~JsString();
+
+    char* c_str() const { return _bytes; }
+
+	unsigned size() const { return _length; }
+
+
+	//!	Non-Null test for using "if (p) ..." to check whether p is NULL.
+	typedef char* JsString::*unspecified_bool_type;
+	operator unspecified_bool_type() const {
+		return _bytes == NULL ? NULL : &JsString::_bytes;
+	}
+
+	bool operator!() const { return !_bytes; }
+
+private:
+	char* _bytes;
+	unsigned _length;
+
+	JsString(const JsString&);
+	JsString& operator=(const JsString&);
+};	// JsString
+
+#define JS_ARGV0 (JS_ARGV(cx, vp)[0])
+#define JS_ARGV1 (JS_ARGV(cx, vp)[1])
+#define JS_ARGV2 (JS_ARGV(cx, vp)[2])
+#define JS_ARGV3 (JS_ARGV(cx, vp)[3])
+#define JS_ARGV4 (JS_ARGV(cx, vp)[4])
+#define JS_ARGV5 (JS_ARGV(cx, vp)[5])
+#define JS_ARGV6 (JS_ARGV(cx, vp)[6])
+#define JS_ARGV7 (JS_ARGV(cx, vp)[7])
+#define JS_ARGV8 (JS_ARGV(cx, vp)[8])
+#define JS_ARGV9 (JS_ARGV(cx, vp)[9])
 
 #endif	// __JSBINDABLE_H__

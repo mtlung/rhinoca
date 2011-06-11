@@ -24,6 +24,9 @@ Color::Color(float r_, float g_, float b_, float a_)
 // TODO: Parse more formats
 bool Color::parse(const char* str)
 {
+	if(!str)
+		return false;
+
 	unsigned len = 0;
 	char buf[32];
 

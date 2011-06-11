@@ -6,20 +6,20 @@ namespace Dom {
 
 JSClass KeyEvent::jsClass = {
 	"KeyEvent", JSCLASS_HAS_PRIVATE,
-	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-static JSBool keyCode(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool keyCode(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	KeyEvent* self = reinterpret_cast<KeyEvent*>(JS_GetPrivate(cx, obj));
+	KeyEvent* self = getJsBindable<KeyEvent>(cx, obj);
 	*vp = INT_TO_JSVAL(self->keyCode);
 	return JS_TRUE;
 }
 
 static JSPropertySpec properties[] = {
-	{"keyCode", 0, 0, keyCode, JS_PropertyStub},
+	{"keyCode", 0, 0, keyCode, JS_StrictPropertyStub},
 	{0}
 };
 

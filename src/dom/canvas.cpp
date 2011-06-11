@@ -11,36 +11,36 @@ using namespace Render;
 namespace Dom {
 
 JSClass HTMLCanvasElement::jsClass = {
-	"HTMLCanvasElement", JSCLASS_HAS_PRIVATE,
-	JS_PropertyStub,  JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	"HTMLCanvasElement", JSCLASS_HAS_PRIVATE | JSCLASS_HAS_RESERVED_SLOTS(1),
+	JS_PropertyStub,  JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub,  JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-static JSBool getWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool getWidth(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	HTMLCanvasElement* self = reinterpret_cast<HTMLCanvasElement*>(JS_GetPrivate(cx, obj));
+	HTMLCanvasElement* self = getJsBindable<HTMLCanvasElement>(cx, obj);
 	*vp = INT_TO_JSVAL(self->width()); return JS_TRUE;
 }
 
-static JSBool getHeight(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool getHeight(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	HTMLCanvasElement* self = reinterpret_cast<HTMLCanvasElement*>(JS_GetPrivate(cx, obj));
+	HTMLCanvasElement* self = getJsBindable<HTMLCanvasElement>(cx, obj);
 	*vp = INT_TO_JSVAL(self->height()); return JS_TRUE;
 }
 
-static JSBool setWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setWidth(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	HTMLCanvasElement* self = reinterpret_cast<HTMLCanvasElement*>(JS_GetPrivate(cx, obj));
+	HTMLCanvasElement* self = getJsBindable<HTMLCanvasElement>(cx, obj);
 	int32 width;
 	if(!JS_ValueToInt32(cx, *vp, &width)) return JS_FALSE;
 	self->setWidth(width);
 	return JS_TRUE;
 }
 
-static JSBool setHeight(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setHeight(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	HTMLCanvasElement* self = reinterpret_cast<HTMLCanvasElement*>(JS_GetPrivate(cx, obj));
+	HTMLCanvasElement* self = getJsBindable<HTMLCanvasElement>(cx, obj);
 	int32 height;
 	if(!JS_ValueToInt32(cx, *vp, &height)) return JS_FALSE;
 	self->setHeight(height);
@@ -53,9 +53,9 @@ static JSPropertySpec properties[] = {
 	{0}
 };
 
-static JSBool construct(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool construct(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_IsConstructing(cx)) return JS_FALSE;	// Not called as constructor? (called without new)
+	if(!JS_IsConstructing(cx, vp)) return JS_FALSE;	// Not called as constructor? (called without new)
 
 	HTMLCanvasElement* img = new HTMLCanvasElement;
 	img->bind(cx, NULL);
@@ -63,28 +63,30 @@ static JSBool construct(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, j
 	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
 	img->ownerDocument = rh->domWindow->document;
 
-	*rval = *img;
+	JS_RVAL(cx, vp) = *img;
 
 	return JS_TRUE;
 }
 
-static JSBool getContext(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool getContext(JSContext* cx, uintN argc, jsval* vp)
 {
-	HTMLCanvasElement* self = reinterpret_cast<HTMLCanvasElement*>(JS_GetPrivate(cx, obj));
+	HTMLCanvasElement* self = getJsBindable<HTMLCanvasElement>(cx, vp);
 
-	JSString* jss = JS_ValueToString(cx, argv[0]);
-	char* str = JS_GetStringBytes(jss);
-
-	*rval = JSVAL_VOID;
+	JsString jss(cx, JS_ARGV0);
+	if(!jss) return JS_FALSE;
 
 	if(!self->context) {
-		self->createContext(str);
+		self->createContext(jss.c_str());
 		self->context->bind(cx, NULL);
-		self->context->addGcRoot();	// releaseGcRoot() in ~HTMLCanvasElement()
+		// Create mutual reference between Canvas and Canvas2DContext, to make sure
+		// they live together in JSGC
+		VERIFY(JS_SetReservedSlot(cx, *self->context, 0, *self));
+		VERIFY(JS_SetReservedSlot(cx, *self, 0, *self->context));
+
 	}
 
 	if(self->context) {
-		*rval = *self->context;
+		JS_RVAL(cx, vp) = *self->context;
 		return JS_TRUE;
 	}
 
@@ -92,7 +94,7 @@ static JSBool getContext(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, 
 }
 
 static JSFunctionSpec methods[] = {
-	{"getContext", getContext, 1,0,0},
+	{"getContext", getContext, 1,0,},
 	{0}
 };
 
@@ -105,7 +107,6 @@ HTMLCanvasElement::~HTMLCanvasElement()
 {
 	if(context) {
 		context->canvas = NULL;
-		if(jsContext) context->releaseGcRoot();
 		context->releaseReference();
 	}
 }

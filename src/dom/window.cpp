@@ -17,17 +17,23 @@ namespace Dom {
 
 static void traceDataOp(JSTracer* trc, JSObject* obj)
 {
-	Window* self = reinterpret_cast<Window*>(JS_GetPrivate(trc->context, obj));
+	Window* self = getJsBindable<Window>(trc->context, obj);
 
 	self->EventTarget::jsTrace(trc);
 
 	if(self->document)
-		JS_CallTracer(trc, self->document->jsObject, JSTRACE_OBJECT);
+		JS_CALL_OBJECT_TRACER(trc, self->document->jsObject, "Window.document");
+
+	for(FrameRequestCallback* cb = self->frameRequestCallbacks.begin(); cb != self->frameRequestCallbacks.end();)
+		JS_CALL_OBJECT_TRACER(trc, *cb, "Window.frameRequestCallback[i]");
+
+	for(TimerCallback* cb = self->timerCallbacks.findMin(); cb != NULL; cb = cb->next())
+		JS_CALL_OBJECT_TRACER(trc, *cb, "Window.timerCallbacks[i]");
 }
 
 JSClass Window::jsClass = {
 	"Window", JSCLASS_HAS_PRIVATE | JSCLASS_MARK_IS_TRACE,
-	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize,
 	0, 0, 0, 0, 0, 0,
@@ -35,93 +41,84 @@ JSClass Window::jsClass = {
 	0
 };
 
-static JSBool alert(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool alert(JSContext* cx, uintN argc, jsval* vp)
 {
-	JSString* jss = JS_ValueToString(cx, argv[0]);
+	JsString jss(cx, vp, 0);
 	if(alertFunc && jss) {
-		Window* self = reinterpret_cast<Window*>(JS_GetPrivate(cx, obj));
-		char* str = JS_GetStringBytes(jss);
-		alertFunc(self->rhinoca, alertFuncUserData, str);
+		Window* self = getJsBindable<Window>(cx, vp);
+		alertFunc(self->rhinoca, alertFuncUserData, jss.c_str());
 		return JS_TRUE;
 	}
 	return JS_FALSE;
 }
 
-static JSBool compileScript(TimerCallback* cb, JSContext* cx, JSObject* obj, jsval* argv)
+static JSBool compileScript(TimerCallback* cb, JSContext* cx, jsval* vp)
 {
-	JSString* jss = JS_ValueToString(cx, argv[0]);
-	cb->jsScript = JS_CompileScript(cx, obj, JS_GetStringBytes(jss), JS_GetStringLength(jss), NULL, 0);
+	JsString jss(cx, vp, 0);
+	cb->jsScript = JS_CompileScript(cx, JS_THIS_OBJECT(cx, vp), jss.c_str(), jss.size(), NULL, 0);
 	if(!cb->jsScript) return JS_FALSE;
-	cb->jsScriptObject = JS_NewScriptObject(cx, cb->jsScript);
-	if(!cb->jsScriptObject) { JS_DestroyScript(cx, cb->jsScript); return JS_FALSE; }
-	VERIFY(JS_AddNamedRoot(cx, &cb->jsScriptObject, "TimerCallback's script object"));
+	VERIFY(JS_SetReservedSlot(cx, *cb, 0, OBJECT_TO_JSVAL(cb->jsScript)));
 
 	return JS_TRUE;
 }
 
-JSBool setTimeout(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+JSBool setTimeout(JSContext* cx, uintN argc, jsval* vp)
 {
 	int32 timeout;	// In unit of millisecond
-	if(!JS_ValueToInt32(cx, argv[1], &timeout)) return JS_FALSE;
-	Window* self = reinterpret_cast<Window*>(JS_GetPrivate(cx, obj));
+	if(!JS_ValueToInt32(cx, JS_ARGV1, &timeout)) return JS_FALSE;
+	Window* self = getJsBindable<Window>(cx, vp);
 
 	TimerCallback* cb = new TimerCallback;
 	cb->bind(cx, NULL);
 
-	if(JSVAL_IS_STRING(argv[0])) {
-		if(!compileScript(cb, cx, obj, argv)) return JS_FALSE;
+	if(JSVAL_IS_STRING(JS_ARGV0)) {
+		if(!compileScript(cb, cx, vp)) return JS_FALSE;
 	}
 	else {
-		cb->closure = argv[0];
-		VERIFY(JS_AddNamedRoot(cx, &cb->closure, "Closure of TimerCallback"));
+		cb->closure = JS_ARGV0;
+		VERIFY(JS_SetReservedSlot(cx, *cb, 0, cb->closure));
 	}
 
 	cb->interval = 0;
 	cb->setNextInvokeTime(float(self->timer.seconds()) + (float)timeout/1000);
 
 	self->timerCallbacks.insert(*cb);
-	cb->addGcRoot();	// releaseGcRoot() in ~TimerCallback::removeThis()
 
-	*rval = *cb;
+	JS_RVAL(cx, vp) = *cb;
 
 	return JS_TRUE;
 }
 
-JSBool setInterval(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+JSBool setInterval(JSContext* cx, uintN argc, jsval* vp)
 {
 	int32 interval;	// In unit of millisecond
-	if(!JS_ValueToInt32(cx, argv[1], &interval)) return JS_FALSE;
-	Window* self = reinterpret_cast<Window*>(JS_GetPrivate(cx, obj));
+	if(!JS_ValueToInt32(cx, JS_ARGV1, &interval)) return JS_FALSE;
+	Window* self = getJsBindable<Window>(cx, vp);
 
 	TimerCallback* cb = new TimerCallback;
 	cb->bind(cx, NULL);
 
-	if(JSVAL_IS_STRING(argv[0])) {
-		if(!compileScript(cb, cx, obj, argv)) return JS_FALSE;
+	if(JSVAL_IS_STRING(JS_ARGV0)) {
+		if(!compileScript(cb, cx, vp)) return JS_FALSE;
 	}
 	else {
-		cb->closure = argv[0];
-		VERIFY(JS_AddNamedRoot(cx, &cb->closure, "Closure of TimerCallback"));
+		cb->closure = JS_ARGV0;
+		VERIFY(JS_SetReservedSlot(cx, *cb, 0, cb->closure));
 	}
 
 	cb->interval = (float)interval/1000;
 	cb->setNextInvokeTime(float(self->timer.seconds()) + cb->interval);
 
 	self->timerCallbacks.insert(*cb);
-	cb->addGcRoot();	// releaseGcRoot() in TimerCallback::removeThis()
 
-	*rval = *cb;
+	JS_RVAL(cx, vp) = *cb;
 
 	return JS_TRUE;
 }
 
-JSBool clearTimeout(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+JSBool clearTimeout(JSContext* cx, uintN argc, jsval* vp)
 {
-	JSObject* jsTimerCallback = NULL;
-	VERIFY(JS_ValueToObject(cx, argv[0], &jsTimerCallback));
-	if(!JS_InstanceOf(cx, jsTimerCallback, &TimerCallback::jsClass, argv)) return JS_FALSE;
-
-	TimerCallback* timerCallback = reinterpret_cast<TimerCallback*>(JS_GetPrivate(cx, jsTimerCallback));
+	TimerCallback* timerCallback = getJsBindable<TimerCallback>(cx, vp, 0);
 
 	if(timerCallback->isInMap())
 		timerCallback->removeThis();
@@ -129,13 +126,10 @@ JSBool clearTimeout(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval
 	return JS_TRUE;
 }
 
-JSBool clearInterval(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+JSBool clearInterval(JSContext* cx, uintN argc, jsval* vp)
 {
-	JSObject* jsTimerCallback = NULL;
-	VERIFY(JS_ValueToObject(cx, argv[0], &jsTimerCallback));
-	if(!JS_InstanceOf(cx, jsTimerCallback, &TimerCallback::jsClass, argv)) return JS_FALSE;
-
-	TimerCallback* cb = reinterpret_cast<TimerCallback*>(JS_GetPrivate(cx, jsTimerCallback));
+	TimerCallback* cb = getJsBindable<TimerCallback>(cx, vp, 0);
+	if(!cb) return JS_FALSE;
 
 	if(cb->isInMap())
 		cb->removeThis();
@@ -144,35 +138,30 @@ JSBool clearInterval(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsva
 }
 
 // NOTE: For simplicity, we ignore the second parameter to requestAnimationFrame
-JSBool requestAnimationFrame(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+JSBool requestAnimationFrame(JSContext* cx, uintN argc, jsval* vp)
 {
-	Window* self = reinterpret_cast<Window*>(JS_GetPrivate(cx, obj));
+	Window* self = getJsBindable<Window>(cx, vp);
 
 	FrameRequestCallback* cb = new FrameRequestCallback;
 	cb->bind(cx, NULL);
 
-	if(!JSVAL_IS_OBJECT(argv[0]))
+	if(!JSVAL_IS_OBJECT(JS_ARGV0))
 		return JS_FALSE;
 
-	cb->closure = argv[0];
-	VERIFY(JS_AddNamedRoot(cx, &cb->closure, "Closure of FrameRequestCallback"));
+	cb->closure = JS_ARGV0;
+	VERIFY(JS_SetReservedSlot(cx, *cb, 0, cb->closure));
 
 	self->frameRequestCallbacks.pushFront(*cb);
 
-	cb->addGcRoot();	// releaseGcRoot() in FrameRequestCallback::removeThis()
-
-	*rval = *cb;
+	JS_RVAL(cx, vp) = *cb;
 
 	return JS_TRUE;
 }
 
-JSBool cancelRequestAnimationFrame(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+JSBool cancelRequestAnimationFrame(JSContext* cx, uintN argc, jsval* vp)
 {
-	JSObject* jsAnimCallback = NULL;
-	VERIFY(JS_ValueToObject(cx, argv[0], &jsAnimCallback));
-	if(!JS_InstanceOf(cx, jsAnimCallback, &FrameRequestCallback::jsClass, argv)) return JS_FALSE;
-
-	FrameRequestCallback* cb = reinterpret_cast<FrameRequestCallback*>(JS_GetPrivate(cx, jsAnimCallback));
+	FrameRequestCallback* cb = getJsBindable<FrameRequestCallback>(cx, vp, 0);
+	if(!cb) return JS_FALSE;
 
 	if(cb->isInList())
 		cb->removeThis();
@@ -180,20 +169,48 @@ JSBool cancelRequestAnimationFrame(JSContext* cx, JSObject* obj, uintN argc, jsv
 	return JS_TRUE;
 }
 
+static JSBool addEventListener(JSContext* cx, uintN argc, jsval* vp)
+{
+	Window* self = getJsBindable<Window>(cx, vp);
+	return self->addEventListener(cx, JS_ARGV0, JS_ARGV1, JS_ARGV2);
+}
+
+static JSBool removeEventListener(JSContext* cx, uintN argc, jsval* vp)
+{
+	Window* self = getJsBindable<Window>(cx, vp);
+	return self->removeEventListener(cx, JS_ARGV0, JS_ARGV1, JS_ARGV2);
+}
+
+static JSBool dispatchEvent(JSContext* cx, uintN argc, jsval* vp)
+{
+	Window* self = getJsBindable<Window>(cx, vp);
+
+	JSObject* _obj = NULL;
+	if(JS_ValueToObject(cx, JS_ARGV0, &_obj) != JS_TRUE) return JS_FALSE;
+	Event* ev = reinterpret_cast<Event*>(JS_GetPrivate(cx, _obj));
+
+	self->dispatchEvent(ev);
+
+	return JS_TRUE;
+}
+
 static JSFunctionSpec methods[] = {
-	{"alert", alert, 1,0,0},
-	{"setTimeout", setTimeout, 2,0,0},
-	{"setInterval", setInterval, 2,0,0},
-	{"clearTimeout", clearTimeout, 1,0,0},
-	{"clearInterval", clearInterval, 1,0,0},
-	{"requestAnimationFrame", requestAnimationFrame, 2,0,0},
-	{"cancelRequestAnimationFrame", cancelRequestAnimationFrame, 1,0,0},
+	{"alert", alert, 1,0},
+	{"setTimeout", setTimeout, 2,0},
+	{"setInterval", setInterval, 2,0},
+	{"clearTimeout", clearTimeout, 1,0},
+	{"clearInterval", clearInterval, 1,0},
+	{"requestAnimationFrame", requestAnimationFrame, 2,0},
+	{"cancelRequestAnimationFrame", cancelRequestAnimationFrame, 1,0},
+	{"addEventListener", addEventListener, 3,0},
+	{"removeEventListener", removeEventListener, 3,0},
+	{"dispatchEvent", dispatchEvent, 1,0},
 	{0}
 };
 
-static JSBool location(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool location(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	Window* self = reinterpret_cast<Window*>(JS_GetPrivate(cx, obj));
+	Window* self = getJsBindable<Window>(cx, obj);
 	WindowLocation* wLoc = new WindowLocation(self);
 	wLoc->bind(cx, NULL);
 	*vp = *wLoc;
@@ -204,22 +221,22 @@ static const char* _eventAttributeTable[] = {
 	"onload",
 };
 
-static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	// Not implemented
 	return JS_FALSE;
 }
 
-static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	Window* self = reinterpret_cast<Window*>(JS_GetPrivate(cx, obj));
-	id /= 2 + 0;	// Account for having both get and set functions
+	Window* self = getJsBindable<Window>(cx, obj);
+	int32 idx = JSID_TO_INT(id) / 2 + 0;	// Account for having both get and set functions
 
-	return self->addEventListenerAsAttribute(cx, _eventAttributeTable[id], *vp);
+	return self->addEventListenerAsAttribute(cx, _eventAttributeTable[idx], *vp);
 }
 
 static JSPropertySpec properties[] = {
-	{"location", 0, JSPROP_READONLY, location, JS_PropertyStub},
+	{"location", 0, JSPROP_READONLY, location, JS_StrictPropertyStub},
 
 	// Event attributes
 	{_eventAttributeTable[0], 0, 0, getEventAttribute, setEventAttribute},
@@ -311,7 +328,6 @@ void Window::update()
 	for(FrameRequestCallback* cb = frameRequestCallbacks.begin(); cb != frameRequestCallbacks.end();)
 	{
 		jsval rval;
-		ASSERT(cb->closure);
 		jsval argv;
 		VERIFY(JS_NewNumberValue(jsContext, double(usSince1970 / 1000), &argv));
 		JS_CallFunctionValue(jsContext, *this, cb->closure, 1, &argv, &rval);
@@ -371,20 +387,20 @@ unsigned Window::height() const
 }
 
 JSClass TimerCallback::jsClass = {
-	"TimerCallback", JSCLASS_HAS_PRIVATE,
-	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	"TimerCallback", JSCLASS_HAS_PRIVATE | JSCLASS_HAS_RESERVED_SLOTS(1),
+	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 TimerCallback::TimerCallback()
-	: closure(NULL), jsScript(NULL), jsScriptObject(NULL)
+	: closure(JSVAL_VOID), jsScript(NULL)
 {
 }
 
 TimerCallback::~TimerCallback()
 {
-	ASSERT(closure == 0);
+	ASSERT(closure == JSVAL_VOID);
 	ASSERT(jsScript == NULL);
 }
 
@@ -400,29 +416,25 @@ void TimerCallback::bind(JSContext* cx, JSObject* parent)
 void TimerCallback::removeThis()
 {
 	super::removeThis();
-	closure = NULL;
+	closure = JSVAL_VOID;
 	jsScript = NULL;
-	jsScriptObject = NULL;
-	VERIFY(JS_RemoveRoot(jsContext, &closure));
-	VERIFY(JS_RemoveRoot(jsContext, &jsScriptObject));
-	releaseGcRoot();
 }
 
 JSClass FrameRequestCallback::jsClass = {
-	"FrameRequestCallback", JSCLASS_HAS_PRIVATE,
-	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	"FrameRequestCallback", JSCLASS_HAS_PRIVATE | JSCLASS_HAS_RESERVED_SLOTS(1),
+	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 FrameRequestCallback::FrameRequestCallback()
-	: closure(NULL)
+	: closure(JSVAL_VOID)
 {
 }
 
 FrameRequestCallback::~FrameRequestCallback()
 {
-	ASSERT(closure == 0);
+	ASSERT(closure == JSVAL_VOID);
 }
 
 void FrameRequestCallback::bind(JSContext* cx, JSObject* parent)
@@ -437,9 +449,7 @@ void FrameRequestCallback::bind(JSContext* cx, JSObject* parent)
 void FrameRequestCallback::removeThis()
 {
 	super::removeThis();
-	closure = NULL;
-	VERIFY(JS_RemoveRoot(jsContext, &closure));
-	releaseGcRoot();
+	closure = JSVAL_VOID;
 }
 
 }	// namespace Dom

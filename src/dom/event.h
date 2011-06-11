@@ -40,11 +40,11 @@ public:
 	bool bubbles;
 	bool cancelable;
 
+	static JSClass jsClass;
+
 protected:
 	friend class EventTarget;
 	bool _stopPropagation;
-
-	static JSClass jsClass;
 };	// Event
 
 class EventListener : public LinkListBase::Node<EventListener>
@@ -74,13 +74,12 @@ public:
 	override void handleEvent(Event* evt);
 
 protected:
-	override void* identifier() { return (void*)_jsClosure; }
+	override void* identifier() { return JSVAL_TO_OBJECT(_jsClosure); }
 	override void jsTrace(JSTracer* trc);
 
 	JSContext* _jsContext;
-	jsval _jsClosure;			///< The js function closure to be invoked
-	JSScript* _jsScript;		///< The compile script to be invoked
-	JSObject* _jsScriptObject;	///< To manage the life-time of jsScript
+	jsval _jsClosure;		///< The js function closure to be invoked
+	JSObject* _jsScript;	///< The compile script to be invoked
 };	// JsFunctionEventListener
 
 class ElementAttributeEventListener : public JsFunctionEventListener

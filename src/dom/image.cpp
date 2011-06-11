@@ -14,7 +14,7 @@ namespace Dom {
 
 JSClass HTMLImageElement::jsClass = {
 	"HTMLImageElement", JSCLASS_HAS_PRIVATE,
-	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
@@ -47,69 +47,68 @@ static void onLoadCallback(TaskPool* taskPool, void* userData)
 	self->releaseGcRoot();
 }
 
-static JSBool getSrc(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool getSrc(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
+	HTMLImageElement* self = getJsBindable<HTMLImageElement>(cx, obj);
 	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->texture->uri().c_str()));
 	return JS_TRUE;
 }
 
-static JSBool setSrc(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setSrc(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
+	HTMLImageElement* self = getJsBindable<HTMLImageElement>(cx, obj);
 
-	JSString* jss = JS_ValueToString(cx, *vp);
-	if(!jss) return JS_FALSE;
-	char* str = JS_GetStringBytes(jss);
+	JsString str(cx, *vp);
+	if(!str) return JS_FALSE;
 
-	self->setSrc(self->ownerDocument->rhinoca, str);
+	self->setSrc(self->ownerDocument->rhinoca, str.c_str());
 
 	return JS_TRUE;
 }
 
-static JSBool getWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool getWidth(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
+	HTMLImageElement* self = getJsBindable<HTMLImageElement>(cx, obj);
 	*vp = INT_TO_JSVAL(self->width()); return JS_TRUE;
 }
 
-static JSBool setWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setWidth(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
+	HTMLImageElement* self = getJsBindable<HTMLImageElement>(cx, obj);
 	int32 width;
 	if(!JS_ValueToInt32(cx, *vp, &width)) return JS_FALSE;
 	self->_width = width; return JS_TRUE;
 }
 
-static JSBool getHeight(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool getHeight(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
+	HTMLImageElement* self = getJsBindable<HTMLImageElement>(cx, obj);
 	*vp = INT_TO_JSVAL(self->height()); return JS_TRUE;
 }
 
-static JSBool setHeight(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setHeight(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
+	HTMLImageElement* self = getJsBindable<HTMLImageElement>(cx, obj);
 	int32 height;
 	if(!JS_ValueToInt32(cx, *vp, &height)) return JS_FALSE;
 	self->_height = height; return JS_TRUE;
 }
 
-static JSBool naturalWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool naturalWidth(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
+	HTMLImageElement* self = getJsBindable<HTMLImageElement>(cx, obj);
 	*vp = INT_TO_JSVAL(self->naturalWidth()); return JS_TRUE;
 }
 
-static JSBool naturalHeight(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool naturalHeight(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
+	HTMLImageElement* self = getJsBindable<HTMLImageElement>(cx, obj);
 	*vp = INT_TO_JSVAL(self->naturalHeight()); return JS_TRUE;
 }
 
-static JSBool complete(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool complete(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
+	HTMLImageElement* self = getJsBindable<HTMLImageElement>(cx, obj);
 	bool ret = self->texture && self->texture->state == Texture::Loaded;
 	*vp = BOOLEAN_TO_JSVAL(ret); return JS_TRUE;
 }
@@ -120,12 +119,12 @@ static const char* _eventAttributeTable[] = {
 	"onerror"
 };
 
-static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx, obj));
-	id = id / 2 + 0;	// Account for having both get and set functions
+	HTMLImageElement* self = getJsBindable<HTMLImageElement>(cx, obj);
+	int32 idx = JSID_TO_INT(id) / 2 + 0;	// Account for having both get and set functions
 
-	self->addEventListenerAsAttribute(cx, _eventAttributeTable[id], *vp);
+	self->addEventListenerAsAttribute(cx, _eventAttributeTable[idx], *vp);
 
 	// In case the Image is already loaded when we assign the callback, invoke the callback immediately
 	Dom::Event* ev = NULL;
@@ -133,15 +132,15 @@ static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsval id, jsval* v
 	if(self->texture) {
 		const Texture::State state = self->texture->state;
 
-		if(state == Texture::Ready && id == 0) goto Dispatch;
-		if(state == Texture::Loaded && id == 1) goto Dispatch;
-		if(state == Texture::Aborted && id == 2) goto Dispatch;
+		if(state == Texture::Ready && JSID_TO_INT(id) == 0) goto Dispatch;
+		if(state == Texture::Loaded && JSID_TO_INT(id) == 1) goto Dispatch;
+		if(state == Texture::Aborted && JSID_TO_INT(id) == 2) goto Dispatch;
 	}
 	goto Return;
 
 Dispatch:
 	ev = new Dom::Event;
-	ev->type = _eventAttributeTable[id] + 2;	// +2 to skip the "on" ("onload" -> "load")
+	ev->type = _eventAttributeTable[JSID_TO_INT(id)] + 2;	// +2 to skip the "on" ("onload" -> "load")
 	ev->bubbles = false;
 	ev->target = self;
 	ev->bind(cx, NULL);
@@ -155,9 +154,9 @@ static JSPropertySpec properties[] = {
 	{"src", 0, 0, getSrc, setSrc},
 	{"width", 0, 0, getWidth, setWidth},
 	{"height", 0, 0, getHeight, setHeight},
-	{"naturalWidth", 0, 0, naturalWidth, JS_PropertyStub},
-	{"naturalHeight", 0, 0, naturalHeight, JS_PropertyStub},
-	{"complete", 0, 0, complete, JS_PropertyStub},
+	{"naturalWidth", 0, 0, naturalWidth, JS_StrictPropertyStub},
+	{"naturalHeight", 0, 0, naturalHeight, JS_StrictPropertyStub},
+	{"complete", 0, 0, complete, JS_StrictPropertyStub},
 
 	// Event attributes
 	{_eventAttributeTable[0], 0, 0, JS_PropertyStub, setEventAttribute},
@@ -166,9 +165,9 @@ static JSPropertySpec properties[] = {
 	{0}
 };
 
-static JSBool construct(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool construct(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_IsConstructing(cx)) return JS_FALSE;	// Not called as constructor? (called without new)
+	if(!JS_IsConstructing(cx, vp)) return JS_FALSE;	// Not called as constructor? (called without new)
 
 	HTMLImageElement* img = new HTMLImageElement;
 	img->bind(cx, NULL);
@@ -176,7 +175,7 @@ static JSBool construct(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, j
 	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
 	img->ownerDocument = rh->domWindow->document;
 
-	*rval = *img;
+	JS_RVAL(cx, vp) = *img;
 
 	return JS_TRUE;
 }

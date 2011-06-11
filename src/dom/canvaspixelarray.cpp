@@ -3,38 +3,32 @@
 
 namespace Dom {
 
-static JSBool getProperty(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool getProperty(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	CanvasPixelArray* self = reinterpret_cast<CanvasPixelArray*>(JS_GetPrivate(cx, obj));
+	CanvasPixelArray* self = getJsBindable<CanvasPixelArray>(cx, obj);
 
-	int32 index;
-	if(JS_ValueToInt32(cx, id, &index)) {
-		if(index < 0 || (unsigned)index >= self->length)
-			return JS_FALSE;
+	int32 index = JSID_TO_INT(id);
+	if(index < 0 || (unsigned)index >= self->length)
+		return JS_FALSE;
 
-		ASSERT(self->rawData);
-		*vp = INT_TO_JSVAL((int)self->getAt(index));
-		return JS_TRUE;
-	}
-
-	return JS_FALSE;
+	ASSERT(self->rawData);
+	*vp = INT_TO_JSVAL((int)self->getAt(index));
+	return JS_TRUE;
 }
 
-static JSBool setProperty(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setProperty(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	CanvasPixelArray* self = reinterpret_cast<CanvasPixelArray*>(JS_GetPrivate(cx, obj));
+	CanvasPixelArray* self = getJsBindable<CanvasPixelArray>(cx, obj);
 
-	int32 index, val;
-	if(JS_ValueToInt32(cx, id, &index) && (JS_ValueToInt32(cx, *vp, &val))) {
-		if(index < 0 || (unsigned)index >= self->length)
-			return JS_FALSE;
+	int32 index = JSID_TO_INT(id);
+	if(index < 0 || (unsigned)index >= self->length)
+		return JS_FALSE;
 
-		ASSERT(self->rawData);
-		self->setAt(index, (unsigned char)val);
-		return JS_TRUE;
-	}
-
-	return JS_FALSE;
+	ASSERT(self->rawData);
+	int32 val;
+	if(!JS_ValueToInt32(cx, *vp, &val)) return JS_FALSE;
+	self->setAt(index, (unsigned char)val);
+	return JS_TRUE;
 }
 
 JSClass CanvasPixelArray::jsClass = {
@@ -48,15 +42,15 @@ static JSFunctionSpec methods[] = {
 	{0}
 };
 
-static JSBool length(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool length(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	CanvasPixelArray* self = reinterpret_cast<CanvasPixelArray*>(JS_GetPrivate(cx, obj));
+	CanvasPixelArray* self = getJsBindable<CanvasPixelArray>(cx, obj);
 	*vp = INT_TO_JSVAL((int)self->length);
 	return JS_TRUE;
 }
 
 static JSPropertySpec properties[] = {
-	{"length", 0, JSPROP_READONLY, length, JS_PropertyStub},
+	{"length", 0, JSPROP_READONLY, length, JS_StrictPropertyStub},
 	{0}
 };
 

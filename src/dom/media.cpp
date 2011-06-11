@@ -10,60 +10,59 @@ namespace Dom {
 
 JSClass HTMLMediaElement::jsClass = {
 	"HTMLMediaElement", JSCLASS_HAS_PRIVATE,
-	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-static JSBool getSrc(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool getSrc(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	HTMLMediaElement* self = reinterpret_cast<HTMLMediaElement*>(JS_GetPrivate(cx, obj));
+	HTMLMediaElement* self = getJsBindable<HTMLMediaElement>(cx, obj);
 	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->src()));
 	return JS_TRUE;
 }
 
-static JSBool setSrc(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setSrc(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	HTMLMediaElement* self = reinterpret_cast<HTMLMediaElement*>(JS_GetPrivate(cx, obj));
+	HTMLMediaElement* self = getJsBindable<HTMLMediaElement>(cx, obj);
 
-	JSString* jss = JS_ValueToString(cx, *vp);
+	JsString jss(cx, *vp);
 	if(!jss) return JS_FALSE;
-	char* str = JS_GetStringBytes(jss);
 
 	Path path;
-	self->fixRelativePath(str, self->ownerDocument->rhinoca->documentUrl.c_str(), path);
+	self->fixRelativePath(jss.c_str(), self->ownerDocument->rhinoca->documentUrl.c_str(), path);
 	self->setSrc(path.c_str());
 
 	return JS_TRUE;
 }
 
-static JSBool getReadyState(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool getReadyState(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	HTMLMediaElement* self = reinterpret_cast<HTMLMediaElement*>(JS_GetPrivate(cx, obj));
+	HTMLMediaElement* self = getJsBindable<HTMLMediaElement>(cx, obj);
 	*vp = INT_TO_JSVAL(self->readyState); return JS_TRUE;
 }
 
-static JSBool getAutoplay(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool getAutoplay(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	HTMLMediaElement* self = reinterpret_cast<HTMLMediaElement*>(JS_GetPrivate(cx, obj));
+	HTMLMediaElement* self = getJsBindable<HTMLMediaElement>(cx, obj);
 	*vp = BOOLEAN_TO_JSVAL(self->autoplay()); return JS_TRUE;
 }
 
-static JSBool setAutoplay(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setAutoplay(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	HTMLMediaElement* self = reinterpret_cast<HTMLMediaElement*>(JS_GetPrivate(cx, obj));
+	HTMLMediaElement* self = getJsBindable<HTMLMediaElement>(cx, obj);
 	self->setAutoplay(JSVAL_TO_BOOLEAN(*vp) == JS_TRUE); return JS_TRUE;
 }
 
-static JSBool getCurrentTime(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool getCurrentTime(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	HTMLMediaElement* self = reinterpret_cast<HTMLMediaElement*>(JS_GetPrivate(cx, obj));
-	*vp = DOUBLE_TO_JSVAL(JS_NewDouble(cx, self->currentTime())); return JS_TRUE;
+	HTMLMediaElement* self = getJsBindable<HTMLMediaElement>(cx, obj);
+	*vp = DOUBLE_TO_JSVAL(self->currentTime()); return JS_TRUE;
 }
 
-static JSBool setCurrentTime(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setCurrentTime(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	HTMLMediaElement* self = reinterpret_cast<HTMLMediaElement*>(JS_GetPrivate(cx, obj));
+	HTMLMediaElement* self = getJsBindable<HTMLMediaElement>(cx, obj);
 	double a;
 	if(JS_ValueToNumber(cx, *vp, &a) == JS_FALSE)
 		return JS_FALSE;
@@ -77,44 +76,43 @@ static JSPropertySpec properties[] = {
 	{0}
 };
 
-static JSBool play(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool play(JSContext* cx, uintN argc, jsval* vp)
 {
-	HTMLMediaElement* self = reinterpret_cast<HTMLMediaElement*>(JS_GetPrivate(cx, obj));
+	HTMLMediaElement* self = getJsBindable<HTMLMediaElement>(cx, vp);
 	self->play();
 	return JS_TRUE;
 }
 
-static JSBool pause(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool pause(JSContext* cx, uintN argc, jsval* vp)
 {
-	HTMLMediaElement* self = reinterpret_cast<HTMLMediaElement*>(JS_GetPrivate(cx, obj));
+	HTMLMediaElement* self = getJsBindable<HTMLMediaElement>(cx, vp);
 	self->pause();
 	return JS_TRUE;
 }
 
-static JSBool canPlayType(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool canPlayType(JSContext* cx, uintN argc, jsval* vp)
 {
-	HTMLMediaElement* self = reinterpret_cast<HTMLMediaElement*>(JS_GetPrivate(cx, obj));
+	HTMLMediaElement* self = getJsBindable<HTMLMediaElement>(cx, vp);
 
-	JSString* jss = JS_ValueToString(cx, argv[0]);
+	JsString jss(cx, JS_ARGV0);
 	if(!jss) return JS_FALSE;
-	char* str = JS_GetStringBytes(jss);
 
-	if( strcasecmp(str, "audio/mpeg") == 0 ||
-		strcasecmp(str, "audio/ogg") == 0 ||
-		strcasecmp(str, "audio/x-wav") == 0)
+	if( strcasecmp(jss.c_str(), "audio/mpeg") == 0 ||
+		strcasecmp(jss.c_str(), "audio/ogg") == 0 ||
+		strcasecmp(jss.c_str(), "audio/x-wav") == 0)
 	{
-		*rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, "probably"));
+		JS_RVAL(cx, vp) = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, "probably"));
 	}
 	else
-		*rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, ""));
+		JS_RVAL(cx, vp) = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, ""));
 
 	return JS_TRUE;
 }
 
 static JSFunctionSpec methods[] = {
-	{"play", play, 0,0,0},
-	{"pause", pause, 0,0,0},
-	{"canPlayType", canPlayType, 1,0,0},
+	{"play", play, 0,0},
+	{"pause", pause, 0,0},
+	{"canPlayType", canPlayType, 1,0},
 	{0}
 };
 

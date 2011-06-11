@@ -40,10 +40,13 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;XP_WIN;JSFILE;_X86_=1;EXPORT_JS_API;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE"
+				AdditionalIncludeDirectories="./"
+				PreprocessorDefinitions="EXPORT_JS_API;WIN32;DEBUG;"
+				ExceptionHandling="0"
 				SmallerTypeCheck="false"
 				RuntimeTypeInfo="false"
-				DisableSpecificWarnings="4100;4127;4214;4706"
+				DisableSpecificWarnings="4100; 4127; 4201; 4244; 4245; 4480; 4510; 4512; 4610; 4702; 4706; 4800;"
+				ForcedIncludeFiles="jsautocfg.win32.h"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -107,9 +110,11 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;XP_WIN;JSFILE;_X86_=1;EXPORT_JS_API;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE"
+				AdditionalIncludeDirectories="./"
+				PreprocessorDefinitions="EXPORT_JS_API;WIN32;"
 				RuntimeTypeInfo="false"
-				DisableSpecificWarnings="4100;4127;4214;4706"
+				DisableSpecificWarnings="4100; 4127; 4201; 4244; 4245; 4480; 4510; 4512; 4610; 4702; 4706; 4800;"
+				ForcedIncludeFiles="jsautocfg.win32.h"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -157,147 +162,195 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm"
 			>
 			<File
-				RelativePath=".\jsapi.c"
+				RelativePath=".\jsapi.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsarena.c"
+				RelativePath=".\jsarena.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsarray.c"
+				RelativePath=".\jsarray.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsatom.c"
+				RelativePath=".\jsatom.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsbool.c"
+				RelativePath=".\jsbool.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jscntxt.c"
+				RelativePath=".\jsclone.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsdate.c"
+				RelativePath=".\jscntxt.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsdbgapi.c"
+				RelativePath=".\jscompartment.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsdhash.c"
+				RelativePath=".\jsdate.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsdtoa.c"
+				RelativePath=".\jsdbgapi.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsemit.c"
+				RelativePath=".\jsdhash.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsexn.c"
+				RelativePath=".\jsdtoa.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsfun.c"
+				RelativePath=".\jsemit.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsgc.c"
+				RelativePath=".\jsexn.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jshash.c"
+				RelativePath=".\jsfun.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsinterp.c"
+				RelativePath=".\jsgc.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsinvoke.c"
+				RelativePath=".\jsgcchunk.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsiter.c"
+				RelativePath=".\jsgcstats.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jslock.c"
+				RelativePath=".\jshash.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jslog2.c"
+				RelativePath=".\jsinterp.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jslong.c"
+				RelativePath=".\jsinvoke.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsmath.c"
+				RelativePath=".\jsiter.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsnum.c"
+				RelativePath=".\jslock.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsobj.c"
+				RelativePath=".\jslog2.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsopcode.c"
+				RelativePath=".\jsmath.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsparse.c"
+				RelativePath=".\jsnativestack.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsprf.c"
+				RelativePath=".\jsnum.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsregexp.c"
+				RelativePath=".\jsobj.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsscan.c"
+				RelativePath=".\json.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsscope.c"
+				RelativePath=".\jsopcode.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsscript.c"
+				RelativePath=".\jsparse.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsstr.c"
+				RelativePath=".\jsprf.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsutil.c"
+				RelativePath=".\jsprobes.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsxdrapi.c"
+				RelativePath=".\jspropertycache.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\jsxml.c"
+				RelativePath=".\jspropertytree.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\prmjtime.c"
+				RelativePath=".\jsproxy.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\jsreflect.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\jsregexp.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\jsscan.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\jsscope.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\jsscript.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\jsstr.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\jstypedarray.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\jsutil.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\jswrapper.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\jsxdrapi.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\jsxml.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\prmjtime.cpp"
 				>
 			</File>
 		</Filter>
@@ -305,6 +358,10 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc"
 			>
+			<File
+				RelativePath=".\js-config.h"
+				>
+			</File>
 			<File
 				RelativePath=".\jsapi.h"
 				>
@@ -322,11 +379,59 @@
 				>
 			</File>
 			<File
+				RelativePath=".\jsatominlines.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jsautokw.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jsautooplen.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jsbit.h"
+				>
+			</File>
+			<File
 				RelativePath=".\jsbool.h"
 				>
 			</File>
 			<File
+				RelativePath=".\jsbuiltins.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jscell.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jsclist.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jsclone.h"
+				>
+			</File>
+			<File
 				RelativePath=".\jscntxt.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jscntxtinlines.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jscompartment.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jscompat.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jscpucfg.h"
 				>
 			</File>
 			<File
@@ -358,7 +463,23 @@
 				>
 			</File>
 			<File
+				RelativePath=".\jsfuninlines.h"
+				>
+			</File>
+			<File
 				RelativePath=".\jsgc.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jsgcchunk.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jsgcinlines.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jsgcstats.h"
 				>
 			</File>
 			<File
@@ -366,11 +487,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\jshashtable.h"
+				>
+			</File>
+			<File
 				RelativePath=".\jsinterp.h"
 				>
 			</File>
 			<File
+				RelativePath=".\jsinterpinlines.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jsinttypes.h"
+				>
+			</File>
+			<File
 				RelativePath=".\jsiter.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jslibmath.h"
 				>
 			</File>
 			<File
@@ -394,7 +531,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\jsobjinlines.h"
+				>
+			</File>
+			<File
+				RelativePath=".\json.h"
+				>
+			</File>
+			<File
 				RelativePath=".\jsopcode.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jsotypes.h"
 				>
 			</File>
 			<File
@@ -406,7 +555,39 @@
 				>
 			</File>
 			<File
+				RelativePath=".\jsprobes.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jspropertycache.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jspropertycacheinlines.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jspropertytree.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jsproxy.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jsprvtd.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jspubtd.h"
+				>
+			</File>
+			<File
 				RelativePath=".\jsregexp.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jsregexpinlines.h"
 				>
 			</File>
 			<File
@@ -418,7 +599,23 @@
 				>
 			</File>
 			<File
+				RelativePath=".\jsscopeinlines.h"
+				>
+			</File>
+			<File
 				RelativePath=".\jsscript.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jsscriptinlines.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jsstaticcheck.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jsstdint.h"
 				>
 			</File>
 			<File
@@ -426,7 +623,51 @@
 				>
 			</File>
 			<File
+				RelativePath=".\jsstrinlines.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jstl.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jstracer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jstypedarray.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jstypes.h"
+				>
+			</File>
+			<File
 				RelativePath=".\jsutil.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jsval.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jsvalue.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jsvector.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jsversion.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jswin.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jswrapper.h"
 				>
 			</File>
 			<File
@@ -438,7 +679,187 @@
 				>
 			</File>
 			<File
+				RelativePath=".\nanojit.h"
+				>
+			</File>
+			<File
 				RelativePath=".\prmjtime.h"
+				>
+			</File>
+			<File
+				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Writer.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="yarr"
+			>
+			<File
+				RelativePath=".\yarr\pcre\pcre.h"
+				>
+			</File>
+			<File
+				RelativePath=".\yarr\pcre\pcre_compile.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\yarr\pcre\pcre_exec.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\yarr\pcre\pcre_internal.h"
+				>
+			</File>
+			<File
+				RelativePath=".\yarr\pcre\pcre_tables.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\yarr\pcre\pcre_ucp_searchfuncs.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\yarr\pcre\pcre_xclass.cpp"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="v8-dtoa"
+			>
+			<File
+				RelativePath=".\v8-dtoa\cached-powers.h"
+				>
+			</File>
+			<File
+				RelativePath=".\v8-dtoa\checks.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\v8-dtoa\checks.h"
+				>
+			</File>
+			<File
+				RelativePath=".\v8-dtoa\conversions.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\v8-dtoa\conversions.h"
+				>
+			</File>
+			<File
+				RelativePath=".\v8-dtoa\diy-fp.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\v8-dtoa\diy-fp.h"
+				>
+			</File>
+			<File
+				RelativePath=".\v8-dtoa\double.h"
+				>
+			</File>
+			<File
+				RelativePath=".\v8-dtoa\dtoa.h"
+				>
+			</File>
+			<File
+				RelativePath=".\v8-dtoa\fast-dtoa.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\v8-dtoa\fast-dtoa.h"
+				>
+			</File>
+			<File
+				RelativePath=".\v8-dtoa\globals.h"
+				>
+			</File>
+			<File
+				RelativePath=".\v8-dtoa\include-v8.h"
+				>
+			</File>
+			<File
+				RelativePath=".\v8-dtoa\platform.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\v8-dtoa\platform.h"
+				>
+			</File>
+			<File
+				RelativePath=".\v8-dtoa\powers-ten.h"
+				>
+			</File>
+			<File
+				RelativePath=".\v8-dtoa\utils.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\v8-dtoa\utils.h"
+				>
+			</File>
+			<File
+				RelativePath=".\v8-dtoa\v8-dtoa.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\v8-dtoa\v8.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="nanojit"
+			>
+			<File
+				RelativePath=".\nanojit\avmplus.h"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\nanojit.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="assembler"
+			>
+			<Filter
+				Name="wtf"
+				>
+				<File
+					RelativePath=".\assembler\wtf\Platform.h"
+					>
+				</File>
+			</Filter>
+		</Filter>
+		<Filter
+			Name="methodjit"
+			>
+			<File
+				RelativePath=".\methodjit\Logging.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\MethodJIT-inl.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\MethodJIT.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\MonoIC.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\PolyIC.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\Retcon.h"
 				>
 			</File>
 		</Filter>

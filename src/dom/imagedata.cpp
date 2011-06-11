@@ -8,7 +8,7 @@ namespace Dom {
 
 JSClass ImageData::jsClass = {
 	"ImageData", JSCLASS_HAS_PRIVATE,
-	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
@@ -17,31 +17,31 @@ static JSFunctionSpec methods[] = {
 	{0}
 };
 
-static JSBool width(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool width(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	ImageData* self = reinterpret_cast<ImageData*>(JS_GetPrivate(cx, obj));
+	ImageData* self = getJsBindable<ImageData>(cx, obj);
 	*vp = INT_TO_JSVAL((int)self->width);
 	return JS_TRUE;
 }
 
-static JSBool height(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool height(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	ImageData* self = reinterpret_cast<ImageData*>(JS_GetPrivate(cx, obj));
+	ImageData* self = getJsBindable<ImageData>(cx, obj);
 	*vp = INT_TO_JSVAL((int)self->height);
 	return JS_TRUE;
 }
 
-static JSBool data(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool data(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	ImageData* self = reinterpret_cast<ImageData*>(JS_GetPrivate(cx, obj));
+	ImageData* self = getJsBindable<ImageData>(cx, obj);
 	*vp = *self->data;
 	return JS_TRUE;
 }
 
 static JSPropertySpec properties[] = {
-	{"width", 0, JSPROP_READONLY, width, JS_PropertyStub},
-	{"height", 0, JSPROP_READONLY, height, JS_PropertyStub},
-	{"data", 0, JSPROP_READONLY, data, JS_PropertyStub},
+	{"width", 0, JSPROP_READONLY, width, JS_StrictPropertyStub},
+	{"height", 0, JSPROP_READONLY, height, JS_StrictPropertyStub},
+	{"data", 0, JSPROP_READONLY, data, JS_StrictPropertyStub},
 	{0}
 };
 

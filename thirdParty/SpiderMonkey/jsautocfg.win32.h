@@ -1,0 +1,48 @@
+#define AVMPLUS_IA32 1
+#define AVMPLUS_WIN32 1
+#define CPP_THROW_NEW throw()
+#define D_INO d_ino
+//#define FEATURE_NANOJIT 1
+#define HAVE_FORCEINLINE 1
+#define HAVE_GETSYSTEMTIMEASFILETIME 1
+#define HAVE_LOCALECONV 1
+#define HAVE_LOCALECONV 1
+#define HAVE_MMINTRIN_H 1
+#define HAVE_SDKDDKVER_H 1
+#define HAVE_SNPRINTF 1
+#define HAVE_SYSTEMTIMETOFILETIME 1
+#define HW_THREADS 1
+#define JS_CPU_X86 1
+#define JS_HAVE___INTN 1
+#define JS_MONOIC 1
+#define JS_NUNBOX32 1
+#define JS_POLYIC 1
+#define JS_POLYIC_TYPED_ARRAY 1
+#define JS_STDDEF_H_HAS_INTPTR_T 1
+//#define JS_TRACER 1
+#define MALLOC_H <malloc.h>
+#define MOZ_DLL_SUFFIX ".dll"
+#define MOZ_MSVC_STL_WRAP__Throw 1
+#define MOZ_NTDDI_LONGHORN 0x06000000
+#define MOZ_NTDDI_WIN7 0x06010000
+#define MOZ_NTDDI_WS03 0x05020000
+#define MOZ_WINSDK_TARGETVER 0x05020000
+#define NEW_H <new>
+#define NO_X11 1
+#define NS_ALWAYS_INLINE 
+#define NS_ATTR_MALLOC 
+#define NS_NORETURN 
+#define NS_WARN_UNUSED_RESULT 
+#define STDC_HEADERS 1
+#define WIN32 1
+#define WIN32_LEAN_AND_MEAN 1
+#define WINVER 0x502
+#define XP_WIN 1
+#define XP_WIN32 1
+#define X_DISPLAY_MISSING 1
+#define _CRT_NONSTDC_NO_WARNINGS 1
+#define _CRT_SECURE_NO_WARNINGS 1
+#define _WIN32_IE 0x0500
+#define _WIN32_WINNT 0x502
+#define _WINDOWS 1
+#define _X86_ 1

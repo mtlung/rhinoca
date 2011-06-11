@@ -17,28 +17,28 @@ namespace Dom {
 
 JSClass Element::jsClass = {
 	"Element", JSCLASS_HAS_PRIVATE,
-	JS_PropertyStub,  JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	JS_PropertyStub,  JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub,  JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-static JSBool clientWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool clientWidth(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	Element* self = reinterpret_cast<Element*>(JS_GetPrivate(cx, obj));
+	Element* self = getJsBindable<Element>(cx, obj);
 	*vp = INT_TO_JSVAL(self->clientWidth());
 	return JS_TRUE;
 }
 
-static JSBool clientHeight(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool clientHeight(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	Element* self = reinterpret_cast<Element*>(JS_GetPrivate(cx, obj));
+	Element* self = getJsBindable<Element>(cx, obj);
 	*vp = INT_TO_JSVAL(self->clientHeight());
 	return JS_TRUE;
 }
 
-static JSBool elementGetStyle(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool elementGetStyle(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	Element* self = reinterpret_cast<Element*>(JS_GetPrivate(cx, obj));
+	Element* self = getJsBindable<Element>(cx, obj);
 
 	ElementStyle* style = new ElementStyle;
 	style->element = self;
@@ -48,9 +48,9 @@ static JSBool elementGetStyle(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	return JS_TRUE;
 }
 
-static JSBool tagName(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool tagName(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	Element* self = reinterpret_cast<Element*>(JS_GetPrivate(cx, obj));
+	Element* self = getJsBindable<Element>(cx, obj);
 	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->tagName()));
 	return JS_TRUE;
 }
@@ -61,25 +61,25 @@ static const char* _eventAttributeTable[] = {
 	"onmousemove"
 };
 
-static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	// Not implemented
 	return JS_FALSE;
 }
 
-static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
-	id /= 2 + 0;	// Account for having both get and set functions
+	Element* self = getJsBindable<Element>(cx, obj);
+	int32 idx = JSID_TO_INT(id) / 2 + 0;	// Account for having both get and set functions
 
-	return self->addEventListenerAsAttribute(cx, _eventAttributeTable[id], *vp);
+	return self->addEventListenerAsAttribute(cx, _eventAttributeTable[idx], *vp);
 }
 
 static JSPropertySpec elementProperties[] = {
-	{"clientWidth", 0, JSPROP_READONLY, clientWidth, JS_PropertyStub},
-	{"clientHeight", 0, JSPROP_READONLY, clientHeight, JS_PropertyStub},
-	{"style", 0, JSPROP_READONLY, elementGetStyle, JS_PropertyStub},
-	{"tagName", 0, JSPROP_READONLY, tagName, JS_PropertyStub},
+	{"clientWidth", 0, JSPROP_READONLY, clientWidth, JS_StrictPropertyStub},
+	{"clientHeight", 0, JSPROP_READONLY, clientHeight, JS_StrictPropertyStub},
+	{"style", 0, JSPROP_READONLY, elementGetStyle, JS_StrictPropertyStub},
+	{"tagName", 0, JSPROP_READONLY, tagName, JS_StrictPropertyStub},
 
 	// Event attributes
 	{_eventAttributeTable[0], 0, 0, getEventAttribute, setEventAttribute},
@@ -88,49 +88,46 @@ static JSPropertySpec elementProperties[] = {
 	{0}
 };
 
-static JSBool getAttribute(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool getAttribute(JSContext* cx, uintN argc, jsval* vp)
 {
-//	if(!JS_InstanceOf(cx, obj, &Element::jsClass, argv)) return JS_FALSE;
-	Element* self = reinterpret_cast<Element*>(JS_GetPrivate(cx, obj));
+	Element* self = getJsBindable<Element>(cx, vp);
 	if(!self) return JS_FALSE;
 
-	if(JSString* jss = JS_ValueToString(cx, argv[0])) {
-		char* str = JS_GetStringBytes(jss);
-		return JS_GetProperty(cx, *self, str, rval);
-	}
+	JsString jss(cx, JS_ARGV0);
+	if(!jss) return JS_FALSE;
 
-	return JS_FALSE;
+	return JS_GetProperty(cx, *self, jss.c_str(), JS_ARGV(cx, vp));
 }
 
-static JSBool setAttribute(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool setAttribute(JSContext* cx, uintN argc, jsval* vp)
 {
-//	if(!JS_InstanceOf(cx, obj, &Element::jsClass, argv)) return JS_FALSE;
-	Element* self = reinterpret_cast<Element*>(JS_GetPrivate(cx, obj));
+	Element* self = getJsBindable<Element>(cx, vp);
 	if(!self) return JS_FALSE;
 
-	if(JSString* jss = JS_ValueToString(cx, argv[0])) {
-		char* str = JS_GetStringBytes(jss);
-		return JS_SetProperty(cx, *self, str, &argv[1]);
-	}
+	JsString jss(cx, JS_ARGV0);
+	if(!jss) return JS_FALSE;
 
-	return JS_FALSE;
+	return JS_SetProperty(cx, *self, jss.c_str(), &JS_ARGV1);
 }
 
-static JSBool getElementsByTagName(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool getElementsByTagName(JSContext* cx, uintN argc, jsval* vp)
 {
-	Element* self = reinterpret_cast<Element*>(JS_GetPrivate(cx, obj));
-	JSString* jss = JS_ValueToString(cx, argv[0]);
-	char* str = JS_GetStringBytes(jss);
-	toupper(str);
-	*rval = *self->getElementsByTagName(str);
+	Element* self = getJsBindable<Element>(cx, vp);
+	if(!self) return JS_FALSE;
+
+	JsString jss(cx, JS_ARGV0);
+	if(!jss) return JS_FALSE;
+
+	toupper(jss.c_str());
+	JS_RVAL(cx, vp) = *self->getElementsByTagName(jss.c_str());
 
 	return JS_TRUE;
 }
 
 static JSFunctionSpec elementMethods[] = {
-	{"getAttribute", getAttribute, 1,0,0},
-	{"setAttribute", setAttribute, 2,0,0},
-	{"getElementsByTagName", getElementsByTagName, 1,0,0},
+	{"getAttribute", getAttribute, 1,0},
+	{"setAttribute", setAttribute, 2,0},
+	{"getElementsByTagName", getElementsByTagName, 1,0},
 	{0}
 };
 
@@ -235,50 +232,50 @@ void ElementFactory::addFactory(FactoryFunc factory)
 
 JSClass ElementStyle::jsClass = {
 	"ElementStyle", JSCLASS_HAS_PRIVATE,
-	JS_PropertyStub,  JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	JS_PropertyStub,  JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub,  JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-static JSBool styleGetVisible(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool styleGetVisible(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	ElementStyle* self = reinterpret_cast<ElementStyle*>(JS_GetPrivate(cx, obj));
+	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
 	*vp = BOOLEAN_TO_JSVAL(self->element->visible);
 	return JS_TRUE;
 }
 
-static JSBool styleSetVisible(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool styleSetVisible(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	JSBool b;
-	ElementStyle* self = reinterpret_cast<ElementStyle*>(JS_GetPrivate(cx, obj));
+	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
 	if(!JS_ValueToBoolean(cx, *vp, &b)) return JS_FALSE;
 	self->element->visible = (b ==  JS_TRUE);
 	return JS_TRUE;
 }
 
-static JSBool styleGetTop(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool styleGetTop(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	ElementStyle* self = reinterpret_cast<ElementStyle*>(JS_GetPrivate(cx, obj));
+	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
 	*vp = INT_TO_JSVAL(self->element->top);
 	return JS_TRUE;
 }
 
-static JSBool styleSetTop(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool styleSetTop(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	ElementStyle* self = reinterpret_cast<ElementStyle*>(JS_GetPrivate(cx, obj));
+	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
 	return JS_ValueToRhInt32(cx, *vp, &self->element->top);
 }
 
-static JSBool styleGetLeft(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool styleGetLeft(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	ElementStyle* self = reinterpret_cast<ElementStyle*>(JS_GetPrivate(cx, obj));
+	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
 	*vp = INT_TO_JSVAL(self->element->left);
 	return JS_TRUE;
 }
 
-static JSBool styleSetLeft(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool styleSetLeft(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	ElementStyle* self = reinterpret_cast<ElementStyle*>(JS_GetPrivate(cx, obj));
+	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
 	return JS_ValueToRhInt32(cx, *vp, &self->element->left);
 }
 

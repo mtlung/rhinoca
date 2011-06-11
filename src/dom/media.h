@@ -96,11 +96,10 @@ public:
 	virtual bool loop() const { return false; }
 	virtual void setLoop(bool) {}
 
-protected:
-	FixString _src;
+	static JSClass jsClass;
 
 protected:
-	static JSClass jsClass;
+	FixString _src;
 };	// HTMLImageElement
 
 }	// namespace Dom

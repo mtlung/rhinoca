@@ -7,13 +7,13 @@ namespace Dom {
 
 static void traceDataOp(JSTracer* trc, JSObject* obj)
 {
-	WindowLocation* self = reinterpret_cast<WindowLocation*>(JS_GetPrivate(trc->context, obj));
-	JS_CallTracer(trc, self->window->jsObject, JSTRACE_OBJECT);
+	WindowLocation* self = getJsBindable<WindowLocation>(trc->context, obj);
+	JS_CALL_OBJECT_TRACER(trc, self->window->jsObject, "WindowLocation::window");
 }
 
 JSClass WindowLocation::jsClass = {
 	"Location", JSCLASS_HAS_PRIVATE | JSCLASS_MARK_IS_TRACE,
-	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize,
 	0, 0, 0, 0, 0, 0,
@@ -21,42 +21,42 @@ JSClass WindowLocation::jsClass = {
 	0
 };
 
-static JSBool assign(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool assign(JSContext* cx, uintN argc, jsval* vp)
 {
-	WindowLocation* self = reinterpret_cast<WindowLocation*>(JS_GetPrivate(cx, obj));
+	WindowLocation* self = getJsBindable<WindowLocation>(cx, vp);
 	Rhinoca* rh = self->window->rhinoca;
-	if(JSString* jss = JS_ValueToString(cx, argv[0])) {
-		char* str = JS_GetStringBytes(jss);
-		rh->openDoucment(str);
-		return JS_TRUE;
-	}
-	return JS_FALSE;
+
+	JsString jss(cx, JS_ARGV0);
+	if(!jss) return JS_FALSE;
+
+	rh->openDoucment(jss.c_str());
+	return JS_TRUE;
 }
 
 static JSFunctionSpec methods[] = {
-	{"assign", assign, 1,0,0},
-	{"replace", assign, 1,0,0},
+	{"assign", assign, 1,0},
+	{"replace", assign, 1,0},
 	{0}
 };
 
-static JSBool href(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool href(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	WindowLocation* self = reinterpret_cast<WindowLocation*>(JS_GetPrivate(cx, obj));
+	WindowLocation* self = getJsBindable<WindowLocation>(cx, obj);
 	Rhinoca* rh = self->window->rhinoca;
 	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, rh->documentUrl.c_str()));
 	return JS_TRUE;
 }
 
-static JSBool setHref(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setHref(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	WindowLocation* self = reinterpret_cast<WindowLocation*>(JS_GetPrivate(cx, obj));
+	WindowLocation* self = getJsBindable<WindowLocation>(cx, obj);
 	Rhinoca* rh = self->window->rhinoca;
-	if(JSString* jss = JS_ValueToString(cx, *vp)) {
-		char* str = JS_GetStringBytes(jss);
-		rh->openDoucment(str);
-		return JS_TRUE;
-	}
-	return JS_FALSE;
+
+	JsString jss(cx, *vp);
+	if(!jss) return JS_FALSE;
+
+	rh->openDoucment(jss.c_str());
+	return JS_TRUE;
 }
 
 static JSPropertySpec properties[] = {

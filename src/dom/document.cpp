@@ -13,85 +13,81 @@ namespace Dom {
 
 JSClass HTMLDocument::jsClass = {
 	"HTMLDocument", JSCLASS_HAS_PRIVATE,
-	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-static JSBool getBody(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool getBody(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	HTMLDocument* self = reinterpret_cast<HTMLDocument*>(JS_GetPrivate(cx, obj));
+	HTMLDocument* self = getJsBindable<HTMLDocument>(cx, obj);
 	*vp = *self->body();
 	return JS_TRUE;
 }
 
 static JSPropertySpec properties[] = {
-	{"body", 0, 0, getBody, JS_PropertyStub},
+	{"body", 0, 0, getBody, JS_StrictPropertyStub},
 	{0}
 };
 
-static JSBool createElement(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool createElement(JSContext* cx, uintN argc, jsval* vp)
 {
-	JSString* jss = JS_ValueToString(cx, argv[0]);
-	char* str = JS_GetStringBytes(jss);
-	HTMLDocument* self = reinterpret_cast<HTMLDocument*>(JS_GetPrivate(cx, obj));
+	JsString jss(cx, JS_ARGV0);
+	HTMLDocument* self = getJsBindable<HTMLDocument>(cx, vp);
 	
-	if(Element* ele = self->createElement(str))
+	if(Element* ele = self->createElement(jss.c_str()))
 	{
 		ele->bind(cx, NULL);
-		*rval = *ele;
+		JS_RVAL(cx, vp) = *ele;
 	}
 	else
-		*rval = JSVAL_VOID;
+		JS_RVAL(cx, vp) = JSVAL_VOID;
 
 	return JS_TRUE;
 }
 
-static JSBool getElementById(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool getElementById(JSContext* cx, uintN argc, jsval* vp)
 {
-	HTMLDocument* self = reinterpret_cast<HTMLDocument*>(JS_GetPrivate(cx, obj));
+	HTMLDocument* self = getJsBindable<HTMLDocument>(cx, vp);
 
-	JSString* jss = JS_ValueToString(cx, argv[0]);
+	JsString jss(cx, JS_ARGV0);
 	if(!jss) return JS_FALSE;
-	char* str = JS_GetStringBytes(jss);
-	Element* ele = self->getElementById(str);
+	Element* ele = self->getElementById(jss.c_str());
 
-	*rval = *ele;
+	JS_RVAL(cx, vp) = *ele;
 
 	return JS_TRUE;
 }
 
-static JSBool getElementsByTagName(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool getElementsByTagName(JSContext* cx, uintN argc, jsval* vp)
 {
-	HTMLDocument* self = reinterpret_cast<HTMLDocument*>(JS_GetPrivate(cx, obj));
+	HTMLDocument* self = getJsBindable<HTMLDocument>(cx, vp);
 
-	JSString* jss = JS_ValueToString(cx, argv[0]);
+	JsString jss(cx, JS_ARGV0);
 	if(!jss) return JS_FALSE;
-	char* str = JS_GetStringBytes(jss);
-	toupper(str);
-	*rval = *self->getElementsByTagName(str);
+	toupper(jss.c_str());
+	JS_RVAL(cx, vp) = *self->getElementsByTagName(jss.c_str());
 
 	return JS_TRUE;
 }
 
-static JSBool createEvent(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool createEvent(JSContext* cx, uintN argc, jsval* vp)
 {
-	HTMLDocument* self = reinterpret_cast<HTMLDocument*>(JS_GetPrivate(cx, obj));
+	HTMLDocument* self = getJsBindable<HTMLDocument>(cx, vp);
 
-	JSString* jss = JS_ValueToString(cx, argv[0]);
+	JsString jss(cx, JS_ARGV0);
 	if(!jss) return JS_FALSE;
-	char* str = JS_GetStringBytes(jss);
 
-	*rval = *self->createEvent(str);
+	JS_RVAL(cx, vp) = *self->createEvent(jss.c_str());
 
 	return JS_TRUE;
 }
 
 static JSFunctionSpec methods[] = {
-	{"createElement", createElement, 1,0,0},
-	{"getElementsByTagName", getElementsByTagName, 1,0,0},
-	{"getElementById", getElementById, 1,0,0},
-	{"createEvent", createEvent, 1,0,0},
+	{"createElement", createElement, 1,0},
+	{"getElementsByTagName", getElementsByTagName, 1,0},
+	{"getElementById", getElementById, 1,0},
+	{"createEvent", createEvent, 1,0},
 	{0}
 };
 

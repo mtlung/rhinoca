@@ -16,44 +16,46 @@ using namespace Render;
 namespace Dom {
 
 JSClass CanvasRenderingContext2D::jsClass = {
-	"CanvasRenderingContext2D", JSCLASS_HAS_PRIVATE,
-	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	"CanvasRenderingContext2D", JSCLASS_HAS_PRIVATE | JSCLASS_HAS_RESERVED_SLOTS(1),
+	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-static JSBool getCanvas(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool getCanvas(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
+	if(!self) return JS_FALSE;
+
 	*vp = *self->canvas;
 	return JS_TRUE;
 }
 
-static JSBool setGlobalAlpha(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setGlobalAlpha(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
+	if(!self) return JS_FALSE;
+
 	double a;
 	JS_ValueToNumber(cx, *vp, &a);
 	self->setGlobalAlpha((float)a);
 	return JS_TRUE;
 }
 
-static JSBool setStrokeStyle(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setStrokeStyle(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
+	if(!self) return JS_FALSE;
 
 	if(JSVAL_IS_OBJECT(*vp)) {
-		JSObject* o = JSVAL_TO_OBJECT(*vp);
-		CanvasGradient* g = reinterpret_cast<CanvasGradient*>(JS_GetPrivate(cx, o));
+		CanvasGradient* g = getJsBindable<CanvasGradient>(cx, JSVAL_TO_OBJECT(*vp));
 
 		self->setStrokeGradient(g);
 	}
 	else {
-		JSString* jss = JS_ValueToString(cx, *vp);
-		char* str = JS_GetStringBytes(jss);
-
 		Color c;
-		if(c.parse(str))
+		JsString jss(cx, *vp);
+		if(c.parse(jss.c_str()))
 			self->setStrokeColor((float*)&c);
 		else {
 			// TODO: print warning
@@ -63,22 +65,21 @@ static JSBool setStrokeStyle(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	return JS_TRUE;
 }
 
-static JSBool setFillStyle(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setFillStyle(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
+	if(!self) return JS_FALSE;
 
 	if(JSVAL_IS_OBJECT(*vp)) {
-		JSObject* o = JSVAL_TO_OBJECT(*vp);
-		CanvasGradient* g = reinterpret_cast<CanvasGradient*>(JS_GetPrivate(cx, o));
+		CanvasGradient* g = getJsBindable<CanvasGradient>(cx, JSVAL_TO_OBJECT(*vp));
+		if(!g) return JS_FALSE;
 
 		self->setFillGradient(g);
 	}
 	else {
-		JSString* jss = JS_ValueToString(cx, *vp);
-		char* str = JS_GetStringBytes(jss);
-
 		Color c;
-		if(c.parse(str))
+		JsString jss(cx, *vp);
+		if(c.parse(jss.c_str()))
 			self->setFillColor((float*)&c);
 		else {
 			// TODO: print warning
@@ -88,33 +89,31 @@ static JSBool setFillStyle(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 	return JS_TRUE;
 }
 
-static JSBool setLineCap(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setLineCap(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
+	if(!self) return JS_FALSE;
 
-	JSString* jss = JS_ValueToString(cx, *vp);
-	char* str = JS_GetStringBytes(jss);
-
-	self->setLineCap(str);
+	JsString jss(cx, *vp);
+	self->setLineCap(jss.c_str());
 
 	return JS_TRUE;
 }
 
-static JSBool setLineJoin(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setLineJoin(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
+	if(!self) return JS_FALSE;
 
-	JSString* jss = JS_ValueToString(cx, *vp);
-	char* str = JS_GetStringBytes(jss);
-
-	self->setLineJoin(str);
+	JsString jss(cx, *vp);
+	self->setLineJoin(jss.c_str());
 
 	return JS_TRUE;
 }
 
-static JSBool setLineWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setLineWidth(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
 	double w;
 	JS_ValueToNumber(cx, *vp, &w);
 	self->setLineWidth((float)w);
@@ -122,7 +121,7 @@ static JSBool setLineWidth(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
 }
 
 static JSPropertySpec properties[] = {
-	{"canvas", 0, 0, getCanvas, JS_PropertyStub},
+	{"canvas", 0, 0, getCanvas, JS_StrictPropertyStub},
 	{"globalAlpha", 0, 0, JS_PropertyStub, setGlobalAlpha},
 	{"strokeStyle", 0, 0, JS_PropertyStub, setStrokeStyle},
 	{"lineCap", 0, 0, JS_PropertyStub, setLineCap},
@@ -132,60 +131,55 @@ static JSPropertySpec properties[] = {
 	{0}
 };
 
-static JSBool clearRect(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool clearRect(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	double x, y, w, h;
-	JS_ValueToNumber(cx, argv[0], &x);
-	JS_ValueToNumber(cx, argv[1], &y);
-	JS_ValueToNumber(cx, argv[2], &w);
-	JS_ValueToNumber(cx, argv[3], &h);
+	JS_ValueToNumber(cx, JS_ARGV0, &x);
+	JS_ValueToNumber(cx, JS_ARGV1, &y);
+	JS_ValueToNumber(cx, JS_ARGV2, &w);
+	JS_ValueToNumber(cx, JS_ARGV3, &h);
 
 	self->clearRect((float)x, (float)y, (float)w, (float)h);
 
 	return JS_TRUE;
 }
 
-static JSBool beginLayer(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool beginLayer(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
+
 	self->beginLayer();
 	return JS_TRUE;
 }
 
-static JSBool endLayer(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool endLayer(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
+
 	self->endLayer();
 	return JS_TRUE;
 }
 
-static JSBool drawImage(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool drawImage(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
-
-	JSObject* imgObj = NULL;
-	JS_ValueToObject(cx, argv[0], &imgObj);
 
 	// Determine the source is an image or a canvas
 	Texture* texture = NULL;
-	if(JS_InstanceOf(cx, imgObj, &HTMLImageElement::jsClass, NULL)) {
-		HTMLImageElement* img = reinterpret_cast<HTMLImageElement*>(JS_GetPrivate(cx ,imgObj));
+
+	if(HTMLImageElement* img = getJsBindable<HTMLImageElement>(cx, vp, 0))
 		texture = img->texture.get();
-	}
-	if(JS_InstanceOf(cx, imgObj, &HTMLCanvasElement::jsClass, NULL)) {
-		HTMLCanvasElement* otherCanvas = reinterpret_cast<HTMLCanvasElement*>(JS_GetPrivate(cx ,imgObj));
+
+	if(HTMLCanvasElement* otherCanvas = getJsBindable<HTMLCanvasElement>(cx, vp, 0))
 		texture = otherCanvas->texture();
-	}
+
+	if(!texture) return JS_FALSE;
 
 	double sx, sy, sw, sh;	// Source x, y, width and height
 	double dx, dy, dw, dh;	// Dest x, y, width and height
@@ -195,27 +189,27 @@ static JSBool drawImage(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, j
 		sx = sy = 0;
 		sw = dw = texture->width;
 		sh = dh = texture->height;
-		JS_ValueToNumber(cx, argv[1], &dx);
-		JS_ValueToNumber(cx, argv[2], &dy);
+		JS_ValueToNumber(cx, JS_ARGV1, &dx);
+		JS_ValueToNumber(cx, JS_ARGV2, &dy);
 		break;
 	case 5:
 		sx = sy = 0;
 		sw = texture->width;
 		sh = texture->height;
-		JS_ValueToNumber(cx, argv[1], &dx);
-		JS_ValueToNumber(cx, argv[2], &dy);
-		JS_ValueToNumber(cx, argv[3], &dw);
-		JS_ValueToNumber(cx, argv[4], &dh);
+		JS_ValueToNumber(cx, JS_ARGV1, &dx);
+		JS_ValueToNumber(cx, JS_ARGV2, &dy);
+		JS_ValueToNumber(cx, JS_ARGV3, &dw);
+		JS_ValueToNumber(cx, JS_ARGV4, &dh);
 		break;
 	case 9:
-		JS_ValueToNumber(cx, argv[1], &sx);
-		JS_ValueToNumber(cx, argv[2], &sy);
-		JS_ValueToNumber(cx, argv[3], &sw);
-		JS_ValueToNumber(cx, argv[4], &sh);
-		JS_ValueToNumber(cx, argv[5], &dx);
-		JS_ValueToNumber(cx, argv[6], &dy);
-		JS_ValueToNumber(cx, argv[7], &dw);
-		JS_ValueToNumber(cx, argv[8], &dh);
+		JS_ValueToNumber(cx, JS_ARGV1, &sx);
+		JS_ValueToNumber(cx, JS_ARGV2, &sy);
+		JS_ValueToNumber(cx, JS_ARGV3, &sw);
+		JS_ValueToNumber(cx, JS_ARGV4, &sh);
+		JS_ValueToNumber(cx, JS_ARGV5, &dx);
+		JS_ValueToNumber(cx, JS_ARGV6, &dy);
+		JS_ValueToNumber(cx, JS_ARGV7, &dw);
+		JS_ValueToNumber(cx, JS_ARGV8, &dh);
 		break;
 	default:
 		return JS_FALSE;
@@ -229,10 +223,9 @@ static JSBool drawImage(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, j
 	return JS_TRUE;
 }
 
-static JSBool save(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool save(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	self->save();
@@ -240,10 +233,9 @@ static JSBool save(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval*
 	return JS_TRUE;
 }
 
-static JSBool restore(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool restore(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	self->restore();
@@ -251,89 +243,83 @@ static JSBool restore(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsv
 	return JS_TRUE;
 }
 
-static JSBool scale(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool scale(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	double x, y;
-	JS_ValueToNumber(cx, argv[0], &x);
-	JS_ValueToNumber(cx, argv[1], &y);
+	JS_ValueToNumber(cx, JS_ARGV0, &x);
+	JS_ValueToNumber(cx, JS_ARGV1, &y);
 	self->scale((float)x, (float)y);
 
 	return JS_TRUE;
 }
 
-static JSBool rotate(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool rotate(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	double angle;
-	JS_ValueToNumber(cx, argv[0], &angle);
+	JS_ValueToNumber(cx, JS_ARGV0, &angle);
 	self->rotate((float)angle);
 
 	return JS_TRUE;
 }
 
-static JSBool translate(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool translate(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	double x, y;
-	JS_ValueToNumber(cx, argv[0], &x);
-	JS_ValueToNumber(cx, argv[1], &y);
+	JS_ValueToNumber(cx, JS_ARGV0, &x);
+	JS_ValueToNumber(cx, JS_ARGV1, &y);
 	self->translate((float)x, (float)y);
 
 	return JS_TRUE;
 }
 
-static JSBool transform(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool transform(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	double m11, m12, m21, m22, dx, dy;
-	JS_ValueToNumber(cx, argv[0], &m11);
-	JS_ValueToNumber(cx, argv[1], &m12);
-	JS_ValueToNumber(cx, argv[2], &m21);
-	JS_ValueToNumber(cx, argv[3], &m22);
-	JS_ValueToNumber(cx, argv[4], &dx);
-	JS_ValueToNumber(cx, argv[5], &dy);
+	JS_ValueToNumber(cx, JS_ARGV0, &m11);
+	JS_ValueToNumber(cx, JS_ARGV1, &m12);
+	JS_ValueToNumber(cx, JS_ARGV2, &m21);
+	JS_ValueToNumber(cx, JS_ARGV3, &m22);
+	JS_ValueToNumber(cx, JS_ARGV4, &dx);
+	JS_ValueToNumber(cx, JS_ARGV5, &dy);
 
 	self->transform((float)m11, (float)m21, (float)m21, (float)m22, (float)dx, (float)dy);
 
 	return JS_TRUE;
 }
 
-static JSBool setTransform(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool setTransform(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	double m11, m12, m21, m22, dx, dy;
-	JS_ValueToNumber(cx, argv[0], &m11);
-	JS_ValueToNumber(cx, argv[1], &m12);
-	JS_ValueToNumber(cx, argv[2], &m21);
-	JS_ValueToNumber(cx, argv[3], &m22);
-	JS_ValueToNumber(cx, argv[4], &dx);
-	JS_ValueToNumber(cx, argv[5], &dy);
+	JS_ValueToNumber(cx, JS_ARGV0, &m11);
+	JS_ValueToNumber(cx, JS_ARGV1, &m12);
+	JS_ValueToNumber(cx, JS_ARGV2, &m21);
+	JS_ValueToNumber(cx, JS_ARGV3, &m22);
+	JS_ValueToNumber(cx, JS_ARGV4, &dx);
+	JS_ValueToNumber(cx, JS_ARGV5, &dy);
 
 	self->setTransform((float)m11, (float)m21, (float)m21, (float)m22, (float)dx, (float)dy);
 
 	return JS_TRUE;
 }
 
-static JSBool beginPath(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool beginPath(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	self->beginPath();
@@ -341,10 +327,9 @@ static JSBool beginPath(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, j
 	return JS_TRUE;
 }
 
-static JSBool closePath(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool closePath(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	self->closePath();
@@ -352,117 +337,110 @@ static JSBool closePath(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, j
 	return JS_TRUE;
 }
 
-static JSBool moveTo(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool moveTo(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	double x, y;
-	JS_ValueToNumber(cx, argv[0], &x);
-	JS_ValueToNumber(cx, argv[1], &y);
+	JS_ValueToNumber(cx, JS_ARGV0, &x);
+	JS_ValueToNumber(cx, JS_ARGV1, &y);
 	self->moveTo((float)x, (float)y);
 
 	return JS_TRUE;
 }
 
-static JSBool lineTo(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool lineTo(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	double x, y;
-	JS_ValueToNumber(cx, argv[0], &x);
-	JS_ValueToNumber(cx, argv[1], &y);
+	JS_ValueToNumber(cx, JS_ARGV0, &x);
+	JS_ValueToNumber(cx, JS_ARGV1, &y);
 	self->lineTo((float)x, (float)y);
 
 	return JS_TRUE;
 }
 
-static JSBool arc(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool arc(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	double x, y, radius, startAngle, endAngle;
-	JS_ValueToNumber(cx, argv[0], &x);
-	JS_ValueToNumber(cx, argv[1], &y);
-	JS_ValueToNumber(cx, argv[2], &radius);
-	JS_ValueToNumber(cx, argv[3], &startAngle);
-	JS_ValueToNumber(cx, argv[4], &endAngle);
+	JS_ValueToNumber(cx, JS_ARGV0, &x);
+	JS_ValueToNumber(cx, JS_ARGV1, &y);
+	JS_ValueToNumber(cx, JS_ARGV2, &radius);
+	JS_ValueToNumber(cx, JS_ARGV3, &startAngle);
+	JS_ValueToNumber(cx, JS_ARGV4, &endAngle);
 	self->arc((float)x, (float)y, (float)radius, (float)startAngle, (float)endAngle, true);
 
 	return JS_TRUE;
 }
 
-static JSBool rect(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool rect(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	double x, y, w, h;
-	JS_ValueToNumber(cx, argv[0], &x);
-	JS_ValueToNumber(cx, argv[1], &y);
-	JS_ValueToNumber(cx, argv[2], &w);
-	JS_ValueToNumber(cx, argv[3], &h);
+	JS_ValueToNumber(cx, JS_ARGV0, &x);
+	JS_ValueToNumber(cx, JS_ARGV1, &y);
+	JS_ValueToNumber(cx, JS_ARGV2, &w);
+	JS_ValueToNumber(cx, JS_ARGV3, &h);
 	self->rect((float)x, (float)y, (float)w, (float)h);
 
 	return JS_TRUE;
 }
 
-static JSBool createLinearGradient(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool createLinearGradient(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	CanvasGradient* g = new CanvasGradient;
 	g->bind(cx, NULL);
 
 	double x1, y1, x2, y2;
-	JS_ValueToNumber(cx, argv[0], &x1);
-	JS_ValueToNumber(cx, argv[1], &y1);
-	JS_ValueToNumber(cx, argv[2], &x2);
-	JS_ValueToNumber(cx, argv[3], &y2);
+	JS_ValueToNumber(cx, JS_ARGV0, &x1);
+	JS_ValueToNumber(cx, JS_ARGV1, &y1);
+	JS_ValueToNumber(cx, JS_ARGV2, &x2);
+	JS_ValueToNumber(cx, JS_ARGV3, &y2);
 
 	g->createLinear((float)x1, (float)y1, (float)x2, (float)y2);
 
-	*rval = *g;
+	JS_RVAL(cx, vp) = *g;
 
 	return JS_TRUE;
 }
 
-static JSBool createRadialGradient(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool createRadialGradient(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	CanvasGradient* g = new CanvasGradient;
 	g->bind(cx, NULL);
 
 	double x1, y1, r1, x2, y2, r2;
-	JS_ValueToNumber(cx, argv[0], &x1);
-	JS_ValueToNumber(cx, argv[1], &y1);
-	JS_ValueToNumber(cx, argv[2], &r1);
-	JS_ValueToNumber(cx, argv[3], &x2);
-	JS_ValueToNumber(cx, argv[4], &y2);
-	JS_ValueToNumber(cx, argv[5], &r2);
+	JS_ValueToNumber(cx, JS_ARGV0, &x1);
+	JS_ValueToNumber(cx, JS_ARGV1, &y1);
+	JS_ValueToNumber(cx, JS_ARGV2, &r1);
+	JS_ValueToNumber(cx, JS_ARGV3, &x2);
+	JS_ValueToNumber(cx, JS_ARGV4, &y2);
+	JS_ValueToNumber(cx, JS_ARGV5, &r2);
 
 	g->createRadial((float)x1, (float)y1, (float)r1, (float)x2, (float)y2, (float)r2);
 
-	*rval = *g;
+	JS_RVAL(cx, vp) = *g;
 
 	return JS_TRUE;
 }
 
-static JSBool stroke(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool stroke(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	self->stroke();
@@ -470,26 +448,24 @@ static JSBool stroke(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsva
 	return JS_TRUE;
 }
 
-static JSBool strokeRect(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool strokeRect(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	double x, y, w, h;
-	JS_ValueToNumber(cx, argv[0], &x);
-	JS_ValueToNumber(cx, argv[1], &y);
-	JS_ValueToNumber(cx, argv[2], &w);
-	JS_ValueToNumber(cx, argv[3], &h);
+	JS_ValueToNumber(cx, JS_ARGV0, &x);
+	JS_ValueToNumber(cx, JS_ARGV1, &y);
+	JS_ValueToNumber(cx, JS_ARGV2, &w);
+	JS_ValueToNumber(cx, JS_ARGV3, &h);
 	self->strokeRect((float)x, (float)y, (float)w, (float)h);
 
 	return JS_TRUE;
 }
 
-static JSBool fill(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool fill(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	self->fill();
@@ -497,38 +473,33 @@ static JSBool fill(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval*
 	return JS_TRUE;
 }
 
-static JSBool fillRect(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool fillRect(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	double x, y, w, h;
-	JS_ValueToNumber(cx, argv[0], &x);
-	JS_ValueToNumber(cx, argv[1], &y);
-	JS_ValueToNumber(cx, argv[2], &w);
-	JS_ValueToNumber(cx, argv[3], &h);
+	JS_ValueToNumber(cx, JS_ARGV0, &x);
+	JS_ValueToNumber(cx, JS_ARGV1, &y);
+	JS_ValueToNumber(cx, JS_ARGV2, &w);
+	JS_ValueToNumber(cx, JS_ARGV3, &h);
 	self->fillRect((float)x, (float)y, (float)w, (float)h);
 
 	return JS_TRUE;
 }
 
-static JSBool createImageData(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool createImageData(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
-	JSObject* imgDataParam = NULL;
-	ImageData* imgData = NULL;
+	ImageData* imgData = getJsBindable<ImageData>(cx, vp, 0);
 
-	if(JS_ValueToObject(cx, argv[0], &imgDataParam) && JS_InstanceOf(cx, imgDataParam, &ImageData::jsClass, argv)) {
-		ImageData* imgData = reinterpret_cast<ImageData*>(JS_GetPrivate(cx, imgDataParam));
+	if(imgData)
 		imgData = self->createImageData(imgData);
-	}
 	else if(argc >= 2) {
 		int32 sw, sh;
-		if(JS_ValueToInt32(cx, argv[0], &sw) && JS_ValueToInt32(cx, argv[1], &sh))
+		if(JS_ValueToInt32(cx, JS_ARGV0, &sw) && JS_ValueToInt32(cx, JS_ARGV1, &sh))
 			imgData = self->createImageData(sw, sh);
 	}
 
@@ -540,51 +511,46 @@ static JSBool createImageData(JSContext* cx, JSObject* obj, uintN argc, jsval* a
 	return JS_FALSE;
 }
 
-static JSBool getImageData(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool getImageData(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	int32 x, y, w, h;
-	JS_ValueToInt32(cx, argv[0], &x);
-	JS_ValueToInt32(cx, argv[1], &y);
-	JS_ValueToInt32(cx, argv[2], &w);
-	JS_ValueToInt32(cx, argv[3], &h);
+	JS_ValueToInt32(cx, JS_ARGV0, &x);
+	JS_ValueToInt32(cx, JS_ARGV1, &y);
+	JS_ValueToInt32(cx, JS_ARGV2, &w);
+	JS_ValueToInt32(cx, JS_ARGV3, &h);
 	ImageData* imgData = self->getImageData(x, y, w, h);
 	imgData->bind(cx, NULL);
 
-	*rval = *imgData;
+	JS_RVAL(cx, vp) = *imgData;
 
 	return JS_TRUE;
 }
 
-static JSBool putImageData(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool putImageData(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasRenderingContext2D::jsClass, argv)) return JS_FALSE;
-	CanvasRenderingContext2D* self = reinterpret_cast<CanvasRenderingContext2D*>(JS_GetPrivate(cx, obj));
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
-	JSObject* imgDataParam = NULL;
-	if(!JS_ValueToObject(cx, argv[0], &imgDataParam) || !JS_InstanceOf(cx, imgDataParam, &ImageData::jsClass, argv))
-		return JS_FALSE;
-
-	ImageData* imgData = reinterpret_cast<ImageData*>(JS_GetPrivate(cx, imgDataParam));
+	ImageData* imgData = getJsBindable<ImageData>(cx, vp, 0);
+	if(!imgData) return JS_FALSE;
 
 	int32 dx, dy;
 	int32 dirtyX = 0, dirtyY = 0;
 	int32 dirtyWidth = imgData->width;
 	int32 dirtyHeight = imgData->height;
 
-	JS_ValueToInt32(cx, argv[1], &dx);
-	JS_ValueToInt32(cx, argv[2], &dy);
+	JS_ValueToInt32(cx, JS_ARGV1, &dx);
+	JS_ValueToInt32(cx, JS_ARGV2, &dy);
 
 	if(argc >= 7) {
 		// TODO: Deal with negative values, as state in the spec
-		JS_ValueToInt32(cx, argv[3], &dirtyX);
-		JS_ValueToInt32(cx, argv[4], &dirtyY);
-		JS_ValueToInt32(cx, argv[5], &dirtyWidth);
-		JS_ValueToInt32(cx, argv[6], &dirtyHeight);
+		JS_ValueToInt32(cx, JS_ARGV3, &dirtyX);
+		JS_ValueToInt32(cx, JS_ARGV4, &dirtyY);
+		JS_ValueToInt32(cx, JS_ARGV5, &dirtyWidth);
+		JS_ValueToInt32(cx, JS_ARGV6, &dirtyHeight);
 	}
 
 	self->putImageData(imgData, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight);
@@ -593,38 +559,38 @@ static JSBool putImageData(JSContext* cx, JSObject* obj, uintN argc, jsval* argv
 }
 
 static JSFunctionSpec methods[] = {
-	{"clearRect", clearRect, 4,0,0},
-	{"beginLayer", beginLayer, 0,0,0},
-	{"endLayer", endLayer, 0,0,0},
-	{"drawImage", drawImage, 5,0,0},
+	{"clearRect", clearRect, 4,0},
+	{"beginLayer", beginLayer, 0,0},
+	{"endLayer", endLayer, 0,0},
+	{"drawImage", drawImage, 5,0},
 
-	{"save", save, 0,0,0},
-	{"restore", restore, 0,0,0},
+	{"save", save, 0,0},
+	{"restore", restore, 0,0},
 
-	{"scale", scale, 2,0,0},
-	{"rotate", rotate, 1,0,0},
-	{"translate", translate, 2,0,0},
-	{"transform", transform, 6,0,0},
-	{"setTransform", setTransform, 6,0,0},
+	{"scale", scale, 2,0},
+	{"rotate", rotate, 1,0},
+	{"translate", translate, 2,0},
+	{"transform", transform, 6,0},
+	{"setTransform", setTransform, 6,0},
 
-	{"beginPath", beginPath, 0,0,0},
-	{"closePath", closePath, 0,0,0},
-	{"moveTo", moveTo, 2,0,0},
-	{"lineTo", lineTo, 2,0,0},
-	{"arc", arc, 6,0,0},
-	{"rect", rect, 4,0,0},
+	{"beginPath", beginPath, 0,0},
+	{"closePath", closePath, 0,0},
+	{"moveTo", moveTo, 2,0},
+	{"lineTo", lineTo, 2,0},
+	{"arc", arc, 6,0},
+	{"rect", rect, 4,0},
 
-	{"createLinearGradient", createLinearGradient, 4,0,0},
-	{"createRadialGradient", createRadialGradient, 6,0,0},
+	{"createLinearGradient", createLinearGradient, 4,0},
+	{"createRadialGradient", createRadialGradient, 6,0},
 
-	{"stroke", stroke, 0,0,0},
-	{"strokeRect", strokeRect, 4,0,0},
-	{"fill", fill, 0,0,0},
-	{"fillRect", fillRect, 4,0,0},
+	{"stroke", stroke, 0,0},
+	{"strokeRect", strokeRect, 4,0},
+	{"fill", fill, 0,0},
+	{"fillRect", fillRect, 4,0},
 
-	{"createImageData", createImageData, 1,0,0},
-	{"getImageData", getImageData, 4,0,0},
-	{"putImageData", putImageData, 3,0,0},
+	{"createImageData", createImageData, 1,0},
+	{"getImageData", getImageData, 4,0},
+	{"putImageData", putImageData, 3,0},
 
 	{0}
 };

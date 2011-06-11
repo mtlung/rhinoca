@@ -42,32 +42,30 @@ void jsReportError(JSContext* cx, const char* message, JSErrorReport* report)
 
 static JSClass jsGlobalClass = {
 	"global", JSCLASS_GLOBAL_FLAGS,
-	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 	JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSClass jsConsoleClass = {
 	"console", JSCLASS_HAS_PRIVATE,
-	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 	JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-JSBool jsConsoleLog(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+JSBool jsConsoleLog(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(JSString* jss = JS_ValueToString(cx, argv[0])) {
-		char* str = JS_GetStringBytes(jss);
-		Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetPrivate(cx, obj));
-		print(rh, "%s", str);
-		return JS_TRUE;
-	}
+	JsString jss(cx, JS_ARGV0);
+	if(!jss) return JS_FALSE;
 
-	return JS_FALSE;
+	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetPrivate(cx, JS_THIS_OBJECT(cx, vp)));
+	print(rh, "%s", jss.c_str());
+	return JS_TRUE;
 }
 
 static JSFunctionSpec jsConsoleMethods[] = {
-	{"log", jsConsoleLog, 1,0,0},
+	{"log", jsConsoleLog, 1,0},
 	{0}
 };
 
@@ -84,7 +82,7 @@ Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 	JS_SetContextPrivate(jsContext, this);
 	JS_SetErrorReporter(jsContext, jsReportError);
 
-	jsGlobal = JS_NewObject(jsContext, &jsGlobalClass, NULL, NULL);
+	jsGlobal = JS_NewCompartmentAndGlobalObject(jsContext, &jsGlobalClass, NULL);
 	JS_SetGlobalObject(jsContext, jsGlobal);
 
 	taskPool.init(2);
@@ -148,7 +146,7 @@ void Rhinoca::_initGlobal()
 	{	// Register the console object
 		jsConsole = JS_DefineObject(jsContext, jsGlobal, "console", &jsConsoleClass, 0, JSPROP_ENUMERATE);
 		VERIFY(JS_SetPrivate(jsContext, jsConsole, this));
-		VERIFY(JS_AddNamedRoot(jsContext, &jsConsole, "console"));
+		VERIFY(JS_AddNamedObjectRoot(jsContext, &jsConsole, "console"));
 		VERIFY(JS_DefineFunctions(jsContext, jsConsole, jsConsoleMethods));
 	}
 
@@ -346,7 +344,7 @@ void Rhinoca::closeDocument()
 	// Clear all tasks before the VM shutdown, since any task would use the VM
 	taskPool.waitAll();
 
-	VERIFY(JS_RemoveRoot(jsContext, &jsConsole));
+	VERIFY(JS_RemoveObjectRoot(jsContext, &jsConsole));
 	jsConsole = NULL;
 
 	if(domWindow)
@@ -359,7 +357,7 @@ void Rhinoca::closeDocument()
 	// This requirement is not mentioned in the Mozilla documentation, I wonder why
 	// JS_DestroyContext() didn't do all the necessary job to clear the global.
 	// Similar problem: http://web.archiveorange.com/archive/v/yxPWTpZYQx37ab1hpyWc
-	JS_ClearScope(jsContext, jsGlobal);
+//	JS_ClearScope(jsContext, jsGlobal);
 
 	JS_GC(jsContext);
 }

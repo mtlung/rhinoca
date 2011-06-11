@@ -8,7 +8,7 @@ namespace Dom {
 
 JSClass HTMLBodyElement::jsClass = {
 	"HTMLBodyElement", JSCLASS_HAS_PRIVATE,
-	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
@@ -17,19 +17,19 @@ static const char* _eventAttributeTable[] = {
 	"onload",
 };
 
-static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	// Not implemented
 	return JS_FALSE;
 }
 
-static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	HTMLBodyElement* self = reinterpret_cast<HTMLBodyElement*>(JS_GetPrivate(cx, obj));
-	id = id / 2 + 0;	// Account for having both get and set functions
+	HTMLBodyElement* self = getJsBindable<HTMLBodyElement>(cx, obj);
+	int32 idx = JSID_TO_INT(id) / 2 + 0;	// Account for having both get and set functions
 
 	// NOTE: Redirect body.onload to window.onload
-	return self->ownerDocument->window()->addEventListenerAsAttribute(cx, _eventAttributeTable[id], *vp);
+	return self->ownerDocument->window()->addEventListenerAsAttribute(cx, _eventAttributeTable[idx], *vp);
 }
 
 static JSPropertySpec properties[] = {

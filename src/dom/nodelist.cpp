@@ -5,26 +5,25 @@ namespace Dom {
 
 static void traceDataOp(JSTracer* trc, JSObject* obj)
 {
-	NodeList* nodeList = reinterpret_cast<NodeList*>(JS_GetPrivate(trc->context, obj));
-	JS_CallTracer(trc, nodeList->root->jsObject, JSTRACE_OBJECT);
+	NodeList* self = getJsBindable<NodeList>(trc->context, obj);
+	JS_CALL_OBJECT_TRACER(trc, self->root->jsObject, "NodeList::root");
 }
 
-static JSBool getProperty(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool getProperty(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	NodeList* self = reinterpret_cast<NodeList*>(JS_GetPrivate(cx, obj));
+	NodeList* self = getJsBindable<NodeList>(cx, obj);
 
-	int32 index;
-	if(JS_ValueToInt32(cx, id, &index)) {
-		*vp = *self->item(index);
-		return JS_TRUE;
-	}
+	int32 index = JSID_TO_INT(id);
+	if(index < 0 || (unsigned)index >= self->length())
+		return JS_FALSE;
 
-	return JS_FALSE;
+	*vp = *self->item(index);
+	return JS_TRUE;
 }
 
 JSClass NodeList::jsClass = {
 	"NodeList", JSCLASS_HAS_PRIVATE | JSCLASS_MARK_IS_TRACE,
-	JS_PropertyStub, JS_PropertyStub, getProperty, JS_PropertyStub,
+	JS_PropertyStub, JS_PropertyStub, getProperty, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize,
 	0, 0, 0, 0, 0, 0,
@@ -32,31 +31,31 @@ JSClass NodeList::jsClass = {
 	0
 };
 
-static JSBool item(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool item(JSContext* cx, uintN argc, jsval* vp)
 {
-	NodeList* self = reinterpret_cast<NodeList*>(JS_GetPrivate(cx, obj));
+	NodeList* self = getJsBindable<NodeList>(cx, vp);
 
 	int32 index;
-	if(!JS_ValueToInt32(cx, argv[0], &index)) return JS_FALSE;
+	if(!JS_ValueToInt32(cx, JS_ARGV0, &index)) return JS_FALSE;
 
-	*rval = *self->item(index);
+	JS_RVAL(cx, vp) = *self->item(index);
 	return JS_TRUE;
 }
 
 static JSFunctionSpec methods[] = {
-	{"item", item, 1,0,0},
+	{"item", item, 1,0},
 	{0}
 };
 
-static JSBool length(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool length(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	NodeList* self = reinterpret_cast<NodeList*>(JS_GetPrivate(cx, obj));
+	NodeList* self = getJsBindable<NodeList>(cx, obj);
 	*vp = INT_TO_JSVAL(self->length());
 	return JS_TRUE;
 }
 
 static JSPropertySpec properties[] = {
-	{"length", 0, JSPROP_READONLY, length, JS_PropertyStub},
+	{"length", 0, JSPROP_READONLY, length, JS_StrictPropertyStub},
 	{0}
 };
 

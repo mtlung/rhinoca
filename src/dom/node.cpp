@@ -7,19 +7,19 @@ namespace Dom {
 
 static void traceDataOp(JSTracer* trc, JSObject* obj)
 {
-	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(trc->context, obj));
+	Node* self = getJsBindable<Node>(trc->context, obj);
 
 	self->EventTarget::jsTrace(trc);
 
 	if(self->firstChild)
-		JS_CallTracer(trc, self->firstChild->jsObject, JSTRACE_OBJECT);
+		JS_CALL_OBJECT_TRACER(trc, self->firstChild->jsObject, "Node.firstChild");
 	if(self->nextSibling)
-		JS_CallTracer(trc, self->nextSibling->jsObject, JSTRACE_OBJECT);
+		JS_CALL_OBJECT_TRACER(trc, self->nextSibling->jsObject, "Node.nextSibling");
 }
 
 JSClass Node::jsClass = {
 	"Node", JSCLASS_HAS_PRIVATE | JSCLASS_MARK_IS_TRACE,
-	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize,
 	0, 0, 0, 0, 0, 0,
@@ -27,187 +27,152 @@ JSClass Node::jsClass = {
 	0
 };
 
-static JSBool appendChild(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool appendChild(JSContext* cx, uintN argc, jsval* vp)
 {
-	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	Node* self = getJsBindable<Node>(cx, vp);
+	Node* child = getJsBindable<Node>(cx, vp, 0);
 
-	JSObject* jsChild = NULL;
-	VERIFY(JS_ValueToObject(cx, argv[0], &jsChild));
-	if(!jsChild) return JS_TRUE;
-
-//	if(!JS_InstanceOf(cx, jsChild, &Node::jsClass, argv)) return JS_TRUE;
-	Node* child = reinterpret_cast<Node*>(JS_GetPrivate(cx, jsChild));
-
-	*rval = *self->appendChild(child);
+	JS_RVAL(cx, vp) = *self->appendChild(child);
 	return JS_TRUE;
 }
 
-static JSBool hasChildNodes(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool hasChildNodes(JSContext* cx, uintN argc, jsval* vp)
 {
-	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
-	*rval = BOOLEAN_TO_JSVAL(self->hasChildNodes());
+	Node* self = getJsBindable<Node>(cx, vp);
+	JS_RVAL(cx, vp) = BOOLEAN_TO_JSVAL(self->hasChildNodes());
 	return JS_TRUE;
 }
 
-static JSBool insertBefore(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool insertBefore(JSContext* cx, uintN argc, jsval* vp)
 {
-	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	Node* self = getJsBindable<Node>(cx, vp);
+	Node* newChild = getJsBindable<Node>(cx, vp, 0);
+	Node* refChild = getJsBindable<Node>(cx, vp, 1);
 
-	JSObject* jsNewChild = NULL;
-	VERIFY(JS_ValueToObject(cx, argv[0], &jsNewChild));
-	if(!jsNewChild) return JS_TRUE;
-
-	if(!JS_InstanceOf(cx, jsNewChild, &Node::jsClass, argv)) return JS_TRUE;
-	Node* newChild = reinterpret_cast<Node*>(JS_GetPrivate(cx, jsNewChild));
-
-	JSObject* jsRefChild = NULL;
-	VERIFY(JS_ValueToObject(cx, argv[1], &jsRefChild));
-
-	if(!JS_InstanceOf(cx, jsRefChild, &Node::jsClass, argv)) return JS_TRUE;
-	Node* refChild = reinterpret_cast<Node*>(JS_GetPrivate(cx, jsRefChild));
-
-	*rval = *self->insertBefore(newChild, refChild);
+	JS_RVAL(cx, vp) = *self->insertBefore(newChild, refChild);
 	return JS_TRUE;
 }
 
-static JSBool removeChild(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool removeChild(JSContext* cx, uintN argc, jsval* vp)
 {
-	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	Node* self = getJsBindable<Node>(cx, vp);
+	Node* child = getJsBindable<Node>(cx, vp, 0);
 
-	JSObject* jsChild = NULL;
-	VERIFY(JS_ValueToObject(cx, argv[0], &jsChild));
-	if(!jsChild) return JS_TRUE;
-
-//	if(!JS_InstanceOf(cx, jsChild, &Node::jsClass, argv)) return JS_TRUE;
-	Node* child = reinterpret_cast<Node*>(JS_GetPrivate(cx, jsChild));
-
-	*rval = *self->removeChild(child);
+	JS_RVAL(cx, vp) = *self->removeChild(child);
 	return JS_TRUE;
 }
 
-static JSBool replaceChild(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool replaceChild(JSContext* cx, uintN argc, jsval* vp)
 {
-	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	Node* self = getJsBindable<Node>(cx, vp);
+	Node* oldChild = getJsBindable<Node>(cx, vp, 0);
+	Node* newChild = getJsBindable<Node>(cx, vp, 1);
 
-	JSObject* jsOldChild = NULL;
-	VERIFY(JS_ValueToObject(cx, argv[0], &jsOldChild));
-	if(!jsOldChild) return JS_TRUE;
-
-//	if(!JS_InstanceOf(cx, jsOldChild, &Node::jsClass, argv)) return JS_TRUE;
-	Node* oldChild = reinterpret_cast<Node*>(JS_GetPrivate(cx, jsOldChild));
-
-	JSObject* jsNewChild = NULL;
-	VERIFY(JS_ValueToObject(cx, argv[0], &jsNewChild));
-	if(!jsNewChild) return JS_TRUE;
-
-//	if(!JS_InstanceOf(cx, jsNewChild, &Node::jsClass, argv)) return JS_TRUE;
-	Node* newChild = reinterpret_cast<Node*>(JS_GetPrivate(cx, jsNewChild));
-
-	*rval = *self->replaceChild(oldChild, newChild);
+	JS_RVAL(cx, vp) = *self->replaceChild(oldChild, newChild);
 	return JS_TRUE;
 }
 
-static JSBool addEventListener(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool addEventListener(JSContext* cx, uintN argc, jsval* vp)
 {
-	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
-	return self->addEventListener(cx, argv[0], argv[1], argv[2]);
+	Node* self = getJsBindable<Node>(cx, vp);
+	return self->addEventListener(cx, JS_ARGV0, JS_ARGV1, JS_ARGV2);
 }
 
-static JSBool removeEventListener(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool removeEventListener(JSContext* cx, uintN argc, jsval* vp)
 {
-	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
-	return self->removeEventListener(cx, argv[0], argv[1], argv[2]);
+	Node* self = getJsBindable<Node>(cx, vp);
+	return self->removeEventListener(cx, JS_ARGV0, JS_ARGV1, JS_ARGV2);
 }
 
-static JSBool dispatchEvent(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool dispatchEvent(JSContext* cx, uintN argc, jsval* vp)
 {
-	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	Node* self = getJsBindable<Node>(cx, vp);
 
 	JSObject* _obj = NULL;
-	if(JS_ValueToObject(cx, argv[0], &_obj) != JS_TRUE) return JS_FALSE;
+	if(JS_ValueToObject(cx, JS_ARGV0, &_obj) != JS_TRUE) return JS_FALSE;
 	Event* ev = reinterpret_cast<Event*>(JS_GetPrivate(cx, _obj));
 
 	return self->dispatchEvent(ev);
 }
 
 static JSFunctionSpec methods[] = {
-	{"appendChild", appendChild, 1,0,0},
-//	{"cloneNode", cloneNode, 0,0,0},
-	{"hasChildNodes", hasChildNodes, 0,0,0},	// https://developer.mozilla.org/en/DOM/Node.hasChildNodes
-	{"insertBefore", insertBefore, 2,0,0},
-	{"removeChild", removeChild, 1,0,0},		// https://developer.mozilla.org/en/DOM/Node.removeChild
-	{"replaceChild", replaceChild, 2,0,0},
-	{"addEventListener", addEventListener, 3,0,0},
-	{"removeEventListener", removeEventListener, 3,0,0},
-	{"dispatchEvent", dispatchEvent, 1,0,0},
+	{"appendChild", appendChild, 1,0},
+//	{"cloneNode", cloneNode, 0,0},
+	{"hasChildNodes", hasChildNodes, 0,0},	// https://developer.mozilla.org/en/DOM/Node.hasChildNodes
+	{"insertBefore", insertBefore, 2,0},
+	{"removeChild", removeChild, 1,0},		// https://developer.mozilla.org/en/DOM/Node.removeChild
+	{"replaceChild", replaceChild, 2,0},
+	{"addEventListener", addEventListener, 3,0},
+	{"removeEventListener", removeEventListener, 3,0},
+	{"dispatchEvent", dispatchEvent, 1,0},
 	{0}
 };
 
-static JSBool childNodes(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool childNodes(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	Node* self = getJsBindable<Node>(cx, obj);
 	*vp = *self->childNodes();
 	return JS_TRUE;
 }
 
-static JSBool firstChild(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool firstChild(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	Node* self = getJsBindable<Node>(cx, obj);
 	*vp = *self->firstChild;
 	return JS_TRUE;
 }
 
-static JSBool lastChild(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool lastChild(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	Node* self = getJsBindable<Node>(cx, obj);
 	*vp = *self->lastChild();
 	return JS_TRUE;
 }
 
-static JSBool nextSibling(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool nextSibling(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	Node* self = getJsBindable<Node>(cx, obj);
 	*vp = *self->nextSibling;
 	return JS_TRUE;
 }
 
-static JSBool nodeName(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool nodeName(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	Node* self = getJsBindable<Node>(cx, obj);
 	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->nodeName.c_str()));
 	return JS_TRUE;
 }
 
-static JSBool ownerDocument(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool ownerDocument(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	Node* self = getJsBindable<Node>(cx, obj);
 	*vp = *self->ownerDocument;
 	return JS_TRUE;
 }
 
-static JSBool parentNode(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool parentNode(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	Node* self = getJsBindable<Node>(cx, obj);
 	*vp = *self->parentNode;
 	return JS_TRUE;
 }
 
-static JSBool previousSibling(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool previousSibling(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	Node* self = reinterpret_cast<Node*>(JS_GetPrivate(cx, obj));
+	Node* self = getJsBindable<Node>(cx, obj);
 	*vp = *self->previousSibling();
 	return JS_TRUE;
 }
 
 static JSPropertySpec properties[] = {
-	{"childNodes", 0, JSPROP_READONLY, childNodes, JS_PropertyStub},	// NOTE: Current implementation will not return the same NodeList object on each call of childNodes
-	{"firstChild", 0, JSPROP_READONLY, firstChild, JS_PropertyStub},
-	{"lastChild", 0, JSPROP_READONLY, lastChild, JS_PropertyStub},
-	{"nextSibling", 0, JSPROP_READONLY, nextSibling, JS_PropertyStub},
-	{"nodeName", 0, JSPROP_READONLY, nodeName, JS_PropertyStub},
-	{"ownerDocument", 0, JSPROP_READONLY, ownerDocument, JS_PropertyStub},
-	{"parentNode", 0, JSPROP_READONLY, parentNode, JS_PropertyStub},
-	{"previousSibling", 0, JSPROP_READONLY, previousSibling, JS_PropertyStub},
+	{"childNodes", 0, JSPROP_READONLY, childNodes, JS_StrictPropertyStub},	// NOTE: Current implementation will not return the same NodeList object on each call of childNodes
+	{"firstChild", 0, JSPROP_READONLY, firstChild, JS_StrictPropertyStub},
+	{"lastChild", 0, JSPROP_READONLY, lastChild, JS_StrictPropertyStub},
+	{"nextSibling", 0, JSPROP_READONLY, nextSibling, JS_StrictPropertyStub},
+	{"nodeName", 0, JSPROP_READONLY, nodeName, JS_StrictPropertyStub},
+	{"ownerDocument", 0, JSPROP_READONLY, ownerDocument, JS_StrictPropertyStub},
+	{"parentNode", 0, JSPROP_READONLY, parentNode, JS_StrictPropertyStub},
+	{"previousSibling", 0, JSPROP_READONLY, previousSibling, JS_StrictPropertyStub},
 	{0}
 };
 

@@ -9,30 +9,27 @@ namespace Dom {
 
 JSClass CanvasGradient::jsClass = {
 	"CanvasGradient", JSCLASS_HAS_PRIVATE,
-	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-static JSBool addColorStop(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool addColorStop(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_InstanceOf(cx, obj, &CanvasGradient::jsClass, argv)) return JS_FALSE;
-	CanvasGradient* self = reinterpret_cast<CanvasGradient*>(JS_GetPrivate(cx, obj));
+	CanvasGradient* self = getJsBindable<CanvasGradient>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	double t;
-	JS_ValueToNumber(cx, argv[0], &t);
+	JS_ValueToNumber(cx, JS_ARGV0, &t);
 
-	JSString* jss = JS_ValueToString(cx, argv[1]);
-	char* str = JS_GetStringBytes(jss);
-
-	self->addColorStop((float)t, str);
+	JsString jss(cx, JS_ARGV1);
+	self->addColorStop((float)t, jss.c_str());
 
 	return JS_TRUE;
 }
 
 static JSFunctionSpec methods[] = {
-	{"addColorStop", addColorStop, 2,0,0},
+	{"addColorStop", addColorStop, 2,0},
 	{0}
 };
 

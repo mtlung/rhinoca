@@ -11,20 +11,20 @@ namespace Dom {
 
 JSClass HTMLAudioElement::jsClass = {
 	"HTMLAudioElement", JSCLASS_HAS_PRIVATE,
-	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-static JSBool getLoop(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool getLoop(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	HTMLAudioElement* self = reinterpret_cast<HTMLAudioElement*>(JS_GetPrivate(cx, obj));
+	HTMLAudioElement* self = getJsBindable<HTMLAudioElement>(cx, obj);
 	*vp = BOOLEAN_TO_JSVAL(self->loop()); return JS_TRUE;
 }
 
-static JSBool setLoop(JSContext* cx, JSObject* obj, jsval id, jsval* vp)
+static JSBool setLoop(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	HTMLAudioElement* self = reinterpret_cast<HTMLAudioElement*>(JS_GetPrivate(cx, obj));
+	HTMLAudioElement* self = getJsBindable<HTMLAudioElement>(cx, obj);
 	self->setLoop(JSVAL_TO_BOOLEAN(*vp) == JS_TRUE); return JS_TRUE;
 }
 
@@ -33,9 +33,9 @@ static JSPropertySpec properties[] = {
 	{0}
 };
 
-static JSBool construct(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+static JSBool construct(JSContext* cx, uintN argc, jsval* vp)
 {
-	if(!JS_IsConstructing(cx)) return JS_FALSE;	// Not called as constructor? (called without new)
+	if(!JS_IsConstructing(cx, vp)) return JS_FALSE;	// Not called as constructor? (called without new)
 
 	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
 
@@ -44,7 +44,7 @@ static JSBool construct(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, j
 
 	audio->ownerDocument = rh->domWindow->document;
 
-	*rval = *audio;
+	JS_RVAL(cx, vp) = *audio;
 	return JS_TRUE;
 }
 
