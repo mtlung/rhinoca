@@ -24,11 +24,11 @@
 
 /* Define to 1 if the N-byte __intN types are defined by the
    compiler.  */
-#define JS_HAVE___INTN 1
+/* #undef JS_HAVE___INTN */
 
 /* Define to 1 if #including <stddef.h> provides definitions for
    intptr_t and uintptr_t.  */
-#define JS_STDDEF_H_HAS_INTPTR_T 1
+/* #undef JS_STDDEF_H_HAS_INTPTR_T */
 
 /* Define to 1 if #including <crtdefs.h> provides definitions for
    intptr_t and uintptr_t.  */
@@ -45,15 +45,20 @@
 
 /* Some mozilla code uses JS-friend APIs that depend on JS_TRACER and
    JS_METHODJIT being correct. */
-//#define JS_TRACER 1
+/* #undef JS_TRACER */
 /* #undef JS_METHODJIT */
+
+#ifdef _MSC_VER
+#	define JS_HAVE___INTN 1
+#	define JS_STDDEF_H_HAS_INTPTR_T 1
+#	define __STDC_LIMIT_MACROS
+#else
+#	define JS_HAVE_STDINT_H 1
+#	define JS_BYTES_PER_WORD 4
+#endif
 
 #ifndef ENABLE_YARR_JIT
 #	define ENABLE_YARR_JIT 0
 #endif
-
-#define __STDC_LIMIT_MACROS
-
-
 
 #endif /* js_config_h___ */

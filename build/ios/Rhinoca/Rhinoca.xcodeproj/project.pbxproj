@@ -754,6 +754,8 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = Rhinoca_Prefix.pch;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
+				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
 				INSTALL_PATH = /usr/local/lib;
 				PRODUCT_NAME = Rhinoca;
 			};
@@ -767,6 +769,8 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = Rhinoca_Prefix.pch;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
+				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
 				INSTALL_PATH = /usr/local/lib;
 				PRODUCT_NAME = Rhinoca;
 			};
