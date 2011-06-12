@@ -73,6 +73,8 @@ public:
 
 	override void handleEvent(Event* evt);
 
+	jsval getJsVal();
+
 protected:
 	override void* identifier() { return JSVAL_TO_OBJECT(_jsClosure); }
 	override void jsTrace(JSTracer* trc);
@@ -109,6 +111,8 @@ public:
 	void removeEventListener(const char* type, void* listenerIdentifier, bool useCapture);
 	JSBool removeEventListener(JSContext* cx, jsval type, jsval func, jsval useCapture);
 	JSBool removeEventListenerAsAttribute(JSContext* cx, const char* eventAttributeName);
+
+	jsval getEventListenerAsAttribute(JSContext* cx, const char* eventAttributeName);
 
 	void removeAllEventListener();
 

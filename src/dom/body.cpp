@@ -19,14 +19,17 @@ static const char* _eventAttributeTable[] = {
 
 static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	// Not implemented
-	return JS_FALSE;
+	HTMLBodyElement* self = getJsBindable<HTMLBodyElement>(cx, obj);
+	int32 idx = JSID_TO_INT(id) / 2;	// Account for having both get and set functions
+
+	*vp = self->getEventListenerAsAttribute(cx, _eventAttributeTable[idx]);
+	return JS_TRUE;
 }
 
 static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	HTMLBodyElement* self = getJsBindable<HTMLBodyElement>(cx, obj);
-	int32 idx = JSID_TO_INT(id) / 2 + 0;	// Account for having both get and set functions
+	int32 idx = JSID_TO_INT(id) / 2;	// Account for having both get and set functions
 
 	// NOTE: Redirect body.onload to window.onload
 	return self->ownerDocument->window()->addEventListenerAsAttribute(cx, _eventAttributeTable[idx], *vp);

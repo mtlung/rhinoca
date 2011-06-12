@@ -119,10 +119,19 @@ static const char* _eventAttributeTable[] = {
 	"onerror"
 };
 
+static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+{
+	HTMLImageElement* self = getJsBindable<HTMLImageElement>(cx, obj);
+	int32 idx = JSID_TO_INT(id) / 2;	// Account for having both get and set functions
+
+	*vp = self->getEventListenerAsAttribute(cx, _eventAttributeTable[idx]);
+	return JS_TRUE;
+}
+
 static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	HTMLImageElement* self = getJsBindable<HTMLImageElement>(cx, obj);
-	int32 idx = JSID_TO_INT(id) / 2 + 0;	// Account for having both get and set functions
+	int32 idx = JSID_TO_INT(id) / 2;	// Account for having both get and set functions
 
 	self->addEventListenerAsAttribute(cx, _eventAttributeTable[idx], *vp);
 
@@ -159,9 +168,9 @@ static JSPropertySpec properties[] = {
 	{"complete", 0, JSPROP_READONLY | JsBindable::jsPropFlags, complete, JS_StrictPropertyStub},
 
 	// Event attributes
-	{_eventAttributeTable[0], 0, 0, JS_PropertyStub, setEventAttribute},
-	{_eventAttributeTable[1], 1, 0, JS_PropertyStub, setEventAttribute},
-	{_eventAttributeTable[2], 2, 0, JS_PropertyStub, setEventAttribute},
+	{_eventAttributeTable[0], 0, 0, getEventAttribute, setEventAttribute},
+	{_eventAttributeTable[1], 1, 0, getEventAttribute, setEventAttribute},
+	{_eventAttributeTable[2], 2, 0, getEventAttribute, setEventAttribute},
 	{0}
 };
 

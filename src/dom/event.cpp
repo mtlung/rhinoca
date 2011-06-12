@@ -109,6 +109,14 @@ void JsFunctionEventListener::handleEvent(Event* evt)
 		JS_ExecuteScript(_jsContext, JS_GetGlobalObject(_jsContext), _jsScript, &rval);
 }
 
+jsval JsFunctionEventListener::getJsVal()
+{
+	if(_jsScript)
+		return OBJECT_TO_JSVAL(_jsScript);
+	else
+		return _jsClosure;
+}
+
 void JsFunctionEventListener::jsTrace(JSTracer* trc)
 {
 	if(!JSVAL_IS_NULL(_jsClosure))
@@ -219,6 +227,20 @@ JSBool EventTarget::removeEventListenerAsAttribute(JSContext* cx, const char* ev
 {
 	removeEventListener(eventAttributeName + 2, (void*)FixString(eventAttributeName).hashValue(), false);
 	return JS_TRUE;
+}
+
+jsval EventTarget::getEventListenerAsAttribute(JSContext* cx, const char* eventAttributeName)
+{
+	void* listenerIdentifier = (void*)FixString(eventAttributeName).hashValue();
+
+	for(EventListener* l = _eventListeners.begin(); l != _eventListeners.end(); l = l->next()) {
+		if(l->_type == StringHash(eventAttributeName + 2) && !l->_useCapture && l->identifier() == listenerIdentifier) {
+			if(JsFunctionEventListener* e = dynamic_cast<JsFunctionEventListener*>(l))
+				return e->getJsVal();
+		}
+	}
+
+	return JSVAL_NULL;
 }
 
 void EventTarget::removeAllEventListener()

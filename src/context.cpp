@@ -261,6 +261,7 @@ bool Rhinoca::openDoucment(const char* uri)
 				currentNode = element;
 			}
 
+			// Assign attributes from html tag to the HTMLElement javascript property
 			for(unsigned i=0; i<parser.attributeCount(); ++i)
 			{
 				const char* name = parser.attributeName(i);
@@ -279,12 +280,6 @@ bool Rhinoca::openDoucment(const char* uri)
 					jsval rval;
 					JS_EvaluateScript(jsContext, jsGlobal, script.c_str(), script.size(), uri, 0, &rval);
 				}
-			}
-			else if(strcasecmp(parser.elementName(), "canvas") == 0)
-			{
-			}
-			else if(strcasecmp(parser.elementName(), "script") == 0)
-			{
 			}
 		}	break;
 

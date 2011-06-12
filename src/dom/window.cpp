@@ -223,14 +223,17 @@ static const char* _eventAttributeTable[] = {
 
 static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	// Not implemented
-	return JS_FALSE;
+	Window* self = getJsBindable<Window>(cx, obj);
+	int32 idx = JSID_TO_INT(id) / 2;	// Account for having both get and set functions
+
+	*vp = self->getEventListenerAsAttribute(cx, _eventAttributeTable[idx]);
+	return JS_TRUE;
 }
 
 static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	Window* self = getJsBindable<Window>(cx, obj);
-	int32 idx = JSID_TO_INT(id) / 2 + 0;	// Account for having both get and set functions
+	int32 idx = JSID_TO_INT(id) / 2;	// Account for having both get and set functions
 
 	return self->addEventListenerAsAttribute(cx, _eventAttributeTable[idx], *vp);
 }
