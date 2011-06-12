@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "canvas2dcontext.h"
-#include "canvaspixelarray.h"
 #include "canvasgradient.h"
 #include "color.h"
 #include "image.h"
@@ -374,7 +373,7 @@ static JSBool arc(JSContext* cx, uintN argc, jsval* vp)
 	JS_ValueToNumber(cx, JS_ARGV2, &radius);
 	JS_ValueToNumber(cx, JS_ARGV3, &startAngle);
 	JS_ValueToNumber(cx, JS_ARGV4, &endAngle);
-	self->arc((float)x, (float)y, (float)radius, (float)startAngle, (float)endAngle, true);
+	self->arc((float)x, (float)y, (float)radius, (float)startAngle, (float)endAngle, false);
 
 	return JS_TRUE;
 }
