@@ -48,8 +48,8 @@ static JSBool setHeight(JSContext* cx, JSObject* obj, jsid id, JSBool strict, js
 }
 
 static JSPropertySpec properties[] = {
-	{"width", 0, 0, getWidth, setWidth},
-	{"height", 0, 0, getHeight, setHeight},
+	{"width", 0, JsBindable::jsPropFlags, getWidth, setWidth},
+	{"height", 0, JsBindable::jsPropFlags, getHeight, setHeight},
 	{0}
 };
 

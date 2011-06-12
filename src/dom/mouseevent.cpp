@@ -139,19 +139,19 @@ static JSBool get(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 // Reference:
 // http://www.quirksmode.org/dom/w3c_cssom.html#mousepos
 static JSPropertySpec properties[] = {
-	{"screenX",		screenX,	0, get, JS_StrictPropertyStub},	// Returns the mouse coordinates relative to the screen
-	{"screenY",		screenY,	0, get, JS_StrictPropertyStub},	//
-	{"clientX",		clientX,	0, get, JS_StrictPropertyStub},	// Returns the mouse coordinates relative to the window
-	{"clientY",		clientY,	0, get, JS_StrictPropertyStub},	//
-	{"x",			clientX,	0, get, JS_StrictPropertyStub},	//
-	{"y",			clientY,	0, get, JS_StrictPropertyStub},	//
-	{"pageX",		pageX,		0, get, JS_StrictPropertyStub},	// Returns the mouse coordinates relative to the document
-	{"pageY",		pageY,		0, get, JS_StrictPropertyStub},	//
-	{"ctrlKey",		ctrlKey,	0, get, JS_StrictPropertyStub},
-	{"shiftKey",	shiftKey,	0, get, JS_StrictPropertyStub},
-	{"altKey",		altKey,		0, get, JS_StrictPropertyStub},
-	{"metaKey",		metaKey,	0, get, JS_StrictPropertyStub},
-	{"button",		button,		0, get, JS_StrictPropertyStub},
+	{"screenX",		screenX,	JSPROP_READONLY | JsBindable::jsPropFlags, get, JS_StrictPropertyStub},	// Returns the mouse coordinates relative to the screen
+	{"screenY",		screenY,	JSPROP_READONLY | JsBindable::jsPropFlags, get, JS_StrictPropertyStub},	//
+	{"clientX",		clientX,	JSPROP_READONLY | JsBindable::jsPropFlags, get, JS_StrictPropertyStub},	// Returns the mouse coordinates relative to the window
+	{"clientY",		clientY,	JSPROP_READONLY | JsBindable::jsPropFlags, get, JS_StrictPropertyStub},	//
+	{"x",			clientX,	JSPROP_READONLY | JsBindable::jsPropFlags, get, JS_StrictPropertyStub},	//
+	{"y",			clientY,	JSPROP_READONLY | JsBindable::jsPropFlags, get, JS_StrictPropertyStub},	//
+	{"pageX",		pageX,		JSPROP_READONLY | JsBindable::jsPropFlags, get, JS_StrictPropertyStub},	// Returns the mouse coordinates relative to the document
+	{"pageY",		pageY,		JSPROP_READONLY | JsBindable::jsPropFlags, get, JS_StrictPropertyStub},	//
+	{"ctrlKey",		ctrlKey,	JSPROP_READONLY | JsBindable::jsPropFlags, get, JS_StrictPropertyStub},
+	{"shiftKey",	shiftKey,	JSPROP_READONLY | JsBindable::jsPropFlags, get, JS_StrictPropertyStub},
+	{"altKey",		altKey,		JSPROP_READONLY | JsBindable::jsPropFlags, get, JS_StrictPropertyStub},
+	{"metaKey",		metaKey,	JSPROP_READONLY | JsBindable::jsPropFlags, get, JS_StrictPropertyStub},
+	{"button",		button,		JSPROP_READONLY | JsBindable::jsPropFlags, get, JS_StrictPropertyStub},
 	{0}
 };
 

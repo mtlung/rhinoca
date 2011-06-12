@@ -188,6 +188,18 @@ void String::swap(String& rhs)
 	rhs._length = l;
 }
 
+bool strToBool(const char* str, bool defaultValue)
+{
+	if(!str)
+		return defaultValue;
+	else if(strcasecmp(str, "true") == 0)
+		return true;
+	else if(strcasecmp(str, "false") == 0)
+		return false;
+
+	return atof(str, defaultValue) > 0 ? true : false;
+}
+
 char* rstrstr(char* __restrict str1, const char* __restrict str2)
 {
 	size_t  s1len = strlen(str1);

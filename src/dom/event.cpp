@@ -26,12 +26,12 @@ static JSFunctionSpec methods[] = {
 static JSBool type(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	Event* self = getJsBindable<Event>(cx, obj);
-	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->type.c_str()));
+	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->type));
 	return JS_TRUE;
 }
 
 static JSPropertySpec properties[] = {
-	{"type", 0, JSPROP_READONLY, type, JS_StrictPropertyStub},
+	{"type", 0, JSPROP_READONLY | JsBindable::jsPropFlags, type, JS_StrictPropertyStub},
 	{0}
 };
 

@@ -50,7 +50,7 @@ static void onLoadCallback(TaskPool* taskPool, void* userData)
 static JSBool getSrc(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	HTMLImageElement* self = getJsBindable<HTMLImageElement>(cx, obj);
-	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->texture->uri().c_str()));
+	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->texture->uri()));
 	return JS_TRUE;
 }
 
@@ -151,12 +151,12 @@ Return:
 }
 
 static JSPropertySpec properties[] = {
-	{"src", 0, 0, getSrc, setSrc},
-	{"width", 0, 0, getWidth, setWidth},
-	{"height", 0, 0, getHeight, setHeight},
-	{"naturalWidth", 0, 0, naturalWidth, JS_StrictPropertyStub},
-	{"naturalHeight", 0, 0, naturalHeight, JS_StrictPropertyStub},
-	{"complete", 0, 0, complete, JS_StrictPropertyStub},
+	{"src", 0, JsBindable::jsPropFlags, getSrc, setSrc},
+	{"width", 0, JsBindable::jsPropFlags, getWidth, setWidth},
+	{"height", 0, JsBindable::jsPropFlags, getHeight, setHeight},
+	{"naturalWidth", 0, JSPROP_READONLY | JsBindable::jsPropFlags, naturalWidth, JS_StrictPropertyStub},
+	{"naturalHeight", 0, JSPROP_READONLY | JsBindable::jsPropFlags, naturalHeight, JS_StrictPropertyStub},
+	{"complete", 0, JSPROP_READONLY | JsBindable::jsPropFlags, complete, JS_StrictPropertyStub},
 
 	// Event attributes
 	{_eventAttributeTable[0], 0, 0, JS_PropertyStub, setEventAttribute},
@@ -213,15 +213,6 @@ void HTMLImageElement::registerClass(JSContext* cx, JSObject* parent)
 Element* HTMLImageElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
 	HTMLImageElement* img = strcasecmp(type, "IMG") == 0 ? new HTMLImageElement : NULL;
-	if(!img) return NULL;
-
-	if(!img->jsContext)
-		img->bind(rh->jsContext, NULL);
-
-	// Parse HTMLImageElement attributes
-	if(const char* s = parser->attributeValueIgnoreCase("src"))
-		img->setSrc(rh, s);
-
 	return img;
 }
 

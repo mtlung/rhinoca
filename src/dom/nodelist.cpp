@@ -55,7 +55,7 @@ static JSBool length(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 }
 
 static JSPropertySpec properties[] = {
-	{"length", 0, JSPROP_READONLY, length, JS_StrictPropertyStub},
+	{"length", 0, JSPROP_READONLY | JsBindable::jsPropFlags, length, JS_StrictPropertyStub},
 	{0}
 };
 

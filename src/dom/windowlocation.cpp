@@ -43,7 +43,7 @@ static JSBool href(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	WindowLocation* self = getJsBindable<WindowLocation>(cx, obj);
 	Rhinoca* rh = self->window->rhinoca;
-	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, rh->documentUrl.c_str()));
+	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, rh->documentUrl));
 	return JS_TRUE;
 }
 
@@ -60,7 +60,7 @@ static JSBool setHref(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsva
 }
 
 static JSPropertySpec properties[] = {
-	{"href", 0, 0, href, setHref},
+	{"href", 0, JsBindable::jsPropFlags, href, setHref},
 	{0}
 };
 

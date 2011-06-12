@@ -139,7 +139,7 @@ static JSBool nextSibling(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 static JSBool nodeName(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	Node* self = getJsBindable<Node>(cx, obj);
-	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->nodeName.c_str()));
+	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->nodeName));
 	return JS_TRUE;
 }
 
@@ -165,14 +165,14 @@ static JSBool previousSibling(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 }
 
 static JSPropertySpec properties[] = {
-	{"childNodes", 0, JSPROP_READONLY, childNodes, JS_StrictPropertyStub},	// NOTE: Current implementation will not return the same NodeList object on each call of childNodes
-	{"firstChild", 0, JSPROP_READONLY, firstChild, JS_StrictPropertyStub},
-	{"lastChild", 0, JSPROP_READONLY, lastChild, JS_StrictPropertyStub},
-	{"nextSibling", 0, JSPROP_READONLY, nextSibling, JS_StrictPropertyStub},
-	{"nodeName", 0, JSPROP_READONLY, nodeName, JS_StrictPropertyStub},
-	{"ownerDocument", 0, JSPROP_READONLY, ownerDocument, JS_StrictPropertyStub},
-	{"parentNode", 0, JSPROP_READONLY, parentNode, JS_StrictPropertyStub},
-	{"previousSibling", 0, JSPROP_READONLY, previousSibling, JS_StrictPropertyStub},
+	{"childNodes", 0, JSPROP_READONLY | JsBindable::jsPropFlags, childNodes, JS_StrictPropertyStub},	// NOTE: Current implementation will not return the same NodeList object on each call of childNodes
+	{"firstChild", 0, JSPROP_READONLY | JsBindable::jsPropFlags, firstChild, JS_StrictPropertyStub},
+	{"lastChild", 0, JSPROP_READONLY | JsBindable::jsPropFlags, lastChild, JS_StrictPropertyStub},
+	{"nextSibling", 0, JSPROP_READONLY | JsBindable::jsPropFlags, nextSibling, JS_StrictPropertyStub},
+	{"nodeName", 0, JSPROP_READONLY | JsBindable::jsPropFlags, nodeName, JS_StrictPropertyStub},
+	{"ownerDocument", 0, JSPROP_READONLY | JsBindable::jsPropFlags, ownerDocument, JS_StrictPropertyStub},
+	{"parentNode", 0, JSPROP_READONLY | JsBindable::jsPropFlags, parentNode, JS_StrictPropertyStub},
+	{"previousSibling", 0, JSPROP_READONLY | JsBindable::jsPropFlags, previousSibling, JS_StrictPropertyStub},
 	{0}
 };
 

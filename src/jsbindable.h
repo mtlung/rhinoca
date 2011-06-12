@@ -41,6 +41,9 @@ public:
 	FixString typeName;
 
 	static void finalize(JSContext* cx, JSObject* obj);
+
+	/// Common flags for defining js property
+	static const unsigned jsPropFlags = JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_SHARED;
 };	// JsBindable
 
 /// Get JsBindable from JSObject

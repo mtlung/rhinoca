@@ -223,7 +223,8 @@ bool Rhinoca::openDoucment(const char* uri)
 	}
 
 	Dom::ElementFactory& factory = Dom::ElementFactory::singleton();
-	Dom::Node* currentNode = domWindow->document;
+	Dom::HTMLDocument* document = domWindow->document;
+	Dom::Node* currentNode = document;
 
 	// Make documentUrl always in absolute path
 	Path path = uri;
@@ -234,6 +235,8 @@ bool Rhinoca::openDoucment(const char* uri)
 	documentUrl = path.c_str();
 	XmlParser parser;
 	parser.parse(const_cast<char*>(html.c_str()));
+
+	document->readyState = "loading";
 
 	bool ended = false;
 	while(!ended)
@@ -256,6 +259,15 @@ bool Rhinoca::openDoucment(const char* uri)
 
 				currentNode->appendChild(element);
 				currentNode = element;
+			}
+
+			for(unsigned i=0; i<parser.attributeCount(); ++i)
+			{
+				const char* name = parser.attributeName(i);
+				const char* value = parser.attributeValue(i);
+
+				jsval v = STRING_TO_JSVAL(JS_NewStringCopyZ(jsContext, value));
+				VERIFY(JS_SetProperty(jsContext, *currentNode, name, &v));
 			}
 
 			if(strcasecmp(parser.elementName(), "body") == 0)
@@ -325,6 +337,9 @@ bool Rhinoca::openDoucment(const char* uri)
 
 	// Run window.onload
 	{
+		// TODO: The ready state should be interactive rather than complete
+		document->readyState = "complete";
+
 		Dom::Event* ev = new Dom::Event;
 		ev->type = "load";
 		ev->bubbles = false;

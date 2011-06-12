@@ -25,11 +25,6 @@ static JSBool getBody(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 	return JS_TRUE;
 }
 
-static JSPropertySpec properties[] = {
-	{"body", 0, 0, getBody, JS_StrictPropertyStub},
-	{0}
-};
-
 static JSBool createElement(JSContext* cx, uintN argc, jsval* vp)
 {
 	JsString jss(cx, JS_ARGV0);
@@ -91,8 +86,30 @@ static JSFunctionSpec methods[] = {
 	{0}
 };
 
+static JSBool readyState(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+{
+	HTMLDocument* self = getJsBindable<HTMLDocument>(cx, obj);
+
+	JS_RVAL(cx, vp) = STRING_TO_JSVAL(JS_InternString(cx, self->readyState));
+
+	return JS_TRUE;
+}
+
+static JSPropertySpec properties[] = {
+	{"body", 0, JSPROP_READONLY | JsBindable::jsPropFlags, getBody, JS_StrictPropertyStub},
+	{"readyState", 0, JSPROP_READONLY | JsBindable::jsPropFlags, readyState, JS_StrictPropertyStub},
+	{0}
+};
+
+// Static variables to keep the intern string on life
+static FixString _readyStateUninitialized = "uninitialized";
+static FixString _readyStateLoading = "loading";
+static FixString _readyStateInteractive = "interactive";
+static FixString _readyStateComplete = "complete";
+
 HTMLDocument::HTMLDocument(Rhinoca* rh)
 	: rhinoca(rh)
+	, readyState(_readyStateUninitialized)
 {
 	ownerDocument = this;
 }

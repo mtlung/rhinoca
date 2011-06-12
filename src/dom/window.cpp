@@ -236,7 +236,7 @@ static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsid id, JSBool st
 }
 
 static JSPropertySpec properties[] = {
-	{"location", 0, JSPROP_READONLY, location, JS_StrictPropertyStub},
+	{"location", 0, JSPROP_READONLY | JsBindable::jsPropFlags, location, JS_StrictPropertyStub},
 
 	// Event attributes
 	{_eventAttributeTable[0], 0, 0, getEventAttribute, setEventAttribute},

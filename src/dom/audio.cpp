@@ -25,11 +25,21 @@ static JSBool getLoop(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 static JSBool setLoop(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	HTMLAudioElement* self = getJsBindable<HTMLAudioElement>(cx, obj);
-	self->setLoop(JSVAL_TO_BOOLEAN(*vp) == JS_TRUE); return JS_TRUE;
+
+	if(JSVAL_IS_BOOLEAN(*vp))
+		self->setLoop(JSVAL_TO_BOOLEAN(*vp) == JS_TRUE);
+	else if(JSVAL_IS_STRING(*vp)) {
+		JsString jss(cx, *vp);
+		self->setLoop(strToBool(jss.c_str(), false));
+	}
+	else
+		return JS_FALSE;
+
+	return JS_TRUE;
 }
 
 static JSPropertySpec properties[] = {
-	{"loop", 0, 0, getLoop, setLoop},
+	{"loop", 0, JsBindable::jsPropFlags, getLoop, setLoop},
 	{0}
 };
 
@@ -82,12 +92,6 @@ Element* HTMLAudioElement::factoryCreate(Rhinoca* rh, const char* type, XmlParse
 {
 	HTMLAudioElement* audio = strcasecmp(type, "AUDIO") == 0 ? new HTMLAudioElement(rh->audioDevice, &rh->resourceManager) : NULL;
 	if(!audio) return NULL;
-
-	audio->parseMediaElementAttributes(rh, parser);
-
-	// HTMLAudioElement specific attributes
-	if(bool loop = parser->attributeValueAsBoolIgnoreCase("loop"))
-		audiodevice_setSoundLoop(audio->_device, audio->_sound, loop);
 
 	return audio;
 }

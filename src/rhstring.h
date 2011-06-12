@@ -57,6 +57,8 @@ protected:
 	unsigned _length;
 };	// String
 
+bool strToBool(const char* str, bool defaultValue);
+
 /// Reverse version of strstr
 char* rstrstr(char* str1, const char* str2);
 

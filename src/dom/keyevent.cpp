@@ -19,7 +19,7 @@ static JSBool keyCode(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 }
 
 static JSPropertySpec properties[] = {
-	{"keyCode", 0, 0, keyCode, JS_StrictPropertyStub},
+	{"keyCode", 0, JSPROP_READONLY | JsBindable::jsPropFlags, keyCode, JS_StrictPropertyStub},
 	{0}
 };
 

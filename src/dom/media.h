@@ -21,8 +21,6 @@ public:
 	virtual void play() {}
 	virtual void pause() {}
 
-	void parseMediaElementAttributes(Rhinoca* rh, XmlParser* parser);
-
 // Attributes
 	enum MediaError {
 		MEDIA_ERR_ABORTED			= 1,

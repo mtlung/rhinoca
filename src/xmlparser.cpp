@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "xmlparser.h"
 #include <memory.h>	// For memcpy
+#include "rhstring.h"
 #include "stack.h"
 #include "vector.h"
 
@@ -153,8 +154,8 @@ public:
 			ignoreDefinition();
 			break;
 		case '!':
-			if(!parseCDATA())
-				parseComment();
+			if(!parseCDATA() && !parseComment())
+				ignoreDefinition();
 			break;
 		default:
 			parseOpeningXMLElement();
@@ -207,25 +208,32 @@ public:
 	}
 
 	//! parses a comment
-	void parseComment()
+	bool parseComment()
 	{
+		if(*(p+1) != '-' || *(p+2) != '-')
+			return false;
+
 		mCurrentNodeType = Event::Comment;
-		++p;
+
+		// Skip '<!--'
+		p += 3;
 
 		const char* pCommentBegin = p;
+		char* pCommentEnd = NULL;
 
-		int count = 1;
-
-		// Move until end of comment reached
-		while(*p && count) {
-			if(*p == '>')
-				--count;
-			else if(*p == '<')
-				++count;
+		// Find end of comment "--"
+		while(*p && !pCommentEnd) {
+			if(*p == '>' && (*(p-1) == '-') && (*(p-2) == '-'))
+				pCommentEnd = p - 2;
 			++p;
 		}
 
-		mText = createString(pCommentBegin + 2, p - 3);
+		if(pCommentEnd)
+			mText = createString(pCommentBegin, pCommentEnd);
+		else
+			mText = "";
+
+		return true;
 	}
 
 	//! Parses an opening xml element and reads attributes
@@ -536,12 +544,5 @@ float XmlParser::stringToFloat(const char* str, float defaultValue)
 
 bool XmlParser::stringToBool(const char* str, bool defaultValue)
 {
-	if(!str)
-		return defaultValue;
-	else if(strcasecmp(str, "true") == 0)
-		return true;
-	else if(strcasecmp(str, "false") == 0)
-		return false;
-
-	return atof(str, defaultValue) > 0 ? true : false;
+	return strToBool(str, defaultValue);
 }

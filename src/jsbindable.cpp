@@ -119,5 +119,7 @@ JsBindable* getJsBindable(JSContext* cx, JSObject* obj, JSClass* jsClass, jsval*
 		ret = JS_GetInstancePrivate(cx, obj, jsClass, argv);
 	}
 
+	if(ret) JS_ClearPendingException(cx);
+
 	return reinterpret_cast<JsBindable*>(ret);
 }

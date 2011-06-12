@@ -41,9 +41,9 @@ static JSBool data(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 }
 
 static JSPropertySpec properties[] = {
-	{"width", 0, JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT, width, JS_StrictPropertyStub},
-	{"height", 0, JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT, height, JS_StrictPropertyStub},
-	{"data", 0, JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT, data, JS_StrictPropertyStub},
+	{"width", 0, JSPROP_READONLY | JsBindable::jsPropFlags, width, JS_StrictPropertyStub},
+	{"height", 0, JSPROP_READONLY | JsBindable::jsPropFlags, height, JS_StrictPropertyStub},
+	{"data", 0, JSPROP_READONLY | JsBindable::jsPropFlags, data, JS_StrictPropertyStub},
 	{0}
 };
 

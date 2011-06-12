@@ -120,13 +120,13 @@ static JSBool setLineWidth(JSContext* cx, JSObject* obj, jsid id, JSBool strict,
 }
 
 static JSPropertySpec properties[] = {
-	{"canvas", 0, 0, getCanvas, JS_StrictPropertyStub},
-	{"globalAlpha", 0, 0, JS_PropertyStub, setGlobalAlpha},
-	{"strokeStyle", 0, 0, JS_PropertyStub, setStrokeStyle},
-	{"lineCap", 0, 0, JS_PropertyStub, setLineCap},
-	{"lineJoin", 0, 0, JS_PropertyStub, setLineJoin},
-	{"lineWidth", 0, 0, JS_PropertyStub, setLineWidth},
-	{"fillStyle", 0, 0, JS_PropertyStub, setFillStyle},
+	{"canvas", 0, JSPROP_READONLY | JsBindable::jsPropFlags, getCanvas, JS_StrictPropertyStub},
+	{"globalAlpha", 0, JsBindable::jsPropFlags, JS_PropertyStub, setGlobalAlpha},
+	{"strokeStyle", 0, JsBindable::jsPropFlags, JS_PropertyStub, setStrokeStyle},
+	{"lineCap", 0, JsBindable::jsPropFlags, JS_PropertyStub, setLineCap},
+	{"lineJoin", 0, JsBindable::jsPropFlags, JS_PropertyStub, setLineJoin},
+	{"lineWidth", 0, JsBindable::jsPropFlags, JS_PropertyStub, setLineWidth},
+	{"fillStyle", 0, JsBindable::jsPropFlags, JS_PropertyStub, setFillStyle},
 	{0}
 };
 

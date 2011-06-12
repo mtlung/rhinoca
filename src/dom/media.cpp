@@ -70,9 +70,9 @@ static JSBool setCurrentTime(JSContext* cx, JSObject* obj, jsid id, JSBool stric
 }
 
 static JSPropertySpec properties[] = {
-	{"src", 0, 0, getSrc, setSrc},
-	{"autoplay", 0, 0, getAutoplay, setAutoplay},
-	{"currentTime", 0, 0, getCurrentTime, setCurrentTime},
+	{"src", 0, JsBindable::jsPropFlags, getSrc, setSrc},
+	{"autoplay", 0, JsBindable::jsPropFlags, getAutoplay, setAutoplay},
+	{"currentTime", 0, JsBindable::jsPropFlags, getCurrentTime, setCurrentTime},
 	{0}
 };
 
@@ -101,10 +101,10 @@ static JSBool canPlayType(JSContext* cx, uintN argc, jsval* vp)
 		strcasecmp(jss.c_str(), "audio/ogg") == 0 ||
 		strcasecmp(jss.c_str(), "audio/x-wav") == 0)
 	{
-		JS_RVAL(cx, vp) = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, "probably"));
+		JS_RVAL(cx, vp) = STRING_TO_JSVAL(JS_InternString(cx, "probably"));
 	}
 	else
-		JS_RVAL(cx, vp) = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, ""));
+		JS_RVAL(cx, vp) = STRING_TO_JSVAL(JS_InternString(cx, ""));
 
 	return JS_TRUE;
 }
@@ -133,15 +133,6 @@ JSObject* HTMLMediaElement::createPrototype()
 	VERIFY(JS_DefineProperties(jsContext, proto, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 	return proto;
-}
-
-void HTMLMediaElement::parseMediaElementAttributes(Rhinoca* rh, XmlParser* parser)
-{
-	if(const char* s = parser->attributeValueIgnoreCase("src")) {
-		Path path;
-		fixRelativePath(s, rh->documentUrl.c_str(), path);
-		setSrc(path.c_str());
-	}
 }
 
 }	// namespace Dom

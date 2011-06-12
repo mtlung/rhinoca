@@ -51,7 +51,7 @@ static JSBool elementGetStyle(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 static JSBool tagName(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	Element* self = getJsBindable<Element>(cx, obj);
-	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->tagName()));
+	*vp = STRING_TO_JSVAL(JS_InternString(cx, self->tagName()));
 	return JS_TRUE;
 }
 
@@ -76,10 +76,10 @@ static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsid id, JSBool st
 }
 
 static JSPropertySpec elementProperties[] = {
-	{"clientWidth", 0, JSPROP_READONLY, clientWidth, JS_StrictPropertyStub},
-	{"clientHeight", 0, JSPROP_READONLY, clientHeight, JS_StrictPropertyStub},
-	{"style", 0, JSPROP_READONLY, elementGetStyle, JS_StrictPropertyStub},
-	{"tagName", 0, JSPROP_READONLY, tagName, JS_StrictPropertyStub},
+	{"clientWidth", 0, JSPROP_READONLY | JsBindable::jsPropFlags, clientWidth, JS_StrictPropertyStub},
+	{"clientHeight", 0, JSPROP_READONLY | JsBindable::jsPropFlags, clientHeight, JS_StrictPropertyStub},
+	{"style", 0, JSPROP_READONLY | JsBindable::jsPropFlags, elementGetStyle, JS_StrictPropertyStub},
+	{"tagName", 0, JSPROP_READONLY | JsBindable::jsPropFlags, tagName, JS_StrictPropertyStub},
 
 	// Event attributes
 	{_eventAttributeTable[0], 0, 0, getEventAttribute, setEventAttribute},
@@ -96,7 +96,7 @@ static JSBool getAttribute(JSContext* cx, uintN argc, jsval* vp)
 	JsString jss(cx, JS_ARGV0);
 	if(!jss) return JS_FALSE;
 
-	return JS_GetProperty(cx, *self, jss.c_str(), JS_ARGV(cx, vp));
+	return JS_GetProperty(cx, *self, jss.c_str(), vp);
 }
 
 static JSBool setAttribute(JSContext* cx, uintN argc, jsval* vp)
@@ -107,7 +107,7 @@ static JSBool setAttribute(JSContext* cx, uintN argc, jsval* vp)
 	JsString jss(cx, JS_ARGV0);
 	if(!jss) return JS_FALSE;
 
-	return JS_SetProperty(cx, *self, jss.c_str(), &JS_ARGV1);
+	return JS_SetProperty(cx, *self, jss.c_str(), vp);
 }
 
 static JSBool getElementsByTagName(JSContext* cx, uintN argc, jsval* vp)
@@ -280,9 +280,9 @@ static JSBool styleSetLeft(JSContext* cx, JSObject* obj, jsid id, JSBool strict,
 }
 
 static JSPropertySpec properties[] = {
-	{"display", 0, 0, styleGetVisible, styleSetVisible},
-	{"top", 0, 0, styleGetTop, styleSetTop},
-	{"left", 0, 0, styleGetLeft, styleSetLeft},
+	{"display", 0, JsBindable::jsPropFlags, styleGetVisible, styleSetVisible},
+	{"top", 0, JsBindable::jsPropFlags, styleGetTop, styleSetTop},
+	{"left", 0, JsBindable::jsPropFlags, styleGetLeft, styleSetLeft},
 	{0}
 };
 
