@@ -20,7 +20,7 @@ static JSBool addColorStop(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	double t;
-	JS_ValueToNumber(cx, JS_ARGV0, &t);
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &t));
 
 	JsString jss(cx, JS_ARGV1);
 	self->addColorStop((float)t, jss.c_str());

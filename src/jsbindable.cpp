@@ -110,13 +110,13 @@ JsString::~JsString()
 	js_free(_bytes);
 }
 
-JsBindable* getJsBindable(JSContext* cx, JSObject* obj, JSClass* jsClass)
+JsBindable* getJsBindable(JSContext* cx, JSObject* obj, JSClass* jsClass, jsval* argv)
 {
-	void* ret = JS_GetInstancePrivate(cx, obj, jsClass, NULL);
+	void* ret = JS_GetInstancePrivate(cx, obj, jsClass, argv);
 
 	while(!ret && obj) {
 		obj = JS_GetPrototype(cx, obj);
-		ret = JS_GetInstancePrivate(cx, obj, jsClass, NULL);
+		ret = JS_GetInstancePrivate(cx, obj, jsClass, argv);
 	}
 
 	return reinterpret_cast<JsBindable*>(ret);

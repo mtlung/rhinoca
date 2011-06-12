@@ -44,7 +44,7 @@ public:
 };	// JsBindable
 
 /// Get JsBindable from JSObject
-extern JsBindable* getJsBindable(JSContext* cx, JSObject* obj, JSClass* jsClass);
+extern JsBindable* getJsBindable(JSContext* cx, JSObject* obj, JSClass* jsClass, jsval* argvForDebugPrint=NULL);
 
 template<class T>
 static T* getJsBindable(JSContext* cx, JSObject* obj)
@@ -65,6 +65,12 @@ static T* getJsBindable(JSContext* cx, jsval* vp)
 /// Get the i-th parameter as JsBindable
 template<class T>
 static T* getJsBindable(JSContext* cx, jsval* vp, unsigned paramIdx)
+{
+	return  static_cast<T*>(getJsBindable(cx, JSVAL_TO_OBJECT(JS_ARGV(cx, vp)[paramIdx]), &T::jsClass, JS_ARGV(cx, vp)));
+}
+
+template<class T>
+static T* getJsBindableNoThrow(JSContext* cx, jsval* vp, unsigned paramIdx)
 {
 	return getJsBindable<T>(cx, JSVAL_TO_OBJECT(JS_ARGV(cx, vp)[paramIdx]));
 }

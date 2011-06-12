@@ -136,10 +136,10 @@ static JSBool clearRect(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	double x, y, w, h;
-	JS_ValueToNumber(cx, JS_ARGV0, &x);
-	JS_ValueToNumber(cx, JS_ARGV1, &y);
-	JS_ValueToNumber(cx, JS_ARGV2, &w);
-	JS_ValueToNumber(cx, JS_ARGV3, &h);
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &w));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &h));
 
 	self->clearRect((float)x, (float)y, (float)w, (float)h);
 
@@ -172,10 +172,9 @@ static JSBool drawImage(JSContext* cx, uintN argc, jsval* vp)
 	// Determine the source is an image or a canvas
 	Texture* texture = NULL;
 
-	if(HTMLImageElement* img = getJsBindable<HTMLImageElement>(cx, vp, 0))
+	if(HTMLImageElement* img = getJsBindableNoThrow<HTMLImageElement>(cx, vp, 0))
 		texture = img->texture.get();
-
-	if(HTMLCanvasElement* otherCanvas = getJsBindable<HTMLCanvasElement>(cx, vp, 0))
+	else if(HTMLCanvasElement* otherCanvas = getJsBindable<HTMLCanvasElement>(cx, vp, 0))
 		texture = otherCanvas->texture();
 
 	if(!texture) return JS_FALSE;
@@ -188,27 +187,27 @@ static JSBool drawImage(JSContext* cx, uintN argc, jsval* vp)
 		sx = sy = 0;
 		sw = dw = texture->width;
 		sh = dh = texture->height;
-		JS_ValueToNumber(cx, JS_ARGV1, &dx);
-		JS_ValueToNumber(cx, JS_ARGV2, &dy);
+		VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &dx));
+		VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &dy));
 		break;
 	case 5:
 		sx = sy = 0;
 		sw = texture->width;
 		sh = texture->height;
-		JS_ValueToNumber(cx, JS_ARGV1, &dx);
-		JS_ValueToNumber(cx, JS_ARGV2, &dy);
-		JS_ValueToNumber(cx, JS_ARGV3, &dw);
-		JS_ValueToNumber(cx, JS_ARGV4, &dh);
+		VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &dx));
+		VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &dy));
+		VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &dw));
+		VERIFY(JS_ValueToNumber(cx, JS_ARGV4, &dh));
 		break;
 	case 9:
-		JS_ValueToNumber(cx, JS_ARGV1, &sx);
-		JS_ValueToNumber(cx, JS_ARGV2, &sy);
-		JS_ValueToNumber(cx, JS_ARGV3, &sw);
-		JS_ValueToNumber(cx, JS_ARGV4, &sh);
-		JS_ValueToNumber(cx, JS_ARGV5, &dx);
-		JS_ValueToNumber(cx, JS_ARGV6, &dy);
-		JS_ValueToNumber(cx, JS_ARGV7, &dw);
-		JS_ValueToNumber(cx, JS_ARGV8, &dh);
+		VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &sx));
+		VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &sy));
+		VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &sw));
+		VERIFY(JS_ValueToNumber(cx, JS_ARGV4, &sh));
+		VERIFY(JS_ValueToNumber(cx, JS_ARGV5, &dx));
+		VERIFY(JS_ValueToNumber(cx, JS_ARGV6, &dy));
+		VERIFY(JS_ValueToNumber(cx, JS_ARGV7, &dw));
+		VERIFY(JS_ValueToNumber(cx, JS_ARGV8, &dh));
 		break;
 	default:
 		return JS_FALSE;
@@ -248,8 +247,8 @@ static JSBool scale(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	double x, y;
-	JS_ValueToNumber(cx, JS_ARGV0, &x);
-	JS_ValueToNumber(cx, JS_ARGV1, &y);
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
 	self->scale((float)x, (float)y);
 
 	return JS_TRUE;
@@ -261,7 +260,7 @@ static JSBool rotate(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	double angle;
-	JS_ValueToNumber(cx, JS_ARGV0, &angle);
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &angle));
 	self->rotate((float)angle);
 
 	return JS_TRUE;
@@ -273,8 +272,8 @@ static JSBool translate(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	double x, y;
-	JS_ValueToNumber(cx, JS_ARGV0, &x);
-	JS_ValueToNumber(cx, JS_ARGV1, &y);
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
 	self->translate((float)x, (float)y);
 
 	return JS_TRUE;
@@ -286,12 +285,12 @@ static JSBool transform(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	double m11, m12, m21, m22, dx, dy;
-	JS_ValueToNumber(cx, JS_ARGV0, &m11);
-	JS_ValueToNumber(cx, JS_ARGV1, &m12);
-	JS_ValueToNumber(cx, JS_ARGV2, &m21);
-	JS_ValueToNumber(cx, JS_ARGV3, &m22);
-	JS_ValueToNumber(cx, JS_ARGV4, &dx);
-	JS_ValueToNumber(cx, JS_ARGV5, &dy);
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &m11));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &m12));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &m21));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &m22));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV4, &dx));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV5, &dy));
 
 	self->transform((float)m11, (float)m21, (float)m21, (float)m22, (float)dx, (float)dy);
 
@@ -304,12 +303,12 @@ static JSBool setTransform(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	double m11, m12, m21, m22, dx, dy;
-	JS_ValueToNumber(cx, JS_ARGV0, &m11);
-	JS_ValueToNumber(cx, JS_ARGV1, &m12);
-	JS_ValueToNumber(cx, JS_ARGV2, &m21);
-	JS_ValueToNumber(cx, JS_ARGV3, &m22);
-	JS_ValueToNumber(cx, JS_ARGV4, &dx);
-	JS_ValueToNumber(cx, JS_ARGV5, &dy);
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &m11));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &m12));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &m21));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &m22));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV4, &dx));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV5, &dy));
 
 	self->setTransform((float)m11, (float)m21, (float)m21, (float)m22, (float)dx, (float)dy);
 
@@ -342,8 +341,8 @@ static JSBool moveTo(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	double x, y;
-	JS_ValueToNumber(cx, JS_ARGV0, &x);
-	JS_ValueToNumber(cx, JS_ARGV1, &y);
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
 	self->moveTo((float)x, (float)y);
 
 	return JS_TRUE;
@@ -355,8 +354,8 @@ static JSBool lineTo(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	double x, y;
-	JS_ValueToNumber(cx, JS_ARGV0, &x);
-	JS_ValueToNumber(cx, JS_ARGV1, &y);
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
 	self->lineTo((float)x, (float)y);
 
 	return JS_TRUE;
@@ -368,11 +367,11 @@ static JSBool arc(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	double x, y, radius, startAngle, endAngle;
-	JS_ValueToNumber(cx, JS_ARGV0, &x);
-	JS_ValueToNumber(cx, JS_ARGV1, &y);
-	JS_ValueToNumber(cx, JS_ARGV2, &radius);
-	JS_ValueToNumber(cx, JS_ARGV3, &startAngle);
-	JS_ValueToNumber(cx, JS_ARGV4, &endAngle);
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &radius));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &startAngle));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV4, &endAngle));
 	self->arc((float)x, (float)y, (float)radius, (float)startAngle, (float)endAngle, false);
 
 	return JS_TRUE;
@@ -384,10 +383,10 @@ static JSBool rect(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	double x, y, w, h;
-	JS_ValueToNumber(cx, JS_ARGV0, &x);
-	JS_ValueToNumber(cx, JS_ARGV1, &y);
-	JS_ValueToNumber(cx, JS_ARGV2, &w);
-	JS_ValueToNumber(cx, JS_ARGV3, &h);
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &w));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &h));
 	self->rect((float)x, (float)y, (float)w, (float)h);
 
 	return JS_TRUE;
@@ -402,10 +401,10 @@ static JSBool createLinearGradient(JSContext* cx, uintN argc, jsval* vp)
 	g->bind(cx, NULL);
 
 	double x1, y1, x2, y2;
-	JS_ValueToNumber(cx, JS_ARGV0, &x1);
-	JS_ValueToNumber(cx, JS_ARGV1, &y1);
-	JS_ValueToNumber(cx, JS_ARGV2, &x2);
-	JS_ValueToNumber(cx, JS_ARGV3, &y2);
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x1));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y1));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &x2));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &y2));
 
 	g->createLinear((float)x1, (float)y1, (float)x2, (float)y2);
 
@@ -423,12 +422,12 @@ static JSBool createRadialGradient(JSContext* cx, uintN argc, jsval* vp)
 	g->bind(cx, NULL);
 
 	double x1, y1, r1, x2, y2, r2;
-	JS_ValueToNumber(cx, JS_ARGV0, &x1);
-	JS_ValueToNumber(cx, JS_ARGV1, &y1);
-	JS_ValueToNumber(cx, JS_ARGV2, &r1);
-	JS_ValueToNumber(cx, JS_ARGV3, &x2);
-	JS_ValueToNumber(cx, JS_ARGV4, &y2);
-	JS_ValueToNumber(cx, JS_ARGV5, &r2);
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x1));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y1));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &r1));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &x2));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV4, &y2));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV5, &r2));
 
 	g->createRadial((float)x1, (float)y1, (float)r1, (float)x2, (float)y2, (float)r2);
 
@@ -453,10 +452,10 @@ static JSBool strokeRect(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	double x, y, w, h;
-	JS_ValueToNumber(cx, JS_ARGV0, &x);
-	JS_ValueToNumber(cx, JS_ARGV1, &y);
-	JS_ValueToNumber(cx, JS_ARGV2, &w);
-	JS_ValueToNumber(cx, JS_ARGV3, &h);
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &w));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &h));
 	self->strokeRect((float)x, (float)y, (float)w, (float)h);
 
 	return JS_TRUE;
@@ -478,10 +477,10 @@ static JSBool fillRect(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	double x, y, w, h;
-	JS_ValueToNumber(cx, JS_ARGV0, &x);
-	JS_ValueToNumber(cx, JS_ARGV1, &y);
-	JS_ValueToNumber(cx, JS_ARGV2, &w);
-	JS_ValueToNumber(cx, JS_ARGV3, &h);
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &w));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &h));
 	self->fillRect((float)x, (float)y, (float)w, (float)h);
 
 	return JS_TRUE;
@@ -511,10 +510,10 @@ static JSBool getImageData(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	int32 x, y, w, h;
-	JS_ValueToInt32(cx, JS_ARGV0, &x);
-	JS_ValueToInt32(cx, JS_ARGV1, &y);
-	JS_ValueToInt32(cx, JS_ARGV2, &w);
-	JS_ValueToInt32(cx, JS_ARGV3, &h);
+	VERIFY(JS_ValueToInt32(cx, JS_ARGV0, &x));
+	VERIFY(JS_ValueToInt32(cx, JS_ARGV1, &y));
+	VERIFY(JS_ValueToInt32(cx, JS_ARGV2, &w));
+	VERIFY(JS_ValueToInt32(cx, JS_ARGV3, &h));
 	ImageData* imgData = self->getImageData(cx, x, y, w, h);
 
 	JS_RVAL(cx, vp) = *imgData;
@@ -535,15 +534,15 @@ static JSBool putImageData(JSContext* cx, uintN argc, jsval* vp)
 	int32 dirtyWidth = imgData->width;
 	int32 dirtyHeight = imgData->height;
 
-	JS_ValueToInt32(cx, JS_ARGV1, &dx);
-	JS_ValueToInt32(cx, JS_ARGV2, &dy);
+	VERIFY(JS_ValueToInt32(cx, JS_ARGV1, &dx));
+	VERIFY(JS_ValueToInt32(cx, JS_ARGV2, &dy));
 
 	if(argc >= 7) {
 		// TODO: Deal with negative values, as state in the spec
-		JS_ValueToInt32(cx, JS_ARGV3, &dirtyX);
-		JS_ValueToInt32(cx, JS_ARGV4, &dirtyY);
-		JS_ValueToInt32(cx, JS_ARGV5, &dirtyWidth);
-		JS_ValueToInt32(cx, JS_ARGV6, &dirtyHeight);
+		VERIFY(JS_ValueToInt32(cx, JS_ARGV3, &dirtyX));
+		VERIFY(JS_ValueToInt32(cx, JS_ARGV4, &dirtyY));
+		VERIFY(JS_ValueToInt32(cx, JS_ARGV5, &dirtyWidth));
+		VERIFY(JS_ValueToInt32(cx, JS_ARGV6, &dirtyHeight));
 	}
 
 	self->putImageData(imgData, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight);
@@ -872,7 +871,7 @@ void CanvasRenderingContext2D::arc(float x, float y, float radius, float startAn
 	startAngle = startAngle * 360 / (2 * 3.14159f);
 	endAngle = endAngle * 360 / (2 * 3.14159f);
 	radius *= 2;
-	vguArc(openvg->path, x,y, radius,radius, startAngle, endAngle-startAngle, VGU_ARC_OPEN);
+	vguArc(openvg->path, x,y, radius,radius, startAngle, (anticlockwise ? 1 : -1) * (endAngle-startAngle), VGU_ARC_OPEN);
 }
 
 void CanvasRenderingContext2D::rect(float x, float y, float w, float h)
