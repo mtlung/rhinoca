@@ -139,12 +139,12 @@ public:
 
 // Pixel manipulation
 	/// Returns an ImageData object with the given dimensions. All the pixels in the returned object are transparent black.
-	ImageData* createImageData(unsigned width, unsigned height);
+	ImageData* createImageData(JSContext* cx, unsigned width, unsigned height);
 
 	/// Returns an ImageData object with the same dimensions as the argument. All the pixels in the returned object are transparent black.
-	ImageData* createImageData(ImageData* imageData);
+	ImageData* createImageData(JSContext* cx, ImageData* imageData);
 
-	ImageData* getImageData(unsigned sx, unsigned sy, unsigned sw, unsigned sh);
+	ImageData* getImageData(JSContext* cx, unsigned sx, unsigned sy, unsigned sw, unsigned sh);
 
 	void putImageData(ImageData* data, unsigned dx, unsigned dy, unsigned dirtyX, unsigned dirtyY, unsigned dirtyWidth, unsigned dirtyHeight);
 

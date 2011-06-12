@@ -16,11 +16,15 @@ public:
 // Operations
 	override void bind(JSContext* cx, JSObject* parent);
 
-	void init(unsigned w, unsigned h, const unsigned char* rawData=NULL);
+	void init(JSContext* cx, unsigned w, unsigned h, const unsigned char* rawData=NULL);
 
 // Attribbutes
 	unsigned width, height;
-	CanvasPixelArray* data;
+
+	rhbyte* rawData();
+	unsigned length() const { return width * height * sizeof(rhbyte); }
+
+	JSObject* array;
 
 	static JSClass jsClass;
 };	// ImageData

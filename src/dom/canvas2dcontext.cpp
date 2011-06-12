@@ -496,19 +496,14 @@ static JSBool createImageData(JSContext* cx, uintN argc, jsval* vp)
 	ImageData* imgData = getJsBindable<ImageData>(cx, vp, 0);
 
 	if(imgData)
-		imgData = self->createImageData(imgData);
+		imgData = self->createImageData(cx, imgData);
 	else if(argc >= 2) {
 		int32 sw, sh;
 		if(JS_ValueToInt32(cx, JS_ARGV0, &sw) && JS_ValueToInt32(cx, JS_ARGV1, &sh))
-			imgData = self->createImageData(sw, sh);
+			imgData = self->createImageData(cx, sw, sh);
 	}
 
-	if(imgData) {
-		imgData->bind(cx, NULL);
-		return JS_TRUE;
-	}
-
-	return JS_FALSE;
+	return imgData ? JS_TRUE : JS_FALSE;
 }
 
 static JSBool getImageData(JSContext* cx, uintN argc, jsval* vp)
@@ -521,8 +516,7 @@ static JSBool getImageData(JSContext* cx, uintN argc, jsval* vp)
 	JS_ValueToInt32(cx, JS_ARGV1, &y);
 	JS_ValueToInt32(cx, JS_ARGV2, &w);
 	JS_ValueToInt32(cx, JS_ARGV3, &h);
-	ImageData* imgData = self->getImageData(x, y, w, h);
-	imgData->bind(cx, NULL);
+	ImageData* imgData = self->getImageData(cx, x, y, w, h);
 
 	JS_RVAL(cx, vp) = *imgData;
 
@@ -1066,29 +1060,30 @@ void CanvasRenderingContext2D::setGlobalAlpha(float alpha)
 	_globalAlpha = alpha;
 }
 
-ImageData* CanvasRenderingContext2D::createImageData(unsigned width, unsigned height)
+ImageData* CanvasRenderingContext2D::createImageData(JSContext* cx, unsigned width, unsigned height)
 {
 	ImageData* imgData = new ImageData;
-	imgData->init(width, height, NULL);
+	imgData->init(cx, width, height, NULL);
 
-	for(unsigned i=0; i<imgData->data->length; ++i)
-		imgData->data->rawData[i] = 0;
+	rhbyte* data = imgData->rawData();
+	for(unsigned i=0; i<imgData->length(); ++i)
+		data[i] = 0;
 
 	return imgData;
 }
 
-ImageData* CanvasRenderingContext2D::createImageData(ImageData* imageData)
+ImageData* CanvasRenderingContext2D::createImageData(JSContext* cx, ImageData* imageData)
 {
-	return createImageData(imageData->width, imageData->height);
+	return createImageData(cx, imageData->width, imageData->height);
 }
 
-ImageData* CanvasRenderingContext2D::getImageData(unsigned sx, unsigned sy, unsigned sw, unsigned sh)
+ImageData* CanvasRenderingContext2D::getImageData(JSContext* cx, unsigned sx, unsigned sy, unsigned sw, unsigned sh)
 {
 	ImageData* imgData = new ImageData;
-	imgData->init(sw, sh, NULL);
+	imgData->init(cx, sw, sh, NULL);
 
 	canvas->bindFramebuffer();
-	Driver::readPixels(sx, sy, sw, sh, Driver::RGBA, imgData->data->rawData);
+	Driver::readPixels(sx, sy, sw, sh, Driver::RGBA, imgData->rawData());
 
 	return imgData;
 }
@@ -1101,7 +1096,7 @@ void CanvasRenderingContext2D::putImageData(ImageData* data, unsigned dx, unsign
 	canvas->bindFramebuffer();
 	Driver::setSamplerState(0, noTexture);
 
-	Driver::writePixels(dx, dy, dirtyWidth, dirtyHeight, Driver::RGBA, data->data->rawData);
+	Driver::writePixels(dx, dy, dirtyWidth, dirtyHeight, Driver::RGBA, data->rawData());
 }
 
 }	// namespace Dom

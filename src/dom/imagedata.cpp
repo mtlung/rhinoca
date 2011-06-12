@@ -1,13 +1,15 @@
 #include "pch.h"
 #include "ImageData.h"
-#include "canvaspixelarray.h"
+
+#define XP_WIN
+#include "../../thirdParty/SpiderMonkey/jstypedarray.h"
 
 using namespace Render;
 
 namespace Dom {
 
 JSClass ImageData::jsClass = {
-	"ImageData", JSCLASS_HAS_PRIVATE,
+	"ImageData", JSCLASS_HAS_PRIVATE | JSCLASS_HAS_RESERVED_SLOTS(1),
 	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
@@ -34,27 +36,25 @@ static JSBool height(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 static JSBool data(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	ImageData* self = getJsBindable<ImageData>(cx, obj);
-	*vp = *self->data;
+	*vp = OBJECT_TO_JSVAL(self->array);
 	return JS_TRUE;
 }
 
 static JSPropertySpec properties[] = {
-	{"width", 0, JSPROP_READONLY, width, JS_StrictPropertyStub},
-	{"height", 0, JSPROP_READONLY, height, JS_StrictPropertyStub},
-	{"data", 0, JSPROP_READONLY, data, JS_StrictPropertyStub},
+	{"width", 0, JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT, width, JS_StrictPropertyStub},
+	{"height", 0, JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT, height, JS_StrictPropertyStub},
+	{"data", 0, JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT, data, JS_StrictPropertyStub},
 	{0}
 };
 
 ImageData::ImageData()
 	: width(0), height(0)
-	, data(NULL)
+	, array(NULL)
 {
 }
 
 ImageData::~ImageData()
 {
-	if(data)
-		data->releaseGcRoot();
 }
 
 void ImageData::bind(JSContext* cx, JSObject* parent)
@@ -66,19 +66,24 @@ void ImageData::bind(JSContext* cx, JSObject* parent)
 	VERIFY(JS_DefineFunctions(cx, *this, methods));
 	VERIFY(JS_DefineProperties(cx, *this, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
-
-	data->bind(cx, NULL);
-	data->addGcRoot();	// releaseGcRoot() in ~ImageData()
 }
 
-void ImageData::init(unsigned w, unsigned h, const unsigned char* rawData)
+void ImageData::init(JSContext* cx, unsigned w, unsigned h, const unsigned char* rawData)
 {
+	bind(cx, NULL);
+
 	width = w;
 	height = h;
 
-	data = new CanvasPixelArray;
-	data->length = w * h * 4;
-	data->rawData = (unsigned char*)rhinoca_malloc(data->length);
+	ASSERT(!array);
+	array = js_CreateTypedArray(cx, js::TypedArray::TYPE_UINT8_CLAMPED, w * h * 4);
+	VERIFY(JS_SetReservedSlot(cx, *this, 0, OBJECT_TO_JSVAL(array)));
+}
+
+rhbyte* ImageData::rawData()
+{
+	js::TypedArray* a = js::TypedArray::fromJSObject(array);
+	return (rhbyte*)(a ? a->data : NULL);
 }
 
 }	// namespace Dom

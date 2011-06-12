@@ -50,7 +50,7 @@
 				PrecompiledHeaderThrough="pch.h"
 				WarningLevel="3"
 				DebugInformationFormat="4"
-				DisableSpecificWarnings="4996"
+				DisableSpecificWarnings="4800; 4996"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -116,7 +116,7 @@
 				PrecompiledHeaderThrough="pch.h"
 				WarningLevel="3"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4996"
+				DisableSpecificWarnings="4800; 4996"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -191,14 +191,6 @@
 			</File>
 			<File
 				RelativePath="..\..\src\dom\canvasgradient.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\dom\canvaspixelarray.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\dom\canvaspixelarray.h"
 				>
 			</File>
 			<File
