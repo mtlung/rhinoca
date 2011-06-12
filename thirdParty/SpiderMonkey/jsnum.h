@@ -101,7 +101,7 @@ JSDOUBLE_IS_FINITE(jsdouble d)
 #ifdef WIN32
     return _finite(d);
 #else
-    return finite(d);
+    return isfinite(d);
 #endif
 }
 
@@ -440,7 +440,7 @@ js_DoubleToECMAInt32(jsdouble d)
     }
 
     return int32(du.d);
-#elif defined (__arm__) && defined (__GNUC__)
+#elif defined (__arm__) && defined (__GNUC__) && !defined (__llvm__)
     int32_t i;
     uint32_t    tmp0;
     uint32_t    tmp1;

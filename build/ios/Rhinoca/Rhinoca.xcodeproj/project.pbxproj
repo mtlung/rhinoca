@@ -76,8 +76,6 @@
 		18F0C57F1303A566007752DB /* driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 18F0C57D1303A566007752DB /* driver.cpp */; };
 		18F0C5801303A566007752DB /* driver.h in Headers */ = {isa = PBXBuildFile; fileRef = 18F0C57E1303A566007752DB /* driver.h */; };
 		18F0C73E1304F121007752DB /* driverios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 18F0C73D1304F121007752DB /* driverios.cpp */; };
-		9C39095E139D489A001119F1 /* canvaspixelarray.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C39095C139D489A001119F1 /* canvaspixelarray.cpp */; };
-		9C39095F139D489A001119F1 /* canvaspixelarray.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C39095D139D489A001119F1 /* canvaspixelarray.h */; };
 		9C390962139D48A7001119F1 /* imagedata.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C390960139D48A7001119F1 /* imagedata.cpp */; };
 		9C390963139D48A7001119F1 /* imagedata.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C390961139D48A7001119F1 /* imagedata.h */; };
 		9C3B3BD3138558E400E3AE02 /* nsimageloader.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B3BD2138558E400E3AE02 /* nsimageloader.mm */; };
@@ -229,8 +227,6 @@
 		18F0C57D1303A566007752DB /* driver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = driver.cpp; path = ../../../src/render/driver.cpp; sourceTree = SOURCE_ROOT; };
 		18F0C57E1303A566007752DB /* driver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = driver.h; path = ../../../src/render/driver.h; sourceTree = SOURCE_ROOT; };
 		18F0C73D1304F121007752DB /* driverios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = driverios.cpp; path = ../../../src/render/ios/driverios.cpp; sourceTree = SOURCE_ROOT; };
-		9C39095C139D489A001119F1 /* canvaspixelarray.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = canvaspixelarray.cpp; path = ../../../src/dom/canvaspixelarray.cpp; sourceTree = "<group>"; };
-		9C39095D139D489A001119F1 /* canvaspixelarray.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = canvaspixelarray.h; path = ../../../src/dom/canvaspixelarray.h; sourceTree = "<group>"; };
 		9C390960139D48A7001119F1 /* imagedata.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = imagedata.cpp; path = ../../../src/dom/imagedata.cpp; sourceTree = "<group>"; };
 		9C390961139D48A7001119F1 /* imagedata.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = imagedata.h; path = ../../../src/dom/imagedata.h; sourceTree = "<group>"; };
 		9C3B3BD2138558E400E3AE02 /* nsimageloader.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = nsimageloader.mm; path = ../../../src/render/nsimageloader.mm; sourceTree = "<group>"; };
@@ -411,8 +407,6 @@
 				187BCA6412F9BC270042FDB1 /* canvas2dcontext.h */,
 				9C93C9271379885300682898 /* canvasgradient.cpp */,
 				9C93C9281379885300682898 /* canvasgradient.h */,
-				9C39095C139D489A001119F1 /* canvaspixelarray.cpp */,
-				9C39095D139D489A001119F1 /* canvaspixelarray.h */,
 				9C93C92B1379886000682898 /* color.cpp */,
 				9C93C92C1379886000682898 /* color.h */,
 				187BCA6512F9BC270042FDB1 /* div.cpp */,
@@ -593,7 +587,6 @@
 				9CED2E94138C0B5400ACEF92 /* nodelist.h in Headers */,
 				9CB6F657139007AC004D2CCF /* windowlocation.h in Headers */,
 				9CBF7B331393F3DC0041806B /* event.h in Headers */,
-				9C39095F139D489A001119F1 /* canvaspixelarray.h in Headers */,
 				9C390963139D48A7001119F1 /* imagedata.h in Headers */,
 				9C81DC8A139FC94500952557 /* stack.h in Headers */,
 			);
@@ -726,7 +719,6 @@
 				9CED2E93138C0B5400ACEF92 /* nodelist.cpp in Sources */,
 				9CB6F656139007AC004D2CCF /* windowlocation.cpp in Sources */,
 				9CBF7B321393F3DC0041806B /* event.cpp in Sources */,
-				9C39095E139D489A001119F1 /* canvaspixelarray.cpp in Sources */,
 				9C390962139D48A7001119F1 /* imagedata.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
