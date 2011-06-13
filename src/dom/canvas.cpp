@@ -165,7 +165,7 @@ void HTMLCanvasElement::render()
 
 void HTMLCanvasElement::registerClass(JSContext* cx, JSObject* parent)
 {
-	JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL);
+	VERIFY(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
 }
 
 Element* HTMLCanvasElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)

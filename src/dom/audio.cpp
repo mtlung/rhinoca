@@ -85,7 +85,7 @@ void HTMLAudioElement::bind(JSContext* cx, JSObject* parent)
 
 void HTMLAudioElement::registerClass(JSContext* cx, JSObject* parent)
 {
-	JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL);
+	VERIFY(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
 }
 
 Element* HTMLAudioElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)

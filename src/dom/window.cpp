@@ -217,6 +217,13 @@ static JSBool location(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 	return JS_TRUE;
 }
 
+static JSBool document(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+{
+	Window* self = getJsBindable<Window>(cx, obj);
+	*vp = *self->document;
+	return JS_TRUE;
+}
+
 static const char* _eventAttributeTable[] = {
 	"onload",
 };
@@ -239,6 +246,7 @@ static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsid id, JSBool st
 }
 
 static JSPropertySpec properties[] = {
+	{"document", 0, JSPROP_READONLY | JsBindable::jsPropFlags, document, JS_StrictPropertyStub},
 	{"location", 0, JSPROP_READONLY | JsBindable::jsPropFlags, location, JS_StrictPropertyStub},
 
 	// Event attributes

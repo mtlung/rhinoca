@@ -18,13 +18,6 @@ JSClass HTMLDocument::jsClass = {
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-static JSBool getBody(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
-{
-	HTMLDocument* self = getJsBindable<HTMLDocument>(cx, obj);
-	*vp = *self->body();
-	return JS_TRUE;
-}
-
 static JSBool createElement(JSContext* cx, uintN argc, jsval* vp)
 {
 	JsString jss(cx, JS_ARGV0);
@@ -86,6 +79,22 @@ static JSFunctionSpec methods[] = {
 	{0}
 };
 
+static JSBool getBody(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+{
+	HTMLDocument* self = getJsBindable<HTMLDocument>(cx, obj);
+	*vp = *self->body();
+	return JS_TRUE;
+}
+
+// https://developer.mozilla.org/en/DOM/document.documentElement
+static JSBool documentElement(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+{
+	HTMLDocument* self = getJsBindable<HTMLDocument>(cx, obj);
+	// TODO: If the file is an XML, document.documentElement != document.firstChild
+	*vp = *self->firstChild;
+	return JS_TRUE;
+}
+
 static JSBool readyState(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	HTMLDocument* self = getJsBindable<HTMLDocument>(cx, obj);
@@ -97,6 +106,7 @@ static JSBool readyState(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 
 static JSPropertySpec properties[] = {
 	{"body", 0, JSPROP_READONLY | JsBindable::jsPropFlags, getBody, JS_StrictPropertyStub},
+	{"documentElement", 0, JSPROP_READONLY | JsBindable::jsPropFlags, documentElement, JS_StrictPropertyStub},
 	{"readyState", 0, JSPROP_READONLY | JsBindable::jsPropFlags, readyState, JS_StrictPropertyStub},
 	{0}
 };

@@ -77,8 +77,8 @@ Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 	, audioDevice(NULL)
 {
 	jsContext = JS_NewContext(jsrt, 8192);
-	JS_SetOptions(jsContext, JS_GetOptions(jsContext) | JSOPTION_STRICT);
-	JS_SetOptions(jsContext, JS_GetOptions(jsContext) & ~JSOPTION_ANONFUNFIX);
+//	JS_SetOptions(jsContext, JS_GetOptions(jsContext) | JSOPTION_STRICT);
+//	JS_SetOptions(jsContext, JS_GetOptions(jsContext) & ~JSOPTION_ANONFUNFIX);
 	JS_SetContextPrivate(jsContext, this);
 	JS_SetErrorReporter(jsContext, jsReportError);
 
@@ -336,12 +336,20 @@ bool Rhinoca::openDoucment(const char* uri)
 		document->readyState = "complete";
 
 		Dom::Event* ev = new Dom::Event;
-		ev->type = "load";
+		ev->type = "DOMContentLoaded";
 		ev->bubbles = false;
-		ev->target = domWindow;
 		ev->bind(jsContext, NULL);
 
+		ev->target = domWindow;
 		domWindow->dispatchEvent(ev);
+		ev->target = document;
+		document->dispatchEvent(ev);
+
+		ev->type = "load";
+		ev->target = domWindow;
+		domWindow->dispatchEvent(ev);
+		ev->target = document;
+		document->dispatchEvent(ev);
 	}
 
 	return true;

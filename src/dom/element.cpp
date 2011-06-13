@@ -96,7 +96,36 @@ static JSBool getAttribute(JSContext* cx, uintN argc, jsval* vp)
 	JsString jss(cx, JS_ARGV0);
 	if(!jss) return JS_FALSE;
 
+	// NOTE: Simply returning JS_GetProperty() will give an 'undefined' value, but the
+	// DOM specification says that the correct return should be empty string.
+	// However most browser returns a null and so we follows.
+	// See: https://developer.mozilla.org/en/DOM/element.getAttribute#Notes
+	JSBool found;
+	tolower(jss.c_str());
+	if(!JS_HasProperty(cx, *self, jss.c_str(), &found)) return JS_FALSE;
+
+	if(!found) {
+		*vp = JSVAL_NULL;
+		return JS_TRUE;
+	}
+
 	return JS_GetProperty(cx, *self, jss.c_str(), vp);
+}
+
+static JSBool hasAttribute(JSContext* cx, uintN argc, jsval* vp)
+{
+	Element* self = getJsBindable<Element>(cx, vp);
+	if(!self) return JS_FALSE;
+
+	JsString jss(cx, JS_ARGV0);
+	if(!jss) return JS_FALSE;
+
+	JSBool found;
+	tolower(jss.c_str());
+	if(!JS_HasProperty(cx, *self, jss.c_str(), &found)) return JS_FALSE;
+
+	*vp = BOOLEAN_TO_JSVAL(found);
+	return JS_TRUE;
 }
 
 static JSBool setAttribute(JSContext* cx, uintN argc, jsval* vp)
@@ -126,6 +155,7 @@ static JSBool getElementsByTagName(JSContext* cx, uintN argc, jsval* vp)
 
 static JSFunctionSpec elementMethods[] = {
 	{"getAttribute", getAttribute, 1,0},
+	{"hasAttribute", hasAttribute, 1,0},
 	{"setAttribute", setAttribute, 2,0},
 	{"getElementsByTagName", getElementsByTagName, 1,0},
 	{0}
@@ -150,7 +180,7 @@ JSObject* Element::createPrototype()
 
 void Element::registerClass(JSContext* cx, JSObject* parent)
 {
-	JS_InitClass(cx, parent, NULL, &jsClass, NULL, 0, NULL, NULL, NULL, NULL);
+	VERIFY(JS_InitClass(cx, parent, NULL, &jsClass, NULL, 0, NULL, NULL, NULL, NULL));
 }
 
 static Node* getElementsByTagNameFilter_(NodeIterator& iter, void* userData)
