@@ -6,9 +6,10 @@
 #include "rhinoca.h"
 #include "xmlparser.h"
 #include "audio/audiodevice.h"
-#include "dom/document.h"
+#include "dom/body.h"
 #include "dom/element.h"
 #include "dom/event.h"
+#include "dom/document.h"
 #include "dom/keyevent.h"
 #include "dom/mouseevent.h"
 #include "dom/registerfactories.h"
@@ -350,6 +351,11 @@ bool Rhinoca::openDoucment(const char* uri)
 		domWindow->dispatchEvent(ev);
 		ev->target = document;
 		document->dispatchEvent(ev);
+
+		if(Dom::HTMLBodyElement* body = document->body()) {
+			ev->target = body;
+			body->dispatchEvent(ev);
+		}
 	}
 
 	return true;

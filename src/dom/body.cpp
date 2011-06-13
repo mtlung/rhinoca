@@ -31,8 +31,7 @@ static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsid id, JSBool st
 	HTMLBodyElement* self = getJsBindable<HTMLBodyElement>(cx, obj);
 	int32 idx = JSID_TO_INT(id) / 2;	// Account for having both get and set functions
 
-	// NOTE: Redirect body.onload to window.onload
-	return self->ownerDocument->window()->addEventListenerAsAttribute(cx, _eventAttributeTable[idx], *vp);
+	return self->addEventListenerAsAttribute(cx, _eventAttributeTable[idx], *vp);
 }
 
 static JSPropertySpec properties[] = {
