@@ -272,16 +272,6 @@ bool Rhinoca::openDoucment(const char* uri)
 				VERIFY(JS_SetProperty(jsContext, *currentNode, name, &v));
 			}
 
-			if(strcasecmp(parser.elementName(), "body") == 0)
-			{
-				if(const char* str = parser.attributeValueIgnoreCase("onload")) {
-					String script = "window.onload=function(){";
-					script += str;
-					script += "};";
-					jsval rval;
-					JS_EvaluateScript(jsContext, jsGlobal, script.c_str(), script.size(), uri, 0, &rval);
-				}
-			}
 		}	break;
 
 		case Event::EndElement:
