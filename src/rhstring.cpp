@@ -145,8 +145,15 @@ String::size_type String::rfind(char c, size_type offset) const
 
 String::size_type String::rfind(const char* str, size_type offset) const
 {
-	const char* ret = rstrstr(_cstr + offset, str);
-	return ret ? ret - _cstr : npos;
+	unsigned l1 = offset > _length ? _length : offset;
+	unsigned l2 = strlen(str);
+
+	if(l2 > l1) return npos;
+
+	for(char* s = _cstr + l1 - l2; s >= _cstr; --s)
+		if(strncmp(s, str, l2) == 0)
+			return s - _cstr;
+	return npos;
 }
 
 String String::substr(size_type offset, size_type count) const
@@ -202,8 +209,8 @@ bool strToBool(const char* str, bool defaultValue)
 
 char* rstrstr(char* __restrict str1, const char* __restrict str2)
 {
-	size_t  s1len = strlen(str1);
-	size_t  s2len = strlen(str2);
+	size_t s1len = strlen(str1);
+	size_t s2len = strlen(str2);
 	char* s;
 
 	if(s2len > s1len)
