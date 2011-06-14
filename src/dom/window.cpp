@@ -4,6 +4,7 @@
 #include "canvas.h"
 #include "document.h"
 #include "mouseevent.h"
+#include "navigator.h"
 #include "node.h"
 #include "windowlocation.h"
 #include "../common.h"
@@ -208,6 +209,13 @@ static JSFunctionSpec methods[] = {
 	{0}
 };
 
+static JSBool document(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+{
+	Window* self = getJsBindable<Window>(cx, obj);
+	*vp = *self->document;
+	return JS_TRUE;
+}
+
 static JSBool location(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	Window* self = getJsBindable<Window>(cx, obj);
@@ -217,10 +225,11 @@ static JSBool location(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 	return JS_TRUE;
 }
 
-static JSBool document(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+static JSBool navigator(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	Window* self = getJsBindable<Window>(cx, obj);
-	*vp = *self->document;
+	Navigator* navigator = new Navigator;
+	navigator->bind(cx, NULL);
+	*vp = *navigator;
 	return JS_TRUE;
 }
 
@@ -248,6 +257,7 @@ static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsid id, JSBool st
 static JSPropertySpec properties[] = {
 	{"document", 0, JSPROP_READONLY | JsBindable::jsPropFlags, document, JS_StrictPropertyStub},
 	{"location", 0, JSPROP_READONLY | JsBindable::jsPropFlags, location, JS_StrictPropertyStub},
+	{"navigator", 0, JSPROP_READONLY | JsBindable::jsPropFlags, navigator, JS_StrictPropertyStub},
 
 	// Event attributes
 	{_eventAttributeTable[0], 0, 0, getEventAttribute, setEventAttribute},

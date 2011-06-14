@@ -160,13 +160,11 @@ void Rhinoca::_initGlobal()
 			"function clearTimeout(cb) { window.clearTimeout(cb); };"
 			"function log(msg){setTimeout(function(){throw new Error(msg);},0);}"
 
+			"var navigator = window.navigator;"
+
 			"var Audio = HTMLAudioElement;"
 			"var Canvas = HTMLCanvasElement;"
 			"var Image = HTMLImageElement;"
-
-			"var navigator = { userAgent: {"
-			"	indexOf : function(str) { return -1; }, match : function(str) { return false; }"
-			"}};"
 		;
 		jsval rval;
 		VERIFY(JS_EvaluateScript(jsContext, jsGlobal, script, strlen(script), "", 0, &rval));

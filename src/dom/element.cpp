@@ -105,7 +105,7 @@ static JSBool getAttribute(JSContext* cx, uintN argc, jsval* vp)
 	if(!JS_HasProperty(cx, *self, jss.c_str(), &found)) return JS_FALSE;
 
 	if(!found) {
-		*vp = JSVAL_NULL;
+		JS_RVAL(cx, vp) = JSVAL_NULL;
 		return JS_TRUE;
 	}
 
@@ -124,7 +124,7 @@ static JSBool hasAttribute(JSContext* cx, uintN argc, jsval* vp)
 	tolower(jss.c_str());
 	if(!JS_HasProperty(cx, *self, jss.c_str(), &found)) return JS_FALSE;
 
-	*vp = BOOLEAN_TO_JSVAL(found);
+	JS_RVAL(cx, vp) = BOOLEAN_TO_JSVAL(found);
 	return JS_TRUE;
 }
 
@@ -136,7 +136,7 @@ static JSBool setAttribute(JSContext* cx, uintN argc, jsval* vp)
 	JsString jss(cx, JS_ARGV0);
 	if(!jss) return JS_FALSE;
 
-	return JS_SetProperty(cx, *self, jss.c_str(), vp);
+	return JS_SetProperty(cx, *self, jss.c_str(), &JS_ARGV1);
 }
 
 static JSBool getElementsByTagName(JSContext* cx, uintN argc, jsval* vp)
