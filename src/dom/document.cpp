@@ -187,8 +187,12 @@ Event* HTMLDocument::createEvent(const char* type)
 		e = new MouseEvent;
 	else if(hash == StringHash("KeyEvents") || hash == StringHash("KeyboardEvent"))
 		e = new KeyEvent;
+	else if(hash == StringHash("HTMLEvents"))
+		e = new Event;
+	
+	if(e)
+		e->bind(jsContext, NULL);
 
-	e->bind(jsContext, NULL);
 	return e;
 }
 

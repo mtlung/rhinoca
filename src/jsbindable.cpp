@@ -123,3 +123,46 @@ JsBindable* getJsBindable(JSContext* cx, JSObject* obj, JSClass* jsClass, jsval*
 
 	return reinterpret_cast<JsBindable*>(ret);
 }
+
+JSBool JS_GetValue(JSContext *cx, jsval jv, bool& val)
+{
+	if(JS_ValueToBoolean(cx, jv, (JSBool*)&val) == JS_FALSE)
+		return JS_FALSE;
+	return JS_TRUE;
+}
+
+JSBool JS_GetValue(JSContext *cx, jsval jv, int& val)
+{
+	int32 v;
+	if(JS_ValueToInt32(cx, jv, &v) == JS_FALSE)
+		return JS_FALSE;
+	val = v;
+	return JS_TRUE;
+}
+
+JSBool JS_GetValue(JSContext *cx, jsval jv, unsigned& val)
+{
+	uint32 v;
+	if(JS_ValueToECMAUint32(cx, jv, &v) == JS_FALSE)
+		return JS_FALSE;
+	val = v;
+	return JS_TRUE;
+}
+
+JSBool JS_GetValue(JSContext *cx, jsval jv, float& val)
+{
+	jsdouble v;
+	if(JS_ValueToNumber(cx, jv, &v) == JS_FALSE)
+		return JS_FALSE;
+	val = (float)v;
+	return JS_TRUE;
+}
+
+JSBool JS_GetValue(JSContext *cx, jsval jv, FixString& val)
+{
+	JsString jss(cx, jv);
+	if(!jss) return JS_FALSE;
+
+	val = jss.c_str();
+	return JS_TRUE;
+}

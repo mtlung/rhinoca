@@ -11,6 +11,24 @@ JSClass Event::jsClass = {
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
+static JSBool initEvent(JSContext* cx, uintN argc, jsval* vp)
+{
+	Event* self = getJsBindable<Event>(cx, vp);
+
+	// Arg: type
+	if(JS_GetValue(cx, JS_ARGV0, self->type) == JS_FALSE)
+		return JS_FALSE;
+
+	// Arg: canBubble
+	if(JS_GetValue(cx, JS_ARGV1, self->bubbles) == JS_FALSE)
+		return JS_FALSE;
+
+	// TODO:
+	// Arg: cancelable 
+
+	return JS_TRUE;
+}
+
 static JSBool stopPropagation(JSContext* cx, uintN argc, jsval* vp)
 {
 	Event* self = getJsBindable<Event>(cx, vp);
@@ -19,6 +37,7 @@ static JSBool stopPropagation(JSContext* cx, uintN argc, jsval* vp)
 }
 
 static JSFunctionSpec methods[] = {
+	{"initEvent", initEvent, 3,0},
 	{"stopPropagation", stopPropagation, 0,0},
 	{0}
 };

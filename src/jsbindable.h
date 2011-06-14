@@ -103,6 +103,12 @@ private:
 	JsString& operator=(const JsString&);
 };	// JsString
 
+JSBool JS_GetValue(JSContext *cx, jsval jv, bool& val);
+JSBool JS_GetValue(JSContext *cx, jsval jv, int& val);
+JSBool JS_GetValue(JSContext *cx, jsval jv, unsigned& val);
+JSBool JS_GetValue(JSContext *cx, jsval jv, float& val);
+JSBool JS_GetValue(JSContext *cx, jsval jv, FixString& val);
+
 #define JS_ARGV0 (JS_ARGV(cx, vp)[0])
 #define JS_ARGV1 (JS_ARGV(cx, vp)[1])
 #define JS_ARGV2 (JS_ARGV(cx, vp)[2])

@@ -4,40 +4,6 @@
 
 namespace Dom {
 
-static JSBool JS_GetValue(JSContext *cx, jsval jv, bool& val)
-{
-	if(JS_ValueToBoolean(cx, jv, (JSBool*)&val) == JS_FALSE)
-		return JS_FALSE;
-	return JS_TRUE;
-}
-
-static JSBool JS_GetValue(JSContext *cx, jsval jv, int& val)
-{
-	int32 i;
-	if(JS_ValueToInt32(cx, jv, &i) == JS_FALSE)
-		return JS_FALSE;
-	val = i;
-	return JS_TRUE;
-}
-
-static JSBool JS_GetValue(JSContext *cx, jsval jv, unsigned& val)
-{
-	uint32 i;
-	if(JS_ValueToECMAUint32(cx, jv, &i) == JS_FALSE)
-		return JS_FALSE;
-	val = i;
-	return JS_TRUE;
-}
-
-static JSBool JS_GetValue(JSContext *cx, jsval jv, FixString& val)
-{
-	JsString jss(cx, jv);
-	if(!jss) return JS_FALSE;
-
-	val = jss.c_str();
-	return JS_TRUE;
-}
-
 JSClass MouseEvent::jsClass = {
 	"MouseEvent", JSCLASS_HAS_PRIVATE,
 	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
