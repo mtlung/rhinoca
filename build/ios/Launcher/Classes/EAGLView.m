@@ -9,6 +9,7 @@
 #import <QuartzCore/QuartzCore.h>
 
 #import "EAGLView.h"
+#import "../../../../src/rhinoca.h"
 
 @interface EAGLView (PrivateMethods)
 - (void)createFramebuffer;
@@ -152,8 +153,49 @@
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
+	static const char* msg = "touchstart";
+	int i = 0;
 	for(UITouch* touch in touches) {
-//		CGPoint loc = [touch locationInView:self];
+		CGPoint loc = [touch locationInView:self];
+		RhinocaEvent ev = { (void*)msg, i, loc.x, loc.y, 0 };
+		rhinoca_processEvent(rh, ev);
+		++i;
+	}
+}
+
+-(void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
+{
+	static const char* msg = "touchmove";
+	int i = 0;
+	for(UITouch* touch in touches) {
+		CGPoint loc = [touch locationInView:self];
+		RhinocaEvent ev = { (void*)msg, i, loc.x, loc.y, 0 };
+		rhinoca_processEvent(rh, ev);
+		++i;
+	}
+}
+
+-(void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
+{
+	static const char* msg = "touchend";
+	int i = 0;
+	for(UITouch* touch in touches) {
+		CGPoint loc = [touch locationInView:self];
+		RhinocaEvent ev = { (void*)msg, i, loc.x, loc.y, 0 };
+		rhinoca_processEvent(rh, ev);
+		++i;
+	}
+}
+
+-(void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
+{
+	static const char* msg = "touchcancel";
+	int i = 0;
+	for(UITouch* touch in touches) {
+		CGPoint loc = [touch locationInView:self];
+		RhinocaEvent ev = { (void*)msg, i, loc.x, loc.y, 0 };
+		rhinoca_processEvent(rh, ev);
+		++i;
 	}
 }
 

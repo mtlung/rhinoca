@@ -126,7 +126,8 @@ static JSBool getFont(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
 	if(!self) return JS_FALSE;
 
-	return JS_GetValue(cx, *vp, self->font());
+	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->font().c_str()));
+	return JS_TRUE;
 }
 
 static JSBool setFont(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
@@ -146,7 +147,8 @@ static JSBool getTextAlign(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
 	if(!self) return JS_FALSE;
 
-	return JS_GetValue(cx, *vp, self->textAlign());
+	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->textAlign().c_str()));
+	return JS_TRUE;
 }
 
 static JSBool setTextAlign(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
@@ -166,7 +168,8 @@ static JSBool getTextBaseLine(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
 	if(!self) return JS_FALSE;
 
-	return JS_GetValue(cx, *vp, self->textBaseLine());
+	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->textBaseLine().c_str()));
+	return JS_TRUE;
 }
 
 static JSBool setTextBaseLine(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)

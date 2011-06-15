@@ -78,7 +78,7 @@ typedef struct RhinocaRenderContext RhinocaRenderContext;
 
 /// Platform dependent key/mouse/gesture event data
 struct RhinocaEvent {
-	int type;
+	void* type;
 	int value1;
 	int value2;
 	int value3;
