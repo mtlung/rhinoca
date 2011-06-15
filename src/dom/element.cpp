@@ -63,14 +63,17 @@ static const char* _eventAttributeTable[] = {
 
 static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	// Not implemented
-	return JS_FALSE;
+	Element* self = getJsBindable<Element>(cx, obj);
+	int32 idx = JSID_TO_INT(id) / 2;	// Account for having both get and set functions
+
+	*vp = self->getEventListenerAsAttribute(cx, _eventAttributeTable[idx]);
+	return JS_TRUE;
 }
 
 static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	Element* self = getJsBindable<Element>(cx, obj);
-	int32 idx = JSID_TO_INT(id) / 2 + 0;	// Account for having both get and set functions
+	int32 idx = JSID_TO_INT(id) / 2;	// Account for having both get and set functions
 
 	return self->addEventListenerAsAttribute(cx, _eventAttributeTable[idx], *vp);
 }
@@ -105,7 +108,7 @@ static JSBool getAttribute(JSContext* cx, uintN argc, jsval* vp)
 	if(!JS_HasProperty(cx, *self, jss.c_str(), &found)) return JS_FALSE;
 
 	if(!found) {
-		JS_RVAL(cx, vp) = JSVAL_NULL;
+		*vp = JSVAL_NULL;
 		return JS_TRUE;
 	}
 
@@ -124,7 +127,7 @@ static JSBool hasAttribute(JSContext* cx, uintN argc, jsval* vp)
 	tolower(jss.c_str());
 	if(!JS_HasProperty(cx, *self, jss.c_str(), &found)) return JS_FALSE;
 
-	JS_RVAL(cx, vp) = BOOLEAN_TO_JSVAL(found);
+	*vp = BOOLEAN_TO_JSVAL(found);
 	return JS_TRUE;
 }
 
@@ -136,7 +139,7 @@ static JSBool setAttribute(JSContext* cx, uintN argc, jsval* vp)
 	JsString jss(cx, JS_ARGV0);
 	if(!jss) return JS_FALSE;
 
-	return JS_SetProperty(cx, *self, jss.c_str(), &JS_ARGV1);
+	return JS_SetProperty(cx, *self, jss.c_str(), vp);
 }
 
 static JSBool getElementsByTagName(JSContext* cx, uintN argc, jsval* vp)

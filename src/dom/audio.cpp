@@ -25,16 +25,16 @@ static JSBool getLoop(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 static JSBool setLoop(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	HTMLAudioElement* self = getJsBindable<HTMLAudioElement>(cx, obj);
+	JSBool ret;
 
-	if(JSVAL_IS_BOOLEAN(*vp))
-		self->setLoop(JSVAL_TO_BOOLEAN(*vp) == JS_TRUE);
-	else if(JSVAL_IS_STRING(*vp)) {
+	if(JSVAL_IS_STRING(*vp)) {
 		JsString jss(cx, *vp);
 		self->setLoop(strToBool(jss.c_str(), false));
+		return JS_TRUE;
 	}
-	else
-		return JS_FALSE;
 
+	if(!JS_ValueToBoolean(cx, *vp, &ret)) return JS_FALSE;
+	self->setLoop(ret == JS_TRUE);
 	return JS_TRUE;
 }
 

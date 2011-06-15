@@ -113,9 +113,71 @@ static JSBool setLineJoin(JSContext* cx, JSObject* obj, jsid id, JSBool strict, 
 static JSBool setLineWidth(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
+	if(!self) return JS_FALSE;
+
 	double w;
 	JS_ValueToNumber(cx, *vp, &w);
 	self->setLineWidth((float)w);
+	return JS_TRUE;
+}
+
+static JSBool getFont(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+{
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
+	if(!self) return JS_FALSE;
+
+	return JS_GetValue(cx, *vp, self->font());
+}
+
+static JSBool setFont(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
+{
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
+	if(!self) return JS_FALSE;
+
+	JsString jss(cx, *vp);
+	if(!jss) return JS_FALSE;
+
+	self->setFont(jss.c_str());
+	return JS_TRUE;
+}
+
+static JSBool getTextAlign(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+{
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
+	if(!self) return JS_FALSE;
+
+	return JS_GetValue(cx, *vp, self->textAlign());
+}
+
+static JSBool setTextAlign(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
+{
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
+	if(!self) return JS_FALSE;
+
+	JsString jss(cx, *vp);
+	if(!jss) return JS_FALSE;
+
+	self->setTextAlign(jss.c_str());
+	return JS_TRUE;
+}
+
+static JSBool getTextBaseLine(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+{
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
+	if(!self) return JS_FALSE;
+
+	return JS_GetValue(cx, *vp, self->textBaseLine());
+}
+
+static JSBool setTextBaseLine(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
+{
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
+	if(!self) return JS_FALSE;
+
+	JsString jss(cx, *vp);
+	if(!jss) return JS_FALSE;
+
+	self->setTextBaseLine(jss.c_str());
 	return JS_TRUE;
 }
 
@@ -127,6 +189,9 @@ static JSPropertySpec properties[] = {
 	{"lineJoin", 0, JsBindable::jsPropFlags, JS_PropertyStub, setLineJoin},
 	{"lineWidth", 0, JsBindable::jsPropFlags, JS_PropertyStub, setLineWidth},
 	{"fillStyle", 0, JsBindable::jsPropFlags, JS_PropertyStub, setFillStyle},
+	{"font", 0, JsBindable::jsPropFlags, getFont, setFont},
+	{"textAlign", 0, JsBindable::jsPropFlags, getTextAlign, setTextAlign},
+	{"textBaseLine", 0, JsBindable::jsPropFlags, getTextBaseLine, setTextBaseLine},
 	{0}
 };
 
@@ -550,6 +615,30 @@ static JSBool putImageData(JSContext* cx, uintN argc, jsval* vp)
 	return JS_TRUE;
 }
 
+static JSBool fillText(JSContext* cx, uintN argc, jsval* vp)
+{
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
+	if(!self) return JS_FALSE;
+
+	return JS_TRUE;
+}
+
+static JSBool strokeText(JSContext* cx, uintN argc, jsval* vp)
+{
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
+	if(!self) return JS_FALSE;
+
+	return JS_TRUE;
+}
+
+static JSBool measureText(JSContext* cx, uintN argc, jsval* vp)
+{
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
+	if(!self) return JS_FALSE;
+
+	return JS_TRUE;
+}
+
 static JSFunctionSpec methods[] = {
 	{"clearRect", clearRect, 4,0},
 	{"beginLayer", beginLayer, 0,0},
@@ -583,6 +672,10 @@ static JSFunctionSpec methods[] = {
 	{"createImageData", createImageData, 1,0},
 	{"getImageData", getImageData, 4,0},
 	{"putImageData", putImageData, 3,0},
+
+	{"fillText", fillText, 4,0},
+	{"strokeText", strokeText, 4,0},
+	{"measureText", measureText, 1,0},
 
 	{0}
 };
@@ -1095,6 +1188,21 @@ void CanvasRenderingContext2D::putImageData(ImageData* data, unsigned dx, unsign
 	Driver::setSamplerState(0, noTexture);
 
 	Driver::writePixels(dx, dy, dirtyWidth, dirtyHeight, Driver::RGBA, data->rawData());
+}
+
+void CanvasRenderingContext2D::setFont(const char* font)
+{
+	_font = font;
+}
+
+void CanvasRenderingContext2D::setTextAlign(const char* textAlign)
+{
+	_textAlign = textAlign;
+}
+
+void CanvasRenderingContext2D::setTextBaseLine(const char* textBaseLine)
+{
+	_textBaseLine = textBaseLine;
 }
 
 }	// namespace Dom

@@ -148,12 +148,23 @@ public:
 
 	void putImageData(ImageData* data, unsigned dx, unsigned dy, unsigned dirtyX, unsigned dirtyY, unsigned dirtyWidth, unsigned dirtyHeight);
 
+// Font
+//	void 
 // Attributes
 	unsigned width() const { return canvas->width(); }
 	unsigned height() const { return canvas->height(); }
 
 	float globalAlpha() const { return _globalAlpha; }
 	void setGlobalAlpha(float alpha);
+
+	FixString font() const { return _font; }
+	void setFont(const char* font);
+
+	FixString textAlign() const { return _textAlign; }
+	void setTextAlign(const char* textAlign);
+
+	FixString textBaseLine() const { return _textBaseLine; }
+	void setTextBaseLine(const char* textBaseLine);
 
 	struct OpenVG;
 	OpenVG* openvg;
@@ -165,6 +176,10 @@ public:
 	Vector<State> stateStack;
 
 	float _globalAlpha;
+
+	FixString _font;
+	FixString _textAlign;
+	FixString _textBaseLine;
 
 	static JSClass jsClass;
 };	// CanvasRenderingContext2D
