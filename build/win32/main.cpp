@@ -88,7 +88,7 @@ LRESULT CALLBACK wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 	{
-		RhinocaEvent ev = { uMsg, wParam, lParam, 0, 0 };
+		RhinocaEvent ev = { (void*)uMsg, wParam, lParam, 0, 0 };
 		rhinoca_processEvent(rh, ev);
 	}
 

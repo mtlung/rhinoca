@@ -27,7 +27,7 @@ void Rhinoca::processEvent(RhinocaEvent ev)
 
 	const char* mouseEvent = NULL;
 
-	switch(ev.type)
+	switch((UINT)ev.type)
 	{
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:
