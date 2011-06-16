@@ -13,6 +13,7 @@ void registerLoaders(ResourceManager* mgr)
 	mgr->addFactory(createPng, loadPng);
 	mgr->addFactory(createJpeg, loadJpeg);
 #endif
+	mgr->addFactory(createTrueTypeFont, loadTrueTypeFont);
 	mgr->addFactory(createOgg, loadOgg);
 	mgr->addFactory(createWave, loadWave);
 }

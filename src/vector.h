@@ -103,6 +103,20 @@ public:
 		_vals[idx] = val;
 	}
 
+	void insert(iterator position, T* first, T* last)
+	{
+		ASSERT(_vals <= position && position <= _vals + _size);
+		ASSERT(first < last);
+
+		const unsigned idx = position - _vals;
+		const unsigned amount = last - first;
+		const unsigned oldSize = _size;
+		resize(_size + amount);
+
+		memmove(_vals + idx + amount, _vals + idx, oldSize - idx);
+		memcpy(_vals + idx, first, amount);
+	}
+
 	void remove(rhuint idx)
 	{
 		ASSERT(idx < _size);
