@@ -12,7 +12,9 @@ public:
 	override ~TrueTypeFont();
 
 	// Operations
-	override bool bake(unsigned fontIdx, unsigned fontSize);
+	override rhuint8* bake(unsigned fontIdx, unsigned fontPixelHeight, int codepoint, int* width, int* height, int* xoff, int* yoff);
+
+	override void freeBitmap(rhuint8* bitmap);
 
 	override void getMetrics(int* ascent, int* descent, int* lineGap);
 

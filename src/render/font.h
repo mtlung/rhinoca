@@ -16,8 +16,16 @@ protected:
 
 public:
 // Operations
-	/// 
-	virtual bool bake(unsigned fontIdx, unsigned fontSize) = 0;
+	/// Allocates a large-enough single-channel 8bpp bitmap and renders the
+	/// specified character/glyph at the specified font size into it, with
+	/// antialiasing. 0 is no coverage (transparent), 255 is fully covered (opaque).
+	/// *width & *height are filled out with the width & height of the bitmap,
+	/// which is stored left-to-right, top-to-bottom.
+	/// xoff/yoff are the offset in pixel space from the glyph origin to the top-left of the bitmap
+	virtual rhuint8* bake(unsigned fontIdx, unsigned fontPixelHeight, int codepoint, int* width, int* height, int* xoff, int* yoff) = 0;
+
+	/// Free the bitmap created by bake()
+	virtual void freeBitmap(rhuint8* bitmap) = 0;
 
 	virtual void getMetrics(int* ascent, int* descent, int* lineGap) {}
 

@@ -39,10 +39,18 @@ TrueTypeFont::~TrueTypeFont()
 	delete impl;
 }
 
-bool TrueTypeFont::bake(unsigned fontIdx, unsigned fontSize)
+rhuint8* TrueTypeFont::bake(unsigned fontIdx, unsigned fontPixelHeight, int codepoint, int* width, int* height, int* xoff, int* yoff)
 {
-	if(!impl) return false;
-	return true;
+	if(!impl) return NULL;
+
+	float scale = stbtt_ScaleForPixelHeight(&impl->fontInfo, (float)fontPixelHeight);
+	return stbtt_GetCodepointBitmap(&impl->fontInfo, 0, scale, codepoint, width, height, xoff, yoff);
+}
+
+void TrueTypeFont::freeBitmap(rhuint8* bitmap)
+{
+	if(!impl) return;
+	stbtt_FreeBitmap(bitmap, NULL);
 }
 
 void TrueTypeFont::getMetrics(int* ascent, int* descent, int* lineGap)
@@ -111,6 +119,7 @@ void TrueTypeFontLoader::load()
 		goto Abort;
 	}
 
+	// TODO: It would be much more efficient if we can know the file size in advance
 	while(unsigned read = (unsigned)io_read(stream, p, bufIncSize, tId)) {
 		buf = (rhbyte*)rhinoca_realloc(buf, bufSize, bufSize + read);
 		size += read;
