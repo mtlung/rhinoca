@@ -262,6 +262,7 @@ void NSImageLoader::commit(TaskPool* taskPool)
 	texture->height = height;
 
     free(temp);
+	CFRelease(data);
 
 	delete this;
 }

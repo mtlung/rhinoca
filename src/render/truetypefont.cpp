@@ -2,6 +2,9 @@
 #include "truetypefont.h"
 #include "../vector.h"
 
+#define STBTT_malloc(x,u) rhinoca_malloc(x)
+#define STBTT_free(x,u) rhinoca_free(x)
+
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
 
