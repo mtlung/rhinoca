@@ -22,6 +22,7 @@
 		28FD14FE0DC6FC130079059D /* EAGLView.m in Sources */ = {isa = PBXBuildFile; fileRef = 28FD14FD0DC6FC130079059D /* EAGLView.m */; };
 		28FD15000DC6FC520079059D /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28FD14FF0DC6FC520079059D /* OpenGLES.framework */; };
 		28FD15080DC6FC5B0079059D /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28FD15070DC6FC5B0079059D /* QuartzCore.framework */; };
+		9C871A9F13AE0248009F1382 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C871A9E13AE0248009F1382 /* AudioToolbox.framework */; };
 		9CD888731382E0C1003751E2 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CD888721382E0C1003751E2 /* OpenAL.framework */; };
 /* End PBXBuildFile section */
 
@@ -72,6 +73,7 @@
 		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		32CA4F630368D1EE00C91783 /* Launcher_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Launcher_Prefix.pch; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Launcher-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Launcher-Info.plist"; plistStructureDefinitionIdentifier = "com.apple.xcode.plist.structure-definition.iphone.info-plist"; sourceTree = "<group>"; };
+		9C871A9E13AE0248009F1382 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		9CD888721382E0C1003751E2 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -88,6 +90,7 @@
 				28FD15000DC6FC520079059D /* OpenGLES.framework in Frameworks */,
 				28FD15080DC6FC5B0079059D /* QuartzCore.framework in Frameworks */,
 				187BCE2D12FC315F0042FDB1 /* CoreGraphics.framework in Frameworks */,
+				9C871A9F13AE0248009F1382 /* AudioToolbox.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -143,7 +146,6 @@
 		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
 			isa = PBXGroup;
 			children = (
-				9CD888721382E0C1003751E2 /* OpenAL.framework */,
 				182F5537130390D1003805A7 /* SpiderMonkey.xcodeproj */,
 				187BCB8A12FAA71F0042FDB1 /* Rhinoca.xcodeproj */,
 				080E96DDFE201D6D7F000001 /* Classes */,
@@ -154,6 +156,8 @@
 				19C28FACFE9D520D11CA2CBB /* Products */,
 				187BCE2412FC31340042FDB1 /* CoreFoundation.framework */,
 				187BCE2C12FC315F0042FDB1 /* CoreGraphics.framework */,
+				9CD888721382E0C1003751E2 /* OpenAL.framework */,
+				9C871A9E13AE0248009F1382 /* AudioToolbox.framework */,
 			);
 			name = CustomTemplate;
 			sourceTree = "<group>";

@@ -8,6 +8,7 @@ void registerLoaders(ResourceManager* mgr)
 {
 #ifdef RHINOCA_IOS
 	mgr->addFactory(createImage, loadImage);
+	mgr->addFactory(createNSAudio, loadNSAudio);
 #else
 	mgr->addFactory(createBmp, loadBmp);
 	mgr->addFactory(createPng, loadPng);

@@ -26,6 +26,8 @@
 #	pragma comment(lib, "OpenAL32")
 #endif
 
+using namespace Audio;
+
 // Apple suggest to use it's OpenAL extension to avoid extra buffer memory copy
 // http://developer.apple.com/library/ios/#technotes/tn2199/_index.html
 #if defined(RHINOCA_APPLE)

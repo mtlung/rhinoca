@@ -4,6 +4,8 @@
 #include "../resource.h"
 #include "../vector.h"
 
+namespace Audio {
+
 /// Basically this class store chunks of audio data,
 /// All the functions can be invoked in multi-thread environment.
 class AudioBuffer : public Resource
@@ -62,5 +64,7 @@ protected:
 };	// AudioBuffer
 
 typedef IntrusivePtr<AudioBuffer> AudioBufferPtr;
+
+}	// namespace
 
 #endif	// __AUDIO_AUDIOBUFFER_H__

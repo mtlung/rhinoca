@@ -5,6 +5,8 @@
 
 namespace Loader {
 
+using namespace Audio;
+
 struct WaveFormatEx
 {
 	rhint16 formatTag;

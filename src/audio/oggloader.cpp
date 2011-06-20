@@ -4,6 +4,8 @@
 #include "stb_vorbis.h"
 #include <string.h>	// for memcpy()
 
+using namespace Audio;
+
 namespace Loader {
 
 struct RingBuffer

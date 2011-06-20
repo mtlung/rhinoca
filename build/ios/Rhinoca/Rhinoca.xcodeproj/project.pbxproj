@@ -85,6 +85,11 @@
 		9C788C4113A906B000C12B1D /* navigator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C788C3F13A906B000C12B1D /* navigator.cpp */; };
 		9C788C4213A906B000C12B1D /* navigator.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C788C4013A906B000C12B1D /* navigator.h */; };
 		9C81DC8A139FC94500952557 /* stack.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C81DC89139FC94500952557 /* stack.h */; };
+		9C871A9513ADD4BE009F1382 /* nsaudioloader.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C871A9413ADD4BE009F1382 /* nsaudioloader.mm */; };
+		9C871A9813ADD954009F1382 /* truetypefont.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C871A9613ADD954009F1382 /* truetypefont.cpp */; };
+		9C871A9913ADD954009F1382 /* truetypefont.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C871A9713ADD954009F1382 /* truetypefont.h */; };
+		9C871A9B13ADD963009F1382 /* font.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C871A9A13ADD963009F1382 /* font.h */; };
+		9C871A9D13ADD988009F1382 /* stb_truetype.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C871A9C13ADD988009F1382 /* stb_truetype.h */; };
 		9C91B8D1132545A000195FF7 /* driverdetail.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C91B8D0132545A000195FF7 /* driverdetail.h */; };
 		9C93C8FF1379825F00682898 /* media.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C93C8FD1379825F00682898 /* media.cpp */; };
 		9C93C9001379825F00682898 /* media.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C93C8FE1379825F00682898 /* media.h */; };
@@ -238,6 +243,11 @@
 		9C788C3F13A906B000C12B1D /* navigator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = navigator.cpp; path = ../../../src/dom/navigator.cpp; sourceTree = "<group>"; };
 		9C788C4013A906B000C12B1D /* navigator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = navigator.h; path = ../../../src/dom/navigator.h; sourceTree = "<group>"; };
 		9C81DC89139FC94500952557 /* stack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stack.h; path = ../../../src/stack.h; sourceTree = "<group>"; };
+		9C871A9413ADD4BE009F1382 /* nsaudioloader.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = nsaudioloader.mm; path = ../../../src/audio/nsaudioloader.mm; sourceTree = "<group>"; };
+		9C871A9613ADD954009F1382 /* truetypefont.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = truetypefont.cpp; path = ../../../src/render/truetypefont.cpp; sourceTree = "<group>"; };
+		9C871A9713ADD954009F1382 /* truetypefont.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = truetypefont.h; path = ../../../src/render/truetypefont.h; sourceTree = "<group>"; };
+		9C871A9A13ADD963009F1382 /* font.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = font.h; path = ../../../src/render/font.h; sourceTree = "<group>"; };
+		9C871A9C13ADD988009F1382 /* stb_truetype.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_truetype.h; path = ../../../src/render/stb_truetype.h; sourceTree = "<group>"; };
 		9C91B8D0132545A000195FF7 /* driverdetail.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = driverdetail.h; path = ../../../src/render/driverdetail.h; sourceTree = SOURCE_ROOT; };
 		9C93C8FD1379825F00682898 /* media.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = media.cpp; path = ../../../src/dom/media.cpp; sourceTree = "<group>"; };
 		9C93C8FE1379825F00682898 /* media.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = media.h; path = ../../../src/dom/media.h; sourceTree = "<group>"; };
@@ -455,6 +465,7 @@
 				18F0C57E1303A566007752DB /* driver.h */,
 				9C91B8D0132545A000195FF7 /* driverdetail.h */,
 				18F0C73D1304F121007752DB /* driverios.cpp */,
+				9C871A9A13ADD963009F1382 /* font.h */,
 				187BCC5812FADFB60042FDB1 /* framebuffer.cpp */,
 				187BCC5912FADFB60042FDB1 /* framebuffer.h */,
 				187BCC4B12FADEF50042FDB1 /* gl.h */,
@@ -463,8 +474,11 @@
 				187BCC5F12FADFC70042FDB1 /* render.h */,
 				187BCC6012FADFC70042FDB1 /* renderqueue.cpp */,
 				187BCC6112FADFC70042FDB1 /* renderqueue.h */,
+				9C871A9C13ADD988009F1382 /* stb_truetype.h */,
 				187BCC3712FABB1D0042FDB1 /* texture.cpp */,
 				187BCC3812FABB1D0042FDB1 /* texture.h */,
+				9C871A9613ADD954009F1382 /* truetypefont.cpp */,
+				9C871A9713ADD954009F1382 /* truetypefont.h */,
 			);
 			name = render;
 			sourceTree = "<group>";
@@ -513,6 +527,7 @@
 				9CD8886C1382DFC9003751E2 /* audiodevice.h */,
 				9C3B3BD81385592800E3AE02 /* audiodevice.openal.cpp */,
 				9CF4B71B137D692C0025CF8E /* audioloader.h */,
+				9C871A9413ADD4BE009F1382 /* nsaudioloader.mm */,
 				9CD80F3613897ED3003C1056 /* oggloader.cpp */,
 				9CD80F3713897ED3003C1056 /* stb_vorbis.cpp */,
 				9CD80F3813897ED3003C1056 /* stb_vorbis.h */,
@@ -596,6 +611,9 @@
 				9C390963139D48A7001119F1 /* imagedata.h in Headers */,
 				9C81DC8A139FC94500952557 /* stack.h in Headers */,
 				9C788C4213A906B000C12B1D /* navigator.h in Headers */,
+				9C871A9913ADD954009F1382 /* truetypefont.h in Headers */,
+				9C871A9B13ADD963009F1382 /* font.h in Headers */,
+				9C871A9D13ADD988009F1382 /* stb_truetype.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -728,6 +746,8 @@
 				9CBF7B321393F3DC0041806B /* event.cpp in Sources */,
 				9C390962139D48A7001119F1 /* imagedata.cpp in Sources */,
 				9C788C4113A906B000C12B1D /* navigator.cpp in Sources */,
+				9C871A9513ADD4BE009F1382 /* nsaudioloader.mm in Sources */,
+				9C871A9813ADD954009F1382 /* truetypefont.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -754,7 +774,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = Rhinoca_Prefix.pch;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
-				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
+				GCC_WARN_ABOUT_INVALID_OFFSETOF_MACRO = NO;
 				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
 				INSTALL_PATH = /usr/local/lib;
 				PRODUCT_NAME = Rhinoca;
@@ -769,7 +789,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = Rhinoca_Prefix.pch;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
-				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
+				GCC_WARN_ABOUT_INVALID_OFFSETOF_MACRO = NO;
 				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
 				INSTALL_PATH = /usr/local/lib;
 				PRODUCT_NAME = Rhinoca;

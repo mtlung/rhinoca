@@ -2,6 +2,8 @@
 #include "audiobuffer.h"
 #include "audioloader.h"
 
+namespace Audio {
+
 AudioBuffer::AudioBuffer(const char* uri)
 	: Resource(uri)
 {
@@ -15,7 +17,7 @@ AudioBuffer::~AudioBuffer()
 		rhinoca_free(subBuffers[i].data);
 
 	if(scratch) {
-		AudioLoader* loader = reinterpret_cast<AudioLoader*>(scratch);
+		Loader::AudioLoader* loader = reinterpret_cast<Loader::AudioLoader*>(scratch);
 		delete loader;
 	} 
 }
@@ -103,7 +105,7 @@ void* AudioBuffer::getReadPointerForRange(unsigned begin, unsigned end, unsigned
 	// Inform the loader to do it's job
 	if(scratch) {
 		// TODO: Prevent loading (overlapped) data that already in other sub-buffers
-		AudioLoader* loader = reinterpret_cast<AudioLoader*>(scratch);
+		Loader::AudioLoader* loader = reinterpret_cast<Loader::AudioLoader*>(scratch);
 		loader->loadDataForRange(begin, end);
 	}
 
@@ -129,3 +131,5 @@ unsigned AudioBuffer::totalSamples() const
 	ScopeLock lock(mutex);
 	return format.totalSamples;
 }
+
+}	// namespace Audio

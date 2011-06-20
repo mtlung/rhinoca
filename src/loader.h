@@ -13,6 +13,9 @@ namespace Loader {
 Resource* createImage(const char* uri, ResourceManager* mgr);
 bool loadImage(Resource* resource, ResourceManager* mgr);
 
+Resource* createNSAudio(const char* uri, ResourceManager* mgr);
+bool loadNSAudio(Resource* resource, ResourceManager* mgr);
+
 #else
 
 Resource* createBmp(const char* uri, ResourceManager* mgr);

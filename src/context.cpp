@@ -86,7 +86,7 @@ Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 	jsGlobal = JS_NewCompartmentAndGlobalObject(jsContext, &jsGlobalClass, NULL);
 	JS_SetGlobalObject(jsContext, jsGlobal);
 
-	taskPool.init(2);
+//	taskPool.init(2);
 	resourceManager.rhinoca = this;
 	resourceManager.taskPool = &taskPool;
 	Loader::registerLoaders(&resourceManager);
@@ -105,6 +105,7 @@ Rhinoca::~Rhinoca()
 	audiodevice_destroy(audioDevice);
 }
 
+static int count = 0;
 void Rhinoca::update()
 {
 	Render::Driver::forceApplyCurrent();
@@ -122,7 +123,10 @@ void Rhinoca::update()
 	if(domWindow)
 		domWindow->render();
 
-	JS_MaybeGC(jsContext);
+	if(++count > 100) {
+		JS_MaybeGC(jsContext);
+		count = 0; 
+	}
 
 	Render::Driver::useRenderTarget(NULL);
 }
@@ -364,12 +368,6 @@ void Rhinoca::closeDocument()
 
 	documentUrl = "";
 	domWindow = NULL;
-
-	// NOTE: I found this "clear scope" is necessary in order to not leak memory
-	// This requirement is not mentioned in the Mozilla documentation, I wonder why
-	// JS_DestroyContext() didn't do all the necessary job to clear the global.
-	// Similar problem: http://web.archiveorange.com/archive/v/yxPWTpZYQx37ab1hpyWc
-//	JS_ClearScope(jsContext, jsGlobal);
 
 	JS_GC(jsContext);
 }

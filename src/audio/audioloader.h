@@ -3,6 +3,8 @@
 
 #include "../taskpool.h"
 
+namespace Loader {
+
 /// 
 class AudioLoader : public Task
 {
@@ -14,5 +16,7 @@ public:
 
 // Attributes
 };	// AudioLoader
+
+}	// namespace Loader
 
 #endif	// __AUDIO_AUDIOLOADER_H__

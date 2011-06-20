@@ -38,8 +38,8 @@ void audiodevice_setSoundvolume(AudioDevice* device, AudioSound* sound, float vo
 float audiodevice_getSoundvolume(AudioDevice* device, AudioSound* sound);
 
 // Loading
-typedef void* (*audiodevice_loadCallback)(void* userData, AudioBuffer* audioData, unsigned begin, unsigned end);	// Invoked when the audio device think it's time to load some data
-AudioBuffer* audiodevice_load(AudioDevice* device, const char* uri, audiodevice_loadCallback callback, void* userData);
+typedef void* (*audiodevice_loadCallback)(void* userData, Audio::AudioBuffer* audioData, unsigned begin, unsigned end);	// Invoked when the audio device think it's time to load some data
+Audio::AudioBuffer* audiodevice_load(AudioDevice* device, const char* uri, audiodevice_loadCallback callback, void* userData);
 
 // Main loop iteration processing
 void audiodevice_update(AudioDevice* device);
