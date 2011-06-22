@@ -5,10 +5,10 @@
 #include "vector.h"
 #include <string.h>
 
-static char* _emptyString = "";
+static const char* _emptyString = "";
 
 String::String()
-	: _cstr(_emptyString)
+	: _cstr(const_cast<char*>(_emptyString))
 	, _length(0)
 {
 }
@@ -23,7 +23,7 @@ String::String(const char* str)
 		_cstr[_length] = '\0';
 	}
 	else
-		_cstr = _emptyString;
+		_cstr = const_cast<char*>(_emptyString);
 }
 
 String::String(const char* str, unsigned count)
@@ -37,7 +37,7 @@ String::String(const char* str, unsigned count)
 		_cstr[_length] = '\0';
 	}
 	else
-		_cstr = _emptyString;
+		_cstr = const_cast<char*>(_emptyString);
 }
 
 String::String(const String& str)
@@ -50,7 +50,7 @@ String::String(const String& str)
 		_cstr[_length] = '\0';
 	}
 	else
-		_cstr = _emptyString;
+		_cstr = const_cast<char*>(_emptyString);
 }
 
 String::~String()

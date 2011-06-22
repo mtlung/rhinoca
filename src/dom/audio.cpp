@@ -19,18 +19,21 @@ JSClass HTMLAudioElement::jsClass = {
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-static void onLoadCallback(TaskPool* taskPool, void* userData)
+static void triggerLoadEvent(HTMLAudioElement* self, AudioBuffer::State state)
 {
-	HTMLAudioElement* self = reinterpret_cast<HTMLAudioElement*>(userData);
-
 	Dom::Event* ev = new Dom::Event;
-	AudioBuffer* b = audiodevice_getSoundBuffer(self->_device, self->_sound);
-	ev->type = (b && (b->state == AudioBuffer::Aborted)) ? "error" : "canplaythrough";
+	ev->type = (state == AudioBuffer::Aborted) ? "error" : "canplaythrough";
 	ev->bubbles = false;
 	ev->target = self;
 	ev->bind(self->jsContext, NULL);
-
 	self->dispatchEvent(ev);
+}
+
+static void onLoadCallback(TaskPool* taskPool, void* userData)
+{
+	HTMLAudioElement* self = reinterpret_cast<HTMLAudioElement*>(userData);
+	AudioBuffer* b = audiodevice_getSoundBuffer(self->_device, self->_sound);
+	triggerLoadEvent(self, b ? b->state : AudioBuffer::Aborted);
 	self->releaseGcRoot();
 }
 
@@ -133,10 +136,14 @@ void HTMLAudioElement::setSrc(const char* uri)
 	if(_sound) {
 		int tId = TaskPool::threadId();
 		AudioBuffer* b = audiodevice_getSoundBuffer(_device, _sound);
-		_resourceManager->taskPool->addCallback(b->taskLoaded, onLoadCallback, this, tId);
-
-		// Prevent HTMLImageElement begging GC before the callback finished.
-		addGcRoot();
+		
+		if(!b)
+			triggerLoadEvent(this, AudioBuffer::Aborted);
+		else {
+			// Prevent HTMLImageElement begging GC before the callback finished.
+			addGcRoot();
+			_resourceManager->taskPool->addCallback(b->taskLoaded, onLoadCallback, this, tId);
+		}
 	}
 	else
 		print(rhinoca, "Failed to load: '%s'\n", uri);

@@ -2,7 +2,6 @@
 #include "audiobuffer.h"
 #include "audioloader.h"
 #include "stb_vorbis.h"
-#include <string.h>	// for memcpy()
 #include <AudioToolbox/AudioFileStream.h>
 
 using namespace Audio;
@@ -39,7 +38,7 @@ public:
 	void loadDataForRange(unsigned begin, unsigned end);
 
 	void run(TaskPool* taskPool);
-	void onDataReady(const rhbyte* data, unsigned len);
+	void onDataReady(const rhbyte* data, unsigned len, unsigned numPacket, AudioStreamPacketDescription* inPacketDescriptions);
 
 	void* stream;
 	Audio::AudioBuffer* buffer;
@@ -67,7 +66,7 @@ static void propertyListenerProc(
 
 	OSStatus err = noErr;
 
-//	printf("found property '%c%c%c%c'\n", (inPropertyID>>24)&255, (inPropertyID>>16)&255, (inPropertyID>>8)&255, inPropertyID&255);
+//	printf("found property '%4.4s'\n", (char*)&inPropertyID);
 	
 	switch(inPropertyID) {
 	case kAudioFileStreamProperty_ReadyToProducePackets:
@@ -82,6 +81,11 @@ static void propertyListenerProc(
 
 		UInt64 totalAudioBytes = 0;
 		AudioFileStreamGetProperty(inAudioFileStream, kAudioFileStreamProperty_AudioDataByteCount, &asbdSize, &totalAudioBytes);
+
+		if(asbd.mBytesPerFrame == 0) {
+			print(self->manager->rhinoca, "NSAudioLoader: VBR format is not yet supported: '%s'\n", self->buffer->uri().c_str());		
+			goto Abort;
+		}
 
 		self->format.channels = asbd.mChannelsPerFrame;
 		self->format.samplesPerSecond = asbd.mSampleRate;
@@ -108,7 +112,7 @@ static void audioPacketsProc(
 	AudioStreamPacketDescription* inPacketDescriptions)
 {
 	NSAudioLoader* self = reinterpret_cast<NSAudioLoader*>(inClientData);
-	self->onDataReady((rhbyte*)inInputData, inNumberBytes);
+	self->onDataReady((rhbyte*)inInputData, inNumberBytes, inNumberPackets, inPacketDescriptions);
 }
 
 NSAudioLoader::NSAudioLoader(Audio::AudioBuffer* buf, ResourceManager* mgr)
@@ -161,6 +165,9 @@ void NSAudioLoader::run(TaskPool* taskPool)
 			PRINTERROR("AudioFileStreamParseBytes");
 			goto Abort;
 		}
+		
+		if(buffer->state == Resource::Aborted)
+			goto Abort;
 	}
 
 	return reSchedule();
@@ -169,27 +176,38 @@ Abort:
 	buffer->state = Resource::Aborted;
 }
 
-void NSAudioLoader::onDataReady(const rhbyte* data, unsigned len)
+void NSAudioLoader::onDataReady(const rhbyte* data, unsigned len, unsigned numPacket, AudioStreamPacketDescription* inPacketDescriptions)
 {
-	ASSERT(len % format.blockAlignment == 0);
-	const unsigned sampleCount = len / format.blockAlignment;
-	const unsigned audioBufBegin = currentSamplePos;
-	const unsigned audioBufEnd = audioBufBegin + sampleCount;
+	if(inPacketDescriptions) for(int i=0; i<numPacket; ++i)
+	{
+//		SInt64 packetOffset = inPacketDescriptions[i].mStartOffset;
+//		SInt64 packetSize = inPacketDescriptions[i].mDataByteSize;
+		
+//		memcpy((char*)fillBuf->mAudioData + myData->bytesFilled, (const char*)inInputData + packetOffset, packetSize);
+//		packetSize = packetSize;
+	}
+	else
+	{
+		ASSERT(len % format.blockAlignment == 0);
+		const unsigned sampleCount = len / format.blockAlignment;
+		const unsigned audioBufBegin = currentSamplePos;
+		const unsigned audioBufEnd = audioBufBegin + sampleCount;
 
-	while(currentSamplePos < audioBufEnd) {
-		unsigned bytesToWrite = 0;
-		unsigned pos = audioBufEnd;
+		while(currentSamplePos < audioBufEnd) {
+			unsigned bytesToWrite = 0;
+			unsigned pos = audioBufEnd;
 
-		void* bufferData = buffer->getWritePointerForRange(currentSamplePos, pos, bytesToWrite);
-		ASSERT(bufferData);
-		ASSERT(bytesToWrite <= len);
+			void* bufferData = buffer->getWritePointerForRange(currentSamplePos, pos, bytesToWrite);
+			ASSERT(bufferData);
+			ASSERT(bytesToWrite <= len);
 
-		memcpy(bufferData, data, bytesToWrite);
-		buffer->commitWriteForRange(currentSamplePos, pos);
+			memcpy(bufferData, data, bytesToWrite);
+			buffer->commitWriteForRange(currentSamplePos, pos);
 
-		data += bytesToWrite;
-		len -= bytesToWrite;
-		currentSamplePos = pos;
+			data += bytesToWrite;
+			len -= bytesToWrite;
+			currentSamplePos = pos;
+		}
 	}
 
 	discontinueFlag = 0;

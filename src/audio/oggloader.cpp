@@ -182,7 +182,6 @@ Abort:
 void OggLoader::loadData()
 {
 	int tId = TaskPool::threadId();
-	Rhinoca* rh = manager->rhinoca;
 	void* bufferData = NULL;
 
 	if(buffer->state == Resource::Aborted) goto Abort;
