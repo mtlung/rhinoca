@@ -118,14 +118,14 @@ JSBool JsFunctionEventListener::init(jsval stringOrFunc)
 	return JS_TRUE;
 }
 
-void JsFunctionEventListener::handleEvent(Event* evt)
+void JsFunctionEventListener::handleEvent(Event* evt, EventTarget* initiator)
 {
 	jsval argv, rval;
 	argv = *evt;
 	if(!JSVAL_IS_NULL(_jsClosure))
-		JS_CallFunctionValue(_jsContext, NULL, _jsClosure, 1, &argv, &rval);
+		JS_CallFunctionValue(_jsContext, initiator->getJSObject(), _jsClosure, 1, &argv, &rval);
 	else if(_jsScript)
-		JS_ExecuteScript(_jsContext, JS_GetGlobalObject(_jsContext), _jsScript, &rval);
+		JS_ExecuteScript(_jsContext, initiator->getJSObject(), _jsScript, &rval);
 }
 
 jsval JsFunctionEventListener::getJsVal()
@@ -271,14 +271,19 @@ bool EventTarget::_dispatchEventNoCaptureBubble(Event* evt)
 {
 	ASSERT(evt);
 
-	for(EventListener* l = _eventListeners.begin(); l != _eventListeners.end(); l = l->next()) {
+	for(EventListener* l = _eventListeners.begin(); l != _eventListeners.end(); ) {
+		// NOTE: In case the event listener callback invoke removeEventListener()
+		EventListener* next = l->next();
+
 		// Check for capture/bubble phase
 		bool correctPhase = evt->eventPhase == Event::AT_TARGET;
 		correctPhase |= l->_useCapture == (evt->eventPhase == Event::CAPTURING_PHASE);
 
 		// Check for correct event type
 		if(correctPhase && evt->type == l->_type)
-			l->handleEvent(evt);
+			l->handleEvent(evt, this);
+
+		l = next;
 	}
 
 	return true;

@@ -50,7 +50,7 @@ protected:
 class EventListener : public LinkListBase::Node<EventListener>
 {
 public:
-	virtual void handleEvent(Event* evt) = 0;
+	virtual void handleEvent(Event* evt, EventTarget* initiator) = 0;
 
 protected:
 	friend class EventTarget;
@@ -71,7 +71,7 @@ public:
 
 	JSBool init(jsval stringOrFunc);
 
-	override void handleEvent(Event* evt);
+	override void handleEvent(Event* evt, EventTarget* initiator);
 
 	jsval getJsVal();
 
@@ -123,6 +123,9 @@ public:
 
 protected:
 	bool _dispatchEventNoCaptureBubble(Event* evt);
+
+	friend class JsFunctionEventListener;
+	virtual JSObject* getJSObject() = 0;
 
 	/// Traverse up the DOM tree to the next EventTarget, returns NULL if the root is reached
 	virtual EventTarget* eventTargetTraverseUp() { return NULL; }
