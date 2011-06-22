@@ -11,15 +11,28 @@ JSClass KeyEvent::jsClass = {
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-static JSBool keyCode(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+enum PropertyKey {
+	keyCode,
+	target
+};
+
+static JSBool get(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	KeyEvent* self = getJsBindable<KeyEvent>(cx, obj);
-	*vp = INT_TO_JSVAL(self->keyCode);
+
+	switch(JSID_TO_INT(id)) {
+	case keyCode:
+		*vp = INT_TO_JSVAL(self->keyCode); return JS_TRUE;
+	case target:
+		*vp = OBJECT_TO_JSVAL(self->target->getJSObject()); return JS_TRUE;
+	}
+
 	return JS_TRUE;
 }
 
 static JSPropertySpec properties[] = {
-	{"keyCode", 0, JSPROP_READONLY | JsBindable::jsPropFlags, keyCode, JS_StrictPropertyStub},
+	{"keyCode", keyCode,	JSPROP_READONLY | JsBindable::jsPropFlags, get, JS_StrictPropertyStub},
+	{"target",	target,		JSPROP_READONLY | JsBindable::jsPropFlags, get, JS_StrictPropertyStub},
 	{0}
 };
 

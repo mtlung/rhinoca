@@ -20,8 +20,8 @@ void Rhinoca::processEvent(RhinocaEvent ev)
 	WPARAM wParam = ev.value1;
 	LPARAM lParam = ev.value2;
 
-	const char* onkeydown = "onkeydown";
-	const char* onkeyup = "onkeyup";
+	const char* onkeydown = "keydown";
+	const char* onkeyup = "keyup";
 	const char* keyEvent = NULL;
 	int keyCode = 0;
 
@@ -56,6 +56,15 @@ void Rhinoca::processEvent(RhinocaEvent ev)
 
 	if(keyEvent)
 	{
+		Dom::KeyEvent* e = new Dom::KeyEvent;
+		e->type = keyEvent;
+		e->keyCode = keyCode;
+
+		e->bind(domWindow->jsContext, NULL);
+		e->target = domWindow;
+
+		domWindow->dispatchEvent(e);
+/*
 		jsval argv, closure, rval;
 		Dom::HTMLDocument* document = domWindow->document;
 		if(JS_GetProperty(document->jsContext, *document, keyEvent, &closure) && closure != JSVAL_VOID) {
@@ -64,7 +73,7 @@ void Rhinoca::processEvent(RhinocaEvent ev)
 			e->bind(document->jsContext, NULL);
 			argv = *e;
 			JS_CallFunctionValue(document->jsContext, *document, closure, 1, &argv, &rval);
-		}
+		}*/
 	}
 
 	if(mouseEvent)

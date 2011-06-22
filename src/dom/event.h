@@ -121,11 +121,10 @@ public:
 
 	void jsTrace(JSTracer* trc);
 
+	virtual JSObject* getJSObject() = 0;
+
 protected:
 	bool _dispatchEventNoCaptureBubble(Event* evt);
-
-	friend class JsFunctionEventListener;
-	virtual JSObject* getJSObject() = 0;
 
 	/// Traverse up the DOM tree to the next EventTarget, returns NULL if the root is reached
 	virtual EventTarget* eventTargetTraverseUp() { return NULL; }

@@ -77,7 +77,8 @@ enum PropertyKey {
 	clientX, clientY,
 	pageX, pageY,
 	ctrlKey, shiftKey, altKey, metaKey,
-	button
+	button,
+	target
 };
 
 static JSBool get(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
@@ -97,6 +98,8 @@ static JSBool get(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 		*vp = INT_TO_JSVAL(self->pageX); return JS_TRUE;
 	case pageY:
 		*vp = INT_TO_JSVAL(self->pageY); return JS_TRUE;
+	case target:
+		*vp = OBJECT_TO_JSVAL(self->target->getJSObject()); return JS_TRUE;
 	}
 
 	return JS_TRUE;
@@ -118,6 +121,8 @@ static JSPropertySpec properties[] = {
 	{"altKey",		altKey,		JSPROP_READONLY | JsBindable::jsPropFlags, get, JS_StrictPropertyStub},
 	{"metaKey",		metaKey,	JSPROP_READONLY | JsBindable::jsPropFlags, get, JS_StrictPropertyStub},
 	{"button",		button,		JSPROP_READONLY | JsBindable::jsPropFlags, get, JS_StrictPropertyStub},
+
+	{"target",		target,		JSPROP_READONLY | JsBindable::jsPropFlags, get, JS_StrictPropertyStub},
 	{0}
 };
 
