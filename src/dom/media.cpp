@@ -30,7 +30,7 @@ static JSBool setSrc(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval
 	if(!jss) return JS_FALSE;
 
 	Path path;
-	self->fixRelativePath(jss.c_str(), self->ownerDocument->rhinoca->documentUrl.c_str(), path);
+	self->fixRelativePath(jss.c_str(), self->rhinoca->documentUrl.c_str(), path);
 	self->setSrc(path.c_str());
 
 	return JS_TRUE;
@@ -90,6 +90,13 @@ static JSBool pause(JSContext* cx, uintN argc, jsval* vp)
 	return JS_TRUE;
 }
 
+static JSBool load(JSContext* cx, uintN argc, jsval* vp)
+{
+	HTMLMediaElement* self = getJsBindable<HTMLMediaElement>(cx, vp);
+	self->load();
+	return JS_TRUE;
+}
+
 static JSBool canPlayType(JSContext* cx, uintN argc, jsval* vp)
 {
 	HTMLMediaElement* self = getJsBindable<HTMLMediaElement>(cx, vp);
@@ -112,11 +119,13 @@ static JSBool canPlayType(JSContext* cx, uintN argc, jsval* vp)
 static JSFunctionSpec methods[] = {
 	{"play", play, 0,0},
 	{"pause", pause, 0,0},
+	{"load", load, 0,0},
 	{"canPlayType", canPlayType, 1,0},
 	{0}
 };
 
-HTMLMediaElement::HTMLMediaElement()
+HTMLMediaElement::HTMLMediaElement(Rhinoca* rh)
+	: Element(rh)
 {
 }
 

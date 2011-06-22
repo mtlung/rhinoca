@@ -1,11 +1,14 @@
 #include "pch.h"
 #include "audio.h"
 #include "document.h"
+#include "../audio/audiodevice.h"
 #include "../context.h"
 #include "../path.h"
 #include "../resource.h"
 #include "../xmlparser.h"
 #include <string.h>	// for strcasecmp
+
+using namespace Audio;
 
 namespace Dom {
 
@@ -15,6 +18,21 @@ JSClass HTMLAudioElement::jsClass = {
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
+
+static void onLoadCallback(TaskPool* taskPool, void* userData)
+{
+	HTMLAudioElement* self = reinterpret_cast<HTMLAudioElement*>(userData);
+
+	Dom::Event* ev = new Dom::Event;
+	AudioBuffer* b = audiodevice_getSoundBuffer(self->_device, self->_sound);
+	ev->type = (b && (b->state == AudioBuffer::Aborted)) ? "error" : "canplaythrough";
+	ev->bubbles = false;
+	ev->target = self;
+	ev->bind(self->jsContext, NULL);
+
+	self->dispatchEvent(ev);
+	self->releaseGcRoot();
+}
 
 static JSBool getLoop(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
@@ -49,10 +67,8 @@ static JSBool construct(JSContext* cx, uintN argc, jsval* vp)
 
 	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
 
-	HTMLAudioElement* audio = new HTMLAudioElement(rh->audioDevice, &rh->resourceManager);
+	HTMLAudioElement* audio = new HTMLAudioElement(rh, rh->audioDevice, &rh->resourceManager);
 	audio->bind(cx, NULL);
-
-	audio->ownerDocument = rh->domWindow->document;
 
 	JS_RVAL(cx, vp) = *audio;
 	return JS_TRUE;
@@ -62,8 +78,8 @@ static JSFunctionSpec methods[] = {
 	{0}
 };
 
-HTMLAudioElement::HTMLAudioElement(AudioDevice* device, ResourceManager* mgr)
-	: _sound(NULL), _device(device), _resourceManager(mgr)
+HTMLAudioElement::HTMLAudioElement(Rhinoca* rh, AudioDevice* device, ResourceManager* mgr)
+	: HTMLMediaElement(rh), _sound(NULL), _device(device), _resourceManager(mgr)
 {
 }
 
@@ -90,7 +106,8 @@ void HTMLAudioElement::registerClass(JSContext* cx, JSObject* parent)
 
 Element* HTMLAudioElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
-	HTMLAudioElement* audio = strcasecmp(type, "AUDIO") == 0 ? new HTMLAudioElement(rh->audioDevice, &rh->resourceManager) : NULL;
+	HTMLAudioElement* audio = strcasecmp(type, "AUDIO") == 0 ?
+		new HTMLAudioElement(rh, rh->audioDevice, &rh->resourceManager) : NULL;
 	if(!audio) return NULL;
 
 	return audio;
@@ -105,19 +122,29 @@ const FixString& HTMLAudioElement::tagName() const
 
 void HTMLAudioElement::setSrc(const char* uri)
 {
-	if(_sound)
-		audioSound_destroy(_sound);
+	Path path;
+	fixRelativePath(uri, rhinoca->documentUrl.c_str(), path);
 
+	if(_sound) audioSound_destroy(_sound);
 	_sound = audiodevice_createSound(_device, uri, _resourceManager);
 	_src = uri;
+
+	// Register callbacks
+	if(_sound) {
+		int tId = TaskPool::threadId();
+		AudioBuffer* b = audiodevice_getSoundBuffer(_device, _sound);
+		_resourceManager->taskPool->addCallback(b->taskLoaded, onLoadCallback, this, tId);
+
+		// Prevent HTMLImageElement begging GC before the callback finished.
+		addGcRoot();
+	}
+	else
+		print(rhinoca, "Failed to load: '%s'\n", uri);
 }
 
 const char* HTMLAudioElement::src() const
 {
-	if(!_sound)
-		return "";
-
-	return audioSound_getUri(_sound);
+	return _src.c_str();
 }
 
 void HTMLAudioElement::play()
@@ -130,6 +157,15 @@ void HTMLAudioElement::pause()
 {
 	if(_sound)
 		audiodevice_pauseSound(_device, _sound);
+}
+
+Node* HTMLAudioElement::cloneNode(bool recursive)
+{
+	HTMLAudioElement* ret = new HTMLAudioElement(rhinoca, _device, _resourceManager);
+	ret->bind(jsContext, NULL);
+	ret->setSrc(src());
+	ret->setLoop(loop());
+	return ret;
 }
 
 double HTMLAudioElement::currentTime() const

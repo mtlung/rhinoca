@@ -8,7 +8,7 @@ namespace Dom {
 class HTMLBodyElement : public Element
 {
 public:
-	HTMLBodyElement();
+	explicit HTMLBodyElement(Rhinoca* rh);
 	~HTMLBodyElement();
 
 // Operations

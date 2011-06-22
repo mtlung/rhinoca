@@ -57,11 +57,9 @@ static JSBool construct(JSContext* cx, uintN argc, jsval* vp)
 {
 	if(!JS_IsConstructing(cx, vp)) return JS_FALSE;	// Not called as constructor? (called without new)
 
-	HTMLCanvasElement* img = new HTMLCanvasElement;
-	img->bind(cx, NULL);
-
 	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
-	img->ownerDocument = rh->domWindow->document;
+	HTMLCanvasElement* img = new HTMLCanvasElement(rh);
+	img->bind(cx, NULL);
 
 	JS_RVAL(cx, vp) = *img;
 
@@ -98,8 +96,9 @@ static JSFunctionSpec methods[] = {
 	{0}
 };
 
-HTMLCanvasElement::HTMLCanvasElement()
-	: context(NULL)
+HTMLCanvasElement::HTMLCanvasElement(Rhinoca* rh)
+	: Element(rh)
+	, context(NULL)
 {
 }
 
@@ -154,7 +153,7 @@ void HTMLCanvasElement::render()
 	// draw operation is already put on the window
 	if(!_framebuffer.texture) return;
 
-	Window* window = ownerDocument->window();
+	Window* window = ownerDocument()->window();
 	HTMLCanvasElement* vc = window->virtualCanvas;
 
 	CanvasRenderingContext2D* ctx = dynamic_cast<CanvasRenderingContext2D*>(vc->context);
@@ -172,7 +171,7 @@ Element* HTMLCanvasElement::factoryCreate(Rhinoca* rh, const char* type, XmlPars
 {
 	if(strcasecmp(type, "CANVAS") != 0) return NULL;
 
-	HTMLCanvasElement* canvas = new HTMLCanvasElement;
+	HTMLCanvasElement* canvas = new HTMLCanvasElement(rh);
 
 	/// The default size of a canvas is 300 x 150 as described by the standard
 	float w = 300, h = 150;

@@ -36,6 +36,7 @@ void audiodevice_setSoundCurrentTime(AudioDevice* device, AudioSound* sound, flo
 float audiodevice_getSoundCurrentTime(AudioDevice* device, AudioSound* sound);
 void audiodevice_setSoundvolume(AudioDevice* device, AudioSound* sound, float volume);
 float audiodevice_getSoundvolume(AudioDevice* device, AudioSound* sound);
+Audio::AudioBuffer* audiodevice_getSoundBuffer(AudioDevice* device, AudioSound* sound);
 
 // Loading
 typedef void* (*audiodevice_loadCallback)(void* userData, Audio::AudioBuffer* audioData, unsigned begin, unsigned end);	// Invoked when the audio device think it's time to load some data

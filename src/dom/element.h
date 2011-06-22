@@ -13,7 +13,7 @@ namespace Dom {
 class Element : public Node
 {
 public:
-	Element();
+	explicit Element(Rhinoca* rh);
 
 // Operations
 	JSObject* createPrototype();

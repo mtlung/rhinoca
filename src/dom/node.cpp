@@ -2,6 +2,7 @@
 #include "node.h"
 #include "nodelist.h"
 #include "document.h"
+#include "../context.h"
 
 namespace Dom {
 
@@ -72,6 +73,19 @@ static JSBool replaceChild(JSContext* cx, uintN argc, jsval* vp)
 	return JS_TRUE;
 }
 
+static JSBool cloneNode(JSContext* cx, uintN argc, jsval* vp)
+{
+	bool recursive= true;
+//	if(!JS_GetValue(cx, JS_ARGV0, recursive)) return JS_FALSE;
+
+	Node* self = getJsBindable<Node>(cx, vp);
+	Node* newNode = self->cloneNode(recursive);
+	ASSERT(!newNode || newNode->jsContext && "Overrided cloneNode() is responsible to bind the object");
+
+	JS_RVAL(cx, vp) = *newNode;
+	return JS_TRUE;
+}
+
 static JSBool addEventListener(JSContext* cx, uintN argc, jsval* vp)
 {
 	Node* self = getJsBindable<Node>(cx, vp);
@@ -102,6 +116,7 @@ static JSFunctionSpec methods[] = {
 	{"insertBefore", insertBefore, 2,0},
 	{"removeChild", removeChild, 1,0},		// https://developer.mozilla.org/en/DOM/Node.removeChild
 	{"replaceChild", replaceChild, 2,0},
+	{"cloneNode", cloneNode, 1,0},
 	{"addEventListener", addEventListener, 3,0},
 	{"removeEventListener", removeEventListener, 3,0},
 	{"dispatchEvent", dispatchEvent, 1,0},
@@ -146,7 +161,7 @@ static JSBool nodeName(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 static JSBool ownerDocument(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	Node* self = getJsBindable<Node>(cx, obj);
-	*vp = *self->ownerDocument;
+	*vp = *self->ownerDocument();
 	return JS_TRUE;
 }
 
@@ -176,8 +191,8 @@ static JSPropertySpec properties[] = {
 	{0}
 };
 
-Node::Node()
-	: ownerDocument(NULL)
+Node::Node(Rhinoca* rh)
+	: rhinoca(rh)
 	, parentNode(NULL)
 	, firstChild(NULL)
 	, nextSibling(NULL)
@@ -227,7 +242,6 @@ Node* Node::appendChild(Node* newChild)
 	else
 		firstChild = newChild;
 
-	newChild->ownerDocument = ownerDocument;
 	return newChild;
 }
 
@@ -251,7 +265,6 @@ Node* Node::insertBefore(Node* newChild, Node* refChild)
 	else
 		firstChild = newChild;
 
-	newChild->ownerDocument = ownerDocument;
 	return newChild;
 }
 
@@ -285,6 +298,11 @@ void Node::removeThis()
 	releaseReference();
 }
 
+Node* Node::cloneNode(bool recursive)
+{
+	return NULL;
+}
+
 EventTarget* Node::eventTargetTraverseUp()
 {
 	return parentNode;
@@ -296,6 +314,10 @@ void Node::eventTargetAddReference() {
 
 void Node::eventTargetReleaseReference() {
 	releaseReference();
+}
+
+HTMLDocument* Node::ownerDocument() {
+	return rhinoca->domWindow->document;
 }
 
 static Node* childNodesFilter(NodeIterator& iter, void* userData)

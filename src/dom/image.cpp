@@ -61,7 +61,7 @@ static JSBool setSrc(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval
 	JsString str(cx, *vp);
 	if(!str) return JS_FALSE;
 
-	self->setSrc(self->ownerDocument->rhinoca, str.c_str());
+	self->setSrc(str.c_str());
 
 	return JS_TRUE;
 }
@@ -178,11 +178,9 @@ static JSBool construct(JSContext* cx, uintN argc, jsval* vp)
 {
 	if(!JS_IsConstructing(cx, vp)) return JS_FALSE;	// Not called as constructor? (called without new)
 
-	HTMLImageElement* img = new HTMLImageElement;
-	img->bind(cx, NULL);
-
 	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
-	img->ownerDocument = rh->domWindow->document;
+	HTMLImageElement* img = new HTMLImageElement(rh);
+	img->bind(cx, NULL);
 
 	JS_RVAL(cx, vp) = *img;
 
@@ -193,8 +191,9 @@ static JSFunctionSpec methods[] = {
 	{0}
 };
 
-HTMLImageElement::HTMLImageElement()
-	: texture(NULL)
+HTMLImageElement::HTMLImageElement(Rhinoca* rh)
+	: Element(rh)
+	, texture(NULL)
 	, _width(-1), _height(-1)
 {
 }
@@ -221,16 +220,16 @@ void HTMLImageElement::registerClass(JSContext* cx, JSObject* parent)
 
 Element* HTMLImageElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
-	HTMLImageElement* img = strcasecmp(type, "IMG") == 0 ? new HTMLImageElement : NULL;
+	HTMLImageElement* img = strcasecmp(type, "IMG") == 0 ? new HTMLImageElement(rh) : NULL;
 	return img;
 }
 
-void HTMLImageElement::setSrc(Rhinoca* rh, const char* uri)
+void HTMLImageElement::setSrc(const char* uri)
 {
 	Path path;
-	fixRelativePath(uri, rh->documentUrl.c_str(), path);
+	fixRelativePath(uri, rhinoca->documentUrl.c_str(), path);
 
-	ResourceManager& mgr = rh->resourceManager;
+	ResourceManager& mgr = rhinoca->resourceManager;
 	texture = mgr.loadAs<Texture>(path.c_str());
 
 	// Register callbacks
@@ -244,7 +243,7 @@ void HTMLImageElement::setSrc(Rhinoca* rh, const char* uri)
 		addGcRoot();
 	}
 	else
-		print(rh, "Failed to load: '%s'\n", path.c_str());
+		print(rhinoca, "Failed to load: '%s'\n", path.c_str());
 }
 
 rhuint HTMLImageElement::width() const

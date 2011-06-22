@@ -11,7 +11,7 @@ namespace Dom {
 class HTMLCanvasElement : public Element
 {
 public:
-	HTMLCanvasElement();
+	explicit HTMLCanvasElement(Rhinoca* rh);
 	~HTMLCanvasElement();
 
 // Operations

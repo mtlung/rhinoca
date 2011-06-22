@@ -15,7 +15,7 @@ class HTMLDocument;
 class Node : public JsBindable, public EventTarget
 {
 public:
-	Node();
+	explicit Node(Rhinoca* rh);
 
 	/// Don't destruct a Node (or it's derived class) directly, it
 	/// should be preformed by the GC.
@@ -47,18 +47,23 @@ public:
 	/// Will not delete the C++ object, actual delete is done during JS GC.
 	void removeThis();
 
+	virtual Node* cloneNode(bool recursive);
+
 	/// Render this node to the window
 	virtual void render() {}
 
 protected:
+	override JSObject* getJSObject() { return jsObject; }
 	override EventTarget* eventTargetTraverseUp();
 	override void eventTargetAddReference();
 	override void eventTargetReleaseReference();
 
 // Attributes
 public:
+	Rhinoca* rhinoca;
 	FixString nodeName;
-	HTMLDocument* ownerDocument;
+
+	HTMLDocument* ownerDocument();
 
 	NodeList* childNodes();
 

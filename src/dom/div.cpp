@@ -13,7 +13,8 @@ JSClass HTMLDivElement::jsClass = {
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-HTMLDivElement::HTMLDivElement()
+HTMLDivElement::HTMLDivElement(Rhinoca* rh)
+	: Element(rh)
 {
 }
 
@@ -34,7 +35,7 @@ void HTMLDivElement::bind(JSContext* cx, JSObject* parent)
 
 Element* HTMLDivElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
-	return strcasecmp(type, "DIV") == 0 ? new HTMLDivElement : NULL;
+	return strcasecmp(type, "DIV") == 0 ? new HTMLDivElement(rh) : NULL;
 }
 
 static const FixString _tagName = "DIV";

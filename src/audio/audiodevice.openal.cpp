@@ -603,6 +603,11 @@ float audiodevice_getSoundvolume(AudioDevice* device, AudioSound* sound)
 	return ret;
 }
 
+AudioBuffer* audiodevice_getSoundBuffer(AudioDevice* device, AudioSound* sound)
+{
+	return sound->audioBuffer.get();
+}
+
 void audiodevice_update(AudioDevice* device)
 {
 	device->makeContextCurrent();

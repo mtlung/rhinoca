@@ -9,7 +9,7 @@ namespace Dom {
 class HTMLMediaElement : public Element
 {
 public:
-	HTMLMediaElement();
+	explicit HTMLMediaElement(Rhinoca* rh);
 	~HTMLMediaElement();
 
 // Operations
@@ -17,7 +17,7 @@ public:
 
 	static void registerClass(JSContext* cx, JSObject* parent);
 
-	void load();
+	virtual void load() {}
 	virtual void play() {}
 	virtual void pause() {}
 

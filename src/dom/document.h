@@ -31,8 +31,6 @@ public:
 	Event* createEvent(const char* type);
 
 // Attributes
-	Rhinoca* rhinoca;
-
 	Window* window();
 
 	HTMLBodyElement* body();

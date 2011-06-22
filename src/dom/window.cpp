@@ -119,6 +119,10 @@ JSBool setInterval(JSContext* cx, uintN argc, jsval* vp)
 
 JSBool clearTimeout(JSContext* cx, uintN argc, jsval* vp)
 {
+	// Just skip silently if the argument isn't a function
+	if(!JSVAL_IS_OBJECT(JS_ARGV0))
+		return JS_TRUE;
+
 	TimerCallback* timerCallback = getJsBindable<TimerCallback>(cx, vp, 0);
 
 	if(timerCallback->isInMap())
@@ -129,6 +133,10 @@ JSBool clearTimeout(JSContext* cx, uintN argc, jsval* vp)
 
 JSBool clearInterval(JSContext* cx, uintN argc, jsval* vp)
 {
+	// Just skip silently if the argument isn't a function
+	if(!JSVAL_IS_OBJECT(JS_ARGV0))
+		return JS_TRUE;
+
 	TimerCallback* cb = getJsBindable<TimerCallback>(cx, vp, 0);
 	if(!cb) return JS_FALSE;
 
@@ -161,6 +169,10 @@ JSBool requestAnimationFrame(JSContext* cx, uintN argc, jsval* vp)
 
 JSBool cancelRequestAnimationFrame(JSContext* cx, uintN argc, jsval* vp)
 {
+	// Just skip silently if the argument isn't a function
+	if(!JSVAL_IS_OBJECT(JS_ARGV0))
+		return JS_TRUE;
+
 	FrameRequestCallback* cb = getJsBindable<FrameRequestCallback>(cx, vp, 0);
 	if(!cb) return JS_FALSE;
 
@@ -268,7 +280,7 @@ Window::Window(Rhinoca* rh)
 	: rhinoca(rh)
 {
 	document = new HTMLDocument(rh);
-	virtualCanvas = new HTMLCanvasElement();
+	virtualCanvas = new HTMLCanvasElement(rh);
 	virtualCanvas->useExternalFrameBuffer(rh);
 	virtualCanvas->createContext("2d");
 }

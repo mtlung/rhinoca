@@ -14,7 +14,7 @@ namespace Dom {
 class HTMLImageElement : public Element
 {
 public:
-	HTMLImageElement();
+	explicit HTMLImageElement(Rhinoca* rh);
 	~HTMLImageElement();
 
 // Operations
@@ -26,7 +26,7 @@ public:
 // Attributes
 	Render::TexturePtr texture;
 
-	void setSrc(Rhinoca* rh, const char* uri);
+	void setSrc(const char* uri);
 
 	unsigned width() const;
 	unsigned height() const;

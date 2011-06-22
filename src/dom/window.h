@@ -90,6 +90,9 @@ public:
 	FrameRequestCallbacks frameRequestCallbacks;
 
 	static JSClass jsClass;
+
+protected:
+	override JSObject* getJSObject() { return jsObject; }
 };	// Window
 
 }	// namespace Dom

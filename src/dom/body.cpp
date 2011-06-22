@@ -40,7 +40,8 @@ static JSPropertySpec properties[] = {
 	{0}
 };
 
-HTMLBodyElement::HTMLBodyElement()
+HTMLBodyElement::HTMLBodyElement(Rhinoca* rh)
+	: Element(rh)
 {
 }
 
@@ -61,7 +62,7 @@ void HTMLBodyElement::bind(JSContext* cx, JSObject* parent)
 
 Element* HTMLBodyElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
-	return strcasecmp(type, "BODY") == 0 ? new HTMLBodyElement : NULL;
+	return strcasecmp(type, "BODY") == 0 ? new HTMLBodyElement(rh) : NULL;
 }
 
 static const FixString _tagName = "BODY";

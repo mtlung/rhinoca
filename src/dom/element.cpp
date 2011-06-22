@@ -164,8 +164,9 @@ static JSFunctionSpec elementMethods[] = {
 	{0}
 };
 
-Element::Element()
-	: visible(true)
+Element::Element(Rhinoca* rh)
+	: Node(rh)
+	, visible(true)
 	, top(0), left(0)
 {
 }

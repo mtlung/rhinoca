@@ -118,10 +118,9 @@ static FixString _readyStateInteractive = "interactive";
 static FixString _readyStateComplete = "complete";
 
 HTMLDocument::HTMLDocument(Rhinoca* rh)
-	: rhinoca(rh)
+	: Node(rh)
 	, readyState(_readyStateUninitialized)
 {
-	ownerDocument = this;
 }
 
 HTMLDocument::~HTMLDocument()

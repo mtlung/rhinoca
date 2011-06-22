@@ -165,6 +165,7 @@ void Rhinoca::_initGlobal()
 			"function log(msg){setTimeout(function(){throw new Error(msg);},0);}"
 
 			"var navigator = window.navigator;"
+			"document.location = window.location;"
 
 			"var Audio = HTMLAudioElement;"
 			"var Canvas = HTMLCanvasElement;"
@@ -255,9 +256,8 @@ bool Rhinoca::openDoucment(const char* uri)
 			{
 				const char* eleName = parser.elementName();
 				Dom::Element* element = factory.create(this, eleName, &parser);
-				if(!element) element = new Dom::Element;
+				if(!element) element = new Dom::Element(document->rhinoca);
 
-				element->ownerDocument = domWindow->document;
 				element->id = parser.attributeValueIgnoreCase("id");
 
 				currentNode->appendChild(element);

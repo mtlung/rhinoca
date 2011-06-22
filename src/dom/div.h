@@ -8,7 +8,7 @@ namespace Dom {
 class HTMLDivElement : public Element
 {
 public:
-	HTMLDivElement();
+	explicit HTMLDivElement(Rhinoca* rh);
 	~HTMLDivElement();
 
 // Operations

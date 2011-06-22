@@ -2,14 +2,17 @@
 #define __DOM_AUDIO_H__
 
 #include "media.h"
-#include "../audio/audiodevice.h"
+
+struct AudioSound;
+struct AudioDevice;
+class ResourceManager;
 
 namespace Dom {
 
 class HTMLAudioElement : public HTMLMediaElement
 {
 public:
-	HTMLAudioElement(AudioDevice* device, ResourceManager* mgr);
+	HTMLAudioElement(Rhinoca* rh, AudioDevice* device, ResourceManager* mgr);
 	~HTMLAudioElement();
 
 // Operations
@@ -20,6 +23,8 @@ public:
 
 	override void play();
 	override void pause();
+
+	override Node* cloneNode(bool recursive);
 
 // Attributes
 	override const FixString& tagName() const;
