@@ -125,14 +125,14 @@ JSBool JsFunctionEventListener::init(jsval stringOrFunc)
 	return JS_TRUE;
 }
 
-void JsFunctionEventListener::handleEvent(Event* evt, EventTarget* initiator)
+void JsFunctionEventListener::handleEvent(Event* evt, JSObject* self)
 {
 	jsval argv, rval;
 	argv = *evt;
 	if(!JSVAL_IS_NULL(_jsClosure))
-		JS_CallFunctionValue(_jsContext, initiator->getJSObject(), _jsClosure, 1, &argv, &rval);
+		JS_CallFunctionValue(_jsContext, self, _jsClosure, 1, &argv, &rval);
 	else if(_jsScript)
-		JS_ExecuteScript(_jsContext, initiator->getJSObject(), _jsScript, &rval);
+		JS_ExecuteScript(_jsContext, self, _jsScript, &rval);
 }
 
 jsval JsFunctionEventListener::getJsVal()
@@ -274,7 +274,7 @@ void EventTarget::removeAllEventListener()
 	_eventListeners.destroyAll();
 }
 
-bool EventTarget::_dispatchEventNoCaptureBubble(Event* evt)
+bool EventTarget::_dispatchEventNoCaptureBubble(Event* evt, JSObject* self)
 {
 	ASSERT(evt);
 
@@ -288,7 +288,7 @@ bool EventTarget::_dispatchEventNoCaptureBubble(Event* evt)
 
 		// Check for correct event type
 		if(correctPhase && evt->type == l->_type)
-			l->handleEvent(evt, this);
+			l->handleEvent(evt, self ? self : getJSObject());
 
 		l = next;
 	}
@@ -296,7 +296,7 @@ bool EventTarget::_dispatchEventNoCaptureBubble(Event* evt)
 	return true;
 }
 
-JSBool EventTarget::dispatchEvent(Event* ev)
+JSBool EventTarget::dispatchEvent(Event* ev, JSObject* self)
 {
 	// Build the event propagation list
 	// See http://docstore.mik.ua/orelly/webprog/dhtml/ch06_05.htm
@@ -314,7 +314,7 @@ JSBool EventTarget::dispatchEvent(Event* ev)
 	// Perform capture phase (traverse down), including target
 	for(unsigned i=list.size(); i--; ) {
 		ev->eventPhase = list[i] == this ? Event::AT_TARGET : Event::CAPTURING_PHASE;
-		list[i]->_dispatchEventNoCaptureBubble(ev);
+		list[i]->_dispatchEventNoCaptureBubble(ev, self);
 	}
 
 	// TODO: Should the bubble phase use the most updated tree structure?
@@ -323,7 +323,7 @@ JSBool EventTarget::dispatchEvent(Event* ev)
 	// Perform bubble phase (traverse up), excluding target
 	for(unsigned i=1; i<list.size() && !ev->_stopPropagation; ++i) {
 		ev->eventPhase = list[i] == this ? Event::AT_TARGET : Event::BUBBLING_PHASE;
-		list[i]->_dispatchEventNoCaptureBubble(ev);
+		list[i]->_dispatchEventNoCaptureBubble(ev, self);
 	}
 
 	// Now we can release the reference

@@ -305,7 +305,7 @@ bool Rhinoca::openDoucment(const char* uri)
 					unsigned len = script.size();
 					if(const char* s = removeBom(this, srcUrl, script.c_str(), len)) {
 						jsval rval;
-						JS_EvaluateScript(jsContext, jsGlobal, s, len, scriptUrl.c_str(), lineNo+1, &rval);
+						JS_EvaluateScript(jsContext, *domWindow, s, len, scriptUrl.c_str(), lineNo+1, &rval);
 					}
 				}
 			}
@@ -346,7 +346,8 @@ bool Rhinoca::openDoucment(const char* uri)
 
 		if(Dom::HTMLBodyElement* body = document->body()) {
 			ev->target = body;
-			body->dispatchEvent(ev);
+			// NOTE: We pass window as this object for body's onload callback
+			body->dispatchEvent(ev, *domWindow);
 		}
 	}
 

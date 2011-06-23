@@ -64,16 +64,6 @@ void Rhinoca::processEvent(RhinocaEvent ev)
 		e->target = domWindow;
 
 		domWindow->dispatchEvent(e);
-/*
-		jsval argv, closure, rval;
-		Dom::HTMLDocument* document = domWindow->document;
-		if(JS_GetProperty(document->jsContext, *document, keyEvent, &closure) && closure != JSVAL_VOID) {
-			Dom::KeyEvent* e = new Dom::KeyEvent;
-			e->keyCode = keyCode;
-			e->bind(document->jsContext, NULL);
-			argv = *e;
-			JS_CallFunctionValue(document->jsContext, *document, closure, 1, &argv, &rval);
-		}*/
 	}
 
 	if(mouseEvent)
