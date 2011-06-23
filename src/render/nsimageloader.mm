@@ -279,8 +279,9 @@ bool loadImage(Resource* resource, ResourceManager* mgr)
 		Texture* texture = dynamic_cast<Texture*>(resource);
 
 		NSImageLoader* loaderTask = new NSImageLoader(texture, mgr);
-		texture->taskReady = taskPool->addFinalized(loaderTask, 0, 0, ~taskPool->mainThreadId());
-		texture->taskLoaded = taskPool->addFinalized(loaderTask, 0, texture->taskReady, taskPool->mainThreadId());
+		TaskId taskLoad = taskPool->beginAdd(loaderTask, ~taskPool->mainThreadId());
+		texture->taskReady = texture->taskLoaded = taskPool->addFinalized(loaderTask, 0, taskLoad, taskPool->mainThreadId());
+		taskPool->finishAdd(taskLoad);
 
 		return true;
 	}

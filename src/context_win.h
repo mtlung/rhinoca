@@ -1,15 +1,15 @@
-int convertKeyCode(WPARAM virtualKey, LPARAM flags)
+int convertKeyCode(WPARAM key, LPARAM flags)
 {
-	switch(virtualKey)
+	switch(key)
 	{
-		case VK_SPACE :			return 32;
-		case VK_LEFT :			return 37;
-		case VK_RIGHT :			return 39;
-		case VK_UP :			return 38;
-		case VK_DOWN :			return 0;
+		case VK_SPACE :		return 32;
+		case VK_LEFT :		return 37;
+		case VK_RIGHT :		return 39;
+		case VK_UP :		return 38;
+		case VK_DOWN :		return 0;
 	}
 
-	return 0;
+	return key;
 }
 
 void Rhinoca::processEvent(RhinocaEvent ev)

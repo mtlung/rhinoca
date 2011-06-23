@@ -429,6 +429,38 @@ static JSBool lineTo(JSContext* cx, uintN argc, jsval* vp)
 	return JS_TRUE;
 }
 
+static JSBool quadrativeCureTo(JSContext* cx, uintN argc, jsval* vp)
+{
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
+	if(!self) return JS_FALSE;
+
+	double cpx, cpy, x, y;
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &cpx));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &cpy));
+	self->quadrativeCureTo((float)cpx, (float)cpy, (float)x, (float)y);
+
+	return JS_TRUE;
+}
+
+static JSBool bezierCurveTo(JSContext* cx, uintN argc, jsval* vp)
+{
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
+	if(!self) return JS_FALSE;
+
+	double cp1x, cp1y, cp2x, cp2y, x, y;
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &cp1x));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &cp1y));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &cp2x));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &cp2y));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV4, &x));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV5, &y));
+	self->bezierCurveTo((float)cp1x, (float)cp1y, (float)cp2x, (float)cp2y, (float)x, (float)y);
+
+	return JS_TRUE;
+}
+
 static JSBool arc(JSContext* cx, uintN argc, jsval* vp)
 {
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
@@ -661,6 +693,8 @@ static JSFunctionSpec methods[] = {
 	{"closePath", closePath, 0,0},
 	{"moveTo", moveTo, 2,0},
 	{"lineTo", lineTo, 2,0},
+	{"quadrativeCureTo", quadrativeCureTo, 4,0},
+	{"bezierCurveTo", bezierCurveTo, 6,0},
 	{"arc", arc, 6,0},
 	{"rect", rect, 4,0},
 
@@ -952,14 +986,17 @@ void CanvasRenderingContext2D::lineTo(float x, float y)
 
 void CanvasRenderingContext2D::quadrativeCureTo(float cpx, float cpy, float x, float y)
 {
+	// TODO: To be implement
 }
 
 void CanvasRenderingContext2D::bezierCurveTo(float cp1x, float cp1y, float cp2x, float cp2y, float x, float y)
 {
+	// TODO: To be implement
 }
 
 void CanvasRenderingContext2D::arcTo(float x1, float y1, float x2, float y2, float radius)
 {
+	// TODO: To be implement
 }
 
 void CanvasRenderingContext2D::arc(float x, float y, float radius, float startAngle, float endAngle, bool anticlockwise)
@@ -1059,10 +1096,12 @@ void CanvasRenderingContext2D::fillRect(float x, float y, float w, float h)
 
 void CanvasRenderingContext2D::clip()
 {
+	// TODO: To be implement
 }
 
 void CanvasRenderingContext2D::isPointInPath(float x, float y)
 {
+	// TODO: To be implement
 }
 
 void CanvasRenderingContext2D::setStrokeColor(float* rgba)

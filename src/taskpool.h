@@ -87,7 +87,8 @@ public:
 	/// Wait till they are finished
 	void waitAll();
 
-	/// Callback to invoke when a task finish
+	/// Callback to invoke when a task finish. It also get triggered
+	/// if the task is already done at the time you invoke addCallback()
 	typedef void (*Callback)(TaskPool* taskPool, void* userData);
 	void addCallback(TaskId id, Callback callback, void* userData, int affinity);
 

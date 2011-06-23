@@ -1,11 +1,28 @@
 #ifndef __RENDER_FONT_H__
 #define __RENDER_FONT_H__
 
-#include "driver.h"
-#include "../common.h"
+#include "texture.h"
+#include "../map.h"
 #include "../resource.h"
 
 namespace Render {
+
+/// 
+class GlyphCache
+{
+public:
+	struct Glyph : public MapBase<int>::Node<Glyph>
+	{
+		typedef MapBase<int>::Node<Glyph> Super;
+		Glyph() : Super(0), texture(NULL), width(0), height(0) {}
+		TexturePtr texture;
+		int width, height;
+		int xoff, yoff;
+	};
+
+	Glyph ascii[256];	/// Use plan array to store ascii glyph, fast!
+	Map<Glyph> glyphs;	/// For glyphs other than ascii
+};	// GlyphCache
 
 /// An abstract font hold implementation/platform specific data for
 /// rasterizing font glyphs to memory.
@@ -27,9 +44,13 @@ public:
 	/// Free the bitmap created by bake()
 	virtual void freeBitmap(rhuint8* bitmap) = 0;
 
+	virtual void getBoundingBox(unsigned fontPixelHeight, const int* codePointStr, unsigned* width, unsigned* height) {}
+
 	virtual void getMetrics(int* ascent, int* descent, int* lineGap) {}
 
 // Attributes
+	/// To cache any baked result
+	GlyphCache glyphCache;
 };	// Font
 
 typedef IntrusivePtr<Font> FontPtr;

@@ -16,6 +16,8 @@ public:
 
 	override void freeBitmap(rhuint8* bitmap);
 
+	override void getBoundingBox(unsigned fontPixelHeight, const int* codePointStr, unsigned* width, unsigned* height);
+
 	override void getMetrics(int* ascent, int* descent, int* lineGap);
 
 	// Attributes

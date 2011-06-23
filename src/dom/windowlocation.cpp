@@ -5,20 +5,11 @@
 
 namespace Dom {
 
-static void traceDataOp(JSTracer* trc, JSObject* obj)
-{
-	WindowLocation* self = getJsBindable<WindowLocation>(trc->context, obj);
-	JS_CALL_OBJECT_TRACER(trc, self->window->jsObject, "WindowLocation::window");
-}
-
 JSClass WindowLocation::jsClass = {
-	"Location", JSCLASS_HAS_PRIVATE | JSCLASS_MARK_IS_TRACE,
+	"Location", JSCLASS_HAS_PRIVATE | JSCLASS_HAS_RESERVED_SLOTS(1),
 	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
-	JS_ConvertStub, JsBindable::finalize,
-	0, 0, 0, 0, 0, 0,
-	JS_CLASS_TRACE(traceDataOp),
-	0
+	JS_ConvertStub,  JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSBool assign(JSContext* cx, uintN argc, jsval* vp)
@@ -78,6 +69,8 @@ void WindowLocation::bind(JSContext* cx, JSObject* parent)
 	VERIFY(JS_DefineFunctions(cx, *this, methods));
 	VERIFY(JS_DefineProperties(cx, *this, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
+
+	VERIFY(JS_SetReservedSlot(cx, jsObject, 0, *window));
 }
 
 }	// namespace Dom

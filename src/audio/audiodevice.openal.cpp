@@ -299,7 +299,12 @@ AudioSound* AudioDevice::createSound(const char* uri, ResourceManager* resourceM
 	AudioSound* sound = new AudioSound(this);
 	sound->audioBuffer = resourceMgr->loadAs<AudioBuffer>(uri);
 
-	_soundList.pushBack(*sound);
+	if(!sound->audioBuffer) {
+		delete sound;
+		sound = NULL;
+	}
+	else
+		_soundList.pushBack(*sound);
 
 	return sound;
 }

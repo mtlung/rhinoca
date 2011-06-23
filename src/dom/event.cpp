@@ -29,6 +29,12 @@ static JSBool initEvent(JSContext* cx, uintN argc, jsval* vp)
 	return JS_TRUE;
 }
 
+static JSBool preventDefault(JSContext* cx, uintN argc, jsval* vp)
+{
+	// Currently just do nothing for preventDefault()
+	return JS_TRUE;
+}
+
 static JSBool stopPropagation(JSContext* cx, uintN argc, jsval* vp)
 {
 	Event* self = getJsBindable<Event>(cx, vp);
@@ -38,6 +44,7 @@ static JSBool stopPropagation(JSContext* cx, uintN argc, jsval* vp)
 
 static JSFunctionSpec methods[] = {
 	{"initEvent", initEvent, 3,0},
+	{"preventDefault", preventDefault, 0,0},
 	{"stopPropagation", stopPropagation, 0,0},
 	{0}
 };

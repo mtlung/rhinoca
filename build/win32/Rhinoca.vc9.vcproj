@@ -321,6 +321,14 @@
 				RelativePath="..\..\src\dom\windowlocation.h"
 				>
 			</File>
+			<File
+				RelativePath="..\..\src\dom\windowscreen.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\windowscreen.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="render"
@@ -347,6 +355,10 @@
 			</File>
 			<File
 				RelativePath="..\..\src\render\win32\extensionswin32.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\render\font.cpp"
 				>
 			</File>
 			<File
@@ -379,6 +391,14 @@
 			</File>
 			<File
 				RelativePath="..\..\src\render\renderqueue.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\render\textrenderer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\render\textrenderer.h"
 				>
 			</File>
 			<File

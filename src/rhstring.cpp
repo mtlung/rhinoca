@@ -251,6 +251,150 @@ char* replaceCharacterWithStr(const char* str, const char charArray[], const cha
 	return ret;
 }
 
+// Reference: http://en.wikipedia.org/wiki/Utf8
+static const rhbyte _utf8Limits[] = {
+	0xC0,	// Start of a 2-byte sequence
+	0xE0,	// Start of a 3-byte sequence
+	0xF0,	// Start of a 4-byte sequence
+	0xF8,	// Start of a 5-byte sequence
+	0xFC,	// Start of a 6-byte sequence
+	0xFE	// Invalid: not defined by original UTF-8 specification
+};
+
+bool utf8ToUtf16(rhuint16* dest, unsigned& destLen, const char* src, unsigned maxSrcLen)
+{
+	unsigned destPos = 0, srcPos = 0;
+
+	while(true)
+	{
+		rhbyte c;	// Note that rhbyte should be unsigned
+		unsigned numAdds;
+
+		if(srcPos == maxSrcLen || src[srcPos] == '\0') {
+			if(dest && destLen != destPos) {
+				ASSERT(false && "The provided destLen should equals to what we calculated here");
+				return false;
+			}
+
+			destLen = destPos;
+			return true;
+		}
+
+		c = src[srcPos++];
+
+		if(c < 0x80) {	// 0-127, US-ASCII (single byte)
+			if(dest)
+				dest[destPos] = (wchar_t)c;
+			++destPos;
+			continue;
+		}
+
+		if(c < 0xC0)	// The first octet for each code point should within 0-191
+			break;
+
+		for(numAdds = 1; numAdds < 5; ++numAdds)
+			if(c < _utf8Limits[numAdds])
+				break;
+		rhuint32 value = c - _utf8Limits[numAdds - 1];
+
+		do {
+			rhbyte c2;
+			if(srcPos == maxSrcLen || src[srcPos] == '\0')
+				break;
+			c2 = src[srcPos++];
+			if(c2 < 0x80 || c2 >= 0xC0)
+				break;
+			value <<= 6;
+			value |= (c2 - 0x80);
+		} while(--numAdds != 0);
+
+		if(value < 0x10000) {
+			if(dest)
+				dest[destPos] = (rhuint16)value;
+			++destPos;
+		}
+		else {
+			value -= 0x10000;
+			if(value >= 0x100000)
+				break;
+			if(dest) {
+				dest[destPos + 0] = (rhuint16)(0xD800 + (value >> 10));
+				dest[destPos + 1] = (rhuint16)(0xDC00 + (value & 0x3FF));
+			}
+			destPos += 2;
+		}
+	}
+
+	destLen = destPos;
+	return false;
+}
+
+bool utf8ToUtf32(rhuint32* dest, unsigned& destLen, const char* src, unsigned maxSrcLen)
+{
+	unsigned destPos = 0, srcPos = 0;
+
+	while(true)
+	{
+		rhbyte c;	// Note that rhbyte should be unsigned
+		unsigned numAdds;
+
+		if(srcPos == maxSrcLen || src[srcPos] == '\0') {
+			if(dest && destLen != destPos) {
+				ASSERT(false && "The provided destLen should equals to what we calculated here");
+				return false;
+			}
+
+			destLen = destPos;
+			return true;
+		}
+
+		c = src[srcPos++];
+
+		if(c < 0x80) {	// 0-127, US-ASCII (single byte)
+			if(dest)
+				dest[destPos] = (rhuint32)c;
+			++destPos;
+			continue;
+		}
+
+		if(c < 0xC0)	// The first octet for each code point should within 0-191
+			break;
+
+		for(numAdds = 1; numAdds < 5; ++numAdds)
+			if(c < _utf8Limits[numAdds])
+				break;
+		rhuint32 value = c - _utf8Limits[numAdds - 1];
+
+		do {
+			rhbyte c2;
+			if(srcPos == maxSrcLen || src[srcPos] == '\0')
+				break;
+			c2 = src[srcPos++];
+			if(c2 < 0x80 || c2 >= 0xC0)
+				break;
+			value <<= 6;
+			value |= (c2 - 0x80);
+		} while(--numAdds != 0);
+
+		if(value < 0x10000) {
+			if(dest)
+				dest[destPos] = value;
+			++destPos;
+		}
+		else {
+			value -= 0x10000;
+			if(value >= 0x100000)
+				break;
+			if(dest)
+				dest[destPos] = value;
+			++destPos;
+		}
+	}
+
+	destLen = destPos;
+	return false;
+}
+
 StringHash::StringHash(const char* buf, size_t len)
 {
 	rhuint32 hash_ = 0;

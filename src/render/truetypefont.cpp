@@ -2,9 +2,6 @@
 #include "truetypefont.h"
 #include "../vector.h"
 
-#define STBTT_malloc(x,u) rhinoca_malloc(x)
-#define STBTT_free(x,u) rhinoca_free(x)
-
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
 
@@ -54,6 +51,49 @@ void TrueTypeFont::freeBitmap(rhuint8* bitmap)
 {
 	if(!impl) return;
 	stbtt_FreeBitmap(bitmap, NULL);
+}
+
+void TrueTypeFont::getBoundingBox(unsigned fontPixelHeight, const int* codePointStr, unsigned* width, unsigned* height)
+{
+	unsigned w = 0;
+	unsigned h = 0;
+	unsigned widest = 0;
+
+	int ascent = 0, descent = 0, lineGap = 0;
+	stbtt_GetFontVMetrics(&impl->fontInfo, &ascent, &descent, &lineGap);
+	unsigned lineHeight = ascent - descent;
+
+	int lastCodePoint = 0;
+
+	while(int c = *(codePointStr++))
+	{
+		if(c != '\n') {
+			int advanceWidth, leftSideBearing;
+			stbtt_GetCodepointHMetrics(&impl->fontInfo, c, &advanceWidth, &leftSideBearing);
+
+			if(w == 0)	// Beginning of line
+				w += leftSideBearing + advanceWidth;
+			else
+				w += advanceWidth + stbtt_GetCodepointKernAdvance(&impl->fontInfo, lastCodePoint, c);
+		}
+		else {	// Handling of new line
+			widest = w > widest ? w : widest;
+			w = 0;
+			h += lineHeight + lineGap;
+		}
+
+		lastCodePoint = c;
+	}
+
+	h += lineHeight;
+
+	const float scale = stbtt_ScaleForPixelHeight(&impl->fontInfo, (float)fontPixelHeight);
+
+	w = (unsigned)(scale * w + 0.5f);
+	h = (unsigned)(scale * h + 0.5f);
+
+	if(width) *width = w;
+	if(height) *height = h;
 }
 
 void TrueTypeFont::getMetrics(int* ascent, int* descent, int* lineGap)

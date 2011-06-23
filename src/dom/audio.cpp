@@ -132,21 +132,21 @@ void HTMLAudioElement::setSrc(const char* uri)
 	_sound = audiodevice_createSound(_device, uri, _resourceManager);
 	_src = uri;
 
-	// Register callbacks
-	if(_sound) {
-		int tId = TaskPool::threadId();
-		AudioBuffer* b = audiodevice_getSoundBuffer(_device, _sound);
-		
-		if(!b)
-			triggerLoadEvent(this, AudioBuffer::Aborted);
-		else {
-			// Prevent HTMLImageElement begging GC before the callback finished.
-			addGcRoot();
-			_resourceManager->taskPool->addCallback(b->taskLoaded, onLoadCallback, this, tId);
-		}
+	if(!_sound) goto Abort;
+
+	if(AudioBuffer* b = audiodevice_getSoundBuffer(_device, _sound)) {
+		// Prevent HTMLImageElement begging GC before the callback finished.
+		addGcRoot();
+		// Register callbacks
+		_resourceManager->taskPool->addCallback(b->taskLoaded, onLoadCallback, this, TaskPool::threadId());
 	}
 	else
-		print(rhinoca, "Failed to load: '%s'\n", uri);
+		goto Abort;
+
+	return;
+
+Abort:
+	triggerLoadEvent(this, AudioBuffer::Aborted);
 }
 
 const char* HTMLAudioElement::src() const

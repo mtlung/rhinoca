@@ -7,6 +7,7 @@
 #include "navigator.h"
 #include "node.h"
 #include "windowlocation.h"
+#include "windowscreen.h"
 #include "../common.h"
 #include "../context.h"
 #include "../vector.h"
@@ -245,6 +246,15 @@ static JSBool navigator(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 	return JS_TRUE;
 }
 
+static JSBool screen(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+{
+	Window* self = getJsBindable<Window>(cx, obj);
+	WindowScreen* screen = new WindowScreen(self);
+	screen->bind(cx, NULL);
+	*vp = *screen;
+	return JS_TRUE;
+}
+
 static const char* _eventAttributeTable[] = {
 	"onload",
 };
@@ -270,6 +280,7 @@ static JSPropertySpec properties[] = {
 	{"document", 0, JSPROP_READONLY | JsBindable::jsPropFlags, document, JS_StrictPropertyStub},
 	{"location", 0, JSPROP_READONLY | JsBindable::jsPropFlags, location, JS_StrictPropertyStub},
 	{"navigator", 0, JSPROP_READONLY | JsBindable::jsPropFlags, navigator, JS_StrictPropertyStub},
+	{"screen", 0, JSPROP_READONLY | JsBindable::jsPropFlags, screen, JS_StrictPropertyStub},
 
 	// Event attributes
 	{_eventAttributeTable[0], 0, 0, getEventAttribute, setEventAttribute},

@@ -19,31 +19,27 @@ JSClass HTMLImageElement::jsClass = {
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-static void onReadyCallback(TaskPool* taskPool, void* userData)
+static void triggerLoadEvent(HTMLImageElement* self, const char* event)
 {
-	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(userData);
-
 	Dom::Event* ev = new Dom::Event;
-	ev->type = (self->texture->state == Texture::Aborted) ? "error" : "ready";
+	ev->type = event;
 	ev->bubbles = false;
 	ev->target = self;
 	ev->bind(self->jsContext, NULL);
-
 	self->dispatchEvent(ev);
+}
+
+static void onReadyCallback(TaskPool* taskPool, void* userData)
+{
+	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(userData);
+	triggerLoadEvent(self, (self->texture->state == Texture::Aborted) ? "error" : "ready");
 	self->releaseGcRoot();
 }
 
 static void onLoadCallback(TaskPool* taskPool, void* userData)
 {
 	HTMLImageElement* self = reinterpret_cast<HTMLImageElement*>(userData);
-
-	Dom::Event* ev = new Dom::Event;
-	ev->type = (self->texture->state == Texture::Aborted) ? "error" : "load";
-	ev->bubbles = false;
-	ev->target = self;
-	ev->bind(self->jsContext, NULL);
-
-	self->dispatchEvent(ev);
+	triggerLoadEvent(self, (self->texture->state == Texture::Aborted) ? "error" : "load");
 	self->releaseGcRoot();
 }
 
@@ -235,15 +231,17 @@ void HTMLImageElement::setSrc(const char* uri)
 	// Register callbacks
 	if(texture) {
 		int tId = TaskPool::threadId();
-		mgr.taskPool->addCallback(texture->taskReady, onReadyCallback, this, tId);
-		mgr.taskPool->addCallback(texture->taskLoaded, onLoadCallback, this, tId);
 
-		// Prevent HTMLImageElement begging GC before the callback finished.
+		// NOTE: The ordering of registering 'ready' and 'load' are revered
+		mgr.taskPool->addCallback(texture->taskLoaded, onLoadCallback, this, tId);
+		mgr.taskPool->addCallback(texture->taskReady, onReadyCallback, this, tId);
+
+		// Prevent HTMLImageElement begging GC before the callbacks finished.
 		addGcRoot();
 		addGcRoot();
 	}
 	else
-		print(rhinoca, "Failed to load: '%s'\n", path.c_str());
+		triggerLoadEvent(this, "error");
 }
 
 rhuint HTMLImageElement::width() const

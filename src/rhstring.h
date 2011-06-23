@@ -70,6 +70,18 @@ char* rstrstr(char* str1, const char* str2);
  */
 char* replaceCharacterWithStr(const char* str, const char charArray[], const char** replacements);
 
+/*!	Usually it is a 2 steps process to convert the string, invoke utf8ToUtf16() with
+	dest equals to null so that it gives you destLen (not including null terminator),
+	then allocate the destination with that amount of memory and call utf8ToUtf16() once
+	again to perform the actual conversion. You can skip the first call if you sure
+	the destination buffer is large enough to store the data.
+
+	\ref Modify from 7zip LZMA sdk
+	\ref See http://www.docin.com/p-5500235.html
+ */
+bool utf8ToUtf16(rhuint16* dest, unsigned& destLen, const char* src, unsigned maxSrcLen);
+bool utf8ToUtf32(rhuint32* dest, unsigned& destLen, const char* src, unsigned maxSrcLen);
+
 class StringHash;
 
 /*!	A string class that ensure only one memory block is allocated for each unique string,

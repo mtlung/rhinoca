@@ -236,9 +236,9 @@ bool loadPng(Resource* resource, ResourceManager* mgr)
 
 	PngLoader* loaderTask = new PngLoader(texture, mgr);
 
-	texture->taskReady = taskPool->beginAdd(loaderTask, ~taskPool->mainThreadId());
-	texture->taskLoaded = taskPool->addFinalized(loaderTask, 0, texture->taskReady, taskPool->mainThreadId());
-	taskPool->finishAdd(texture->taskReady);
+	TaskId taskLoad = taskPool->beginAdd(loaderTask, ~taskPool->mainThreadId());
+	texture->taskReady = texture->taskLoaded = taskPool->addFinalized(loaderTask, 0, taskLoad, taskPool->mainThreadId());
+	taskPool->finishAdd(taskLoad);
 
 	return true;
 }

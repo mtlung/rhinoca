@@ -16,7 +16,7 @@ static JSBool JS_ValueToRhInt32(JSContext *cx, jsval v, rhint32 *ip)
 namespace Dom {
 
 JSClass Element::jsClass = {
-	"Element", JSCLASS_HAS_PRIVATE,
+	"HTMLElement", JSCLASS_HAS_PRIVATE,
 	JS_PropertyStub,  JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub,  JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
@@ -182,9 +182,16 @@ JSObject* Element::createPrototype()
 	return proto;
 }
 
+static JSBool construct(JSContext* cx, uintN argc, jsval* vp)
+{
+	ASSERT(false && "For compatible with javascript instanceof operator only, you are not suppose to new a HTMLElement directly");
+	return JS_FALSE;
+}
+
+
 void Element::registerClass(JSContext* cx, JSObject* parent)
 {
-	VERIFY(JS_InitClass(cx, parent, NULL, &jsClass, NULL, 0, NULL, NULL, NULL, NULL));
+	VERIFY(JS_InitClass(cx, parent, NULL, &jsClass, construct, 0, NULL, NULL, NULL, NULL));
 }
 
 static Node* getElementsByTagNameFilter_(NodeIterator& iter, void* userData)
