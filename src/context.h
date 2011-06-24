@@ -45,6 +45,11 @@ public:
 
 	TaskPool taskPool;
 	ResourceManager resourceManager;
+
+	/// Parameter to tune how often we perform explicit GC.
+	/// It's kind of temporary solution, since I am seeking some multi-thready way to do GC
+	unsigned _gcFrameIntervalCounter;
+	static const unsigned _gcFrameInterval = 60;
 };	// Rhinoca
 
 #endif	// __CONTEXT_H__
