@@ -76,6 +76,8 @@
 		18F0C57F1303A566007752DB /* driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 18F0C57D1303A566007752DB /* driver.cpp */; };
 		18F0C5801303A566007752DB /* driver.h in Headers */ = {isa = PBXBuildFile; fileRef = 18F0C57E1303A566007752DB /* driver.h */; };
 		18F0C73E1304F121007752DB /* driverios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 18F0C73D1304F121007752DB /* driverios.cpp */; };
+		9C1130EA13B4DAC8001F4B3B /* windowscreen.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1130E813B4DAC8001F4B3B /* windowscreen.cpp */; };
+		9C1130EB13B4DAC8001F4B3B /* windowscreen.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1130E913B4DAC8001F4B3B /* windowscreen.h */; };
 		9C390962139D48A7001119F1 /* imagedata.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C390960139D48A7001119F1 /* imagedata.cpp */; };
 		9C390963139D48A7001119F1 /* imagedata.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C390961139D48A7001119F1 /* imagedata.h */; };
 		9C3B3BD3138558E400E3AE02 /* nsimageloader.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B3BD2138558E400E3AE02 /* nsimageloader.mm */; };
@@ -234,6 +236,8 @@
 		18F0C57D1303A566007752DB /* driver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = driver.cpp; path = ../../../src/render/driver.cpp; sourceTree = SOURCE_ROOT; };
 		18F0C57E1303A566007752DB /* driver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = driver.h; path = ../../../src/render/driver.h; sourceTree = SOURCE_ROOT; };
 		18F0C73D1304F121007752DB /* driverios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = driverios.cpp; path = ../../../src/render/ios/driverios.cpp; sourceTree = SOURCE_ROOT; };
+		9C1130E813B4DAC8001F4B3B /* windowscreen.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = windowscreen.cpp; path = ../../../src/dom/windowscreen.cpp; sourceTree = "<group>"; };
+		9C1130E913B4DAC8001F4B3B /* windowscreen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = windowscreen.h; path = ../../../src/dom/windowscreen.h; sourceTree = "<group>"; };
 		9C390960139D48A7001119F1 /* imagedata.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = imagedata.cpp; path = ../../../src/dom/imagedata.cpp; sourceTree = "<group>"; };
 		9C390961139D48A7001119F1 /* imagedata.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = imagedata.h; path = ../../../src/dom/imagedata.h; sourceTree = "<group>"; };
 		9C3B3BD2138558E400E3AE02 /* nsimageloader.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = nsimageloader.mm; path = ../../../src/render/nsimageloader.mm; sourceTree = "<group>"; };
@@ -453,6 +457,8 @@
 				187BCA9812F9BEFB0042FDB1 /* window.h */,
 				9CB6F654139007AC004D2CCF /* windowlocation.cpp */,
 				9CB6F655139007AC004D2CCF /* windowlocation.h */,
+				9C1130E813B4DAC8001F4B3B /* windowscreen.cpp */,
+				9C1130E913B4DAC8001F4B3B /* windowscreen.h */,
 			);
 			name = dom;
 			sourceTree = "<group>";
@@ -614,6 +620,7 @@
 				9C871A9913ADD954009F1382 /* truetypefont.h in Headers */,
 				9C871A9B13ADD963009F1382 /* font.h in Headers */,
 				9C871A9D13ADD988009F1382 /* stb_truetype.h in Headers */,
+				9C1130EB13B4DAC8001F4B3B /* windowscreen.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -748,6 +755,7 @@
 				9C788C4113A906B000C12B1D /* navigator.cpp in Sources */,
 				9C871A9513ADD4BE009F1382 /* nsaudioloader.mm in Sources */,
 				9C871A9813ADD954009F1382 /* truetypefont.cpp in Sources */,
+				9C1130EA13B4DAC8001F4B3B /* windowscreen.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

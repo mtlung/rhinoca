@@ -3,6 +3,8 @@
 #include "../vector.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
+#define STBTT_malloc(x,u) rhinoca_malloc(x)
+#define STBTT_free(x,u) rhinoca_free(x)
 #include "stb_truetype.h"
 
 namespace Render {
