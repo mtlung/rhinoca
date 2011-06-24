@@ -1,0 +1,18 @@
+<html><body>
+
+<script>
+// Test if the window object is the global
+if(!this instanceof Window) alert("The 'this' object for script should be the 'window' object");
+
+if(!window.Array) alert("Standard objects/functions should appear on 'window'");
+
+x = 1;
+if(window.x != 1) alert("Variables declared (without keyword var) on script should go into window's scope rather than global");
+delete x;
+
+var y = 2;
+if(window.y != 2) alert("Variables declared with 'var' should also go to global scope");
+delete y;
+</script>
+
+</body></html>

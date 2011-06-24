@@ -4,6 +4,7 @@
 #include "canvas.h"
 #include "div.h"
 #include "image.h"
+#include "window.h"
 
 namespace Dom {
 
@@ -13,6 +14,7 @@ void registerClasses(JSContext* cx, JSObject* parent)
 	HTMLAudioElement::registerClass(cx, parent);
 	HTMLCanvasElement::registerClass(cx, parent);
 	HTMLImageElement::registerClass(cx, parent);
+	Window::registerClass(cx, parent);
 }
 
 void registerFactories()

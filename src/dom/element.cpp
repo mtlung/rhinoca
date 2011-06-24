@@ -188,7 +188,6 @@ static JSBool construct(JSContext* cx, uintN argc, jsval* vp)
 	return JS_FALSE;
 }
 
-
 void Element::registerClass(JSContext* cx, JSObject* parent)
 {
 	VERIFY(JS_InitClass(cx, parent, NULL, &jsClass, construct, 0, NULL, NULL, NULL, NULL));

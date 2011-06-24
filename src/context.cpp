@@ -41,13 +41,6 @@ void jsReportError(JSContext* cx, const char* message, JSErrorReport* report)
 	);
 }
 
-static JSClass jsGlobalClass = {
-	"global", JSCLASS_GLOBAL_FLAGS,
-	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-	JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
-	JSCLASS_NO_OPTIONAL_MEMBERS
-};
-
 static JSClass jsConsoleClass = {
 	"console", JSCLASS_HAS_PRIVATE,
 	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
@@ -76,17 +69,15 @@ Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 	, width(0), height(0)
 	, renderContex(rc)
 	, audioDevice(NULL)
+	, _gcFrameIntervalCounter(_gcFrameInterval)
 {
 	jsContext = JS_NewContext(jsrt, 8192);
 //	JS_SetOptions(jsContext, JS_GetOptions(jsContext) | JSOPTION_STRICT);
-//	JS_SetOptions(jsContext, JS_GetOptions(jsContext) & ~JSOPTION_ANONFUNFIX);
+//	JS_SetOptions(jsContext, JS_GetOptions(jsContext) | JSOPTION_VAROBJFIX);
 	JS_SetContextPrivate(jsContext, this);
 	JS_SetErrorReporter(jsContext, jsReportError);
 
-	jsGlobal = JS_NewCompartmentAndGlobalObject(jsContext, &jsGlobalClass, NULL);
-	JS_SetGlobalObject(jsContext, jsGlobal);
-
-//	taskPool.init(2);
+	taskPool.init(2);
 	resourceManager.rhinoca = this;
 	resourceManager.taskPool = &taskPool;
 	Loader::registerLoaders(&resourceManager);
@@ -105,7 +96,6 @@ Rhinoca::~Rhinoca()
 	audiodevice_destroy(audioDevice);
 }
 
-static int count = 0;
 void Rhinoca::update()
 {
 	Render::Driver::forceApplyCurrent();
@@ -120,12 +110,13 @@ void Rhinoca::update()
 
 	taskPool.doSomeTask(1.0f / 60);
 
-	if(domWindow)
+	if(domWindow) {
 		domWindow->render();
 
-	if(++count > 100) {
-		JS_MaybeGC(jsContext);
-		count = 0; 
+		if(--_gcFrameIntervalCounter == 0) {
+			_gcFrameIntervalCounter = _gcFrameInterval;
+			JS_MaybeGC(jsContext);
+		}
 	}
 
 	Render::Driver::useRenderTarget(NULL);
@@ -140,11 +131,16 @@ void Rhinoca::_initGlobal()
 {
 	ASSERT(!domWindow);
 
+	// NOTE: We use the Window object as the global
+	jsGlobal = JS_NewCompartmentAndGlobalObject(jsContext, &Dom::Window::jsClass, NULL);
+	JS_SetGlobalObject(jsContext, jsGlobal);
+
 	VERIFY(JS_InitStandardClasses(jsContext, jsGlobal));
 
 	Dom::registerClasses(jsContext, jsGlobal);
 
 	domWindow = new Dom::Window(this);
+	domWindow->jsObject = jsGlobal;
 	domWindow->bind(jsContext, jsGlobal);
 	domWindow->addGcRoot();	// releaseGcRoot() in ~Rhinoca()
 
@@ -155,24 +151,17 @@ void Rhinoca::_initGlobal()
 		VERIFY(JS_DefineFunctions(jsContext, jsConsole, jsConsoleMethods));
 	}
 
-	{	// Run some default scripts
+	{	// Run some default settings
 		const char* script =
-			"function alert(msg) { return window.alert(msg); }"
-			"function setInterval(cb, interval) { return window.setInterval(cb, interval); };"
-			"function setTimeout(cb, timeout) { return window.setTimeout(cb, timeout); };"
-			"function clearInterval(cb) { window.clearInterval(cb); };"
-			"function clearTimeout(cb) { window.clearTimeout(cb); };"
+			"var window = this;"
 			"function log(msg){setTimeout(function(){throw new Error(msg);},0);}"
-
-			"var navigator = window.navigator;"
 			"document.location = window.location;"
 
 			"var Audio = HTMLAudioElement;"
 			"var Canvas = HTMLCanvasElement;"
 			"var Image = HTMLImageElement;"
 		;
-		jsval rval;
-		VERIFY(JS_EvaluateScript(jsContext, jsGlobal, script, strlen(script), "", 0, &rval));
+		VERIFY(JS_EvaluateScript(jsContext, jsGlobal, script, strlen(script), "", 0, NULL));
 	}
 }
 

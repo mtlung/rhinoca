@@ -71,6 +71,8 @@ public:
 
 	void render();
 
+	static void registerClass(JSContext* cx, JSObject* parent);
+
 // Attributes
 	Rhinoca* rhinoca;
 	HTMLDocument* document;

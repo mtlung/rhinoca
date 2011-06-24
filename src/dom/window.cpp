@@ -21,6 +21,9 @@ static void traceDataOp(JSTracer* trc, JSObject* obj)
 {
 	Window* self = getJsBindable<Window>(trc->context, obj);
 
+	// NOTE: Got some invocation with self == null, after introducing  Window::registerClass()
+	if(!self) return;
+
 	self->EventTarget::jsTrace(trc);
 
 	if(self->document)
@@ -34,7 +37,7 @@ static void traceDataOp(JSTracer* trc, JSObject* obj)
 }
 
 JSClass Window::jsClass = {
-	"Window", JSCLASS_HAS_PRIVATE | JSCLASS_MARK_IS_TRACE,
+	"Window", JSCLASS_GLOBAL_FLAGS | JSCLASS_HAS_PRIVATE | JSCLASS_MARK_IS_TRACE,
 	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize,
@@ -313,8 +316,9 @@ Window::~Window()
 void Window::bind(JSContext* cx, JSObject* parent)
 {
 	ASSERT(!jsContext);
+	ASSERT(jsObject);
+
 	jsContext = cx;
-	jsObject = JS_DefineObject(cx, parent, "window", &jsClass, 0, JSPROP_ENUMERATE);
 	VERIFY(JS_SetPrivate(cx, *this, this));
 	VERIFY(JS_DefineFunctions(cx, *this, methods));
 	VERIFY(JS_DefineProperties(cx, *this, properties));
@@ -372,8 +376,7 @@ void Window::update()
 	for(FrameRequestCallback* cb = frameRequestCallbacks.begin(); cb != frameRequestCallbacks.end();)
 	{
 		jsval rval;
-		jsval argv;
-		VERIFY(JS_NewNumberValue(jsContext, double(usSince1970 / 1000), &argv));
+		jsval argv = DOUBLE_TO_JSVAL(double(usSince1970 / 1000));
 		JS_CallFunctionValue(jsContext, *this, cb->closure, 1, &argv, &rval);
 		FrameRequestCallback* bk = cb;
 		cb = cb->next();
@@ -418,6 +421,17 @@ void Window::render()
 	for(NodeIterator i(document); !i.ended(); i.next()) {
 		i->render();
 	}
+}
+
+static JSBool construct(JSContext* cx, uintN argc, jsval* vp)
+{
+	ASSERT(false && "For compatible with javascript instanceof operator only, you are not suppose to new a Window directly");
+	return JS_FALSE;
+}
+
+void Window::registerClass(JSContext* cx, JSObject* parent)
+{
+	VERIFY(JS_InitClass(cx, parent, NULL, &jsClass, construct, 0, NULL, NULL, NULL, NULL));
 }
 
 unsigned Window::width() const
