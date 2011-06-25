@@ -224,6 +224,8 @@ static const int _minFilter[] = { GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEARE
 
 void Driver::forceApplyCurrent()
 {
+	ASSERT(GL_NO_ERROR == glGetError());
+
 	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)_context->renderTarget);
 
 	{	// Input assembler
@@ -243,14 +245,14 @@ void Driver::forceApplyCurrent()
 		enableNormalArray(_context->normalArrayEnabled, true);
 
 		Context::OglArrayState* arrState = &_context->colorArrayState;
-		glColorPointer(arrState->size, GL_UNSIGNED_BYTE, arrState->stride, arrState->ptrOrHandle);
+		if(arrState->size) glColorPointer(arrState->size, GL_UNSIGNED_BYTE, arrState->stride, arrState->ptrOrHandle);
 
 		arrState = &_context->coordArrayState0;
 		glClientActiveTexture(GL_TEXTURE0);
-		glTexCoordPointer(arrState->size, GL_FLOAT, arrState->stride, arrState->ptrOrHandle);
+		if(arrState->size) glTexCoordPointer(arrState->size, GL_FLOAT, arrState->stride, arrState->ptrOrHandle);
 
 		arrState = &_context->vertexArrayState;
-		glVertexPointer(arrState->size, GL_FLOAT, arrState->stride, arrState->ptrOrHandle);
+		if(arrState->size) glVertexPointer(arrState->size, GL_FLOAT, arrState->stride, arrState->ptrOrHandle);
 	}
 
 	{	// Sampler states
@@ -285,6 +287,8 @@ void Driver::forceApplyCurrent()
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixf(_context->projectionMatrix);
 	glMatrixMode(GL_MODELVIEW);
+
+	ASSERT(GL_NO_ERROR == glGetError());
 }
 
 // Capability
@@ -341,8 +345,16 @@ void* Driver::createRenderTarget(void* existingRenderTarget, void** textureHandl
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, (GLuint)*stencilHandle);
 	}*/
 
-	ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+#ifndef NDEBUG
+	// See http://www.khronos.org/opengles/sdk/docs/man/xhtml/glCheckFramebufferStatus.xml
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	ASSERT(status != GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT);
+	ASSERT(status != GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT);
+	ASSERT(status != GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS);
+	ASSERT(status != GL_FRAMEBUFFER_UNSUPPORTED);
+	ASSERT(status == GL_FRAMEBUFFER_COMPLETE);
 	ASSERT(GL_NO_ERROR == glGetError());
+#endif
 
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
@@ -675,7 +687,6 @@ void Driver::setInputAssemblerState(const InputAssemblerState& state)
 		enableVertexArray(true);
 
 		void* ptrOrHandle = vb->data ? vb->data : NULL;
-		GLuint handleTobind = vb->data ? 0 : hvb;
 
 		Context::OglArrayState state = { ptrOrHandle, fCount, vb->stride };
 		if(memcmp(&state, &_context->vertexArrayState, sizeof(state)) != 0) {
@@ -729,6 +740,7 @@ void Driver::setSamplerState(unsigned textureUnit, const SamplerState& state)
 		return;
 
 	_context->samplerStateHash[textureUnit] = h;
+	_context->samplerStates[textureUnit] = state;
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, state.u);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, state.v);
