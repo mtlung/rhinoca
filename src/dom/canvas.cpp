@@ -102,6 +102,20 @@ HTMLCanvasElement::HTMLCanvasElement(Rhinoca* rh)
 {
 }
 
+HTMLCanvasElement::HTMLCanvasElement(Rhinoca* rh, unsigned width, unsigned height, bool frontBufferOnly)
+	: Element(rh)
+	, context(NULL)
+{
+	if(frontBufferOnly)
+		useExternalFrameBuffer(rh);
+
+	if(!(_framebuffer.handle && !_framebuffer.texture))	// No need to resize external render target
+		createTextureFrameBuffer(width, height);
+
+	_framebuffer.width = width;
+	_framebuffer.height = height;
+}
+
 HTMLCanvasElement::~HTMLCanvasElement()
 {
 	if(context) {
@@ -171,22 +185,18 @@ Element* HTMLCanvasElement::factoryCreate(Rhinoca* rh, const char* type, XmlPars
 {
 	if(strcasecmp(type, "CANVAS") != 0) return NULL;
 
-	HTMLCanvasElement* canvas = new HTMLCanvasElement(rh);
-
 	/// The default size of a canvas is 300 x 150 as described by the standard
 	float w = 300, h = 150;
+	bool frontBufferOnly = false;
 
 	if(parser) {
 		w = parser->attributeValueAsFloatIgnoreCase("width", w);
 		h = parser->attributeValueAsFloatIgnoreCase("height", h);
 
-		bool frontBufferOnly = parser->attributeValueAsBoolIgnoreCase("frontBufferOnly", false);
-		if(frontBufferOnly)
-			canvas->useExternalFrameBuffer(rh);
+		frontBufferOnly = parser->attributeValueAsBoolIgnoreCase("frontBufferOnly", false);
 	}
 
-	canvas->setWidth((unsigned)w);
-	canvas->setHeight((unsigned)h);
+	HTMLCanvasElement* canvas = new HTMLCanvasElement(rh, (unsigned)w, (unsigned)h, frontBufferOnly);
 
 	return canvas;
 }

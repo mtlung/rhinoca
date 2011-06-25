@@ -12,6 +12,7 @@ class HTMLCanvasElement : public Element
 {
 public:
 	explicit HTMLCanvasElement(Rhinoca* rh);
+	HTMLCanvasElement(Rhinoca* rh, unsigned width, unsigned height, bool frontBufferOnly);
 	~HTMLCanvasElement();
 
 // Operations

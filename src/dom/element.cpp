@@ -139,7 +139,7 @@ static JSBool setAttribute(JSContext* cx, uintN argc, jsval* vp)
 	JsString jss(cx, JS_ARGV0);
 	if(!jss) return JS_FALSE;
 
-	return JS_SetProperty(cx, *self, jss.c_str(), vp);
+	return JS_SetProperty(cx, *self, jss.c_str(), &JS_ARGV1);
 }
 
 static JSBool getElementsByTagName(JSContext* cx, uintN argc, jsval* vp)
