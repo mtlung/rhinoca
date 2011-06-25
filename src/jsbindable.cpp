@@ -124,6 +124,12 @@ JsBindable* getJsBindable(JSContext* cx, JSObject* obj, JSClass* jsClass, jsval*
 	return reinterpret_cast<JsBindable*>(ret);
 }
 
+JsBindable* getJsBindableExactType(JSContext* cx, JSObject* obj, JSClass* jsClass, jsval* argv)
+{
+	void* ret = JS_GetInstancePrivate(cx, obj, jsClass, argv);
+	return reinterpret_cast<JsBindable*>(ret);
+}
+
 JSBool JS_GetValue(JSContext *cx, jsval jv, bool& val)
 {
 	if(JS_ValueToBoolean(cx, jv, (JSBool*)&val) == JS_FALSE)

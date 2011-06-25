@@ -12,7 +12,6 @@ Driver::DepthStencilState::DepthStencilState()
 	memset(this, 0, sizeof(*this));
 }
 
-
 Driver::DepthStencilState::DepthStencilState(bool depthEnable, CompareFunc depthFunc, bool stencilEnable, StencilState frontAndBack)
 {
 	this->depthEnable = depthEnable;
@@ -36,9 +35,10 @@ Driver::DepthStencilState::StencilState::StencilState()
 	memset(this, 0, sizeof(*this));
 }
 
-Driver::DepthStencilState::StencilState::StencilState(rhuint8 stencilRefValue, rhuint8 stencilMask,
-                                                      CompareFunc stencilFunc,
-                                                      StencilOp stencilOp)
+Driver::DepthStencilState::StencilState::StencilState(
+	rhuint8 stencilRefValue, rhuint8 stencilMask,
+    CompareFunc stencilFunc,
+    StencilOp stencilOp)
 {
 	this->stencilRefValue = stencilRefValue;
 	this->stencilMask = stencilMask;
@@ -48,9 +48,10 @@ Driver::DepthStencilState::StencilState::StencilState(rhuint8 stencilRefValue, r
 	this->stencilPassOp = stencilOp;
 }
 
-Driver::DepthStencilState::StencilState::StencilState(rhuint8 stencilRefValue, rhuint8 stencilMask,
-                                                      CompareFunc stencilFunc,
-                                                      StencilOp stencilFailOp, StencilOp stencilZFailOp, StencilOp stencilPassOp)
+Driver::DepthStencilState::StencilState::StencilState(
+	rhuint8 stencilRefValue, rhuint8 stencilMask,
+    CompareFunc stencilFunc,
+    StencilOp stencilFailOp, StencilOp stencilZFailOp, StencilOp stencilPassOp)
 {
 	this->stencilRefValue = stencilRefValue;
 	this->stencilMask = stencilMask;

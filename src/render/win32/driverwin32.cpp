@@ -36,8 +36,10 @@ class Context
 public:
 	void* renderTarget;
 
-	float vpLeft, vpTop, vpWidth, vpHeight;	// Viewport
+	Driver::ViewportState viewportState;
 	unsigned viewportHash;
+
+	float projectionMatrix[16];
 
 	bool vertexArrayEnabled, coordArrayEnabled, colorArrayEnabled, normalArrayEnabled;
 
@@ -125,9 +127,13 @@ void* Driver::createContext(void* externalHandle)
 {
 	Context* ctx = new Context;
 
-	ctx->vpLeft = ctx->vpTop = 0;
-	ctx->vpWidth = ctx->vpHeight = 0;
+	ctx->viewportState.left = ctx->viewportState.top = 0;
+	ctx->viewportState.width = ctx->viewportState.height = 0;
 	ctx->viewportHash = 0;
+
+	{	float tmp[] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
+		memcpy(ctx->projectionMatrix, tmp, sizeof(tmp));
+	}
 
 	ctx->vertexArrayEnabled = false;
 	ctx->colorArrayEnabled = false;
@@ -237,11 +243,15 @@ void Driver::forceApplyCurrent()
 	}
 
 	glViewport(
-		(GLint)_context->vpLeft,
-		(GLint)_context->vpTop,
-		(GLsizei)_context->vpWidth,
-		(GLsizei)_context->vpHeight
+		(GLint)_context->viewportState.left,
+		(GLint)_context->viewportState.top,
+		(GLsizei)_context->viewportState.width,
+		(GLsizei)_context->viewportState.height
 	);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadMatrixf(_context->projectionMatrix);
+	glMatrixMode(GL_MODELVIEW);
 }
 
 // Capability
@@ -321,15 +331,31 @@ void Driver::useRenderTarget(void* rtHandle)
 }
 
 // Transformation
+void Driver::getProjectionMatrix(float* matrix)
+{
+	memcpy(matrix, _context->projectionMatrix, sizeof(_context->projectionMatrix));
+}
+
 void Driver::setProjectionMatrix(const float* matrix)
 {
-	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixf(matrix);
+	bool isDirty = (memcmp(matrix, _context->projectionMatrix, sizeof(_context->projectionMatrix)) != 0);
+	memcpy(_context->projectionMatrix, matrix, sizeof(_context->projectionMatrix));
+
+	if(isDirty) {
+		glMatrixMode(GL_PROJECTION);
+		glLoadMatrixf(matrix);
+		glMatrixMode(GL_MODELVIEW);
+	}
 }
 
 void Driver::setViewMatrix(const float* matrix)
 {
-	glMatrixMode(GL_MODELVIEW);
+#ifndef NDEBUG
+	int i;
+	glGetIntegerv(GL_MATRIX_MODE, &i);
+	ASSERT(i == GL_MODELVIEW);
+#endif
+
 	glLoadMatrixf(matrix);
 }
 
@@ -484,7 +510,8 @@ void Driver::destroyVertex(void* vertexHandle)
 	// The external data should free by user
 	// rhinoca_free(vb->data);
 
-	glDeleteBuffers(1, (GLuint*)&vb->handle);
+	if(vb->handle)
+		glDeleteBuffers(1, (GLuint*)&vb->handle);
 
 	delete vb;
 }
@@ -551,7 +578,7 @@ void Driver::setInputAssemblerState(const InputAssemblerState& state)
 			enableCoordArray(true);
 			offset = 3 * sizeof(float) + 4;
 			if(vb->data) offset += unsigned(vb->data);
-			glClientActiveTexture(GL_TEXTURE0);
+//			glClientActiveTexture(GL_TEXTURE0);
 			glTexCoordPointer(2, GL_FLOAT, vb->stride, (GLvoid*)offset);
 			break;
 		default:
@@ -634,7 +661,7 @@ void Driver::setSamplerState(unsigned textureUnit, const SamplerState& state)
 	if(h == _context->samplerStateHash[textureUnit])
 		return;
 
-//	_context->samplerStateHash[textureUnit] = h;
+	_context->samplerStateHash[textureUnit] = h;
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, state.u);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, state.v);
@@ -772,20 +799,26 @@ void Driver::setColorWriteMask(Driver::BlendState::ColorWriteEnable mask)
 	);
 }
 
-void Driver::setViewport(float left, float top, float width, float height)
+void Driver::getViewportState(ViewportState& state)
 {
-	float data[] = { left, top, width, height };
-	unsigned h = hash(data, sizeof(data));
+	state = _context->viewportState;
+}
+
+void Driver::setViewport(const ViewportState& state)
+{
+	unsigned h = hash(&state, sizeof(state));
 
 	if(_context->viewportHash != h) {
-		glViewport((GLint)left, (GLint)top, (GLsizei)width, (GLsizei)height);
+		glViewport((GLint)state.left, (GLint)state.top, (GLsizei)state.width, (GLsizei)state.height);
 		_context->viewportHash = h;
-
-		_context->vpLeft = left;
-		_context->vpTop = left;
-		_context->vpWidth = width;
-		_context->vpHeight = height;
+		_context->viewportState = state;
 	}
+}
+
+void Driver::setViewport(float left, float top, float width, float height)
+{
+	ViewportState state = { (unsigned)left, (unsigned)top, (unsigned)width, (unsigned)height };
+	setViewport(state);
 }
 
 void Driver::setViewport(unsigned left, unsigned top, unsigned width, unsigned height)

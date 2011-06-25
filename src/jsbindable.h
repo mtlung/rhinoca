@@ -46,10 +46,19 @@ public:
 /// Get JsBindable from JSObject
 extern JsBindable* getJsBindable(JSContext* cx, JSObject* obj, JSClass* jsClass, jsval* argvForDebugPrint=NULL);
 
+extern JsBindable* getJsBindableExactType(JSContext* cx, JSObject* obj, JSClass* jsClass, jsval* argvForDebugPrint=NULL);
+
 template<class T>
 static T* getJsBindable(JSContext* cx, JSObject* obj)
 {
 	JsBindable* b = getJsBindable(cx, obj, &T::jsClass);
+	return static_cast<T*>(b);
+}
+
+template<class T>
+static T* getJsBindableExactType(JSContext* cx, JSObject* obj)
+{
+	JsBindable* b = getJsBindableExactType(cx, obj, &T::jsClass);
 	return static_cast<T*>(b);
 }
 
@@ -73,6 +82,12 @@ template<class T>
 static T* getJsBindableNoThrow(JSContext* cx, jsval* vp, unsigned paramIdx)
 {
 	return getJsBindable<T>(cx, JSVAL_TO_OBJECT(JS_ARGV(cx, vp)[paramIdx]));
+}
+
+template<class T>
+static T* getJsBindableExactTypeNoThrow(JSContext* cx, jsval* vp, unsigned paramIdx)
+{
+	return getJsBindableExactType<T>(cx, JSVAL_TO_OBJECT(JS_ARGV(cx, vp)[paramIdx]));
 }
 
 class JsString

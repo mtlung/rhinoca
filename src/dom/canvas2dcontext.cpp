@@ -240,7 +240,7 @@ static JSBool drawImage(JSContext* cx, uintN argc, jsval* vp)
 	// Determine the source is an image or a canvas
 	Texture* texture = NULL;
 
-	if(HTMLImageElement* img = getJsBindableNoThrow<HTMLImageElement>(cx, vp, 0))
+	if(HTMLImageElement* img = getJsBindableExactTypeNoThrow<HTMLImageElement>(cx, vp, 0))
 		texture = img->texture.get();
 	else if(HTMLCanvasElement* otherCanvas = getJsBindable<HTMLCanvasElement>(cx, vp, 0))
 		texture = otherCanvas->texture();
@@ -798,8 +798,13 @@ void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 	};
 	Driver::setBlendState(blendState);
 
-	Driver::setViewport(0, 0, w_, h_);
-	Driver::ortho(0, w_, 0, h_, 10, -10);
+	Driver::ViewportState vs1, vs2 = { 0, 0, (unsigned)w, (unsigned)h };
+	Driver::getViewportState(vs1);
+	if(memcmp(&vs1, &vs2, sizeof(vs1)) != 0) { 
+		Driver::setViewport(0, 0, w_, h_);
+		Driver::ortho(0, w_, 0, h_, 10, -10);
+	}
+
 	Driver::setViewMatrix(Mat44::identity.data);
 
 	Driver::drawQuad(

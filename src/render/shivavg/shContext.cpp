@@ -64,10 +64,7 @@ VG_API_CALL void vgResizeSurfaceSH(VGint width, VGint height)
   
   /* setup GL projection */
   Driver::setViewport(0,0,(unsigned)width,(unsigned)height);
-  
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  gluOrtho2D(0,width,0,height);
+  Driver::ortho(0,(unsigned)width,0,(unsigned)height,0,1);
   
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();

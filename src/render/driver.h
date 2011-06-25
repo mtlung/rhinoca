@@ -51,7 +51,10 @@ public:
 	static void useRenderTarget(void* rtHandle);
 
 // Transformation
+	static void getProjectionMatrix(float* matrix);
 	static void setProjectionMatrix(const float* matrix);
+
+	static void getViewMatrix(float* matrix);
 	static void setViewMatrix(const float* matrix);
 
 	static void ortho(float left, float right, float bottom, float top, float zNear, float zFar);
@@ -285,6 +288,13 @@ public:
 	static void setColorWriteMask(BlendState::ColorWriteEnable mask);
 
 // View port state
+	struct ViewportState
+	{
+		unsigned left, top, width, height;
+	};	// ViewportState
+
+	static void getViewportState(ViewportState& state);
+	static void setViewport(const ViewportState& state);
 	static void setViewport(float left, float top, float width, float height);
 	static void setViewport(unsigned left, unsigned top, unsigned width, unsigned height);
 

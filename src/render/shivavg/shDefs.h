@@ -167,7 +167,6 @@ SHfloat getMaxFloat();
 #    include <OpenGLES/ES2/glext.h>
 #    define glBegin(a)
 #    define glEnd(a)
-#    define gluOrtho2D(a,b,c,d)
 #    define glColor4fv(a)
 #    define glTexCoord1f(a)
 #    define glTexCoord2f(a,b)
