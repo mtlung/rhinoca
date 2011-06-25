@@ -56,6 +56,15 @@ public:
 	Driver::BlendState blendState;
 	unsigned blendStateHash;
 
+	struct OglArrayState {
+		GLvoid* ptrOrHandle;
+		unsigned size, stride;
+	};
+
+	OglArrayState vertexArrayState;
+	OglArrayState colorArrayState;
+	OglArrayState coordArrayState0;
+
 	BufferBuilder bufferBuilder;
 };	// Context
 
@@ -180,6 +189,13 @@ void* Driver::createContext(void* externalHandle)
 		ctx->blendStateHash = 0;
 	}
 
+	{	// Vertex buffer state
+		Context::OglArrayState state = { NULL, 0, 0 };
+		ctx->vertexArrayState = state;
+		ctx->colorArrayState = state;
+		ctx->coordArrayState0 = state;
+	}
+
 	ctx->renderTarget = NULL;
 
 	return ctx;
@@ -218,6 +234,16 @@ void Driver::forceApplyCurrent()
 		enableColorArray(_context->colorArrayEnabled, true);
 		enableCoordArray(_context->coordArrayEnabled, true);
 		enableNormalArray(_context->normalArrayEnabled, true);
+
+		Context::OglArrayState* arrState = &_context->colorArrayState;
+		glColorPointer(arrState->size, GL_UNSIGNED_BYTE, arrState->stride, arrState->ptrOrHandle);
+
+		arrState = &_context->coordArrayState0;
+		glClientActiveTexture(GL_TEXTURE0);
+		glTexCoordPointer(arrState->size, GL_FLOAT, arrState->stride, arrState->ptrOrHandle);
+
+		arrState = &_context->vertexArrayState;
+		glVertexPointer(arrState->size, GL_FLOAT, arrState->stride, arrState->ptrOrHandle);
 	}
 
 	{	// Sampler states
@@ -562,11 +588,18 @@ void Driver::setInputAssemblerState(const InputAssemblerState& state)
 		switch(vb->format) {
 		case P_C:
 		case P_C_UV0:
+		{
 			enableColorArray(true);
 			offset = 3 * sizeof(float);
 			if(vb->data) offset += unsigned(vb->data);
-			glColorPointer(4, GL_UNSIGNED_BYTE, vb->stride, (GLvoid*)offset);
+
+			Context::OglArrayState state = { (GLvoid*)offset, 4, vb->stride };
+			if(memcmp(&state, &_context->colorArrayState, sizeof(state)) != 0) {
+				glColorPointer(state.size, GL_UNSIGNED_BYTE, state.stride, state.ptrOrHandle);
+				_context->colorArrayState = state;
+			}
 			break;
+		}
 		default:
 			enableColorArray(false);
 		}
@@ -575,12 +608,19 @@ void Driver::setInputAssemblerState(const InputAssemblerState& state)
 	{	// Assign tex coord
 		switch(vb->format) {
 		case P_C_UV0:
+		{
 			enableCoordArray(true);
 			offset = 3 * sizeof(float) + 4;
 			if(vb->data) offset += unsigned(vb->data);
 //			glClientActiveTexture(GL_TEXTURE0);
-			glTexCoordPointer(2, GL_FLOAT, vb->stride, (GLvoid*)offset);
+
+			Context::OglArrayState state = { (GLvoid*)offset, 2, vb->stride };
+			if(memcmp(&state, &_context->coordArrayState0, sizeof(state)) != 0) {
+				glTexCoordPointer(state.size, GL_FLOAT, state.stride, state.ptrOrHandle);
+				_context->coordArrayState0 = state;
+			}
 			break;
+		}
 		default:
 			enableCoordArray(false);
 		}
@@ -603,18 +643,15 @@ void Driver::setInputAssemblerState(const InputAssemblerState& state)
 		unsigned fCount = vb->format == P2f ? 2 : 3;
 		GLuint hvb = (GLuint)vb->data |	(GLuint)vb->handle;
 		enableVertexArray(true);
-		if(vb->data) {
-			ASSERT(!vb->handle);
-			bindVertexBuffer(0);
-			glVertexPointer(fCount, GL_FLOAT, vb->stride, vb->data);
-		}
-		else if(vb->handle) {
-			ASSERT(!vb->data);
-			bindVertexBuffer(hvb);
-			glVertexPointer(fCount, GL_FLOAT, vb->stride, 0);
-		}
-		else {
-			ASSERT(false);
+
+		void* ptrOrHandle = vb->data ? vb->data : NULL;
+		GLuint handleTobind = vb->data ? 0 : hvb;
+
+		Context::OglArrayState state = { ptrOrHandle, fCount, vb->stride };
+		if(memcmp(&state, &_context->vertexArrayState, sizeof(state)) != 0) {
+			bindVertexBuffer(vb->data ? 0 : hvb);
+			glVertexPointer(state.size, GL_FLOAT, state.stride, state.ptrOrHandle);
+			_context->vertexArrayState = state;
 		}
 	}
 
