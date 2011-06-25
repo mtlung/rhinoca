@@ -34,8 +34,10 @@ class Context
 public:
 	void* renderTarget;
 
-	float vpLeft, vpTop, vpWidth, vpHeight;	// Viewport
+	Driver::ViewportState viewportState;
 	unsigned viewportHash;
+
+	float projectionMatrix[16];
 
 	bool vertexArrayEnabled, coordArrayEnabled, colorArrayEnabled, normalArrayEnabled;
 
@@ -54,6 +56,15 @@ public:
 
 	bool supportNPOT;
 	bool supportSeperateBlend;
+
+	struct OglArrayState {
+		GLvoid* ptrOrHandle;
+		unsigned size, stride;
+	};
+
+	OglArrayState vertexArrayState;
+	OglArrayState colorArrayState;
+	OglArrayState coordArrayState0;
 
 	BufferBuilder bufferBuilder;
 };	// Context
@@ -132,9 +143,13 @@ void* Driver::createContext(void* externalHandle)
 		strstr(extensions, "GL_OES_blend_equation_separate") != 0 &&
 		strstr(extensions, "GL_OES_blend_func_separate") != 0);
 
-	ctx->vpLeft = ctx->vpTop = 0;
-	ctx->vpWidth = ctx->vpHeight = 0;
+	ctx->viewportState.left = ctx->viewportState.top = 0;
+	ctx->viewportState.width = ctx->viewportState.height = 0;
 	ctx->viewportHash = 0;
+
+	{	float tmp[] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
+		memcpy(ctx->projectionMatrix, tmp, sizeof(tmp));
+	}
 
 	ctx->vertexArrayEnabled = false;
 	ctx->colorArrayEnabled = false;
@@ -181,6 +196,13 @@ void* Driver::createContext(void* externalHandle)
 		ctx->blendStateHash = 0;
 	}
 
+	{	// Vertex buffer state
+		Context::OglArrayState state = { NULL, 0, 0 };
+		ctx->vertexArrayState = state;
+		ctx->colorArrayState = state;
+		ctx->coordArrayState0 = state;
+	}
+
 	ctx->renderTarget = NULL;
 
 	return ctx;
@@ -219,6 +241,16 @@ void Driver::forceApplyCurrent()
 		enableColorArray(_context->colorArrayEnabled, true);
 		enableCoordArray(_context->coordArrayEnabled, true);
 		enableNormalArray(_context->normalArrayEnabled, true);
+
+		Context::OglArrayState* arrState = &_context->colorArrayState;
+		glColorPointer(arrState->size, GL_UNSIGNED_BYTE, arrState->stride, arrState->ptrOrHandle);
+
+		arrState = &_context->coordArrayState0;
+		glClientActiveTexture(GL_TEXTURE0);
+		glTexCoordPointer(arrState->size, GL_FLOAT, arrState->stride, arrState->ptrOrHandle);
+
+		arrState = &_context->vertexArrayState;
+		glVertexPointer(arrState->size, GL_FLOAT, arrState->stride, arrState->ptrOrHandle);
 	}
 
 	{	// Sampler states
@@ -244,11 +276,15 @@ void Driver::forceApplyCurrent()
 	}
 
 	glViewport(
-		(GLint)_context->vpLeft,
-		(GLint)_context->vpTop,
-		(GLsizei)_context->vpWidth,
-		(GLsizei)_context->vpHeight
+		(GLint)_context->viewportState.left,
+		(GLint)_context->viewportState.top,
+		(GLsizei)_context->viewportState.width,
+		(GLsizei)_context->viewportState.height
 	);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadMatrixf(_context->projectionMatrix);
+	glMatrixMode(GL_MODELVIEW);
 }
 
 // Capability
@@ -337,15 +373,31 @@ void Driver::useRenderTarget(void* rtHandle)
 }
 
 // Transformation
+void Driver::getProjectionMatrix(float* matrix)
+{
+	memcpy(matrix, _context->projectionMatrix, sizeof(_context->projectionMatrix));
+}
+
 void Driver::setProjectionMatrix(const float* matrix)
 {
-	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixf(matrix);
+	bool isDirty = (memcmp(matrix, _context->projectionMatrix, sizeof(_context->projectionMatrix)) != 0);
+	memcpy(_context->projectionMatrix, matrix, sizeof(_context->projectionMatrix));
+
+	if(isDirty) {
+		glMatrixMode(GL_PROJECTION);
+		glLoadMatrixf(matrix);
+		glMatrixMode(GL_MODELVIEW);
+	}
 }
 
 void Driver::setViewMatrix(const float* matrix)
 {
-	glMatrixMode(GL_MODELVIEW);
+#ifndef NDEBUG
+	int i;
+	glGetIntegerv(GL_MATRIX_MODE, &i);
+	ASSERT(i == GL_MODELVIEW);
+#endif
+
 	glLoadMatrixf(matrix);
 }
 
@@ -514,7 +566,8 @@ void Driver::destroyVertex(void* vertexHandle)
 	// The external data should free by user
 	// rhinoca_free(vb->data);
 
-	glDeleteBuffers(1, (GLuint*)&vb->handle);
+	if(vb->handle)
+		glDeleteBuffers(1, (GLuint*)&vb->handle);
 
 	delete vb;
 }
@@ -565,11 +618,18 @@ void Driver::setInputAssemblerState(const InputAssemblerState& state)
 		switch(vb->format) {
 		case P_C:
 		case P_C_UV0:
+		{
 			enableColorArray(true);
 			offset = 3 * sizeof(float);
 			if(vb->data) offset += unsigned(vb->data);
-			glColorPointer(4, GL_UNSIGNED_BYTE, vb->stride, (GLvoid*)offset);
+
+			Context::OglArrayState state = { (GLvoid*)offset, 4, vb->stride };
+			if(memcmp(&state, &_context->colorArrayState, sizeof(state)) != 0) {
+				glColorPointer(state.size, GL_UNSIGNED_BYTE, state.stride, state.ptrOrHandle);
+				_context->colorArrayState = state;
+			}
 			break;
+		}
 		default:
 			enableColorArray(false);
 		}
@@ -578,12 +638,19 @@ void Driver::setInputAssemblerState(const InputAssemblerState& state)
 	{	// Assign tex coord
 		switch(vb->format) {
 		case P_C_UV0:
+		{
 			enableCoordArray(true);
 			offset = 3 * sizeof(float) + 4;
 			if(vb->data) offset += unsigned(vb->data);
-			glClientActiveTexture(GL_TEXTURE0);
-			glTexCoordPointer(2, GL_FLOAT, vb->stride, (GLvoid*)offset);
+//			glClientActiveTexture(GL_TEXTURE0);
+
+			Context::OglArrayState state = { (GLvoid*)offset, 2, vb->stride };
+			if(memcmp(&state, &_context->coordArrayState0, sizeof(state)) != 0) {
+				glTexCoordPointer(state.size, GL_FLOAT, state.stride, state.ptrOrHandle);
+				_context->coordArrayState0 = state;
+			}
 			break;
+		}
 		default:
 			enableCoordArray(false);
 		}
@@ -606,18 +673,15 @@ void Driver::setInputAssemblerState(const InputAssemblerState& state)
 		unsigned fCount = vb->format == P2f ? 2 : 3;
 		GLuint hvb = (GLuint)vb->data |	(GLuint)vb->handle;
 		enableVertexArray(true);
-		if(vb->data) {
-			ASSERT(!vb->handle);
-			bindVertexBuffer(0);
-			glVertexPointer(fCount, GL_FLOAT, vb->stride, vb->data);
-		}
-		else if(vb->handle) {
-			ASSERT(!vb->data);
-			bindVertexBuffer(hvb);
-			glVertexPointer(fCount, GL_FLOAT, vb->stride, 0);
-		}
-		else {
-			ASSERT(false);
+
+		void* ptrOrHandle = vb->data ? vb->data : NULL;
+		GLuint handleTobind = vb->data ? 0 : hvb;
+
+		Context::OglArrayState state = { ptrOrHandle, fCount, vb->stride };
+		if(memcmp(&state, &_context->vertexArrayState, sizeof(state)) != 0) {
+			bindVertexBuffer(vb->data ? 0 : hvb);
+			glVertexPointer(state.size, GL_FLOAT, state.stride, state.ptrOrHandle);
+			_context->vertexArrayState = state;
 		}
 	}
 
@@ -664,7 +728,7 @@ void Driver::setSamplerState(unsigned textureUnit, const SamplerState& state)
 	if(h == _context->samplerStateHash[textureUnit])
 		return;
 
-//	_context->samplerStateHash[textureUnit] = h;
+	_context->samplerStateHash[textureUnit] = h;
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, state.u);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, state.v);
@@ -798,20 +862,26 @@ void Driver::setColorWriteMask(Driver::BlendState::ColorWriteEnable mask)
 	);
 }
 
-void Driver::setViewport(float left, float top, float width, float height)
+void Driver::getViewportState(ViewportState& state)
 {
-	float data[] = { left, top, width, height };
-	unsigned h = hash(data, sizeof(data));
+	state = _context->viewportState;
+}
+
+void Driver::setViewport(const ViewportState& state)
+{
+	unsigned h = hash(&state, sizeof(state));
 
 	if(_context->viewportHash != h) {
-		glViewport((GLint)left, (GLint)top, (GLsizei)width, (GLsizei)height);
+		glViewport((GLint)state.left, (GLint)state.top, (GLsizei)state.width, (GLsizei)state.height);
 		_context->viewportHash = h;
-
-		_context->vpLeft = left;
-		_context->vpTop = left;
-		_context->vpWidth = width;
-		_context->vpHeight = height;
+		_context->viewportState = state;
 	}
+}
+
+void Driver::setViewport(float left, float top, float width, float height)
+{
+	ViewportState state = { (unsigned)left, (unsigned)top, (unsigned)width, (unsigned)height };
+	setViewport(state);
 }
 
 void Driver::setViewport(unsigned left, unsigned top, unsigned width, unsigned height)
