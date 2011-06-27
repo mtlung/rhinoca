@@ -18,7 +18,8 @@ static JSFunctionSpec methods[] = {
 
 static JSBool userAgent(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	*vp = STRING_TO_JSVAL(JS_InternString(cx, Navigator::userAgent.c_str()));
+	Navigator* self = getJsBindable<Navigator>(cx, obj);
+	*vp = STRING_TO_JSVAL(JS_InternString(cx, self->userAgent.c_str()));
 	return JS_TRUE;
 }
 
@@ -26,8 +27,6 @@ static JSPropertySpec properties[] = {
 	{"userAgent", 0, JSPROP_READONLY | JsBindable::jsPropFlags, userAgent, JS_StrictPropertyStub},
 	{0}
 };
-
-const FixString Navigator::userAgent = "Rhinoca 1.0";
 
 Navigator::Navigator()
 {

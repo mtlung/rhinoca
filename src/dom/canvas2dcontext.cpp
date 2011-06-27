@@ -674,6 +674,26 @@ static JSBool measureText(JSContext* cx, uintN argc, jsval* vp)
 	return JS_TRUE;
 }
 
+static JSBool beginBatch(JSContext* cx, uintN argc, jsval* vp)
+{
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
+	if(!self) return JS_FALSE;
+
+	self->beginBatch();
+
+	return JS_TRUE;
+}
+
+static JSBool endBatch(JSContext* cx, uintN argc, jsval* vp)
+{
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
+	if(!self) return JS_FALSE;
+
+	self->endBatch();
+
+	return JS_TRUE;
+}
+
 static JSFunctionSpec methods[] = {
 	{"clearRect", clearRect, 4,0},
 	{"beginLayer", beginLayer, 0,0},
@@ -713,6 +733,10 @@ static JSFunctionSpec methods[] = {
 	{"fillText", fillText, 4,0},
 	{"strokeText", strokeText, 4,0},
 	{"measureText", measureText, 1,0},
+
+	// Our own batch optimization extension to canvas
+	{"beginBatch", beginBatch, 0,0},
+	{"endBatch", endBatch, 0,0},
 
 	{0}
 };
@@ -1251,6 +1275,14 @@ void CanvasRenderingContext2D::setTextAlign(const char* textAlign)
 void CanvasRenderingContext2D::setTextBaseLine(const char* textBaseLine)
 {
 	_textBaseLine = textBaseLine;
+}
+
+void CanvasRenderingContext2D::beginBatch()
+{
+}
+
+void CanvasRenderingContext2D::endBatch()
+{
 }
 
 }	// namespace Dom

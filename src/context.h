@@ -33,6 +33,7 @@ public:
 	JSObject* jsGlobal;
 	JSObject* jsConsole;
 	void* privateData;
+	FixString userAgent;
 	FixString documentUrl;
 
 	Dom::Window* domWindow;

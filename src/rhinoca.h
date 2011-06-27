@@ -136,6 +136,7 @@ RHINOCA_API void rhinoca_setPrintFunc(rhinoca_printFunc printFunc);
 typedef void (*rhinoca_alertFunc)(Rhinoca* rh, void* userData, const char* str);
 RHINOCA_API void rhinoca_setAlertFunc(rhinoca_alertFunc alertFunc, void* userData);
 RHINOCA_API void rhinoca_collectGarbage(Rhinoca* rh);
+RHINOCA_API void rhinoca_setUserAgent(Rhinoca* rh, const char* userAgent);
 
 #ifdef __cplusplus
 }

@@ -247,3 +247,8 @@ void rhinoca_collectGarbage(Rhinoca* rh)
 {
 	rh->collectGarbage();
 }
+
+void rhinoca_setUserAgent(Rhinoca* rh, const char* userAgent)
+{
+	rh->userAgent = userAgent;
+}

@@ -150,6 +150,12 @@ public:
 
 // Font
 //	void 
+
+// Batching
+	void beginBatch();
+
+	void endBatch();
+
 // Attributes
 	unsigned width() const { return canvas->width(); }
 	unsigned height() const { return canvas->height(); }

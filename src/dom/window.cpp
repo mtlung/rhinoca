@@ -243,7 +243,9 @@ static JSBool location(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 
 static JSBool navigator(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
+	Window* self = getJsBindable<Window>(cx, obj);
 	Navigator* navigator = new Navigator;
+	navigator->userAgent = self->rhinoca->userAgent;
 	navigator->bind(cx, NULL);
 	*vp = *navigator;
 	return JS_TRUE;
