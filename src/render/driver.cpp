@@ -72,6 +72,11 @@ unsigned Driver::nextPowerOfTwo(unsigned x)
 	return x + 1;
 }
 
+bool Driver::isPowerOfTwo(unsigned x)
+{
+	return x == nextPowerOfTwo(x);
+}
+
 void Driver::ortho(float left, float right, float bottom, float top, float zNear, float zFar)
 {
 	Mat44 m = Mat44::identity;

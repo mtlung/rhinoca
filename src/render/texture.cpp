@@ -7,7 +7,7 @@ Texture::Texture(const char* uri)
 	: Resource(uri)
 	, handle(0)
 	, width(0), height(0)
-	, uvWidth(1), uvHeight(1)
+	, virtualWidth(0), virtualHeight(0)
 {
 }
 
@@ -18,20 +18,17 @@ Texture::~Texture()
 
 bool Texture::create(unsigned w, unsigned h, Format internalFormat, const char* data, unsigned dataSize, Format dataFormat)
 {
-	width = w;
-	height = h;
+	width = virtualWidth = w;
+	height = virtualHeight = h;
 
 	if(w == 0 || h == 0) return false;
 
-	handle = Driver::createTexture(handle, w, h, internalFormat, data, dataFormat);
-
 	if(!Driver::getCapability("npot")) {
-		w = Driver::nextPowerOfTwo(w);
-		h = Driver::nextPowerOfTwo(h);
+		width = Driver::nextPowerOfTwo(w);
+		height = Driver::nextPowerOfTwo(h);
 	}
 
-	uvWidth = float(width) / w;
-	uvHeight = float(height) / h;
+	handle = Driver::createTexture(handle, width, height, internalFormat, data, dataFormat);
 
 	return true;
 }
@@ -40,7 +37,8 @@ void Texture::clear()
 {
 	Driver::deleteTexture(handle);
 	handle = 0;
-	width = height = 0;
+	width = virtualWidth = 0;
+	height = virtualHeight = 0;
 }
 
 }

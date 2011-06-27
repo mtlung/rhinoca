@@ -253,15 +253,15 @@ static JSBool drawImage(JSContext* cx, uintN argc, jsval* vp)
 	switch(argc) {
 	case 3:
 		sx = sy = 0;
-		sw = dw = texture->width;
-		sh = dh = texture->height;
+		sw = dw = texture->virtualWidth;
+		sh = dh = texture->virtualHeight;
 		VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &dx));
 		VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &dy));
 		break;
 	case 5:
 		sx = sy = 0;
-		sw = texture->width;
-		sh = texture->height;
+		sw = texture->virtualWidth;
+		sh = texture->virtualHeight;
 		VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &dx));
 		VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &dy));
 		VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &dw));
@@ -823,8 +823,8 @@ void CanvasRenderingContext2D::drawImage(
 {
 	drawImage(
 		texture,
-		0, 0, (float)texture->width, (float)texture->height,
-		dstx, dsty, (float)texture->width, (float)texture->height
+		0, 0, (float)texture->virtualWidth, (float)texture->virtualHeight,
+		dstx, dsty, (float)texture->virtualWidth, (float)texture->virtualHeight
 	);
 }
 
@@ -833,7 +833,7 @@ void CanvasRenderingContext2D::drawImage(
 	float dstx, float dsty, float dstw, float dsth)
 {
 	drawImage(texture,
-		0, 0, (float)texture->width, (float)texture->height,
+		0, 0, (float)texture->virtualWidth, (float)texture->virtualHeight,
 		dstx, dsty, dstw, dsth
 	);
 }
@@ -863,10 +863,11 @@ void CanvasRenderingContext2D::drawImage(
 	Driver::ortho(0, w, 0, h, 10, -10);
 	Driver::setViewMatrix(Mat44::identity.data);
 
-	float tw = texture->uvWidth / texture->width;
-	float th = texture->uvHeight / texture->height;
+	// Delta UV per pixel
+	float tw = 1.0f / texture->width;
+	float th = 1.0f / texture->height;
 
-	srcx *= tw;	srcw *= tw;
+	srcx *= tw; srcw *= tw;
 	srcy *= th; srch *= th;
 
 	// Use the texture

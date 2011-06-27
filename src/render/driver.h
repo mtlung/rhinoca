@@ -27,6 +27,7 @@ public:
 	static void* getCapability(const char* cap);
 
 	static unsigned nextPowerOfTwo(unsigned x);
+	static bool isPowerOfTwo(unsigned x);
 
 // Render target
 	static void* createRenderTargetExternal(void* externalHandle);

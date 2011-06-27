@@ -34,9 +34,16 @@ void Framebuffer::createTexture(unsigned w, unsigned h)
 	if(!texture)
 		texture = new Texture("");
 
-	(void)texture->create(w, h, Render::Driver::ANY, NULL, 0, Render::Driver::RGBA);
 	width = w;
 	height = h;
+
+	// TODO: Do adjustment to w and h here on devices which have
+	// limitation on the size of the FBO.
+
+	VERIFY(texture->create(w, h, Render::Driver::ANY, NULL, 0, Render::Driver::RGBA));
+	texture->virtualWidth = width;
+	texture->virtualHeight = height;
+
 	handle = Driver::createRenderTarget(handle, &texture->handle, &depthHandle, &stencilHandle, w, h);
 }
 

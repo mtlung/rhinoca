@@ -24,10 +24,9 @@ public:
 	void* handle;
 	unsigned width, height;
 
-	/// For reason of dealing with non power of 2 texture,
-	/// some texture might enlarged beyond it's necessary.
-	/// This uv width and height specify the extend in uv.
-	float uvWidth, uvHeight;
+	/// Pretending the texture is of this size, useful when dealing with some
+	/// device which have limitations on the actual texture size.
+	unsigned virtualWidth, virtualHeight;
 };	// Texture
 
 typedef IntrusivePtr<Texture> TexturePtr;
