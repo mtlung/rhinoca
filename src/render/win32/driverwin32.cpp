@@ -350,12 +350,22 @@ void* Driver::createRenderTarget(void* existingRenderTarget, void** textureHandl
 	return reinterpret_cast<void*>(handle);
 }
 
-void Driver::deleteRenderTarget(void* rtHandle)
+void Driver::deleteRenderTarget(void* rtHandle, void** depthHandle, void** stencilHandle)
 {
 	if(_context->renderTarget == rtHandle)
 		_context->renderTarget = NULL;
 	GLuint handle = reinterpret_cast<GLuint>(rtHandle);
 	if(handle) glDeleteFramebuffers(1, &handle);
+
+	if(depthHandle && *depthHandle) {
+		glDeleteRenderbuffers(1, (GLuint*)depthHandle);
+		*depthHandle = 0;
+	}
+
+	if(stencilHandle && *stencilHandle) {
+		glDeleteRenderbuffers(1, (GLuint*)stencilHandle);
+		*stencilHandle = 0;
+	}
 }
 
 void Driver::useRenderTarget(void* rtHandle)
