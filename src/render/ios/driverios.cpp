@@ -326,24 +326,24 @@ void* Driver::createRenderTarget(void* existingRenderTarget, void** textureHandl
 	}
 
 	if(depthHandle) {
-		if(!*depthHandle) {	// Generate the depth right here
+		if(!*depthHandle)	// Generate the depth stencil right here
 			glGenRenderbuffers(1, (GLuint*)depthHandle);
-		}
 
+		// NOTE: Only iDevice 3G or later support FBO with stencil
+		// See also http://lists.apple.com/archives/mac-opengl/2008/Aug/msg00091.html
+		// http://happyfire.appspot.com/
 		glBindRenderbuffer(GL_RENDERBUFFER, (GLuint)*depthHandle);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
+		glRenderbufferStorage(GL_RENDERBUFFER, TARGET_IPHONE_SIMULATOR ? GL_DEPTH_COMPONENT16 : GL_DEPTH24_STENCIL8_OES, width, height);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, (GLuint)*depthHandle);
 	}
 
-/*	if(stencilHandle) {
-		if(!*stencilHandle) {	// Generate the stencil right here
-			glGenRenderbuffers(1, (GLuint*)stencilHandle);
-		}
-
-		glBindRenderbuffer(GL_RENDERBUFFER, (GLuint)*stencilHandle);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, width, height);
+#if !TARGET_IPHONE_SIMULATOR
+	// NOTE: iPhone simulator didn't support stencil!
+	if(stencilHandle && depthHandle) {
+		*stencilHandle = *depthHandle;
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, (GLuint)*stencilHandle);
-	}*/
+	}
+#endif
 
 #ifndef NDEBUG
 	// See http://www.khronos.org/opengles/sdk/docs/man/xhtml/glCheckFramebufferStatus.xml
@@ -351,7 +351,7 @@ void* Driver::createRenderTarget(void* existingRenderTarget, void** textureHandl
 	ASSERT(status != GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT);
 	ASSERT(status != GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT);
 	ASSERT(status != GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS);
-	ASSERT(status != GL_FRAMEBUFFER_UNSUPPORTED);
+	ASSERT(status != GL_FRAMEBUFFER_UNSUPPORTED && "Most likely stencil not supported");
 	ASSERT(status == GL_FRAMEBUFFER_COMPLETE);
 	ASSERT(GL_NO_ERROR == glGetError());
 #endif
@@ -367,12 +367,22 @@ void* Driver::createRenderTarget(void* existingRenderTarget, void** textureHandl
 	return reinterpret_cast<void*>(handle);
 }
 
-void Driver::deleteRenderTarget(void* rtHandle)
+void Driver::deleteRenderTarget(void* rtHandle, void** depthHandle, void** stencilHandle)
 {
 	if(_context->renderTarget == rtHandle)
 		_context->renderTarget = NULL;
 	GLuint handle = reinterpret_cast<GLuint>(rtHandle);
 	if(handle) glDeleteFramebuffers(1, &handle);
+
+	if(depthHandle && *depthHandle) {
+		glDeleteRenderbuffers(1, (GLuint*)depthHandle);
+		*depthHandle = 0;
+	}
+
+	if(stencilHandle && *stencilHandle) {
+		glDeleteRenderbuffers(1, (GLuint*)stencilHandle);
+		*stencilHandle = 0;
+	}
 }
 
 void Driver::useRenderTarget(void* rtHandle)

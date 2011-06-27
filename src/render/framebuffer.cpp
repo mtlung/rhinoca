@@ -13,8 +13,8 @@ Framebuffer::Framebuffer()
 
 Framebuffer::~Framebuffer()
 {
-	if(texture) Driver::deleteRenderTarget(handle);
-	// TODO: Delete depthHandle and stencilHandle
+	if(texture)
+		Driver::deleteRenderTarget(handle, &depthHandle, &stencilHandle);
 }
 
 void Framebuffer::bind()
@@ -37,8 +37,19 @@ void Framebuffer::createTexture(unsigned w, unsigned h)
 	width = w;
 	height = h;
 
-	// TODO: Do adjustment to w and h here on devices which have
+	// NOTE: Do adjustment to w and h here on devices which have
 	// limitation on the size of the FBO.
+#ifdef RHINOCA_IOS_DEVICE	
+	// NOTE: No idea why iOS device will fail in checking framebuffer completness
+	// if the dimension is power of two, this at least happens on my iPod4G
+	if(Driver::isPowerOfTwo(w)) ++w;
+	if(Driver::isPowerOfTwo(h)) ++h;
+#endif
+
+#ifdef RHINOCA_IPHONE
+	if(w>2048) w= 2048;
+	if(h>2048) h= 2048;
+#endif
 
 	VERIFY(texture->create(w, h, Render::Driver::ANY, NULL, 0, Render::Driver::RGBA));
 	texture->virtualWidth = width;

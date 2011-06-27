@@ -47,7 +47,7 @@ public:
 		unsigned width, unsigned height
 	);
 
-	static void deleteRenderTarget(void* rtHandle);
+	static void deleteRenderTarget(void* rtHandle, void** depthHandle, void** stencilHandle);
 
 	static void useRenderTarget(void* rtHandle);
 
