@@ -9,7 +9,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "png", "png\png.vcproj", "{8
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SmallJpeg", "SmallJpeg\SmallJpeg.vcproj", "{D6AD4E9B-BB9A-4F23-87C6-10BCC68350C1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SpiderMonkey", "SpiderMonkey\SpiderMonkey.vcproj", "{67D1FADD-F84D-4135-B371-4E6B445C33C3}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "js32", "SpiderMonkey\SpiderMonkey.vcproj", "{67D1FADD-F84D-4135-B371-4E6B445C33C3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libmpg", "libmpg\libmpg.vcproj", "{F2ECEF40-A8ED-4E85-87E8-730375D1115A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,6 +51,12 @@ Global
 		{67D1FADD-F84D-4135-B371-4E6B445C33C3}.Release|Win32.ActiveCfg = Release|Win32
 		{67D1FADD-F84D-4135-B371-4E6B445C33C3}.Release|Win32.Build.0 = Release|Win32
 		{67D1FADD-F84D-4135-B371-4E6B445C33C3}.Release|x64.ActiveCfg = Release|Win32
+		{F2ECEF40-A8ED-4E85-87E8-730375D1115A}.Debug|Win32.ActiveCfg = Release|Win32
+		{F2ECEF40-A8ED-4E85-87E8-730375D1115A}.Debug|Win32.Build.0 = Release|Win32
+		{F2ECEF40-A8ED-4E85-87E8-730375D1115A}.Debug|x64.ActiveCfg = Debug|Win32
+		{F2ECEF40-A8ED-4E85-87E8-730375D1115A}.Release|Win32.ActiveCfg = Release|Win32
+		{F2ECEF40-A8ED-4E85-87E8-730375D1115A}.Release|Win32.Build.0 = Release|Win32
+		{F2ECEF40-A8ED-4E85-87E8-730375D1115A}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

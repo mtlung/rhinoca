@@ -538,6 +538,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\audio\mp3loader.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\audio\oggloader.cpp"
 				>
 			</File>

@@ -34,6 +34,7 @@ void audiodevice_setSoundLoop(AudioDevice* device, AudioSound* sound, bool loop)
 bool audiodevice_getSoundLoop(AudioDevice* device, AudioSound* sound);
 void audiodevice_setSoundCurrentTime(AudioDevice* device, AudioSound* sound, float time);
 float audiodevice_getSoundCurrentTime(AudioDevice* device, AudioSound* sound);
+unsigned audiodevice_getSoundCurrentSample(AudioDevice* device, AudioSound* sound);
 void audiodevice_setSoundvolume(AudioDevice* device, AudioSound* sound, float volume);
 float audiodevice_getSoundvolume(AudioDevice* device, AudioSound* sound);
 Audio::AudioBuffer* audiodevice_getSoundBuffer(AudioDevice* device, AudioSound* sound);

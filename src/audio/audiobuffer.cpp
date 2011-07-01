@@ -42,7 +42,13 @@ unsigned AudioBuffer::sizeInByteForSamples(unsigned samples) const
 
 void* AudioBuffer::getWritePointerForRange(unsigned begin, unsigned& end, unsigned& bytesToWrite)
 {
+
 	ScopeLock lock(mutex);
+
+	if(begin == end || format.blockAlignment == 0) {
+		bytesToWrite = 0;
+		return NULL;
+	}
 
 	for(unsigned i=0; i<subBuffers.size(); ++i) {
 		SubBuffer& b = subBuffers[i];
@@ -72,7 +78,7 @@ void AudioBuffer::commitWriteForRange(unsigned begin, unsigned end)
 		SubBuffer& b = subBuffers[i];
 		if(!b.readyForRead && b.posBegin == begin && end <= b.posEnd) {
 			// Call realloc to reclaim wasted space
-			rhinoca_realloc(b.data, format.blockAlignment * (b.posEnd - b.posBegin), format.blockAlignment * (end - begin));
+			b.data = (rhbyte*)rhinoca_realloc(b.data, format.blockAlignment * (b.posEnd - b.posBegin), format.blockAlignment * (end - begin));
 			b.readyForRead = true;
 			b.posEnd = end;
 			return;

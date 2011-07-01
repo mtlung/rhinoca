@@ -447,21 +447,28 @@ void AudioDevice::update()
 				break;
 			case AL_STOPPED:
 				// Detect the sound is stopped due to lack of buffer or really stopped.
-				if(sound.totalSamples() == 0) {
+				if(sound.isPlay && sound.totalSamples() == 0) {
+					// Out of streaming data or other temporary interruption, keep retry
 					alSourcePlay(sound.handle);
-					if(sound.isPause)
-						alSourcePause(sound.handle);
 				}
-				else if(sound.isPlay && sound.isLoop) {
-					alSourceRewind(sound.handle);
+				else if(sound.isPlay && audiodevice_getSoundCurrentSample(this, &sound) < sound.audioBuffer->totalSamples()) {
+					// The sound is not to it's end yet, we are just hitting some temporary interruption
 					alSourcePlay(sound.handle);
-					sound.nextALBufLoadPosition = 0;
-					sound.queueSampleStartPosition = 0;
-					if(sound.isPause)
-						alSourcePause(sound.handle);
+				}
+				else if(sound.isLoop) {
+					if(audiodevice_getSoundCurrentSample(this, &sound) >= sound.audioBuffer->totalSamples()) {
+						alSourceRewind(sound.handle);
+						sound.nextALBufLoadPosition = 0;
+						sound.queueSampleStartPosition = 0;
+					}
+					alSourcePlay(sound.handle);
 				}
 				else
 					sound.activeListNode.removeThis();
+
+				if(sound.isPause)
+					alSourcePause(sound.handle);
+
 				break;
 			default:
 				break;
@@ -594,6 +601,13 @@ float audiodevice_getSoundCurrentTime(AudioDevice* device, AudioSound* sound)
 	float fraction = float(offset % format.samplesPerSecond) / format.samplesPerSecond;
 
 	return float(seconds) + fraction;
+}
+
+unsigned audiodevice_getSoundCurrentSample(AudioDevice* device, AudioSound* sound)
+{
+	ALint offset;
+	alGetSourcei(sound->handle, AL_SAMPLE_OFFSET, &offset);
+	return sound->queueSampleStartPosition + offset;
 }
 
 void audiodevice_setSoundvolume(AudioDevice* device, AudioSound* sound, float volume)

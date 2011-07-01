@@ -27,6 +27,9 @@ bool loadPng(Resource* resource, ResourceManager* mgr);
 Resource* createJpeg(const char* uri, ResourceManager* mgr);
 bool loadJpeg(Resource* resource, ResourceManager* mgr);
 
+Resource* createMp3(const char* uri, ResourceManager* mgr);
+bool loadMp3(Resource* resource, ResourceManager* mgr);
+
 #endif
 
 Resource* createTrueTypeFont(const char* uri, ResourceManager* mgr);

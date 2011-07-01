@@ -122,9 +122,9 @@ void OggLoader::run(TaskPool* taskPool)
 }
 
 // This will be the approximate duration (in seconds) of a audio buffer segment to send to audio device
-static const float _bufferDuration = 3.0f;
+static const float _bufferDuration = 1.0f;
 
-static const unsigned _dataChunkSize = 1024 * 8;
+static const unsigned _dataChunkSize = 1024 * 16;
 
 void OggLoader::loadHeader()
 {
