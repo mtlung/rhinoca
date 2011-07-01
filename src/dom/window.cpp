@@ -262,12 +262,17 @@ static JSBool screen(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 
 static const char* _eventAttributeTable[] = {
 	"onload",
+	"onmousedown",
+	"onmousemove",
+	"onmouseup",
+	"onkeydown",
+	"onkeyup"
 };
 
 static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	Window* self = getJsBindable<Window>(cx, obj);
-	int32 idx = JSID_TO_INT(id) / 2;	// Account for having both get and set functions
+	int32 idx = JSID_TO_INT(id);
 
 	*vp = self->getEventListenerAsAttribute(cx, _eventAttributeTable[idx]);
 	return JS_TRUE;
@@ -276,7 +281,7 @@ static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsid id, jsval* vp
 static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	Window* self = getJsBindable<Window>(cx, obj);
-	int32 idx = JSID_TO_INT(id) / 2;	// Account for having both get and set functions
+	int32 idx = JSID_TO_INT(id);
 
 	return self->addEventListenerAsAttribute(cx, _eventAttributeTable[idx], *vp);
 }
@@ -288,7 +293,12 @@ static JSPropertySpec properties[] = {
 	{"screen", 0, JSPROP_READONLY | JsBindable::jsPropFlags, screen, JS_StrictPropertyStub},
 
 	// Event attributes
-	{_eventAttributeTable[0], 0, 0, getEventAttribute, setEventAttribute},
+	{_eventAttributeTable[0], 0, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
+	{_eventAttributeTable[1], 1, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
+	{_eventAttributeTable[2], 2, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
+	{_eventAttributeTable[3], 3, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
+	{_eventAttributeTable[4], 4, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
+	{_eventAttributeTable[5], 5, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
 	{0}
 };
 
@@ -334,20 +344,22 @@ void Window::dispatchEvent(Event* e)
 	ASSERT(e->jsObject);
 
 	// Get a list of traversed node first
-	Vector<Node*> nodes;
+	Vector<EventTarget*> targets;
+
+	targets.push_back(this);
 	for(Dom::NodeIterator itr(document); !itr.ended(); itr.next())
 		if(itr->hasListener())
-			nodes.push_back(itr.current());
+			targets.push_back(itr.current());
 
 	// Handling of mouse events
 	// TODO: Generate 'secondary' events like mouse clicked (down and up in the same position)
 	if(MouseEvent* mouse = dynamic_cast<MouseEvent*>(e))
 	{
-		// Loop from the back of nodes to see where the mouse fall into the element's rectangle
+		// Loop from the back of targets to see where the mouse fall into the element's rectangle
 		// TODO: Handling of stack context and z-index
-		for(unsigned i=nodes.size(); i--; )
+		for(unsigned i=targets.size(); i--; )
 		{
-			if(Element* ele = dynamic_cast<Element*>(nodes[i]))
+			if(Element* ele = dynamic_cast<Element*>(targets[i]))
 			{
 				// TODO: Temp solution, before we assign the body element with correct width and height
 				if(ele->tagName() == FixString("BODY")) {

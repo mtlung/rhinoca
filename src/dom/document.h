@@ -30,6 +30,10 @@ public:
 	/// See https://developer.mozilla.org/En/DOM/Document.createEvent for list of valid type
 	Event* createEvent(const char* type);
 
+protected:
+	override EventTarget* eventTargetTraverseUp();
+
+public:
 // Attributes
 	Window* window();
 

@@ -64,7 +64,7 @@ static const char* _eventAttributeTable[] = {
 static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	Element* self = getJsBindable<Element>(cx, obj);
-	int32 idx = JSID_TO_INT(id) / 2;	// Account for having both get and set functions
+	int32 idx = JSID_TO_INT(id);
 
 	*vp = self->getEventListenerAsAttribute(cx, _eventAttributeTable[idx]);
 	return JS_TRUE;
@@ -73,7 +73,7 @@ static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsid id, jsval* vp
 static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	Element* self = getJsBindable<Element>(cx, obj);
-	int32 idx = JSID_TO_INT(id) / 2;	// Account for having both get and set functions
+	int32 idx = JSID_TO_INT(id);
 
 	return self->addEventListenerAsAttribute(cx, _eventAttributeTable[idx], *vp);
 }
@@ -85,9 +85,9 @@ static JSPropertySpec elementProperties[] = {
 	{"tagName", 0, JSPROP_READONLY | JsBindable::jsPropFlags, tagName, JS_StrictPropertyStub},
 
 	// Event attributes
-	{_eventAttributeTable[0], 0, 0, getEventAttribute, setEventAttribute},
-	{_eventAttributeTable[1], 1, 0, getEventAttribute, setEventAttribute},
-	{_eventAttributeTable[2], 2, 0, getEventAttribute, setEventAttribute},
+	{_eventAttributeTable[0], 0, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
+	{_eventAttributeTable[1], 1, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
+	{_eventAttributeTable[2], 2, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
 	{0}
 };
 

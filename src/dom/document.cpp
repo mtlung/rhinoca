@@ -195,6 +195,11 @@ Event* HTMLDocument::createEvent(const char* type)
 	return e;
 }
 
+EventTarget* HTMLDocument::eventTargetTraverseUp()
+{
+	return rhinoca->domWindow;
+}
+
 Window* HTMLDocument::window()
 {
 	return rhinoca->domWindow;
