@@ -2,6 +2,7 @@
 #include "audio.h"
 #include "body.h"
 #include "canvas.h"
+#include "canvas2dcontext.h"
 #include "div.h"
 #include "image.h"
 #include "window.h"
@@ -13,6 +14,7 @@ void registerClasses(JSContext* cx, JSObject* parent)
 	Element::registerClass(cx, parent);
 	HTMLAudioElement::registerClass(cx, parent);
 	HTMLCanvasElement::registerClass(cx, parent);
+	CanvasRenderingContext2D::registerClass(cx, parent);
 	HTMLImageElement::registerClass(cx, parent);
 	Window::registerClass(cx, parent);
 }

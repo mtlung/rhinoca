@@ -841,6 +841,17 @@ void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 	);
 }
 
+static JSBool construct(JSContext* cx, uintN argc, jsval* vp)
+{
+	ASSERT(false && "For compatible with javascript instanceof operator only, you are not suppose to new a CanvasRenderingContext2D directly");
+	return JS_FALSE;
+}
+
+void CanvasRenderingContext2D::registerClass(JSContext* cx, JSObject* parent)
+{
+	VERIFY(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
+}
+
 void CanvasRenderingContext2D::drawImage(
 	Texture* texture,
 	float dstx, float dsty)

@@ -24,6 +24,8 @@ public:
 
 	void clearRect(float x, float y, float w, float h);
 
+	static void registerClass(JSContext* cx, JSObject* parent);
+
 // States
 	/// Pushes the current state onto the stack.
 	void save();
