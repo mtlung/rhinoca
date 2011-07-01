@@ -150,7 +150,7 @@ struct AudioSound : public LinkListBase::Node<AudioSound>
 		bool queued;	/// Put to OpenAL buffer queue or not yet
 	};
 
-	static const unsigned MAX_AL_BUFFERS = 2;
+	static const unsigned MAX_AL_BUFFERS = 4;
 	Array<BufferIndex, MAX_AL_BUFFERS> alBufferIndice;
 };	// AudioSound
 
@@ -194,7 +194,7 @@ struct AudioDevice
 	LinkList<AudioSound> _soundList;
 	LinkList<AudioSound::Active> _activeSoundList;
 
-	static const unsigned MAX_AL_BUFFERS = 4;
+	static const unsigned MAX_AL_BUFFERS = 64;
 	Array<AlBuffer, MAX_AL_BUFFERS> _alBuffers;
 };	// AudioDevice
 
@@ -431,8 +431,9 @@ void AudioDevice::update()
 
 			switch(state) {
 			case AL_INITIAL:
-				// NOTE: This state should rarely encountered in this switch-case block, 
-				// since it's already handled near alSourceQueueBuffers()
+				// When user try to call play() on an already playing sound, alSourceRewind() will trigger this state
+				if(sound.isPlay)
+					alSourcePlay(sound.handle);
 				sound.tryLoadNextBuffer();
 				break;
 			case AL_PLAYING:
@@ -440,34 +441,26 @@ void AudioDevice::update()
 					alSourcePause(sound.handle);
 				break;
 			case AL_PAUSED:
-				if(sound.isPlay && !sound.isPause) {
+				if(sound.isPlay && !sound.isPause)
 					alSourcePlay(sound.handle);
-					sound.activeListNode.removeThis();
-				}
 				break;
 			case AL_STOPPED:
-				// Detect the sound is stopped due to lack of buffer or really stopped.
-				if(sound.isPlay && sound.totalSamples() == 0) {
-					// Out of streaming data or other temporary interruption, keep retry
+				if(sound.isPlay)
 					alSourcePlay(sound.handle);
+
+				if(audiodevice_getSoundCurrentSample(this, &sound) >= sound.audioBuffer->totalSamples()) {
+					alSourceRewind(sound.handle);
+					sound.nextALBufLoadPosition = 0;
+					sound.queueSampleStartPosition = 0;
 				}
-				else if(sound.isPlay && audiodevice_getSoundCurrentSample(this, &sound) < sound.audioBuffer->totalSamples()) {
-					// The sound is not to it's end yet, we are just hitting some temporary interruption
-					alSourcePlay(sound.handle);
-				}
-				else if(sound.isLoop) {
-					if(audiodevice_getSoundCurrentSample(this, &sound) >= sound.audioBuffer->totalSamples()) {
-						alSourceRewind(sound.handle);
-						sound.nextALBufLoadPosition = 0;
-						sound.queueSampleStartPosition = 0;
-					}
-					alSourcePlay(sound.handle);
-				}
-				else
-					sound.activeListNode.removeThis();
 
 				if(sound.isPause)
 					alSourcePause(sound.handle);
+
+				if(!sound.isLoop) {
+					sound.isPlay = false;
+					sound.activeListNode.removeThis();
+				}
 
 				break;
 			default:
@@ -556,6 +549,15 @@ void audiodevice_playSound(AudioDevice* device, AudioSound* sound)
 	checkAndPrintError("alSourcePlay failed: ");
 	sound->isPlay = true;
 	sound->isPause = false;
+
+	// Remove all queued buffers and reset the play position to beginning
+	// Call alSourceStop() such that unqueueBuffer() can get effect
+	alSourceStop(sound->handle);
+	for(unsigned i=0; i<AudioSound::MAX_AL_BUFFERS; ++i)
+		sound->unqueueBuffer();
+	// Call alSourceRewind() to make the sound go though the AL_INITIAL state
+	alSourceRewind(sound->handle);
+	sound->nextALBufLoadPosition = 0;
 }
 
 void audiodevice_pauseSound(AudioDevice* device, AudioSound* sound)
