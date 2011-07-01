@@ -4,7 +4,7 @@
 #include "../../thirdParty/libmpg/mpg123.h"
 
 #ifdef RHINOCA_VC
-#	pragma comment(lib, "libmpg")
+#	pragma comment(lib, "libmpg123")
 #endif
 
 using namespace Audio;
