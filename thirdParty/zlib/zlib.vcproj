@@ -38,6 +38,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				ExceptionHandling="0"
 				RuntimeTypeInfo="false"
 				CompileAs="1"
 				DisableSpecificWarnings="4127;4131;4244"
@@ -93,6 +94,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				ExceptionHandling="0"
 				RuntimeTypeInfo="false"
 				CompileAs="1"
 				DisableSpecificWarnings="4127;4131;4244"

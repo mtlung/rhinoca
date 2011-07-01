@@ -112,6 +112,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="./"
 				PreprocessorDefinitions="EXPORT_JS_API;WIN32;"
+				ExceptionHandling="0"
 				RuntimeTypeInfo="false"
 				DisableSpecificWarnings="4100; 4127; 4201; 4244; 4245; 4480; 4510; 4512; 4610; 4702; 4706; 4800;"
 				ForcedIncludeFiles="jsautocfg.win32.h"
