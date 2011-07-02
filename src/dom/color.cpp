@@ -28,7 +28,7 @@ bool Color::parse(const char* str)
 		return false;
 
 	unsigned len = 0;
-	char buf[32];
+	char buf[512];
 
 	const char* p = str;
 	while(*p != '\0') {
