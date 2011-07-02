@@ -54,6 +54,15 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height)
   return VG_TRUE;
 }
 
+static void assertMatrixMode(GLenum mode)
+{
+#ifndef NDEBUG
+	GLint i;
+	glGetIntegerv(GL_MATRIX_MODE, &i);
+	assert(i == mode);
+#endif
+}
+
 VG_API_CALL void vgResizeSurfaceSH(VGint width, VGint height)
 {
   VG_GETCONTEXT(VG_NO_RETVAL);
@@ -65,8 +74,8 @@ VG_API_CALL void vgResizeSurfaceSH(VGint width, VGint height)
   /* setup GL projection */
   Driver::setViewport(0,0,(unsigned)width,(unsigned)height);
   Driver::ortho(0,(unsigned)width,0,(unsigned)height,0,1);
-  
-  glMatrixMode(GL_MODELVIEW);
+
+  assertMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   
   VG_RETURN(VG_NO_RETVAL);

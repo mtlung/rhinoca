@@ -374,7 +374,8 @@ void Driver::deleteRenderTarget(void* rtHandle, void** depthHandle, void** stenc
 	GLuint handle = reinterpret_cast<GLuint>(rtHandle);
 	if(handle) glDeleteFramebuffers(1, &handle);
 
-	if(depthHandle && *depthHandle) {
+	// NOTE: The handle value of depth and stencil may be the same
+	if(depthHandle && *depthHandle) if(!stencilHandle || *stencilHandle != *depthHandle) {
 		glDeleteRenderbuffers(1, (GLuint*)depthHandle);
 		*depthHandle = 0;
 	}

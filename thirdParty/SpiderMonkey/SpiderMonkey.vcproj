@@ -92,6 +92,7 @@
 			ConfigurationType="2"
 			InheritedPropertySheets="..\General.vsprops;..\Release.vsprops"
 			CharacterSet="2"
+			WholeProgramOptimization="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -113,6 +114,7 @@
 				AdditionalIncludeDirectories="./"
 				PreprocessorDefinitions="EXPORT_JS_API;WIN32;"
 				ExceptionHandling="0"
+				BufferSecurityCheck="false"
 				RuntimeTypeInfo="false"
 				DisableSpecificWarnings="4100; 4127; 4201; 4244; 4245; 4480; 4510; 4512; 4610; 4702; 4706; 4800;"
 				ForcedIncludeFiles="jsautocfg.win32.h"

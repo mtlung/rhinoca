@@ -32,6 +32,15 @@
 
 #include "../driver.h"
 
+static void assertMatrixMode(GLenum mode)
+{
+#ifndef NDEBUG
+	GLint i;
+	glGetIntegerv(GL_MATRIX_MODE, &i);
+	assert(i == mode);
+#endif
+}
+
 // Replacement for texture coordinate generation using texture matrix
 // http://www.fernlightning.com/doku.php?id=randd:opengles
 #define USE_TEXCOORD_GEN 0
@@ -369,7 +378,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
   
   /* Apply transformation */
   shMatrixToGL(&context->pathTransform, mgl);
-  glMatrixMode(GL_MODELVIEW);
+  assertMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glMultMatrixf(mgl);
   
@@ -494,7 +503,7 @@ VG_API_CALL void vgDrawImage(VGImage image)
   /* Apply image-user-to-surface transformation */
   i = (SHImage*)image;
   shMatrixToGL(&context->imageTransform, mgl);
-  glMatrixMode(GL_MODELVIEW);
+  assertMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glMultMatrixf(mgl);
   
