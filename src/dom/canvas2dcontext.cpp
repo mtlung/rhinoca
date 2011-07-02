@@ -41,6 +41,21 @@ static JSBool setGlobalAlpha(JSContext* cx, JSObject* obj, jsid id, JSBool stric
 	return JS_TRUE;
 }
 
+static JSBool getStrokeStyle(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+{
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
+	if(!self) return JS_FALSE;
+
+	Color c;
+	self->getStrokeColor((float*)(&c));
+
+	char str[10];
+	c.toString(str);
+
+	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, str));
+	return JS_TRUE;
+}
+
 static JSBool setStrokeStyle(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
@@ -61,6 +76,21 @@ static JSBool setStrokeStyle(JSContext* cx, JSObject* obj, jsid id, JSBool stric
 		}
 	}
 
+	return JS_TRUE;
+}
+
+static JSBool getFillStyle(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+{
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
+	if(!self) return JS_FALSE;
+
+	Color c;
+	self->getFillColor((float*)(&c));
+
+	char str[10];
+	c.toString(str);
+
+	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, str));
 	return JS_TRUE;
 }
 
@@ -187,11 +217,11 @@ static JSBool setTextBaseLine(JSContext* cx, JSObject* obj, jsid id, JSBool stri
 static JSPropertySpec properties[] = {
 	{"canvas", 0, JSPROP_READONLY | JsBindable::jsPropFlags, getCanvas, JS_StrictPropertyStub},
 	{"globalAlpha", 0, JsBindable::jsPropFlags, JS_PropertyStub, setGlobalAlpha},
-	{"strokeStyle", 0, JsBindable::jsPropFlags, JS_PropertyStub, setStrokeStyle},
+	{"strokeStyle", 0, JsBindable::jsPropFlags, getStrokeStyle, setStrokeStyle},
 	{"lineCap", 0, JsBindable::jsPropFlags, JS_PropertyStub, setLineCap},
 	{"lineJoin", 0, JsBindable::jsPropFlags, JS_PropertyStub, setLineJoin},
 	{"lineWidth", 0, JsBindable::jsPropFlags, JS_PropertyStub, setLineWidth},
-	{"fillStyle", 0, JsBindable::jsPropFlags, JS_PropertyStub, setFillStyle},
+	{"fillStyle", 0, JsBindable::jsPropFlags, getFillStyle, setFillStyle},
 	{"font", 0, JsBindable::jsPropFlags, getFont, setFont},
 	{"textAlign", 0, JsBindable::jsPropFlags, getTextAlign, setTextAlign},
 	{"textBaseLine", 0, JsBindable::jsPropFlags, getTextBaseLine, setTextBaseLine},
@@ -1145,6 +1175,11 @@ void CanvasRenderingContext2D::isPointInPath(float x, float y)
 	// TODO: To be implement
 }
 
+void CanvasRenderingContext2D::getStrokeColor(float* rgba)
+{
+	vgGetParameterfv(openvg->strokePaint, VG_PAINT_COLOR, 4, rgba);
+}
+
 void CanvasRenderingContext2D::setStrokeColor(float* rgba)
 {
 	vgSetPaint(openvg->strokePaint, VG_STROKE_PATH);
@@ -1160,7 +1195,12 @@ void CanvasRenderingContext2D::setStrokeGradient(CanvasGradient* gradient)
 	vgSetPaint(gradient->handle, VG_STROKE_PATH);
 }
 
-void CanvasRenderingContext2D::setFillColor(float* rgba)
+void CanvasRenderingContext2D::getFillColor(float* rgba)
+{
+	vgGetParameterfv(openvg->fillPaint, VG_PAINT_COLOR, 4, rgba);
+}
+
+void CanvasRenderingContext2D::setFillColor(const float* rgba)
 {
 	vgSetPaint(openvg->fillPaint, VG_FILL_PATH);
 	vgSetParameterfv(openvg->fillPaint, VG_PAINT_COLOR, 4, rgba);

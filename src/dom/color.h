@@ -16,6 +16,9 @@ public:
 	/// http://msdn.microsoft.com/en-us/library/ms531197%28v=vs.85%29.aspx
 	bool parse(const char* str);
 
+	/// Str is of fixed format as "#rrggbbaa\0"
+	void toString(char str[10]);
+
 // Attributes
 	float r, g, b, a;
 };	// Color

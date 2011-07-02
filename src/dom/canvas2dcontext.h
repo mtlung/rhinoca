@@ -114,6 +114,7 @@ public:
 
 	void strokeRect(float x, float y, float w, float h);
 
+	void getStrokeColor(float* rgba);
 	void setStrokeColor(float* rgba);
 
 	void setStrokeGradient(CanvasGradient* gradient);
@@ -132,7 +133,8 @@ public:
 
 	void fillRect(float x, float y, float w, float h);
 
-	void setFillColor(float* rgba);
+	void getFillColor(float* rgba);
+	void setFillColor(const float* rgba);
 
 	void setFillGradient(CanvasGradient* gradient);
 

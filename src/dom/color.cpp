@@ -141,4 +141,14 @@ bool Color::parse(const char* str)
 	return false;
 }
 
+void Color::toString(char str[10])
+{
+	int r_ = int(r * 255);
+	int g_ = int(g * 255);
+	int b_ = int(b * 255);
+	int a_ = int(a * 255);
+
+	sprintf(str, "#%02x%02x%02x%02x", r_, g_, b_, a_);
+}
+
 }	// namespace Dom
