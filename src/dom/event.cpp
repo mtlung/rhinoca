@@ -171,11 +171,11 @@ void EventTarget::addEventListener(const char* type, EventListener* listener, bo
 	listener->_type = type;
 	listener->_useCapture = useCapture;
 
-	// Search for duplication
+	// Search for duplication and remove it before inserting new one
 	for(EventListener* l = _eventListeners.begin(); l != _eventListeners.end(); l = l->next()) {
 		if(l->_type == StringHash(type) && l->_useCapture == useCapture && l->identifier() == listener->identifier()) {
-			delete listener;
-			return;
+			delete l;
+			break;
 		}
 	}
 
@@ -213,6 +213,7 @@ JSBool EventTarget::addEventListenerAsAttribute(JSContext* cx, const char* event
 		// Skip the 'on' of the event attribute will become the eventType
 		const char* eventType = eventAttributeName + 2;
 
+		// Remove any existing event attribute
 		// NOTE: Event attribute use bubbling by default
 		addEventListener(eventType, listener, false);
 	}
