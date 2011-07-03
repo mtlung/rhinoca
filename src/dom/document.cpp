@@ -104,10 +104,38 @@ static JSBool readyState(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 	return JS_TRUE;
 }
 
+static const char* _eventAttributeTable[] = {
+	"onmouseup",
+	"onmousedown",
+	"onmousemove"
+};
+
+static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+{
+	HTMLDocument* self = getJsBindable<HTMLDocument>(cx, obj);
+	int32 idx = JSID_TO_INT(id);
+
+	*vp = self->getEventListenerAsAttribute(cx, _eventAttributeTable[idx]);
+	return JS_TRUE;
+}
+
+static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
+{
+	HTMLDocument* self = getJsBindable<HTMLDocument>(cx, obj);
+	int32 idx = JSID_TO_INT(id);
+
+	return self->addEventListenerAsAttribute(cx, _eventAttributeTable[idx], *vp);
+}
+
 static JSPropertySpec properties[] = {
 	{"body", 0, JSPROP_READONLY | JsBindable::jsPropFlags, getBody, JS_StrictPropertyStub},
 	{"documentElement", 0, JSPROP_READONLY | JsBindable::jsPropFlags, documentElement, JS_StrictPropertyStub},
 	{"readyState", 0, JSPROP_READONLY | JsBindable::jsPropFlags, readyState, JS_StrictPropertyStub},
+
+	// Event attributes
+	{_eventAttributeTable[0], 0, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
+	{_eventAttributeTable[1], 1, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
+	{_eventAttributeTable[2], 2, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
 	{0}
 };
 
