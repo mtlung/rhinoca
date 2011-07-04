@@ -1,0 +1,39 @@
+<html>
+<head>
+<title>Image load events test</title>
+<script>
+function assert(b) {
+	if(!b) alert("assertion failed");
+}
+
+function test() {
+	{	var img1 = new Image();
+
+		var img1OnReadyCalled = !('onready' in img1);
+		img1.onready = function() {
+			img1OnReadyCalled = true;
+		}
+
+		var img1OnLoadCalled = false;
+		var recursived = false;
+		img1.onload = function() {
+			assert(img1OnReadyCalled == true);
+			img1OnLoadCalled = true;
+
+			recursived = true;
+			// This onload should not be invoked, since the image is already loaded
+			img1.onload = function() {
+				assert(false);
+				assert(!recursived);
+			}
+			recursived = false;
+		}
+
+		img1.src = 'rhino.png';
+	}
+}
+</script>
+</head>
+<body onload="test();">
+</body>
+</html>

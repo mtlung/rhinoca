@@ -131,8 +131,12 @@ static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsid id, JSBool st
 
 	self->addEventListenerAsAttribute(cx, _eventAttributeTable[idx], *vp);
 
+	// NOTE: Seems major browser will not trigger onload if you register the callback after
+	// the image is loaded. So the user need to set the callbacks before setting the image source.
+	// See: http://www.thefutureoftheweb.com/blog/image-onload-isnt-being-called
+
 	// In case the Image is already loaded when we assign the callback, invoke the callback immediately
-	Dom::Event* ev = NULL;
+/*	Dom::Event* ev = NULL;
 
 	if(self->texture) {
 		const Texture::State state = self->texture->state;
@@ -151,7 +155,7 @@ Dispatch:
 	ev->bind(cx, NULL);
 	self->dispatchEvent(ev);
 
-Return:
+Return:*/
 	return JS_PropertyStub(cx, obj, id, vp);
 }
 
