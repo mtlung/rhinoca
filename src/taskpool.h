@@ -26,7 +26,8 @@ public:
 protected:
 	/// Put the task back to the pool, useful when the task cannot complete immediately.
 	/// Make sure you won't delete 'this' in 'run()'
-	void reSchedule();
+	/// The re-scheduled task can be suspended and resume again using TaskPool::suspend(id, false);
+	void reSchedule(bool suspend=false);
 
 private:
 	friend class TaskPool;
@@ -72,6 +73,11 @@ public:
 	/// were NOT waiting for, but that's not the problem since the
 	/// task should be finished anyway.
 	void wait(TaskId id);
+
+	/// A task will not be pick up by the TaskPool to run, if it's suspended.
+	/// @note If the task is already running, it will not preempted.
+	void suspend(TaskId id);
+	void resume(TaskId id);
 
 	/// Check if a task is finished.
 	bool isDone(TaskId id);

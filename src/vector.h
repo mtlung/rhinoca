@@ -150,6 +150,9 @@ public:
 	T& top() { ASSERT(_size > 0); return _vals[_size - 1]; }
 	const T& top() const { ASSERT(_size > 0); return _vals[_size - 1]; }
 
+	T& front() { ASSERT(_size > 0); return _vals[0]; }
+	const T& front() const { ASSERT(_size > 0); return _vals[0]; }
+
 	T& back() { ASSERT(_size > 0); return _vals[_size - 1]; }
 	const T& back() const { ASSERT(_size > 0); return _vals[_size - 1]; }
 

@@ -19,6 +19,7 @@ public:
 	volatile TaskId id;		///< 0 for invalid id
 	Task* task;				///< Once complete it will set to NULL
 	bool finalized;			///< Attributes like dependency, affinity, parent cannot be set after the task is finalized
+	bool suspended;			///< If suspended, the task cannot be started
 	int affinity;
 	TaskPool* taskPool;
 	TaskProxy* parent;		///< A task is consider completed only if all it's children are completed.
@@ -35,6 +36,7 @@ TaskPool::TaskProxy::TaskProxy()
 	: id(0)
 	, task(NULL)
 	, finalized(false)
+	, suspended(false)
 	, affinity(0)
 	, taskPool(NULL)
 	, parent(NULL)
@@ -377,6 +379,22 @@ bool TaskPool::isDone(TaskId id)
 	return _findProxyById(id) == NULL;
 }
 
+void TaskPool::suspend(TaskId id)
+{
+	ScopeLock lock(mutex);
+	TaskProxy* p = _pendingTasksHead->nextPending;
+	if(p != _pendingTasksTail)
+		p->suspended = true;
+}
+
+void TaskPool::resume(TaskId id)
+{
+	ScopeLock lock(mutex);
+	TaskProxy* p = _pendingTasksHead->nextPending;
+	if(p != _pendingTasksTail)
+		p->suspended = false;
+}
+
 void TaskPool::doSomeTask(float timeout)
 {
 	ScopeLock lock(mutex);
@@ -532,7 +550,7 @@ void TaskPool::_removePendingTask(TaskProxy* p)
 
 bool TaskPool::_matchAffinity(TaskProxy* p, int tId)
 {
-	if(!p->finalized)
+	if(p->suspended || !p->finalized)
 		return false;
 
 	if(p->affinity < 0)	// Only this thread cannot run
@@ -569,7 +587,7 @@ void TaskPool::addCallback(TaskId id, Callback callback, void* userData, int aff
 	addFinalized(t, 0, id, affinity);
 }
 
-void Task::reSchedule()
+void Task::reSchedule(bool suspend)
 {
 	TaskPool::TaskProxy* p = reinterpret_cast<TaskPool::TaskProxy*>(this->_proxy);
 
@@ -577,6 +595,7 @@ void Task::reSchedule()
 
 	p->task = this;
 	p->taskPool->_addPendingTask(p);
+	p->suspended = suspend;
 
 #if DEBUG_PRINT
 	printf("%sreSchedule(%d)\n", _debugIndent + _debugMaxIndent - _debugWaitCount, p->id);

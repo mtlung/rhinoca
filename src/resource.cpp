@@ -53,8 +53,10 @@ void ResourceManager::abortAllLoader()
 		if(r->state == Resource::Loading)
 			r->state = Resource::Aborted;
 	}
-	for(Resource* r=_resources.findMin(); r; r=r->next())
+	for(Resource* r=_resources.findMin(); r; r=r->next()) {
+		taskPool->resume(r->taskLoaded);
 		taskPool->wait(r->taskLoaded);
+	}
 }
 
 ResourcePtr ResourceManager::load(const char* uri)
