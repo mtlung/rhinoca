@@ -187,8 +187,10 @@ void Mp3Loader::loadData()
 		ASSERT(currentSamplePos <= audioBufEnd);
 		buffer->commitWriteForRange(audioBufBegin, currentSamplePos);
 		requestQueue.commit(audioBufBegin, currentSamplePos);
-//		printf("mp3 commit  : %d, %d\n", audioBufBegin, currentSamplePos);
+//		printf("mp3 commit %s: %d, %d\n", buffer->uri().c_str(), audioBufBegin, currentSamplePos);
 	}
+	else
+		reSchedule(false);
 
 	// Condition for EOF
 	if(ret == MPG123_DONE || (ret == MPG123_NEED_MORE && readCount == 0)) {

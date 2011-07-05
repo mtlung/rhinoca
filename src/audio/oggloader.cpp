@@ -145,7 +145,7 @@ void OggLoader::loadHeader()
 
 	{	// Read from stream and put to ring buffer
 		rhbyte* p = ringBuffer.write(_dataChunkSize);
-		unsigned readCount = io_read(stream, p, _dataChunkSize, tId);
+		unsigned readCount = (unsigned)io_read(stream, p, _dataChunkSize, tId);
 		ringBuffer.commitWrite(readCount);
 
 		// Read from ring buffer and put to vorbis
@@ -205,7 +205,7 @@ void OggLoader::loadData()
 
 	{	// Read from stream and put to ring buffer
 		rhbyte* p = ringBuffer.write(_dataChunkSize);
-		unsigned readCount = io_read(stream, p, _dataChunkSize, tId);
+		unsigned readCount = (unsigned)io_read(stream, p, _dataChunkSize, tId);
 		ringBuffer.commitWrite(readCount);
 
 		if(readCount == 0) {	// EOF
@@ -215,7 +215,7 @@ void OggLoader::loadData()
 			return;
 		}
 
-		const unsigned proximateBufDuration = _bufferDuration * format.samplesPerSecond;
+		const unsigned proximateBufDuration = unsigned(_bufferDuration * format.samplesPerSecond);
 		const int numChannels = vorbisInfo.channels <= 2 ? vorbisInfo.channels : 2; 
 		p = ringBuffer.read(readCount);
 
@@ -279,8 +279,13 @@ void OggLoader::loadData()
 		}
 
 		ringBuffer.collectUnusedSpace();
+
+		// If nothing to commit right now, re-try on next round, schedule it immediatly
+		if(theVeryBegin == currentSamplePos)
+			return reSchedule(false);
+
 		requestQueue.commit(theVeryBegin, currentSamplePos);
-//		printf("ogg commit  : %d, %d\n", theVeryBegin, currentSamplePos);
+//		printf("ogg commit %s: %d, %d\n", buffer->uri().c_str(), theVeryBegin, currentSamplePos);
 	}
 
 	return reSchedule(true);

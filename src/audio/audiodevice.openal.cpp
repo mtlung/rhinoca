@@ -254,7 +254,16 @@ int AudioSound::tryLoadNextBuffer()
 	if(index < 0)
 		return -1;
 
+	// Check if this index already appear in alBufferIndice, no need to add a new albuffer
+	// This happens when the loader haven't give the buffer to the audio device, while
+	// the device keep asking for data.
+	for(unsigned i=0; i<MAX_AL_BUFFERS; ++i) {
+		if(alBufferIndice[i].index == index)
+			return -1;
+	}
+
 	alBufferIndice[slot].index = index;
+	device->_alBuffers[index].referenceCount++;
 
 	return index;
 }
@@ -274,7 +283,8 @@ void AudioSound::unqueueBuffer()
 			queueSampleStartPosition = b.end;
 			alBufferIndice[i].index = -1;
 			alBufferIndice[i].queued = false;
-			b.referenceCount--;
+			if(--b.referenceCount == 0)
+				b.begin = b.end = 0;
 			break;
 		}
 	}
@@ -314,9 +324,9 @@ int AudioDevice::allocateAlBufferFor(AudioBuffer* src, unsigned begin, unsigned 
 	for(unsigned i=0; i<MAX_AL_BUFFERS; ++i) {
 		AlBuffer& b = _alBuffers[i];
 
-		// Check if there is existing perfect matching duration buffer
+		// Reuse existing perfect matching duration buffer
 		if(b.begin == begin && b.end == end && b.srcData == src)
-			return -2;
+			return i;
 	}
 
 	// No existing buffer match, try to find unused one or free one with zero referenceCount
@@ -327,7 +337,6 @@ int AudioDevice::allocateAlBufferFor(AudioBuffer* src, unsigned begin, unsigned 
 			b.srcData = src;
 			b.begin = begin;
 			b.end = end;
-			b.referenceCount++;
 			return i;
 		}
 	}
@@ -445,7 +454,10 @@ void AudioDevice::update()
 				if(sound.isPlay)
 					alSourcePlay(sound.handle);
 
-				if(audiodevice_getSoundCurrentSample(this, &sound) >= sound.audioBuffer->totalSamples()) {
+				if( sound.audioBuffer->totalSamples() != 0 &&
+					audiodevice_getSoundCurrentSample(this, &sound) >= sound.audioBuffer->totalSamples())
+				{
+					// Now the audio reach it's end
 					alSourceRewind(sound.handle);
 					sound.nextALBufLoadPosition = 0;
 					sound.queueSampleStartPosition = 0;
@@ -454,7 +466,7 @@ void AudioDevice::update()
 				if(sound.isPause)
 					alSourcePause(sound.handle);
 
-				if(!sound.isLoop) {
+				if(!sound.isLoop && sound.audioBuffer->totalSamples() != 0) {
 					sound.isPlay = false;
 					sound.activeListNode.removeThis();
 				}
@@ -483,7 +495,7 @@ void AudioDevice::update()
 				alBufferData(b.handle, getAlFormat(format), readPtr, readableBytes, format.samplesPerSecond);
 				b.dataReady = true;
 				b.end = b.begin + readableSamples;
-//				printf("alBufferData: %d, %d\n", b.begin, b.end);
+//				printf("alBufferData %s: %d, %d\n", b.srcData->uri().c_str(), b.begin, b.end);
 			}
 		}
 	}

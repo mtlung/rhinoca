@@ -138,7 +138,7 @@ void HTMLAudioElement::setSrc(const char* uri)
 		// Prevent HTMLImageElement begging GC before the callback finished.
 		addGcRoot();
 		// Register callbacks
-		_resourceManager->taskPool->addCallback(b->taskLoaded, onLoadCallback, this, TaskPool::threadId());
+		_resourceManager->taskPool->addCallback(b->taskReady, onLoadCallback, this, TaskPool::threadId());
 	}
 	else
 		goto Abort;
