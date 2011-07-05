@@ -132,6 +132,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib"
 				GenerateDebugInformation="true"
+				EnableCOMDATFolding="2"
 				ImportLibrary="../../lib/$(TargetName).lib"
 			/>
 			<Tool

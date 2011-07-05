@@ -30,6 +30,7 @@ public:
 		: stream(NULL)
 		, buffer(buf)
 		, manager(mgr)
+		, preloadAll(false)
 		, headerLoaded(false)
 		, currentSamplePos(0)
 	{
@@ -63,6 +64,7 @@ public:
 	AudioBuffer* buffer;
 	ResourceManager* manager;
 
+	bool preloadAll;	// If not preloadAll, data will be loaded on request by audio device.
 	bool headerLoaded;
 	AudioBuffer::Format format;
 
@@ -73,7 +75,10 @@ public:
 
 void Mp3Loader::loadDataForRange(unsigned begin, unsigned end)
 {
-	// Submit the range to the command queue
+	requestQueue.request(begin, end);
+
+	TaskPool* taskPool = manager->taskPool;
+	taskPool->resume(buffer->taskLoaded);
 }
 
 void Mp3Loader::run(TaskPool* taskPool)
@@ -83,9 +88,6 @@ void Mp3Loader::run(TaskPool* taskPool)
 	else
 		loadData();
 }
-
-// This will be the approximate duration (in seconds) of a audio buffer segment to send to audio device
-static const float _bufferDuration = 1.0f;
 
 static const unsigned _dataChunkSize = 1024 * 16;
 
@@ -150,19 +152,27 @@ void Mp3Loader::loadData()
 	if(!io_ready(stream, _dataChunkSize, tId))
 		return reSchedule();
 
-	// Perform decoding
+	unsigned audioBufBegin, audioBufEnd;
+	const bool seek = requestQueue.getRequest(audioBufBegin, audioBufEnd);
+	// TODO: Handle seeking
+
+	// Even if the audio device didn't have any request, we try to begin loading some data
+	if(audioBufBegin == audioBufEnd && audioBufBegin == 0)
+		audioBufEnd = format.samplesPerSecond;
+
+	unsigned bytesToWrite = 0;
+	void* bufferData = buffer->getWritePointerForRange(audioBufBegin, audioBufEnd, bytesToWrite);
+	ASSERT(bufferData && bytesToWrite);
+
+	// Read from IO stream
 	rhbyte buf[_dataChunkSize];
 	unsigned readCount = (unsigned)io_read(stream, buf, _dataChunkSize, tId);
 
-	unsigned bytesToWrite = 0;
-	const unsigned proximateBufDuration = unsigned(_bufferDuration * format.samplesPerSecond);
-	unsigned audioBufBegin = currentSamplePos;
-	unsigned audioBufEnd = audioBufBegin + proximateBufDuration;
-	void* bufferData = buffer->getWritePointerForRange(audioBufBegin, audioBufEnd, bytesToWrite);
-
+	// Perform MP3 decoding
 	// TODO: Current implementation may lead to unbounded increasing of mpg123
 	// internal buffer. I already submitted a feature request to query the size
 	// of output I can get without feeding new data.
+	// May be implement a algorithm to adjust _dataChunkSize dynamically
 	unsigned decodeBytes = 0;
 	int ret = mpg123_decode(mpg, buf, readCount, (rhbyte*)bufferData, bytesToWrite, &decodeBytes);
 
@@ -176,6 +186,8 @@ void Mp3Loader::loadData()
 		currentSamplePos = mpg123_tell(mpg);
 		ASSERT(currentSamplePos <= audioBufEnd);
 		buffer->commitWriteForRange(audioBufBegin, currentSamplePos);
+		requestQueue.commit(audioBufBegin, currentSamplePos);
+//		printf("mp3 commit  : %d, %d\n", audioBufBegin, currentSamplePos);
 	}
 
 	// Condition for EOF
@@ -188,7 +200,7 @@ void Mp3Loader::loadData()
 		return;
 	}
 
-	return reSchedule();
+	return reSchedule(true);
 
 Abort:
 	buffer->state = Resource::Aborted;

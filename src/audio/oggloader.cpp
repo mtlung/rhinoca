@@ -110,7 +110,10 @@ public:
 
 void OggLoader::loadDataForRange(unsigned begin, unsigned end)
 {
-	// Submit the range to the command queue
+	requestQueue.request(begin, end);
+
+	TaskPool* taskPool = manager->taskPool;
+	taskPool->resume(buffer->taskLoaded);
 }
 
 void OggLoader::run(TaskPool* taskPool)
@@ -182,13 +185,23 @@ Abort:
 void OggLoader::loadData()
 {
 	int tId = TaskPool::threadId();
-	void* bufferData = NULL;
+	Rhinoca* rh = manager->rhinoca;
 
 	if(buffer->state == Resource::Aborted) goto Abort;
 	if(!stream) goto Abort;
 
 	if(!io_ready(stream, _dataChunkSize, tId))
 		return reSchedule();
+
+	unsigned audioBufBegin, audioBufEnd;
+	const bool seek = requestQueue.getRequest(audioBufBegin, audioBufEnd);
+	// TODO: Handle seeking
+
+	// Even if the audio device didn't have any request, we try to begin loading some data
+	if(audioBufBegin == audioBufEnd && audioBufBegin == 0)
+		audioBufEnd = format.samplesPerSecond;
+
+	unsigned theVeryBegin = currentSamplePos = audioBufBegin;
 
 	{	// Read from stream and put to ring buffer
 		rhbyte* p = ringBuffer.write(_dataChunkSize);
@@ -203,22 +216,20 @@ void OggLoader::loadData()
 		}
 
 		const unsigned proximateBufDuration = _bufferDuration * format.samplesPerSecond;
-		unsigned bytesToWrite = 0;
 		const int numChannels = vorbisInfo.channels <= 2 ? vorbisInfo.channels : 2; 
 		p = ringBuffer.read(readCount);
 
 		// Loop until we used up the available buffer we already read
+		void* bufferData = NULL;
 		for(bool needMoreData = false; !needMoreData; )
 		{
-			unsigned audioBufBegin = currentSamplePos;
-			unsigned audioBufEnd = audioBufBegin + proximateBufDuration;
+			unsigned bytesToWrite = 0;
+			audioBufBegin = currentSamplePos;
+			audioBufEnd = audioBufBegin + proximateBufDuration;
 
 			// Reserve a large enough buffer for 1 second audio
 			bufferData = buffer->getWritePointerForRange(audioBufBegin, audioBufEnd, bytesToWrite);
-
-			// Somethings goes wrong and making the audio buffer fail to allocate a single large buffer
-			if(!bufferData)
-				goto Abort;
+			ASSERT(bufferData && bytesToWrite);
 
 			// Read from ring buffer and put to vorbis
 			float** outputs = NULL;
@@ -268,9 +279,11 @@ void OggLoader::loadData()
 		}
 
 		ringBuffer.collectUnusedSpace();
+		requestQueue.commit(theVeryBegin, currentSamplePos);
+//		printf("ogg commit  : %d, %d\n", theVeryBegin, currentSamplePos);
 	}
 
-	return reSchedule();
+	return reSchedule(true);
 
 Abort:
 	buffer->state = Resource::Aborted;

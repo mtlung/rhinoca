@@ -74,6 +74,8 @@ void AudioBuffer::commitWriteForRange(unsigned begin, unsigned end)
 {
 	ScopeLock lock(mutex);
 
+	ASSERT(begin < end);
+
 	for(unsigned i=0; i<subBuffers.size(); ++i) {
 		SubBuffer& b = subBuffers[i];
 		if(!b.readyForRead && b.posBegin == begin && end <= b.posEnd) {

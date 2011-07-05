@@ -183,6 +183,8 @@ struct AudioDevice
 
 	AudioSound* createSound(const char* uri, ResourceManager* resourceMgr);
 
+	/// Returns -1 if no more free buffer available
+	/// Returns -2 if the requested range is already scheduled to load
 	int allocateAlBufferFor(AudioBuffer* src, unsigned begin, unsigned end);
 	void freeAlBuffer(int index);
 
@@ -194,7 +196,7 @@ struct AudioDevice
 	LinkList<AudioSound> _soundList;
 	LinkList<AudioSound::Active> _activeSoundList;
 
-	static const unsigned MAX_AL_BUFFERS = 64;
+	static const unsigned MAX_AL_BUFFERS = AudioSound::MAX_AL_BUFFERS * 16;
 	Array<AlBuffer, MAX_AL_BUFFERS> _alBuffers;
 };	// AudioDevice
 
@@ -229,10 +231,6 @@ int AudioSound::tryLoadNextBuffer()
 	for(unsigned i=0; i<MAX_AL_BUFFERS; ++i) {
 		int j = alBufferIndice[i].index;
 		if(j < 0) continue;
-
-		AlBuffer& b = device->_alBuffers[j];
-		if(b.end >= nextALBufLoadPosition)
-			nextALBufLoadPosition = b.end;
 	}
 
 	AudioBuffer::Format format;
@@ -316,14 +314,12 @@ int AudioDevice::allocateAlBufferFor(AudioBuffer* src, unsigned begin, unsigned 
 	for(unsigned i=0; i<MAX_AL_BUFFERS; ++i) {
 		AlBuffer& b = _alBuffers[i];
 
-		// Reuse existing perfect matching duration buffer (mostly for non-streaming sound)
-		if(b.begin == begin && b.end == end && b.srcData == src && b.dataReady) {
-			b.referenceCount++;
-			return i;
-		}
+		// Check if there is existing perfect matching duration buffer
+		if(b.begin == begin && b.end == end && b.srcData == src)
+			return -2;
 	}
 
-	// No free buffer, try to find unused one or free one with zero referenceCount
+	// No existing buffer match, try to find unused one or free one with zero referenceCount
 	for(unsigned i=0; i<MAX_AL_BUFFERS; ++i) {
 		AlBuffer& b = _alBuffers[i];
 		if(!b.srcData || b.referenceCount == 0) {
@@ -420,6 +416,7 @@ void AudioDevice::update()
 				checkAndPrintError("alSourceQueueBuffers failed: ");
 				sound.alBufferIndice[i].queued = true;
 
+				// Advance the next buffer location, once a buffer is committed by loader
 				sound.nextALBufLoadPosition = b.end;
 				sound.tryLoadNextBuffer();
 			}
@@ -486,6 +483,7 @@ void AudioDevice::update()
 				alBufferData(b.handle, getAlFormat(format), readPtr, readableBytes, format.samplesPerSecond);
 				b.dataReady = true;
 				b.end = b.begin + readableSamples;
+//				printf("alBufferData: %d, %d\n", b.begin, b.end);
 			}
 		}
 	}
