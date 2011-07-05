@@ -382,16 +382,14 @@ bool TaskPool::isDone(TaskId id)
 void TaskPool::suspend(TaskId id)
 {
 	ScopeLock lock(mutex);
-	TaskProxy* p = _pendingTasksHead->nextPending;
-	if(p != _pendingTasksTail)
+	if(TaskProxy* p = _findProxyById(id))
 		p->suspended = true;
 }
 
 void TaskPool::resume(TaskId id)
 {
 	ScopeLock lock(mutex);
-	TaskProxy* p = _pendingTasksHead->nextPending;
-	if(p != _pendingTasksTail)
+	if(TaskProxy* p = _findProxyById(id))
 		p->suspended = false;
 }
 
@@ -430,7 +428,7 @@ void TaskPool::doSomeTask(float timeout)
 			sleep(0);
 
 			// Hunt for most dependening job, to prevent job stavation.
-			p = p->dependency ? p->dependency : next;
+			p = (p->dependency && (p->dependency->id == p->dependencyId)) ? p->dependency : next;
 		}
 	}
 }
