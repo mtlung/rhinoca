@@ -85,6 +85,8 @@ public:
 	/// We use this canvas for rendering stuffs into the window
 	HTMLCanvasElement* virtualCanvas;
 
+	Event* currentEvent;	/// Carry the Event object when a event is risen
+
 	typedef Map<TimerCallback> TimerCallbacks;
 	TimerCallbacks timerCallbacks;
 

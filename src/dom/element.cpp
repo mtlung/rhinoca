@@ -58,7 +58,9 @@ static JSBool tagName(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 static const char* _eventAttributeTable[] = {
 	"onmouseup",
 	"onmousedown",
-	"onmousemove"
+	"onmousemove",
+	"onkeyup",
+	"onkeydown",
 };
 
 static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
@@ -88,6 +90,8 @@ static JSPropertySpec elementProperties[] = {
 	{_eventAttributeTable[0], 0, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
 	{_eventAttributeTable[1], 1, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
 	{_eventAttributeTable[2], 2, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
+	{_eventAttributeTable[3], 3, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
+	{_eventAttributeTable[4], 4, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
 	{0}
 };
 

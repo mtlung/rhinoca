@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "event.h"
+#include "../context.h"
 #include "../vector.h"
 
 namespace Dom {
@@ -129,10 +130,16 @@ void JsFunctionEventListener::handleEvent(Event* evt, JSObject* self)
 {
 	jsval argv, rval;
 	argv = *evt;
+
+	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(_jsContext));
+	rh->domWindow->currentEvent = evt;
+
 	if(!JSVAL_IS_NULL(_jsClosure))
 		JS_CallFunctionValue(_jsContext, self, _jsClosure, 1, &argv, &rval);
 	else if(_jsScript)
 		JS_ExecuteScript(_jsContext, self, _jsScript, &rval);
+
+	rh->domWindow->currentEvent = NULL;
 }
 
 jsval JsFunctionEventListener::getJsVal()

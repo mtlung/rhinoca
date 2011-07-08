@@ -3,6 +3,7 @@
 #include "body.h"
 #include "canvas.h"
 #include "document.h"
+#include "keyevent.h"
 #include "mouseevent.h"
 #include "navigator.h"
 #include "node.h"
@@ -232,6 +233,13 @@ static JSBool document(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 	return JS_TRUE;
 }
 
+static JSBool event(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+{
+	Window* self = getJsBindable<Window>(cx, obj);
+	*vp = *self->currentEvent;
+	return JS_TRUE;
+}
+
 static JSBool location(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	Window* self = getJsBindable<Window>(cx, obj);
@@ -288,6 +296,7 @@ static JSBool setEventAttribute(JSContext* cx, JSObject* obj, jsid id, JSBool st
 
 static JSPropertySpec properties[] = {
 	{"document", 0, JSPROP_READONLY | JsBindable::jsPropFlags, document, JS_StrictPropertyStub},
+	{"event", 0, JSPROP_READONLY | JsBindable::jsPropFlags, event, JS_StrictPropertyStub},
 	{"location", 0, JSPROP_READONLY | JsBindable::jsPropFlags, location, JS_StrictPropertyStub},
 	{"navigator", 0, JSPROP_READONLY | JsBindable::jsPropFlags, navigator, JS_StrictPropertyStub},
 	{"screen", 0, JSPROP_READONLY | JsBindable::jsPropFlags, screen, JS_StrictPropertyStub},
@@ -304,6 +313,7 @@ static JSPropertySpec properties[] = {
 
 Window::Window(Rhinoca* rh)
 	: rhinoca(rh)
+	, currentEvent(NULL)
 {
 	document = new HTMLDocument(rh);
 	virtualCanvas = new HTMLCanvasElement(rh);
@@ -370,6 +380,23 @@ void Window::dispatchEvent(Event* e)
 
 				if(ele->clientLeft() <= mouse->clientX && mouse->clientX <= ele->clientRight())
 				if(ele->clientTop() <= mouse->clientY && mouse->clientY <= ele->clientBottom()) {
+					e->target = ele;
+					ele->dispatchEvent(e);
+					return;
+				}
+			}
+		}
+	}
+	else if(KeyEvent* key = dynamic_cast<KeyEvent*>(e))
+	{
+		// Loop from the back of targets to see where the mouse fall into the element's rectangle
+		// TODO: Handling of stack context and z-index
+		for(unsigned i=targets.size(); i--; )
+		{
+			if(Element* ele = dynamic_cast<Element*>(targets[i]))
+			{
+				// TODO: Temp solution, before we have the concept of input focus
+				if(ele->tagName() == FixString("BODY")) {
 					e->target = ele;
 					ele->dispatchEvent(e);
 					return;
