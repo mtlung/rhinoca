@@ -47,6 +47,16 @@ public:
 	TaskPool taskPool;
 	ResourceManager resourceManager;
 
+	/// Frame per second, averaged over several frames
+	float fps;
+
+	/// Instantaneous frame time
+	float frameTime;
+
+	/// Timer for calculation of FPS etc
+	Timer _timer;
+	float _lastFrameTime;
+
 	/// Parameter to tune how often we perform explicit GC.
 	/// It's kind of temporary solution, since I am seeking some multi-thready way to do GC
 	unsigned _gcFrameIntervalCounter;

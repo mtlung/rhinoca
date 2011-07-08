@@ -7,6 +7,7 @@
 #include "render/vg/openvg.h"
 #include <stdarg.h>	// For va_list
 #include <string.h>
+#include <sys/stat.h>
 
 // Context
 JSRuntime* jsrt = NULL;
@@ -167,6 +168,22 @@ static rhuint64 default_ioRead(void* file, void* buffer, rhuint64 size, int thre
 	return (rhuint64)fread(buffer, 1, (size_t)size, f);
 }
 
+static rhint64 default_ioSize(void* file, int threadId)
+{
+	CompoundFS* fs = reinterpret_cast<CompoundFS*>(file);
+
+	if(fs->type == CompoundFS::Http)
+		return -1;	// Currently http stream don't support getting file size
+
+	FILE* f = reinterpret_cast<FILE*>(fs->handle);
+
+	struct stat st;
+	if(fstat(fileno(f), &st) != 0)
+		return -1;
+
+	return st.st_size;
+}
+
 static int default_ioSeek(void* file, rhuint64 offset, int origin, int threadId)
 {
 	CompoundFS* fs = reinterpret_cast<CompoundFS*>(file);
@@ -195,23 +212,22 @@ static void default_ioClose(void* file, int threadId)
 rhinoca_io_open io_open = default_ioOpen;
 rhinoca_io_ready io_ready = default_ioReady;
 rhinoca_io_read io_read = default_ioRead;
+rhinoca_io_size io_size = default_ioSize;
 rhinoca_io_seek io_seek = default_ioSeek;
 rhinoca_io_close io_close = default_ioClose;
-
-void rhinoca_io_setcallback(rhinoca_io_open open, rhinoca_io_ready ready, rhinoca_io_read read, rhinoca_io_seek seek, rhinoca_io_close close)
-{
-	io_open = open;
-	io_ready = ready;
-	io_read = read;
-	io_seek = seek;
-	io_close = close;
-}
 
 rhinoca_io_open rhinoca_get_io_open()	{ return io_open; }
 rhinoca_io_ready rhinoca_get_io_ready()	{ return io_ready; }
 rhinoca_io_read rhinoca_get_io_read()	{ return io_read; }
 rhinoca_io_seek rhinoca_get_io_seek()	{ return io_seek; }
 rhinoca_io_close rhinoca_get_io_close()	{ return io_close; }
+
+void rhinoca_set_io_open(rhinoca_io_open f)		{ io_open = f; }
+void rhinoca_set_io_ready(rhinoca_io_ready f)	{ io_ready = f; }
+void rhinoca_set_io_read(rhinoca_io_read f)		{ io_read = f; }
+void rhinoca_set_io_size(rhinoca_io_size f)		{ io_size = f; }
+void rhinoca_set_io_seek(rhinoca_io_seek f)		{ io_seek = f; }
+void rhinoca_set_io_close(rhinoca_io_close f)	{ io_close = f; }
 
 // Memory allocation
 void* rhinoca_realloca(void* ptr, unsigned int oldSize, unsigned int size);

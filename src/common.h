@@ -37,6 +37,7 @@ inline T* rhrenew(const T* ptr, rhuint oldCount, rhuint newCount) {
 extern rhinoca_io_open io_open;
 extern rhinoca_io_ready io_ready;
 extern rhinoca_io_read io_read;
+extern rhinoca_io_size io_size;
 extern rhinoca_io_seek io_seek;
 extern rhinoca_io_close io_close;
 extern rhinoca_printFunc print;

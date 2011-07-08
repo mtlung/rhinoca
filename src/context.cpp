@@ -69,6 +69,9 @@ Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 	, width(0), height(0)
 	, renderContex(rc)
 	, audioDevice(NULL)
+	, fps(1)
+	, frameTime(1)
+	, _lastFrameTime(0)
 	, _gcFrameIntervalCounter(_gcFrameInterval)
 {
 	jsContext = JS_NewContext(jsrt, 8192);
@@ -126,6 +129,13 @@ void Rhinoca::update()
 	}
 
 	Render::Driver::useRenderTarget(NULL);
+
+	// FPS calculation
+	float currentTime = _timer.seconds();
+	frameTime = currentTime - _lastFrameTime;
+	fps = (1.0f / frameTime) * 0.1f + fps * 0.9f;
+//	printf("\rfps: %f", fps);
+	_lastFrameTime = currentTime;
 }
 
 void Rhinoca::collectGarbage()
