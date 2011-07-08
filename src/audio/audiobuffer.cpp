@@ -7,7 +7,7 @@ namespace Audio {
 AudioBuffer::AudioBuffer(const char* uri)
 	: Resource(uri)
 {
-	Format f = { 0, 0, 0, 0, 0 };
+	Format f = { 0, 0, 0, 0, 0, 0 };
 	format = f;
 }
 
@@ -42,7 +42,6 @@ unsigned AudioBuffer::sizeInByteForSamples(unsigned samples) const
 
 void* AudioBuffer::getWritePointerForRange(unsigned begin, unsigned& end, unsigned& bytesToWrite)
 {
-
 	ScopeLock lock(mutex);
 
 	if(begin == end || format.blockAlignment == 0) {
@@ -105,6 +104,7 @@ void* AudioBuffer::getReadPointerForRange(unsigned begin, unsigned end, unsigned
 			readableSamples = b.posEnd - begin;
 			readableBytes = readableSamples * format.blockAlignment;
 			_format = format;
+			b.hotness++;
 
 			return b.data + (begin - b.posBegin) * format.blockAlignment;
 		}
@@ -120,13 +120,25 @@ void* AudioBuffer::getReadPointerForRange(unsigned begin, unsigned end, unsigned
 	return NULL;
 }
 
+unsigned AudioBuffer::memoryUsed() const
+{
+	ScopeLock lock(mutex);
+
+	unsigned size = 0;
+	for(unsigned i=0; i<subBuffers.size(); ++i) {
+		const SubBuffer& b = subBuffers[i];
+		size += b.sizeInByte;
+	}
+	return size;
+}
+
 void AudioBuffer::collectGarbage()
 {
 	ScopeLock lock(mutex);
 
 	for(unsigned i=0; i<subBuffers.size(); ++i) {
 		SubBuffer& b = subBuffers[i];
-		if(b.hotless < 0.001f && b.data) {
+		if(b.hotness < 0.001f && b.data) {
 			rhinoca_free(b.data);
 			SubBuffer empty = { 0, 0, 0, 0, NULL };
 			b = empty;

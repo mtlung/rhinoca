@@ -127,6 +127,7 @@ void WaveLoader::loadHeader()
 				format.format.samplesPerSec,
 				format.format.bitsPerSample,
 				format.format.blockAlign,
+				dataChunkSize / format.format.blockAlign,
 				dataChunkSize / format.format.blockAlign
 			};
 

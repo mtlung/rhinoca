@@ -24,24 +24,15 @@ public:
 	{
 		RequestQueue() : _seek(false), _begin(0), _end(0) {}
 
-		// Call be the audio device when it need some data
+		// Call by the audio device when it need some data
 		void request(unsigned begin, unsigned end)
 		{
 			ScopeLock lock(mutex);
 			ASSERT(begin < end);
 			ASSERT(_begin <= _end);
-			// Not contiguous, ignore this request
-			if(_seek = begin < _begin || begin > _end)
-				return;
-			_end = end;
-		}
-
-		void seek(unsigned begin, unsigned end)
-		{
-			ScopeLock lock(mutex);
-			ASSERT(begin < end);
-			_seek = true;
-			_begin = begin;
+			// Not contiguous, set seek to true
+			if(_seek = (begin < _begin || begin > _end))
+				_begin = begin;
 			_end = end;
 		}
 

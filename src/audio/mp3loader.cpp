@@ -125,8 +125,13 @@ void Mp3Loader::loadHeader()
 		format.bitsPerSample = 16;
 		format.blockAlignment = channels * sizeof(rhuint16);
 
+		// Mpg123 needs to know the file in order to estimate the audio length
+		mpg123_set_filesize(mpg, (off_t)io_size(stream, tId));
+
+		// NOTE: This is just an estimation, for accurate result we need to call mpg123_scan()
+		// but it need mpg to be opened in a seekable mode.
 		off_t length = mpg123_length(mpg);
-		format.totalSamples = (length != MPG123_ERR) ? length : 0;
+		format.estimatedSamples = (length != MPG123_ERR) ? length : 0;
 
 		// NOTE: AudioBuffer::setFormat() is thread safe
 		buffer->setFormat(format);
@@ -154,7 +159,33 @@ void Mp3Loader::loadData()
 
 	unsigned audioBufBegin, audioBufEnd;
 	const bool seek = requestQueue.getRequest(audioBufBegin, audioBufEnd);
-	// TODO: Handle seeking
+
+	if(seek) {
+		const unsigned backupCurPos = mpg123_tell(mpg);
+
+		off_t fileSeekPos;
+		off_t resultingOffset = mpg123_feedseek(mpg, audioBufBegin, SEEK_SET, &fileSeekPos);
+		if(resultingOffset < 0)
+			return reSchedule();
+
+		bool failed = false;
+
+		if(int fileSize = (int)io_size(stream, tId))
+			if(fileSeekPos >= fileSize)
+				failed = true;
+
+		if(!failed && !io_seek(stream, fileSeekPos, SEEK_SET, tId))
+			failed = true;
+
+		if(failed) {
+			// TODO: We need some way to report any failure of the seek operation to the audio device
+			// Roll back the seek position
+			VERIFY(mpg123_feedseek(mpg, backupCurPos, SEEK_SET, &fileSeekPos) == backupCurPos);
+			return reSchedule();
+		}
+
+		audioBufBegin = resultingOffset;
+	}
 
 	// Even if the audio device didn't have any request, we try to begin loading some data
 	if(audioBufBegin == audioBufEnd && audioBufBegin == 0)
@@ -182,20 +213,20 @@ void Mp3Loader::loadData()
 	if(ret == MPG123_NEW_FORMAT)
 		print(rh, "Mp3Loader: Changing audio format in the middle of loading is not supported '%s'\n", buffer->uri().c_str());
 
-	if(bytesToWrite > 0) {
+	if(decodeBytes > 0) {
 		currentSamplePos = mpg123_tell(mpg);
 		ASSERT(currentSamplePos <= audioBufEnd);
 		buffer->commitWriteForRange(audioBufBegin, currentSamplePos);
 		requestQueue.commit(audioBufBegin, currentSamplePos);
 //		printf("mp3 commit %s: %d, %d\n", buffer->uri().c_str(), audioBufBegin, currentSamplePos);
 	}
-	else
+	else if(readCount > 0)
 		reSchedule(false);
 
 	// Condition for EOF
 	if(ret == MPG123_DONE || (ret == MPG123_NEED_MORE && readCount == 0)) {
 		currentSamplePos = mpg123_tell(mpg);
-		format.totalSamples = currentSamplePos;
+		format.totalSamples = format.estimatedSamples = currentSamplePos;
 		buffer->setFormat(format);
 		buffer->state = Resource::Loaded;
 

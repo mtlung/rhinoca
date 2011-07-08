@@ -183,6 +183,12 @@ double HTMLAudioElement::currentTime() const
 		return 0;
 }
 
+void HTMLAudioElement::setCurrentTime(double time)
+{
+	if(_sound)
+		audiodevice_setSoundCurrentTime(_device, _sound, (float)time);
+}
+
 void HTMLAudioElement::setLoop(bool loop)
 {
 	if(_sound)

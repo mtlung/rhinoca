@@ -167,7 +167,7 @@ void OggLoader::loadHeader()
 		format.samplesPerSecond = vorbisInfo.sample_rate;
 		format.bitsPerSample = 16;
 		format.blockAlignment = vorbisInfo.channels * 2;
-		format.totalSamples = 0;
+		format.totalSamples = format.estimatedSamples = 0;
 
 		// NOTE: AudioBuffer::setFormat() is thread safe
 		buffer->setFormat(format);
@@ -209,7 +209,7 @@ void OggLoader::loadData()
 		ringBuffer.commitWrite(readCount);
 
 		if(readCount == 0) {	// EOF
-			format.totalSamples = currentSamplePos;
+			format.totalSamples = format.estimatedSamples = currentSamplePos;
 			buffer->setFormat(format);
 			buffer->state = Resource::Loaded;
 			return;

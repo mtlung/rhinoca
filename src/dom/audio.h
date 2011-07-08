@@ -35,6 +35,7 @@ public:
 	override void setSrc(const char* uri);
 
 	override double currentTime() const;
+	override void setCurrentTime(double time);
 
 	override bool loop() const;
 	override void setLoop(bool loop);

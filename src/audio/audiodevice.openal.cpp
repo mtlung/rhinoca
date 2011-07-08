@@ -119,6 +119,7 @@ struct AudioSound : public LinkListBase::Node<AudioSound>
 	int tryLoadNextBuffer();
 
 	void unqueueBuffer();
+	void unqueueAllBuffers();
 
 // Attributes:
 	struct Active : public LinkListBase::Node<AudioSound::Active>
@@ -228,10 +229,10 @@ int AudioSound::tryLoadNextBuffer()
 		return -1;
 
 	// Search the next sample position to load for
-	for(unsigned i=0; i<MAX_AL_BUFFERS; ++i) {
+/*	for(unsigned i=0; i<MAX_AL_BUFFERS; ++i) {
 		int j = alBufferIndice[i].index;
 		if(j < 0) continue;
-	}
+	}*/
 
 	AudioBuffer::Format format;
 	audioBuffer->getFormat(format);
@@ -241,11 +242,11 @@ int AudioSound::tryLoadNextBuffer()
 		return -1;
 
 	// The existing buffers already cover the whole range
-	if(nextALBufLoadPosition >= format.totalSamples && format.totalSamples > 0)
-		return -1;
+//	if(nextALBufLoadPosition >= format.totalSamples && format.totalSamples > 0)
+//		return -1;
 
-	// Try to load one second of sound data if the length of the audio is unknown
-	unsigned sampleToLoad = format.totalSamples > 0 ? format.totalSamples : 1 * format.samplesPerSecond + nextALBufLoadPosition;
+	// Try to load one second of sound data
+	unsigned sampleToLoad = 1 * format.samplesPerSecond + nextALBufLoadPosition;
 
 	// Query the device for any existing buffer for the requesting source and range,
 	// return a new one if none had found.
@@ -288,6 +289,12 @@ void AudioSound::unqueueBuffer()
 			break;
 		}
 	}
+}
+
+void AudioSound::unqueueAllBuffers()
+{
+	for(unsigned i=0; i<AudioSound::MAX_AL_BUFFERS; ++i)
+		unqueueBuffer();
 }
 
 void audioSound_destroy(AudioSound* sound)
@@ -499,6 +506,10 @@ void AudioDevice::update()
 			}
 		}
 	}
+
+	// Perform garbage collection on sound buffers
+	for(AudioSound* s = _soundList.begin(); s != _soundList.end(); s = s->next()) {
+	}
 }
 
 static ALCdevice* _alcDevice = NULL;
@@ -560,14 +571,7 @@ void audiodevice_playSound(AudioDevice* device, AudioSound* sound)
 	sound->isPlay = true;
 	sound->isPause = false;
 
-	// Remove all queued buffers and reset the play position to beginning
-	// Call alSourceStop() such that unqueueBuffer() can get effect
-	alSourceStop(sound->handle);
-	for(unsigned i=0; i<AudioSound::MAX_AL_BUFFERS; ++i)
-		sound->unqueueBuffer();
-	// Call alSourceRewind() to make the sound go though the AL_INITIAL state
-	alSourceRewind(sound->handle);
-	sound->nextALBufLoadPosition = 0;
+	audiodevice_setSoundCurrentTime(device, sound, 0);
 }
 
 void audiodevice_pauseSound(AudioDevice* device, AudioSound* sound)
@@ -594,6 +598,30 @@ bool audiodevice_getSoundLoop(AudioDevice* device, AudioSound* sound)
 
 void audiodevice_setSoundCurrentTime(AudioDevice* device, AudioSound* sound, float time)
 {
+	// Ensure positive value
+	time = time >= 0 ? time : 0;
+
+	AudioBuffer::Format format;
+	sound->audioBuffer->getFormat(format);
+
+	if(format.samplesPerSecond == 0)
+		return;
+
+	const unsigned samplePos = unsigned(time * format.samplesPerSecond);
+
+	// Ignore request that's beyond the audio length
+	if(format.totalSamples > 0 && samplePos >= format.totalSamples)
+		return;
+
+	// Remove all queued buffers and reset the play position to beginning
+	// Call alSourceStop() such that unqueueBuffer() can get effect
+	alSourceStop(sound->handle);
+	sound->unqueueAllBuffers();
+
+	// Call alSourceRewind() to make the sound go though the AL_INITIAL state
+	alSourceRewind(sound->handle);
+	sound->nextALBufLoadPosition = 
+	sound->queueSampleStartPosition = samplePos;
 }
 
 float audiodevice_getSoundCurrentTime(AudioDevice* device, AudioSound* sound)

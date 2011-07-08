@@ -20,6 +20,7 @@ public:
 		unsigned bitsPerSample;
 		unsigned blockAlignment;	/// >= channels * self->bitsPerSample / 8
 		unsigned totalSamples;		/// Zero for unknown duration
+		unsigned estimatedSamples;	/// A rough version of estimatedSamples, for showing to the user only, not used for play/stop logic
 	};
 
 // Operations
@@ -40,6 +41,9 @@ public:
 	/// Is data ready for read, null if data not ready.
 	void* getReadPointerForRange(unsigned begin, unsigned end, unsigned& readableSamples, unsigned& readableBytes, Format& format);
 
+	/// Calculate how much memory was spend in this audio buffer
+	unsigned memoryUsed() const;
+
 	/// Remove sub-buffer that is not used for a period of time.
 	void collectGarbage();
 
@@ -53,7 +57,7 @@ protected:
 	{
 		unsigned posBegin, posEnd;
 		unsigned sizeInByte;
-		float hotless;
+		float hotness;
 		bool readyForRead;
 		rhbyte* data;
 	};
