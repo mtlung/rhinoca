@@ -52,8 +52,11 @@ int _height = -1;
 
 static RhinocaRenderContext renderContext = { NULL, 0, 0, 0, 0 };
 
-static void setupFbo(unsigned width, unsigned height)
+static bool setupFbo(unsigned width, unsigned height)
 {
+	if(!glGenFramebuffers)
+		return false;
+
 	// Generate texture
 	if(!renderContext.texture) glGenTextures(1, &renderContext.texture);
 	glBindTexture(GL_TEXTURE_2D, renderContext.texture);
@@ -78,6 +81,8 @@ static void setupFbo(unsigned width, unsigned height)
 	ASSERT(GL_NO_ERROR == glGetError());
 
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+	return true;
 }
 
 LRESULT CALLBACK wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -162,13 +167,11 @@ HWND createWindow(HWND existingWindow, int& width, int& height, bool fullScreen)
 		hWnd = existingWindow;
 	}
 
-	{	// Get the client area size from Win32 if user didn't supply one
-		if(width == CW_USEDEFAULT || height == CW_USEDEFAULT) {
-			RECT rect;
-			::GetClientRect(hWnd, &rect);
-			width = rect.right - rect.left;
-			height = rect.bottom - rect.top;
-		}
+	{	// Get the client area size from Win32
+		RECT rect;
+		::GetClientRect(hWnd, &rect);
+		width = rect.right - rect.left;
+		height = rect.bottom - rect.top;
 
 //		if(fullScreen)
 //			setFullscreen(true);
@@ -221,7 +224,11 @@ int main()
 	initOpenGl(hWnd, dc);
 	rhinoca_init();
 
-	setupFbo(_width, _height);
+	if(!setupFbo(_width, _height)) {
+		printf("Seems like your OpenGL driver didn't support 'Frame Buffer Object', program quit.");
+		return 0;
+	}
+
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	Rhinoca* rh = rhinoca_create(&renderContext);
@@ -233,11 +240,9 @@ int main()
 	::SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG>(rh));
 	::ShowWindow(hWnd, true);
 
-//	rhinoca_openDocument(rh, "html5/test4/test.html");
-//	rhinoca_openDocument(rh, "../../../on9bird/on9birds.html");
-//	rhinoca_openDocument(rh, "../../test/htmlTest/vgTest/test.html");
-//	rhinoca_openDocument(rh, "../../test/htmlTest/requestAnimationFrame.html");
-	rhinoca_openDocument(rh, "http://localhost/rhinoca/test/htmlTest/imageTest/test.html");
+//	rhinoca_openDocument(rh, "../../test/htmlTest/audioTest/test.html");
+//	rhinoca_openDocument(rh, "../../demo/impactjs/drop/drop.html");
+	rhinoca_openDocument(rh, "../../demo/impactjs/biolab/biolab.html");
 
 	while(true) {
 		MSG message;

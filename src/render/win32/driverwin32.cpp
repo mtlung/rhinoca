@@ -219,6 +219,9 @@ void Driver::forceApplyCurrent()
 {
 	ASSERT(GL_NO_ERROR == glGetError());
 
+	if(!glBindFramebuffer)
+		return;
+
 	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)_context->renderTarget);
 
 	{	// Input assembler
