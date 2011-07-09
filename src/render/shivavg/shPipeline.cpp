@@ -508,22 +508,23 @@ VG_API_CALL void vgDrawImage(VGImage image)
   glMultMatrixf(mgl);
   
   /* Clamp to edge for proper filtering, modulate for multiply mode */
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, i->texture);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+  Driver::SamplerState state = {
+    (void*)i->texture,
+    Driver::SamplerState::MIN_MAG_POINT,
+    Driver::SamplerState::Edge,
+    Driver::SamplerState::Edge,
+  };
   
   /* Adjust antialiasing to settings */
   if (context->imageQuality == VG_IMAGE_QUALITY_NONANTIALIASED) {
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    state.filter = Driver::SamplerState::MIN_MAG_POINT;
     glDisable(GL_MULTISAMPLE);
   }else{
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    state.filter = Driver::SamplerState::MIN_MAG_LINEAR;
     glEnable(GL_MULTISAMPLE);
   }
+  Driver::setSamplerState(0, state);
+//glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
   
   /* Generate image texture coords automatically */
   texGenS[0] = 1.0f / i->texwidth;

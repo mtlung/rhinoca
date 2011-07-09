@@ -164,7 +164,7 @@ void* Driver::createContext(void* externalHandle)
 
 		for(unsigned i=0; i<Driver::maxTextureUnit; ++i) {
 			ctx->samplerStates[i].textureHandle = NULL;
-			ctx->samplerStates[i].filter = SamplerState::MIN_MAG_POINT;
+			ctx->samplerStates[i].filter = SamplerState::MIP_MAG_LINEAR;
 			ctx->samplerStates[i].u = SamplerState::Repeat;
 			ctx->samplerStates[i].v = SamplerState::Repeat;
 		}
@@ -439,13 +439,16 @@ void* Driver::createTexture(void* existingTexture, unsigned width, unsigned heig
 		handle = (GLuint)existingTexture;
 
 	if(width != 0 && height != 0) {
-		glBindTexture(type, handle);
+		Driver::SamplerState backupState;
+		Driver::getSamplerState(0, backupState);
 
-		glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-		glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		Driver::SamplerState state = {
+			(void*)handle,
+			Driver::SamplerState::MIN_MAG_LINEAR,
+			Driver::SamplerState::Edge,
+			Driver::SamplerState::Edge,
+		};
+		Driver::setSamplerState(0, state);
 
 		glTexImage2D(
 			type, 0, internalFormat, width, height, 0,
@@ -454,8 +457,8 @@ void* Driver::createTexture(void* existingTexture, unsigned width, unsigned heig
 			srcData
 		);
 
-		// Restore previous binded texture
-		glBindTexture(type, (GLuint)_context->samplerStates[_context->currentSampler].textureHandle);
+		// Restore previous state
+		Driver::setSamplerState(0, backupState);
 	}
 
 	ASSERT(GL_NO_ERROR == glGetError());
@@ -477,6 +480,7 @@ void Driver::deleteTexture(void* textureHandle)
 static const Driver::SamplerState noTexture = {
 	NULL,
 	Driver::SamplerState::MIN_MAG_LINEAR,
+	Driver::SamplerState::Edge,
 	Driver::SamplerState::Edge
 };
 
@@ -689,6 +693,11 @@ void Driver::setInputAssemblerState(const InputAssemblerState& state)
 	_context->inputAssemblerState = state;
 }
 
+void Driver::getSamplerState(unsigned textureUnit, SamplerState& state)
+{
+	state = _context->samplerStates[textureUnit];
+}
+
 void Driver::setSamplerState(unsigned textureUnit, const SamplerState& state)
 {
 	if(textureUnit != _context->currentSampler)
@@ -696,6 +705,8 @@ void Driver::setSamplerState(unsigned textureUnit, const SamplerState& state)
 
 	_context->currentSampler = textureUnit;
 	SamplerState& s = _context->samplerStates[textureUnit];
+
+	bool textureChanged = false;
 
 	// Bind the texture unit
 	if(s.textureHandle != state.textureHandle)
@@ -710,17 +721,25 @@ void Driver::setSamplerState(unsigned textureUnit, const SamplerState& state)
 			if(s.textureHandle)
 				glDisable(GL_TEXTURE_2D);
 		}
+
+		// Whenever there is a texture switch, we need to set the sampler state
+		textureChanged = true;
 		s.textureHandle = state.textureHandle;
 		glBindTexture(GL_TEXTURE_2D, handle);
 	}
 
-	if(!state.textureHandle) return;
-
 	// Setup sampler state
 	unsigned h = hash(&state.filter, sizeof(state)-sizeof(void*));
 
-	if(h == _context->samplerStateHash[textureUnit])
+	if(!textureChanged && h == _context->samplerStateHash[textureUnit]) {
+#ifndef NDEBUG
+		GLint magFilter;
+		glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, &magFilter);
+
+		ASSERT(_magFilter[state.filter] == magFilter);
+#endif
 		return;
+	}
 
 	_context->samplerStateHash[textureUnit] = h;
 	_context->samplerStates[textureUnit] = state;

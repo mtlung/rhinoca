@@ -167,6 +167,7 @@ public:
 		AddressMode u, v;
 	};	// SamplerState
 
+	static void getSamplerState(unsigned textureUnit, SamplerState& state);
 	static void setSamplerState(unsigned textureUnit, const SamplerState& state);
 
 // Rasterizer state
