@@ -18,8 +18,11 @@ Texture::~Texture()
 
 bool Texture::create(unsigned w, unsigned h, Format internalFormat, const char* data, unsigned dataSize, Format dataFormat)
 {
-	width = virtualWidth = w;
-	height = virtualHeight = h;
+	width = w;
+	height = h;
+
+	virtualWidth = (virtualWidth == 0) ? w : virtualWidth;
+	virtualHeight = (virtualHeight == 0) ? h : virtualHeight;
 
 	if(w == 0 || h == 0) return false;
 

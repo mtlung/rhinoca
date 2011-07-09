@@ -26,6 +26,7 @@ public:
 
 	/// Pretending the texture is of this size, useful when dealing with some
 	/// device which have limitations on the actual texture size.
+	/// If the virtual and actual size are not the same, the texture is cliped or padded but not strached.
 	unsigned virtualWidth, virtualHeight;
 };	// Texture
 
