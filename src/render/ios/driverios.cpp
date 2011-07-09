@@ -761,10 +761,12 @@ void Driver::setSamplerState(unsigned textureUnit, const SamplerState& state)
 
 	if(!textureChanged && h == _context->samplerStateHash[textureUnit]) {
 #ifndef NDEBUG
-		GLint magFilter;
-		glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, &magFilter);
+		if(state.textureHandle) {
+			GLint magFilter;
+			glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, &magFilter);
 
-		ASSERT(_magFilter[state.filter] == magFilter);
+			ASSERT(_magFilter[state.filter] == magFilter);
+		}
 #endif
 		return;
 	}

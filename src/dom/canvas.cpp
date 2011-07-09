@@ -173,7 +173,7 @@ void HTMLCanvasElement::render()
 	CanvasRenderingContext2D* ctx = dynamic_cast<CanvasRenderingContext2D*>(vc->context);
 
 	ctx->clearRect(0, 0, (float)width(), (float)height());
-	ctx->drawImage(texture(), 0, 0);
+	ctx->drawImage(texture(), Render::Driver::SamplerState::MIN_MAG_LINEAR, 0, 0);
 }
 
 void HTMLCanvasElement::registerClass(JSContext* cx, JSObject* parent)

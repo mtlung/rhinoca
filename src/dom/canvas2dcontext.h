@@ -35,17 +35,17 @@ public:
 
 // Draw image
 	void drawImage(
-		Render::Texture* texture,
+		Render::Texture* texture, int filter,
 		float dstx, float dsty
 	);
 
 	void drawImage(
-		Render::Texture* texture,
+		Render::Texture* texture, int filter,
 		float dstx, float dsty, float dstw, float dsth
 	);
 
 	void drawImage(
-		Render::Texture* texture,
+		Render::Texture* texture, int filter,
 		float srcx, float srcy, float srcw, float srch,
 		float dstx, float dsty, float dstw, float dsth
 	);
@@ -190,6 +190,10 @@ public:
 	FixString _font;
 	FixString _textAlign;
 	FixString _textBaseLine;
+
+	/// In the standard HTML5 canvas, the widht and height of the <IMG> tag is ignored,
+	/// set this to true such that the image will be appear as the size you set it.
+	bool useImgDimension;
 
 	static JSClass jsClass;
 };	// CanvasRenderingContext2D

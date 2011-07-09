@@ -30,8 +30,16 @@ public:
 
 	unsigned width() const;
 	unsigned height() const;
+
+	void setWidth(unsigned w);
+	void setHeight(unsigned h);
+
 	unsigned naturalWidth() const;
 	unsigned naturalHeight() const;
+
+	/// Use enum values as seen in Render::Driver::SamplerState
+	/// Can be MIN_MAG_LINEAR (default) or MIN_MAG_POINT
+	int filter;
 
 	override const FixString& tagName() const;
 

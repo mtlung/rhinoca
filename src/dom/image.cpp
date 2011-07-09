@@ -73,7 +73,7 @@ static JSBool setWidth(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsv
 	HTMLImageElement* self = getJsBindable<HTMLImageElement>(cx, obj);
 	int32 width;
 	if(!JS_ValueToInt32(cx, *vp, &width)) return JS_FALSE;
-	self->_width = width; return JS_TRUE;
+	self->setWidth(width); return JS_TRUE;
 }
 
 static JSBool getHeight(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
@@ -87,7 +87,7 @@ static JSBool setHeight(JSContext* cx, JSObject* obj, jsid id, JSBool strict, js
 	HTMLImageElement* self = getJsBindable<HTMLImageElement>(cx, obj);
 	int32 height;
 	if(!JS_ValueToInt32(cx, *vp, &height)) return JS_FALSE;
-	self->_height = height; return JS_TRUE;
+	self->setHeight(height); return JS_TRUE;
 }
 
 static JSBool naturalWidth(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
@@ -159,6 +159,22 @@ Return:*/
 	return JS_PropertyStub(cx, obj, id, vp);
 }
 
+static JSBool setFilter(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
+{
+	HTMLImageElement* self = getJsBindable<HTMLImageElement>(cx, obj);
+	if(!self) return JS_FALSE;
+
+	JsString jss(cx, *vp);
+	if(!jss) return JS_FALSE;
+
+	if(stricmp(jss.c_str(), "nearest") == 0)
+		self->filter = Driver::SamplerState::MIN_MAG_POINT;
+	else
+		self->filter = Driver::SamplerState::MIN_MAG_LINEAR;
+
+	return JS_TRUE;
+}
+
 static JSPropertySpec properties[] = {
 	{"src", 0, JsBindable::jsPropFlags, getSrc, setSrc},
 	{"width", 0, JsBindable::jsPropFlags, getWidth, setWidth},
@@ -171,6 +187,10 @@ static JSPropertySpec properties[] = {
 	{_eventAttributeTable[0], 0, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
 	{_eventAttributeTable[1], 1, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
 	{_eventAttributeTable[2], 2, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
+
+	// Rhinoca extensions
+	{"filter", 0, JsBindable::jsPropFlags, JS_PropertyStub, setFilter},
+
 	{0}
 };
 
@@ -194,6 +214,7 @@ static JSFunctionSpec methods[] = {
 HTMLImageElement::HTMLImageElement(Rhinoca* rh)
 	: Element(rh)
 	, texture(NULL)
+	, filter(Driver::SamplerState::MIN_MAG_LINEAR)
 	, _width(-1), _height(-1)
 {
 }
@@ -248,22 +269,32 @@ void HTMLImageElement::setSrc(const char* uri)
 		triggerLoadEvent(this, "error");
 }
 
-rhuint HTMLImageElement::width() const
+unsigned HTMLImageElement::width() const
 {
 	return _width < 0 ? naturalWidth() : _width;
 }
 
-rhuint HTMLImageElement::height() const
+unsigned HTMLImageElement::height() const
 {
 	return _height < 0 ? naturalHeight() : _height;
 }
 
-rhuint HTMLImageElement::naturalWidth() const
+void HTMLImageElement::setWidth(unsigned w)
+{
+	_width = w;
+}
+
+void HTMLImageElement::setHeight(unsigned h)
+{
+	_height = h;
+}
+
+unsigned HTMLImageElement::naturalWidth() const
 {
 	return texture ? texture->width : 0;
 }
 
-rhuint HTMLImageElement::naturalHeight() const
+unsigned HTMLImageElement::naturalHeight() const
 {
 	return texture ? texture->height : 0;
 }

@@ -218,6 +218,19 @@ static JSBool setTextBaseLine(JSContext* cx, JSObject* obj, jsid id, JSBool stri
 	return JS_TRUE;
 }
 
+static JSBool setUseImgDimension(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
+{
+	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
+	if(!self) return JS_FALSE;
+
+	JSBool b;
+	if(!JS_ValueToBoolean(cx, *vp, &b))
+		return JS_FALSE;
+
+	self->useImgDimension = b;
+	return JS_TRUE;
+}
+
 static JSPropertySpec properties[] = {
 	{"canvas", 0, JSPROP_READONLY | JsBindable::jsPropFlags, getCanvas, JS_StrictPropertyStub},
 	{"globalAlpha", 0, JsBindable::jsPropFlags, JS_PropertyStub, setGlobalAlpha},
@@ -229,6 +242,10 @@ static JSPropertySpec properties[] = {
 	{"font", 0, JsBindable::jsPropFlags, getFont, setFont},
 	{"textAlign", 0, JsBindable::jsPropFlags, getTextAlign, setTextAlign},
 	{"textBaseLine", 0, JsBindable::jsPropFlags, getTextBaseLine, setTextBaseLine},
+
+	// Rhinoca extensions
+	{"useImgDimension", 0, JsBindable::jsPropFlags, JS_PropertyStub, setUseImgDimension},	// Consider <IMG>'s width and height when in drawImage()
+
 	{0}
 };
 
@@ -274,21 +291,41 @@ static JSBool drawImage(JSContext* cx, uintN argc, jsval* vp)
 	// Determine the source is an image or a canvas
 	Texture* texture = NULL;
 
-	if(HTMLImageElement* img = getJsBindableExactTypeNoThrow<HTMLImageElement>(cx, vp, 0))
+	int filter;
+	unsigned imgw, imgh;
+
+	if(HTMLImageElement* img = getJsBindableExactTypeNoThrow<HTMLImageElement>(cx, vp, 0)) {
 		texture = img->texture.get();
-	else if(HTMLCanvasElement* otherCanvas = getJsBindable<HTMLCanvasElement>(cx, vp, 0))
+		filter = img->filter;
+		imgw = img->width();
+		imgh = img->height();
+	}
+	else if(HTMLCanvasElement* otherCanvas = getJsBindable<HTMLCanvasElement>(cx, vp, 0)) {
 		texture = otherCanvas->texture();
+		filter = Driver::SamplerState::MIN_MAG_LINEAR;
+		imgw = otherCanvas->width();
+		imgh = otherCanvas->height();
+	}
 
 	if(!texture) return JS_FALSE;
 
+	if(!self->useImgDimension) {
+		imgw = texture->virtualWidth;
+		imgh = texture->virtualHeight;
+	}
+
+	float scalex = float(texture->virtualWidth) / imgw;
+	float scaley = float(texture->virtualHeight) / imgh;
 	double sx, sy, sw, sh;	// Source x, y, width and height
 	double dx, dy, dw, dh;	// Dest x, y, width and height
 
 	switch(argc) {
 	case 3:
 		sx = sy = 0;
-		sw = dw = texture->virtualWidth;
-		sh = dh = texture->virtualHeight;
+		sw = texture->virtualWidth;
+		sh = texture->virtualHeight;
+		dw = imgw;
+		dh = imgh;
 		VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &dx));
 		VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &dy));
 		break;
@@ -310,12 +347,18 @@ static JSBool drawImage(JSContext* cx, uintN argc, jsval* vp)
 		VERIFY(JS_ValueToNumber(cx, JS_ARGV6, &dy));
 		VERIFY(JS_ValueToNumber(cx, JS_ARGV7, &dw));
 		VERIFY(JS_ValueToNumber(cx, JS_ARGV8, &dh));
+
+		sx *= scalex;
+		sy *= scaley;
+		sw *= scalex;
+		sh *= scaley;
 		break;
 	default:
 		return JS_FALSE;
 	}
 
-	self->drawImage(texture,
+	self->drawImage(
+		texture, filter,
 		(float)sx, (float)sy, (float)sw, (float)sh,
 		(float)dx, (float)dy, (float)dw, (float)dh
 	);
@@ -788,6 +831,7 @@ struct CanvasRenderingContext2D::OpenVG
 CanvasRenderingContext2D::CanvasRenderingContext2D(HTMLCanvasElement* c)
 	: Context(c)
 	, _globalAlpha(1)
+	, useImgDimension(false)
 {
 	currentState.transform = Mat44::identity;
 
@@ -887,31 +931,38 @@ void CanvasRenderingContext2D::registerClass(JSContext* cx, JSObject* parent)
 }
 
 void CanvasRenderingContext2D::drawImage(
-	Texture* texture,
+	Texture* texture, int filter,
 	float dstx, float dsty)
 {
 	drawImage(
-		texture,
+		texture, filter,
 		0, 0, (float)texture->virtualWidth, (float)texture->virtualHeight,
 		dstx, dsty, (float)texture->virtualWidth, (float)texture->virtualHeight
 	);
 }
 
 void CanvasRenderingContext2D::drawImage(
-	Texture* texture,
+	Texture* texture, int filter,
 	float dstx, float dsty, float dstw, float dsth)
 {
-	drawImage(texture,
+	drawImage(
+		texture, filter,
 		0, 0, (float)texture->virtualWidth, (float)texture->virtualHeight,
 		dstx, dsty, dstw, dsth
 	);
 }
 
 void CanvasRenderingContext2D::drawImage(
-	Texture* texture,
+	Texture* texture, int filter,
 	float srcx, float srcy, float srcw, float srch,
 	float dstx, float dsty, float dstw, float dsth)
 {
+/*	printf("draw to %x: %s, %.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f\n",
+		(unsigned)canvas->_framebuffer.handle, texture->uri().c_str(),
+		srcx, srcy, srcw, srch,
+		dstx, dsty, dstw, dsth
+	);*/
+
 	canvas->bindFramebuffer();
 
 	unsigned w = width();
@@ -940,9 +991,9 @@ void CanvasRenderingContext2D::drawImage(
 	srcy *= th; srch *= th;
 
 	// Use the texture
+	ASSERT(filter >= 0 && filter <= Driver::SamplerState::MIP_MAG_LINEAR);
 	Driver::SamplerState state = {
-		texture->handle,
-		Driver::SamplerState::MIN_MAG_LINEAR,
+		texture->handle, (Render::Driver::SamplerState::Filter)filter,
 		Driver::SamplerState::Edge,
 		Driver::SamplerState::Edge,
 	};
@@ -1090,7 +1141,7 @@ void CanvasRenderingContext2D::rect(float x, float y, float w, float h)
 
 static const Driver::SamplerState noTexture = {
 	NULL,
-	Driver::SamplerState::MIN_MAG_LINEAR,
+	Driver::SamplerState::MIP_MAG_LINEAR,
 	Driver::SamplerState::Edge,
 	Driver::SamplerState::Edge,
 };
