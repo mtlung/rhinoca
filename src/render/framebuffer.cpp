@@ -61,7 +61,7 @@ void Framebuffer::createTexture(unsigned w, unsigned h)
 		sprintf(buf, "Framebuffer %x", (unsigned)handle);
 		texture->setKey(buf);
 
-		printf("creating Framebuffer:%x, w:%d h:%d\n", (unsigned)handle, width, height);
+//		printf("creating Framebuffer:%x, w:%d h:%d\n", (unsigned)handle, width, height);
 	}
 }
 

@@ -74,7 +74,7 @@ public:
 	};
 
 	/// To use the texture, call setSamplerState()
-	static void* createTexture(void* existingTexture, unsigned width, unsigned height, TextureFormat internalFormat=RGBA, const void* srcData=NULL, TextureFormat srcDataFormat=RGBA);
+	static void* createTexture(void* existingTexture, unsigned width, unsigned height, TextureFormat internalFormat=RGBA, const void* srcData=NULL, TextureFormat srcDataFormat=RGBA, unsigned packAlignment=1);
 	static void deleteTexture(void* textureHandle);
 
 // Draw quad

@@ -16,7 +16,7 @@ Texture::~Texture()
 	clear();
 }
 
-bool Texture::create(unsigned w, unsigned h, Format internalFormat, const char* data, unsigned dataSize, Format dataFormat)
+bool Texture::create(unsigned w, unsigned h, Format internalFormat, const char* data, unsigned dataSize, Format dataFormat, unsigned packAlignment)
 {
 	width = w;
 	height = h;
@@ -31,7 +31,7 @@ bool Texture::create(unsigned w, unsigned h, Format internalFormat, const char* 
 		height = Driver::nextPowerOfTwo(h);
 	}
 
-	handle = Driver::createTexture(handle, width, height, internalFormat, data, dataFormat);
+	handle = Driver::createTexture(handle, width, height, internalFormat, data, dataFormat, packAlignment);
 
 	return true;
 }

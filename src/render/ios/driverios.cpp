@@ -446,7 +446,7 @@ static Driver::TextureFormat autoChooseFormat(Driver::TextureFormat srcFormat)
 	}
 }
 
-void* Driver::createTexture(void* existingTexture, unsigned width, unsigned height, TextureFormat internalFormat, const void* srcData, TextureFormat srcDataFormat)
+void* Driver::createTexture(void* existingTexture, unsigned width, unsigned height, TextureFormat internalFormat, const void* srcData, TextureFormat srcDataFormat, unsigned packAlignment)
 {
 	ASSERT(GL_NO_ERROR == glGetError());
 
@@ -488,12 +488,20 @@ void* Driver::createTexture(void* existingTexture, unsigned width, unsigned heig
 		};
 		Driver::setSamplerState(0, state);
 
-		glTexImage2D(
-			type, 0, internalFormat, texWidth, texHeight, 0,
-			srcDataFormat,
-			GL_UNSIGNED_BYTE,
-			srcData
-		);
+		{	// NOTE: iOS didn't support GL_UNPACK_ROW_LENGTH, which is better than using GL_UNPACK_ALIGNMENT
+			GLint alignmentBackup;
+			glGetIntegerv(GL_UNPACK_ALIGNMENT, &alignmentBackup);
+			glPixelStorei(GL_UNPACK_ALIGNMENT, packAlignment);
+
+			glTexImage2D(
+				type, 0, internalFormat, texWidth, texHeight, 0,
+				srcDataFormat,
+				GL_UNSIGNED_BYTE,
+				srcData
+			);
+
+			glPixelStorei(GL_UNPACK_ALIGNMENT, alignmentBackup);
+		}
 
 		if(!_context->supportNPOT) {
 			int area[] = { 0, 0, width, height };
