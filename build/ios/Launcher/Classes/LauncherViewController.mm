@@ -176,6 +176,7 @@ void alertFunc(Rhinoca* rh, void* userData, const char* str)
 	[aContext release];
 
 	[(EAGLView *)self.view setContext:context];
+	self.view.contentScaleFactor = 1;
 	[(EAGLView *)self.view setFramebuffer];
 
 	if ([context API] == kEAGLRenderingAPIOpenGLES2)
@@ -185,8 +186,8 @@ void alertFunc(Rhinoca* rh, void* userData, const char* str)
 	animationFrameInterval = 1;
 	self.displayLink = nil;
 
-	unsigned width = self.view.bounds.size.width;
-	unsigned height = self.view.bounds.size.height;
+	unsigned width = self.view.bounds.size.width * self.view.contentScaleFactor;
+	unsigned height = self.view.bounds.size.height * self.view.contentScaleFactor;
 
 	// Fbo for Rhinoca to render
 	renderContext.platformSpecificContext = aContext;
@@ -203,11 +204,11 @@ void alertFunc(Rhinoca* rh, void* userData, const char* str)
 //	rhinoca_openDocument(rh, "http://localhost/rhinoca/test/htmlTest/test4/test.html");
 //	rhinoca_openDocument(rh, "http://192.168.1.100/rhinoca/demo/Nebula/nebula.html");
 //	rhinoca_openDocument(rh, "http://192.168.1.100/rhinoca/demo/jsgamesoup/FallingGame/FallingGame.html");
-	rhinoca_openDocument(rh, "http://192.168.1.100/rhinoca/demo/on9bird/on9birds.html");
+//	rhinoca_openDocument(rh, "http://192.168.1.100/rhinoca/demo/on9bird/on9birds.html");
 //	rhinoca_openDocument(rh, "http://192.168.1.100/rhinoca/demo/Pixastic/pixastic.html");
 //	rhinoca_openDocument(rh, "http://192.168.1.100/rhinoca/test/htmltest/audiotest/test.html");
 //	rhinoca_openDocument(rh, "http://192.168.1.100/rhinoca/demo/impactjs/drop/drop.html");
-//	rhinoca_openDocument(rh, "http://192.168.1.100/rhinoca/demo/impactjs/biolab/biolab.html");
+	rhinoca_openDocument(rh, "http://192.168.1.100/rhinoca/demo/impactjs/biolab/biolab.html");
 	assert(GL_NO_ERROR == glGetError());
 }
 
@@ -315,8 +316,8 @@ void alertFunc(Rhinoca* rh, void* userData, const char* str)
 	rhinoca_update(rh);
 	assert(GL_NO_ERROR == glGetError());
 
-	unsigned width = self.view.bounds.size.width;
-	unsigned height = self.view.bounds.size.height;
+	unsigned width = self.view.bounds.size.width * self.view.contentScaleFactor;
+	unsigned height = self.view.bounds.size.height * self.view.contentScaleFactor;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, ((EAGLView*)self.view)->defaultFramebuffer);
 

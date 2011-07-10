@@ -157,6 +157,8 @@
 	int i = 0;
 	for(UITouch* touch in touches) {
 		CGPoint loc = [touch locationInView:self];
+		loc.x *= self.contentScaleFactor;
+		loc.y *= self.contentScaleFactor;
 		RhinocaEvent ev = { (void*)msg, i, loc.x, loc.y, 0 };
 		rhinoca_processEvent(rh, ev);
 		++i;
@@ -169,6 +171,8 @@
 	int i = 0;
 	for(UITouch* touch in touches) {
 		CGPoint loc = [touch locationInView:self];
+		loc.x *= self.contentScaleFactor;
+		loc.y *= self.contentScaleFactor;
 		RhinocaEvent ev = { (void*)msg, i, loc.x, loc.y, 0 };
 		rhinoca_processEvent(rh, ev);
 		++i;
@@ -181,6 +185,8 @@
 	int i = 0;
 	for(UITouch* touch in touches) {
 		CGPoint loc = [touch locationInView:self];
+		loc.x *= self.contentScaleFactor;
+		loc.y *= self.contentScaleFactor;
 		RhinocaEvent ev = { (void*)msg, i, loc.x, loc.y, 0 };
 		rhinoca_processEvent(rh, ev);
 		++i;
@@ -193,6 +199,8 @@
 	int i = 0;
 	for(UITouch* touch in touches) {
 		CGPoint loc = [touch locationInView:self];
+		loc.x *= self.contentScaleFactor;
+		loc.y *= self.contentScaleFactor;
 		RhinocaEvent ev = { (void*)msg, i, loc.x, loc.y, 0 };
 		rhinoca_processEvent(rh, ev);
 		++i;
