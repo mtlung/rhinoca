@@ -314,8 +314,8 @@ static JSBool drawImage(JSContext* cx, uintN argc, jsval* vp)
 		imgh = texture->virtualHeight;
 	}
 
-	float scalex = float(texture->virtualWidth) / imgw;
-	float scaley = float(texture->virtualHeight) / imgh;
+	const float scalex = float(texture->virtualWidth) / imgw;
+	const float scaley = float(texture->virtualHeight) / imgh;
 	double sx, sy, sw, sh;	// Source x, y, width and height
 	double dx, dy, dw, dh;	// Dest x, y, width and height
 

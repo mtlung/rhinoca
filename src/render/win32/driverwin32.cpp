@@ -470,7 +470,7 @@ void* Driver::createTexture(void* existingTexture, unsigned width, unsigned heig
 			glPixelStorei(GL_UNPACK_ALIGNMENT, packAlignment);
 
 			glTexImage2D(
-				type, 0, internalFormat, texWidth, texHeight, 0,
+				type, 0, internalFormat, width, height, 0,
 				srcDataFormat,
 				GL_UNSIGNED_BYTE,
 				srcData
