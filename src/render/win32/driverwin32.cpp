@@ -56,6 +56,8 @@ public:
 	Driver::BlendState blendState;
 	unsigned blendStateHash;
 
+	GLint maxTextureSize;
+
 	struct OglArrayState {
 		GLvoid* ptrOrHandle;
 		unsigned size, stride;
@@ -135,6 +137,8 @@ static void bindIndexBuffer(GLuint ib)
 void* Driver::createContext(void* externalHandle)
 {
 	Context* ctx = new Context;
+
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &ctx->maxTextureSize);
 
 	ctx->viewportState.left = ctx->viewportState.top = 0;
 	ctx->viewportState.width = ctx->viewportState.height = 0;
@@ -290,7 +294,11 @@ void Driver::forceApplyCurrent()
 // Capability
 void* Driver::getCapability(const char* cap)
 {
-	return (void*)1;
+	if(strcasecmp(cap, "npot") == 0)
+		return (void*)1;
+	if(strcasecmp(cap, "maxtexsize") == 0)
+		return (void*)_context->maxTextureSize;
+	return NULL;
 }
 
 // Render target
@@ -426,6 +434,12 @@ static Driver::TextureFormat autoChooseFormat(Driver::TextureFormat srcFormat)
 void* Driver::createTexture(void* existingTexture, unsigned width, unsigned height, TextureFormat internalFormat, const void* srcData, TextureFormat srcDataFormat)
 {
 	ASSERT(GL_NO_ERROR == glGetError());
+
+	const GLint maxTexSize = _context->maxTextureSize;
+	if(width > maxTexSize || height > maxTexSize) {
+		printf("Driver::createTexture() - texture size w:%d, h:%d exceed the limit %d\n", width, height, maxTexSize);
+		return NULL;
+	}
 
 	if(internalFormat == ANY)
 		internalFormat = autoChooseFormat(srcDataFormat);

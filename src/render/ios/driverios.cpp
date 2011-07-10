@@ -12,6 +12,10 @@
 
 namespace Render {
 
+static const float _mat44Identity[16] = {
+	1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1
+};
+
 void Driver::init()
 {
 }
@@ -56,6 +60,7 @@ public:
 
 	bool supportNPOT;
 	bool supportSeperateBlend;
+	GLint maxTextureSize;
 
 	struct OglArrayState {
 		GLvoid* ptrOrHandle;
@@ -142,6 +147,8 @@ void* Driver::createContext(void* externalHandle)
 	ctx->supportSeperateBlend = (
 		strstr(extensions, "GL_OES_blend_equation_separate") != 0 &&
 		strstr(extensions, "GL_OES_blend_func_separate") != 0);
+
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &ctx->maxTextureSize);
 
 	ctx->viewportState.left = ctx->viewportState.top = 0;
 	ctx->viewportState.width = ctx->viewportState.height = 0;
@@ -294,8 +301,10 @@ void Driver::forceApplyCurrent()
 // Capability
 void* Driver::getCapability(const char* cap)
 {
-	if(strcmp(cap, "npot") == 0)
+	if(strcasecmp(cap, "npot") == 0)
 		return _context->supportNPOT ? (void*)1 : NULL;
+	if(strcasecmp(cap, "maxtexsize") == 0)
+		return (void*)_context->maxTextureSize;
 	return NULL;
 }
 
@@ -441,6 +450,12 @@ void* Driver::createTexture(void* existingTexture, unsigned width, unsigned heig
 {
 	ASSERT(GL_NO_ERROR == glGetError());
 
+	const GLint maxTexSize = _context->maxTextureSize;
+	if(width > maxTexSize || height > maxTexSize) {
+		printf("Driver::createTexture() - texture size w:%d, h:%d exceed the limit %d\n", width, height, maxTexSize);
+		return NULL;
+	}
+
 	if(internalFormat == ANY)
 		internalFormat = autoChooseFormat(srcDataFormat);
 
@@ -508,7 +523,7 @@ void Driver::deleteTexture(void* textureHandle)
 static const Driver::SamplerState noTexture = {
 	NULL,
 	Driver::SamplerState::MIN_MAG_LINEAR,
-	Driver::SamplerState::Edge
+	Driver::SamplerState::Edge,
 	Driver::SamplerState::Edge
 };
 
@@ -964,9 +979,41 @@ void Driver::readPixels(unsigned x, unsigned y, unsigned width, unsigned height,
 
 void Driver::writePixels(unsigned x, unsigned y, unsigned width, unsigned height, TextureFormat format, const unsigned char* data)
 {
-	glPixelStorei(GL_PACK_ALIGNMENT,1);
+	// OpenGL ES didn't support glDrawPixels
+//	glPixelStorei(GL_PACK_ALIGNMENT,1);
 //	glRasterPos2i((GLint)x, (GLint)y);
 //	glDrawPixels((GLsizei)width, (GLsizei)height, (GLenum)format, GL_UNSIGNED_BYTE, data);
+
+	const GLint maxTexSize = _context->maxTextureSize;
+	if(width > maxTexSize || height > maxTexSize)
+		printf("Driver::createTexture() - texture size w:%d, h:%d exceed the limit %d\n", width, height, maxTexSize);
+
+
+	// TODO: It's slow, any alternative?
+	width = width > maxTexSize ? maxTexSize : width;
+	height = height > maxTexSize ? maxTexSize : height;
+	void* texture = createTexture(NULL, width, height, format, data, format);
+
+	setViewport(x, y, width, height);
+	ortho(0, width, 0, height, 1, -1);
+	setViewMatrix(_mat44Identity);
+
+	SamplerState state = {
+		texture,
+		SamplerState::MIN_MAG_LINEAR,
+		SamplerState::Edge,
+		SamplerState::Edge
+	};
+	setSamplerState(0, state);
+
+	drawQuad(
+		0,0, width,0, width,height, 0,height,
+		1,
+		0,0, 1,0, 1,1, 0,1,
+		255,255,255,255
+	);
+
+	deleteTexture(texture);
 }
 
 }	// Render

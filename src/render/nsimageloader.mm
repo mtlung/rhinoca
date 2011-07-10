@@ -161,22 +161,22 @@ Abort:
 	texture->state = Resource::Aborted;
 }
 
-static void rgbaSetAlphaToOne(unsigned char* data, unsigned rowPixels, unsigned rowBytes, unsigned rows)
+static void rgbaSetAlphaToOne(unsigned char* data, unsigned width, unsigned rowBytes, unsigned rows)
 {
 	for(unsigned i=0; i<rows; ++i) {
 		unsigned char* p = data + i * rowBytes;
-		for(unsigned j=0; j<rowPixels; ++j) {
+		for(unsigned j=0; j<width; ++j) {
 			p[3] = 255;
 			p += 4;
 		}
 	}
 }
 
-static void argbToRgba(unsigned char* data, unsigned rowPixels, unsigned rowBytes, unsigned rows)
+static void argbToRgba(unsigned char* data, unsigned width, unsigned rowBytes, unsigned rows)
 {
 	for(unsigned i=0; i<rows; ++i) {
 		unsigned char* p = data + i * rowBytes;
-		for(unsigned j=0; j<rowPixels; ++j) {
+		for(unsigned j=0; j<width; ++j) {
 			unsigned tmp[4] = { p[0], p[1], p[2], p[3] };
 			p[0] = tmp[1]; p[1] = tmp[2]; p[2] = tmp[3]; p[3] = tmp[0];
 			p += 4;
@@ -189,7 +189,6 @@ void NSImageLoader::commit(TaskPool* taskPool)
 	ASSERT(texture->scratch == this);
 	texture->scratch = NULL;
 
-	unsigned components;
 	unsigned rowBytes, rowPixels;		// Image size padded by CGImage
 	CGBitmapInfo info;					// CGImage component layout info
 
@@ -209,9 +208,7 @@ void NSImageLoader::commit(TaskPool* taskPool)
 		return;
 	}
 
-	components = bpp >> 3;
 	rowBytes = CGImageGetBytesPerRow(image);	// CGImage may pad rows
-	rowPixels = rowBytes / components;
 
 	CFDataRef data = CGDataProviderCopyData(CGImageGetDataProvider(image));
 	pixels = (unsigned char*)CFDataGetBytePtr(data);
@@ -224,10 +221,10 @@ void NSImageLoader::commit(TaskPool* taskPool)
 		switch(info & kCGBitmapAlphaInfoMask) {
 		case kCGImageAlphaPremultipliedFirst:
 		case kCGImageAlphaFirst:
-			argbToRgba(pixels, rowPixels, rowBytes, texHeight);
+			argbToRgba(pixels, width, rowBytes, texHeight);
 			break;
 		case kCGImageAlphaNoneSkipFirst:
-			argbToRgba(pixels, rowPixels, rowBytes, texHeight);
+			argbToRgba(pixels, width, rowBytes, texHeight);
 		case kCGImageAlphaNoneSkipLast:
 			// If the driver support converting RGBA to RGB, then there is no need to call rgbaSetAlphaToOne()
 			//internal = Driver::RGB;

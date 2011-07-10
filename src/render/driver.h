@@ -24,6 +24,7 @@ public:
 // Capability
 	// Supported cap:
 	// npot
+	// maxtexsize
 	static void* getCapability(const char* cap);
 
 	static unsigned nextPowerOfTwo(unsigned x);

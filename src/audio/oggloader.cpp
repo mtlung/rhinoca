@@ -193,17 +193,19 @@ void OggLoader::loadData()
 	if(!io_ready(stream, _dataChunkSize, tId))
 		return reSchedule();
 
-	unsigned audioBufBegin, audioBufEnd;
-	const bool seek = requestQueue.getRequest(audioBufBegin, audioBufEnd);
-	// TODO: Handle seeking
+	{
+		unsigned audioBufBegin, audioBufEnd;
+		const bool seek = requestQueue.getRequest(audioBufBegin, audioBufEnd);
+		// TODO: Handle seeking
+		(void)seek;
 
-	// Even if the audio device didn't have any request, we try to begin loading some data
-	if(audioBufBegin == audioBufEnd && audioBufBegin == 0)
-		audioBufEnd = format.samplesPerSecond;
+		// Even if the audio device didn't have any request, we try to begin loading some data
+		if(audioBufBegin == audioBufEnd && audioBufBegin == 0)
+			audioBufEnd = format.samplesPerSecond;
 
-	unsigned theVeryBegin = currentSamplePos = audioBufBegin;
+		unsigned theVeryBegin = currentSamplePos = audioBufBegin;
 
-	{	// Read from stream and put to ring buffer
+		// Read from stream and put to ring buffer
 		rhbyte* p = ringBuffer.write(_dataChunkSize);
 		unsigned readCount = (unsigned)io_read(stream, p, _dataChunkSize, tId);
 		ringBuffer.commitWrite(readCount);

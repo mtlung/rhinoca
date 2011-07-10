@@ -31,7 +31,7 @@ public:
 			ASSERT(begin < end);
 			ASSERT(_begin <= _end);
 			// Not contiguous, set seek to true
-			if(_seek = (begin < _begin || begin > _end))
+			if((_seek = (begin < _begin || begin > _end)))
 				_begin = begin;
 			_end = end;
 		}

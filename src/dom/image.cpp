@@ -167,7 +167,7 @@ static JSBool setFilter(JSContext* cx, JSObject* obj, jsid id, JSBool strict, js
 	JsString jss(cx, *vp);
 	if(!jss) return JS_FALSE;
 
-	if(stricmp(jss.c_str(), "nearest") == 0)
+	if(strcasecmp(jss.c_str(), "nearest") == 0)
 		self->filter = Driver::SamplerState::MIN_MAG_POINT;
 	else
 		self->filter = Driver::SamplerState::MIN_MAG_LINEAR;

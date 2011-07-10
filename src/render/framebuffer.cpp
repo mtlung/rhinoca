@@ -46,10 +46,9 @@ void Framebuffer::createTexture(unsigned w, unsigned h)
 	if(Driver::isPowerOfTwo(h)) ++h;
 #endif
 
-#ifdef RHINOCA_IPHONE
-	if(w>2048) w= 2048;
-	if(h>2048) h= 2048;
-#endif
+	const unsigned maxTexSize = (unsigned)Driver::getCapability("maxTexSize");
+	if(w > maxTexSize) w = maxTexSize;
+	if(h > maxTexSize) h = maxTexSize;
 
 	VERIFY(texture->create(w, h, Render::Driver::ANY, NULL, 0, Render::Driver::RGBA));
 	texture->virtualWidth = width;
