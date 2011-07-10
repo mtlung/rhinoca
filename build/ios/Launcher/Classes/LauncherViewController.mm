@@ -124,6 +124,40 @@ static void setupFbo(unsigned width, unsigned height)
 
 @synthesize animating, context, displayLink;
 
+void alertFunc(Rhinoca* rh, void* userData, const char* str)
+{
+	// TODO: Make it a blocking call
+	// May need to run the javascript other than the main thread
+#if TARGET_OS_IPHONE
+	UIAlertView* alert = [
+		[[UIAlertView alloc]
+		initWithTitle:@"Alert"
+		message:[NSString stringWithUTF8String:str]
+		delegate:nil
+		cancelButtonTitle:NSLocalizedString(@"OK", @"")
+		otherButtonTitles:nil]
+		autorelease];
+	[alert
+		performSelector:@selector(show)
+		onThread:[NSThread mainThread]
+		withObject:nil
+		waitUntilDone:YES];
+#else
+	NSAlert* alert =
+		[NSAlert
+		alertWithMessageText:@"Alert"
+		defaultButton:NSLocalizedString(@"OK", @"")
+		alternateButton:nil
+		otherButton:nil
+		informativeTextWithFormat:[NSString stringWithUTF8String:str]];
+	[alert
+		performSelector:@selector(runModal)
+		onThread:[NSThread mainThread]
+		withObject:nil
+		waitUntilDone:NO];
+#endif
+}
+
 - (void)awakeFromNib
 {
 	EAGLContext *aContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
@@ -162,9 +196,18 @@ static void setupFbo(unsigned width, unsigned height)
 	rhinoca_init();
 
 	rh = rhinoca_create(&renderContext);
+	rhinoca_setAlertFunc(alertFunc, self);
 	rhinoca_setSize(rh, width, height);
+	((EAGLView*)self.view)->rh = rh;
 
-	rhinoca_openDocument(rh, "http://localhost/rhinoca/test/htmlTest/imageTest/test.html");
+//	rhinoca_openDocument(rh, "http://localhost/rhinoca/test/htmlTest/test4/test.html");
+//	rhinoca_openDocument(rh, "http://192.168.1.100/rhinoca/demo/Nebula/nebula.html");
+//	rhinoca_openDocument(rh, "http://192.168.1.100/rhinoca/demo/jsgamesoup/FallingGame/FallingGame.html");
+	rhinoca_openDocument(rh, "http://192.168.1.100/rhinoca/demo/on9bird/on9birds.html");
+//	rhinoca_openDocument(rh, "http://192.168.1.100/rhinoca/demo/Pixastic/pixastic.html");
+//	rhinoca_openDocument(rh, "http://192.168.1.100/rhinoca/test/htmltest/audiotest/test.html");
+//	rhinoca_openDocument(rh, "http://192.168.1.100/rhinoca/demo/impactjs/drop/drop.html");
+//	rhinoca_openDocument(rh, "http://192.168.1.100/rhinoca/demo/impactjs/biolab/biolab.html");
 	assert(GL_NO_ERROR == glGetError());
 }
 
@@ -377,6 +420,7 @@ static void setupFbo(unsigned width, unsigned height)
 	[super didReceiveMemoryWarning];
 
 	// Release any cached data, images, etc. that aren't in use.
+	rhinoca_collectGarbage(rh);
 }
 
 - (BOOL)compileShader:(GLuint *)shader type:(GLenum)type file:(NSString *)file
