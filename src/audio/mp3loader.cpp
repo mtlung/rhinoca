@@ -158,9 +158,10 @@ void Mp3Loader::loadData()
 		return reSchedule();
 
 	unsigned audioBufBegin, audioBufEnd;
-	const bool seek = requestQueue.getRequest(audioBufBegin, audioBufEnd);
 
-	if(seek) {
+	// Get the requested audio range, and see if seeking is needed
+	if(requestQueue.getRequest(audioBufBegin, audioBufEnd))
+	{
 		const unsigned backupCurPos = mpg123_tell(mpg);
 
 		off_t fileSeekPos;
@@ -181,10 +182,15 @@ void Mp3Loader::loadData()
 			// TODO: We need some way to report any failure of the seek operation to the audio device
 			// Roll back the seek position
 			VERIFY(mpg123_feedseek(mpg, backupCurPos, SEEK_SET, &fileSeekPos) == backupCurPos);
-			return reSchedule();
+			requestQueue.request(backupCurPos, backupCurPos + format.samplesPerSecond);
+			return reSchedule(true);
 		}
 
 		audioBufBegin = resultingOffset;
+
+		// Check for IO ready state once again
+		if(!io_ready(stream, _dataChunkSize, tId))
+			return reSchedule();
 	}
 
 	// Even if the audio device didn't have any request, we try to begin loading some data

@@ -275,6 +275,9 @@ bool Rhinoca::openDoucment(const char* uri)
 				const char* name = parser.attributeName(i);
 				const char* value = parser.attributeValue(i);
 
+				// Make the attribute name case insensitive
+				tolower(const_cast<char*>(name));
+
 				jsval v = STRING_TO_JSVAL(JS_NewStringCopyZ(jsContext, value));
 				VERIFY(JS_SetProperty(jsContext, *currentNode, name, &v));
 			}

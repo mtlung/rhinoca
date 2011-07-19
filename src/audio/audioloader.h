@@ -50,7 +50,7 @@ public:
 		void commit(unsigned begin, unsigned end)
 		{
 			ScopeLock lock(mutex);
-			ASSERT(begin == _begin && "Audio loader is leaving a gap in the audio data!");
+			ASSERT(_seek || begin == _begin && "Audio loader is leaving a gap in the audio data!");
 			ASSERT(begin < end);
 			ASSERT(_begin <= _end);
 			_begin = end;
