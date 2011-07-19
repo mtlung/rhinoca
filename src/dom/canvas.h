@@ -43,16 +43,13 @@ public:
 
 	Render::Texture* texture();
 
-	int width() const { return _framebuffer.width; }
-	int height() const { return _framebuffer.height; }
+	override unsigned width() const { return _framebuffer.width; }
+	override unsigned height() const { return _framebuffer.height; }
 
-	void setWidth(unsigned width);
-	void setHeight(unsigned height);
+	override void setWidth(unsigned width);
+	override void setHeight(unsigned height);
 
 	override const FixString& tagName() const;
-
-	override int clientWidth() const { return _framebuffer.width; }
-	override int clientHeight() const { return _framebuffer.height; }
 
 	static JSClass jsClass;
 

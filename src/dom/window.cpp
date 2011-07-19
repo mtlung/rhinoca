@@ -378,8 +378,8 @@ void Window::dispatchEvent(Event* e)
 					return;
 				}
 
-				if(ele->clientLeft() <= mouse->clientX && mouse->clientX <= ele->clientRight())
-				if(ele->clientTop() <= mouse->clientY && mouse->clientY <= ele->clientBottom()) {
+				if(ele->left() <= mouse->clientX && mouse->clientX <= ele->right())
+				if(ele->top() <= mouse->clientY && mouse->clientY <= ele->bottom()) {
 					e->target = ele;
 					ele->dispatchEvent(e);
 					return;

@@ -163,6 +163,8 @@ void HTMLCanvasElement::createContext(const char* ctxName)
 
 void HTMLCanvasElement::render()
 {
+	Element::render();
+
 	// No need to draw to the window, if 'frontBufferOnly' is set to true such that all
 	// draw operation is already put on the window
 	if(!_framebuffer.texture) return;

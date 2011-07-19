@@ -1,17 +1,11 @@
 #include "pch.h"
 #include "element.h"
+#include "elementstyle.h"
+#include "canvas2dcontext.h"
 #include "document.h"
 #include "nodelist.h"
 #include "../context.h"
 #include "../path.h"
-
-static JSBool JS_ValueToRhInt32(JSContext *cx, jsval v, rhint32 *ip)
-{
-	int32 val = *ip;
-	JSBool ret = JS_ValueToInt32(cx, v, &val);
-	*ip = val;
-	return ret;
-}
 
 namespace Dom {
 
@@ -25,14 +19,14 @@ JSClass Element::jsClass = {
 static JSBool clientWidth(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	Element* self = getJsBindable<Element>(cx, obj);
-	*vp = INT_TO_JSVAL(self->clientWidth());
+	*vp = INT_TO_JSVAL(self->width());
 	return JS_TRUE;
 }
 
 static JSBool clientHeight(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	Element* self = getJsBindable<Element>(cx, obj);
-	*vp = INT_TO_JSVAL(self->clientHeight());
+	*vp = INT_TO_JSVAL(self->height());
 	return JS_TRUE;
 }
 
@@ -40,10 +34,12 @@ static JSBool elementGetStyle(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	Element* self = getJsBindable<Element>(cx, obj);
 
-	ElementStyle* style = new ElementStyle;
-	style->element = self;
-	style->bind(cx, *self);
-	*vp = *style;
+	if(!self->style) {
+		self->style = new ElementStyle(self);
+		self->style->bind(cx, *self);
+	}
+
+	*vp = *self->style;
 
 	return JS_TRUE;
 }
@@ -170,8 +166,9 @@ static JSFunctionSpec elementMethods[] = {
 
 Element::Element(Rhinoca* rh)
 	: Node(rh)
-	, visible(true)
-	, top(0), left(0)
+	, _top(0), _left(0)
+	, _width(0), _height(0)
+	, style(NULL)
 {
 }
 
@@ -227,6 +224,34 @@ void Element::fixRelativePath(const char* uri, const char* docUri, Path& path)
 	}
 }
 
+static int _min(int a, int b) { return a < b ? a : b; }
+
+void Element::render()
+{
+	// Render the style's background image if any
+	if(!style || !style->backgroundImage)
+		return;
+
+	HTMLCanvasElement* canvas = ownerDocument()->window()->virtualCanvas;
+	CanvasRenderingContext2D* context = dynamic_cast<CanvasRenderingContext2D*>(canvas->context);
+
+	float dx = (float)style->left();
+	float dy = (float)style->top();
+	float dw = (float)style->width();
+	float dh = (float)style->height();
+
+	float sx = (float)style->backgroundPositionX;
+	float sy = (float)style->backgroundPositionY;
+	float sw = (float)_min(style->width(), style->backgroundImage->virtualWidth);
+	float sh = (float)_min(style->height(), style->backgroundImage->virtualHeight);
+
+	context->drawImage(
+		style->backgroundImage.get(), Render::Driver::SamplerState::MIN_MAG_LINEAR,
+		sx, sy, sw, sh,
+		dx, dy, dw, dh
+	);
+}
+
 static const FixString _tagName = "ELEMENT";
 
 const FixString& Element::tagName() const
@@ -272,72 +297,6 @@ void ElementFactory::addFactory(FactoryFunc factory)
 	}
 
 	_factories[_factoryCount-1] = factory;
-}
-
-JSClass ElementStyle::jsClass = {
-	"ElementStyle", JSCLASS_HAS_PRIVATE,
-	JS_PropertyStub,  JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-	JS_EnumerateStub, JS_ResolveStub,
-	JS_ConvertStub,  JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
-};
-
-static JSBool styleGetVisible(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
-{
-	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
-	*vp = BOOLEAN_TO_JSVAL(self->element->visible);
-	return JS_TRUE;
-}
-
-static JSBool styleSetVisible(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
-{
-	JSBool b;
-	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
-	if(!JS_ValueToBoolean(cx, *vp, &b)) return JS_FALSE;
-	self->element->visible = (b ==  JS_TRUE);
-	return JS_TRUE;
-}
-
-static JSBool styleGetTop(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
-{
-	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
-	*vp = INT_TO_JSVAL(self->element->top);
-	return JS_TRUE;
-}
-
-static JSBool styleSetTop(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
-{
-	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
-	return JS_ValueToRhInt32(cx, *vp, &self->element->top);
-}
-
-static JSBool styleGetLeft(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
-{
-	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
-	*vp = INT_TO_JSVAL(self->element->left);
-	return JS_TRUE;
-}
-
-static JSBool styleSetLeft(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
-{
-	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
-	return JS_ValueToRhInt32(cx, *vp, &self->element->left);
-}
-
-static JSPropertySpec properties[] = {
-	{"display", 0, JsBindable::jsPropFlags, styleGetVisible, styleSetVisible},
-	{"top", 0, JsBindable::jsPropFlags, styleGetTop, styleSetTop},
-	{"left", 0, JsBindable::jsPropFlags, styleGetLeft, styleSetLeft},
-	{0}
-};
-
-void ElementStyle::bind(JSContext* cx, JSObject* parent)
-{
-	ASSERT(!jsContext);
-	jsContext = cx;
-	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
-	VERIFY(JS_SetPrivate(cx, *this, this));
-	VERIFY(JS_DefineProperties(cx, *this, properties));
-	addReference();
 }
 
 }	// namespace Dom

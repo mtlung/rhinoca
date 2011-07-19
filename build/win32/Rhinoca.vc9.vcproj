@@ -226,6 +226,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\dom\elementstyle.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\elementstyle.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\dom\event.cpp"
 				>
 			</File>

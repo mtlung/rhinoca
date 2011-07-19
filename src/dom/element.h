@@ -9,6 +9,8 @@ class XmlParser;
 
 namespace Dom {
 
+class ElementStyle;
+
 // Reference: http://www.w3schools.com/dom/dom_element.asp
 class Element : public Node
 {
@@ -25,20 +27,30 @@ public:
 	/// Helper function to convert a uri into a usable path for ResourceManager
 	void fixRelativePath(const char* uri, const char* docUri, Path& path);
 
+	override void render();
+
 // Attributes
 	FixString id;
 	bool visible;
-	rhint32 top, left;
+
+	int _top, _left;
+	int _width, _height;	// NOTE: It's intentional to type _width and _height as signed integer
 
 	override const FixString& tagName() const;
 
-	virtual int clientTop() const { return top; }
-	virtual int clientLeft() const { return left; }
-	virtual int clientWidth() const { return 0; }
-	virtual int clientHeight() const { return 0; }
+	virtual int top() const { return _top; }
+	virtual int left() const { return _left; }
 
-	int clientRight() const { return clientLeft() + clientWidth(); }
-	int clientBottom() const { return clientTop() + clientHeight(); }
+	virtual unsigned width() const { return _width; }
+	virtual unsigned height() const { return _height; }
+
+	virtual void setWidth(unsigned w) { _width = w; }
+	virtual void setheight(unsigned h) { _height = h; }
+
+	int right() const { return left() + width(); }
+	int bottom() const { return top() + height(); }
+
+	ElementStyle* style;
 
 	static JSClass jsClass;
 };	// Element
@@ -64,18 +76,6 @@ protected:
 	int _factoryCount;
 	int _factoryBufCount;
 };	// ElementFactory
-
-class ElementStyle : public JsBindable
-{
-public:
-// Operations
-	override void bind(JSContext* cx, JSObject* parent);
-
-// Attributes
-	Element* element;
-
-	static JSClass jsClass;
-};	// ElementStyle
 
 }	// namespace Dom
 

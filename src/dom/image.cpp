@@ -215,8 +215,8 @@ HTMLImageElement::HTMLImageElement(Rhinoca* rh)
 	: Element(rh)
 	, texture(NULL)
 	, filter(Driver::SamplerState::MIN_MAG_LINEAR)
-	, _width(-1), _height(-1)
 {
+	_width = _height = -1;
 }
 
 HTMLImageElement::~HTMLImageElement()
@@ -279,16 +279,6 @@ unsigned HTMLImageElement::height() const
 	return _height < 0 ? naturalHeight() : _height;
 }
 
-void HTMLImageElement::setWidth(unsigned w)
-{
-	_width = w;
-}
-
-void HTMLImageElement::setHeight(unsigned h)
-{
-	_height = h;
-}
-
 unsigned HTMLImageElement::naturalWidth() const
 {
 	return texture ? texture->width : 0;
@@ -297,6 +287,16 @@ unsigned HTMLImageElement::naturalWidth() const
 unsigned HTMLImageElement::naturalHeight() const
 {
 	return texture ? texture->height : 0;
+}
+
+void HTMLImageElement::setWidth(unsigned w)
+{
+	_width = w;
+}
+
+void HTMLImageElement::setHeight(unsigned h)
+{
+	_height = h;
 }
 
 static const FixString _tagName = "IMG";

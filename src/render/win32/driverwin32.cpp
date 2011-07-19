@@ -436,7 +436,7 @@ void* Driver::createTexture(void* existingTexture, unsigned width, unsigned heig
 	ASSERT(GL_NO_ERROR == glGetError());
 
 	const GLint maxTexSize = _context->maxTextureSize;
-	if(width > maxTexSize || height > maxTexSize) {
+	if(width > (unsigned)maxTexSize || height > (unsigned)maxTexSize) {
 		printf("Driver::createTexture() - texture size w:%d, h:%d exceed the limit %d\n", width, height, maxTexSize);
 		return NULL;
 	}

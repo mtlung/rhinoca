@@ -28,14 +28,14 @@ public:
 
 	void setSrc(const char* uri);
 
-	unsigned width() const;
-	unsigned height() const;
-
-	void setWidth(unsigned w);
-	void setHeight(unsigned h);
+	override unsigned width() const;
+	override unsigned height() const;
 
 	unsigned naturalWidth() const;
 	unsigned naturalHeight() const;
+
+	override void setWidth(unsigned w);
+	override void setHeight(unsigned h);
 
 	/// Use enum values as seen in Render::Driver::SamplerState
 	/// Can be MIN_MAG_LINEAR (default) or MIN_MAG_POINT
@@ -44,8 +44,6 @@ public:
 	override const FixString& tagName() const;
 
 	static JSClass jsClass;
-
-	int _width, _height;
 };	// HTMLImageElement
 
 }	// namespace Dom
