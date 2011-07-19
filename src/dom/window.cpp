@@ -5,6 +5,7 @@
 #include "document.h"
 #include "keyevent.h"
 #include "mouseevent.h"
+#include "touchevent.h"
 #include "navigator.h"
 #include "node.h"
 #include "windowlocation.h"
@@ -361,13 +362,26 @@ void Window::dispatchEvent(Event* e)
 		if(itr->hasListener())
 			targets.push_back(itr.current());
 
-	// Handling of mouse events
+	// Handling of touch and mouse events
 	// TODO: Generate 'secondary' events like mouse clicked (down and up in the same position)
-	if(MouseEvent* mouse = dynamic_cast<MouseEvent*>(e))
 	{
+		int x, y;
+		MouseEvent* mouse = dynamic_cast<MouseEvent*>(e);
+		TouchEvent* touch = dynamic_cast<TouchEvent*>(e);
+
+		if(mouse) {
+			x = mouse->clientX;
+			y = mouse->clientY;
+		}
+
+		if(touch) {
+			x = touch->clientX;
+			y = touch->clientY;
+		}
+
 		// Loop from the back of targets to see where the mouse fall into the element's rectangle
 		// TODO: Handling of stack context and z-index
-		for(unsigned i=targets.size(); i--; )
+		if(mouse || touch) for(unsigned i=targets.size(); i--; )
 		{
 			if(Element* ele = dynamic_cast<Element*>(targets[i]))
 			{
@@ -378,8 +392,8 @@ void Window::dispatchEvent(Event* e)
 					return;
 				}
 
-				if(ele->left() <= mouse->clientX && mouse->clientX <= ele->right())
-				if(ele->top() <= mouse->clientY && mouse->clientY <= ele->bottom()) {
+				if(ele->left() <= x && x <= ele->right())
+				if(ele->top() <= y && y <= ele->bottom()) {
 					e->target = ele;
 					ele->dispatchEvent(e);
 					return;
@@ -387,7 +401,8 @@ void Window::dispatchEvent(Event* e)
 			}
 		}
 	}
-	else if(KeyEvent* key = dynamic_cast<KeyEvent*>(e))
+
+	if(KeyEvent* key = dynamic_cast<KeyEvent*>(e))
 	{
 		// Loop from the back of targets to see where the mouse fall into the element's rectangle
 		// TODO: Handling of stack context and z-index

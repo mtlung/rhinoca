@@ -41,8 +41,8 @@ public:
 	unsigned height() const;
 	void setHeight(unsigned val);
 
-	float backgroundPositionX;
-	float backgroundPositionY;
+	int backgroundPositionX;
+	int backgroundPositionY;
 	Render::TexturePtr backgroundImage;
 
 	static JSClass jsClass;

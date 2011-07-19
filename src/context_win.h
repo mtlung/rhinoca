@@ -26,6 +26,7 @@ void Rhinoca::processEvent(RhinocaEvent ev)
 	int keyCode = 0;
 
 	const char* mouseEvent = NULL;
+	const char* touchEvent = NULL;
 
 	switch((UINT)ev.type)
 	{
@@ -45,9 +46,11 @@ void Rhinoca::processEvent(RhinocaEvent ev)
 
 	case WM_LBUTTONDOWN:
 		mouseEvent = "mousedown";
+		touchEvent = "touchstart";
 		break;
 	case WM_LBUTTONUP:
 		mouseEvent = "mouseup";
+		touchEvent = "touchend";
 		break;
 	case WM_MOUSEMOVE:
 		mouseEvent = "mousemove";
@@ -62,6 +65,24 @@ void Rhinoca::processEvent(RhinocaEvent ev)
 
 		e->bind(domWindow->jsContext, NULL);
 		e->target = domWindow;
+
+		domWindow->dispatchEvent(e);
+	}
+
+	// The standard require dispatching the touch event first, and then mouse event
+	// See Interaction with Mouse Events in https://dvcs.w3.org/hg/webevents/raw-file/tip/touchevents.html
+	if(touchEvent)
+	{
+		Dom::TouchEvent* e = new Dom::TouchEvent;
+		e->type = touchEvent;
+		e->screenX = LOWORD(lParam);
+		e->screenY = HIWORD(lParam);
+		e->clientX = LOWORD(lParam);
+		e->clientY = HIWORD(lParam);
+		e->pageX = LOWORD(lParam);
+		e->pageY = HIWORD(lParam);
+
+		e->bind(domWindow->jsContext, NULL);
 
 		domWindow->dispatchEvent(e);
 	}

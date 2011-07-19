@@ -95,6 +95,18 @@ static JSBool styleSetBG(JSContext* cx, JSObject* obj, jsid id, JSBool strict, j
 	return JS_TRUE;
 }
 
+static JSBool styleSetBGPos(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
+{
+	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
+
+	if(JSVAL_IS_NUMBER(*vp))
+		VERIFY(JS_ValueToRhInt32(cx, *vp, &self->backgroundPositionX));
+	else
+		return JS_FALSE;
+
+	return JS_TRUE;
+}
+
 static JSPropertySpec properties[] = {
 	{"display", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetVisible},
 	{"top", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetTop},
@@ -102,6 +114,7 @@ static JSPropertySpec properties[] = {
 	{"width", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetWidth},
 	{"height", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetHeight},
 	{"backgroundImage", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetBG},
+	{"backgroundPositionX", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetBGPos},
 	{0}
 };
 

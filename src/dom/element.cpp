@@ -10,7 +10,7 @@
 namespace Dom {
 
 JSClass Element::jsClass = {
-	"HTMLElement", JSCLASS_HAS_PRIVATE,
+	"HTMLElement", JSCLASS_HAS_PRIVATE | JSCLASS_HAS_RESERVED_SLOTS(1),
 	JS_PropertyStub,  JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub,  JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
@@ -37,6 +37,7 @@ static JSBool elementGetStyle(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 	if(!self->style) {
 		self->style = new ElementStyle(self);
 		self->style->bind(cx, *self);
+		VERIFY(JS_SetReservedSlot(cx, *self, 0, *self->style));
 	}
 
 	*vp = *self->style;
@@ -240,8 +241,8 @@ void Element::render()
 	float dw = (float)style->width();
 	float dh = (float)style->height();
 
-	float sx = (float)style->backgroundPositionX;
-	float sy = (float)style->backgroundPositionY;
+	float sx = (float)-style->backgroundPositionX;
+	float sy = (float)-style->backgroundPositionY;
 	float sw = (float)_min(style->width(), style->backgroundImage->virtualWidth);
 	float sh = (float)_min(style->height(), style->backgroundImage->virtualHeight);
 
