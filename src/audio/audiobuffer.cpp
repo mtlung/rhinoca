@@ -73,15 +73,23 @@ void AudioBuffer::commitWriteForRange(unsigned begin, unsigned end)
 {
 	ScopeLock lock(mutex);
 
-	ASSERT(begin < end);
+	ASSERT(begin <= end);
 
 	for(unsigned i=0; i<subBuffers.size(); ++i) {
 		SubBuffer& b = subBuffers[i];
 		if(!b.readyForRead && b.posBegin == begin && end <= b.posEnd) {
-			// Call realloc to reclaim wasted space
-			b.data = (rhbyte*)rhinoca_realloc(b.data, format.blockAlignment * (b.posEnd - b.posBegin), format.blockAlignment * (end - begin));
-			b.readyForRead = true;
-			b.posEnd = end;
+			if(begin < end) {
+				// Call realloc to reclaim wasted space
+				b.data = (rhbyte*)rhinoca_realloc(b.data, format.blockAlignment * (b.posEnd - b.posBegin), format.blockAlignment * (end - begin));
+				b.readyForRead = true;
+				b.posEnd = end;
+			}
+			// For begin == end
+			else {
+				rhinoca_free(b.data);
+				SubBuffer empty = { 0, 0, 0, 0.0f, false, NULL };
+				b = empty;
+			}
 			return;
 		}
 	}
@@ -140,7 +148,7 @@ void AudioBuffer::collectGarbage()
 		SubBuffer& b = subBuffers[i];
 		if(b.hotness < 0.001f && b.data) {
 			rhinoca_free(b.data);
-			SubBuffer empty = { 0, 0, 0, 0, NULL };
+			SubBuffer empty = { 0, 0, 0, 0.0f, false, NULL };
 			b = empty;
 		}
 	}

@@ -47,6 +47,11 @@ struct RingBuffer
 		readPos += read;
 	}
 
+	void clear()
+	{
+		readPos = writePos = 0;
+	}
+
 	void collectUnusedSpace()
 	{
 		// Move remaining data at the back to the font space
@@ -77,6 +82,7 @@ public:
 		, headerLoaded(false)
 		, currentSamplePos(0)
 		, vorbis(NULL)
+		, bytesForHeader(0), bytesRead(0), sampleProduced(0)
 	{
 	}
 
@@ -104,6 +110,9 @@ public:
 
 	stb_vorbis* vorbis;
 	stb_vorbis_info vorbisInfo;
+
+	// Variables for sample per byte estimation, which in turn is used for seeking.
+	unsigned bytesForHeader, bytesRead, sampleProduced;
 
 	RingBuffer ringBuffer;
 };
@@ -150,8 +159,9 @@ void OggLoader::loadHeader()
 
 		// Read from ring buffer and put to vorbis
 		p = ringBuffer.read(readCount);
-		int error, byteUsed;
+		int error, byteUsed = 0;
 		vorbis = stb_vorbis_open_pushdata(p, readCount, &byteUsed, &error, NULL);
+		bytesForHeader += byteUsed;
 
 		if(error == VORBIS_need_more_data)
 			return reSchedule();
@@ -195,9 +205,20 @@ void OggLoader::loadData()
 
 	{
 		unsigned audioBufBegin, audioBufEnd;
-		const bool seek = requestQueue.getRequest(audioBufBegin, audioBufEnd);
-		// TODO: Handle seeking
-		(void)seek;
+
+		if(requestQueue.getRequest(audioBufBegin, audioBufEnd))
+		{
+			print(rh, "OggLoader: Currently there are problem on seeking ogg: '%s'\n", buffer->uri().c_str());
+
+			const unsigned backupCurPos = stb_vorbis_get_sample_offset(vorbis);
+//			const rhint64 fileSize = io_size(stream, tId);
+			const float estimatedSamplePerByte = (sampleProduced * bytesRead == 0) ? 0 : float(sampleProduced) / bytesRead;
+
+			const unsigned fileSeekPos = bytesForHeader + unsigned(float(audioBufBegin) / estimatedSamplePerByte);
+			io_seek(stream, fileSeekPos, SEEK_SET, tId);
+			stb_vorbis_flush_pushdata(vorbis);
+			ringBuffer.clear();
+		}
 
 		// Even if the audio device didn't have any request, we try to begin loading some data
 		if(audioBufBegin == audioBufEnd && audioBufBegin == 0)
@@ -226,8 +247,6 @@ void OggLoader::loadData()
 		for(bool needMoreData = false; !needMoreData; )
 		{
 			unsigned bytesToWrite = 0;
-			audioBufBegin = currentSamplePos;
-			audioBufEnd = audioBufBegin + proximateBufDuration;
 
 			// Reserve a large enough buffer for 1 second audio
 			bufferData = buffer->getWritePointerForRange(audioBufBegin, audioBufEnd, bytesToWrite);
@@ -242,6 +261,9 @@ void OggLoader::loadData()
 			while(true)
 			{
 				byteUsed = stb_vorbis_decode_frame_pushdata(vorbis, p, readCount, NULL, &outputs, &sampleCount);
+				bytesRead += byteUsed;
+				sampleProduced += sampleCount;
+//				printf("sample per byte: %f\n", float(sampleProduced) / bytesRead);
 
 				// Summit the buffer decoded so far if we come across at AudioBuffer boundary
 				if(currentSamplePos + sampleCount > audioBufEnd) {
@@ -253,6 +275,8 @@ void OggLoader::loadData()
 						goto Abort;
 				}
 
+				// By default stb_vorbis load data as float, we need to convert to uint16 before submitting to audio device
+				ASSERT(sampleCount < proximateBufDuration && "This is our assumption so stb_vorbis_channels_short_interleaved() will not overflow bufferData");
 				stb_vorbis_channels_short_interleaved(numChannels, (short*)bufferData, vorbisInfo.channels, outputs, 0, sampleCount);
 
 				if(byteUsed == 0) {
@@ -282,7 +306,7 @@ void OggLoader::loadData()
 
 		ringBuffer.collectUnusedSpace();
 
-		// If nothing to commit right now, re-try on next round, schedule it immediatly
+		// If nothing to commit right now, re-try on next round, schedule it immediately
 		if(theVeryBegin == currentSamplePos)
 			return reSchedule(false);
 

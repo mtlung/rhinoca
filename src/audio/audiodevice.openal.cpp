@@ -509,6 +509,8 @@ void AudioDevice::update()
 
 	// Perform garbage collection on sound buffers
 	for(AudioSound* s = _soundList.begin(); s != _soundList.end(); s = s->next()) {
+		// TODO: No need to do GC every frame
+		s->audioBuffer->collectGarbage();
 	}
 }
 

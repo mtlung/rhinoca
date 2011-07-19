@@ -32,6 +32,7 @@ public:
 
 	/// Returns a block of memory for the specific sample range.
 	/// Sometimes the buffer returned is less then the request, so you need to consult bytesToWrite.
+	/// You can cancel the requested buffer by calling commitWriteForRange(begin, begin);
 	void* getWritePointerForRange(unsigned begin, unsigned& end, unsigned& bytesToWrite);
 
 	/// For loader to tell the buffer data is written to the memory allocated via getWritePointerForRange()
