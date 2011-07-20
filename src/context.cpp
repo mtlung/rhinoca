@@ -12,6 +12,7 @@
 #include "dom/document.h"
 #include "dom/keyevent.h"
 #include "dom/mouseevent.h"
+#include "dom/touchevent.h"
 #include "dom/registerfactories.h"
 #include "render/driver.h"
 #include <string.h>	// for strlen() and strcasecmp()
@@ -338,6 +339,7 @@ bool Rhinoca::openDoucment(const char* uri)
 
 		Dom::Event* ev = new Dom::Event;
 		ev->type = "DOMContentLoaded";
+		ev->stopPropagation();	// Load events should not propagate
 		ev->bubbles = false;
 		ev->bind(jsContext, NULL);
 
