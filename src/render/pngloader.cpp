@@ -73,21 +73,20 @@ void PngLoader::onPngInfoReady()
 
 	switch(color_type) {
 	case PNG_COLOR_TYPE_RGB:
-		png_set_filler(png_ptr, 0x000000ff, PNG_FILLER_AFTER);
+		pixelDataFormat = Driver::RGB;
+		break;
 	case PNG_COLOR_TYPE_RGB_ALPHA:
 		pixelDataFormat = Driver::RGBA;
 		break;
 	case PNG_COLOR_TYPE_GRAY:
-		print(rh, "PngLoader: gray scale image is not yet supported, operation aborted\n");
-		_aborted = true;
+		pixelDataFormat = Driver::LUMINANCE;
 		break;
 	case PNG_COLOR_TYPE_GRAY_ALPHA:
-		print(rh, "PngLoader: gray scale image is not yet supported, operation aborted\n");
-		_aborted = true;
+		pixelDataFormat = Driver::LUMINANCE_ALPHA;
 		break;
-	case PNG_COLOR_TYPE_PALETTE:	// Color palette is not supported
-		print(rh, "PngLoader: image using color palette is not supported, operation aborted\n");
-		_aborted = true;
+	case PNG_COLOR_TYPE_PALETTE:
+		png_set_palette_to_rgb(png_ptr);
+		pixelDataFormat = Driver::RGB;
 		break;
 	default:
 		_aborted = true;
