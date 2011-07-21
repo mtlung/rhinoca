@@ -39,6 +39,8 @@
 										[NSNumber numberWithBool:FALSE], kEAGLDrawablePropertyRetainedBacking,
 										kEAGLColorFormatRGBA8, kEAGLDrawablePropertyColorFormat,
 										nil];
+
+		[self setMultipleTouchEnabled:true];
 	}
 	
 	return self;

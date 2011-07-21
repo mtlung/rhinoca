@@ -84,6 +84,10 @@
 		9C3B3BD61385590000E3AE02 /* loader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B3BD41385590000E3AE02 /* loader.cpp */; };
 		9C3B3BD71385590000E3AE02 /* loader.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C3B3BD51385590000E3AE02 /* loader.h */; };
 		9C3B3BD91385592800E3AE02 /* audiodevice.openal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B3BD81385592800E3AE02 /* audiodevice.openal.cpp */; };
+		9C5D0EB813D65EA1001E3A0E /* elementstyle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C5D0EB413D65EA1001E3A0E /* elementstyle.cpp */; };
+		9C5D0EB913D65EA1001E3A0E /* elementstyle.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C5D0EB513D65EA1001E3A0E /* elementstyle.h */; };
+		9C5D0EBA13D65EA1001E3A0E /* touchevent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C5D0EB613D65EA1001E3A0E /* touchevent.cpp */; };
+		9C5D0EBB13D65EA1001E3A0E /* touchevent.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C5D0EB713D65EA1001E3A0E /* touchevent.h */; };
 		9C788C4113A906B000C12B1D /* navigator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C788C3F13A906B000C12B1D /* navigator.cpp */; };
 		9C788C4213A906B000C12B1D /* navigator.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C788C4013A906B000C12B1D /* navigator.h */; };
 		9C81DC8A139FC94500952557 /* stack.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C81DC89139FC94500952557 /* stack.h */; };
@@ -244,6 +248,10 @@
 		9C3B3BD41385590000E3AE02 /* loader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = loader.cpp; path = ../../../src/loader.cpp; sourceTree = "<group>"; };
 		9C3B3BD51385590000E3AE02 /* loader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = loader.h; path = ../../../src/loader.h; sourceTree = "<group>"; };
 		9C3B3BD81385592800E3AE02 /* audiodevice.openal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = audiodevice.openal.cpp; path = ../../../src/audio/audiodevice.openal.cpp; sourceTree = "<group>"; };
+		9C5D0EB413D65EA1001E3A0E /* elementstyle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = elementstyle.cpp; path = ../../../src/dom/elementstyle.cpp; sourceTree = "<group>"; };
+		9C5D0EB513D65EA1001E3A0E /* elementstyle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = elementstyle.h; path = ../../../src/dom/elementstyle.h; sourceTree = "<group>"; };
+		9C5D0EB613D65EA1001E3A0E /* touchevent.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = touchevent.cpp; path = ../../../src/dom/touchevent.cpp; sourceTree = "<group>"; };
+		9C5D0EB713D65EA1001E3A0E /* touchevent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = touchevent.h; path = ../../../src/dom/touchevent.h; sourceTree = "<group>"; };
 		9C788C3F13A906B000C12B1D /* navigator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = navigator.cpp; path = ../../../src/dom/navigator.cpp; sourceTree = "<group>"; };
 		9C788C4013A906B000C12B1D /* navigator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = navigator.h; path = ../../../src/dom/navigator.h; sourceTree = "<group>"; };
 		9C81DC89139FC94500952557 /* stack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stack.h; path = ../../../src/stack.h; sourceTree = "<group>"; };
@@ -433,6 +441,8 @@
 				187BCA7012F9BC600042FDB1 /* document.h */,
 				187BCA7112F9BC600042FDB1 /* element.cpp */,
 				187BCA7212F9BC600042FDB1 /* element.h */,
+				9C5D0EB413D65EA1001E3A0E /* elementstyle.cpp */,
+				9C5D0EB513D65EA1001E3A0E /* elementstyle.h */,
 				9CBF7B301393F3DC0041806B /* event.cpp */,
 				9CBF7B311393F3DC0041806B /* event.h */,
 				187BCA7312F9BC600042FDB1 /* image.cpp */,
@@ -453,6 +463,8 @@
 				9CED2E92138C0B5400ACEF92 /* nodelist.h */,
 				187BCA9512F9BEFB0042FDB1 /* registerfactories.cpp */,
 				187BCA9612F9BEFB0042FDB1 /* registerfactories.h */,
+				9C5D0EB613D65EA1001E3A0E /* touchevent.cpp */,
+				9C5D0EB713D65EA1001E3A0E /* touchevent.h */,
 				187BCA9712F9BEFB0042FDB1 /* window.cpp */,
 				187BCA9812F9BEFB0042FDB1 /* window.h */,
 				9CB6F654139007AC004D2CCF /* windowlocation.cpp */,
@@ -621,6 +633,8 @@
 				9C871A9B13ADD963009F1382 /* font.h in Headers */,
 				9C871A9D13ADD988009F1382 /* stb_truetype.h in Headers */,
 				9C1130EB13B4DAC8001F4B3B /* windowscreen.h in Headers */,
+				9C5D0EB913D65EA1001E3A0E /* elementstyle.h in Headers */,
+				9C5D0EBB13D65EA1001E3A0E /* touchevent.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -756,6 +770,8 @@
 				9C871A9513ADD4BE009F1382 /* nsaudioloader.mm in Sources */,
 				9C871A9813ADD954009F1382 /* truetypefont.cpp in Sources */,
 				9C1130EA13B4DAC8001F4B3B /* windowscreen.cpp in Sources */,
+				9C5D0EB813D65EA1001E3A0E /* elementstyle.cpp in Sources */,
+				9C5D0EBA13D65EA1001E3A0E /* touchevent.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
