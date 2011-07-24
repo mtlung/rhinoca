@@ -52,7 +52,7 @@ void KeyEvent::bind(JSContext* cx, JSObject* parent)
 	jsObject = JS_NewObject(cx, &jsClass, Event::createPrototype(), parent);
 	VERIFY(JS_SetPrivate(cx, *this, this));
 	VERIFY(JS_DefineProperties(cx, *this, properties));
-	addReference();
+	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
 }	// namespace Dom

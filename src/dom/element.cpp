@@ -180,7 +180,7 @@ JSObject* Element::createPrototype()
 	VERIFY(JS_SetPrivate(jsContext, proto, this));
 	VERIFY(JS_DefineFunctions(jsContext, proto, elementMethods));
 	VERIFY(JS_DefineProperties(jsContext, proto, elementProperties));
-	addReference();
+	addReference();	// releaseReference() in JsBindable::finalize()
 	return proto;
 }
 

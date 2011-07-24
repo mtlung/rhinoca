@@ -132,7 +132,7 @@ void HTMLCanvasElement::bind(JSContext* cx, JSObject* parent)
 	VERIFY(JS_SetPrivate(cx, *this, this));
 	VERIFY(JS_DefineFunctions(cx, *this, methods));
 	VERIFY(JS_DefineProperties(cx, *this, properties));
-	addReference();
+	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
 void HTMLCanvasElement::bindFramebuffer()

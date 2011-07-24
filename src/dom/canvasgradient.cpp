@@ -53,7 +53,7 @@ void CanvasGradient::bind(JSContext* cx, JSObject* parent)
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
 	VERIFY(JS_SetPrivate(cx, *this, this));
 	VERIFY(JS_DefineFunctions(cx, *this, methods));
-	addReference();
+	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
 void CanvasGradient::createLinear(float xStart, float yStart, float xEnd, float yEnd)

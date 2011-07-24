@@ -125,7 +125,7 @@ void ElementStyle::bind(JSContext* cx, JSObject* parent)
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
 	VERIFY(JS_SetPrivate(cx, *this, this));
 	VERIFY(JS_DefineProperties(cx, *this, properties));
-	addReference();
+	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
 ElementStyle::ElementStyle(Element* ele)
