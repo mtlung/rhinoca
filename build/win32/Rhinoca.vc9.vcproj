@@ -314,6 +314,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\dom\touchevent.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\touchevent.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\dom\window.cpp"
 				>
 			</File>

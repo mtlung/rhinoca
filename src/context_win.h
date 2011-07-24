@@ -70,17 +70,22 @@ void Rhinoca::processEvent(RhinocaEvent ev)
 	}
 
 	// The standard require dispatching the touch event first, and then mouse event
-	// See Interaction with Mouse Events in https://dvcs.w3.org/hg/webevents/raw-file/tip/touchevents.html
+	// See http://dvcs.w3.org/hg/webevents/raw-file/tip/touchevents.html#mouse-events
 	if(touchEvent)
 	{
+		// We use identifier '0' to represent the mouse
+		Dom::TouchData& data = domWindow->allocateTouchData(0);
+		data.screenX = LOWORD(lParam);
+		data.screenY = HIWORD(lParam);
+		data.clientX = LOWORD(lParam);
+		data.clientY = HIWORD(lParam);
+		data.pageX = LOWORD(lParam);
+		data.pageY = HIWORD(lParam);
+
 		Dom::TouchEvent* e = new Dom::TouchEvent;
 		e->type = touchEvent;
-		e->screenX = LOWORD(lParam);
-		e->screenY = HIWORD(lParam);
-		e->clientX = LOWORD(lParam);
-		e->clientY = HIWORD(lParam);
-		e->pageX = LOWORD(lParam);
-		e->pageY = HIWORD(lParam);
+		e->touches = domWindow->touches;
+		e->changedTouches.push_back(data);
 
 		e->bind(domWindow->jsContext, NULL);
 

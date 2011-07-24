@@ -350,6 +350,18 @@ void Window::bind(JSContext* cx, JSObject* parent)
 	document->bind(cx, parent);
 }
 
+static bool isInsideElement(Element* ele, int x, int y)
+{
+	if(!ele)
+		return false;
+
+	// TODO: Temp solution, before we assign the body element with correct width and height
+	bool isBodyTag = ele->tagName() == FixString("BODY");
+	bool isInBound = (ele->left() <= x && x <= ele->right()) && (ele->top() <= y && y <= ele->bottom());
+
+	return isBodyTag || isInBound;
+}
+
 void Window::dispatchEvent(Event* e)
 {
 	ASSERT(e->jsObject);
@@ -362,42 +374,70 @@ void Window::dispatchEvent(Event* e)
 		if(itr->hasListener())
 			targets.push_back(itr.current());
 
-	// Handling of touch and mouse events
+	// Handling of mouse events
 	// TODO: Generate 'secondary' events like mouse clicked (down and up in the same position)
+	if(MouseEvent* mouse = dynamic_cast<MouseEvent*>(e))
 	{
-		int x, y;
-		MouseEvent* mouse = dynamic_cast<MouseEvent*>(e);
-		TouchEvent* touch = dynamic_cast<TouchEvent*>(e);
-
-		if(mouse) {
-			x = mouse->clientX;
-			y = mouse->clientY;
-		}
-
-		if(touch) {
-			x = touch->clientX;
-			y = touch->clientY;
-		}
-
 		// Loop from the back of targets to see where the mouse fall into the element's rectangle
 		// TODO: Handling of stack context and z-index
-		if(mouse || touch) for(unsigned i=targets.size(); i--; )
+		for(unsigned i=targets.size(); i--; )
 		{
-			if(Element* ele = dynamic_cast<Element*>(targets[i]))
-			{
-				// TODO: Temp solution, before we assign the body element with correct width and height
-				if(ele->tagName() == FixString("BODY")) {
-					e->target = ele;
-					ele->dispatchEvent(e);
-					return;
-				}
+			Element* ele = dynamic_cast<Element*>(targets[i]);
+			if(isInsideElement(ele, mouse->clientX, mouse->clientY)) {
+				e->target = ele;
+				ele->dispatchEvent(e);
+				return;
+			}
+		}
+	}
 
-				if(ele->left() <= x && x <= ele->right())
-				if(ele->top() <= y && y <= ele->bottom()) {
-					e->target = ele;
-					ele->dispatchEvent(e);
-					return;
-				}
+	// Handling of touchevents
+	// TODO: Generate 'secondary' events like mouse clicked (down and up in the same position)
+	if(TouchEvent* touch = dynamic_cast<TouchEvent*>(e))
+	{
+		// Determine which Element the touchBegin occur
+		// Loop from the back of targets to see where the mouse fall into the element's rectangle
+		// TODO: Handling of stack context and z-index
+		if(touch->type == StringHash("touchstart"))
+		for(unsigned i=targets.size(); i--; )
+		{
+			Element* ele = dynamic_cast<Element*>(targets[i]);
+			if(ele) for(unsigned j=0; j<touch->changedTouches.size(); ++j)
+			{
+				const TouchData& touchData = touch->changedTouches[j];
+				if(isInsideElement(ele, touchData.clientX, touchData.clientY))
+					touches[touchData.index].target = ele;
+			}
+		}
+
+		// For each changedTouches, find it's corresponding Element and do the dispatch.
+		for(unsigned i=targets.size(); i--; )
+		{
+			Element* ele = dynamic_cast<Element*>(targets[i]);
+			if(ele) for(unsigned j=0; j<touch->changedTouches.size(); ++j)
+			{
+				const TouchData& touchData = touch->changedTouches[j];
+				if(!isInsideElement(ele, touchData.clientX, touchData.clientY))
+					continue;
+
+				// Construct the targetTouches list
+				touch->targetTouches.clear();
+				for(unsigned k=0; k<touch->touches.size(); ++k)
+					if(touches[k].target == ele)
+						touch->targetTouches.push_back(touchData);
+
+				e->target = ele;
+				ele->dispatchEvent(e);
+			}
+		}
+
+		// Do cleanup for "touchend" and "touchcancel"
+		if(touch->type == StringHash("touchend") || touch->type == StringHash("touchcancel")) {
+			for(unsigned i=0; i<touch->changedTouches.size(); ++i)
+			{
+				const TouchData& touchData = touch->changedTouches[i];
+				touches[touchData.index].identifier = -1;
+				touches[touchData.index].target = NULL;
 			}
 		}
 	}
@@ -477,6 +517,40 @@ void Window::render()
 	for(NodeIterator i(document); !i.ended(); i.next()) {
 		i->render();
 	}
+}
+
+TouchData& Window::allocateTouchData(int identifier)
+{
+	int index = findTouchIndexByIdentifier(identifier);
+
+	if(index >= 0 && index < (int)touches.size())
+		return touches[index];
+
+	// Reuse free slot
+	for(unsigned i=0; i<touches.size(); ++i) {
+		if(touches[i].identifier < 0) {
+			touches[i].identifier = identifier;
+			return touches[i];
+		}
+	}
+
+	// Allocate new entry
+	touches.resize(touches.size() + 1);
+	touches.back().index = touches.size() - 1;
+	touches.back().identifier = identifier;
+
+	return touches.back();
+}
+
+int Window::findTouchIndexByIdentifier(int identifier) const
+{
+	for(unsigned i=0; i<touches.size(); ++i) {
+		ASSERT(touches[i].index == i);
+		if(touches[i].identifier == identifier)
+			return i;
+	}
+
+	return -1;
 }
 
 static JSBool construct(JSContext* cx, uintN argc, jsval* vp)

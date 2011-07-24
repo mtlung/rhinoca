@@ -1,7 +1,7 @@
 #ifndef __DOM_WINDOW_H__
 #define __DOM_WINDOW_H__
 
-#include "event.h"
+#include "touchevent.h"
 #include "../jsbindable.h"
 #include "../linklist.h"
 #include "../map.h"
@@ -71,6 +71,11 @@ public:
 
 	void render();
 
+	TouchData& allocateTouchData(int identifier);
+
+	/// Reutrn -1 if no such identifier found
+	int findTouchIndexByIdentifier(int identifier) const;
+
 	static void registerClass(JSContext* cx, JSObject* parent);
 
 // Attributes
@@ -86,6 +91,8 @@ public:
 	HTMLCanvasElement* virtualCanvas;
 
 	Event* currentEvent;	/// Carry the Event object when a event is risen
+
+	Vector<TouchData> touches;	/// Book keeping for all touch points
 
 	typedef Map<TimerCallback> TimerCallbacks;
 	TimerCallbacks timerCallbacks;
