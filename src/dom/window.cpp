@@ -31,6 +31,11 @@ static void traceDataOp(JSTracer* trc, JSObject* obj)
 	if(self->document)
 		JS_CALL_OBJECT_TRACER(trc, self->document->jsObject, "Window.document");
 
+	for(unsigned i=0; i<self->touches.size(); ++i) {
+		if(EventTarget* t = self->touches[i].target)
+			JS_CALL_OBJECT_TRACER(trc, t->getJSObject(), "Window.frameRequestCallback[i]");
+	}
+
 	for(FrameRequestCallback* cb = self->frameRequestCallbacks.begin(); cb != self->frameRequestCallbacks.end(); cb = cb->next())
 		JS_CALL_OBJECT_TRACER(trc, *cb, "Window.frameRequestCallback[i]");
 

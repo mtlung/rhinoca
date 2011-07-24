@@ -232,11 +232,18 @@ static JSBool getTouches(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 
 	switch(JSID_TO_INT(id)) {
 	case touches:
-		list->touches = _touches;
+		list->touches = self->touches;
+		break;
 	case targetTouches:
+		list->touches = self->targetTouches;
+		break;
 	case changedTouches:
+		list->touches = self->changedTouches;
+		break;
 	default: ASSERT(false);
 	}
+
+	*vp = *list;
 
 	return JS_TRUE;
 }
