@@ -404,27 +404,33 @@ void Window::dispatchEvent(Event* e)
 		// Loop from the back of targets to see where the mouse fall into the element's rectangle
 		// TODO: Handling of stack context and z-index
 		if(touch->type == StringHash("touchstart"))
-		for(unsigned i=targets.size(); i--; )
+		for(unsigned i=0; i<touch->changedTouches.size(); ++i)
 		{
-			Element* ele = dynamic_cast<Element*>(targets[i]);
-			if(ele) for(unsigned j=0; j<touch->changedTouches.size(); ++j)
+			const TouchData& touchData = touch->changedTouches[i];
+			if(touchData.target)
+				continue;
+
+			for(unsigned j=targets.size(); j--; )
 			{
-				const TouchData& touchData = touch->changedTouches[j];
-				if(isInsideElement(ele, touchData.clientX, touchData.clientY))
-					touches[touchData.index].target = ele;
+				if(Element* ele = dynamic_cast<Element*>(targets[j])) {
+					if(isInsideElement(ele, touchData.clientX, touchData.clientY)) {
+						touches[touchData.index].target = ele;
+						break;
+					}
+				}
 			}
 		}
 
 		// For each changedTouches, perform dispatch using TouchData::target as the target.
 		for(unsigned i=0; i<touch->changedTouches.size(); ++i)
 		{
-			const TouchData& touchData = touch->changedTouches[i];
+			const TouchData& touchData = touches[touch->changedTouches[i].index];
 
 			// Construct the targetTouches list
 			touch->targetTouches.clear();
-			for(unsigned k=0; k<touch->touches.size(); ++k)
+			for(unsigned k=0; k<touches.size(); ++k)
 				if(touches[k].target == touchData.target)
-					touch->targetTouches.push_back(touchData);
+					touch->targetTouches.push_back(touches[k]);
 
 			ASSERT(touchData.target);
 			e->target = touchData.target;

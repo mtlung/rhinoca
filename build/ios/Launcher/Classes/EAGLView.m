@@ -156,56 +156,50 @@
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
 	static const char* msg = "touchstart";
-	int i = 0;
 	for(UITouch* touch in touches) {
 		CGPoint loc = [touch locationInView:self];
 		loc.x *= self.contentScaleFactor;
 		loc.y *= self.contentScaleFactor;
-		RhinocaEvent ev = { (void*)msg, i, loc.x, loc.y, 0 };
+		// NOTE: The value of 'touch' pointer will persit until touchesEnded
+		// or touchesCancelled, so it can be used as identifier
+		RhinocaEvent ev = { (void*)msg, (int)touch, loc.x, loc.y, 0 };
 		rhinoca_processEvent(rh, ev);
-		++i;
 	}
 }
 
 -(void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
 	static const char* msg = "touchmove";
-	int i = 0;
 	for(UITouch* touch in touches) {
 		CGPoint loc = [touch locationInView:self];
 		loc.x *= self.contentScaleFactor;
 		loc.y *= self.contentScaleFactor;
-		RhinocaEvent ev = { (void*)msg, i, loc.x, loc.y, 0 };
+		RhinocaEvent ev = { (void*)msg, (int)touch, loc.x, loc.y, 0 };
 		rhinoca_processEvent(rh, ev);
-		++i;
 	}
 }
 
 -(void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
 	static const char* msg = "touchend";
-	int i = 0;
 	for(UITouch* touch in touches) {
 		CGPoint loc = [touch locationInView:self];
 		loc.x *= self.contentScaleFactor;
 		loc.y *= self.contentScaleFactor;
-		RhinocaEvent ev = { (void*)msg, i, loc.x, loc.y, 0 };
+		RhinocaEvent ev = { (void*)msg, (int)touch, loc.x, loc.y, 0 };
 		rhinoca_processEvent(rh, ev);
-		++i;
 	}
 }
 
 -(void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
 {
 	static const char* msg = "touchcancel";
-	int i = 0;
 	for(UITouch* touch in touches) {
 		CGPoint loc = [touch locationInView:self];
 		loc.x *= self.contentScaleFactor;
 		loc.y *= self.contentScaleFactor;
-		RhinocaEvent ev = { (void*)msg, i, loc.x, loc.y, 0 };
+		RhinocaEvent ev = { (void*)msg, (int)touch, loc.x, loc.y, 0 };
 		rhinoca_processEvent(rh, ev);
-		++i;
 	}
 }
 
