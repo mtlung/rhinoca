@@ -415,25 +415,20 @@ void Window::dispatchEvent(Event* e)
 			}
 		}
 
-		// For each changedTouches, find it's corresponding Element and do the dispatch.
-		for(unsigned i=targets.size(); i--; )
+		// For each changedTouches, perform dispatch using TouchData::target as the target.
+		for(unsigned i=0; i<touch->changedTouches.size(); ++i)
 		{
-			Element* ele = dynamic_cast<Element*>(targets[i]);
-			if(ele) for(unsigned j=0; j<touch->changedTouches.size(); ++j)
-			{
-				const TouchData& touchData = touch->changedTouches[j];
-				if(!isInsideElement(ele, touchData.clientX, touchData.clientY))
-					continue;
+			const TouchData& touchData = touch->changedTouches[i];
 
-				// Construct the targetTouches list
-				touch->targetTouches.clear();
-				for(unsigned k=0; k<touch->touches.size(); ++k)
-					if(touches[k].target == ele)
-						touch->targetTouches.push_back(touchData);
+			// Construct the targetTouches list
+			touch->targetTouches.clear();
+			for(unsigned k=0; k<touch->touches.size(); ++k)
+				if(touches[k].target == touchData.target)
+					touch->targetTouches.push_back(touchData);
 
-				e->target = ele;
-				ele->dispatchEvent(e);
-			}
+			ASSERT(touchData.target);
+			e->target = touchData.target;
+			e->target->dispatchEvent(e);
 		}
 
 		// Do cleanup for "touchend" and "touchcancel"
