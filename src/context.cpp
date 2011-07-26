@@ -76,6 +76,7 @@ Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 	, _gcFrameIntervalCounter(_gcFrameInterval)
 {
 	jsContext = JS_NewContext(jsrt, 8192);
+	JS_SetOptions(jsContext, JS_GetOptions(jsContext) | JSOPTION_JIT);
 //	JS_SetOptions(jsContext, JS_GetOptions(jsContext) | JSOPTION_STRICT);
 //	JS_SetOptions(jsContext, JS_GetOptions(jsContext) | JSOPTION_VAROBJFIX);
 	JS_SetContextPrivate(jsContext, this);
