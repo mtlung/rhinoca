@@ -53,7 +53,7 @@
 #include "jsnum.h"
 #include "jsvector.h"
 #include "jscompartment.h"
-#include "Writer.h"
+#include "tracejit/Writer.h"
 
 namespace js {
 

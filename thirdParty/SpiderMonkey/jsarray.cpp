@@ -2757,12 +2757,8 @@ array_extra(JSContext *cx, ArrayExtraMode mode, uintN argc, Value *vp)
      * Set our initial return condition, used for zero-length array cases
      * (and pre-size our map return to match our known length, for all cases).
      */
-    jsuint newlen;
-    JSObject *newarr;
-#ifdef __GNUC__ /* quell GCC overwarning */
-    newlen = 0;
-    newarr = NULL;
-#endif
+    jsuint newlen = 0;
+    JSObject *newarr = NULL;
     jsint start = 0, end = length, step = 1;
 
     switch (mode) {
@@ -2861,10 +2857,8 @@ array_extra(JSContext *cx, ArrayExtraMode mode, uintN argc, Value *vp)
 
         if (mode > MAP)
             cond = js_ValueToBoolean(rval);
-#ifdef __GNUC__ /* quell GCC overwarning */
         else
             cond = JS_FALSE;
-#endif
 
         switch (mode) {
           case FOREACH:

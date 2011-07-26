@@ -45,13 +45,15 @@
 
 /* Some mozilla code uses JS-friend APIs that depend on JS_TRACER and
    JS_METHODJIT being correct. */
-/* #undef JS_TRACER */
-/* #undef JS_METHODJIT */
+#define JS_TRACER 1
+#define JS_METHODJIT 1
 
 #ifdef _MSC_VER
 #	define JS_HAVE___INTN 1
 #	define JS_STDDEF_H_HAS_INTPTR_T 1
 #	define __STDC_LIMIT_MACROS
+#	define ENABLE_ASSEMBLER 1
+#	define ENABLE_JIT 1
 #else
 #	define JS_HAVE_STDINT_H 1
 #	define JS_BYTES_PER_WORD 4

@@ -27,7 +27,7 @@
 #define RegexParser_h
 
 #include <limits.h>
-#include "../wtf/ASCIICType.h"
+#include <wtf/ASCIICType.h>
 #include "yarr/jswtfbridge.h"
 #include "yarr/yarr/RegexCommon.h"
 

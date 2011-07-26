@@ -40,13 +40,13 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="./"
-				PreprocessorDefinitions="EXPORT_JS_API;WIN32;DEBUG;"
+				AdditionalIncludeDirectories="./;./assembler;./nanojit;./yarr"
+				PreprocessorDefinitions="EXPORT_JS_API;WIN32;DEBUG;NJ_VERBOSE"
 				ExceptionHandling="0"
 				SmallerTypeCheck="false"
 				RuntimeTypeInfo="false"
 				DisableSpecificWarnings="4100; 4127; 4201; 4244; 4245; 4480; 4510; 4512; 4610; 4702; 4706; 4800;"
-				ForcedIncludeFiles="jsautocfg.win32.h"
+				ForcedIncludeFiles="js-confdefs.win32.h"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -111,13 +111,13 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="./"
+				AdditionalIncludeDirectories="./;./assembler;./nanojit;./yarr"
 				PreprocessorDefinitions="EXPORT_JS_API;WIN32;"
 				ExceptionHandling="0"
 				BufferSecurityCheck="false"
 				RuntimeTypeInfo="false"
 				DisableSpecificWarnings="4100; 4127; 4201; 4244; 4245; 4480; 4510; 4512; 4610; 4702; 4706; 4800;"
-				ForcedIncludeFiles="jsautocfg.win32.h"
+				ForcedIncludeFiles="js-confdefs.win32.h"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -166,6 +166,10 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm"
 			>
 			<File
+				RelativePath=".\jsanalyze.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\jsapi.cpp"
 				>
 			</File>
@@ -183,6 +187,10 @@
 			</File>
 			<File
 				RelativePath=".\jsbool.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\jsbuiltins.cpp"
 				>
 			</File>
 			<File
@@ -334,6 +342,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\jstracer.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\jstypedarray.cpp"
 				>
 			</File>
@@ -362,6 +374,10 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc"
 			>
+			<File
+				RelativePath=".\js-confdefs.win32.h"
+				>
+			</File>
 			<File
 				RelativePath=".\js-config.h"
 				>
@@ -819,11 +835,107 @@
 			Name="nanojit"
 			>
 			<File
+				RelativePath=".\nanojit\Allocator.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\Allocator.h"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\Assembler.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\Assembler.h"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\avmplus.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\nanojit\avmplus.h"
 				>
 			</File>
 			<File
+				RelativePath=".\nanojit\CodeAlloc.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\CodeAlloc.h"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\Containers.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\Containers.h"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\Fragmento.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\Fragmento.h"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\LIR.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\LIR.h"
+				>
+			</File>
+			<File
 				RelativePath=".\nanojit\nanojit.h"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\Native.h"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\NativeCommon.h"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\Nativei386.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\Nativei386.h"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\njconfig.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\njconfig.h"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\njcpudetect.h"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\RegAlloc.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\RegAlloc.h"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\VMPI.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\nanojit\VMPI.h"
 				>
 			</File>
 		</Filter>
@@ -834,7 +946,83 @@
 				Name="wtf"
 				>
 				<File
+					RelativePath=".\assembler\wtf\Assertions.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\assembler\wtf\Assertions.h"
+					>
+				</File>
+				<File
 					RelativePath=".\assembler\wtf\Platform.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="assembler"
+				>
+				<File
+					RelativePath=".\assembler\assembler\AbstractMacroAssembler.h"
+					>
+				</File>
+				<File
+					RelativePath=".\assembler\assembler\AssemblerBuffer.h"
+					>
+				</File>
+				<File
+					RelativePath=".\assembler\assembler\AssemblerBufferWithConstantPool.h"
+					>
+				</File>
+				<File
+					RelativePath=".\assembler\assembler\CodeLocation.h"
+					>
+				</File>
+				<File
+					RelativePath=".\assembler\assembler\LinkBuffer.h"
+					>
+				</File>
+				<File
+					RelativePath=".\assembler\assembler\MacroAssembler.h"
+					>
+				</File>
+				<File
+					RelativePath=".\assembler\assembler\MacroAssemblerCodeRef.h"
+					>
+				</File>
+				<File
+					RelativePath=".\assembler\assembler\MacroAssemblerX86.h"
+					>
+				</File>
+				<File
+					RelativePath=".\assembler\assembler\MacroAssemblerX86Common.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\assembler\assembler\MacroAssemblerX86Common.h"
+					>
+				</File>
+				<File
+					RelativePath=".\assembler\assembler\RepatchBuffer.h"
+					>
+				</File>
+				<File
+					RelativePath=".\assembler\assembler\X86Assembler.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="jit"
+				>
+				<File
+					RelativePath=".\assembler\jit\ExecutableAllocator.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\assembler\jit\ExecutableAllocator.h"
+					>
+				</File>
+				<File
+					RelativePath=".\assembler\jit\ExecutableAllocatorWin.cpp"
 					>
 				</File>
 			</Filter>
@@ -843,7 +1031,87 @@
 			Name="methodjit"
 			>
 			<File
+				RelativePath=".\methodjit\BaseAssembler.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\BaseCompiler.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\CodeGenIncludes.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\Compiler.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\Compiler.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\FastArithmetic.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\FastOps.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\FrameEntry.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\FrameState-inl.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\FrameState.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\FrameState.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\ICChecker.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\ICLabels.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\ICRepatcher.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\ImmutableSync.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\ImmutableSync.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\InlineFrameAssembler.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\InvokeHelpers.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\Logging.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\methodjit\Logging.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\MachineRegs.h"
 				>
 			</File>
 			<File
@@ -851,7 +1119,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\methodjit\MethodJIT.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\methodjit\MethodJIT.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\MonoIC.cpp"
 				>
 			</File>
 			<File
@@ -859,11 +1135,87 @@
 				>
 			</File>
 			<File
+				RelativePath=".\methodjit\NunboxAssembler.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\PolyIC.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\methodjit\PolyIC.h"
 				>
 			</File>
 			<File
+				RelativePath=".\methodjit\PunboxAssembler.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\RematInfo.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\Retcon.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\methodjit\Retcon.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\StubCalls-inl.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\StubCalls.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\StubCalls.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\StubCompiler.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\StubCompiler.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\TrampolineCompiler.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\TrampolineCompiler.h"
+				>
+			</File>
+			<File
+				RelativePath=".\methodjit\TypedArrayIC.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="vprof"
+			>
+			<File
+				RelativePath=".\vprof\vprof.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\vprof\vprof.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="tracejit"
+			>
+			<File
+				RelativePath=".\tracejit\Writer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\tracejit\Writer.h"
 				>
 			</File>
 		</Filter>
