@@ -1,0 +1,120 @@
+<html>
+<head>
+<title>Canvas Particle Example</title>
+<script type="text/javascript">
+var ctx, canvasHeight, canvasWidth;
+var ParticleArray = [];
+
+function init()
+{
+	SetupCanvas();
+
+	if (ctx != null)
+	{
+		AddParticles();
+		requestAnimationFrame(Draw);
+	}
+}
+
+function SetupCanvas()
+{
+	var thisCanvas = document.getElementById('thisCanvas')
+
+	if (thisCanvas && thisCanvas.getContext)
+	{
+		canvasHeight = thisCanvas.height;
+		canvasWidth =  thisCanvas.width;
+
+		ctx = thisCanvas.getContext('2d');
+		ctx.globalCompositeOperation = "lighter";
+	}
+}
+
+function Draw()
+{
+	ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+	ParticleArray.forEach(function(particle) {
+		particle.Draw();
+	});
+
+	requestAnimationFrame(Draw);
+}
+
+function AddParticle()
+{
+	ParticleArray.push(new Particle(Math.rand(0, canvasWidth), Math.rand(0, canvasHeight)));
+}
+
+function AddParticles()
+{
+	for (var index = 0; index < 100; index++)
+		AddParticle();
+}
+
+function Particle(xCoord, yCoord)
+{
+	var particleRadius = 15;
+	var direction = Math.rand(0, 359);
+	var speed = Math.rand(1,5);
+	var startColor = "rgb(" + Math.rand(0, 255) + "," + Math.rand(0, 255) + "," + Math.rand(0, 255) + ")";
+	var endColor = "rgba(" + Math.rand(0, 255) + "," + Math.rand(0, 255) + "," + Math.rand(0, 255) + ",0)";
+
+	var x = xCoord;
+	var y = yCoord;
+
+	this.Draw = function()
+	{
+		// Move the particle.
+		x += Math.sin(direction) * speed;
+		y += Math.cos(direction) * speed;
+
+		// If the particle position is outside the canvas, move it to the opposite side.
+		if (x > canvasWidth)
+			x = 0;
+		else if (x < 0)
+			x = canvasWidth;
+		if (y >= canvasHeight)
+			y = 0;
+		else if (y < 0)
+			y = canvasHeight;
+
+		// Draw the particle.
+		DrawGradient(x, y);
+
+		// Add extra gradients temporarily so it appears the particle
+		// is wrapping around the screen.
+		if (x > canvasWidth - particleRadius)
+			DrawGradient(x - canvasWidth, y);
+		else if (x < particleRadius)
+			DrawGradient(canvasWidth + x, y);
+
+		if (y > canvasHeight - particleRadius)
+			DrawGradient(x, y - canvasHeight);
+		else if (y < particleRadius)
+			DrawGradient(x, y + canvasHeight);
+	};
+
+	function DrawGradient(a, b)
+	{
+		var p = ctx.createRadialGradient(a, b, 0, a, b, particleRadius);
+
+		p.addColorStop(0, startColor);
+		p.addColorStop(1, endColor);
+
+		ctx.fillStyle = p;
+		ctx.fillRect(a - particleRadius, b - particleRadius, particleRadius * 2, particleRadius * 2);
+	}
+}
+
+Math.rand = function(l,u)
+{
+	return Math.floor((Math.random() * (u-l+1))+l);
+}
+</script>
+</head>
+<body onload="init();">
+	<h1><a href="http://www.ferretarmy.com/files/canvas/canvasParticle/canvasParticle2.html">FerretArmy.com</a> Canvas Particle Demo</h1>
+    <canvas id="thisCanvas" width="300" height="200"></canvas>
+</body>
+</html>
