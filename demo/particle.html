@@ -12,7 +12,10 @@ function init()
 	if (ctx != null)
 	{
 		AddParticles();
-		requestAnimationFrame(Draw);
+		if("requestAnimationFrame" in this)
+			requestAnimationFrame(Draw);
+		else
+			setInterval(Draw, 10);
 	}
 }
 
@@ -38,7 +41,8 @@ function Draw()
 		particle.Draw();
 	});
 
-	requestAnimationFrame(Draw);
+	if("requestAnimationFrame" in this)
+		requestAnimationFrame(Draw);
 }
 
 function AddParticle()
@@ -62,6 +66,10 @@ function Particle(xCoord, yCoord)
 
 	var x = xCoord;
 	var y = yCoord;
+
+	var gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, particleRadius);
+	gradient.addColorStop(0, startColor);
+	gradient.addColorStop(1, endColor);
 
 	this.Draw = function()
 	{
@@ -97,13 +105,11 @@ function Particle(xCoord, yCoord)
 
 	function DrawGradient(a, b)
 	{
-		var p = ctx.createRadialGradient(a, b, 0, a, b, particleRadius);
-
-		p.addColorStop(0, startColor);
-		p.addColorStop(1, endColor);
-
-		ctx.fillStyle = p;
-		ctx.fillRect(a - particleRadius, b - particleRadius, particleRadius * 2, particleRadius * 2);
+		ctx.save();
+		ctx.fillStyle = gradient;
+		ctx.translate(a, b);
+		ctx.fillRect(- particleRadius, - particleRadius, particleRadius * 2, particleRadius * 2);
+		ctx.restore();
 	}
 }
 
