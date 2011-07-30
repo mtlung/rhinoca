@@ -68,6 +68,16 @@ JsBindable::operator jsval()
 	return jsObject ? OBJECT_TO_JSVAL(jsObject) : JSVAL_NULL;
 }
 
+JSObject* JsBindable::jsObjectOfType(JSClass* c)
+{
+	JSObject* obj = jsObject;
+
+	while(obj && JS_GetClass(obj) != c)
+		obj = JS_GetPrototype(jsContext, obj);
+
+	return obj;
+}
+
 void* JsBindable::operator new(size_t size)
 {
 	return rhinoca_malloc(size);

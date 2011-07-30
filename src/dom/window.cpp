@@ -426,13 +426,15 @@ void Window::dispatchEvent(Event* e)
 		{
 			const TouchData& touchData = touches[touch->changedTouches[i].index];
 
+			if(!touchData.target)
+				continue;
+
 			// Construct the targetTouches list
 			touch->targetTouches.clear();
 			for(unsigned k=0; k<touches.size(); ++k)
 				if(touches[k].target == touchData.target)
 					touch->targetTouches.push_back(touches[k]);
 
-			ASSERT(touchData.target);
 			e->target = touchData.target;
 			e->target->dispatchEvent(e);
 		}

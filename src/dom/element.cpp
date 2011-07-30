@@ -37,7 +37,7 @@ static JSBool elementGetStyle(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 	if(!self->style) {
 		self->style = new ElementStyle(self);
 		self->style->bind(cx, *self);
-		VERIFY(JS_SetReservedSlot(cx, *self, 0, *self->style));
+		VERIFY(JS_SetReservedSlot(cx, self->jsObjectOfType(&Element::jsClass), 0, *self->style));
 	}
 
 	*vp = *self->style;

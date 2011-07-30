@@ -27,6 +27,10 @@ public:
 	operator jsval();
 	operator JSObject*() { return this ? jsObject : NULL; }
 
+	/// JsBindable::jsObject store the most derived object, if you want to 
+	/// access object in the prototype chain, use this function.
+	JSObject* jsObjectOfType(JSClass* c);
+
 	void* operator new(size_t);
 	void operator delete(void*);
 
