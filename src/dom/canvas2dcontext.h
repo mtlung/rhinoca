@@ -84,7 +84,7 @@ public:
 
 	/// Adds the given point to the current path, connected to the previous
 	/// one by a quadratic Bezier curve with the given control point.
-	void quadrativeCureTo(float cpx, float cpy, float x, float y);
+	void quadraticCurveTo(float cpx, float cpy, float x, float y);
 
 	/// Adds the given point to the current path, connected to the previous
 	/// one by a cubic Bezier curve with the given control points.

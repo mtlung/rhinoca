@@ -506,17 +506,17 @@ static JSBool lineTo(JSContext* cx, uintN argc, jsval* vp)
 	return JS_TRUE;
 }
 
-static JSBool quadrativeCureTo(JSContext* cx, uintN argc, jsval* vp)
+static JSBool quadraticCurveTo(JSContext* cx, uintN argc, jsval* vp)
 {
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
 	double cpx, cpy, x, y;
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &cpx));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &cpy));
-	self->quadrativeCureTo((float)cpx, (float)cpy, (float)x, (float)y);
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &cpx));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &cpy));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &x));
+	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &y));
+	self->quadraticCurveTo((float)cpx, (float)cpy, (float)x, (float)y);
 
 	return JS_TRUE;
 }
@@ -790,7 +790,7 @@ static JSFunctionSpec methods[] = {
 	{"closePath", closePath, 0,0},
 	{"moveTo", moveTo, 2,0},
 	{"lineTo", lineTo, 2,0},
-	{"quadrativeCureTo", quadrativeCureTo, 4,0},
+	{"quadraticCurveTo", quadraticCurveTo, 4,0},
 	{"bezierCurveTo", bezierCurveTo, 6,0},
 	{"arc", arc, 6,0},
 	{"rect", rect, 4,0},
@@ -853,6 +853,7 @@ CanvasRenderingContext2D::CanvasRenderingContext2D(HTMLCanvasElement* c)
 	vgSetPaint(openvg->fillPaint, VG_FILL_PATH);
 
 	vgSeti(VG_FILL_RULE, VG_NON_ZERO);
+	vgSetf(VG_STROKE_LINE_WIDTH, 1);
 }
 
 CanvasRenderingContext2D::~CanvasRenderingContext2D()
@@ -1110,14 +1111,22 @@ void CanvasRenderingContext2D::lineTo(float x, float y)
 	openvg->pathEmpty = false;
 }
 
-void CanvasRenderingContext2D::quadrativeCureTo(float cpx, float cpy, float x, float y)
+void CanvasRenderingContext2D::quadraticCurveTo(float cpx, float cpy, float x, float y)
 {
-	// TODO: To be implement
+	VGubyte seg = VG_QUAD_TO;
+	VGfloat data[] = { cpx, cpy, x, y };
+	vgAppendPathData(openvg->path, 1, &seg, data);
+
+	openvg->pathEmpty = false;
 }
 
 void CanvasRenderingContext2D::bezierCurveTo(float cp1x, float cp1y, float cp2x, float cp2y, float x, float y)
 {
-	// TODO: To be implement
+	VGubyte seg = VG_CUBIC_TO;
+	VGfloat data[] = { cp1x, cp1y, cp2x, cp2y, x, y };
+	vgAppendPathData(openvg->path, 1, &seg, data);
+
+	openvg->pathEmpty = false;
 }
 
 void CanvasRenderingContext2D::arcTo(float x1, float y1, float x2, float y2, float radius)
