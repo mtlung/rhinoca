@@ -50,6 +50,16 @@ struct RhinocaRenderContext
 int _width = -1;
 int _height = -1;
 
+void fileDropCallback(const char* filePath, void* userData)
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, 1);	// Handle '1' is the main buffer
+	glClearColor(1, 1, 1, 1);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	Rhinoca* rh = reinterpret_cast<Rhinoca*>(userData);
+	rhinoca_openDocument(rh, filePath);
+}
+
 static RhinocaRenderContext renderContext = { NULL, 0, 0, 0, 0 };
 
 static bool setupFbo(unsigned width, unsigned height)
@@ -234,7 +244,7 @@ int main()
 	Rhinoca* rh = rhinoca_create(&renderContext);
 	rhinoca_setAlertFunc(alertFunc, hWnd);
 
-	FileDropHandler dropHandler(hWnd, rh);
+	FileDropHandler dropHandler(hWnd, fileDropCallback, rh);
 
 	// Associate Rhinoca context as the user-data of the window handle
 	::SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG>(rh));

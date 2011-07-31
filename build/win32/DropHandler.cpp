@@ -2,7 +2,6 @@
 #include <windows.h> // Load the complete set of win32api.
 
 #include "DropHandler.h"
-#include "../../src/context.h"
 
 #pragma warning(push)
 #pragma warning(disable : 4355) // Justification: DropTarget does not invoke any functions on DropHandler. It just stores DropTarget's pointer.
@@ -83,7 +82,11 @@ HRESULT DropHandler::DropTarget::Drop(IDataObject* pDataObject, DWORD grfKeyStat
 	return m_dropHandler.Drop(pDataObject, grfKeyState, pt, pdwEffect);
 }
 
-FileDropHandler::FileDropHandler(HWND hWnd, Rhinoca* rh) : DropHandler(hWnd), m_rh(rh), m_lastEffect(DROPEFFECT_NONE)
+FileDropHandler::FileDropHandler(HWND hWnd, OnDropCallback callback, void* callbackUserData)
+	: DropHandler(hWnd)
+	, m_callback(callback)
+	, m_callbackUserData(callbackUserData)
+	, m_lastEffect(DROPEFFECT_NONE)
 {
 }
 
@@ -126,7 +129,7 @@ HRESULT FileDropHandler::Drop(IDataObject* pDataObject, DWORD grfKeyState, POINT
 	else
 	{
 		*pdwEffect = DROPEFFECT_MOVE;
-		m_rh->openDoucment(filePath);
+		m_callback(filePath, m_callbackUserData);
 	}
 
 	return S_OK;

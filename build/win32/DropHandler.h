@@ -46,7 +46,9 @@ struct Rhinoca;
 class FileDropHandler : public DropHandler
 {
 public:
-	FileDropHandler(HWND hWnd, Rhinoca* rh);
+	typedef void (*OnDropCallback)(const char* filePath, void* userData);
+
+	FileDropHandler(HWND hWnd, OnDropCallback callback, void* callbackUserData);
 	// Drop event handlers
 	virtual HRESULT DragEnter(IDataObject* pDataObject, DWORD grfKeyState, POINTL pt, DWORD* pdwEffect);
 	virtual HRESULT DragOver(DWORD rfKeyState, POINTL pt, DWORD* pdwEffect);
@@ -59,5 +61,6 @@ private:
 	// We have to cache the dwEffect returned from DragEnter to get a correct drag cursor.
 	DWORD m_lastEffect;
 
-	Rhinoca* m_rh;
+	OnDropCallback m_callback;
+	void* m_callbackUserData;
 };
