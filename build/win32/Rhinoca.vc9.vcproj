@@ -667,6 +667,14 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\src\parser.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\src\parser.h"
+			>
+		</File>
+		<File
 			RelativePath="..\..\src\path.cpp"
 			>
 		</File>
