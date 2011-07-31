@@ -1037,6 +1037,7 @@ void CanvasRenderingContext2D::save()
 
 void CanvasRenderingContext2D::restore()
 {
+	if(stateStack.empty()) return;	// Be more forgiving
 	currentState = stateStack.top();
 	stateStack.pop_back();
 }

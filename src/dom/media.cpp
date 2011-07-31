@@ -51,7 +51,11 @@ static JSBool getAutoplay(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 static JSBool setAutoplay(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	HTMLMediaElement* self = getJsBindable<HTMLMediaElement>(cx, obj);
-	self->setAutoplay(JSVAL_TO_BOOLEAN(*vp) == JS_TRUE); return JS_TRUE;
+
+	bool autoPlay = false;
+	if(JS_GetValue(cx, *vp, autoPlay) == JS_FALSE)
+		return JS_FALSE;
+	self->setAutoplay(autoPlay); return JS_TRUE;
 }
 
 static JSBool getCurrentTime(JSContext* cx, JSObject* obj, jsid id, jsval* vp)

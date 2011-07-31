@@ -142,8 +142,17 @@ JsBindable* getJsBindableExactType(JSContext* cx, JSObject* obj, JSClass* jsClas
 
 JSBool JS_GetValue(JSContext *cx, jsval jv, bool& val)
 {
-	if(JS_ValueToBoolean(cx, jv, (JSBool*)&val) == JS_FALSE)
+	JSBool b;
+	if(JSVAL_IS_BOOLEAN(jv))
+		b = JSVAL_TO_BOOLEAN(jv);
+	else if(JSVAL_IS_STRING(jv)) {
+		JsString jss(cx, jv);
+		b = (stricmp(jss.c_str(), "false") != 0);
+	}
+	else if(JS_ValueToBoolean(cx, jv, &b) == JS_FALSE)
 		return JS_FALSE;
+
+	val = (b == JS_TRUE);
 	return JS_TRUE;
 }
 
