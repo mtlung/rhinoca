@@ -16,10 +16,10 @@ public:
 	char* begin;
 	char* end;
 
-	ParserResult result;
-
 	typedef void (*ParserResultCallback)(ParserResult* result);
 	ParserResultCallback callback;
+
+	ParserResult result;
 };	// Parser
 
 template<typename T>
@@ -132,7 +132,7 @@ struct WhiteSpaceMatcher
 };
 
 inline Matcher<WhiteSpaceMatcher> whiteSpace(Parser* parser) {
-	Matcher<WhiteSpaceMatcher> ret = { { }, parser };
+	Matcher<WhiteSpaceMatcher> ret = { {}, parser };
 	return ret;
 }
 
@@ -148,14 +148,14 @@ inline Matcher<StringMatcher> string(Parser* parser, const char* str) {
 	return ret;
 }
 
-/// Match digi numbers only, +-. will not be matched
+/// Match digit numbers only, +-. will not be matched
 struct DigitMatcher
 {
 	bool match(Parser* parser);
 };
 
 inline Matcher<DigitMatcher> digit(Parser* parser) {
-	Matcher<DigitMatcher> ret = { { }, parser };
+	Matcher<DigitMatcher> ret = { {}, parser };
 	return ret;
 }
 
@@ -166,7 +166,7 @@ struct QuotedStringMatcher
 };
 
 inline Matcher<QuotedStringMatcher> quotedString(Parser* parser) {
-	Matcher<QuotedStringMatcher> ret = { { }, parser };
+	Matcher<QuotedStringMatcher> ret = { {}, parser };
 	return ret;
 }
 
@@ -177,7 +177,7 @@ struct DoubleQuotedStringMatcher
 };
 
 inline Matcher<DoubleQuotedStringMatcher> doubleQuotedString(Parser* parser) {
-	Matcher<DoubleQuotedStringMatcher> ret = { { }, parser };
+	Matcher<DoubleQuotedStringMatcher> ret = { {}, parser };
 	return ret;
 }
 

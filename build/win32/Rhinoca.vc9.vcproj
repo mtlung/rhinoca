@@ -202,6 +202,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\dom\cssparser.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\cssparser.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\dom\div.cpp"
 				>
 			</File>

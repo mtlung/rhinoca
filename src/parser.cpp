@@ -6,98 +6,98 @@
 
 namespace Parsing {
 
-bool WhiteSpaceMatcher::match(Parser* parser)
+bool WhiteSpaceMatcher::match(Parser* p)
 {
-	char c = *parser->begin;
+	char c = *p->begin;
 	char chars[] = { ' ', '\t', '\r', '\n' };
 
-	for(unsigned i=0; i<sizeof(c)/sizeof(char); ++i) {
+	for(unsigned i=0; i<sizeof(chars)/sizeof(char); ++i) {
 		if(c != chars[i])
 			continue;
 
-		parser->begin++;
+		p->begin++;
 		return true;
 	}
 
 	return false;
 }
 
-bool StringMatcher::match(Parser* parser)
+bool StringMatcher::match(Parser* p)
 {
 	unsigned len = strlen(str);
 
-	if(parser->end - parser->begin < (int)len)
+	if(p->end - p->begin < (int)len)
 		return false;
 
-	int ret = strncmp(parser->begin, str, len);
+	int ret = strncmp(p->begin, str, len);
 	if(ret == 0) {
-		parser->begin += len;
+		p->begin += len;
 		return true;
 	}
 	return false;
 }
 
-bool DigitMatcher::match(Parser* parser)
+bool DigitMatcher::match(Parser* p)
 {
-	char c = *parser->begin;
+	char c = *p->begin;
 
 	if(c < '0' || c > '9')
 		return false;
 
-	parser->begin++;
+	p->begin++;
 	return true;
 }
 
-bool QuotedStringMatcher::match(Parser* parser)
+bool QuotedStringMatcher::match(Parser* p)
 {
-	if(*parser->begin != '\'')
+	if(*p->begin != '\'')
 		return false;
 
-	parser->result.begin = parser->begin + 1;
+	p->result.begin = p->begin + 1;
 
-	char lastChar = *parser->begin;
-	for(char* p=parser->begin+1; p<parser->end; ++p)
+	char lastChar = *p->begin;
+	for(char* c=p->begin+1; c<p->end; ++c)
 	{
-		if(*p == '\'' && lastChar != '\\') {
-			parser->begin = p + 1;
-			parser->result.end = p;
+		if(*c == '\'' && lastChar != '\\') {
+			p->begin = c + 1;
+			p->result.end = c;
 			return true;
 		}
-		lastChar = *p;
+		lastChar = *c;
 	}
 
-	parser->begin = parser->end;
+	p->begin = p->end;
 	return false;
 }
 
-bool DoubleQuotedStringMatcher::match(Parser* parser)
+bool DoubleQuotedStringMatcher::match(Parser* p)
 {
-	if(*parser->begin != '"')
+	if(*p->begin != '"')
 		return false;
 
-	parser->result.begin = parser->begin + 1;
+	p->result.begin = p->begin + 1;
 
-	char lastChar = *parser->begin;
-	for(char* p=parser->begin+1; p<parser->end; ++p)
+	char lastChar = *p->begin;
+	for(char* c=p->begin+1; c<p->end; ++c)
 	{
-		if(*p == '"' && lastChar != '\\') {
-			parser->begin = p + 1;
-			parser->result.end = p;
+		if(*c == '"' && lastChar != '\\') {
+			p->begin = c + 1;
+			p->result.end = c;
 			return true;
 		}
-		lastChar = *p;
+		lastChar = *c;
 	}
 
-	parser->begin = parser->end;
+	p->begin = p->end;
 	return false;
 }
 
-bool AnyCharExceptMatcher::match(Parser* parser)
+bool AnyCharExceptMatcher::match(Parser* p)
 {
-	const char* ret = strchr(except, *parser->begin);
+	const char* ret = strchr(except, *p->begin);
 
 	if(ret == NULL) {	// No exception found
-		++parser->begin;
+		++p->begin;
 		return true;
 	}
 
