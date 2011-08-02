@@ -1,8 +1,9 @@
 #include "pch.h"
 #include "elementstyle.h"
+#include "element.h"
+#include "cssparser.h"
 #include "../context.h"
 #include "../path.h"
-#include "../dom/element.h"
 
 namespace Dom {
 
@@ -83,9 +84,17 @@ static JSBool styleSetBG(JSContext* cx, JSObject* obj, jsid id, JSBool strict, j
 	if(!jss) return JS_FALSE;
 
 	// Get the url from the style string value
+	Parsing::Parser parser(jss.c_str(), jss.c_str() + jss.size());
+	Parsing::ParserResult result;
+
+	if(!Parsing::url(&parser).once(&result)) {
+		// TODO: Give some warning
+		return JS_TRUE;
+	}
+	*result.end = '\0';	// Make it parse result null terminated
 
 	Path path;
-	ele->fixRelativePath(jss.c_str(), ele->rhinoca->documentUrl.c_str(), path);
+	ele->fixRelativePath(result.begin, ele->rhinoca->documentUrl.c_str(), path);
 
 	using namespace Render;
 	

@@ -5,6 +5,7 @@
 
 namespace Parsing {
 
+/// CSS selector syntax: http://www.w3.org/TR/CSS2/selector.html#selector-syntax
 /// See http://www.codeproject.com/KB/recipes/CSSParser.aspx
 /// http://stackoverflow.com/questions/4656975/use-css-selectors-to-collect-html-elements-from-a-streaming-parser-e-g-sax-stre
 
@@ -68,7 +69,7 @@ inline Matcher<SimpleSelectorMatcher> simpleSelector(Parser* parser) {
 	return ret;
 }
 
-/// Match simpleSelector { [ '+' | '>' | '~' ] simpleSelector }0-*
+/// Match simpleSelector { [ '+' | '>' ] simpleSelector }0-*
 struct SelectorMatcher
 {
 	bool match(Parser* parser);

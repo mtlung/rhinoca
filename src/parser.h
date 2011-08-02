@@ -13,13 +13,20 @@ struct ParserResult
 class Parser
 {
 public:
+	typedef void (*ParserResultCallback)(ParserResult* result, Parser* parser);
+
+	Parser(char* begin, char* end, ParserResultCallback callback=NULL, void* userdata=NULL);
+
 	char* begin;
 	char* end;
 
-	typedef void (*ParserResultCallback)(ParserResult* result);
 	ParserResultCallback callback;
+	void* userdata;
 
 	ParserResult result;
+
+	void reportError(const char* msg);
+	const char* erroMessage;
 };	// Parser
 
 template<typename T>
@@ -32,7 +39,7 @@ struct Matcher
 		if(result) {
 			result->begin = bk;
 			result->end = parser->begin;
-			parser->callback(result);
+			if(parser->callback) parser->callback(result, parser);
 		}
 		return true;
 	}
@@ -58,7 +65,7 @@ struct Matcher
 			if(result) {
 				result->begin = bk;
 				result->end = parser->begin;
-				parser->callback(result);
+				if(parser->callback) parser->callback(result, parser);
 			}
 			return true;
 		}
@@ -82,7 +89,7 @@ struct Matcher
 
 	bool once(ParserResult* result=NULL)
 	{
-		parser->result.begin = NULL;
+		if(result) parser->result.begin = NULL;
 		char* bk = parser->begin;
 
 		if(!t.match(parser)) {
@@ -97,7 +104,7 @@ struct Matcher
 				result->begin = bk;
 				result->end = parser->begin;
 			}
-			parser->callback(result);
+			if(parser->callback) parser->callback(result, parser);
 		}
 
 		return true;

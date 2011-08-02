@@ -6,19 +6,23 @@ namespace Parsing {
 bool UrlMatcher::match(Parser* p)
 {
 	p->result.type = "url";
+	bool hasParenthesis = false;
 
 	return
 		whiteSpace(p).any() &&
 		string(p, "url").once() &&
-		whiteSpace(p).any() &&
-		character(p, '(').atMostOnce() &&
-		whiteSpace(p).any() &&
-		(quotedString(p).once(&p->result) ||
-		 doubleQuotedString(p).once(&p->result) ||
-		 anyCharExcept(p, " \t\n\r,()").any(&p->result)
+		(	whiteSpace(p).atLeastOnce() ||
+			(hasParenthesis = character(p, '(').once())
 		) &&
 		whiteSpace(p).any() &&
-		character(p, ')').atMostOnce();
+		(	quotedString(p).once(&p->result) ||
+			doubleQuotedString(p).once(&p->result) ||
+			anyCharExcept(p, " \t\n\r,()'\"").any(&p->result)
+		) &&
+		whiteSpace(p).any() &&
+		(	hasParenthesis ?
+			character(p, ')').once() : true
+		);
 }
 
 bool HexMatcher::match(Parser* p)
@@ -51,10 +55,8 @@ bool PropertyValueMatcher::match(Parser* p)
 	ParserResult result = { "propVal", NULL, NULL };
 
 	return
-		url(p).once() ||
-		hex(p).once() ||
-		quotedString(p).once() || doubleQuotedString(p).once() ||
-		anyCharExcept(p, ";").any(&result);
+		whiteSpace(p).any() &&
+		anyCharExcept(p, ";}").atLeastOnce(&result);
 }
 
 bool SimpleSelectorMatcher::match(Parser* p)
@@ -76,13 +78,18 @@ bool SimpleSelectorMatcher::match(Parser* p)
 bool SelectorMatcher::match(Parser* p)
 {
 	ParserResult selector = { "selector", NULL, NULL };
+	ParserResult sSibling = { "sSibling", NULL, NULL };
+	ParserResult sChild = { "sChild", NULL, NULL };
 
 	if(!(whiteSpace(p).any() && simpleSelector(p).once(&selector)))
 		return false;
 
 	while(
 		whiteSpace(p).any() &&
-		(character(p, '+').once() || character(p, '>').once() || character(p, '~').once() || true) &&	// || true make this line optional
+		(	character(p, '+').once(&sSibling) ||
+			character(p, '>').once(&sChild) ||
+			true	// '|| true' make this block optional, but will this be optimized away be compiler?
+		) &&
 		whiteSpace(p).any() &&
 		simpleSelector(p).once(&selector)
 	)
@@ -103,7 +110,7 @@ bool PropertyDeclMatcher::match(Parser* p)
 		whiteSpace(p).any() &&
 		propertyValue(p).once() &&
 		whiteSpace(p).any() &&
-		character(p, ';').once();
+		character(p, ';').atMostOnce();
 }
 
 bool RuleSetMatcher::match(Parser* p)
@@ -111,22 +118,32 @@ bool RuleSetMatcher::match(Parser* p)
 	if(!selector(p).once())
 		return false;
 
-	while(whiteSpace(p).any() && character(p, ',').once() && whiteSpace(p).any() && selector(p).once())
+	ParserResult sGroup = { "sGroup", NULL, NULL };
+
+	while(whiteSpace(p).any() && character(p, ',').once(&sGroup) && whiteSpace(p).any() && selector(p).once())
 	{}
 
-	if(!whiteSpace(p).any() || !character(p, '{').once())
+	if(!whiteSpace(p).any() || !character(p, '{').once()) {
+		p->reportError("missing '{'");
 		return false;
+	}
 
-	propertyDecl(p).any();
+	if(!propertyDecl(p).atLeastOnce()) {
+		p->reportError("no property declared");
+		return false;
+	}
 
-	return
-		whiteSpace(p).any() &&
-		character(p, '}').once();
+	if(!whiteSpace(p).any() || !character(p, '}').once()) {
+		p->reportError("missing '}'");
+		return false;
+	}
+
+	return true;
 }
 
 bool CssMatcher::match(Parser* p)
 {
-	return ruleSet(p).any();
+	return ruleSet(p).atLeastOnce();
 }
 
 }	// namespace Parsing

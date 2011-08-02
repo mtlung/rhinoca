@@ -6,6 +6,23 @@
 
 namespace Parsing {
 
+Parser::Parser(char* b, char* e, ParserResultCallback c, void* u)
+	: begin(b), end(e)
+	, callback(c), userdata(u)
+	, erroMessage("")
+{
+}
+
+void Parser::reportError(const char* msg)
+{
+	erroMessage = msg;
+
+	if(callback) {
+		ParserResult error = { "error", begin, end };
+		callback(&error, this);
+	}
+}
+
 bool WhiteSpaceMatcher::match(Parser* p)
 {
 	char c = *p->begin;

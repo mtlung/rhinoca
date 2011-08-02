@@ -9,7 +9,7 @@ class ParserTest {};
 TEST_FIXTURE(ParserTest, character)
 {
 	char data[] = "abcdef";
-	Parser parser = { data, data + sizeof(data) };
+	Parser parser(data, data + sizeof(data));
 
 	CHECK(character(&parser, 'a').once());
 	CHECK(*parser.begin == 'b');
@@ -24,7 +24,7 @@ TEST_FIXTURE(ParserTest, character)
 TEST_FIXTURE(ParserTest, digit)
 {
 	char data[] = "0123 abc";
-	Parser parser = { data, data + sizeof(data) };
+	Parser parser(data, data + sizeof(data));
 
 	CHECK(digit(&parser).once());
 	CHECK(*parser.begin == '1');
@@ -36,7 +36,7 @@ TEST_FIXTURE(ParserTest, digit)
 TEST_FIXTURE(ParserTest, string)
 {
 	char data[] = "Hello world!";
-	Parser parser = { data, data + sizeof(data) };
+	Parser parser(data, data + sizeof(data));
 
 	CHECK(string(&parser, "Hello").once());
 	CHECK(*parser.begin == ' ');
@@ -44,23 +44,61 @@ TEST_FIXTURE(ParserTest, string)
 	CHECK(!string(&parser, "Foo").once());
 }
 
-static void parserCallback(ParserResult* result)
+class CSSSelectorParserTest
 {
-	if(result->type)
-		printf("%s, ", result->type);
+public:
+	static void parserCallback(ParserResult* result, Parser* parser)
+	{
+		std::string& str = *reinterpret_cast<std::string*>(parser->userdata);
+		str += result->type;
 
-	for(const char* i=result->begin; i<result->end; ++i)
-		putchar(*i);
-	printf("\n");
+		if(strcmp(result->type, "error:") == 0) {
+			str += parser->erroMessage;
+			str += "near";
+		}
+
+		str += ":";
+		str.append(result->begin, result->end);
+		str += ";";
+	}
+
+	std::string str;
+};
+
+TEST_FIXTURE(CSSSelectorParserTest, universal)
+{
+	{	char data[] = "*{a:b}";
+		Parser parser(data, data + sizeof(data), parserCallback, &str);
+
+		str.clear();
+		CHECK(css(&parser).once());
+		CHECK_EQUAL("selector:*;propName:a;propVal:b;", str);
+	}
+
+	{	char data[] = "*E{a:b;}";
+		Parser parser(data, data + sizeof(data), parserCallback, &str);
+
+		str.clear();
+		CHECK(css(&parser).once());
+		CHECK_EQUAL("selector:*;selector:E;propName:a;propVal:b;", str);
+	}
 }
 
-TEST_FIXTURE(ParserTest, css)
+TEST_FIXTURE(CSSSelectorParserTest, group)
 {
-	char data[] =
-		".button { background-image : url ( \"http://mtlung.blogspot.com\" ) ; background-repeat : no-repeat ; }\n"
-		"#buttonLeft , abc def { left : 0; background-position : 0 , 0 ; }";
+	{	char data[] = "h1, h2, h3 {a:b}";
+		Parser parser(data, data + sizeof(data), parserCallback, &str);
 
-	Parser parser = { data, data + sizeof(data), parserCallback };
+		str.clear();
+		CHECK(css(&parser).once());
+		CHECK_EQUAL("selector:h1;sGroup:,;selector:h2;sGroup:,;selector:h3;propName:a;propVal:b;", str);
+	}
 
-	CHECK(css(&parser).once());
+	{	char data[] = "*E, *F{a:b;}";
+		Parser parser(data, data + sizeof(data), parserCallback, &str);
+
+		str.clear();
+		CHECK(css(&parser).once());
+		CHECK_EQUAL("selector:*;selector:E;sGroup:,;selector:*;selector:F;propName:a;propVal:b;", str);
+	}
 }
