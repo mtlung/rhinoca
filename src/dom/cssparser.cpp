@@ -50,12 +50,40 @@ bool IdentifierMatcher::match(Parser* p)
 	return bk < p->begin;
 }
 
+bool CommentMatcher::match(Parser* p)
+{
+	char* bk = p->begin;
+
+	if(*(p->begin++) != '/') goto Fail;
+	if(*(p->begin++) != '*') goto Fail;
+
+	// Skip anything except "*/"
+	char lastChar = *p->begin;
+	for(char* c=p->begin+1; c<p->end; ++c)
+	{
+		if(lastChar == '*' && *c == '/') {
+			p->begin = c + 1;
+			return true;
+		}
+		lastChar = *c;
+	}
+
+Fail:
+	p->begin = bk;
+	return false;
+}
+
+bool SkippableMatcher::match(Parser* p)
+{
+	return whiteSpace(p).once() || comment(p).once();
+}
+
 bool PropertyValueMatcher::match(Parser* p)
 {
 	ParserResult result = { "propVal", NULL, NULL };
 
 	return
-		whiteSpace(p).any() &&
+		skip(p).any() &&
 		anyCharExcept(p, ";}").atLeastOnce(&result);
 }
 
@@ -81,16 +109,16 @@ bool SelectorMatcher::match(Parser* p)
 	ParserResult sSibling = { "sSibling", NULL, NULL };
 	ParserResult sChild = { "sChild", NULL, NULL };
 
-	if(!(whiteSpace(p).any() && simpleSelector(p).once(&selector)))
+	if(!(skip(p).any() && simpleSelector(p).once(&selector)))
 		return false;
 
 	while(
-		whiteSpace(p).any() &&
+		skip(p).any() &&
 		(	character(p, '+').once(&sSibling) ||
 			character(p, '>').once(&sChild) ||
 			true	// '|| true' make this block optional, but will this be optimized away be compiler?
 		) &&
-		whiteSpace(p).any() &&
+		skip(p).any() &&
 		simpleSelector(p).once(&selector)
 	)
 	{}
@@ -103,13 +131,13 @@ bool PropertyDeclMatcher::match(Parser* p)
 	ParserResult propName = { "propName", NULL, NULL };
 
 	return
-		whiteSpace(p).any() &&
+		skip(p).any() &&
 		identifier(p).once(&propName) &&
-		whiteSpace(p).any() &&
+		skip(p).any() &&
 		character(p, ':').once() &&
-		whiteSpace(p).any() &&
+		skip(p).any() &&
 		propertyValue(p).once() &&
-		whiteSpace(p).any() &&
+		skip(p).any() &&
 		character(p, ';').atMostOnce();
 }
 
@@ -120,10 +148,10 @@ bool RuleSetMatcher::match(Parser* p)
 
 	ParserResult sGroup = { "sGroup", NULL, NULL };
 
-	while(whiteSpace(p).any() && character(p, ',').once(&sGroup) && whiteSpace(p).any() && selector(p).once())
+	while(skip(p).any() && character(p, ',').once(&sGroup) && skip(p).any() && selector(p).once())
 	{}
 
-	if(!whiteSpace(p).any() || !character(p, '{').once()) {
+	if(!skip(p).any() || !character(p, '{').once()) {
 		p->reportError("missing '{'");
 		return false;
 	}
@@ -133,7 +161,7 @@ bool RuleSetMatcher::match(Parser* p)
 		return false;
 	}
 
-	if(!whiteSpace(p).any() || !character(p, '}').once()) {
+	if(!skip(p).any() || !character(p, '}').once()) {
 		p->reportError("missing '}'");
 		return false;
 	}

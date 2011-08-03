@@ -47,6 +47,28 @@ inline Matcher<IdentifierMatcher> identifier(Parser* parser) {
 	return ret;
 }
 
+/// Match /* {any}0-* */
+struct CommentMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<CommentMatcher> comment(Parser* parser) {
+	Matcher<CommentMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// Skippable things are white space and comment
+struct SkippableMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<SkippableMatcher> skip(Parser* parser) {
+	Matcher<SkippableMatcher> ret = { {}, parser };
+	return ret;
+}
+
 /// Match the string of a property's value
 struct PropertyValueMatcher
 {
