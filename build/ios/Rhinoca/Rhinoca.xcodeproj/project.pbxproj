@@ -78,6 +78,10 @@
 		18F0C73E1304F121007752DB /* driverios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 18F0C73D1304F121007752DB /* driverios.cpp */; };
 		9C1130EA13B4DAC8001F4B3B /* windowscreen.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1130E813B4DAC8001F4B3B /* windowscreen.cpp */; };
 		9C1130EB13B4DAC8001F4B3B /* windowscreen.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1130E913B4DAC8001F4B3B /* windowscreen.h */; };
+		9C11FA1613E9A1EB0024299D /* parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C11FA1413E9A1EB0024299D /* parser.cpp */; };
+		9C11FA1713E9A1EB0024299D /* parser.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C11FA1513E9A1EB0024299D /* parser.h */; };
+		9C11FA1A13E9A20B0024299D /* cssparser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C11FA1813E9A20B0024299D /* cssparser.cpp */; };
+		9C11FA1B13E9A20B0024299D /* cssparser.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C11FA1913E9A20B0024299D /* cssparser.h */; };
 		9C390962139D48A7001119F1 /* imagedata.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C390960139D48A7001119F1 /* imagedata.cpp */; };
 		9C390963139D48A7001119F1 /* imagedata.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C390961139D48A7001119F1 /* imagedata.h */; };
 		9C3B3BD3138558E400E3AE02 /* nsimageloader.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B3BD2138558E400E3AE02 /* nsimageloader.mm */; };
@@ -242,6 +246,10 @@
 		18F0C73D1304F121007752DB /* driverios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = driverios.cpp; path = ../../../src/render/ios/driverios.cpp; sourceTree = SOURCE_ROOT; };
 		9C1130E813B4DAC8001F4B3B /* windowscreen.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = windowscreen.cpp; path = ../../../src/dom/windowscreen.cpp; sourceTree = "<group>"; };
 		9C1130E913B4DAC8001F4B3B /* windowscreen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = windowscreen.h; path = ../../../src/dom/windowscreen.h; sourceTree = "<group>"; };
+		9C11FA1413E9A1EB0024299D /* parser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = parser.cpp; path = ../../../src/parser.cpp; sourceTree = "<group>"; };
+		9C11FA1513E9A1EB0024299D /* parser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = parser.h; path = ../../../src/parser.h; sourceTree = "<group>"; };
+		9C11FA1813E9A20B0024299D /* cssparser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = cssparser.cpp; path = ../../../src/dom/cssparser.cpp; sourceTree = "<group>"; };
+		9C11FA1913E9A20B0024299D /* cssparser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cssparser.h; path = ../../../src/dom/cssparser.h; sourceTree = "<group>"; };
 		9C390960139D48A7001119F1 /* imagedata.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = imagedata.cpp; path = ../../../src/dom/imagedata.cpp; sourceTree = "<group>"; };
 		9C390961139D48A7001119F1 /* imagedata.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = imagedata.h; path = ../../../src/dom/imagedata.h; sourceTree = "<group>"; };
 		9C3B3BD2138558E400E3AE02 /* nsimageloader.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = nsimageloader.mm; path = ../../../src/render/nsimageloader.mm; sourceTree = "<group>"; };
@@ -387,6 +395,8 @@
 				187BC9FB12F9B6730042FDB1 /* memory.cpp */,
 				187BCA0512F9B6CD0042FDB1 /* mutex.cpp */,
 				187BCA0612F9B6CD0042FDB1 /* mutex.h */,
+				9C11FA1413E9A1EB0024299D /* parser.cpp */,
+				9C11FA1513E9A1EB0024299D /* parser.h */,
 				187BCA0712F9B6CD0042FDB1 /* path.cpp */,
 				187BCA0812F9B6CD0042FDB1 /* path.h */,
 				187BCA0912F9B6CD0042FDB1 /* platform.h */,
@@ -435,6 +445,8 @@
 				9C93C9281379885300682898 /* canvasgradient.h */,
 				9C93C92B1379886000682898 /* color.cpp */,
 				9C93C92C1379886000682898 /* color.h */,
+				9C11FA1813E9A20B0024299D /* cssparser.cpp */,
+				9C11FA1913E9A20B0024299D /* cssparser.h */,
 				187BCA6512F9BC270042FDB1 /* div.cpp */,
 				187BCA6612F9BC270042FDB1 /* div.h */,
 				187BCA6F12F9BC600042FDB1 /* document.cpp */,
@@ -635,6 +647,8 @@
 				9C1130EB13B4DAC8001F4B3B /* windowscreen.h in Headers */,
 				9C5D0EB913D65EA1001E3A0E /* elementstyle.h in Headers */,
 				9C5D0EBB13D65EA1001E3A0E /* touchevent.h in Headers */,
+				9C11FA1713E9A1EB0024299D /* parser.h in Headers */,
+				9C11FA1B13E9A20B0024299D /* cssparser.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -772,6 +786,8 @@
 				9C1130EA13B4DAC8001F4B3B /* windowscreen.cpp in Sources */,
 				9C5D0EB813D65EA1001E3A0E /* elementstyle.cpp in Sources */,
 				9C5D0EBA13D65EA1001E3A0E /* touchevent.cpp in Sources */,
+				9C11FA1613E9A1EB0024299D /* parser.cpp in Sources */,
+				9C11FA1A13E9A20B0024299D /* cssparser.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

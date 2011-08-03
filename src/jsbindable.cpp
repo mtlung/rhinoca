@@ -147,7 +147,7 @@ JSBool JS_GetValue(JSContext *cx, jsval jv, bool& val)
 		b = JSVAL_TO_BOOLEAN(jv);
 	else if(JSVAL_IS_STRING(jv)) {
 		JsString jss(cx, jv);
-		b = (stricmp(jss.c_str(), "false") != 0);
+		b = (strcasecmp(jss.c_str(), "false") != 0);
 	}
 	else if(JS_ValueToBoolean(cx, jv, &b) == JS_FALSE)
 		return JS_FALSE;

@@ -52,13 +52,13 @@ bool IdentifierMatcher::match(Parser* p)
 
 bool CommentMatcher::match(Parser* p)
 {
-	char* bk = p->begin;
+	char* bk = p->begin, lastChar;
 
 	if(*(p->begin++) != '/') goto Fail;
 	if(*(p->begin++) != '*') goto Fail;
 
 	// Skip anything except "*/"
-	char lastChar = *p->begin;
+	lastChar = *p->begin;
 	for(char* c=p->begin+1; c<p->end; ++c)
 	{
 		if(lastChar == '*' && *c == '/') {

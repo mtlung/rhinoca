@@ -46,7 +46,7 @@ struct Matcher
 
 	bool count(unsigned min, unsigned max, ParserResult* result=NULL)
 	{
-		char* bk = parser->begin;
+		char* bk = parser->begin, *bk2;
 
 		// Match min occurrences
 		for(unsigned i=0; i<min; ++i)
@@ -59,7 +59,7 @@ struct Matcher
 				break;
 
 		// If there still match, we fail
-		char* bk2 = parser->begin;
+		bk2 = parser->begin;
 		if(!t.match(parser)) {
 			parser->begin = bk2;
 			if(result) {
