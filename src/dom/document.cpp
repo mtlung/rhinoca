@@ -5,6 +5,7 @@
 #include "keyevent.h"
 #include "mouseevent.h"
 #include "nodelist.h"
+#include "textnode.h"
 #include "../common.h"
 #include "../context.h"
 #include <string.h>
@@ -27,6 +28,22 @@ static JSBool createElement(JSContext* cx, uintN argc, jsval* vp)
 	{
 		ele->bind(cx, NULL);
 		JS_RVAL(cx, vp) = *ele;
+	}
+	else
+		JS_RVAL(cx, vp) = JSVAL_VOID;
+
+	return JS_TRUE;
+}
+
+static JSBool createTextNode(JSContext* cx, uintN argc, jsval* vp)
+{
+	JsString jss(cx, JS_ARGV0);
+	HTMLDocument* self = getJsBindable<HTMLDocument>(cx, vp);
+
+	if(TextNode* node = self->createTextNode(jss.c_str()))
+	{
+		node->bind(cx, NULL);
+		JS_RVAL(cx, vp) = *node;
 	}
 	else
 		JS_RVAL(cx, vp) = JSVAL_VOID;
@@ -73,6 +90,7 @@ static JSBool createEvent(JSContext* cx, uintN argc, jsval* vp)
 
 static JSFunctionSpec methods[] = {
 	{"createElement", createElement, 1,0},
+	{"createTextNode", createTextNode, 1,0},
 	{"getElementsByTagName", getElementsByTagName, 1,0},
 	{"getElementById", getElementById, 1,0},
 	{"createEvent", createEvent, 1,0},
@@ -171,6 +189,13 @@ Element* HTMLDocument::createElement(const char* eleType)
 {
 	ElementFactory& factory = ElementFactory::singleton();
 	return factory.create(this->rhinoca, eleType, NULL);
+}
+
+TextNode* HTMLDocument::createTextNode(const char* data)
+{
+	TextNode* ret = new TextNode(rhinoca);
+	ret->data = data;
+	return ret;
 }
 
 Element* HTMLDocument::getElementById(const char* id)

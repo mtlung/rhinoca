@@ -36,7 +36,7 @@ public:
 	int _top, _left;
 	int _width, _height;	// NOTE: It's intentional to type _width and _height as signed integer
 
-	override const FixString& tagName() const;
+	virtual const FixString& tagName() const;
 
 	virtual int top() const { return _top; }
 	virtual int left() const { return _left; }

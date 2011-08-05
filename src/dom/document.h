@@ -7,9 +7,10 @@ namespace Dom {
 
 class Element;
 class Event;
-class Window;
 class HTMLBodyElement;
 class NodeList;
+class TextNode;
+class Window;
 
 /// Reference: http://www.w3schools.com/dom/dom_document.asp
 class HTMLDocument : public Node
@@ -22,6 +23,8 @@ public:
 	override void bind(JSContext* cx, JSObject* parent);
 
 	Element* createElement(const char* eleType);
+
+	TextNode* createTextNode(const char* data);
 
 	Element* getElementById(const char* id);
 

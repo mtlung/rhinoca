@@ -12,6 +12,7 @@
 #include "dom/document.h"
 #include "dom/keyevent.h"
 #include "dom/mouseevent.h"
+#include "dom/textnode.h"
 #include "dom/touchevent.h"
 #include "dom/registerfactories.h"
 #include "render/driver.h"
@@ -325,7 +326,12 @@ bool Rhinoca::openDoucment(const char* uri)
 		}	break;
 
 		case Event::Text:
-			break;
+		{
+			Dom::TextNode* text = new Dom::TextNode(document->rhinoca);
+			text->data = parser.textData();
+			currentNode->appendChild(text);
+			currentNode = text;
+		}	break;
 		case Event::EndDocument:
 			ended = true;
 		default:
