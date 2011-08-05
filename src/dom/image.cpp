@@ -239,6 +239,8 @@ void HTMLImageElement::registerClass(JSContext* cx, JSObject* parent)
 	VERIFY(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
 }
 
+static const FixString _tagName = "IMG";
+
 Element* HTMLImageElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
 	HTMLImageElement* img = strcasecmp(type, "IMG") == 0 ? new HTMLImageElement(rh) : NULL;
@@ -298,8 +300,6 @@ void HTMLImageElement::setHeight(unsigned h)
 {
 	_height = h;
 }
-
-static const FixString _tagName = "IMG";
 
 const FixString& HTMLImageElement::tagName() const
 {

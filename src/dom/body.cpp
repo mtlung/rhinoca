@@ -60,12 +60,12 @@ void HTMLBodyElement::bind(JSContext* cx, JSObject* parent)
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
+static const FixString _tagName = "BODY";
+
 Element* HTMLBodyElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
-	return strcasecmp(type, "BODY") == 0 ? new HTMLBodyElement(rh) : NULL;
+	return strcasecmp(type, _tagName) == 0 ? new HTMLBodyElement(rh) : NULL;
 }
-
-static const FixString _tagName = "BODY";
 
 const FixString& HTMLBodyElement::tagName() const
 {

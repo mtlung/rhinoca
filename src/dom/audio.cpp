@@ -107,16 +107,16 @@ void HTMLAudioElement::registerClass(JSContext* cx, JSObject* parent)
 	VERIFY(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
 }
 
+static FixString _tagName = "AUDIO";
+
 Element* HTMLAudioElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
-	HTMLAudioElement* audio = strcasecmp(type, "AUDIO") == 0 ?
+	HTMLAudioElement* audio = strcasecmp(type, _tagName) == 0 ?
 		new HTMLAudioElement(rh, rh->audioDevice, &rh->resourceManager) : NULL;
 	if(!audio) return NULL;
 
 	return audio;
 }
-
-static FixString _tagName = "AUDIO";
 
 const FixString& HTMLAudioElement::tagName() const
 {

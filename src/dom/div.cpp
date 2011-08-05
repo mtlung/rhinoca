@@ -33,12 +33,12 @@ void HTMLDivElement::bind(JSContext* cx, JSObject* parent)
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
+static const FixString _tagName = "DIV";
+
 Element* HTMLDivElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
-	return strcasecmp(type, "DIV") == 0 ? new HTMLDivElement(rh) : NULL;
+	return strcasecmp(type, _tagName) == 0 ? new HTMLDivElement(rh) : NULL;
 }
-
-static const FixString _tagName = "DIV";
 
 const FixString& HTMLDivElement::tagName() const
 {

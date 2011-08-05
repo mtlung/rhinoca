@@ -183,9 +183,11 @@ void HTMLCanvasElement::registerClass(JSContext* cx, JSObject* parent)
 	VERIFY(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
 }
 
+static const FixString _tagName = "CANVAS";
+
 Element* HTMLCanvasElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
-	if(strcasecmp(type, "CANVAS") != 0) return NULL;
+	if(strcasecmp(type, _tagName) != 0) return NULL;
 
 	/// The default size of a canvas is 300 x 150 as described by the standard
 	float w = 300, h = 150;
@@ -221,8 +223,6 @@ void HTMLCanvasElement::setHeight(unsigned h)
 		createTextureFrameBuffer(_framebuffer.width, h);
 	_framebuffer.height = h;
 }
-
-static const FixString _tagName = "CANVAS";
 
 const FixString& HTMLCanvasElement::tagName() const
 {
