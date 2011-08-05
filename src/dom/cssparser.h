@@ -102,6 +102,19 @@ inline Matcher<SelectorMatcher> selector(Parser* parser) {
 	return ret;
 }
 
+/// Match all valid CSS medium type:
+/// all, aural, braille, embossed, handheld, print
+/// projection, scree, tty, tv
+struct MediumMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<MediumMatcher> medium(Parser* parser) {
+	Matcher<MediumMatcher> ret = { {}, parser };
+	return ret;
+}
+
 /// Match propName ':' propValue ';'
 struct PropertyDeclMatcher
 {

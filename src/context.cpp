@@ -263,6 +263,7 @@ bool Rhinoca::openDoucment(const char* uri)
 
 			{
 				const char* eleName = parser.elementName();
+				printf("%s\n", eleName);
 				Dom::Element* element = factory.create(this, eleName, &parser);
 				if(!element) element = new Dom::Element(document->rhinoca);
 
@@ -321,8 +322,13 @@ bool Rhinoca::openDoucment(const char* uri)
 				}
 			}
 
-			if(currentNode)
+			if(currentNode) {
+				if(Dom::Element* ele = dynamic_cast<Dom::Element*>(currentNode)) {
+					printf("end %s\n", parser.elementName());
+					ele->onParserEndElement();
+				}
 				currentNode = currentNode->parentNode;
+			}
 		}	break;
 
 		case Event::Text:
@@ -330,7 +336,6 @@ bool Rhinoca::openDoucment(const char* uri)
 			Dom::TextNode* text = new Dom::TextNode(document->rhinoca);
 			text->data = parser.textData();
 			currentNode->appendChild(text);
-			currentNode = text;
 		}	break;
 		case Event::EndDocument:
 			ended = true;

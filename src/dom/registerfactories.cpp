@@ -3,6 +3,7 @@
 #include "body.h"
 #include "canvas.h"
 #include "canvas2dcontext.h"
+#include "style.h"
 #include "div.h"
 #include "image.h"
 #include "window.h"
@@ -28,6 +29,7 @@ void registerFactories()
 	f.addFactory(&HTMLCanvasElement::factoryCreate);
 	f.addFactory(&HTMLDivElement::factoryCreate);
 	f.addFactory(&HTMLImageElement::factoryCreate);
+	f.addFactory(&HTMLStyleElement::factoryCreate);
 }
 
 }	// namespace Dom

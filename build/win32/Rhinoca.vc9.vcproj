@@ -322,6 +322,30 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\dom\script.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\script.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\style.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\style.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\textnode.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\textnode.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\dom\touchevent.cpp"
 				>
 			</File>

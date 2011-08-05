@@ -126,6 +126,21 @@ bool SelectorMatcher::match(Parser* p)
 	return true;
 }
 
+bool MediumMatcher::match(Parser* p)
+{
+	return
+		string(p, "all").once() ||
+		string(p, "aural").once() ||
+		string(p, "braille").once() ||
+		string(p, "embossed").once() ||
+		string(p, "handheld").once() ||
+		string(p, "print").once() ||
+		string(p, "projection").once() ||
+		string(p, "screen").once() ||
+		string(p, "tty").once() ||
+		string(p, "tv").once();
+}
+
 bool PropertyDeclMatcher::match(Parser* p)
 {
 	ParserResult propName = { "propName", NULL, NULL };

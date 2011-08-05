@@ -27,6 +27,9 @@ public:
 	/// Helper function to convert a uri into a usable path for ResourceManager
 	void fixRelativePath(const char* uri, const char* docUri, Path& path);
 
+	/// Callback when the HTML parser read the closing tag for this element
+	virtual void onParserEndElement() {}
+
 	override void render();
 
 // Attributes

@@ -49,6 +49,7 @@ void toupper(char* str);
 #if defined(_MSC_VER)
 #define FORCE_INLINE __forceinline
 int strcasecmp(const char* s1, const char* s2);
+#define strdup _strdup	// Workaround for the "strdup - free" bug on VC++
 #else
 #define FORCE_INLINE inline
 #endif

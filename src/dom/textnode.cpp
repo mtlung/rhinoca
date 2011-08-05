@@ -10,6 +10,30 @@ JSClass TextNode::jsClass = {
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
+static JSBool getData(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+{
+	TextNode* self = getJsBindable<TextNode>(cx, obj);
+	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->data.c_str()));
+	return JS_TRUE;
+}
+
+static JSBool setData(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
+{
+	TextNode* self = getJsBindable<TextNode>(cx, obj);
+
+	JsString str(cx, *vp);
+	if(!str) return JS_FALSE;
+
+	self->data = str.c_str();
+
+	return JS_TRUE;
+}
+
+static JSPropertySpec properties[] = {
+	{"data", 0, JsBindable::jsPropFlags, getData, setData},
+	{0}
+};
+
 TextNode::TextNode(Rhinoca* rh)
 	: Node(rh)
 {
@@ -26,7 +50,7 @@ void TextNode::bind(JSContext* cx, JSObject* parent)
 	jsObject = JS_NewObject(cx, &jsClass, Node::createPrototype(), parent);
 	VERIFY(JS_SetPrivate(cx, *this, this));
 //	VERIFY(JS_DefineFunctions(cx, *this, methods));
-//	VERIFY(JS_DefineProperties(cx, *this, properties));
+	VERIFY(JS_DefineProperties(cx, *this, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
