@@ -36,6 +36,7 @@ static JSPropertySpec properties[] = {
 
 TextNode::TextNode(Rhinoca* rh)
 	: Node(rh)
+	, lineNumber(0)
 {
 }
 

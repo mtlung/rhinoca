@@ -15,6 +15,7 @@ void registerLoaders(ResourceManager* mgr)
 	mgr->addFactory(createJpeg, loadJpeg);
 	mgr->addFactory(createMp3, loadMp3);
 #endif
+	mgr->addFactory(createText, loadText);
 	mgr->addFactory(createTrueTypeFont, loadTrueTypeFont);
 	mgr->addFactory(createOgg, loadOgg);
 	mgr->addFactory(createWave, loadWave);

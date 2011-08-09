@@ -201,25 +201,6 @@ unsigned countNewline(const char* str, const char* end)
 	return count;
 }
 
-const char* removeBom(Rhinoca* rh, const char* uri, const char* str, unsigned& len)
-{
-	if(len < 3) return str;
-
-	if( (str[0] == (char)0xFE && str[1] == (char)0xFF) ||
-		(str[0] == (char)0xFF && str[1] == (char)0xFE))
-	{
-		print(rh, "'%s' is encoded using UTF-16 which is not supported\n");
-		len = 0;
-		return NULL;
-	}
-
-	if(str[0] == (char)0xEF && str[1] == (char)0xBB && str[2] == (char)0xBF) {
-		len -= 3;
-		return str + 3;
-	}
-	return str;
-}
-
 bool Rhinoca::openDoucment(const char* uri)
 {
 	closeDocument();
@@ -291,36 +272,6 @@ bool Rhinoca::openDoucment(const char* uri)
 		case Event::EndElement:
 		{
 			parser.popAttributes();
-			if(strcasecmp(parser.elementName(), "script") == 0)
-			{
-				String script;
-				Path scriptUrl = documentUrl.c_str();
-				unsigned lineNo = 0;
-				const char* srcUrl = NULL;
-
-				if((srcUrl = parser.attributeValueIgnoreCase("src")))
-				{
-					scriptUrl = Path(srcUrl).hasRootDirectory() ? srcUrl : scriptUrl.getBranchPath() / srcUrl;
-					if(void* file = io_open(this, scriptUrl.c_str(), 0)) {
-						appendFileToString(file, script);
-						io_close(file, 0);
-					}
-					else
-						print(this, "Fail to load '%s'\n", scriptUrl.c_str());
-				}
-				else {
-					script = parser.textData();
-					lineNo = countNewline(html.c_str(), parser.textData());
-				}
-
-				if(!script.empty()) {
-					unsigned len = script.size();
-					if(const char* s = removeBom(this, srcUrl, script.c_str(), len)) {
-						jsval rval;
-						JS_EvaluateScript(jsContext, *domWindow, s, len, scriptUrl.c_str(), lineNo+1, &rval);
-					}
-				}
-			}
 
 			if(currentNode) {
 				if(Dom::Element* ele = dynamic_cast<Dom::Element*>(currentNode)) {
@@ -335,6 +286,7 @@ bool Rhinoca::openDoucment(const char* uri)
 		{
 			Dom::TextNode* text = new Dom::TextNode(document->rhinoca);
 			text->data = parser.textData();
+			text->lineNumber = countNewline(html.c_str(), parser.textData());
 			currentNode->appendChild(text);
 		}	break;
 		case Event::EndDocument:

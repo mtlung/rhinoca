@@ -16,6 +16,9 @@ public:
 	override void bind(JSContext* cx, JSObject* parent);
 
 // Attributes
+	/// The line number where this text node begine in the document
+	unsigned lineNumber;
+
 	String data;
 
 	static JSClass jsClass;

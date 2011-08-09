@@ -787,6 +787,14 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\src\textresource.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\src\textresource.h"
+			>
+		</File>
+		<File
 			RelativePath="..\..\src\timer.cpp"
 			>
 		</File>

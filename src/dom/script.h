@@ -2,6 +2,7 @@
 #define __DOM_SCRIPT_H__
 
 #include "element.h"
+#include "../textresource.h"
 #include "../vector.h"
 
 namespace Dom {
@@ -17,21 +18,22 @@ public:
 
 	override void onParserEndElement();
 
-	void runScript(const char* code);
+	bool runScript(const char* code, const char* srcPath=NULL, unsigned lineNumber=0);
 
+	static void registerClass(JSContext* cx, JSObject* parent);
 	static Element* factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser);
 
 // Attributes
 	bool inited;
 
 	void setSrc(const char* uri);
-	const FixString& src() const;
+	const char* src() const;	/// The path of the js file, not the context of the script
 
 	override const FixString& tagName() const;
 
-	static JSClass jsClass;
+	TextResourcePtr _src;
 
-	FixString _src;
+	static JSClass jsClass;
 };	// HTMLScriptElement
 
 }	// namespace Dom

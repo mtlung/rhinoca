@@ -32,6 +32,9 @@ bool loadMp3(Resource* resource, ResourceManager* mgr);
 
 #endif
 
+Resource* createText(const char* uri, ResourceManager* mgr);
+bool loadText(Resource* resource, ResourceManager* mgr);
+
 Resource* createTrueTypeFont(const char* uri, ResourceManager* mgr);
 bool loadTrueTypeFont(Resource* resource, ResourceManager* mgr);
 

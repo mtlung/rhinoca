@@ -6,6 +6,7 @@
 #include "style.h"
 #include "div.h"
 #include "image.h"
+#include "script.h"
 #include "window.h"
 
 namespace Dom {
@@ -17,6 +18,7 @@ void registerClasses(JSContext* cx, JSObject* parent)
 	HTMLCanvasElement::registerClass(cx, parent);
 	CanvasRenderingContext2D::registerClass(cx, parent);
 	HTMLImageElement::registerClass(cx, parent);
+	HTMLScriptElement::registerClass(cx, parent);
 	Window::registerClass(cx, parent);
 }
 
@@ -29,6 +31,7 @@ void registerFactories()
 	f.addFactory(&HTMLCanvasElement::factoryCreate);
 	f.addFactory(&HTMLDivElement::factoryCreate);
 	f.addFactory(&HTMLImageElement::factoryCreate);
+	f.addFactory(&HTMLScriptElement::factoryCreate);
 	f.addFactory(&HTMLStyleElement::factoryCreate);
 }
 

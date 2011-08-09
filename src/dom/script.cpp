@@ -1,6 +1,9 @@
 #include "pch.h"
 #include "script.h"
 #include "textnode.h"
+#include "../context.h"
+#include "../path.h"
+#include "../textresource.h"
 
 namespace Dom {
 
@@ -14,7 +17,7 @@ JSClass HTMLScriptElement::jsClass = {
 static JSBool getSrc(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	HTMLScriptElement* self = getJsBindable<HTMLScriptElement>(cx, obj);
-	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->src().c_str()));
+	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->src()));
 	return JS_TRUE;
 }
 
@@ -34,6 +37,19 @@ static JSPropertySpec properties[] = {
 	{"src", 0, JsBindable::jsPropFlags, getSrc, setSrc},
 	{0}
 };
+
+static JSBool construct(JSContext* cx, uintN argc, jsval* vp)
+{
+	if(!JS_IsConstructing(cx, vp)) return JS_FALSE;	// Not called as constructor? (called without new)
+
+	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
+	HTMLScriptElement* script = new HTMLScriptElement(rh);
+	script->bind(cx, NULL);
+
+	JS_RVAL(cx, vp) = *script;
+
+	return JS_TRUE;
+}
 
 HTMLScriptElement::HTMLScriptElement(Rhinoca* rh)
 	: Element(rh)
@@ -60,6 +76,26 @@ void HTMLScriptElement::onParserEndElement()
 {
 	TextNode* text = dynamic_cast<TextNode*>(firstChild);
 	if(!text) return;
+
+	runScript(text->data.c_str(), NULL, text->lineNumber);
+}
+
+bool HTMLScriptElement::runScript(const char* code, const char* srcPath, unsigned lineNumber)
+{
+	unsigned len = strlen(code);
+
+	if(!srcPath)
+		srcPath = "unknown source";
+
+	jsval rval;
+	JSBool ret = JS_EvaluateScript(jsContext, *rhinoca->domWindow, code, len, srcPath, lineNumber+1, &rval);
+
+	return ret == JS_TRUE;
+}
+
+void HTMLScriptElement::registerClass(JSContext* cx, JSObject* parent)
+{
+	VERIFY(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
 }
 
 static const FixString _tagName = "SCRIPT";
@@ -69,16 +105,36 @@ Element* HTMLScriptElement::factoryCreate(Rhinoca* rh, const char* type, XmlPars
 	return strcasecmp(type, _tagName) == 0 ? new HTMLScriptElement(rh) : NULL;
 }
 
+static void appendFileToString(void* file, String& str)
+{
+	char buf[128];
+	rhuint64 readCount;
+	while((readCount = io_read(file, buf, sizeof(buf), 0)))
+		str.append(buf, (size_t)readCount);
+}
+
 void HTMLScriptElement::setSrc(const char* uri)
 {
 	// We only allow to set the source once
 	if(inited) return;
-	_src = uri;
+
+	Path path;
+	fixRelativePath(uri, rhinoca->documentUrl.c_str(), path);
+
+	ResourceManager& mgr = rhinoca->resourceManager;
+	_src = mgr.loadAs<TextResource>(path.c_str());
+
+	mgr.taskPool->wait(_src->taskLoaded);
+	runScript(_src->data.c_str(), path.c_str());
 }
 
-const FixString& HTMLScriptElement::src() const
+const char* HTMLScriptElement::src() const
 {
-	return _src;
+	return _src ?
+		(_src->dataWithoutBOM ?
+			_src->dataWithoutBOM : ""
+		) :
+		"";
 }
 
 const FixString& HTMLScriptElement::tagName() const
