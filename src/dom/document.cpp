@@ -51,6 +51,18 @@ static JSBool createTextNode(JSContext* cx, uintN argc, jsval* vp)
 	return JS_TRUE;
 }
 
+static JSBool createDocumentFragment(JSContext* cx, uintN argc, jsval* vp)
+{
+	HTMLDocument* self = getJsBindable<HTMLDocument>(cx, vp);
+
+	// We simply use a node to represent a DocumentFragment
+	Node* node = new Node(self->rhinoca);
+	node->bind(cx, NULL);
+	JS_RVAL(cx, vp) = *node;
+
+	return JS_TRUE;
+}
+
 static JSBool getElementById(JSContext* cx, uintN argc, jsval* vp)
 {
 	HTMLDocument* self = getJsBindable<HTMLDocument>(cx, vp);
@@ -91,6 +103,7 @@ static JSBool createEvent(JSContext* cx, uintN argc, jsval* vp)
 static JSFunctionSpec methods[] = {
 	{"createElement", createElement, 1,0},
 	{"createTextNode", createTextNode, 1,0},
+	{"createDocumentFragment", createDocumentFragment, 0,0},
 	{"getElementsByTagName", getElementsByTagName, 1,0},
 	{"getElementById", getElementById, 1,0},
 	{"createEvent", createEvent, 1,0},

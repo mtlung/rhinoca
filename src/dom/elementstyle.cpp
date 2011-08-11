@@ -7,10 +7,26 @@
 
 namespace Dom {
 
-static JSBool JS_ValueToRhInt32(JSContext *cx, jsval v, rhint32 *ip)
+static JSBool JS_ValueToCssDimension(JSContext *cx, jsval v, rhint32* ip)
 {
 	int32 val = *ip;
-	JSBool ret = JS_ValueToInt32(cx, v, &val);
+	JSBool ret;
+
+	if(JSVAL_IS_NUMBER(v)) {
+		ret = JS_ValueToInt32(cx, v, &val);
+	}
+	else {
+		JsString jss(cx, v);
+		if(!jss) ret = JS_FALSE;
+		char buf[32];
+		ret = (sscanf(jss.c_str(), "%d%s", &val, buf) == 2) ? JS_TRUE : JS_FALSE;
+
+		if(strcasecmp(buf, "px") != 0) {
+			Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
+			print(rh, "%s", "Only 'px' is supported for CSS dimension values");
+		}
+	}
+
 	*ip = val;
 	return ret;
 }
@@ -34,13 +50,13 @@ static JSBool styleSetVisible(JSContext* cx, JSObject* obj, jsid id, JSBool stri
 static JSBool styleSetTop(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
-	return JS_ValueToRhInt32(cx, *vp, &self->element->_top);
+	return JS_ValueToCssDimension(cx, *vp, &self->element->_top);
 }
 
 static JSBool styleSetLeft(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
-	return JS_ValueToRhInt32(cx, *vp, &self->element->_left);
+	return JS_ValueToCssDimension(cx, *vp, &self->element->_left);
 }
 
 static JSBool styleSetWidth(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
@@ -49,7 +65,7 @@ static JSBool styleSetWidth(JSContext* cx, JSObject* obj, jsid id, JSBool strict
 	int w = 0;
 
 	if(JSVAL_IS_NUMBER(*vp))
-		VERIFY(JS_ValueToRhInt32(cx, *vp, &w));
+		VERIFY(JS_ValueToCssDimension(cx, *vp, &w));
 	else if(JSVAL_IS_STRING(*vp))
 		w = w;	// TODO: Parse the string
 	else
@@ -65,7 +81,7 @@ static JSBool styleSetHeight(JSContext* cx, JSObject* obj, jsid id, JSBool stric
 	int h = 0;
 
 	if(JSVAL_IS_NUMBER(*vp))
-		VERIFY(JS_ValueToRhInt32(cx, *vp, &h));
+		VERIFY(JS_ValueToCssDimension(cx, *vp, &h));
 	else if(JSVAL_IS_STRING(*vp))
 		h = h;	// TODO: Parse the string
 	else
@@ -109,7 +125,7 @@ static JSBool styleSetBGPos(JSContext* cx, JSObject* obj, jsid id, JSBool strict
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
 
 	if(JSVAL_IS_NUMBER(*vp))
-		VERIFY(JS_ValueToRhInt32(cx, *vp, &self->backgroundPositionX));
+		VERIFY(JS_ValueToCssDimension(cx, *vp, &self->backgroundPositionX));
 	else
 		return JS_FALSE;
 

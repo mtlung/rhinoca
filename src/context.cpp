@@ -55,7 +55,7 @@ JSBool jsConsoleLog(JSContext* cx, uintN argc, jsval* vp)
 	JsString jss(cx, JS_ARGV0);
 	if(!jss) return JS_FALSE;
 
-	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetPrivate(cx, JS_THIS_OBJECT(cx, vp)));
+	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
 	print(rh, "%s", jss.c_str());
 	return JS_TRUE;
 }
