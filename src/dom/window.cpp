@@ -274,6 +274,18 @@ static JSBool screen(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 	return JS_TRUE;
 }
 
+static JSBool innerWidth(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+{
+	Window* self = getJsBindable<Window>(cx, obj);
+	*vp = INT_TO_JSVAL(self->width()); return JS_TRUE;
+}
+
+static JSBool innerHeight(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+{
+	Window* self = getJsBindable<Window>(cx, obj);
+	*vp = INT_TO_JSVAL(self->height()); return JS_TRUE;
+}
+
 static const char* _eventAttributeTable[] = {
 	"onload",
 	"onmousedown",
@@ -306,6 +318,8 @@ static JSPropertySpec properties[] = {
 	{"location", 0, JSPROP_READONLY | JsBindable::jsPropFlags, location, JS_StrictPropertyStub},
 	{"navigator", 0, JSPROP_READONLY | JsBindable::jsPropFlags, navigator, JS_StrictPropertyStub},
 	{"screen", 0, JSPROP_READONLY | JsBindable::jsPropFlags, screen, JS_StrictPropertyStub},
+	{"innerWidth", 0, JSPROP_READONLY | JsBindable::jsPropFlags, innerWidth, JS_StrictPropertyStub},
+	{"innerHeight", 0, JSPROP_READONLY | JsBindable::jsPropFlags, innerHeight, JS_StrictPropertyStub},
 
 	// Event attributes
 	{_eventAttributeTable[0], 0, JsBindable::jsPropFlags, getEventAttribute, setEventAttribute},
@@ -452,8 +466,7 @@ void Window::dispatchEvent(Event* e)
 
 	if(KeyEvent* key = dynamic_cast<KeyEvent*>(e))
 	{
-		// Loop from the back of targets to see where the mouse fall into the element's rectangle
-		// TODO: Handling of stack context and z-index
+		// TODO: Handling of keyboard focus
 		for(unsigned i=targets.size(); i--; )
 		{
 			if(Element* ele = dynamic_cast<Element*>(targets[i]))
@@ -464,6 +477,12 @@ void Window::dispatchEvent(Event* e)
 					ele->dispatchEvent(e);
 					return;
 				}
+			}
+			else if(HTMLDocument* doc = dynamic_cast<HTMLDocument*>(targets[i]))
+			{
+				e->target = doc;
+				doc->dispatchEvent(e);
+				return;
 			}
 		}
 	}

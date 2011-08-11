@@ -7,27 +7,27 @@
 
 namespace Dom {
 
-static JSBool JS_ValueToCssDimension(JSContext *cx, jsval v, rhint32* ip)
+static JSBool JS_ValueToCssDimension(JSContext *cx, jsval v, float& val)
 {
-	int32 val = *ip;
+	jsdouble d = 0;
 	JSBool ret;
 
 	if(JSVAL_IS_NUMBER(v)) {
-		ret = JS_ValueToInt32(cx, v, &val);
+		ret = JS_ValueToNumber(cx, v, &d);
+		val = (float)d;
 	}
 	else {
 		JsString jss(cx, v);
 		if(!jss) ret = JS_FALSE;
 		char buf[32];
-		ret = (sscanf(jss.c_str(), "%d%s", &val, buf) == 2) ? JS_TRUE : JS_FALSE;
+		ret = (sscanf(jss.c_str(), "%f%s", &val, buf) == 2) ? JS_TRUE : JS_FALSE;
 
 		if(strcasecmp(buf, "px") != 0) {
 			Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
-			print(rh, "%s", "Only 'px' is supported for CSS dimension values");
+			print(rh, "%s", "Only 'px' is supported for CSS dimension unit");
 		}
 	}
 
-	*ip = val;
 	return ret;
 }
 
@@ -50,44 +50,36 @@ static JSBool styleSetVisible(JSContext* cx, JSObject* obj, jsid id, JSBool stri
 static JSBool styleSetTop(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
-	return JS_ValueToCssDimension(cx, *vp, &self->element->_top);
+	return JS_ValueToCssDimension(cx, *vp, self->element->_top);
 }
 
 static JSBool styleSetLeft(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
-	return JS_ValueToCssDimension(cx, *vp, &self->element->_left);
+	return JS_ValueToCssDimension(cx, *vp, self->element->_left);
 }
 
 static JSBool styleSetWidth(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
-	int w = 0;
 
-	if(JSVAL_IS_NUMBER(*vp))
-		VERIFY(JS_ValueToCssDimension(cx, *vp, &w));
-	else if(JSVAL_IS_STRING(*vp))
-		w = w;	// TODO: Parse the string
-	else
+	float w = 0;
+	if(!JS_ValueToCssDimension(cx, *vp, w))
 		return JS_FALSE;
 
-	self->setWidth(w);
+	self->setWidth((unsigned)w);
 	return JS_TRUE;
 }
 
 static JSBool styleSetHeight(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
-	int h = 0;
 
-	if(JSVAL_IS_NUMBER(*vp))
-		VERIFY(JS_ValueToCssDimension(cx, *vp, &h));
-	else if(JSVAL_IS_STRING(*vp))
-		h = h;	// TODO: Parse the string
-	else
+	float h = 0;
+	if(!JS_ValueToCssDimension(cx, *vp, h))
 		return JS_FALSE;
 
-	self->setHeight(h);
+	self->setHeight((unsigned)h);
 	return JS_TRUE;
 }
 
@@ -124,9 +116,7 @@ static JSBool styleSetBGPos(JSContext* cx, JSObject* obj, jsid id, JSBool strict
 {
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
 
-	if(JSVAL_IS_NUMBER(*vp))
-		VERIFY(JS_ValueToCssDimension(cx, *vp, &self->backgroundPositionX));
-	else
+	if(!JS_ValueToCssDimension(cx, *vp, self->backgroundPositionX))
 		return JS_FALSE;
 
 	return JS_TRUE;
@@ -164,14 +154,14 @@ ElementStyle::~ElementStyle()
 }
 
 bool ElementStyle::visible() const { return element->visible; }
-int ElementStyle::left() const { return element->left(); }
-int ElementStyle::top() const { return element->top(); }
+float ElementStyle::left() const { return element->left(); }
+float ElementStyle::top() const { return element->top(); }
 unsigned ElementStyle::width() const { return element->width(); }
 unsigned ElementStyle::height() const { return element->height(); }
 
 void ElementStyle::setVisible(bool val) { element->visible = val; }
-void ElementStyle::setLeft(int val) { element->_left = val; }
-void ElementStyle::setTop(int val) { element->_top = val; }
+void ElementStyle::setLeft(float val) { element->_left = val; }
+void ElementStyle::setTop(float val) { element->_top = val; }
 void ElementStyle::setWidth(unsigned val) { element->setWidth(val); }
 void ElementStyle::setHeight(unsigned val) { element->setheight(val); }
 

@@ -86,7 +86,7 @@ void PngLoader::onPngInfoReady()
 		break;
 	case PNG_COLOR_TYPE_PALETTE:
 		png_set_palette_to_rgb(png_ptr);
-		pixelDataFormat = Driver::RGB;
+		pixelDataFormat = Driver::RGBA;	// NOTE: I am not quite sure to use RGB or RGBA
 		break;
 	default:
 		_aborted = true;

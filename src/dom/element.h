@@ -36,13 +36,13 @@ public:
 	FixString id;
 	bool visible;
 
-	int _top, _left;
+	float _top, _left;
 	int _width, _height;	// NOTE: It's intentional to type _width and _height as signed integer
 
 	virtual const FixString& tagName() const;
 
-	virtual int top() const { return _top; }
-	virtual int left() const { return _left; }
+	virtual float top() const { return _top; }
+	virtual float left() const { return _left; }
 
 	virtual unsigned width() const { return _width; }
 	virtual unsigned height() const { return _height; }
@@ -50,8 +50,8 @@ public:
 	virtual void setWidth(unsigned w) { _width = w; }
 	virtual void setheight(unsigned h) { _height = h; }
 
-	int right() const { return left() + width(); }
-	int bottom() const { return top() + height(); }
+	float right() const { return left() + width(); }
+	float bottom() const { return top() + height(); }
 
 	ElementStyle* style;
 

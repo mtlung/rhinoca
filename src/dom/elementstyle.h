@@ -29,11 +29,11 @@ public:
 	void setVisible(bool val);
 
 	/// All dimension stuffs are in unit of pixels
-	int left() const;
-	void setLeft(int val);
+	float left() const;
+	void setLeft(float val);
 
-	int top() const;
-	void setTop(int val);
+	float top() const;
+	void setTop(float val);
 
 	unsigned width() const;
 	void setWidth(unsigned val);
@@ -41,8 +41,8 @@ public:
 	unsigned height() const;
 	void setHeight(unsigned val);
 
-	int backgroundPositionX;
-	int backgroundPositionY;
+	float backgroundPositionX;
+	float backgroundPositionY;
 	Render::TexturePtr backgroundImage;
 
 	static JSClass jsClass;
