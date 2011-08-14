@@ -61,6 +61,15 @@ void LinkListBase::insertBefore(NodeBase& newNode, const NodeBase& beforeThis)
 	++mCount;
 }
 
+LinkListBase::NodeBase* LinkListBase::getAt(unsigned index)
+{
+	if(index >= mCount) return NULL;
+
+	NodeBase* n = begin();
+	for(; n != end() && index--; n = n->next()) {}
+	return n;
+}
+
 void LinkListBase::pushFront(NodeBase& newNode)
 {
 	insertAfter(newNode, *mHead);

@@ -205,6 +205,11 @@ public:
 		return mTail->mPrev;
 	}
 
+	NodeBase* getAt(unsigned index);
+	const NodeBase* getAt(unsigned index) const {
+		return const_cast<LinkListBase*>(this)->getAt(index);
+	}
+
 	//! Get the node beyond the last node, for use when forward iterating the list.
 	NodeBase* end() {
 		return mTail;
@@ -298,6 +303,14 @@ public:
 	}
 	const Node* rbegin() const {
 		return static_cast<const Node*>(LinkListBase::rbegin());
+	}
+
+	Node* getAt(unsigned index) {
+		return static_cast<Node*>(LinkListBase::getAt(index));
+	}
+
+	const Node* getAt(unsigned index) const {
+		return static_cast<Node*>(LinkListBase::getAt(index));
 	}
 
 	void pushFront(Node& newNode) {

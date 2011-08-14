@@ -52,11 +52,13 @@ void ResourceManager::abortAllLoader()
 	for(Resource* r=_resources.findMin(); r; r=r->next()) {
 		if(r->state == Resource::Loading)
 			r->state = Resource::Aborted;
-	}
-	for(Resource* r=_resources.findMin(); r; r=r->next()) {
+		// Perform resume for every task in the first pass,
+		// prevent blocking task with inter-task dependency
 		taskPool->resume(r->taskLoaded);
-		taskPool->wait(r->taskLoaded);
 	}
+
+	for(Resource* r=_resources.findMin(); r; r=r->next())
+		taskPool->wait(r->taskLoaded);
 }
 
 ResourcePtr ResourceManager::load(const char* uri)
