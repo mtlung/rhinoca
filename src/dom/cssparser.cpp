@@ -126,6 +126,19 @@ bool SelectorMatcher::match(Parser* p)
 	return true;
 }
 
+bool SelectorsMatcher::match(Parser* p)
+{
+	if(!selector(p).once())
+		return false;
+
+	ParserResult sGroup = { "sGroup", NULL, NULL };
+
+	while(skip(p).any() && character(p, ',').once(&sGroup) && skip(p).any() && selector(p).once())
+	{}
+
+	return true;
+}
+
 bool MediumMatcher::match(Parser* p)
 {
 	return
@@ -156,25 +169,22 @@ bool PropertyDeclMatcher::match(Parser* p)
 		character(p, ';').atMostOnce();
 }
 
-bool RuleSetMatcher::match(Parser* p)
+bool PropertyDeclsMatcher::match(Parser* p)
 {
-	if(!selector(p).once())
-		return false;
-
-	ParserResult sGroup = { "sGroup", NULL, NULL };
-
-	while(skip(p).any() && character(p, ',').once(&sGroup) && skip(p).any() && selector(p).once())
-	{}
-
 	if(!skip(p).any() || !character(p, '{').once()) {
 		p->reportError("missing '{'");
 		return false;
 	}
 
+	p->result.type = "decls";
+	p->result.begin = p->begin;
+
 	if(!propertyDecl(p).atLeastOnce()) {
 		p->reportError("no property declared");
 		return false;
 	}
+
+	p->result.end = p->begin;
 
 	if(!skip(p).any() || !character(p, '}').once()) {
 		p->reportError("missing '}'");
@@ -184,9 +194,26 @@ bool RuleSetMatcher::match(Parser* p)
 	return true;
 }
 
+bool RuleSetMatcher::match(Parser* p)
+{
+	ParserResult sGroup = { "selectors", NULL, NULL };
+
+	if(!selectors(p).once(&sGroup))
+		return false;
+
+	ParserResult decls = { "decls", NULL, NULL };
+	return propertyDecls(p).once(&decls);
+}
+
 bool CssMatcher::match(Parser* p)
 {
-	return ruleSet(p).atLeastOnce();
+	ParserResult result = { "ruleSet", NULL, NULL };
+
+	bool ret = false;
+	while(skip(p).any() && ruleSet(p).once(&result))
+		ret = true;
+
+	return ret;
 }
 
 }	// namespace Parsing

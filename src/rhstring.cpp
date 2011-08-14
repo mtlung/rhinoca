@@ -97,6 +97,12 @@ String& String::append(const char* str, size_type count)
 	return *this;
 }
 
+String& String::assign(const char* str, size_type count)
+{
+	clear();
+	return append(str, count);
+}
+
 void String::clear()
 {
 	erase(0);

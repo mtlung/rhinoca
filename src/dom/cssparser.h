@@ -6,6 +6,7 @@
 namespace Parsing {
 
 /// CSS selector syntax: http://www.w3.org/TR/CSS2/selector.html#selector-syntax
+/// http://www.w3.org/TR/1998/REC-CSS2-19980512/syndata.html
 /// See http://www.codeproject.com/KB/recipes/CSSParser.aspx
 /// http://stackoverflow.com/questions/4656975/use-css-selectors-to-collect-html-elements-from-a-streaming-parser-e-g-sax-stre
 
@@ -102,6 +103,17 @@ inline Matcher<SelectorMatcher> selector(Parser* parser) {
 	return ret;
 }
 
+/// Match the whole selector string for a rule set
+struct SelectorsMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<SelectorsMatcher> selectors(Parser* parser) {
+	Matcher<SelectorsMatcher> ret = { {}, parser };
+	return ret;
+}
+
 /// Match all valid CSS medium type:
 /// all, aural, braille, embossed, handheld, print
 /// projection, scree, tty, tv
@@ -126,6 +138,17 @@ inline Matcher<PropertyDeclMatcher> propertyDecl(Parser* parser) {
 	return ret;
 }
 
+/// Match ever property declaration enclosed by '{' and '}'
+struct PropertyDeclsMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<PropertyDeclsMatcher> propertyDecls(Parser* parser) {
+	Matcher<PropertyDeclsMatcher> ret = { {}, parser };
+	return ret;
+}
+
 /// Match selector {',' selector}0-* '{' {propertyDecl}0-* '}'
 struct RuleSetMatcher
 {
@@ -137,7 +160,7 @@ inline Matcher<RuleSetMatcher> ruleSet(Parser* parser) {
 	return ret;
 }
 
-///
+/// Match the top level CSS document
 struct CssMatcher
 {
 	bool match(Parser* parser);
