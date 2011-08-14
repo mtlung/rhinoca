@@ -13,8 +13,6 @@ public:
 	~HTMLStyleElement();
 
 // Operations
-	bool initWithString(const char* css);
-
 	override void bind(JSContext* cx, JSObject* parent);
 
 	override void onParserEndElement();

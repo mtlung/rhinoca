@@ -105,6 +105,7 @@ struct Matcher
 				result->end = parser->begin;
 			}
 			if(parser->callback) parser->callback(result, parser);
+			parser->result.begin = NULL;
 		}
 
 		return true;

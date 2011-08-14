@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "style.h"
 #include "cssparser.h"
+#include "cssstylesheet.h"
+#include "document.h"
 #include "textnode.h"
 
 using namespace Parsing;
@@ -25,22 +27,6 @@ HTMLStyleElement::~HTMLStyleElement()
 	free((void*)source);
 }
 
-static void parserCallback(ParserResult* result, Parser* parser)
-{
-	HTMLStyleElement* style = reinterpret_cast<HTMLStyleElement*>(parser->userdata);
-}
-
-bool HTMLStyleElement::initWithString(const char* css)
-{
-	free((void*)source);
-	source = strdup(css);
-
-	Parser parser(source, source + strlen(source), parserCallback, this);
-	Parsing::css(&parser).once();
-
-	return true;
-}
-
 void HTMLStyleElement::bind(JSContext* cx, JSObject* parent)
 {
 	ASSERT(!jsContext);
@@ -52,12 +38,30 @@ void HTMLStyleElement::bind(JSContext* cx, JSObject* parent)
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
+static void parserCallback(ParserResult* result, Parser* parser)
+{
+	CSSStyleSheet* style = reinterpret_cast<CSSStyleSheet*>(parser->userdata);
+
+	if(strcmp(result->type, "ruleSet") != 0)
+		return;
+
+	char bk = *result->end;
+	*result->end = '\0';
+	style->insertRule(result->begin, style->rules.elementCount());
+	*result->end = bk;
+}
+
 void HTMLStyleElement::onParserEndElement()
 {
 	TextNode* text = dynamic_cast<TextNode*>(firstChild);
 	if(!text) return;
 
-	initWithString(text->data.c_str());
+	CSSStyleSheet* css = new CSSStyleSheet(rhinoca);
+	ownerDocument()->styleSheets.pushBack(*css);
+
+	char* source = text->data.c_str();
+	Parser parser(source, source + strlen(source), parserCallback, css);
+	Parsing::css(&parser).once();
 }
 
 static const FixString _tagName = "STYLE";

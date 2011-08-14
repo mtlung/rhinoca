@@ -2,6 +2,7 @@
 #define __DOM_DOCUMENT_H__
 
 #include "node.h"
+#include "cssstylesheet.h"
 
 namespace Dom {
 
@@ -44,6 +45,8 @@ public:
 
 	/// See http://www.w3schools.com/jsref/prop_doc_readystate.asp
 	FixString readyState;
+
+	LinkList<CSSStyleSheet> styleSheets;
 
 	static JSClass jsClass;
 };	// HTMLDocument

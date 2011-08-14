@@ -210,6 +210,30 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\dom\cssstyledeclaration.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\cssstyledeclaration.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\cssstylerule.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\cssstylerule.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\cssstylesheet.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\dom\cssstylesheet.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\dom\div.cpp"
 				>
 			</File>
