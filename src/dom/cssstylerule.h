@@ -7,6 +7,7 @@
 namespace Dom {
 
 class CSSStyleSheet;
+class Element;
 
 /// http://www.w3.org/TR/DOM-Level-2-Style/css.html#CSS-CSSStyleRule
 class CSSStyleRule : public JsBindable, public LinkListBase::Node<CSSStyleRule>
@@ -17,6 +18,9 @@ public:
 
 // Operations
 	override void bind(JSContext* cx, JSObject* parent);
+
+	/// Loop for the Element tree and assign the style for those element match with the selector.
+	void selectorMatch(Element* tree);
 
 // Attributes
 	/// The parsable textual representation of the rule.

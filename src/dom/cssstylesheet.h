@@ -7,7 +7,7 @@ namespace Dom {
 
 /// https://developer.mozilla.org/en/DOM/CSSStyleSheet
 /// http://www.w3.org/TR/DOM-Level-2-Style/css.html#CSS-CSSStyleSheet
-class CSSStyleSheet : public JsBindable, public LinkListBase::Node<CSSStyleRule>
+class CSSStyleSheet : public JsBindable, public LinkListBase::Node<CSSStyleSheet>
 {
 public:
 	explicit CSSStyleSheet(Rhinoca* rh);

@@ -244,7 +244,6 @@ bool Rhinoca::openDoucment(const char* uri)
 
 			{
 				const char* eleName = parser.elementName();
-				printf("%s\n", eleName);
 				Dom::Element* element = factory.create(this, eleName, &parser);
 				if(!element) element = new Dom::Element(document->rhinoca);
 
@@ -274,10 +273,9 @@ bool Rhinoca::openDoucment(const char* uri)
 			parser.popAttributes();
 
 			if(currentNode) {
-				if(Dom::Element* ele = dynamic_cast<Dom::Element*>(currentNode)) {
-					printf("end %s\n", parser.elementName());
+				if(Dom::Element* ele = dynamic_cast<Dom::Element*>(currentNode))
 					ele->onParserEndElement();
-				}
+
 				currentNode = currentNode->parentNode;
 			}
 		}	break;
@@ -293,6 +291,16 @@ bool Rhinoca::openDoucment(const char* uri)
 			ended = true;
 		default:
 			break;
+		}
+	}
+
+	// Perform selector match and assign style to matching elements
+	LinkList<Dom::CSSStyleSheet>& styleSheets = document->styleSheets;
+	for(Dom::CSSStyleSheet* s = styleSheets.begin(); s != styleSheets.end(); s = s->next())
+	{
+		for(Dom::CSSStyleRule* r = s->rules.begin(); r != s->rules.end(); r = r->next())
+		{
+			r->selectorMatch(dynamic_cast<Dom::Element*>(document->firstChild));
 		}
 	}
 

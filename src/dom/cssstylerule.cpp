@@ -2,6 +2,8 @@
 #include "cssstylerule.h"
 #include "cssstylesheet.h"
 #include "cssparser.h"
+#include "element.h"
+#include "../vector.h"
 
 using namespace Parsing;
 
@@ -22,13 +24,80 @@ CSSStyleRule::~CSSStyleRule()
 {
 }
 
-static void parserCallback(ParserResult* result, Parser* parser)
+struct SingleSelectorState
+{
+	FixString type;
+	const char* val;
+	int len;
+};
+
+struct SelectionBuffer
+{
+	Vector<SingleSelectorState> state;
+}
+;
+static void selectorParserCallback(ParserResult* result, Parser* parser)
+{
+	SelectionBuffer* state = reinterpret_cast<SelectionBuffer*>(parser->userdata);
+
+	SingleSelectorState ss = { result->type, result->begin, result->end - result->begin };
+
+	state->state.push_back(ss);
+}
+
+static bool match(const SingleSelectorState& state, Element* ele)
+{
+	switch(state.val[0])
+	{
+	case '#':	// Match id
+		ASSERT(state.len > 1);
+		// TODO: Should I use case insenstive comparison?
+		if(ele->id == StringHash(state.val + 1, state.len - 1))
+			return true;
+		break;
+	default:
+		return false;
+		break;
+	}
+
+	return false;
+}
+
+void CSSStyleRule::selectorMatch(Element* tree)
+{
+	if(!tree)
+		return;
+
+	// Construct the selector represtation buffer
+	SelectionBuffer state;
+	Parser parser(_selectorText.c_str(), _selectorText.c_str() + _selectorText.size(), selectorParserCallback, &state);
+	Parsing::selector(&parser).once();
+
+	// Perform selection on each node
+	for(NodeIterator i(tree); !i.ended(); i.next())
+	{
+		Element* ele = dynamic_cast<Element*>(i.current());
+		if(!ele)
+			continue;
+
+		// We traverse the selectors in reverse order
+		for(unsigned j=state.state.size(); j--;)
+		{
+			if(match(state.state[j], ele)) {
+				// Assign style
+			}
+		}
+//		break;
+	}
+
+}
+
+static void cssParserCallback(ParserResult* result, Parser* parser)
 {
 	CSSStyleRule* rule = reinterpret_cast<CSSStyleRule*>(parser->userdata);
 
-	if(strcmp(result->type, "selectors") == 0) {
+	if(strcmp(result->type, "selectors") == 0)
 		rule->_selectorText.assign(result->begin, result->end - result->begin);
-	}
 }
 
 const char* CSSStyleRule::cssTest()
@@ -40,7 +109,7 @@ void CSSStyleRule::setCssText(const char* str)
 {
 	_cssText = str;
 
-	Parser parser(_cssText.c_str(), _cssText.c_str() + _cssText.size(), parserCallback, this);
+	Parser parser(_cssText.c_str(), _cssText.c_str() + _cssText.size(), cssParserCallback, this);
 	Parsing::ruleSet(&parser).once();
 }
 
