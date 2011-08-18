@@ -55,6 +55,9 @@ public:
 	template<class T>
 	IntrusivePtr<T> loadAs(const char* uri) { return dynamic_cast<T*>(load(uri).get()); }
 
+	/// Remove the resource from the management of the ResourceManager
+	Resource* forget(const char* uri);
+
 	// Call this on every frame
 	void update();
 

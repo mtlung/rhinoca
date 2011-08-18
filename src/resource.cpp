@@ -103,6 +103,19 @@ ResourcePtr ResourceManager::load(const char* uri)
 	return r;
 }
 
+Resource* ResourceManager::forget(const char* uri)
+{
+	ScopeLock lock(_mutex);
+
+	if(Resource* r = _resources.find(uri)) {
+		r->removeThis();
+		intrusivePtrRelease(r);
+		return r;
+	}
+
+	return NULL;
+}
+
 void ResourceManager::update()
 {
 	ScopeLock lock(_mutex);

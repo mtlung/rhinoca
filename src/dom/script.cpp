@@ -125,7 +125,12 @@ void HTMLScriptElement::setSrc(const char* uri)
 	_src = mgr.loadAs<TextResource>(path.c_str());
 
 	mgr.taskPool->wait(_src->taskLoaded);
+
+	// TODO: Prevent the same script running more than once
 	runScript(_src->data.c_str(), path.c_str());
+
+	// TODO: It's a temp solution to reload script, later should use the file monitor
+	mgr.forget(path.c_str());
 }
 
 const char* HTMLScriptElement::src() const
