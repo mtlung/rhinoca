@@ -5,6 +5,22 @@
 #include "vector.h"
 #include <string.h>
 
+void tolower(char* str)
+{
+	while(*str != '\0') {
+		*str = (char)charTolower(*str);
+		++str;
+	}
+}
+
+void toupper(char* str)
+{
+	while(*str != '\0') {
+		*str = (char)charToupper(*str);
+		++str;
+	}
+}
+
 static const char* _emptyString = "";
 
 String::String()
@@ -425,9 +441,22 @@ StringHash::StringHash(const wchar_t* buf, size_t len)
 	hash = hash_;
 }
 
+StringLowerCaseHash::StringLowerCaseHash(const char* buf, size_t len)
+{
+	rhuint32 hash_ = 0;
+	len = len == 0 ? size_t(-1) : len;
+
+	for(size_t i=0; i<len && buf[i] != '\0'; ++i) {
+		//hash = hash * 65599 + buf[i];
+		hash_ = charTolower(buf[i]) + (hash_ << 6) + (hash_ << 16) - hash_;
+	}
+	hash = hash_;
+}
+
 struct FixString::Node
 {
 	rhuint32 hashValue;
+	rhuint32 lowerCaseHashValue;
 	Node* next;
 	AtomicInteger refCount;
 	size_t size;	//!< Length of the string
@@ -489,6 +518,7 @@ public:
 		if(Node* n = (Node*)rhinoca_malloc(sizeof(Node) + length)) {
 			memcpy((void*)n->stringValue(), str, length);
 			n->hashValue = hashValue;
+			n->lowerCaseHashValue = 0;	// We will assign it lazily
 			n->refCount = 0;
 			n->size = length - 1;
 
@@ -628,6 +658,14 @@ const char* FixString::c_str() const {
 
 rhuint32 FixString::hashValue() const {
 	return mNode->hashValue;
+}
+
+rhuint32 FixString::lowerCaseHashValue() const
+{
+	if(mNode->lowerCaseHashValue == 0)
+		mNode->lowerCaseHashValue = StringLowerCaseHash(mNode->stringValue(), mNode->size);
+
+	return mNode->lowerCaseHashValue;
 }
 
 size_t FixString::size() const {

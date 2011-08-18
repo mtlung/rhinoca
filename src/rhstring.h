@@ -4,6 +4,28 @@
 #include "common.h"
 #include "rhinoca.h"
 
+// Borrowed from http://code.google.com/p/stringencoders/source/browse/trunk/src/modp_ascii.c
+inline char charTolower(char c)
+{
+	rhuint32 eax = c;
+	rhuint32 ebx = (0x7f7f7f7fu & eax) + 0x25252525u;
+	ebx = (0x7f7f7f7fu & ebx) + 0x1a1a1a1au;
+	ebx = ((ebx & ~eax) >> 2)  & 0x20202020u;
+	return (char)(eax + ebx);
+}
+
+inline char charToupper(char c)
+{
+	rhuint32 eax = c;
+	rhuint32 ebx = (0x7f7f7f7fu & eax) + 0x05050505u;
+	ebx = (0x7f7f7f7fu & ebx) + 0x1a1a1a1au;
+	ebx = ((ebx & ~eax) >> 2)  & 0x20202020u;
+	return (char)(eax + ebx);
+}
+
+void tolower(char* str);
+void toupper(char* str);
+
 // A light weight replacement for std::string
 class String
 {
@@ -93,7 +115,7 @@ class StringHash;
 	Behind the scene, there is a single global hash table managing all instance of FixString.
 	Whenever a FixString is created, it search for any existing string in the table that match
 	with the input string; return that cached string if yes, otherwise the input string will
-	be hashed and copyed into the global hash table.
+	be hashed and copied into the global hash table.
 
 	Every FixString instances are reference counted by the global hash table, once it's reference
 	count become zero the FixString's corresponding entry in the hash table along with the string
@@ -106,7 +128,7 @@ class FixString
 public:
 	FixString();
 
-	/*!	The input string will copyed and reference counted.
+	/*!	The input string will copied and reference counted.
 		Null input string will result an empty string.
 	 */
 	FixString(const char* str);
@@ -128,6 +150,7 @@ public:
 	operator const char*() const {	return c_str();	}
 
 	rhuint32 hashValue() const;
+	rhuint32 lowerCaseHashValue() const;
 
 	size_t size() const;
 
@@ -219,5 +242,18 @@ public:
 	bool operator> (const StringHash& rhs) const	{	return hash > rhs.hash;		}
 	bool operator< (const StringHash& rhs) const	{	return hash < rhs.hash;		}
 };	// StringHash
+
+class StringLowerCaseHash : public StringHash
+{
+protected:
+	StringLowerCaseHash() {}	// Accessed by derived-classes only
+
+public:
+	StringLowerCaseHash(rhuint32 h) : StringHash(h) {}
+
+//	StringLowerCaseHash(const FixString& fixString) : hash(fixString.hashValue()) {}
+
+	StringLowerCaseHash(const char* buf, size_t len);
+};	// StringToLowerHash
 
 #endif	// __RHSTRING_H__
