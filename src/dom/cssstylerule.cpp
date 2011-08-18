@@ -34,8 +34,8 @@ struct SingleSelectorState
 struct SelectionBuffer
 {
 	Vector<SingleSelectorState> state;
-}
-;
+};
+
 static void selectorParserCallback(ParserResult* result, Parser* parser)
 {
 	SelectionBuffer* state = reinterpret_cast<SelectionBuffer*>(parser->userdata);
@@ -45,17 +45,29 @@ static void selectorParserCallback(ParserResult* result, Parser* parser)
 	state->state.push_back(ss);
 }
 
+static bool hashCompare(const FixString& str1, const char* str2, unsigned len)
+{
+	StringLowerCaseHash hash(str2, len);
+	return str1.lowerCaseHashValue() == hash;
+}
+
 static bool match(const SingleSelectorState& state, Element* ele)
 {
 	switch(state.val[0])
 	{
 	case '#':	// Match id
 		ASSERT(state.len > 1);
-		// TODO: Should I use case insenstive comparison?
-		if(ele->id == StringHash(state.val + 1, state.len - 1))
+		if(hashCompare(ele->id, state.val + 1, state.len - 1))
 			return true;
 		break;
-	default:
+	case '.':	// Match class name
+		ASSERT(state.len > 1);
+		if(hashCompare(ele->className, state.val + 1, state.len - 1))
+			return true;
+		break;
+	default:	// Match tag name
+		if(hashCompare(ele->tagName(), state.val, state.len))
+			return true;
 		return false;
 		break;
 	}
@@ -68,7 +80,7 @@ void CSSStyleRule::selectorMatch(Element* tree)
 	if(!tree)
 		return;
 
-	// Construct the selector represtation buffer
+	// Construct the selector representation buffer
 	SelectionBuffer state;
 	Parser parser(_selectorText.c_str(), _selectorText.c_str() + _selectorText.size(), selectorParserCallback, &state);
 	Parsing::selector(&parser).once();
@@ -87,9 +99,8 @@ void CSSStyleRule::selectorMatch(Element* tree)
 				// Assign style
 			}
 		}
-//		break;
+		break;
 	}
-
 }
 
 static void cssParserCallback(ParserResult* result, Parser* parser)

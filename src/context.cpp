@@ -248,6 +248,7 @@ bool Rhinoca::openDoucment(const char* uri)
 				if(!element) element = new Dom::Element(document->rhinoca);
 
 				element->id = parser.attributeValueIgnoreCase("id");
+				element->className = parser.attributeValueIgnoreCase("class");
 
 				currentNode->appendChild(element);
 				currentNode = element;

@@ -34,6 +34,8 @@ public:
 
 // Attributes
 	FixString id;
+	FixString className;	/// The CSS class name
+
 	bool visible;
 
 	float _top, _left;
