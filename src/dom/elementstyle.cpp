@@ -88,28 +88,10 @@ static JSBool styleSetHeight(JSContext* cx, JSObject* obj, jsid id, JSBool stric
 static JSBool styleSetBG(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
-	Element* ele = self->element;
 
 	JsString jss(cx, *vp);
-	if(!jss) return JS_FALSE;
-
-	// Get the url from the style string value
-	Parsing::Parser parser(jss.c_str(), jss.c_str() + jss.size());
-	Parsing::ParserResult result;
-
-	if(!Parsing::url(&parser).once(&result)) {
-		// TODO: Give some warning
-		return JS_TRUE;
-	}
-	*const_cast<char*>(result.end) = '\0';	// Make it parse result null terminated
-
-	Path path;
-	ele->fixRelativePath(result.begin, ele->rhinoca->documentUrl.c_str(), path);
-
-	using namespace Render;
-	
-	ResourceManager& mgr = ele->rhinoca->resourceManager;
-	self->backgroundImage = mgr.loadAs<Texture>(path.c_str());
+	if(!jss || !self->setBackgroundImage(jss.c_str()))
+		return JS_FALSE;
 
 	return JS_TRUE;
 }
@@ -155,16 +137,70 @@ ElementStyle::~ElementStyle()
 {
 }
 
+struct ParserState
+{
+	ElementStyle* style;
+	const char* propNameBegin, *propNameEnd;
+};
+
 static void parserCallback(ParserResult* result, Parser* parser)
 {
-	ElementStyle* style = reinterpret_cast<ElementStyle*>(parser->userdata);
+	ParserState* state = reinterpret_cast<ParserState*>(parser->userdata);
+	ElementStyle* style = state->style;
 
+	if(strcmp(result->type, "propName") == 0) {
+		state->propNameBegin = result->begin;
+		state->propNameEnd = result->end;
+	}
+	else if(strcmp(result->type, "propVal") == 0) {
+		char nameEnd = *state->propNameEnd;
+		char valueEnd = *result->end;
+		*const_cast<char*>(state->propNameEnd) = '\0';
+		*const_cast<char*>(result->end) = '\0';
+		style->setStyleAttribute(state->propNameBegin, result->begin);
+		*const_cast<char*>(state->propNameEnd) = nameEnd;
+		*const_cast<char*>(result->end) = valueEnd;
+	}
 }
 
-void ElementStyle::setStyle(const char* style)
+void ElementStyle::setStyleString(const char* begin, const char* end)
 {
-	Parser parser(style, style + strlen(style), parserCallback, this);
-	Parsing::css(&parser).once();
+	ParserState state = { this, NULL, NULL };
+	Parser parser(begin, end, parserCallback, &state);
+	Parsing::propertyDecl(&parser).any();
+}
+
+void ElementStyle::setStyleAttribute(const char* name, const char* value)
+{
+	StringLowerCaseHash hash(name, 0);
+
+	if(hash == StringHash("left")) {
+		float v = 0;
+		sscanf(value, "%f", &v);
+		setLeft(v);
+	}
+	else if(hash == StringHash("top")) {
+		float v = 0;
+		sscanf(value, "%f", &v);
+		setTop(v);
+	}
+	else if(hash == StringHash("width")) {
+		float v = 0;
+		sscanf(value, "%f", &v);
+		setWidth((unsigned)v);
+	}
+	else if(hash == StringHash("height")) {
+		float v = 0;
+		sscanf(value, "%f", &v);
+		setHeight((unsigned)v);
+	}
+	else if(hash == StringHash("background-image")) {
+		setBackgroundImage(value);
+	}
+	else if(hash == StringHash("background-position")) {
+		// For sscanf formatting: http://linux.die.net/man/3/scanf
+		sscanf(value, "%f%*[ ,\n\r\t]%f", &backgroundPositionX, &backgroundPositionY);
+	}
 }
 
 bool ElementStyle::visible() const { return element->visible; }
@@ -178,5 +214,26 @@ void ElementStyle::setLeft(float val) { element->_left = val; }
 void ElementStyle::setTop(float val) { element->_top = val; }
 void ElementStyle::setWidth(unsigned val) { element->setWidth(val); }
 void ElementStyle::setHeight(unsigned val) { element->setheight(val); }
+
+bool ElementStyle::setBackgroundImage(const char* cssUrl)
+{
+	// Get the url from the style string value
+	Parsing::Parser parser(cssUrl, cssUrl + strlen(cssUrl));
+	Parsing::ParserResult result;
+
+	if(!Parsing::url(&parser).once(&result)) {
+		// TODO: Give some warning
+		return false;
+	}
+	*const_cast<char*>(result.end) = '\0';	// Make it parse result null terminated
+
+	Path path;
+	element->fixRelativePath(result.begin, element->rhinoca->documentUrl.c_str(), path);
+
+	ResourceManager& mgr = element->rhinoca->resourceManager;
+	backgroundImage = mgr.loadAs<Render::Texture>(path.c_str());
+
+	return true;
+}
 
 }	// namespace Dom

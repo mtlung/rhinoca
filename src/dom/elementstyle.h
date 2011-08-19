@@ -14,13 +14,15 @@ public:
 	explicit ElementStyle(Dom::Element* ele);
 	~ElementStyle();
 
-	// Operations
+// Operations
 	override void bind(JSContext* cx, JSObject* parent);
 
-	// Attributes
+// Attributes
 	Dom::Element* element;
 
-	void setStyle(const char* style);
+	void setStyleString(const char* begin, const char* end);
+
+	void setStyleAttribute(const char* name, const char* value);
 
 	/// Visible vs Display:
 	/// In CSS: visibility = "visible|hidden", display = "inline|block|none"
@@ -45,6 +47,8 @@ public:
 
 	float backgroundPositionX;
 	float backgroundPositionY;
+
+	bool setBackgroundImage(const char* cssUrl);
 	Render::TexturePtr backgroundImage;
 
 	static JSClass jsClass;

@@ -55,7 +55,9 @@ public:
 	float right() const { return left() + width(); }
 	float bottom() const { return top() + height(); }
 
-	ElementStyle* style;
+	ElementStyle* style();
+
+	ElementStyle* _style;
 
 	static JSClass jsClass;
 };	// Element

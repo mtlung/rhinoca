@@ -33,15 +33,7 @@ static JSBool clientHeight(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 static JSBool elementGetStyle(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	Element* self = getJsBindable<Element>(cx, obj);
-
-	if(!self->style) {
-		self->style = new ElementStyle(self);
-		self->style->bind(cx, *self);
-		VERIFY(JS_SetReservedSlot(cx, self->jsObjectOfType(&Element::jsClass), 0, *self->style));
-	}
-
-	*vp = *self->style;
-
+	*vp = *self->style();
 	return JS_TRUE;
 }
 
@@ -169,7 +161,7 @@ Element::Element(Rhinoca* rh)
 	: Node(rh)
 	, _top(0), _left(0)
 	, _width(0), _height(0)
-	, style(NULL)
+	, _style(NULL)
 {
 }
 
@@ -230,27 +222,40 @@ static int _min(int a, int b) { return a < b ? a : b; }
 void Element::render()
 {
 	// Render the style's background image if any
-	if(!style || !style->backgroundImage)
+	if(!_style || !_style->backgroundImage)
 		return;
 
 	HTMLCanvasElement* canvas = ownerDocument()->window()->virtualCanvas;
 	CanvasRenderingContext2D* context = dynamic_cast<CanvasRenderingContext2D*>(canvas->context);
 
-	float dx = (float)style->left();
-	float dy = (float)style->top();
-	float dw = (float)style->width();
-	float dh = (float)style->height();
+	float dx = (float)_style->left();
+	float dy = (float)_style->top();
+	float dw = (float)_style->width();
+	float dh = (float)_style->height();
 
-	float sx = (float)-style->backgroundPositionX;
-	float sy = (float)-style->backgroundPositionY;
-	float sw = (float)_min(style->width(), style->backgroundImage->virtualWidth);
-	float sh = (float)_min(style->height(), style->backgroundImage->virtualHeight);
+	float sx = (float)-_style->backgroundPositionX;
+	float sy = (float)-_style->backgroundPositionY;
+	float sw = (float)_min(_style->width(), _style->backgroundImage->virtualWidth);
+	float sh = (float)_min(_style->height(), _style->backgroundImage->virtualHeight);
 
 	context->drawImage(
-		style->backgroundImage.get(), Render::Driver::SamplerState::MIN_MAG_LINEAR,
+		_style->backgroundImage.get(), Render::Driver::SamplerState::MIN_MAG_LINEAR,
 		sx, sy, sw, sh,
 		dx, dy, dw, dh
 	);
+}
+
+ElementStyle* Element::style()
+{
+	if(!_style)
+		_style = new ElementStyle(this);
+
+	if(!_style->jsObject) {
+		_style->bind(jsContext, *this);
+		VERIFY(JS_SetReservedSlot(jsContext, jsObjectOfType(&Element::jsClass), 0, *_style));
+	}
+
+	return _style;
 }
 
 static const FixString _tagName = "ELEMENT";

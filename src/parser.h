@@ -23,7 +23,7 @@ public:
 	ParserResultCallback callback;
 	void* userdata;
 
-	ParserResult result;
+	ParserResult* customResult;
 
 	void reportError(const char* msg);
 	const char* erroMessage;
@@ -89,8 +89,10 @@ struct Matcher
 
 	bool once(ParserResult* result=NULL)
 	{
-		if(result) parser->result.begin = NULL;
 		const char* bk = parser->begin;
+
+		ParserResult customResult = { NULL };
+		parser->customResult = &customResult;
 
 		if(!t.match(parser)) {
 			parser->begin = bk;
@@ -98,14 +100,13 @@ struct Matcher
 		}
 
 		if(result) {
-			if(parser->result.begin)
-				*result = parser->result;
+			if(customResult.begin)
+				*result = customResult;
 			else {
 				result->begin = bk;
 				result->end = parser->begin;
 			}
 			if(parser->callback) parser->callback(result, parser);
-			parser->result.begin = NULL;
 		}
 
 		return true;

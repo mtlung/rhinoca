@@ -67,17 +67,19 @@ bool DigitMatcher::match(Parser* p)
 
 bool QuotedStringMatcher::match(Parser* p)
 {
+	ParserResult& result = *p->customResult;
+
 	if(*p->begin != '\'')
 		return false;
 
-	p->result.begin = p->begin + 1;
+	result.begin = p->begin + 1;
 
 	char lastChar = *p->begin;
 	for(const char* c=p->begin+1; c<p->end; ++c)
 	{
 		if(*c == '\'' && lastChar != '\\') {
 			p->begin = c + 1;
-			p->result.end = c;
+			result.end = c;
 			return true;
 		}
 		lastChar = *c;
@@ -89,17 +91,19 @@ bool QuotedStringMatcher::match(Parser* p)
 
 bool DoubleQuotedStringMatcher::match(Parser* p)
 {
+	ParserResult& result = *p->customResult;
+
 	if(*p->begin != '"')
 		return false;
 
-	p->result.begin = p->begin + 1;
+	result.begin = p->begin + 1;
 
 	char lastChar = *p->begin;
 	for(const char* c=p->begin+1; c<p->end; ++c)
 	{
 		if(*c == '"' && lastChar != '\\') {
 			p->begin = c + 1;
-			p->result.end = c;
+			result.end = c;
 			return true;
 		}
 		lastChar = *c;

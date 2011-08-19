@@ -5,7 +5,9 @@ namespace Parsing {
 
 bool UrlMatcher::match(Parser* p)
 {
-	p->result.type = "url";
+	ParserResult& result = *p->customResult;
+
+	result.type = "url";
 	bool hasParenthesis = false;
 
 	return
@@ -15,9 +17,9 @@ bool UrlMatcher::match(Parser* p)
 			(hasParenthesis = character(p, '(').once())
 		) &&
 		whiteSpace(p).any() &&
-		(	quotedString(p).once(&p->result) ||
-			doubleQuotedString(p).once(&p->result) ||
-			anyCharExcept(p, " \t\n\r,()'\"").any(&p->result)
+		(	quotedString(p).once(&result) ||
+			doubleQuotedString(p).once(&result) ||
+			anyCharExcept(p, " \t\n\r,()'\"").any(&result)
 		) &&
 		whiteSpace(p).any() &&
 		(	hasParenthesis ?
@@ -27,10 +29,12 @@ bool UrlMatcher::match(Parser* p)
 
 bool HexMatcher::match(Parser* p)
 {
+	ParserResult& result = *p->customResult;
+
 	return
 		whiteSpace(p).any() &&
 		character(p, '#').once() &&
-		digit(p).any(&p->result);
+		digit(p).any(&result);
 }
 
 bool IdentifierMatcher::match(Parser* p)
@@ -171,20 +175,20 @@ bool PropertyDeclMatcher::match(Parser* p)
 
 bool PropertyDeclsMatcher::match(Parser* p)
 {
+	ParserResult& result = *p->customResult;
+
 	if(!skip(p).any() || !character(p, '{').once()) {
 		p->reportError("missing '{'");
 		return false;
 	}
 
-	p->result.type = "decls";
-	p->result.begin = p->begin;
+	result.type = "decls";
 
-	if(!propertyDecl(p).atLeastOnce()) {
+	skip(p).any();
+	if(!propertyDecl(p).atLeastOnce(&result)) {
 		p->reportError("no property declared");
 		return false;
 	}
-
-	p->result.end = p->begin;
 
 	if(!skip(p).any() || !character(p, '}').once()) {
 		p->reportError("missing '}'");

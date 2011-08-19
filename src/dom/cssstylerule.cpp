@@ -3,6 +3,7 @@
 #include "cssstylesheet.h"
 #include "cssparser.h"
 #include "element.h"
+#include "elementstyle.h"
 #include "../vector.h"
 
 using namespace Parsing;
@@ -17,6 +18,10 @@ JSClass CSSStyleRule::jsClass = {
 };
 
 CSSStyleRule::CSSStyleRule()
+	: _selectorTextBegin(NULL)
+	, _selectorTextEnd(NULL)
+	, _declsTextBegin(NULL)
+	, _declsTextEnd(NULL)
 {
 }
 
@@ -68,7 +73,6 @@ static bool match(const SingleSelectorState& state, Element* ele)
 	default:	// Match tag name
 		if(hashCompare(ele->tagName(), state.val, state.len))
 			return true;
-		return false;
 		break;
 	}
 
@@ -82,7 +86,7 @@ void CSSStyleRule::selectorMatch(Element* tree)
 
 	// Construct the selector representation buffer
 	SelectionBuffer state;
-	Parser parser(_selectorText.c_str(), _selectorText.c_str() + _selectorText.size(), selectorParserCallback, &state);
+	Parser parser(_selectorTextBegin, _selectorTextEnd, selectorParserCallback, &state);
 	Parsing::selector(&parser).once();
 
 	// Perform selection on each node
@@ -97,9 +101,9 @@ void CSSStyleRule::selectorMatch(Element* tree)
 		{
 			if(match(state.state[j], ele)) {
 				// Assign style
+				ele->style()->setStyleString(_declsTextBegin, _declsTextEnd);
 			}
 		}
-		break;
 	}
 }
 
@@ -107,8 +111,14 @@ static void cssParserCallback(ParserResult* result, Parser* parser)
 {
 	CSSStyleRule* rule = reinterpret_cast<CSSStyleRule*>(parser->userdata);
 
-	if(strcmp(result->type, "selectors") == 0)
-		rule->_selectorText.assign(result->begin, result->end - result->begin);
+	if(strcmp(result->type, "selectors") == 0) {
+		rule->_selectorTextBegin = result->begin;
+		rule->_selectorTextEnd = result->end;
+	}
+	else if(strcmp(result->type, "decls") == 0) {
+		rule->_declsTextBegin = result->begin;
+		rule->_declsTextEnd = result->end;
+	}
 }
 
 const char* CSSStyleRule::cssTest()
