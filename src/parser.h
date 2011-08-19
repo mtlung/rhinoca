@@ -6,8 +6,8 @@ namespace Parsing {
 struct ParserResult
 {
 	const char* type;
-	char* begin;
-	char* end;
+	const char* begin;
+	const char* end;
 };
 
 class Parser
@@ -15,10 +15,10 @@ class Parser
 public:
 	typedef void (*ParserResultCallback)(ParserResult* result, Parser* parser);
 
-	Parser(char* begin, char* end, ParserResultCallback callback=NULL, void* userdata=NULL);
+	Parser(const char* begin, const char* end, ParserResultCallback callback=NULL, void* userdata=NULL);
 
-	char* begin;
-	char* end;
+	const char* begin;
+	const char* end;
 
 	ParserResultCallback callback;
 	void* userdata;
@@ -34,7 +34,7 @@ struct Matcher
 {
 	bool any(ParserResult* result=NULL)
 	{
-		char* bk = parser->begin;
+		const char* bk = parser->begin;
 		while(t.match(parser)) {}
 		if(result) {
 			result->begin = bk;
@@ -46,7 +46,7 @@ struct Matcher
 
 	bool count(unsigned min, unsigned max, ParserResult* result=NULL)
 	{
-		char* bk = parser->begin, *bk2;
+		const char* bk = parser->begin, *bk2;
 
 		// Match min occurrences
 		for(unsigned i=0; i<min; ++i)
@@ -90,7 +90,7 @@ struct Matcher
 	bool once(ParserResult* result=NULL)
 	{
 		if(result) parser->result.begin = NULL;
-		char* bk = parser->begin;
+		const char* bk = parser->begin;
 
 		if(!t.match(parser)) {
 			parser->begin = bk;

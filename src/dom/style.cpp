@@ -46,9 +46,9 @@ static void parserCallback(ParserResult* result, Parser* parser)
 		return;
 
 	char bk = *result->end;
-	*result->end = '\0';
+	*const_cast<char*>(result->end) = '\0';
 	style->insertRule(result->begin, style->rules.elementCount());
-	*result->end = bk;
+	*const_cast<char*>(result->end) = bk;
 }
 
 void HTMLStyleElement::onParserEndElement()

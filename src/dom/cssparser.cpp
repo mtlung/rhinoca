@@ -35,7 +35,7 @@ bool HexMatcher::match(Parser* p)
 
 bool IdentifierMatcher::match(Parser* p)
 {
-	char* bk = p->begin;
+	const char* bk = p->begin;
 
 	while(true) {
 		char c = *p->begin;
@@ -52,14 +52,14 @@ bool IdentifierMatcher::match(Parser* p)
 
 bool CommentMatcher::match(Parser* p)
 {
-	char* bk = p->begin, lastChar;
+	const char* bk = p->begin;
 
 	if(*(p->begin++) != '/') goto Fail;
 	if(*(p->begin++) != '*') goto Fail;
 
 	// Skip anything except "*/"
-	lastChar = *p->begin;
-	for(char* c=p->begin+1; c<p->end; ++c)
+	char lastChar = *p->begin;
+	for(const char* c=p->begin+1; c<p->end; ++c)
 	{
 		if(lastChar == '*' && *c == '/') {
 			p->begin = c + 1;

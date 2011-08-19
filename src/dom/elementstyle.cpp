@@ -5,6 +5,8 @@
 #include "../context.h"
 #include "../path.h"
 
+using namespace Parsing;
+
 namespace Dom {
 
 static JSBool JS_ValueToCssDimension(JSContext *cx, jsval v, float& val)
@@ -99,7 +101,7 @@ static JSBool styleSetBG(JSContext* cx, JSObject* obj, jsid id, JSBool strict, j
 		// TODO: Give some warning
 		return JS_TRUE;
 	}
-	*result.end = '\0';	// Make it parse result null terminated
+	*const_cast<char*>(result.end) = '\0';	// Make it parse result null terminated
 
 	Path path;
 	ele->fixRelativePath(result.begin, ele->rhinoca->documentUrl.c_str(), path);
@@ -151,6 +153,18 @@ ElementStyle::ElementStyle(Element* ele)
 
 ElementStyle::~ElementStyle()
 {
+}
+
+static void parserCallback(ParserResult* result, Parser* parser)
+{
+	ElementStyle* style = reinterpret_cast<ElementStyle*>(parser->userdata);
+
+}
+
+void ElementStyle::setStyle(const char* style)
+{
+	Parser parser(style, style + strlen(style), parserCallback, this);
+	Parsing::css(&parser).once();
 }
 
 bool ElementStyle::visible() const { return element->visible; }

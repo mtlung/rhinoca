@@ -6,7 +6,7 @@
 
 namespace Parsing {
 
-Parser::Parser(char* b, char* e, ParserResultCallback c, void* u)
+Parser::Parser(const char* b, const char* e, ParserResultCallback c, void* u)
 	: begin(b), end(e)
 	, callback(c), userdata(u)
 	, erroMessage("")
@@ -73,7 +73,7 @@ bool QuotedStringMatcher::match(Parser* p)
 	p->result.begin = p->begin + 1;
 
 	char lastChar = *p->begin;
-	for(char* c=p->begin+1; c<p->end; ++c)
+	for(const char* c=p->begin+1; c<p->end; ++c)
 	{
 		if(*c == '\'' && lastChar != '\\') {
 			p->begin = c + 1;
@@ -95,7 +95,7 @@ bool DoubleQuotedStringMatcher::match(Parser* p)
 	p->result.begin = p->begin + 1;
 
 	char lastChar = *p->begin;
-	for(char* c=p->begin+1; c<p->end; ++c)
+	for(const char* c=p->begin+1; c<p->end; ++c)
 	{
 		if(*c == '"' && lastChar != '\\') {
 			p->begin = c + 1;

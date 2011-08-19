@@ -20,6 +20,8 @@ public:
 	// Attributes
 	Dom::Element* element;
 
+	void setStyle(const char* style);
+
 	/// Visible vs Display:
 	/// In CSS: visibility = "visible|hidden", display = "inline|block|none"
 	/// Non visible element will not receive events but still occupy space.
