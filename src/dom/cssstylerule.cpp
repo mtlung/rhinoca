@@ -17,6 +17,26 @@ JSClass CSSStyleRule::jsClass = {
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
+static JSBool cssText(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+{
+	CSSStyleRule* self = getJsBindable<CSSStyleRule>(cx, obj);
+	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->cssTest()));
+	return JS_TRUE;
+}
+
+static JSBool selectorText(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+{
+	CSSStyleRule* self = getJsBindable<CSSStyleRule>(cx, obj);
+	*vp = STRING_TO_JSVAL(JS_NewStringCopyN(cx, self->_selectorTextBegin, self->_selectorTextEnd - self->_selectorTextBegin));
+	return JS_TRUE;
+}
+
+static JSPropertySpec properties[] = {
+	{"cssText", 0, JSPROP_READONLY | JsBindable::jsPropFlags, cssText, JS_StrictPropertyStub},
+	{"selectorText", 0, JSPROP_READONLY | JsBindable::jsPropFlags, selectorText, JS_StrictPropertyStub},
+	{0}
+};
+
 CSSStyleRule::CSSStyleRule()
 	: _selectorTextBegin(NULL)
 	, _selectorTextEnd(NULL)
@@ -141,7 +161,7 @@ void CSSStyleRule::bind(JSContext* cx, JSObject* parent)
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
 	VERIFY(JS_SetPrivate(cx, *this, this));
 //	VERIFY(JS_DefineFunctions(cx, *this, methods));
-//	VERIFY(JS_DefineProperties(cx, *this, properties));
+	VERIFY(JS_DefineProperties(cx, *this, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 

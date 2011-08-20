@@ -3,6 +3,250 @@
 
 namespace Parsing {
 
+static bool _CdoCdc(Parser* p)
+{
+	bool ret = false;
+	while(skip(p).once() || string(p, "<!--").once() || string(p, "-->").once())
+		ret = true;
+	return ret;
+}
+
+bool CssMatcher::match(Parser* p)
+{
+	ParserResult result = { "ruleSet", NULL, NULL };
+
+	_CdoCdc(p);
+
+	while(
+		ruleSet(p).once(&result) ||
+		media(p).once() ||
+		_CdoCdc(p)
+	)
+	{}
+
+	return true;
+}
+
+bool MediaMatcher::match(Parser* p)
+{
+	if(!string(p, "@media").once() ||
+	   !skip(p).any() ||
+	   !medium(p).once()
+	)
+		return false;
+	
+	while(
+		character(p, ',').once() &&
+		skip(p).any() &&
+		medium(p).once()
+	)
+	{}
+
+	return
+		character(p, '{').once() &&
+		skip(p).any() &&
+		ruleSet(p).any() &&
+		character(p, '}').once() &&
+		skip(p).any();
+}
+
+bool MediumMatcher::match(Parser* p)
+{
+	return ident(p).once() && skip(p).any();
+}
+
+bool MediaFeatureMatcher::match(Parser* p)
+{
+	return ident(p).once();
+}
+
+bool OperatorMatcher::match(Parser* p)
+{
+	return
+		(character(p, '/').once() && skip(p).any()) ||
+		(character(p, ',').once() && skip(p).any());
+}
+
+bool CombinatorMatcher::match(Parser* p)
+{
+	return
+		(character(p, '+').once() && skip(p).any()) ||
+		(character(p, '>').once() && skip(p).any());
+}
+
+bool UnaryOperatorMatcher::match(Parser* p)
+{
+	return character(p, '-').once() || character(p, '+').once();
+}
+
+bool PropertyMatcher::match(Parser* p)
+{
+	return ident(p).once();
+}
+
+bool PropertyValueMatcher::match(Parser* p)
+{
+//	return expr(p).once() && prio(p).atMostOnce();
+
+	return anyCharExcept(p, ";}").atLeastOnce();
+}
+
+bool RuleSetMatcher::match(Parser* p)
+{
+	ParserResult sGroup = { "selectors", NULL, NULL };
+
+	if(!selectors(p).once(&sGroup))
+		return false;
+
+	ParserResult decls = { "decls", NULL, NULL };
+	return declarations(p, true).once(&decls);
+}
+
+bool SelectorMatcher::match(Parser* p)
+{
+	ParserResult selectorResult = { "selector", NULL, NULL };
+	ParserResult combinatorResult = { "combinator", NULL, NULL };
+
+	if(!simpleSelector(p).once(&selectorResult) || !skip(p).any())
+		return false;
+
+	while(
+		combinator(p).once(&combinatorResult) &&
+		simpleSelector(p).once(&selectorResult) &&
+		skip(p).any()
+	)
+	{}
+
+	return true;
+}
+
+bool SelectorsMatcher::match(Parser* p)
+{
+	if(!selector(p).once())
+		return false;
+
+	ParserResult sGroup = { "sGroup", NULL, NULL };
+
+	while(skip(p).any() && character(p, ',').once(&sGroup) && skip(p).any() && selector(p).once())
+	{}
+
+	return true;
+}
+
+bool SimpleSelectorMatcher::match(Parser* p)
+{
+	if(!elementName(p).atMostOnce())
+		return false;
+
+	while(
+		hash(p).once() ||
+		klass(p).once()
+	)
+	{}
+
+	return true;
+}
+
+bool ClassMatcher::match(Parser* p)
+{
+	return character(p, '.').once() && ident(p).once();
+}
+
+bool ElementNameMatcher::match(Parser* p)
+{
+	return ident(p).once() || character(p, '*').once();
+}
+
+bool DeclarationMatcher::match(Parser* p)
+{
+	ParserResult propNameResult = { "propName", NULL, NULL };
+	ParserResult propValueResult = { "propVal", NULL, NULL };
+
+	return
+		property(p).once(&propNameResult) &&
+		skip(p).any() &&
+		character(p, ':').once() &&
+		skip(p).any() &&
+		propertyValue(p).once(&propValueResult);
+}
+
+bool DeclarationsMatcher::match(Parser* p)
+{
+	ParserResult& result = *p->customResult;
+
+	if(includeCurryBracket)
+	if(!character(p, '{').once() || !skip(p).any()) {
+		p->reportError("missing '{'");
+		return false;
+	}
+
+	result.type = "decls";
+	const char* retBegin = p->begin;
+
+	if(!declaration(p).once()) {
+		p->reportError("no property declared");
+		return false;
+	}
+
+	while(
+		character(p, ';').once() &&
+		skip(p).any() &&
+		declaration(p).once()
+	)
+	{}
+
+	const char* retEnd = p->begin;
+
+	if(includeCurryBracket)
+	if(!character(p, '}').once()) {
+		p->reportError("missing '}'");
+		return false;
+	}
+
+	result.begin = retBegin;
+	result.end =retEnd;
+
+	skip(p).any();
+
+	return true;
+}
+
+bool PrioMatcher::match(Parser* p)
+{
+	return
+		character(p, '!').once() && skip(p).any() &&
+		!string(p, "important").once() && skip(p).any();
+}
+
+bool ExprMatcher::match(Parser* p)
+{
+	if(!term(p).once())
+		return false;
+
+	while(
+		operatar(p).once() &&
+		term(p).once()
+	)
+	{}
+
+	return true;
+}
+
+bool TermMatcher::match(Parser* p)
+{
+	return
+	(
+		unaryOperator(p).atMostOnce() &&
+		(
+			( number(p).once() && skip(p).any() )
+		)
+	) ||
+	(
+		( ident(p).once() && skip(p).any() ) ||
+		( url(p).once() && skip(p).any() )
+	);
+}
+
 // TODO: This number matching is not strict enough
 bool NumberMatcher::match(Parser* p)
 {
@@ -49,7 +293,7 @@ bool IdentMatcher::match(Parser* p)
 		return false;
 
 	p->begin++;
-	if(!name(p).once()) {
+	if(!name(p).atMostOnce()) {
 		p->begin = bk;
 		return false;
 	}
@@ -60,68 +304,6 @@ bool IdentMatcher::match(Parser* p)
 bool HashMatcher::match(Parser* p)
 {
 	return character(p, '#').once() && name(p).once();
-}
-
-bool MediaMatcher::match(Parser* p)
-{
-	if(!string(p, "@media").once() ||
-	   !skip(p).any() ||
-	   !medium(p).once()
-	)
-		return false;
-	
-	while(
-		character(p, ',').once() &&
-		skip(p).any() &&
-		medium(p).once()
-	)
-	{}
-
-	return
-		character(p, '{').once() &&
-		skip(p).any() &&
-		ruleSet(p).any() &&
-		character(p, '}').once() &&
-		skip(p).any();
-}
-
-bool MediumMatcher::match(Parser* p)
-{
-	return ident(p).once() && skip(p).any();
-}
-
-bool OperatorMatcher::match(Parser* p)
-{
-	return
-		(character(p, '/').once() && skip(p).any()) ||
-		(character(p, ',').once() && skip(p).any());
-}
-
-bool CombinatorMatcher::match(Parser* p)
-{
-	return
-		(character(p, '+').once() && skip(p).any()) ||
-		(character(p, '>').once() && skip(p).any());
-}
-
-bool UnaryOperatorMatcher::match(Parser* p)
-{
-	return character(p, '-').once() || character(p, '+').once();
-}
-
-bool PropertyMatcher::match(Parser* p)
-{
-	return ident(p).once() && skip(p).any();
-}
-
-bool ClassMatcher::match(Parser* p)
-{
-	return character(p, '.').once() && ident(p).once();
-}
-
-bool ElementNameMatcher::match(Parser* p)
-{
-	return ident(p).once() || character(p, '*').once();
 }
 
 bool UrlMatcher::match(Parser* p)
@@ -185,134 +367,6 @@ Fail:
 bool SkippableMatcher::match(Parser* p)
 {
 	return whiteSpace(p).once() || comment(p).once();
-}
-
-bool AnyMatcher::match(Parser* p)
-{
-	return
-		ident(p).once() ||
-//		hex(p).once() ||
-//		url(p).once() ||
-//		quotedString(p).once() ||
-//		doubleQuotedString(p).once() ||
-		skip(p).any();
-}
-
-bool PropertyValueMatcher::match(Parser* p)
-{
-	ParserResult result = { "propVal", NULL, NULL };
-
-	return
-		skip(p).any() &&
-		anyCharExcept(p, ";}").atLeastOnce(&result);
-}
-
-bool SimpleSelectorMatcher::match(Parser* p)
-{
-	if(!elementName(p).atMostOnce())
-		return false;
-
-	while(
-		hash(p).once() ||
-		klass(p).once()
-	)
-	{}
-
-//	skip(p).any();
-
-	return true;
-}
-
-bool SelectorMatcher::match(Parser* p)
-{
-	ParserResult selectorResult = { "selector", NULL, NULL };
-	ParserResult combinatorResult = { "combinator", NULL, NULL };
-
-	if(!simpleSelector(p).once(&selectorResult))
-		return false;
-
-	while(
-		combinator(p).once(&combinatorResult) &&
-		simpleSelector(p).once(&selectorResult)
-	)
-	{}
-
-	return true;
-}
-
-bool SelectorsMatcher::match(Parser* p)
-{
-	if(!selector(p).once())
-		return false;
-
-	ParserResult sGroup = { "sGroup", NULL, NULL };
-
-	while(skip(p).any() && character(p, ',').once(&sGroup) && skip(p).any() && selector(p).once())
-	{}
-
-	return true;
-}
-
-bool PropertyDeclMatcher::match(Parser* p)
-{
-	ParserResult propName = { "propName", NULL, NULL };
-
-	return
-		skip(p).any() &&
-		ident(p).once(&propName) &&
-		skip(p).any() &&
-		character(p, ':').once() &&
-		skip(p).any() &&
-		propertyValue(p).once() &&
-		skip(p).any() &&
-		character(p, ';').atMostOnce();
-}
-
-bool PropertyDeclsMatcher::match(Parser* p)
-{
-	ParserResult& result = *p->customResult;
-
-	if(!skip(p).any() || !character(p, '{').once()) {
-		p->reportError("missing '{'");
-		return false;
-	}
-
-	result.type = "decls";
-
-	skip(p).any();
-	if(!propertyDecl(p).atLeastOnce(&result)) {
-		p->reportError("no property declared");
-		return false;
-	}
-
-	if(!skip(p).any() || !character(p, '}').once()) {
-		p->reportError("missing '}'");
-		return false;
-	}
-
-	return true;
-}
-
-bool RuleSetMatcher::match(Parser* p)
-{
-	ParserResult sGroup = { "selectors", NULL, NULL };
-
-	if(!selectors(p).once(&sGroup))
-		return false;
-
-	ParserResult decls = { "decls", NULL, NULL };
-	return propertyDecls(p).once(&decls) && skip(p).any();
-}
-
-bool CssMatcher::match(Parser* p)
-{
-	ParserResult result = { "ruleSet", NULL, NULL };
-
-	bool ret = false;
-	while(skip(p).any() && (ruleSet(p).once(&result) || media(p).once()))
-		ret = true;
-
-	return ret;
 }
 
 }	// namespace Parsing

@@ -32,7 +32,13 @@ public:
 template<typename T>
 struct Matcher
 {
-	bool any(ParserResult* result=NULL)
+	bool any()
+	{
+		while(t.match(parser)) {}
+		return true;
+	}
+
+	bool any(ParserResult* result)
 	{
 		const char* bk = parser->begin;
 		while(t.match(parser)) {}
@@ -87,7 +93,22 @@ struct Matcher
 		return count(0, 1, result);
 	}
 
-	bool once(ParserResult* result=NULL)
+	bool once()
+	{
+		const char* bk = parser->begin;
+
+		ParserResult customResult;
+		parser->customResult = &customResult;
+
+		if(!t.match(parser)) {
+			parser->begin = bk;
+			return false;
+		}
+
+		return true;
+	}
+
+	bool once(ParserResult* result)
 	{
 		const char* bk = parser->begin;
 

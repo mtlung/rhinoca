@@ -8,55 +8,27 @@ namespace Parsing {
 /// CSS selector syntax: http://www.w3.org/TR/CSS2/selector.html#selector-syntax
 /// W3C rough  http://www.w3.org/TR/1998/REC-CSS2-19980512/syndata.html
 /// W3C detail http://www.w3.org/TR/1998/REC-CSS2-19980512/grammar.html
+/// CSS3 media query http://www.w3.org/TR/css3-mediaqueries
 /// See http://www.codeproject.com/KB/recipes/CSSParser.aspx
 /// http://stackoverflow.com/questions/4656975/use-css-selectors-to-collect-html-elements-from-a-streaming-parser-e-g-sax-stre
 
-/// EBNF language used inside the comment:
-/// Alternatives: |, group by ()
-/// Repetitions: {}0-* {}1-*
-/// Options: []
+/// Grammer:
+/// *: 0 or more
+/// +: 1 or more 
+/// ?: 0 or 1
+/// |: separates alternatives
+/// [ ]: grouping 
 
-/// [0-9]+|[0-9]*"."[0-9]+
-struct NumberMatcher
+/// Match the top level CSS document
+/// [S|CDO|CDC]* [ import [S|CDO|CDC]* ]*
+/// [ [ ruleset | media | page | font_face ] [S|CDO|CDC]* ]*
+struct CssMatcher
 {
 	bool match(Parser* parser);
 };
 
-inline Matcher<NumberMatcher> number(Parser* parser) {
-	Matcher<NumberMatcher> ret = { {}, parser };
-	return ret;
-}
-
-/// {[a-z0-9-]|{nonascii}|{escape}}+
-struct NameMatcher
-{
-	bool match(Parser* parser);
-};
-
-inline Matcher<NameMatcher> name(Parser* parser) {
-	Matcher<NameMatcher> ret = { {}, parser };
-	return ret;
-}
-
-/// [a-z]|{nonascii}|{escape} {name}
-struct IdentMatcher
-{
-	bool match(Parser* parser);
-};
-
-inline Matcher<IdentMatcher> ident(Parser* parser) {
-	Matcher<IdentMatcher> ret = { {}, parser };
-	return ret;
-}
-
-/// '#'{name}
-struct HashMatcher
-{
-	bool match(Parser* parser);
-};
-
-inline Matcher<HashMatcher> hash(Parser* parser) {
-	Matcher<HashMatcher> ret = { {}, parser };
+inline Matcher<CssMatcher> css(Parser* parser) {
+	Matcher<CssMatcher> ret = { {}, parser };
 	return ret;
 }
 
@@ -79,6 +51,17 @@ struct MediumMatcher
 
 inline Matcher<MediumMatcher> medium(Parser* parser) {
 	Matcher<MediumMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// IDENT
+struct MediaFeatureMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<MediaFeatureMatcher> mediaFeature(Parser* parser) {
+	Matcher<MediaFeatureMatcher> ret = { {}, parser };
 	return ret;
 }
 
@@ -126,6 +109,61 @@ inline Matcher<PropertyMatcher> property(Parser* parser) {
 	return ret;
 }
 
+/// Match the string of a property's value
+struct PropertyValueMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<PropertyValueMatcher> propertyValue(Parser* parser) {
+	Matcher<PropertyValueMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// Match selector {',' selector}0-* '{' {declaration}0-* '}'
+struct RuleSetMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<RuleSetMatcher> ruleSet(Parser* parser) {
+	Matcher<RuleSetMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// Match simpleSelector { [ '+' | '>' ] simpleSelector }0-*
+struct SelectorMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<SelectorMatcher> selector(Parser* parser) {
+	Matcher<SelectorMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// Match the whole selector string for a rule set
+struct SelectorsMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<SelectorsMatcher> selectors(Parser* parser) {
+	Matcher<SelectorsMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// Match [identifier | '*'] { '#'identifier | '.'identifier }1-*
+struct SimpleSelectorMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<SimpleSelectorMatcher> simpleSelector(Parser* parser) {
+	Matcher<SimpleSelectorMatcher> ret = { {}, parser };
+	return ret;
+}
+
 /// '.' IDENT
 struct ClassMatcher
 {
@@ -145,6 +183,108 @@ struct ElementNameMatcher
 
 inline Matcher<ElementNameMatcher> elementName(Parser* parser) {
 	Matcher<ElementNameMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// property ':' S* expr prio?
+struct DeclarationMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<DeclarationMatcher> declaration(Parser* parser) {
+	Matcher<DeclarationMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// Match ever property declaration enclosed by '{' and '}'
+struct DeclarationsMatcher
+{
+	bool match(Parser* parser);
+	bool includeCurryBracket;
+};
+
+inline Matcher<DeclarationsMatcher> declarations(Parser* parser, bool includeCurryBracket) {
+	Matcher<DeclarationsMatcher> ret = { { includeCurryBracket }, parser };
+	return ret;
+}
+
+/// ! S* important S*
+struct PrioMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<PrioMatcher> prio(Parser* parser) {
+	Matcher<PrioMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// term [ operator term ]*
+struct ExprMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<ExprMatcher> expr(Parser* parser) {
+	Matcher<ExprMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// unary_operator?
+/// [ NUMBER S* | PERCENTAGE S* | LENGTH S* | EMS S* | EXS S* | ANGLE S* | TIME S* | FREQ S* | function ]
+/// | STRING S* | IDENT S* | URI S* | RGB S* | UNICODERANGE S* | hexcolor
+struct TermMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<TermMatcher> term(Parser* parser) {
+	Matcher<TermMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// [0-9]+|[0-9]*"."[0-9]+
+struct NumberMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<NumberMatcher> number(Parser* parser) {
+	Matcher<NumberMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// {[a-z0-9-]|{nonascii}|{escape}}+
+struct NameMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<NameMatcher> name(Parser* parser) {
+	Matcher<NameMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// [a-z]|{nonascii}|{escape} {name}
+struct IdentMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<IdentMatcher> ident(Parser* parser) {
+	Matcher<IdentMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// '#'{name}
+struct HashMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<HashMatcher> hash(Parser* parser) {
+	Matcher<HashMatcher> ret = { {}, parser };
 	return ret;
 }
 
@@ -189,105 +329,6 @@ struct SkippableMatcher
 
 inline Matcher<SkippableMatcher> skip(Parser* parser) {
 	Matcher<SkippableMatcher> ret = { {}, parser };
-	return ret;
-}
-
-///
-struct AnyMatcher
-{
-	bool match(Parser* parser);
-};
-
-inline Matcher<AnyMatcher> any(Parser* parser) {
-	Matcher<AnyMatcher> ret = { {}, parser };
-	return ret;
-}
-
-/// Match the string of a property's value
-struct PropertyValueMatcher
-{
-	bool match(Parser* parser);
-};
-
-inline Matcher<PropertyValueMatcher> propertyValue(Parser* parser) {
-	Matcher<PropertyValueMatcher> ret = { {}, parser };
-	return ret;
-}
-
-/// Match [identifier | '*'] { '#'identifier | '.'identifier }1-*
-struct SimpleSelectorMatcher
-{
-	bool match(Parser* parser);
-};
-
-inline Matcher<SimpleSelectorMatcher> simpleSelector(Parser* parser) {
-	Matcher<SimpleSelectorMatcher> ret = { {}, parser };
-	return ret;
-}
-
-/// Match simpleSelector { [ '+' | '>' ] simpleSelector }0-*
-struct SelectorMatcher
-{
-	bool match(Parser* parser);
-};
-
-inline Matcher<SelectorMatcher> selector(Parser* parser) {
-	Matcher<SelectorMatcher> ret = { {}, parser };
-	return ret;
-}
-
-/// Match the whole selector string for a rule set
-struct SelectorsMatcher
-{
-	bool match(Parser* parser);
-};
-
-inline Matcher<SelectorsMatcher> selectors(Parser* parser) {
-	Matcher<SelectorsMatcher> ret = { {}, parser };
-	return ret;
-}
-
-/// Match propName ':' propValue ';'
-struct PropertyDeclMatcher
-{
-	bool match(Parser* parser);
-};
-
-inline Matcher<PropertyDeclMatcher> propertyDecl(Parser* parser) {
-	Matcher<PropertyDeclMatcher> ret = { {}, parser };
-	return ret;
-}
-
-/// Match ever property declaration enclosed by '{' and '}'
-struct PropertyDeclsMatcher
-{
-	bool match(Parser* parser);
-};
-
-inline Matcher<PropertyDeclsMatcher> propertyDecls(Parser* parser) {
-	Matcher<PropertyDeclsMatcher> ret = { {}, parser };
-	return ret;
-}
-
-/// Match selector {',' selector}0-* '{' {propertyDecl}0-* '}'
-struct RuleSetMatcher
-{
-	bool match(Parser* parser);
-};
-
-inline Matcher<RuleSetMatcher> ruleSet(Parser* parser) {
-	Matcher<RuleSetMatcher> ret = { {}, parser };
-	return ret;
-}
-
-/// Match the top level CSS document
-struct CssMatcher
-{
-	bool match(Parser* parser);
-};
-
-inline Matcher<CssMatcher> css(Parser* parser) {
-	Matcher<CssMatcher> ret = { {}, parser };
 	return ret;
 }
 
