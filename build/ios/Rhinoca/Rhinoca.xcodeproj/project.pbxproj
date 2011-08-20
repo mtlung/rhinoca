@@ -148,6 +148,12 @@
 		9CC68CAC137C2E4F00448AEB /* shVectors.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC68C97137C2E4F00448AEB /* shVectors.cpp */; };
 		9CC68CAD137C2E4F00448AEB /* shVectors.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CC68C98137C2E4F00448AEB /* shVectors.h */; };
 		9CC68CAE137C2E4F00448AEB /* shVgu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC68C99137C2E4F00448AEB /* shVgu.cpp */; };
+		9CC7E1ED13F839D900435C60 /* cssstyledeclaration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC7E1E713F839D900435C60 /* cssstyledeclaration.cpp */; };
+		9CC7E1EE13F839D900435C60 /* cssstyledeclaration.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CC7E1E813F839D900435C60 /* cssstyledeclaration.h */; };
+		9CC7E1EF13F839D900435C60 /* cssstylerule.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC7E1E913F839D900435C60 /* cssstylerule.cpp */; };
+		9CC7E1F013F839D900435C60 /* cssstylerule.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CC7E1EA13F839D900435C60 /* cssstylerule.h */; };
+		9CC7E1F113F839D900435C60 /* cssstylesheet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC7E1EB13F839D900435C60 /* cssstylesheet.cpp */; };
+		9CC7E1F213F839D900435C60 /* cssstylesheet.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CC7E1EC13F839D900435C60 /* cssstylesheet.h */; };
 		9CCBEE76137C192100C0BF4F /* rhinoca.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CCBEE75137C192100C0BF4F /* rhinoca.mm */; };
 		9CD80F3913897ED3003C1056 /* oggloader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CD80F3613897ED3003C1056 /* oggloader.cpp */; };
 		9CD80F3A13897ED3003C1056 /* stb_vorbis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CD80F3713897ED3003C1056 /* stb_vorbis.cpp */; };
@@ -324,6 +330,12 @@
 		9CC68C97137C2E4F00448AEB /* shVectors.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = shVectors.cpp; path = ../../../src/render/shivavg/shVectors.cpp; sourceTree = "<group>"; };
 		9CC68C98137C2E4F00448AEB /* shVectors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = shVectors.h; path = ../../../src/render/shivavg/shVectors.h; sourceTree = "<group>"; };
 		9CC68C99137C2E4F00448AEB /* shVgu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = shVgu.cpp; path = ../../../src/render/shivavg/shVgu.cpp; sourceTree = "<group>"; };
+		9CC7E1E713F839D900435C60 /* cssstyledeclaration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = cssstyledeclaration.cpp; path = ../../../src/dom/cssstyledeclaration.cpp; sourceTree = "<group>"; };
+		9CC7E1E813F839D900435C60 /* cssstyledeclaration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cssstyledeclaration.h; path = ../../../src/dom/cssstyledeclaration.h; sourceTree = "<group>"; };
+		9CC7E1E913F839D900435C60 /* cssstylerule.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = cssstylerule.cpp; path = ../../../src/dom/cssstylerule.cpp; sourceTree = "<group>"; };
+		9CC7E1EA13F839D900435C60 /* cssstylerule.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cssstylerule.h; path = ../../../src/dom/cssstylerule.h; sourceTree = "<group>"; };
+		9CC7E1EB13F839D900435C60 /* cssstylesheet.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = cssstylesheet.cpp; path = ../../../src/dom/cssstylesheet.cpp; sourceTree = "<group>"; };
+		9CC7E1EC13F839D900435C60 /* cssstylesheet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cssstylesheet.h; path = ../../../src/dom/cssstylesheet.h; sourceTree = "<group>"; };
 		9CCBEE75137C192100C0BF4F /* rhinoca.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = rhinoca.mm; path = ../../../src/rhinoca.mm; sourceTree = "<group>"; };
 		9CD80F3613897ED3003C1056 /* oggloader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = oggloader.cpp; path = ../../../src/audio/oggloader.cpp; sourceTree = "<group>"; };
 		9CD80F3713897ED3003C1056 /* stb_vorbis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = stb_vorbis.cpp; path = ../../../src/audio/stb_vorbis.cpp; sourceTree = "<group>"; };
@@ -465,6 +477,12 @@
 				9C93C92C1379886000682898 /* color.h */,
 				9C11FA1813E9A20B0024299D /* cssparser.cpp */,
 				9C11FA1913E9A20B0024299D /* cssparser.h */,
+				9CC7E1E713F839D900435C60 /* cssstyledeclaration.cpp */,
+				9CC7E1E813F839D900435C60 /* cssstyledeclaration.h */,
+				9CC7E1E913F839D900435C60 /* cssstylerule.cpp */,
+				9CC7E1EA13F839D900435C60 /* cssstylerule.h */,
+				9CC7E1EB13F839D900435C60 /* cssstylesheet.cpp */,
+				9CC7E1EC13F839D900435C60 /* cssstylesheet.h */,
 				187BCA6512F9BC270042FDB1 /* div.cpp */,
 				187BCA6612F9BC270042FDB1 /* div.h */,
 				187BCA6F12F9BC600042FDB1 /* document.cpp */,
@@ -677,6 +695,9 @@
 				9CB37B2513F2F129003115F7 /* script.h in Headers */,
 				9CB37B2713F2F129003115F7 /* style.h in Headers */,
 				9CB37B2B13F2F13E003115F7 /* textnode.h in Headers */,
+				9CC7E1EE13F839D900435C60 /* cssstyledeclaration.h in Headers */,
+				9CC7E1F013F839D900435C60 /* cssstylerule.h in Headers */,
+				9CC7E1F213F839D900435C60 /* cssstylesheet.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -820,6 +841,9 @@
 				9CB37B2413F2F129003115F7 /* script.cpp in Sources */,
 				9CB37B2613F2F129003115F7 /* style.cpp in Sources */,
 				9CB37B2A13F2F13E003115F7 /* textnode.cpp in Sources */,
+				9CC7E1ED13F839D900435C60 /* cssstyledeclaration.cpp in Sources */,
+				9CC7E1EF13F839D900435C60 /* cssstylerule.cpp in Sources */,
+				9CC7E1F113F839D900435C60 /* cssstylesheet.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
