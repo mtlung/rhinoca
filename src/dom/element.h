@@ -38,22 +38,27 @@ public:
 
 	bool visible;
 
-	float _top, _left;
+	float _left, _right;
+	float _top, _bottom;
 	int _width, _height;	// NOTE: It's intentional to type _width and _height as signed integer
 
 	virtual const FixString& tagName() const;
 
-	virtual float top() const { return _top; }
-	virtual float left() const { return _left; }
+	virtual float top() const;
+	virtual float left() const;
+	float right() const { return left() + width(); }
+	float bottom() const { return top() + height(); }
+
+	virtual void setLeft(float val);
+	virtual void setRight(float val);
+	virtual void setTop(float val);
+	virtual void setBottom(float val);
 
 	virtual unsigned width() const { return _width; }
 	virtual unsigned height() const { return _height; }
 
 	virtual void setWidth(unsigned w) { _width = w; }
 	virtual void setheight(unsigned h) { _height = h; }
-
-	float right() const { return left() + width(); }
-	float bottom() const { return top() + height(); }
 
 	ElementStyle* style();
 

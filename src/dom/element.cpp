@@ -6,6 +6,7 @@
 #include "nodelist.h"
 #include "../context.h"
 #include "../path.h"
+#include <float.h>
 
 namespace Dom {
 
@@ -157,9 +158,12 @@ static JSFunctionSpec elementMethods[] = {
 	{0}
 };
 
+static const float _invalidPos = FLT_MAX;
+
 Element::Element(Rhinoca* rh)
 	: Node(rh)
-	, _top(0), _left(0)
+	, _left(0), _right(_invalidPos)
+	, _top(0), _bottom(_invalidPos)
 	, _width(0), _height(0)
 	, _style(NULL)
 {
@@ -263,6 +267,42 @@ static const FixString _tagName = "ELEMENT";
 const FixString& Element::tagName() const
 {
 	return _tagName;
+}
+
+float Element::top() const
+{
+	if(_bottom == _invalidPos)
+		return _top;
+	return (float)ownerDocument()->window()->height() - _bottom - _height;
+}
+
+float Element::left() const
+{
+	if(_right == _invalidPos)
+		return _left;
+	return (float)ownerDocument()->window()->width() - _right - _width;
+}
+
+void Element::setLeft(float val)
+{
+	_right = _invalidPos;
+	_left = val;
+}
+
+void Element::setRight(float val)
+{
+	_right = val;
+}
+
+void Element::setTop(float val)
+{
+	_bottom = _invalidPos;
+	_top = val;
+}
+
+void Element::setBottom(float val)
+{
+	_bottom = val;
 }
 
 ElementFactory::ElementFactory()

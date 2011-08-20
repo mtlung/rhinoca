@@ -36,8 +36,14 @@ public:
 	float left() const;
 	void setLeft(float val);
 
+	float right() const;
+	void setRight(float val);
+
 	float top() const;
 	void setTop(float val);
+
+	float bottom() const;
+	void setBottom(float val);
 
 	unsigned width() const;
 	void setWidth(unsigned val);

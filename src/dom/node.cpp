@@ -316,7 +316,7 @@ void Node::eventTargetReleaseReference() {
 	releaseReference();
 }
 
-HTMLDocument* Node::ownerDocument() {
+HTMLDocument* Node::ownerDocument() const {
 	return rhinoca->domWindow->document;
 }
 

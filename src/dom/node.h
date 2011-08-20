@@ -63,7 +63,7 @@ public:
 	Rhinoca* rhinoca;
 	FixString nodeName;
 
-	HTMLDocument* ownerDocument();
+	HTMLDocument* ownerDocument() const;
 
 	NodeList* childNodes();
 

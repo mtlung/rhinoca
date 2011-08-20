@@ -2,6 +2,7 @@
 #include "elementstyle.h"
 #include "element.h"
 #include "cssparser.h"
+#include "document.h"
 #include "../context.h"
 #include "../path.h"
 
@@ -49,16 +50,44 @@ static JSBool styleSetVisible(JSContext* cx, JSObject* obj, jsid id, JSBool stri
 	return JS_TRUE;
 }
 
-static JSBool styleSetTop(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
-{
-	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
-	return JS_ValueToCssDimension(cx, *vp, self->element->_top);
-}
-
 static JSBool styleSetLeft(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
-	return JS_ValueToCssDimension(cx, *vp, self->element->_left);
+	float val;
+	if(!JS_ValueToCssDimension(cx, *vp, val))
+		return JS_FALSE;
+	self->element->setLeft(val);
+	return JS_TRUE;
+}
+
+static JSBool styleSetRight(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
+{
+	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
+	float val;
+	if(!JS_ValueToCssDimension(cx, *vp, val))
+		return JS_FALSE;
+	self->element->setRight(val);
+	return JS_TRUE;
+}
+
+static JSBool styleSetTop(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
+{
+	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
+	float val;
+	if(!JS_ValueToCssDimension(cx, *vp, val))
+		return JS_FALSE;
+	self->element->setTop(val);
+	return JS_TRUE;
+}
+
+static JSBool styleSetBottom(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
+{
+	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
+	float val;
+	if(!JS_ValueToCssDimension(cx, *vp, val))
+		return JS_FALSE;
+	self->element->setBottom(val);
+	return JS_TRUE;
 }
 
 static JSBool styleSetWidth(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
@@ -108,8 +137,10 @@ static JSBool styleSetBGPos(JSContext* cx, JSObject* obj, jsid id, JSBool strict
 
 static JSPropertySpec properties[] = {
 	{"display", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetVisible},
-	{"top", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetTop},
 	{"left", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetLeft},
+	{"right", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetRight},
+	{"top", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetTop},
+	{"bottom", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetBottom},
 	{"width", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetWidth},
 	{"height", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetHeight},
 	{"backgroundImage", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetBG},
@@ -179,10 +210,20 @@ void ElementStyle::setStyleAttribute(const char* name, const char* value)
 		sscanf(value, "%f", &v);
 		setLeft(v);
 	}
+	if(hash == StringHash("right")) {
+		float v = 0;
+		sscanf(value, "%f", &v);
+		setRight(v);
+	}
 	else if(hash == StringHash("top")) {
 		float v = 0;
 		sscanf(value, "%f", &v);
 		setTop(v);
+	}
+	else if(hash == StringHash("bottom")) {
+		float v = 0;
+		sscanf(value, "%f", &v);
+		setBottom(v);
 	}
 	else if(hash == StringHash("width")) {
 		float v = 0;
@@ -205,13 +246,17 @@ void ElementStyle::setStyleAttribute(const char* name, const char* value)
 
 bool ElementStyle::visible() const { return element->visible; }
 float ElementStyle::left() const { return element->left(); }
+float ElementStyle::right() const { return element->right(); }
 float ElementStyle::top() const { return element->top(); }
+float ElementStyle::bottom() const { return element->bottom(); }
 unsigned ElementStyle::width() const { return element->width(); }
 unsigned ElementStyle::height() const { return element->height(); }
 
 void ElementStyle::setVisible(bool val) { element->visible = val; }
-void ElementStyle::setLeft(float val) { element->_left = val; }
-void ElementStyle::setTop(float val) { element->_top = val; }
+void ElementStyle::setLeft(float val) { element->setLeft(val); }
+void ElementStyle::setRight(float val) { element->setRight(val); }
+void ElementStyle::setTop(float val) { element->setTop(val); }
+void ElementStyle::setBottom(float val) { element->setBottom(val); }
 void ElementStyle::setWidth(unsigned val) { element->setWidth(val); }
 void ElementStyle::setHeight(unsigned val) { element->setheight(val); }
 
@@ -225,10 +270,14 @@ bool ElementStyle::setBackgroundImage(const char* cssUrl)
 		// TODO: Give some warning
 		return false;
 	}
+
+	char bk = *result.end;
 	*const_cast<char*>(result.end) = '\0';	// Make it parse result null terminated
 
 	Path path;
 	element->fixRelativePath(result.begin, element->rhinoca->documentUrl.c_str(), path);
+
+	*const_cast<char*>(result.end) = bk;
 
 	ResourceManager& mgr = element->rhinoca->resourceManager;
 	backgroundImage = mgr.loadAs<Render::Texture>(path.c_str());
