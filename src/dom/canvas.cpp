@@ -98,6 +98,7 @@ static JSFunctionSpec methods[] = {
 
 HTMLCanvasElement::HTMLCanvasElement(Rhinoca* rh)
 	: Element(rh)
+	, clearEveryFrame(false)
 	, context(NULL)
 {
 }
@@ -165,16 +166,19 @@ void HTMLCanvasElement::render()
 {
 	Element::render();
 
-	// No need to draw to the window, if 'frontBufferOnly' is set to true such that all
-	// draw operation is already put on the window
-	if(!_framebuffer.texture) return;
-
 	Window* window = ownerDocument()->window();
 	HTMLCanvasElement* vc = window->virtualCanvas;
 
+	// No need to draw to the window, if 'frontBufferOnly' is set to true such that all
+	// draw operation is already put on the window
+	if(!_framebuffer.texture) {
+		// Require the virtual canvas not to clear itself
+		vc->clearEveryFrame = false;
+		return;
+	}
+
 	CanvasRenderingContext2D* ctx = dynamic_cast<CanvasRenderingContext2D*>(vc->context);
 
-	ctx->clearRect(0, 0, (float)width(), (float)height());
 	ctx->drawImage(texture(), Render::Driver::SamplerState::MIN_MAG_LINEAR, 0, 0);
 }
 

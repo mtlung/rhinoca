@@ -50,7 +50,7 @@ static const char* _eventAttributeTable[] = {
 	"onmousedown",
 	"onmousemove",
 	"onkeyup",
-	"onkeydown",
+	"onkeydown"
 };
 
 static JSBool getEventAttribute(JSContext* cx, JSObject* obj, jsid id, jsval* vp)

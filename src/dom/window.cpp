@@ -2,6 +2,7 @@
 #include "window.h"
 #include "body.h"
 #include "canvas.h"
+#include "canvas2dcontext.h"
 #include "document.h"
 #include "keyevent.h"
 #include "mouseevent.h"
@@ -288,9 +289,9 @@ static JSBool innerHeight(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 
 static const char* _eventAttributeTable[] = {
 	"onload",
+	"onmouseup",
 	"onmousedown",
 	"onmousemove",
-	"onmouseup",
 	"onkeydown",
 	"onkeyup"
 };
@@ -540,6 +541,15 @@ void Window::render()
 		virtualCanvas->setWidth(width());
 	if(virtualCanvas->height() != height())
 		virtualCanvas->setHeight(height());
+
+	// Clear the virtual canvas first
+	if(virtualCanvas->clearEveryFrame) {
+		CanvasRenderingContext2D* ctx = dynamic_cast<CanvasRenderingContext2D*>(virtualCanvas->context);
+		ctx->clearRect(0, 0, (float)width(), (float)height());
+	}
+
+	// If no other canvas which use  "frontBufferOnly" clearEveryFrame will still be true on next frame
+	virtualCanvas->clearEveryFrame = true;
 
 	for(NodeIterator i(document); !i.ended(); i.next()) {
 		i->render();

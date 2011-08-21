@@ -114,7 +114,7 @@ bool Color::parse(const char* str)
 		{ "black",		Color(0, 0, 0) },
 		{ "silver",		Color(xC0, xC0, xC0) },
 		{ "gray",		Color(x80, x80, x80) },
-		{ "whilte",		Color(1, 1, 1) },
+		{ "white",		Color(1, 1, 1) },
 
 		{ "maroon",		Color(x80, 0, 0) },
 		{ "red",		Color(1, 0, 0) },

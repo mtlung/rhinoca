@@ -39,6 +39,9 @@ public:
 		HTMLCanvasElement* canvas;
 	};	// Context
 
+	/// For the virtual canvas to clear itself every frame
+	bool clearEveryFrame;
+
 	Context* context;
 
 	Render::Texture* texture();

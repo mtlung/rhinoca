@@ -58,7 +58,7 @@ public:
 	virtual unsigned height() const { return _height; }
 
 	virtual void setWidth(unsigned w) { _width = w; }
-	virtual void setheight(unsigned h) { _height = h; }
+	virtual void setHeight(unsigned h) { _height = h; }
 
 	ElementStyle* style();
 
