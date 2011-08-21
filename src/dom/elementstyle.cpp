@@ -125,11 +125,23 @@ static JSBool styleSetBG(JSContext* cx, JSObject* obj, jsid id, JSBool strict, j
 	return JS_TRUE;
 }
 
+static JSBool styleSetBGColor(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
+{
+	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
+
+	JsString jss(cx, *vp);
+	if(!jss || !self->setBackgroundColor(jss.c_str()))
+		return JS_FALSE;
+
+	return JS_TRUE;
+}
+
 static JSBool styleSetBGPos(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
 
-	if(!JS_ValueToCssDimension(cx, *vp, self->backgroundPositionX))
+	JsString jss(cx, *vp);
+	if(!jss || !self->setBackgroundImage(jss.c_str()))
 		return JS_FALSE;
 
 	return JS_TRUE;
@@ -144,7 +156,8 @@ static JSPropertySpec properties[] = {
 	{"width", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetWidth},
 	{"height", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetHeight},
 	{"backgroundImage", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetBG},
-	{"backgroundPositionX", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetBGPos},
+	{"backgroundColor", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetBGColor},
+	{"backgroundPosition", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetBGPos},
 	{0}
 };
 
@@ -161,6 +174,7 @@ void ElementStyle::bind(JSContext* cx, JSObject* parent)
 ElementStyle::ElementStyle(Element* ele)
 	: element(ele)
 	, backgroundPositionX(0), backgroundPositionY(0)
+	, backgroundColor(0, 0, 0, 0)
 {
 }
 
@@ -198,7 +212,7 @@ void ElementStyle::setStyleString(const char* begin, const char* end)
 {
 	ParserState state = { this, NULL, NULL };
 	Parser parser(begin, end, parserCallback, &state);
-	Parsing::propertyDecl(&parser).any();
+	Parsing::declarations(&parser, false).once();
 }
 
 void ElementStyle::setStyleAttribute(const char* name, const char* value)
@@ -238,6 +252,9 @@ void ElementStyle::setStyleAttribute(const char* name, const char* value)
 	else if(hash == StringHash("background-image")) {
 		setBackgroundImage(value);
 	}
+	else if(hash == StringHash("backgroundcolor")) {
+		setBackgroundColor(value);
+	}
 	else if(hash == StringHash("background-position")) {
 		// For sscanf formatting: http://linux.die.net/man/3/scanf
 		sscanf(value, "%f%*[ ,\n\r\t]%f", &backgroundPositionX, &backgroundPositionY);
@@ -258,7 +275,12 @@ void ElementStyle::setRight(float val) { element->setRight(val); }
 void ElementStyle::setTop(float val) { element->setTop(val); }
 void ElementStyle::setBottom(float val) { element->setBottom(val); }
 void ElementStyle::setWidth(unsigned val) { element->setWidth(val); }
-void ElementStyle::setHeight(unsigned val) { element->setheight(val); }
+void ElementStyle::setHeight(unsigned val) { element->setHeight(val); }
+
+bool ElementStyle::setBackgroundPosition(const char* cssBackgroundPosition)
+{
+	return sscanf(cssBackgroundPosition, "%f%*[ ,\n\r\t]%f", &backgroundPositionX, &backgroundPositionY) == 2;
+}
 
 bool ElementStyle::setBackgroundImage(const char* cssUrl)
 {
@@ -283,6 +305,11 @@ bool ElementStyle::setBackgroundImage(const char* cssUrl)
 	backgroundImage = mgr.loadAs<Render::Texture>(path.c_str());
 
 	return true;
+}
+
+bool ElementStyle::setBackgroundColor(const char* cssColor)
+{
+	return backgroundColor.parse(cssColor);
 }
 
 }	// namespace Dom

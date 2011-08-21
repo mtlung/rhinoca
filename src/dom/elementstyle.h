@@ -1,6 +1,7 @@
 #ifndef __CSS_ELEMENTSTYLE_H__
 #define __CSS_ELEMENTSTYLE_H__
 
+#include "color.h"
 #include "../jsbindable.h"
 #include "../render/texture.h"
 
@@ -53,9 +54,13 @@ public:
 
 	float backgroundPositionX;
 	float backgroundPositionY;
+	bool setBackgroundPosition(const char* cssBackgroundPosition);
 
 	bool setBackgroundImage(const char* cssUrl);
 	Render::TexturePtr backgroundImage;
+
+	bool setBackgroundColor(const char* cssColor);
+	Color backgroundColor;
 
 	static JSClass jsClass;
 };	// ElementStyle
