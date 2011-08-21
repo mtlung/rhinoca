@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "../src/parser.h"
+#include "../src/rhstring.h"
 #include "../src/dom/cssparser.h"
 
 using namespace Parsing;
@@ -49,6 +50,15 @@ class CSSSelectorParserTest
 public:
 	static void parserCallback(ParserResult* result, Parser* parser)
 	{
+		StringLowerCaseHash typeHash(result->type, 0);
+
+		if(	typeHash == StringHash("selectors") ||
+			typeHash == StringHash("decls") ||
+			typeHash == StringHash("ruleset") ||
+			typeHash == StringHash("combinator")
+		)
+			return;
+
 		std::string& str = *reinterpret_cast<std::string*>(parser->userdata);
 		str += result->type;
 

@@ -18,9 +18,12 @@ bool CssMatcher::match(Parser* p)
 	_CdoCdc(p);
 
 	while(
-		ruleSet(p).once(&result) ||
-		media(p).once() ||
-		_CdoCdc(p)
+		*p->begin != '\0' &&
+		(
+			ruleSet(p).once(&result) ||
+			media(p).once() ||
+			_CdoCdc(p)
+		)
 	)
 	{}
 
@@ -31,16 +34,9 @@ bool MediaMatcher::match(Parser* p)
 {
 	if(!string(p, "@media").once() ||
 	   !skip(p).any() ||
-	   !medium(p).once()
+	   !mediaQueryList(p).once()
 	)
 		return false;
-	
-	while(
-		character(p, ',').once() &&
-		skip(p).any() &&
-		medium(p).once()
-	)
-	{}
 
 	return
 		character(p, '{').once() &&
@@ -50,9 +46,69 @@ bool MediaMatcher::match(Parser* p)
 		skip(p).any();
 }
 
-bool MediumMatcher::match(Parser* p)
+static bool andMediaExpression(Parser* p)
 {
-	return ident(p).once() && skip(p).any();
+	return
+		string(p, "and").once() &&
+		skip(p).any() &&
+		mediaExpression(p).once();
+}
+
+bool MediaQueryListMatcher::match(Parser* p)
+{
+	skip(p).any();
+
+	if(mediaQuery(p).once()) while(
+		character(p, ',').once() &&
+		skip(p).any() &&
+		mediaQuery(p).once()
+	)
+	{}
+
+	return true;
+}
+
+bool MediaQueryMatcher::match(Parser* p)
+{
+	if(mediaExpression(p).once()) {
+		while(andMediaExpression(p)) {}
+		return true;
+	}
+
+	string(p, "only").once() || string(p, "not").once();
+	skip(p).any();
+
+	if(!mediaType(p).once())
+		return false;
+
+	skip(p).any();
+	while(andMediaExpression(p)) {}
+
+	return true;
+}
+
+bool MediaTypeMatcher::match(Parser* p)
+{
+	return ident(p).once();
+}
+
+bool MediaExpressionMatcher::match(Parser* p)
+{
+	if(!(
+		character(p, '(').once() &&
+		skip(p).any() && 
+		mediaFeature(p).once() &&
+		skip(p).any())
+	)
+		return false;
+
+	character(p, ':').once() && skip(p).any() && expr(p).once();
+
+	if(!character(p, ')').once())
+		return false;
+
+	skip(p).any();
+	return true;
 }
 
 bool MediaFeatureMatcher::match(Parser* p)
@@ -62,16 +118,18 @@ bool MediaFeatureMatcher::match(Parser* p)
 
 bool OperatorMatcher::match(Parser* p)
 {
-	return
-		(character(p, '/').once() && skip(p).any()) ||
-		(character(p, ',').once() && skip(p).any());
+	(character(p, '/').once() && skip(p).any()) ||
+	(character(p, ',').once() && skip(p).any());
+
+	return true;	// can be empty
 }
 
 bool CombinatorMatcher::match(Parser* p)
 {
-	return
-		(character(p, '+').once() && skip(p).any()) ||
-		(character(p, '>').once() && skip(p).any());
+	(character(p, '+').once() && skip(p).any()) ||
+	(character(p, '>').once() && skip(p).any());
+
+	return true;	// can be empty
 }
 
 bool UnaryOperatorMatcher::match(Parser* p)
@@ -81,7 +139,7 @@ bool UnaryOperatorMatcher::match(Parser* p)
 
 bool PropertyMatcher::match(Parser* p)
 {
-	return ident(p).once();
+	return ident(p).once() && skip(p).any();
 }
 
 bool PropertyValueMatcher::match(Parser* p)
@@ -135,16 +193,21 @@ bool SelectorsMatcher::match(Parser* p)
 
 bool SimpleSelectorMatcher::match(Parser* p)
 {
-	if(!elementName(p).atMostOnce())
-		return false;
+	bool ret = false;
+
+	ret = elementName(p).once();
 
 	while(
 		hash(p).once() ||
-		klass(p).once()
+		klass(p).once() ||
+		attrib(p).once() ||
+		pseudo(p).once()
 	)
-	{}
+	{
+		ret |= true;
+	}
 
-	return true;
+	return ret;
 }
 
 bool ClassMatcher::match(Parser* p)
@@ -157,17 +220,52 @@ bool ElementNameMatcher::match(Parser* p)
 	return ident(p).once() || character(p, '*').once();
 }
 
+bool AttribMatcher::match(Parser* p)
+{
+	if( !character(p, '[').once() ||
+		!skip(p).any() ||
+		ident(p).once() ||
+		!skip(p).any()
+	)
+		return false;
+
+	(character(p, '=').once() || string(p, "~=").once() || string(p, "|=").once()) &&
+	skip(p).any() &&
+	(ident(p).once() || doubleQuotedString(p).once()) &&
+	skip(p).any();
+
+	return character(p, ']').once();
+}
+
+bool PseudoMatcher::match(Parser* p)
+{
+	if(!character(p, ':').once() && skip(p).any())
+		return false;
+
+	if(	ident(p).once() &&
+		skip(p).any() &&
+		character(p, '(').once() &&
+		skip(p).any() &&
+		ident(p).once() && 
+		character(p, ')').once() &&
+		skip(p).any()
+	)
+		return true;
+
+	return ident(p).once() && skip(p).any();
+}
+
 bool DeclarationMatcher::match(Parser* p)
 {
 	ParserResult propNameResult = { "propName", NULL, NULL };
 	ParserResult propValueResult = { "propVal", NULL, NULL };
 
-	return
-		property(p).once(&propNameResult) &&
-		skip(p).any() &&
-		character(p, ':').once() &&
-		skip(p).any() &&
-		propertyValue(p).once(&propValueResult);
+	property(p).once(&propNameResult) &&
+	character(p, ':').once() &&
+	skip(p).any() &&
+	propertyValue(p).once(&propValueResult);
+
+	return true;	// can be empty
 }
 
 bool DeclarationsMatcher::match(Parser* p)
@@ -238,13 +336,26 @@ bool TermMatcher::match(Parser* p)
 	(
 		unaryOperator(p).atMostOnce() &&
 		(
-			( number(p).once() && skip(p).any() )
+			( number(p).once() && skip(p).any() ) ||
+			( function(p).once() && skip(p).any() )
 		)
 	) ||
 	(
 		( ident(p).once() && skip(p).any() ) ||
 		( url(p).once() && skip(p).any() )
 	);
+}
+
+bool FunctionMatcher::match(Parser* p)
+{
+	return
+		ident(p).once() &&
+		skip(p).any() &&
+		character(p, '(').once() &&
+		skip(p).any() &&
+		expr(p).once() && 
+		character(p, ')').once() &&
+		skip(p).any();
 }
 
 // TODO: This number matching is not strict enough

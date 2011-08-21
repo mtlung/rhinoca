@@ -8,7 +8,6 @@ namespace Parsing {
 /// CSS selector syntax: http://www.w3.org/TR/CSS2/selector.html#selector-syntax
 /// W3C rough  http://www.w3.org/TR/1998/REC-CSS2-19980512/syndata.html
 /// W3C detail http://www.w3.org/TR/1998/REC-CSS2-19980512/grammar.html
-/// CSS3 media query http://www.w3.org/TR/css3-mediaqueries
 /// See http://www.codeproject.com/KB/recipes/CSSParser.aspx
 /// http://stackoverflow.com/questions/4656975/use-css-selectors-to-collect-html-elements-from-a-streaming-parser-e-g-sax-stre
 
@@ -32,7 +31,7 @@ inline Matcher<CssMatcher> css(Parser* parser) {
 	return ret;
 }
 
-/// '@media' S* medium [ ',' S* medium ]* '{' S* ruleset* '}' S*
+/// '@media' S* mediaQueryList '{' S* ruleset* '}' S*
 struct MediaMatcher
 {
 	bool match(Parser* parser);
@@ -43,14 +42,48 @@ inline Matcher<MediaMatcher> media(Parser* parser) {
 	return ret;
 }
 
-/// IDENT S*
-struct MediumMatcher
+/// CSS3 media query: http://www.w3.org/TR/css3-mediaqueries
+/// S* [mediaQuery [ ',' S* mediaQuery ]* ]?
+struct MediaQueryListMatcher
 {
 	bool match(Parser* parser);
 };
 
-inline Matcher<MediumMatcher> medium(Parser* parser) {
-	Matcher<MediumMatcher> ret = { {}, parser };
+inline Matcher<MediaQueryListMatcher> mediaQueryList(Parser* parser) {
+	Matcher<MediaQueryListMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// ['ONLY' | 'NOT']? S* media_type S* [ 'AND' S* expression ]* | expression [ 'AND' S* expression ]*
+struct MediaQueryMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<MediaQueryMatcher> mediaQuery(Parser* parser) {
+	Matcher<MediaQueryMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// IDENT
+struct MediaTypeMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<MediaTypeMatcher> mediaType(Parser* parser) {
+	Matcher<MediaTypeMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// '(' S* mediaFeature S* [ ':' S* expr ]? ')' S*
+struct MediaExpressionMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<MediaExpressionMatcher> mediaExpression(Parser* parser) {
+	Matcher<MediaExpressionMatcher> ret = { {}, parser };
 	return ret;
 }
 
@@ -65,7 +98,7 @@ inline Matcher<MediaFeatureMatcher> mediaFeature(Parser* parser) {
 	return ret;
 }
 
-/// '/' S* | ',' S*
+/// '/' S* | ',' S* | empty
 struct OperatorMatcher
 {
 	bool match(Parser* parser);
@@ -76,7 +109,7 @@ inline Matcher<OperatorMatcher> operatar(Parser* parser) {
 	return ret;
 }
 
-/// '+' S* | '>' S*
+/// '+' S* | '>' S* | empty
 struct CombinatorMatcher
 {
 	bool match(Parser* parser);
@@ -109,7 +142,7 @@ inline Matcher<PropertyMatcher> property(Parser* parser) {
 	return ret;
 }
 
-/// Match the string of a property's value
+/// expr prio?
 struct PropertyValueMatcher
 {
 	bool match(Parser* parser);
@@ -186,7 +219,29 @@ inline Matcher<ElementNameMatcher> elementName(Parser* parser) {
 	return ret;
 }
 
-/// property ':' S* expr prio?
+/// '[' S* IDENT S* [ [ '=' | INCLUDES | DASHMATCH ] S* [ IDENT | STRING ] S* ]? ']'
+struct AttribMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<AttribMatcher> attrib(Parser* parser) {
+	Matcher<AttribMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// ':' [ IDENT S* '(' S* IDENT S* ')' ] | IDENT
+struct PseudoMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<PseudoMatcher> pseudo(Parser* parser) {
+	Matcher<PseudoMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// property ':' S* expr prio? | empty
 struct DeclarationMatcher
 {
 	bool match(Parser* parser);
@@ -241,6 +296,17 @@ struct TermMatcher
 
 inline Matcher<TermMatcher> term(Parser* parser) {
 	Matcher<TermMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// IDENT S* '(' S* expr ')' S*
+struct FunctionMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<FunctionMatcher> function(Parser* parser) {
+	Matcher<FunctionMatcher> ret = { {}, parser };
 	return ret;
 }
 
