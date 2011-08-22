@@ -40,7 +40,8 @@ extern rhinoca_io_read io_read;
 extern rhinoca_io_size io_size;
 extern rhinoca_io_seek io_seek;
 extern rhinoca_io_close io_close;
-extern rhinoca_printFunc print;
+extern void print(Rhinoca* rh, const char* format, ...);
+extern void print(Rhinoca* rh, const char* format, va_list ap);
 
 double atof(const char* str, double onErr);
 
@@ -108,4 +109,4 @@ private:
 	const Noncopyable& operator=(const Noncopyable&);
 };	// Noncopyable
 
-#endif
+#endif	// __COMMON_H__

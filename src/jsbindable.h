@@ -38,7 +38,7 @@ public:
 	JSContext* jsContext;
 	JSObject* jsObject;
 	int refCount;		/// Governing when the object will be deleted
-	int gcRootCount;	/// Control when the Javascript engine will giveup ownership
+	int gcRootCount;	/// Control when the Javascript engine will give up ownership
 	FixString typeName;
 
 	static void finalize(JSContext* cx, JSObject* obj);
@@ -121,6 +121,8 @@ private:
 	JsString(const JsString&);
 	JsString& operator=(const JsString&);
 };	// JsString
+
+extern void print(JSContext* cx, const char* format, ...);
 
 JSBool JS_GetValue(JSContext *cx, jsval jv, bool& val);
 JSBool JS_GetValue(JSContext *cx, jsval jv, int& val);

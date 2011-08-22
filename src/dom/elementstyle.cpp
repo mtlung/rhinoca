@@ -25,10 +25,8 @@ static JSBool JS_ValueToCssDimension(JSContext *cx, jsval v, float& val)
 		char buf[32];
 		ret = (sscanf(jss.c_str(), "%f%s", &val, buf) == 2) ? JS_TRUE : JS_FALSE;
 
-		if(strcasecmp(buf, "px") != 0) {
-			Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
-			print(rh, "%s", "Only 'px' is supported for CSS dimension unit");
-		}
+		if(strcasecmp(buf, "px") != 0)
+			print(cx, "%s", "Only 'px' is supported for CSS dimension unit\n");
 	}
 
 	return ret;
@@ -54,8 +52,8 @@ static JSBool styleSetLeft(JSContext* cx, JSObject* obj, jsid id, JSBool strict,
 {
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
 	float val;
-	if(!JS_ValueToCssDimension(cx, *vp, val))
-		return JS_FALSE;
+	(void)JS_ValueToCssDimension(cx, *vp, val);
+
 	self->element->setLeft(val);
 	return JS_TRUE;
 }
@@ -64,8 +62,8 @@ static JSBool styleSetRight(JSContext* cx, JSObject* obj, jsid id, JSBool strict
 {
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
 	float val;
-	if(!JS_ValueToCssDimension(cx, *vp, val))
-		return JS_FALSE;
+	(void)JS_ValueToCssDimension(cx, *vp, val);
+
 	self->element->setRight(val);
 	return JS_TRUE;
 }
@@ -74,8 +72,8 @@ static JSBool styleSetTop(JSContext* cx, JSObject* obj, jsid id, JSBool strict, 
 {
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
 	float val;
-	if(!JS_ValueToCssDimension(cx, *vp, val))
-		return JS_FALSE;
+	(void)JS_ValueToCssDimension(cx, *vp, val);
+
 	self->element->setTop(val);
 	return JS_TRUE;
 }
@@ -84,8 +82,8 @@ static JSBool styleSetBottom(JSContext* cx, JSObject* obj, jsid id, JSBool stric
 {
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
 	float val;
-	if(!JS_ValueToCssDimension(cx, *vp, val))
-		return JS_FALSE;
+	(void)JS_ValueToCssDimension(cx, *vp, val);
+
 	self->element->setBottom(val);
 	return JS_TRUE;
 }
@@ -95,8 +93,7 @@ static JSBool styleSetWidth(JSContext* cx, JSObject* obj, jsid id, JSBool strict
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
 
 	float w = 0;
-	if(!JS_ValueToCssDimension(cx, *vp, w))
-		return JS_FALSE;
+	(void)JS_ValueToCssDimension(cx, *vp, w);
 
 	self->setWidth((unsigned)w);
 	return JS_TRUE;
@@ -107,8 +104,7 @@ static JSBool styleSetHeight(JSContext* cx, JSObject* obj, jsid id, JSBool stric
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
 
 	float h = 0;
-	if(!JS_ValueToCssDimension(cx, *vp, h))
-		return JS_FALSE;
+	(void)JS_ValueToCssDimension(cx, *vp, h);
 
 	self->setHeight((unsigned)h);
 	return JS_TRUE;
@@ -120,7 +116,7 @@ static JSBool styleSetBG(JSContext* cx, JSObject* obj, jsid id, JSBool strict, j
 
 	JsString jss(cx, *vp);
 	if(!jss || !self->setBackgroundImage(jss.c_str()))
-		return JS_FALSE;
+		print(cx, "Invalid CSS background image: %s\n", jss ? jss.c_str() : "");
 
 	return JS_TRUE;
 }
@@ -131,7 +127,7 @@ static JSBool styleSetBGColor(JSContext* cx, JSObject* obj, jsid id, JSBool stri
 
 	JsString jss(cx, *vp);
 	if(!jss || !self->setBackgroundColor(jss.c_str()))
-		return JS_FALSE;
+		print(cx, "Invalid CSS color: %s\n", jss ? jss.c_str() : "");
 
 	return JS_TRUE;
 }
@@ -141,8 +137,8 @@ static JSBool styleSetBGPos(JSContext* cx, JSObject* obj, jsid id, JSBool strict
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
 
 	JsString jss(cx, *vp);
-	if(!jss || !self->setBackgroundImage(jss.c_str()))
-		return JS_FALSE;
+	if(!jss || !self->setBackgroundPosition(jss.c_str()))
+		print(cx, "Invalid CSS backgroundPosition: %s\n", jss ? jss.c_str() : "");
 
 	return JS_TRUE;
 }
@@ -256,8 +252,7 @@ void ElementStyle::setStyleAttribute(const char* name, const char* value)
 		setBackgroundColor(value);
 	}
 	else if(hash == StringHash("background-position")) {
-		// For sscanf formatting: http://linux.die.net/man/3/scanf
-		sscanf(value, "%f%*[ ,\n\r\t]%f", &backgroundPositionX, &backgroundPositionY);
+		setBackgroundPosition(value);
 	}
 }
 
@@ -279,6 +274,7 @@ void ElementStyle::setHeight(unsigned val) { element->setHeight(val); }
 
 bool ElementStyle::setBackgroundPosition(const char* cssBackgroundPosition)
 {
+	// For sscanf formatting: http://linux.die.net/man/3/scanf
 	return sscanf(cssBackgroundPosition, "%f%*[ ,\n\r\t]%f", &backgroundPositionX, &backgroundPositionY) == 2;
 }
 

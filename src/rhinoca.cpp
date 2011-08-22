@@ -233,21 +233,18 @@ void rhinoca_set_io_close(rhinoca_io_close f)	{ io_close = f; }
 void* rhinoca_realloca(void* ptr, unsigned int oldSize, unsigned int size);
 
 // Others
-static void defaultPrintFunc(Rhinoca* context, const char* str, ...)
+static void defaultPrintFunc(Rhinoca* context, const char* format, va_list ap)
 {
-	if(!context || !str) return;
+	if(!context || !format) return;
 
-	va_list vl;
-	va_start(vl, str);
-	vprintf(str, vl);
-	va_end(vl);
+	vprintf(format, ap);
 }
 
-rhinoca_printFunc print = defaultPrintFunc;
+rhinoca_printFunc rhinoca_print = defaultPrintFunc;
 
 void rhinoca_setPrintFunc(rhinoca_printFunc printFunc)
 {
-	print = printFunc;
+	rhinoca_print = printFunc;
 }
 
 rhinoca_alertFunc alertFunc = NULL;

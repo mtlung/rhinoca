@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "jsbindable.h"
 #include "common.h"
+#include "rhinoca.h"
 
 #ifdef DEBUG
 #	include <typeinfo>	// For debugging GC problem
@@ -138,6 +139,18 @@ JsBindable* getJsBindableExactType(JSContext* cx, JSObject* obj, JSClass* jsClas
 {
 	void* ret = JS_GetInstancePrivate(cx, obj, jsClass, argv);
 	return reinterpret_cast<JsBindable*>(ret);
+}
+
+
+void print(JSContext* cx, const char* format, ...)
+{
+	if(!format) return;
+
+	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
+	va_list vl;
+	va_start(vl, format);
+	print(rh, format, vl);
+	va_end(vl);
 }
 
 JSBool JS_GetValue(JSContext *cx, jsval jv, bool& val)

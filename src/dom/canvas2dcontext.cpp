@@ -72,8 +72,7 @@ static JSBool setStrokeStyle(JSContext* cx, JSObject* obj, jsid id, JSBool stric
 		if(c.parse(jss.c_str()))
 			self->setStrokeColor((float*)&c);
 		else {
-			Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
-			print(rh, "Fail to parse \"%s\" as a color\n", jss.c_str());
+			print(cx, "Fail to parse \"%s\" as a color\n", jss.c_str());
 			return JS_FALSE;
 		}
 	}
@@ -113,8 +112,7 @@ static JSBool setFillStyle(JSContext* cx, JSObject* obj, jsid id, JSBool strict,
 		if(c.parse(jss.c_str()))
 			self->setFillColor((float*)&c);
 		else {
-			Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
-			print(rh, "Fail to parse \"%s\" as a color\n", jss.c_str());
+			print(cx, "Fail to parse \"%s\" as a color\n", jss.c_str());
 			return JS_FALSE;
 		}
 	}
