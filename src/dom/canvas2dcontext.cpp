@@ -541,13 +541,15 @@ static JSBool arc(JSContext* cx, uintN argc, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
+	bool antiClockwise;
 	double x, y, radius, startAngle, endAngle;
 	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
 	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
 	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &radius));
 	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &startAngle));
 	VERIFY(JS_ValueToNumber(cx, JS_ARGV4, &endAngle));
-	self->arc((float)x, (float)y, (float)radius, (float)startAngle, (float)endAngle, false);
+	VERIFY(JS_GetValue(cx, JS_ARGV5, antiClockwise));
+	self->arc((float)x, (float)y, (float)radius, (float)startAngle, (float)endAngle, antiClockwise);
 
 	return JS_TRUE;
 }
@@ -1138,7 +1140,7 @@ void CanvasRenderingContext2D::arc(float x, float y, float radius, float startAn
 	startAngle = startAngle * 360 / (2 * 3.14159f);
 	endAngle = endAngle * 360 / (2 * 3.14159f);
 	radius *= 2;
-	vguArc(openvg->path, x,y, radius,radius, startAngle, (anticlockwise ? 1 : -1) * (endAngle-startAngle), VGU_ARC_OPEN);
+	vguArc(openvg->path, x,y, radius,radius, startAngle, (anticlockwise ? -1 : 1) * (endAngle-startAngle), VGU_ARC_OPEN);
 }
 
 void CanvasRenderingContext2D::rect(float x, float y, float w, float h)

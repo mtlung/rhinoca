@@ -334,16 +334,16 @@ bool TermMatcher::match(Parser* p)
 {
 	return
 	(
-		( url(p).once() && skip(p).any() ) ||
-		( hex(p).once() && skip(p).any() ) ||
-		( ident(p).once() && skip(p).any() )
-	) ||
-	(
 		unaryOperator(p).atMostOnce() &&
 		(
 			( unit(p).once() && skip(p).any() ) ||
 			( function(p).once() && skip(p).any() )
 		)
+	) ||
+	(
+		( url(p).once() && skip(p).any() ) ||
+		( hex(p).once() && skip(p).any() ) ||
+		( ident(p).once() && skip(p).any() )
 	);
 }
 

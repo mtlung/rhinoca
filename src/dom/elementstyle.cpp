@@ -275,7 +275,7 @@ void ElementStyle::setHeight(unsigned val) { element->setHeight(val); }
 bool ElementStyle::setBackgroundPosition(const char* cssBackgroundPosition)
 {
 	// For sscanf formatting: http://linux.die.net/man/3/scanf
-	return sscanf(cssBackgroundPosition, "%f%*[ ,\n\r\t]%f", &backgroundPositionX, &backgroundPositionY) == 2;
+	return sscanf(cssBackgroundPosition, "%f%*[px ,\n\r\t]%f", &backgroundPositionX, &backgroundPositionY) == 2;
 }
 
 bool ElementStyle::setBackgroundImage(const char* cssUrl)
