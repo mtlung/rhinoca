@@ -11,7 +11,7 @@ namespace Parsing {
 /// See http://www.codeproject.com/KB/recipes/CSSParser.aspx
 /// http://stackoverflow.com/questions/4656975/use-css-selectors-to-collect-html-elements-from-a-streaming-parser-e-g-sax-stre
 
-/// Grammer:
+/// Grammar:
 /// *: 0 or more
 /// +: 1 or more 
 /// ?: 0 or 1
@@ -362,6 +362,17 @@ struct UrlMatcher
 
 inline Matcher<UrlMatcher> url(Parser* parser) {
 	Matcher<UrlMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// NUMBER S* ( 'px' | 'cm' | 'pt' | 'deg' | 'rad' | 'grad' | 'ms' | 's' | 'hz' | 'khz' | '%' )
+struct UnitMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<UnitMatcher> unit(Parser* parser) {
+	Matcher<UnitMatcher> ret = { {}, parser };
 	return ret;
 }
 

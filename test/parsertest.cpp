@@ -85,8 +85,8 @@ TEST_FIXTURE(CSSSelectorParserTest, universal)
 		CHECK_EQUAL("selector:*;propName:a;propVal:b;", str);
 	}
 
-	{	// Try to confuse the parser with some comments
-		char data[] = "/*!*/*/*xxx*//*yyy*/{/**/a:b;/* */}";
+	{	// Test again with spacing
+		char data[] = " * { a : b} ";
 		Parser parser(data, data + sizeof(data), parserCallback, &str);
 
 		str.clear();
@@ -100,6 +100,24 @@ TEST_FIXTURE(CSSSelectorParserTest, universal)
 		str.clear();
 		CHECK(css(&parser).once());
 		CHECK_EQUAL("selector:*;selector:E;propName:a;propVal:b;", str);
+	}
+
+	{	// Test again with spacing
+		char data[] = " * E { a : b; }";
+		Parser parser(data, data + sizeof(data), parserCallback, &str);
+
+		str.clear();
+		CHECK(css(&parser).once());
+		CHECK_EQUAL("selector:*;selector:E;propName:a;propVal:b;", str);
+	}
+
+	{	// Try to confuse the parser with some comments
+		char data[] = "/*!*/*/*xxx*//*yyy*/{/**/a:b;/* */}";
+		Parser parser(data, data + sizeof(data), parserCallback, &str);
+
+		str.clear();
+		CHECK(css(&parser).once());
+		CHECK_EQUAL("selector:*;propName:a;propVal:b;", str);
 	}
 }
 

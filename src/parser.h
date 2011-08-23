@@ -97,7 +97,7 @@ struct Matcher
 	{
 		const char* bk = parser->begin;
 
-		ParserResult customResult;
+		ParserResult customResult = { NULL };
 		parser->customResult = &customResult;
 
 		if(!t.match(parser)) {

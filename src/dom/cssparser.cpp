@@ -139,14 +139,15 @@ bool UnaryOperatorMatcher::match(Parser* p)
 
 bool PropertyMatcher::match(Parser* p)
 {
-	return ident(p).once() && skip(p).any();
+	ParserResult propNameResult = { "propName", NULL, NULL };
+	return ident(p).once(&propNameResult) && skip(p).any();
 }
 
 bool PropertyValueMatcher::match(Parser* p)
 {
-//	return expr(p).once() && prio(p).atMostOnce();
+	return expr(p).once() && prio(p).atMostOnce();
 
-	return anyCharExcept(p, ";}").atLeastOnce();
+//	return anyCharExcept(p, ";}").atLeastOnce();
 }
 
 bool RuleSetMatcher::match(Parser* p)
@@ -257,10 +258,9 @@ bool PseudoMatcher::match(Parser* p)
 
 bool DeclarationMatcher::match(Parser* p)
 {
-	ParserResult propNameResult = { "propName", NULL, NULL };
 	ParserResult propValueResult = { "propVal", NULL, NULL };
 
-	property(p).once(&propNameResult) &&
+	property(p).once() &&
 	character(p, ':').once() &&
 	skip(p).any() &&
 	propertyValue(p).once(&propValueResult);
@@ -334,15 +334,16 @@ bool TermMatcher::match(Parser* p)
 {
 	return
 	(
-		unaryOperator(p).atMostOnce() &&
-		(
-			( number(p).once() && skip(p).any() ) ||
-			( function(p).once() && skip(p).any() )
-		)
+		( url(p).once() && skip(p).any() ) ||
+		( hex(p).once() && skip(p).any() ) ||
+		( ident(p).once() && skip(p).any() )
 	) ||
 	(
-		( ident(p).once() && skip(p).any() ) ||
-		( url(p).once() && skip(p).any() )
+		unaryOperator(p).atMostOnce() &&
+		(
+			( unit(p).once() && skip(p).any() ) ||
+			( function(p).once() && skip(p).any() )
+		)
 	);
 }
 
@@ -441,9 +442,29 @@ bool UrlMatcher::match(Parser* p)
 		);
 }
 
+bool UnitMatcher::match(Parser* p)
+{
+	if(!number(p).once() && skip(p).any())
+		return false;
+
+	string(p, "px").once() ||
+	string(p, "cm").once() ||
+	string(p, "pt").once() ||
+	string(p, "deg").once() ||
+	string(p, "rad").once() ||
+	string(p, "grad").once() ||
+	string(p, "ms").once() ||
+	string(p, "s").once() ||
+	string(p, "hz").once() ||
+	string(p, "khz").once() ||
+	string(p, "%").once();
+
+	return true;
+}
+
 bool HexMatcher::match(Parser* p)
 {
-	ParserResult& result = *p->customResult;
+	ParserResult result = { "hex", NULL, NULL };
 
 	return
 		whiteSpace(p).any() &&
