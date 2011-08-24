@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "element.h"
 #include "elementstyle.h"
-#include "canvas2dcontext.h"
 #include "document.h"
 #include "nodelist.h"
 #include "../context.h"
@@ -221,40 +220,10 @@ void Element::fixRelativePath(const char* uri, const char* docUri, Path& path)
 	}
 }
 
-static int _min(int a, int b) { return a < b ? a : b; }
-
 void Element::render()
 {
-	if(!_style)
-		return;
-
-	HTMLCanvasElement* canvas = ownerDocument()->window()->virtualCanvas;
-	CanvasRenderingContext2D* context = dynamic_cast<CanvasRenderingContext2D*>(canvas->context);
-
-	// Render the background color
-	if(_style->backgroundColor.a > 0) {
-		context->setFillColor(&_style->backgroundColor.r);
-		context->fillRect((float)_style->left(), (float)_style->top(), (float)_style->width(), (float)_style->height());
-	}
-
-	// Render the style's background image if any
-	if(_style->backgroundImage) {
-		float dx = (float)_style->left();
-		float dy = (float)_style->top();
-		float dw = (float)_style->width();
-		float dh = (float)_style->height();
-
-		float sx = (float)-_style->backgroundPositionX;
-		float sy = (float)-_style->backgroundPositionY;
-		float sw = (float)_min(_style->width(), _style->backgroundImage->virtualWidth);
-		float sh = (float)_min(_style->height(), _style->backgroundImage->virtualHeight);
-
-		context->drawImage(
-			_style->backgroundImage.get(), Render::Driver::SamplerState::MIN_MAG_LINEAR,
-			sx, sy, sw, sh,
-			dx, dy, dw, dh
-		);
-	}
+	if(_style)
+		_style->render();
 }
 
 ElementStyle* Element::style()

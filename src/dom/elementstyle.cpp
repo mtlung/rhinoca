@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "elementstyle.h"
 #include "element.h"
+#include "canvas2dcontext.h"
 #include "cssparser.h"
 #include "document.h"
 #include "../context.h"
@@ -41,10 +42,15 @@ JSClass ElementStyle::jsClass = {
 
 static JSBool styleSetVisible(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
-	JSBool b;
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
-	if(!JS_ValueToBoolean(cx, *vp, &b)) return JS_FALSE;
-	self->element->visible = (b ==  JS_TRUE);
+	if(!JS_GetValue(cx, *vp, self->element->visible)) return JS_FALSE;
+	return JS_TRUE;
+}
+
+static JSBool styleSetOpacity(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
+{
+	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
+	if(!JS_GetValue(cx, *vp, self->opacity)) return JS_FALSE;
 	return JS_TRUE;
 }
 
@@ -110,6 +116,23 @@ static JSBool styleSetHeight(JSContext* cx, JSObject* obj, jsid id, JSBool stric
 	return JS_TRUE;
 }
 
+static JSBool styleGetTransform(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
+{
+	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
+	// TODO: Implementation
+	*vp = INT_TO_JSVAL(1);
+	return JS_TRUE;
+}
+
+static JSBool styleSetTransform(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
+{
+	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
+
+	JsString jss(cx, *vp);
+
+	return JS_TRUE;
+}
+
 static JSBool styleSetBG(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
@@ -145,12 +168,14 @@ static JSBool styleSetBGPos(JSContext* cx, JSObject* obj, jsid id, JSBool strict
 
 static JSPropertySpec properties[] = {
 	{"display", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetVisible},
+	{"opacity", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetOpacity},
 	{"left", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetLeft},
 	{"right", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetRight},
 	{"top", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetTop},
 	{"bottom", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetBottom},
 	{"width", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetWidth},
 	{"height", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetHeight},
+	{"transform", 0, JsBindable::jsPropFlags, styleGetTransform, styleSetTransform},
 	{"backgroundImage", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetBG},
 	{"backgroundColor", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetBGColor},
 	{"backgroundPosition", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetBGPos},
@@ -169,6 +194,12 @@ void ElementStyle::bind(JSContext* cx, JSObject* parent)
 
 ElementStyle::ElementStyle(Element* ele)
 	: element(ele)
+	, opacity(1)
+	, _translation(Vec3(0, 0, 0))
+	, _scale(Vec3(1, 1, 1))
+	, _transformDirty(1)
+	, _localToWorld(Mat44::identity)
+	, _localTransformation(Mat44::identity)
 	, backgroundPositionX(0), backgroundPositionY(0)
 	, backgroundColor(0, 0, 0, 0)
 {
@@ -176,6 +207,63 @@ ElementStyle::ElementStyle(Element* ele)
 
 ElementStyle::~ElementStyle()
 {
+}
+
+static int _min(int a, int b) { return a < b ? a : b; }
+
+void ElementStyle::updateTransformation()
+{
+	// See if any parent node contains transform
+	ASSERT(dynamic_cast<Element*>(element->parentNode) && "An element's parent should also be an element");
+	Element* parent = static_cast<Element*>(element->parentNode);
+	while(parent) {
+		if(ElementStyle* s = parent->_style) {
+			s->_localToWorld.mul(localTransformation(), _localToWorld);
+			break;
+		}
+		parent = static_cast<Element*>(parent->parentNode);
+	}
+}
+
+void ElementStyle::render()
+{
+	// Early out optimization
+	if(backgroundColor.a == 0 && !backgroundImage)
+		return;
+
+	HTMLCanvasElement* canvas = element->ownerDocument()->window()->virtualCanvas;
+	CanvasRenderingContext2D* context = dynamic_cast<CanvasRenderingContext2D*>(canvas->context);
+
+	updateTransformation();
+
+	context->setTransform(_localToWorld.data);
+
+	context->setGlobalAlpha(opacity);
+
+	// Render the background color
+	if(backgroundColor.a > 0) {
+		context->setFillColor(&backgroundColor.r);
+		context->fillRect((float)left(), (float)top(), (float)width(), (float)height());
+	}
+
+	// Render the style's background image if any
+	if(backgroundImage) {
+		float dx = (float)left();
+		float dy = (float)top();
+		float dw = (float)width();
+		float dh = (float)height();
+
+		float sx = (float)-backgroundPositionX;
+		float sy = (float)-backgroundPositionY;
+		float sw = (float)_min(width(), backgroundImage->virtualWidth);
+		float sh = (float)_min(height(), backgroundImage->virtualHeight);
+
+		context->drawImage(
+			backgroundImage.get(), Render::Driver::SamplerState::MIN_MAG_LINEAR,
+			sx, sy, sw, sh,
+			dx, dy, dw, dh
+		);
+	}
 }
 
 struct ParserState
@@ -215,6 +303,9 @@ void ElementStyle::setStyleAttribute(const char* name, const char* value)
 {
 	StringLowerCaseHash hash(name, 0);
 
+	if(hash == StringHash("opacity")) {
+		sscanf(value, "%f", &opacity);
+	}
 	if(hash == StringHash("left")) {
 		float v = 0;
 		sscanf(value, "%f", &v);
@@ -245,6 +336,10 @@ void ElementStyle::setStyleAttribute(const char* name, const char* value)
 		sscanf(value, "%f", &v);
 		setHeight((unsigned)v);
 	}
+	else if(hash == StringHash("transform")) {
+		// TODO: Implementation
+		value = value;
+	}
 	else if(hash == StringHash("background-image")) {
 		setBackgroundImage(value);
 	}
@@ -272,10 +367,46 @@ void ElementStyle::setBottom(float val) { element->setBottom(val); }
 void ElementStyle::setWidth(unsigned val) { element->setWidth(val); }
 void ElementStyle::setHeight(unsigned val) { element->setHeight(val); }
 
+void ElementStyle::setOrigin(const Vec3& v)
+{
+	_transformDirty = 1;
+	_origin = v;
+}
+
+void ElementStyle::setTranslation(const Vec3& v)
+{
+	_transformDirty = 1;
+	_translation = v;
+}
+
+void ElementStyle::setScale(const Vec3& v)
+{
+	_transformDirty = 1;
+	_scale = v;
+}
+
+const Mat44& ElementStyle::localTransformation() const
+{
+	if(_transformDirty) {
+		_localTransformation =
+			Mat44::makeTranslation(_translation.data) * 
+			Mat44::makeScale(_scale.data);
+	}
+
+	_transformDirty = 0;
+	return _localTransformation;
+}
+
+Mat44 ElementStyle::worldTransformation() const
+{
+	// TODO: Implementation
+	return localTransformation();
+}
+
 bool ElementStyle::setBackgroundPosition(const char* cssBackgroundPosition)
 {
 	// For sscanf formatting: http://linux.die.net/man/3/scanf
-	return sscanf(cssBackgroundPosition, "%f%*[px ,\n\r\t]%f", &backgroundPositionX, &backgroundPositionY) == 2;
+	return sscanf(cssBackgroundPosition, "%f%*[ ,\n\r\t]%f", &backgroundPositionX, &backgroundPositionY) == 2;
 }
 
 bool ElementStyle::setBackgroundImage(const char* cssUrl)

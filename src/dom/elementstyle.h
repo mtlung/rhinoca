@@ -4,6 +4,8 @@
 #include "color.h"
 #include "../jsbindable.h"
 #include "../render/texture.h"
+#include "../mat44.h"
+#include "../vec3.h"
 
 namespace Dom {
 
@@ -16,6 +18,12 @@ public:
 	~ElementStyle();
 
 // Operations
+	/// Calculate it's _localToWorld matrix
+	/// For this function to work, you must call this function for an Element's parent first
+	void updateTransformation();
+
+	void render();
+
 	override void bind(JSContext* cx, JSObject* parent);
 
 // Attributes
@@ -33,6 +41,10 @@ public:
 	bool visible() const;
 	void setVisible(bool val);
 
+	/// Opacity of 0 to 1
+	float opacity;
+
+// Positional
 	/// All dimension stuffs are in unit of pixels
 	float left() const;
 	void setLeft(float val);
@@ -52,6 +64,26 @@ public:
 	unsigned height() const;
 	void setHeight(unsigned val);
 
+// Transform
+	// TODO: May move these transform into a transform component
+	const Vec3& origin() const { return _origin; }
+	const Vec3& translation() const { return _translation; }
+	const Vec3& scale() const { return _scale; }
+	const Mat44& localTransformation() const;
+	Mat44 worldTransformation() const;
+
+	void setOrigin(const Vec3& v);
+	void setTranslation(const Vec3& v);
+	void setScale(const Vec3& v);
+
+	Vec3 _origin;					/// In unit of percentage of the width and height
+	Vec3 _translation;
+	Vec3 _scale;
+	mutable int _transformDirty;	/// NOTE: Use int other than bool to avoid alignment problem
+	mutable Mat44 _localToWorld;
+	mutable Mat44 _localTransformation;
+
+// Background
 	float backgroundPositionX;
 	float backgroundPositionY;
 	bool setBackgroundPosition(const char* cssBackgroundPosition);

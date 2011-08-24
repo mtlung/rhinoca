@@ -1081,6 +1081,11 @@ void CanvasRenderingContext2D::setTransform(float m11, float m12, float m21, flo
 	currentState.transform = m;
 }
 
+void CanvasRenderingContext2D::setTransform(float mat44[16])
+{
+	currentState.transform.copyFrom(mat44);
+}
+
 void CanvasRenderingContext2D::beginPath()
 {
 	vgClearPath(openvg->path, VG_PATH_CAPABILITY_ALL);

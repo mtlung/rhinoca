@@ -67,6 +67,8 @@ public:
 	/// Changes the transformation matrix to the matrix given by the arguments as described below.
 	void setTransform(float m11, float m12, float m21, float m22, float dx, float dy);
 
+	void setTransform(float mat44[16]);
+
 // Paths
 	/// Resets the current path.
 	void beginPath();
