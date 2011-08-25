@@ -622,7 +622,7 @@ void audiodevice_setSoundCurrentTime(AudioDevice* device, AudioSound* sound, flo
 
 	// Call alSourceRewind() to make the sound go though the AL_INITIAL state
 	alSourceRewind(sound->handle);
-	sound->nextALBufLoadPosition = 
+	sound->nextALBufLoadPosition = samplePos;
 	sound->queueSampleStartPosition = samplePos;
 }
 

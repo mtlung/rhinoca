@@ -114,7 +114,7 @@ void print(Rhinoca* rh, const char* format, ...)
 	va_end(vl);
 }
 
-void print(Rhinoca* rh, const char* format, va_list ap)
+void vprint(Rhinoca* rh, const char* format, va_list ap)
 {
 	rhinoca_print(rh, format, ap);
 }

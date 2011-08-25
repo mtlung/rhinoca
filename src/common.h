@@ -41,7 +41,7 @@ extern rhinoca_io_size io_size;
 extern rhinoca_io_seek io_seek;
 extern rhinoca_io_close io_close;
 extern void print(Rhinoca* rh, const char* format, ...);
-extern void print(Rhinoca* rh, const char* format, va_list ap);
+extern void vprint(Rhinoca* rh, const char* format, va_list ap);
 
 double atof(const char* str, double onErr);
 
