@@ -22,7 +22,7 @@ typedef __int64 intmax_t;
 #define ftello ftell
 
 #define MPG123_NO_CONFIGURE
-#include "mpg123.in.h" /* Yes, .h.in; we include the configure template! */
+#include "mpg123.h.in" /* Yes, .h.in; we include the configure template! */
 
 #ifdef __cplusplus
 extern "C" {
