@@ -33,6 +33,7 @@ public:
 		, preloadAll(false)
 		, headerLoaded(false)
 		, currentSamplePos(0)
+		, mpgRet(MPG123_OK)
 	{
 		mpg = mpg123_new(NULL, NULL);
 		ASSERT(mpg);
@@ -71,6 +72,7 @@ public:
 	unsigned currentSamplePos;
 
 	mpg123_handle* mpg;
+	int mpgRet;
 };
 
 void Mp3Loader::loadDataForRange(unsigned begin, unsigned end)
@@ -201,22 +203,26 @@ void Mp3Loader::loadData()
 	void* bufferData = buffer->getWritePointerForRange(audioBufBegin, audioBufEnd, bytesToWrite);
 	ASSERT(bufferData && bytesToWrite);
 
-	// Read from IO stream
-	rhbyte buf[_dataChunkSize];
-	unsigned readCount = (unsigned)io_read(stream, buf, _dataChunkSize, tId);
-
-	// Perform MP3 decoding
-	// TODO: Current implementation may lead to unbounded increasing of mpg123
-	// internal buffer. I already submitted a feature request to query the size
-	// of output I can get without feeding new data.
-	// May be implement a algorithm to adjust _dataChunkSize dynamically
-	unsigned decodeBytes = 0;
-	int ret = mpg123_decode(mpg, buf, readCount, (rhbyte*)bufferData, bytesToWrite, &decodeBytes);
-
-	if(ret == MPG123_ERR)
+	// Query the size of the mpg123's internal buffer, 
+	// if it's large enough, we need not to perform read from the stream
+	long mpgInternalSize = 0;
+	if(MPG123_OK != mpg123_getstate(mpg, MPG123_BUFFERFILL, &mpgInternalSize, NULL))
 		goto Abort;
 
-	if(ret == MPG123_NEW_FORMAT)
+	// Read from IO stream, if necessary
+	rhbyte buf[_dataChunkSize];
+	unsigned readCount =
+		mpgRet != MPG123_NEED_MORE && mpgInternalSize > _dataChunkSize ?
+		0 : (unsigned)io_read(stream, buf, _dataChunkSize, tId);
+
+	// Perform MP3 decoding
+	unsigned decodeBytes = 0;
+	mpgRet = mpg123_decode(mpg, buf, readCount, (rhbyte*)bufferData, bytesToWrite, &decodeBytes);
+
+	if(mpgRet == MPG123_ERR)
+		goto Abort;
+
+	if(mpgRet == MPG123_NEW_FORMAT)
 		print(rh, "Mp3Loader: Changing audio format in the middle of loading is not supported '%s'\n", buffer->uri().c_str());
 
 	if(decodeBytes > 0) {
@@ -230,7 +236,7 @@ void Mp3Loader::loadData()
 		reSchedule(false);
 
 	// Condition for EOF
-	if(ret == MPG123_DONE || (ret == MPG123_NEED_MORE && readCount == 0)) {
+	if(mpgRet == MPG123_DONE || (mpgRet == MPG123_NEED_MORE && readCount == 0)) {
 		currentSamplePos = mpg123_tell(mpg);
 		format.totalSamples = format.estimatedSamples = currentSamplePos;
 		buffer->setFormat(format);
