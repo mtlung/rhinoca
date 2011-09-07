@@ -409,6 +409,17 @@ inline Matcher<SkippableMatcher> skip(Parser* parser) {
 	return ret;
 }
 
+/// 'none' | <transform-function> [ <transform-function> ]* 
+struct TransformMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<TransformMatcher> transform(Parser* parser) {
+	Matcher<TransformMatcher> ret = { {}, parser };
+	return ret;
+}
+
 }	// namespace Parsing
 
 #endif	// __DOM_CSSPARSER_H__

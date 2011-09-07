@@ -155,6 +155,18 @@ inline Matcher<CharMatcher> character(Parser* parser, char v) {
 	return ret;
 }
 
+/// Always match and didn't consume any character
+/// Useful for generating result explicitly
+struct DummyMatcher
+{
+	bool match(Parser* parser) { return true; }
+};
+
+inline Matcher<DummyMatcher> empty(Parser* parser) {
+	Matcher<DummyMatcher> ret = { {}, parser };
+	return ret;
+}
+
 /// Match ' ', '\t', '\r', '\n'
 struct WhiteSpaceMatcher
 {

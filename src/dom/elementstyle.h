@@ -65,21 +65,17 @@ public:
 	void setHeight(unsigned val);
 
 // Transform
+	// http://www.w3.org/TR/css3-2d-transforms/
 	// TODO: May move these transform into a transform component
 	const Vec3& origin() const { return _origin; }
-	const Vec3& translation() const { return _translation; }
-	const Vec3& scale() const { return _scale; }
 	const Mat44& localTransformation() const;
 	Mat44 worldTransformation() const;
 
+	void setIdentity();
+	void setTransform(const char* transformStr);
 	void setOrigin(const Vec3& v);
-	void setTranslation(const Vec3& v);
-	void setScale(const Vec3& v);
 
 	Vec3 _origin;					/// In unit of percentage of the width and height
-	Vec3 _translation;
-	Vec3 _scale;
-	mutable int _transformDirty;	/// NOTE: Use int other than bool to avoid alignment problem
 	mutable Mat44 _localToWorld;
 	mutable Mat44 _localTransformation;
 

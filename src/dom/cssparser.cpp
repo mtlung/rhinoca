@@ -501,4 +501,44 @@ bool SkippableMatcher::match(Parser* p)
 	return whiteSpace(p).once() || comment(p).once();
 }
 
+bool TransformMatcher::match(Parser* p)
+{
+	ParserResult transformNone = { "none", NULL, NULL };
+
+	if(skip(p).any() && string(p, "none").once(&transformNone))
+		return true;
+
+	ParserResult transformName = { "name", NULL, NULL };
+	ParserResult transformValue = { "value", NULL, NULL };
+	ParserResult transformUnit = { "unit", NULL, NULL };
+
+	if(!
+		(skip(p).any() &&
+		ident(p).once(&transformName) &&
+		skip(p).any() &&
+		character(p, '(').once() &&
+		skip(p).any())
+	)
+		return false;
+
+	while(
+		number(p).once(&transformValue) && 
+		skip(p).any() &&
+		(
+			string(p, "px").once(&transformUnit) ||
+			string(p, "deg").once(&transformUnit) ||
+			string(p, "rad").once(&transformUnit) ||
+			string(p, "grad").once(&transformUnit) ||
+			empty(p).once(&transformUnit)
+		) &&
+		character(p, ',').atMostOnce() &&
+		skip(p).any()
+	) {}
+
+	return
+		skip(p).any() &&
+		character(p, ')').once() &&
+		skip(p).any();
+}
+
 }	// namespace Parsing

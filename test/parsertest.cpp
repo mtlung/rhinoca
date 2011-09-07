@@ -139,3 +139,51 @@ TEST_FIXTURE(CSSSelectorParserTest, group)
 		CHECK_EQUAL("selector:*;selector:E;sGroup:,;selector:*;selector:F;propName:a;propVal:b;", str);
 	}
 }
+
+class CSSTransformParserTest
+{
+public:
+	static void parserCallback(ParserResult* result, Parser* parser)
+	{
+		StringLowerCaseHash typeHash(result->type, 0);
+
+		std::string& str = *reinterpret_cast<std::string*>(parser->userdata);
+		str += result->type;
+
+		str += ":";
+		str.append(result->begin, result->end);
+		str += ";";
+	}
+
+	std::string str;
+};
+
+TEST_FIXTURE(CSSTransformParserTest, none)
+{
+	char data[] = " none ; ";
+	Parser parser(data, data + sizeof(data), parserCallback, &str);
+
+	str.clear();
+	CHECK(transform(&parser).any());
+	CHECK_EQUAL("none:none;", str);
+}
+
+TEST_FIXTURE(CSSTransformParserTest, base)
+{
+	char data[] = " skewx ( 10 deg ) translatex ( 10 ) translatey ( 150 px ) ; ";
+	Parser parser(data, data + sizeof(data), parserCallback, &str);
+
+	str.clear();
+	CHECK(transform(&parser).any());
+	CHECK_EQUAL("name:skewx;value:10;unit:deg;name:translatex;value:10;unit:;name:translatey;value:150;unit:px;", str);
+}
+
+TEST_FIXTURE(CSSTransformParserTest, translate)
+{
+	char data[] = "translate( 10, 20 px );";
+	Parser parser(data, data + sizeof(data), parserCallback, &str);
+
+	str.clear();
+	CHECK(transform(&parser).any());
+	CHECK_EQUAL("name:translate;value:10;unit:;value:20;unit:px;", str);
+}

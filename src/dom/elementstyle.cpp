@@ -129,6 +129,7 @@ static JSBool styleSetTransform(JSContext* cx, JSObject* obj, jsid id, JSBool st
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
 
 	JsString jss(cx, *vp);
+	self->setTransform(jss.c_str());
 
 	return JS_TRUE;
 }
@@ -195,9 +196,6 @@ void ElementStyle::bind(JSContext* cx, JSObject* parent)
 ElementStyle::ElementStyle(Element* ele)
 	: element(ele)
 	, opacity(1)
-	, _translation(Vec3(0, 0, 0))
-	, _scale(Vec3(1, 1, 1))
-	, _transformDirty(1)
 	, _localToWorld(Mat44::identity)
 	, _localTransformation(Mat44::identity)
 	, backgroundPositionX(0), backgroundPositionY(0)
@@ -213,6 +211,8 @@ static int _min(int a, int b) { return a < b ? a : b; }
 
 void ElementStyle::updateTransformation()
 {
+	_localToWorld = localTransformation();
+
 	// See if any parent node contains transform
 	ASSERT(dynamic_cast<Element*>(element->parentNode) && "An element's parent should also be an element");
 	Element* parent = static_cast<Element*>(element->parentNode);
@@ -221,7 +221,7 @@ void ElementStyle::updateTransformation()
 			s->_localToWorld.mul(localTransformation(), _localToWorld);
 			break;
 		}
-		parent = static_cast<Element*>(parent->parentNode);
+		parent = dynamic_cast<Element*>(parent->parentNode);
 	}
 }
 
@@ -266,36 +266,37 @@ void ElementStyle::render()
 	}
 }
 
-struct ParserState
-{
-	ElementStyle* style;
-	const char* propNameBegin, *propNameEnd;
-};
-
-static void parserCallback(ParserResult* result, Parser* parser)
-{
-	ParserState* state = reinterpret_cast<ParserState*>(parser->userdata);
-	ElementStyle* style = state->style;
-
-	if(strcmp(result->type, "propName") == 0) {
-		state->propNameBegin = result->begin;
-		state->propNameEnd = result->end;
-	}
-	else if(strcmp(result->type, "propVal") == 0) {
-		char nameEnd = *state->propNameEnd;
-		char valueEnd = *result->end;
-		*const_cast<char*>(state->propNameEnd) = '\0';
-		*const_cast<char*>(result->end) = '\0';
-		style->setStyleAttribute(state->propNameBegin, result->begin);
-		*const_cast<char*>(state->propNameEnd) = nameEnd;
-		*const_cast<char*>(result->end) = valueEnd;
-	}
-}
 
 void ElementStyle::setStyleString(const char* begin, const char* end)
 {
+	struct ParserState
+	{
+		ElementStyle* style;
+		const char* propNameBegin, *propNameEnd;
+
+		static void parserCallback(ParserResult* result, Parser* parser)
+		{
+			ParserState* state = reinterpret_cast<ParserState*>(parser->userdata);
+			ElementStyle* style = state->style;
+
+			if(strcmp(result->type, "propName") == 0) {
+				state->propNameBegin = result->begin;
+				state->propNameEnd = result->end;
+			}
+			else if(strcmp(result->type, "propVal") == 0) {
+				char nameEnd = *state->propNameEnd;
+				char valueEnd = *result->end;
+				*const_cast<char*>(state->propNameEnd) = '\0';
+				*const_cast<char*>(result->end) = '\0';
+				style->setStyleAttribute(state->propNameBegin, result->begin);
+				*const_cast<char*>(state->propNameEnd) = nameEnd;
+				*const_cast<char*>(result->end) = valueEnd;
+			}
+		}
+	};	// ParserState
+
 	ParserState state = { this, NULL, NULL };
-	Parser parser(begin, end, parserCallback, &state);
+	Parser parser(begin, end, ParserState::parserCallback, &state);
 	Parsing::declarations(&parser, false).once();
 }
 
@@ -306,12 +307,12 @@ void ElementStyle::setStyleAttribute(const char* name, const char* value)
 	if(hash == StringHash("opacity")) {
 		sscanf(value, "%f", &opacity);
 	}
-	if(hash == StringHash("left")) {
+	else if(hash == StringHash("left")) {
 		float v = 0;
 		sscanf(value, "%f", &v);
 		setLeft(v);
 	}
-	if(hash == StringHash("right")) {
+	else if(hash == StringHash("right")) {
 		float v = 0;
 		sscanf(value, "%f", &v);
 		setRight(v);
@@ -337,8 +338,7 @@ void ElementStyle::setStyleAttribute(const char* name, const char* value)
 		setHeight((unsigned)v);
 	}
 	else if(hash == StringHash("transform")) {
-		// TODO: Implementation
-		value = value;
+		setTransform(value);
 	}
 	else if(hash == StringHash("background-image")) {
 		setBackgroundImage(value);
@@ -367,33 +367,70 @@ void ElementStyle::setBottom(float val) { element->setBottom(val); }
 void ElementStyle::setWidth(unsigned val) { element->setWidth(val); }
 void ElementStyle::setHeight(unsigned val) { element->setHeight(val); }
 
+void ElementStyle::setIdentity()
+{
+	_localTransformation = Mat44::identity;
+}
+
+void ElementStyle::setTransform(const char* transformStr)
+{
+	setIdentity();
+
+	struct ParserState
+	{
+		ElementStyle* style;
+		const char* nameBegin, *nameEnd;
+		int valueIdx;
+		float values[3];
+
+		static void callback(ParserResult* result, Parser* parser)
+		{
+			ParserState* state = reinterpret_cast<ParserState*>(parser->userdata);
+			ElementStyle* style = state->style;
+
+			if(strcmp(result->type, "name") == 0) {
+				state->nameBegin = result->begin;
+				state->nameEnd = result->end;
+				state->valueIdx = 0;
+				memset(state->values, 0, sizeof(state->values));
+			}
+			else if(strcmp(result->type, "value") == 0) {
+				char bk = *result->end;
+				*const_cast<char*>(result->end) = '\0';
+				sscanf(result->begin, "%f", &state->values[state->valueIdx]);
+				*const_cast<char*>(result->end) = bk;
+				++state->valueIdx;
+			}
+			else if(strcmp(result->type, "unit") == 0) {
+				// Convert deg to rad
+				if(result->end - result->begin > 0 && state->valueIdx == 1 &&
+					strncmp(result->begin, "deg", result->end - result->begin) == 0
+				)
+					state->values[state->valueIdx - 1] *= 3.1415926535897932f / 180;
+
+				if(state->valueIdx == 2 && strncmp(state->nameBegin, "translate", state->nameEnd - state->nameBegin) == 0)
+					style->_localTransformation = style->_localTransformation * Mat44::makeTranslation(state->values);
+			}
+			else if(strcmp(result->type, "none") == 0) {
+				style->setIdentity();
+			}
+			else
+				ASSERT(false);
+		}
+	};	// Local
+
+	ParserState state = { this, NULL, NULL, 0, 0.0f, 0.0f };
+	Parser parser(transformStr, transformStr + strlen(transformStr), ParserState::callback, &state);
+	Parsing::transform(&parser).once();
+}
+
 void ElementStyle::setOrigin(const Vec3& v)
 {
-	_transformDirty = 1;
 	_origin = v;
-}
-
-void ElementStyle::setTranslation(const Vec3& v)
-{
-	_transformDirty = 1;
-	_translation = v;
-}
-
-void ElementStyle::setScale(const Vec3& v)
-{
-	_transformDirty = 1;
-	_scale = v;
 }
 
 const Mat44& ElementStyle::localTransformation() const
 {
-	if(_transformDirty) {
-		_localTransformation =
-			Mat44::makeTranslation(_translation.data) * 
-			Mat44::makeScale(_scale.data);
-	}
-
-	_transformDirty = 0;
 	return _localTransformation;
 }
 
