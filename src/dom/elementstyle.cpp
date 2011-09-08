@@ -177,6 +177,7 @@ static JSPropertySpec properties[] = {
 	{"width", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetWidth},
 	{"height", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetHeight},
 	{"transform", 0, JsBindable::jsPropFlags, styleGetTransform, styleSetTransform},
+	{"-moz-transform", 0, JsBindable::jsPropFlags, styleGetTransform, styleSetTransform},
 	{"backgroundImage", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetBG},
 	{"backgroundColor", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetBGColor},
 	{"backgroundPosition", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetBGPos},
@@ -196,6 +197,7 @@ void ElementStyle::bind(JSContext* cx, JSObject* parent)
 ElementStyle::ElementStyle(Element* ele)
 	: element(ele)
 	, opacity(1)
+	, _origin(0.5f, 0.5f, 0)
 	, _localToWorld(Mat44::identity)
 	, _localTransformation(Mat44::identity)
 	, backgroundPositionX(0), backgroundPositionY(0)
@@ -302,7 +304,7 @@ void ElementStyle::setStyleString(const char* begin, const char* end)
 
 void ElementStyle::setStyleAttribute(const char* name, const char* value)
 {
-	StringLowerCaseHash hash(name, 0);
+	const StringLowerCaseHash hash(name, 0);
 
 	if(hash == StringHash("opacity")) {
 		sscanf(value, "%f", &opacity);
@@ -338,6 +340,9 @@ void ElementStyle::setStyleAttribute(const char* name, const char* value)
 		setHeight((unsigned)v);
 	}
 	else if(hash == StringHash("transform")) {
+		setTransform(value);
+	}
+	else if(hash == StringHash("-moz-transform")) {
 		setTransform(value);
 	}
 	else if(hash == StringHash("background-image")) {
@@ -383,57 +388,62 @@ void ElementStyle::setTransform(const char* transformStr)
 		int valueIdx;
 		float values[6];
 
+		// TODO: Release the restriction that width/height/ and transform-origin should be 
+		// appear before transform in the css <style> tag
 		void applyTransform()
 		{
+			const StringLowerCaseHash hash(nameBegin, nameEnd - nameBegin);
+
 			Mat44 mat;
-			if(strncmp(nameBegin, "translate", nameEnd - nameBegin) == 0)
+			if(hash == StringHash("translate"))
 			{
 				if(valueIdx == 1) values[1] = 0;	// If the second param is not provided, assign zero
 				mat = Mat44::makeTranslation(values);
 			}
-			else if(strncmp(nameBegin, "translateX", nameEnd - nameBegin) == 0)
+			else if(hash == StringHash("translatex"))
 			{
 				const float val[3] = { values[0], 0, 0 };
 				mat = Mat44::makeTranslation(val);
 			}
-			else if(strncmp(nameBegin, "translateY", nameEnd - nameBegin) == 0)
+			else if(hash == StringHash("translatey"))
 			{
 				const float val[3] = { 0, values[0], 0 };
 				mat = Mat44::makeTranslation(val);
 			}
-			else if(strncmp(nameBegin, "scale", nameEnd - nameBegin) == 0)
+			else if(hash == StringHash("scale"))
 			{
 				if(valueIdx == 1) values[1] = values[0];	// If the second param is not provided, use the first one
 				const float val[3] = { values[0], values[1], 1 };
 				mat = Mat44::makeScale(val);
 			}
-			else if(strncmp(nameBegin, "scaleX", nameEnd - nameBegin) == 0)
+			else if(hash == StringHash("scalex"))
 			{
 				const float val[3] = { values[0], 1, 1 };
 				mat = Mat44::makeScale(val);
 			}
-			else if(strncmp(nameBegin, "scaleY", nameEnd - nameBegin) == 0)
+			else if(hash == StringHash("scaley"))
 			{
 				const float val[3] = { 1, values[0], 1 };
 				mat = Mat44::makeScale(val);
 			}
-			else if(strncmp(nameBegin, "rotate", nameEnd - nameBegin) == 0)
+			else if(hash == StringHash("rotate"))
+			{
+				static const float zaxis[3] = { 0, 0, 1 };
+				mat = Mat44::makeAxisRotation(zaxis, values[0]);
+			}
+			else if(hash == StringHash("skew"))
 			{
 				ASSERT(false && "Not implemented");
 			}
-			else if(strncmp(nameBegin, "skew", nameEnd - nameBegin) == 0)
+			else if(hash == StringHash("skewx"))
 			{
 				ASSERT(false && "Not implemented");
 			}
-			else if(strncmp(nameBegin, "skewX", nameEnd - nameBegin) == 0)
+			else if(hash == StringHash("skewy"))
 			{
 				ASSERT(false && "Not implemented");
 			}
-			else if(strncmp(nameBegin, "skewY", nameEnd - nameBegin) == 0)
-			{
-				ASSERT(false && "Not implemented");
-			}
-			else if(strncmp(nameBegin, "matrix", nameEnd - nameBegin) == 0)
+			else if(hash == StringHash("matrix"))
 			{
 				ASSERT(false && "Not implemented");
 			}
@@ -442,7 +452,15 @@ void ElementStyle::setTransform(const char* transformStr)
 				ASSERT(false && "invalid transform function");
 			}
 
-			style->_localTransformation = style->_localTransformation * mat;
+			// Apply the transform with origin adjustment
+			const float origin[3] = { style->_origin.x * style->width(), style->_origin.y * style->height(), 0 };
+			const float negOrigin[3] = { -origin[0], -origin[1], 0 };
+
+			style->_localTransformation =
+				style->_localTransformation *
+				Mat44::makeTranslation(origin) *
+				mat *
+				Mat44::makeTranslation(negOrigin);
 		}
 
 		static void callback(ParserResult* result, Parser* parser)
