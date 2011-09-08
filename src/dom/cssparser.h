@@ -321,6 +321,17 @@ inline Matcher<NumberMatcher> number(Parser* parser) {
 	return ret;
 }
 
+/// unary_operator? S* NUMBER
+struct SignedNumberMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<SignedNumberMatcher> signedNumber(Parser* parser) {
+	Matcher<SignedNumberMatcher> ret = { {}, parser };
+	return ret;
+}
+
 /// {[a-z0-9-]|{nonascii}|{escape}}+
 struct NameMatcher
 {

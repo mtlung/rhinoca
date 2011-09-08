@@ -381,7 +381,69 @@ void ElementStyle::setTransform(const char* transformStr)
 		ElementStyle* style;
 		const char* nameBegin, *nameEnd;
 		int valueIdx;
-		float values[3];
+		float values[6];
+
+		void applyTransform()
+		{
+			Mat44 mat;
+			if(strncmp(nameBegin, "translate", nameEnd - nameBegin) == 0)
+			{
+				if(valueIdx == 1) values[1] = 0;	// If the second param is not provided, assign zero
+				mat = Mat44::makeTranslation(values);
+			}
+			else if(strncmp(nameBegin, "translateX", nameEnd - nameBegin) == 0)
+			{
+				const float val[3] = { values[0], 0, 0 };
+				mat = Mat44::makeTranslation(val);
+			}
+			else if(strncmp(nameBegin, "translateY", nameEnd - nameBegin) == 0)
+			{
+				const float val[3] = { 0, values[0], 0 };
+				mat = Mat44::makeTranslation(val);
+			}
+			else if(strncmp(nameBegin, "scale", nameEnd - nameBegin) == 0)
+			{
+				if(valueIdx == 1) values[1] = values[0];	// If the second param is not provided, use the first one
+				const float val[3] = { values[0], values[1], 1 };
+				mat = Mat44::makeScale(val);
+			}
+			else if(strncmp(nameBegin, "scaleX", nameEnd - nameBegin) == 0)
+			{
+				const float val[3] = { values[0], 1, 1 };
+				mat = Mat44::makeScale(val);
+			}
+			else if(strncmp(nameBegin, "scaleY", nameEnd - nameBegin) == 0)
+			{
+				const float val[3] = { 1, values[0], 1 };
+				mat = Mat44::makeScale(val);
+			}
+			else if(strncmp(nameBegin, "rotate", nameEnd - nameBegin) == 0)
+			{
+				ASSERT(false && "Not implemented");
+			}
+			else if(strncmp(nameBegin, "skew", nameEnd - nameBegin) == 0)
+			{
+				ASSERT(false && "Not implemented");
+			}
+			else if(strncmp(nameBegin, "skewX", nameEnd - nameBegin) == 0)
+			{
+				ASSERT(false && "Not implemented");
+			}
+			else if(strncmp(nameBegin, "skewY", nameEnd - nameBegin) == 0)
+			{
+				ASSERT(false && "Not implemented");
+			}
+			else if(strncmp(nameBegin, "matrix", nameEnd - nameBegin) == 0)
+			{
+				ASSERT(false && "Not implemented");
+			}
+			else
+			{
+				ASSERT(false && "invalid transform function");
+			}
+
+			style->_localTransformation = style->_localTransformation * mat;
+		}
 
 		static void callback(ParserResult* result, Parser* parser)
 		{
@@ -407,9 +469,9 @@ void ElementStyle::setTransform(const char* transformStr)
 					strncmp(result->begin, "deg", result->end - result->begin) == 0
 				)
 					state->values[state->valueIdx - 1] *= 3.1415926535897932f / 180;
-
-				if(state->valueIdx == 2 && strncmp(state->nameBegin, "translate", state->nameEnd - state->nameBegin) == 0)
-					style->_localTransformation = style->_localTransformation * Mat44::makeTranslation(state->values);
+			}
+			else if(strcmp(result->type, "end") == 0) {
+				state->applyTransform();
 			}
 			else if(strcmp(result->type, "none") == 0) {
 				style->setIdentity();
@@ -421,7 +483,7 @@ void ElementStyle::setTransform(const char* transformStr)
 
 	ParserState state = { this, NULL, NULL, 0, 0.0f, 0.0f };
 	Parser parser(transformStr, transformStr + strlen(transformStr), ParserState::callback, &state);
-	Parsing::transform(&parser).once();
+	Parsing::transform(&parser).any();
 }
 
 void ElementStyle::setOrigin(const Vec3& v)

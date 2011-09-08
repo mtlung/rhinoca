@@ -377,6 +377,11 @@ bool NumberMatcher::match(Parser* p)
 	return bk < p->begin;
 }
 
+bool SignedNumberMatcher::match(Parser* p)
+{
+	return unaryOperator(p).atMostOnce() && skip(p).any() && number(p).once();
+}
+
 // TODO: match nonascii and escape
 bool NameMatcher::match(Parser* p)
 {
@@ -504,8 +509,9 @@ bool SkippableMatcher::match(Parser* p)
 bool TransformMatcher::match(Parser* p)
 {
 	ParserResult transformNone = { "none", NULL, NULL };
+	ParserResult transformEnd = { "end", NULL, NULL };
 
-	if(skip(p).any() && string(p, "none").once(&transformNone))
+	if(skip(p).any() && string(p, "none").once(&transformNone) && empty(p).once(&transformEnd))
 		return true;
 
 	ParserResult transformName = { "name", NULL, NULL };
@@ -522,7 +528,7 @@ bool TransformMatcher::match(Parser* p)
 		return false;
 
 	while(
-		number(p).once(&transformValue) && 
+		signedNumber(p).once(&transformValue) && 
 		skip(p).any() &&
 		(
 			string(p, "px").once(&transformUnit) ||
@@ -538,7 +544,8 @@ bool TransformMatcher::match(Parser* p)
 	return
 		skip(p).any() &&
 		character(p, ')').once() &&
-		skip(p).any();
+		skip(p).any() &&
+		empty(p).once(&transformEnd);
 }
 
 }	// namespace Parsing

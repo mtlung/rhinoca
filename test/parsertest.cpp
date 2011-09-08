@@ -165,17 +165,17 @@ TEST_FIXTURE(CSSTransformParserTest, none)
 
 	str.clear();
 	CHECK(transform(&parser).any());
-	CHECK_EQUAL("none:none;", str);
+	CHECK_EQUAL("none:none;end:;", str);
 }
 
 TEST_FIXTURE(CSSTransformParserTest, base)
 {
-	char data[] = " skewx ( 10 deg ) translatex ( 10 ) translatey ( 150 px ) ; ";
+	char data[] = " skewx ( 10 deg ) translatex ( -10 ) translatey ( 150 px ) ; ";
 	Parser parser(data, data + sizeof(data), parserCallback, &str);
 
 	str.clear();
 	CHECK(transform(&parser).any());
-	CHECK_EQUAL("name:skewx;value:10;unit:deg;name:translatex;value:10;unit:;name:translatey;value:150;unit:px;", str);
+	CHECK_EQUAL("name:skewx;value:10;unit:deg;end:;name:translatex;value:-10;unit:;end:;name:translatey;value:150;unit:px;end:;", str);
 }
 
 TEST_FIXTURE(CSSTransformParserTest, translate)
@@ -185,5 +185,5 @@ TEST_FIXTURE(CSSTransformParserTest, translate)
 
 	str.clear();
 	CHECK(transform(&parser).any());
-	CHECK_EQUAL("name:translate;value:10;unit:;value:20;unit:px;", str);
+	CHECK_EQUAL("name:translate;value:10;unit:;value:20;unit:px;end:;", str);
 }
