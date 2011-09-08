@@ -177,6 +177,7 @@ static JSPropertySpec properties[] = {
 	{"width", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetWidth},
 	{"height", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetHeight},
 	{"transform", 0, JsBindable::jsPropFlags, styleGetTransform, styleSetTransform},
+	{"Transform", 0, JsBindable::jsPropFlags, styleGetTransform, styleSetTransform},
 	{"-moz-transform", 0, JsBindable::jsPropFlags, styleGetTransform, styleSetTransform},
 	{"backgroundImage", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetBG},
 	{"backgroundColor", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetBGColor},
@@ -216,14 +217,15 @@ void ElementStyle::updateTransformation()
 	_localToWorld = localTransformation();
 
 	// See if any parent node contains transform
-	ASSERT(dynamic_cast<Element*>(element->parentNode) && "An element's parent should also be an element");
-	Element* parent = static_cast<Element*>(element->parentNode);
+	Node* parent = static_cast<Node*>(element->parentNode);
 	while(parent) {
-		if(ElementStyle* s = parent->_style) {
+		Element* ele = dynamic_cast<Element*>(parent);
+
+		if(ele) if(ElementStyle* s = ele->_style) {
 			s->_localToWorld.mul(localTransformation(), _localToWorld);
 			break;
 		}
-		parent = dynamic_cast<Element*>(parent->parentNode);
+		parent = static_cast<Node*>(parent->parentNode);
 	}
 }
 
