@@ -506,6 +506,28 @@ bool SkippableMatcher::match(Parser* p)
 	return whiteSpace(p).once() || comment(p).once();
 }
 
+bool BackgroundPositionMatcher::match(Parser* p)
+{
+	ParserResult bgValue = { "value", NULL, NULL };
+	ParserResult bgUnit = { "unit", NULL, NULL };
+	ParserResult bgEnd = { "end", NULL, NULL };
+
+	return
+		skip(p).any() &&
+		signedNumber(p).once(&bgValue) && skip(p).any() &&
+		(
+			string(p, "px").once(&bgUnit) ||
+			empty(p).once(&bgUnit)
+		) && skip(p).any() &&
+		character(p, ',').once() && skip(p).any() &&
+		signedNumber(p).once(&bgValue) && skip(p).any() &&
+		(
+			string(p, "px").once(&bgUnit) ||
+			empty(p).once(&bgUnit)
+		) &&
+		empty(p).once(&bgEnd);
+}
+
 bool TransformMatcher::match(Parser* p)
 {
 	ParserResult transformNone = { "none", NULL, NULL };

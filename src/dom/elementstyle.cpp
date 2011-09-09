@@ -470,38 +470,40 @@ void ElementStyle::setTransform(const char* transformStr)
 			ParserState* state = reinterpret_cast<ParserState*>(parser->userdata);
 			ElementStyle* style = state->style;
 
-			if(strcmp(result->type, "name") == 0) {
+			const StringHash hash(result->type, 0);
+
+			if(hash == StringHash("name")) {
 				state->nameBegin = result->begin;
 				state->nameEnd = result->end;
 				state->valueIdx = 0;
 				memset(state->values, 0, sizeof(state->values));
 			}
-			else if(strcmp(result->type, "value") == 0) {
+			else if(hash == StringHash("value")) {
 				char bk = *result->end;
 				*const_cast<char*>(result->end) = '\0';
 				sscanf(result->begin, "%f", &state->values[state->valueIdx]);
 				*const_cast<char*>(result->end) = bk;
 				++state->valueIdx;
 			}
-			else if(strcmp(result->type, "unit") == 0) {
+			else if(hash == StringHash("unit")) {
 				// Convert deg to rad
 				if(result->end - result->begin > 0 && state->valueIdx == 1 &&
 					strncmp(result->begin, "deg", result->end - result->begin) == 0
 				)
 					state->values[state->valueIdx - 1] *= 3.1415926535897932f / 180;
 			}
-			else if(strcmp(result->type, "end") == 0) {
+			else if(hash == StringHash("end")) {
 				state->applyTransform();
 			}
-			else if(strcmp(result->type, "none") == 0) {
+			else if(hash == StringHash("none")) {
 				style->setIdentity();
 			}
 			else
 				ASSERT(false);
 		}
-	};	// Local
+	};	// ParserState
 
-	ParserState state = { this, NULL, NULL, 0, 0.0f, 0.0f };
+	ParserState state = { this, NULL, NULL, 0, {0} };
 	Parser parser(transformStr, transformStr + strlen(transformStr), ParserState::callback, &state);
 	Parsing::transform(&parser).any();
 }
@@ -524,8 +526,40 @@ Mat44 ElementStyle::worldTransformation() const
 
 bool ElementStyle::setBackgroundPosition(const char* cssBackgroundPosition)
 {
-	// For sscanf formatting: http://linux.die.net/man/3/scanf
-	return sscanf(cssBackgroundPosition, "%f%*[ ,\n\r\t]%f", &backgroundPositionX, &backgroundPositionY) == 2;
+	struct ParserState
+	{
+		ElementStyle* style;
+		int valueIdx;
+		float values[2];
+
+		static void callback(ParserResult* result, Parser* parser)
+		{
+			ParserState* state = reinterpret_cast<ParserState*>(parser->userdata);
+			ElementStyle* style = state->style;
+
+			const StringHash hash(result->type, 0);
+
+			if(hash == StringHash("value")) {
+				char bk = *result->end;
+				*const_cast<char*>(result->end) = '\0';
+				sscanf(result->begin, "%f", &state->values[state->valueIdx]);
+				*const_cast<char*>(result->end) = bk;
+				++state->valueIdx;
+			}
+			else if(hash == StringHash("unit")) {
+			}
+			else if(hash == StringHash("end")) {
+				style->backgroundPositionX = state->values[0];
+				style->backgroundPositionY = state->values[1];
+			}
+			else
+				ASSERT(false);
+		}
+	};	// ParserState
+
+	ParserState state = { this, 0, { 0.0f } };
+	Parser parser(cssBackgroundPosition, cssBackgroundPosition + strlen(cssBackgroundPosition), ParserState::callback, &state);
+	return Parsing::backgroundPosition(&parser).once();
 }
 
 bool ElementStyle::setBackgroundImage(const char* cssUrl)

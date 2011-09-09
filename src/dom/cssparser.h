@@ -420,6 +420,19 @@ inline Matcher<SkippableMatcher> skip(Parser* parser) {
 	return ret;
 }
 
+/// With callback to extract information in a CSS background-position
+/// 'none' | <transform-function> [ <transform-function> ]* 
+struct BackgroundPositionMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<BackgroundPositionMatcher> backgroundPosition(Parser* parser) {
+	Matcher<BackgroundPositionMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// With callback to extract information in a CSS transform string
 /// 'none' | <transform-function> [ <transform-function> ]* 
 struct TransformMatcher
 {

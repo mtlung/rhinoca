@@ -140,13 +140,37 @@ TEST_FIXTURE(CSSSelectorParserTest, group)
 	}
 }
 
+class CSSBackgroundPositionParserTest
+{
+public:
+	static void parserCallback(ParserResult* result, Parser* parser)
+	{
+		std::string& str = *reinterpret_cast<std::string*>(parser->userdata);
+		str += result->type;
+
+		str += ":";
+		str.append(result->begin, result->end);
+		str += ";";
+	}
+
+	std::string str;
+};
+
+TEST_FIXTURE(CSSBackgroundPositionParserTest, basic)
+{
+	char data[] = " -10px, 20 ; ";
+	Parser parser(data, data + sizeof(data), parserCallback, &str);
+
+	str.clear();
+	CHECK(backgroundPosition(&parser).once());
+	CHECK_EQUAL("value:-10;unit:px;value:20;unit:;end:;", str);
+}
+
 class CSSTransformParserTest
 {
 public:
 	static void parserCallback(ParserResult* result, Parser* parser)
 	{
-		StringLowerCaseHash typeHash(result->type, 0);
-
 		std::string& str = *reinterpret_cast<std::string*>(parser->userdata);
 		str += result->type;
 
@@ -168,7 +192,7 @@ TEST_FIXTURE(CSSTransformParserTest, none)
 	CHECK_EQUAL("none:none;end:;", str);
 }
 
-TEST_FIXTURE(CSSTransformParserTest, base)
+TEST_FIXTURE(CSSTransformParserTest, basic)
 {
 	char data[] = " skewx ( 10 deg ) translatex ( -10 ) translatey ( 150 px ) ; ";
 	Parser parser(data, data + sizeof(data), parserCallback, &str);
