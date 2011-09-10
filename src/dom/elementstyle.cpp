@@ -134,6 +134,16 @@ static JSBool styleSetTransform(JSContext* cx, JSObject* obj, jsid id, JSBool st
 	return JS_TRUE;
 }
 
+static JSBool styleSetTransformOrigin(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
+{
+	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
+
+	JsString jss(cx, *vp);
+	self->setTransformOrigin(jss.c_str());
+
+	return JS_TRUE;
+}
+
 static JSBool styleSetBG(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsval* vp)
 {
 	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
@@ -178,7 +188,8 @@ static JSPropertySpec properties[] = {
 	{"height", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetHeight},
 	{"transform", 0, JsBindable::jsPropFlags, styleGetTransform, styleSetTransform},
 	{"Transform", 0, JsBindable::jsPropFlags, styleGetTransform, styleSetTransform},
-	{"-moz-transform", 0, JsBindable::jsPropFlags, styleGetTransform, styleSetTransform},
+	{"transformOrigin", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetTransformOrigin},
+	{"TransformOrigin", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetTransformOrigin},
 	{"backgroundImage", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetBG},
 	{"backgroundColor", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetBGColor},
 	{"backgroundPosition", 0, JsBindable::jsPropFlags, JS_PropertyStub, styleSetBGPos},
@@ -198,12 +209,13 @@ void ElementStyle::bind(JSContext* cx, JSObject* parent)
 ElementStyle::ElementStyle(Element* ele)
 	: element(ele)
 	, opacity(1)
-	, _origin(0.5f, 0.5f, 0)
+	, _origin(50, 50, 0)
 	, _localToWorld(Mat44::identity)
 	, _localTransformation(Mat44::identity)
 	, backgroundPositionX(0), backgroundPositionY(0)
 	, backgroundColor(0, 0, 0, 0)
 {
+	memset(_originUsePercentage, true, sizeof(_originUsePercentage));
 }
 
 ElementStyle::~ElementStyle()
@@ -240,20 +252,22 @@ void ElementStyle::render()
 
 	updateTransformation();
 
-	context->setTransform(_localToWorld.data);
+	context->setIdentity();
+	context->translate((float)left(), (float)top());
+	context->transform(_localToWorld.data);
 
 	context->setGlobalAlpha(opacity);
 
 	// Render the background color
 	if(backgroundColor.a > 0) {
 		context->setFillColor(&backgroundColor.r);
-		context->fillRect((float)left(), (float)top(), (float)width(), (float)height());
+		context->fillRect(0, 0, (float)width(), (float)height());
 	}
 
 	// Render the style's background image if any
 	if(backgroundImage) {
-		float dx = (float)left();
-		float dy = (float)top();
+		float dx = 0;
+		float dy = 0;
 		float dw = (float)width();
 		float dh = (float)height();
 
@@ -269,7 +283,6 @@ void ElementStyle::render()
 		);
 	}
 }
-
 
 void ElementStyle::setStyleString(const char* begin, const char* end)
 {
@@ -346,6 +359,12 @@ void ElementStyle::setStyleAttribute(const char* name, const char* value)
 	}
 	else if(hash == StringHash("-moz-transform")) {
 		setTransform(value);
+	}
+	else if(hash == StringHash("transform-origin")) {
+		setTransformOrigin(value);
+	}
+	else if(hash == StringHash("-moz-transform-origin")) {
+		setTransformOrigin(value);
 	}
 	else if(hash == StringHash("background-image")) {
 		setBackgroundImage(value);
@@ -455,12 +474,12 @@ void ElementStyle::setTransform(const char* transformStr)
 			}
 
 			// Apply the transform with origin adjustment
-			const float origin[3] = { style->_origin.x * style->width(), style->_origin.y * style->height(), 0 };
-			const float negOrigin[3] = { -origin[0], -origin[1], 0 };
+			const Vec3 origin = style->origin();
+			const float negOrigin[3] = { -origin.x, -origin.y, 0 };
 
 			style->_localTransformation =
 				style->_localTransformation *
-				Mat44::makeTranslation(origin) *
+				Mat44::makeTranslation(origin.data) *
 				mat *
 				Mat44::makeTranslation(negOrigin);
 		}
@@ -508,9 +527,72 @@ void ElementStyle::setTransform(const char* transformStr)
 	Parsing::transform(&parser).any();
 }
 
-void ElementStyle::setOrigin(const Vec3& v)
+void ElementStyle::setTransformOrigin(const char* transformOriginStr)
 {
-	_origin = v;
+	struct ParserState
+	{
+		ElementStyle* style;
+		int valueIdx;
+		float values[2];
+		bool usePercentage[2];
+
+		static void callback(ParserResult* result, Parser* parser)
+		{
+			ParserState* state = reinterpret_cast<ParserState*>(parser->userdata);
+			ElementStyle* style = state->style;
+
+			const StringHash hash(result->type, 0);
+
+			if(hash == StringHash("value")) {
+				char bk = *result->end;
+				*const_cast<char*>(result->end) = '\0';
+				sscanf(result->begin, "%f", &state->values[state->valueIdx]);
+				*const_cast<char*>(result->end) = bk;
+				++state->valueIdx;
+			}
+			else if(hash == StringHash("unit")) {
+				if(strncmp(result->begin, "px", result->end - result->begin) == 0)
+					state->usePercentage[state->valueIdx-1] = false;
+			}
+			else if(hash == StringHash("named")) {
+				const StringHash hash2(result->begin, result->end - result->begin);
+
+				if(hash2 == StringHash("center"))
+					state->values[state->valueIdx] = 50;
+				if(hash2 == StringHash("left"))
+					state->values[0] = 0;
+				if(hash2 == StringHash("right"))
+					state->values[0] = 100;
+				if(hash2 == StringHash("top"))
+					state->values[1] = 0;
+				if(hash2 == StringHash("bottom"))
+					state->values[1] = 100;
+
+				++state->valueIdx;
+			}
+			else if(hash == StringHash("end")) {
+				style->_origin.x = state->values[0];
+				style->_origin.y = state->values[1];
+				style->_originUsePercentage[0] = state->usePercentage[0];
+				style->_originUsePercentage[1] = state->usePercentage[1];
+			}
+			else
+				ASSERT(false);
+		}
+	};	// ParserState
+
+	ParserState state = { this, NULL, NULL, {0}, { true, true } };
+	Parser parser(transformOriginStr, transformOriginStr + strlen(transformOriginStr), ParserState::callback, &state);
+	Parsing::transformOrigin(&parser).once();
+}
+
+Vec3 ElementStyle::origin() const
+{
+	return Vec3(
+		_originUsePercentage[0] ? _origin.x * 0.01f * width() : _origin.x,
+		_originUsePercentage[1] ? _origin.y * 0.01f * height() : _origin.y,
+		0
+	);
 }
 
 const Mat44& ElementStyle::localTransformation() const

@@ -64,10 +64,14 @@ public:
 	/// Changes the transformation matrix to apply the matrix given by the arguments as described below.
 	void transform(float m11, float m12, float m21, float m22, float dx, float dy);
 
+	void transform(float mat44[16]);
+
 	/// Changes the transformation matrix to the matrix given by the arguments as described below.
 	void setTransform(float m11, float m12, float m21, float m22, float dx, float dy);
 
 	void setTransform(float mat44[16]);
+
+	void setIdentity();
 
 // Paths
 	/// Resets the current path.

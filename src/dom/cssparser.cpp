@@ -508,41 +508,41 @@ bool SkippableMatcher::match(Parser* p)
 
 bool BackgroundPositionMatcher::match(Parser* p)
 {
-	ParserResult bgValue = { "value", NULL, NULL };
-	ParserResult bgUnit = { "unit", NULL, NULL };
-	ParserResult bgEnd = { "end", NULL, NULL };
+	ParserResult value = { "value", NULL, NULL };
+	ParserResult unit = { "unit", NULL, NULL };
+	ParserResult end = { "end", NULL, NULL };
 
 	return
 		skip(p).any() &&
-		signedNumber(p).once(&bgValue) && skip(p).any() &&
+		signedNumber(p).once(&value) && skip(p).any() &&
 		(
-			string(p, "px").once(&bgUnit) ||
-			empty(p).once(&bgUnit)
+			string(p, "px").once(&unit) ||
+			empty(p).once(&unit)
 		) && skip(p).any() &&
-		character(p, ',').once() && skip(p).any() &&
-		signedNumber(p).once(&bgValue) && skip(p).any() &&
+		character(p, ',').atMostOnce() && skip(p).any() &&
+		signedNumber(p).once(&value) && skip(p).any() &&
 		(
-			string(p, "px").once(&bgUnit) ||
-			empty(p).once(&bgUnit)
+			string(p, "px").once(&unit) ||
+			empty(p).once(&unit)
 		) &&
-		empty(p).once(&bgEnd);
+		empty(p).once(&end);
 }
 
 bool TransformMatcher::match(Parser* p)
 {
-	ParserResult transformNone = { "none", NULL, NULL };
-	ParserResult transformEnd = { "end", NULL, NULL };
+	ParserResult none = { "none", NULL, NULL };
+	ParserResult end = { "end", NULL, NULL };
 
-	if(skip(p).any() && string(p, "none").once(&transformNone) && empty(p).once(&transformEnd))
+	if(skip(p).any() && string(p, "none").once(&none) && empty(p).once(&end))
 		return true;
 
-	ParserResult transformName = { "name", NULL, NULL };
-	ParserResult transformValue = { "value", NULL, NULL };
-	ParserResult transformUnit = { "unit", NULL, NULL };
+	ParserResult name = { "name", NULL, NULL };
+	ParserResult value = { "value", NULL, NULL };
+	ParserResult unit = { "unit", NULL, NULL };
 
 	if(!
 		(skip(p).any() &&
-		ident(p).once(&transformName) &&
+		ident(p).once(&name) &&
 		skip(p).any() &&
 		character(p, '(').once() &&
 		skip(p).any())
@@ -550,14 +550,14 @@ bool TransformMatcher::match(Parser* p)
 		return false;
 
 	while(
-		signedNumber(p).once(&transformValue) && 
+		signedNumber(p).once(&value) && 
 		skip(p).any() &&
 		(
-			string(p, "px").once(&transformUnit) ||
-			string(p, "deg").once(&transformUnit) ||
-			string(p, "rad").once(&transformUnit) ||
-			string(p, "grad").once(&transformUnit) ||
-			empty(p).once(&transformUnit)
+			string(p, "px").once(&unit) ||
+			string(p, "deg").once(&unit) ||
+			string(p, "rad").once(&unit) ||
+			string(p, "grad").once(&unit) ||
+			empty(p).once(&unit)
 		) &&
 		character(p, ',').atMostOnce() &&
 		skip(p).any()
@@ -567,7 +567,47 @@ bool TransformMatcher::match(Parser* p)
 		skip(p).any() &&
 		character(p, ')').once() &&
 		skip(p).any() &&
-		empty(p).once(&transformEnd);
+		empty(p).once(&end);
+}
+
+bool TransformOriginMatcher::match(Parser* p)
+{
+	ParserResult named = { "named", NULL, NULL };
+	ParserResult value = { "value", NULL, NULL };
+	ParserResult unit = { "unit", NULL, NULL };
+	ParserResult end = { "end", NULL, NULL };
+
+	return
+		skip(p).any() &&
+		((
+			string(p, "left").once(&named) ||
+			string(p, "center").once(&named) ||
+			string(p, "right").once(&named)
+		) ||
+		(
+			signedNumber(p).once(&value) && skip(p).any() &&
+			(
+				string(p, "%").once(&unit) ||
+				string(p, "px").once(&unit) ||
+				empty(p).once(&unit)
+			)
+		))  && skip(p).any() &&
+
+		skip(p).any() &&
+		((
+			string(p, "top").once(&named) ||
+			string(p, "center").once(&named) ||
+			string(p, "bottom").once(&named)
+		) ||
+		(
+			signedNumber(p).once(&value) && skip(p).any() &&
+			(
+				string(p, "%").once(&unit) ||
+				string(p, "px").once(&unit) ||
+				empty(p).once(&unit)
+			)
+		))  && skip(p).any() &&
+		empty(p).once(&end);
 }
 
 }	// namespace Parsing

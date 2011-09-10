@@ -67,15 +67,17 @@ public:
 // Transform
 	// http://www.w3.org/TR/css3-2d-transforms/
 	// TODO: May move these transform into a transform component
-	const Vec3& origin() const { return _origin; }
+	Vec3 origin() const;			/// Always in unit of pixel
 	const Mat44& localTransformation() const;
 	Mat44 worldTransformation() const;
 
 	void setIdentity();
 	void setTransform(const char* transformStr);
-	void setOrigin(const Vec3& v);
+	void setTransformOrigin(const char* transformOriginStr);
 
-	Vec3 _origin;					/// In unit of percentage of the width and height
+	Vec3 _origin;					/// Transformation orgiin, the unit can be pixel or percentage
+	bool _originUsePercentage[4];	/// Indicate if _origin is in unit of percentage
+
 	mutable Mat44 _localToWorld;
 	mutable Mat44 _localTransformation;
 

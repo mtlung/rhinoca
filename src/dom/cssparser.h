@@ -444,6 +444,17 @@ inline Matcher<TransformMatcher> transform(Parser* parser) {
 	return ret;
 }
 
+/// With callback to extract information in a CSS transform-origin string
+struct TransformOriginMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<TransformOriginMatcher> transformOrigin(Parser* parser) {
+	Matcher<TransformOriginMatcher> ret = { {}, parser };
+	return ret;
+}
+
 }	// namespace Parsing
 
 #endif	// __DOM_CSSPARSER_H__

@@ -1072,6 +1072,16 @@ void CanvasRenderingContext2D::transform(float m11, float m12, float m21, float 
 	currentState.transform *= m;
 }
 
+void CanvasRenderingContext2D::transform(float mat44[16])
+{
+	currentState.transform *= *reinterpret_cast<Mat44*>(mat44);
+}
+
+void CanvasRenderingContext2D::setIdentity()
+{
+	currentState.transform = Mat44::identity;
+}
+
 void CanvasRenderingContext2D::setTransform(float m11, float m12, float m21, float m22, float dx, float dy)
 {
 	Mat44 m = Mat44::identity;

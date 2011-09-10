@@ -211,3 +211,49 @@ TEST_FIXTURE(CSSTransformParserTest, translate)
 	CHECK(transform(&parser).any());
 	CHECK_EQUAL("name:translate;value:10;unit:;value:20;unit:px;end:;", str);
 }
+
+class CSSTransformOriginParserTest
+{
+public:
+	static void parserCallback(ParserResult* result, Parser* parser)
+	{
+		std::string& str = *reinterpret_cast<std::string*>(parser->userdata);
+		str += result->type;
+
+		str += ":";
+		str.append(result->begin, result->end);
+		str += ";";
+	}
+
+	std::string str;
+};
+
+TEST_FIXTURE(CSSTransformOriginParserTest, named)
+{
+	char data[] = " left top ; ";
+	Parser parser(data, data + sizeof(data), parserCallback, &str);
+
+	str.clear();
+	CHECK(transformOrigin(&parser).any());
+	CHECK_EQUAL("named:left;named:top;end:;", str);
+}
+
+TEST_FIXTURE(CSSTransformOriginParserTest, pencetage)
+{
+	char data[] = " 50 % 50 % ; ";
+	Parser parser(data, data + sizeof(data), parserCallback, &str);
+
+	str.clear();
+	CHECK(transformOrigin(&parser).any());
+	CHECK_EQUAL("value:50;unit:%;value:50;unit:%;end:;", str);
+}
+
+TEST_FIXTURE(CSSTransformOriginParserTest, px)
+{
+	char data[] = " -10 px -20 px ; ";
+	Parser parser(data, data + sizeof(data), parserCallback, &str);
+
+	str.clear();
+	CHECK(transformOrigin(&parser).any());
+	CHECK_EQUAL("value:-10;unit:px;value:-20;unit:px;end:;", str);
+}
