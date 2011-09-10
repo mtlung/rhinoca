@@ -149,7 +149,7 @@ void print(JSContext* cx, const char* format, ...)
 	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
 	va_list vl;
 	va_start(vl, format);
-	print(rh, format, vl);
+	vprint(rh, format, vl);
 	va_end(vl);
 }
 
