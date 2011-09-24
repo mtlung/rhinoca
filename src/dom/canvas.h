@@ -25,7 +25,7 @@ public:
 
 	void createContext(const char* ctxName);
 
-	override void render();
+	override void render(CanvasRenderingContext2D* virtualCanvas);
 
 	static void registerClass(JSContext* cx, JSObject* parent);
 	static Element* factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser);

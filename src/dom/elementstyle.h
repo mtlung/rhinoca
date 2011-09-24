@@ -10,6 +10,7 @@
 namespace Dom {
 
 class Element;
+class CanvasRenderingContext2D;
 
 class ElementStyle : public JsBindable
 {
@@ -22,7 +23,7 @@ public:
 	/// For this function to work, you must call this function for an Element's parent first
 	void updateTransformation();
 
-	void render();
+	void render(CanvasRenderingContext2D* virtualCanvas);
 
 	override void bind(JSContext* cx, JSObject* parent);
 

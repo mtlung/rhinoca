@@ -162,9 +162,9 @@ void HTMLCanvasElement::createContext(const char* ctxName)
 	}
 }
 
-void HTMLCanvasElement::render()
+void HTMLCanvasElement::render(CanvasRenderingContext2D* ctx)
 {
-	Element::render();
+	Element::render(ctx);
 
 	Window* window = ownerDocument()->window();
 	HTMLCanvasElement* vc = window->virtualCanvas;
@@ -176,8 +176,6 @@ void HTMLCanvasElement::render()
 		vc->clearEveryFrame = false;
 		return;
 	}
-
-	CanvasRenderingContext2D* ctx = dynamic_cast<CanvasRenderingContext2D*>(vc->context);
 
 	ctx->drawImage(texture(), Render::Driver::SamplerState::MIN_MAG_LINEAR, 0, 0);
 }

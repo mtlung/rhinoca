@@ -543,16 +543,15 @@ void Window::render()
 		virtualCanvas->setHeight(height());
 
 	// Clear the virtual canvas first
-	if(virtualCanvas->clearEveryFrame) {
-		CanvasRenderingContext2D* ctx = dynamic_cast<CanvasRenderingContext2D*>(virtualCanvas->context);
+	CanvasRenderingContext2D* ctx = dynamic_cast<CanvasRenderingContext2D*>(virtualCanvas->context);
+	if(virtualCanvas->clearEveryFrame)
 		ctx->clearRect(0, 0, (float)width(), (float)height());
-	}
 
 	// If no other canvas which use  "frontBufferOnly" clearEveryFrame will still be true on next frame
 	virtualCanvas->clearEveryFrame = true;
 
 	for(NodeIterator i(document); !i.ended(); i.next()) {
-		i->render();
+		i->render(ctx);
 	}
 }
 

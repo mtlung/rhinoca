@@ -241,27 +241,20 @@ void ElementStyle::updateTransformation()
 	}
 }
 
-void ElementStyle::render()
+void ElementStyle::render(CanvasRenderingContext2D* ctx)
 {
-	// Early out optimization
-	if(backgroundColor.a == 0 && !backgroundImage)
-		return;
-
-	HTMLCanvasElement* canvas = element->ownerDocument()->window()->virtualCanvas;
-	CanvasRenderingContext2D* context = dynamic_cast<CanvasRenderingContext2D*>(canvas->context);
-
 	updateTransformation();
 
-	context->setIdentity();
-	context->translate((float)left(), (float)top());
-	context->transform(_localToWorld.data);
+	ctx->setIdentity();
+	ctx->translate((float)left(), (float)top());
+	ctx->transform(_localToWorld.data);
 
-	context->setGlobalAlpha(opacity);
+	ctx->setGlobalAlpha(opacity);
 
 	// Render the background color
 	if(backgroundColor.a > 0) {
-		context->setFillColor(&backgroundColor.r);
-		context->fillRect(0, 0, (float)width(), (float)height());
+		ctx->setFillColor(&backgroundColor.r);
+		ctx->fillRect(0, 0, (float)width(), (float)height());
 	}
 
 	// Render the style's background image if any
@@ -276,7 +269,7 @@ void ElementStyle::render()
 		float sw = (float)_min(width(), backgroundImage->virtualWidth);
 		float sh = (float)_min(height(), backgroundImage->virtualHeight);
 
-		context->drawImage(
+		ctx->drawImage(
 			backgroundImage.get(), Render::Driver::SamplerState::MIN_MAG_LINEAR,
 			sx, sy, sw, sh,
 			dx, dy, dw, dh

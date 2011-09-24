@@ -7,7 +7,7 @@
  * camelCase for public attributes
  */
 
-//(function(){
+(function(){
 
 var sjs = {
 	Sprite: Sprite,
@@ -467,8 +467,8 @@ function Layer(name) {
 		canvas.width = sjs.w;
 		canvas.style.position = 'absolute';
 		canvas.style.zIndex = String(layer_zindex);
-//		canvas.style.top = '0px';
-//		canvas.style.left = '0px';
+		canvas.style.top = '0px';
+		canvas.style.left = '0px';
 		dom.appendChild(canvas);
 		this.dom = canvas;
 		this.ctx = canvas.getContext('2d');
@@ -512,4 +512,4 @@ function initDom() {
 window.addEventListener("load", init, false);
 window.sjs = sjs;
 
-//})();
+})();

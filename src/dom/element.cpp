@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "element.h"
 #include "elementstyle.h"
+#include "canvas2dcontext.h"
 #include "document.h"
 #include "nodelist.h"
 #include "../context.h"
@@ -220,10 +221,14 @@ void Element::fixRelativePath(const char* uri, const char* docUri, Path& path)
 	}
 }
 
-void Element::render()
+void Element::render(CanvasRenderingContext2D* ctx)
 {
 	if(_style)
-		_style->render();
+		_style->render(ctx);
+	else {
+		ctx->setIdentity();
+		ctx->setGlobalAlpha(1);
+	}
 }
 
 ElementStyle* Element::style()
@@ -250,14 +255,14 @@ float Element::top() const
 {
 	if(_bottom == _invalidPos)
 		return _top;
-	return (float)ownerDocument()->window()->height() - _bottom - _height;
+	return (float)ownerDocument()->window()->height() - _bottom - height();
 }
 
 float Element::left() const
 {
 	if(_right == _invalidPos)
 		return _left;
-	return (float)ownerDocument()->window()->width() - _right - _width;
+	return (float)ownerDocument()->window()->width() - _right - width();
 }
 
 void Element::setLeft(float val)

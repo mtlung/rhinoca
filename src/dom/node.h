@@ -9,6 +9,7 @@ namespace Dom {
 
 class NodeList;
 class HTMLDocument;
+class CanvasRenderingContext2D;
 
 /// Reference: http://www.w3schools.com/dom/dom_node.asp
 /// Reference: https://developer.mozilla.org/en/Gecko_DOM_Reference
@@ -50,7 +51,7 @@ public:
 	virtual Node* cloneNode(bool recursive);
 
 	/// Render this node to the window
-	virtual void render() {}
+	virtual void render(CanvasRenderingContext2D* virtualCanvas) {}
 
 protected:
 	override JSObject* getJSObject() { return jsObject; }
