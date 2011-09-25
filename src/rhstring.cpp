@@ -248,7 +248,7 @@ char* replaceCharacterWithStr(const char* str, const char charArray[], const cha
 	unsigned orgLen = strlen(str);
 	unsigned charCount = strlen(charArray);
 
-	Vector<char> buf;
+	PreAllocVector<char, 128> buf;
 	buf.reserve(orgLen);
 
 	while(*str != '\0')

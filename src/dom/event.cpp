@@ -308,7 +308,7 @@ JSBool EventTarget::dispatchEvent(Event* ev, JSObject* self)
 {
 	// Build the event propagation list
 	// See http://docstore.mik.ua/orelly/webprog/dhtml/ch06_05.htm
-	Vector<EventTarget*> list(1, this);
+	PreAllocVector<EventTarget*, 64> list(1, this);
 
 	for(EventTarget* t = this->eventTargetTraverseUp(); t; t = t->eventTargetTraverseUp()) {
 		if(!t->_eventListeners.isEmpty())

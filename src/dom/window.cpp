@@ -387,7 +387,7 @@ void Window::dispatchEvent(Event* e)
 	ASSERT(e->jsObject);
 
 	// Get a list of traversed node first
-	Vector<EventTarget*> targets;
+	PreAllocVector<EventTarget*, 64> targets;
 
 	targets.push_back(this);
 	for(Dom::NodeIterator itr(document); !itr.ended(); itr.next())

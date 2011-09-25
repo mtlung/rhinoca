@@ -226,6 +226,10 @@
 			RelativePath="..\..\test\taskpooltest.cpp"
 			>
 		</File>
+		<File
+			RelativePath="..\..\test\vectortest.cpp"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

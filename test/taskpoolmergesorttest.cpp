@@ -149,7 +149,7 @@ TEST(TaskPoolMultiThreadMergeSortTest)
 	TaskPool taskPool;
 	taskPool.init(3);
 
-	Vector<int> data(testSize), scratch(testSize);;
+	Vector<int> data(testSize), scratch(testSize);
 	for(rhuint i=0; i<data.size(); ++i)
 		data[i] = rand() % data.size();
 
