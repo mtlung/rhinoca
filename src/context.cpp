@@ -188,7 +188,7 @@ static void appendFileToString(void* file, String& str)
 {
 	char buf[128];
 	rhuint64 readCount;
-	while((readCount = io_read(file, buf, sizeof(buf), 0)))
+	while((readCount = rhFileSystem.read(file, buf, sizeof(buf))))
 		str.append(buf, (size_t)readCount);
 }
 
@@ -209,10 +209,10 @@ bool Rhinoca::openDoucment(const char* uri)
 	String html;
 
 	{	// Reads the html file into memory
-		void* file = io_open(this, uri, 0);
+		void* file = rhFileSystem.openFile(this, uri);
 		if(!file) return false;
 		appendFileToString(file, html);
-		io_close(file, 0);
+		rhFileSystem.closeFile(file);
 	}
 
 	Dom::ElementFactory& factory = Dom::ElementFactory::singleton();

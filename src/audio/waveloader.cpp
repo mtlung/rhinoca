@@ -52,7 +52,7 @@ public:
 
 	~WaveLoader()
 	{
-		if(stream) io_close(stream, TaskPool::threadId());
+		if(stream) rhFileSystem.closeFile(stream);
 	}
 
 	void loadDataForRange(unsigned begin, unsigned end);
@@ -86,10 +86,9 @@ void WaveLoader::run(TaskPool* taskPool)
 
 void WaveLoader::loadHeader()
 {
-	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
-	if(!stream) stream = io_open(rh, buffer->uri(), tId);
+	if(!stream) stream = rhFileSystem.openFile(rh, buffer->uri());
 	if(!stream) {
 		print(rh, "WaveLoader: Fail to open file '%s'\n", buffer->uri().c_str());
 		goto Abort;
@@ -99,11 +98,11 @@ void WaveLoader::loadHeader()
 		char chunkId[5] = {0};
 		rhint32 chunkSize;
 
-		if(!io_ready(stream, sizeof(chunkId) + sizeof(chunkSize) + sizeof(WaveFormatExtensible), tId))
+		if(!rhFileSystem.readReady(stream, sizeof(chunkId) + sizeof(chunkSize) + sizeof(WaveFormatExtensible)))
 			return reSchedule();
 
-		if(	io_read(stream, chunkId, 4, tId) != 4 ||
-			io_read(stream, &chunkSize, sizeof(rhint32), tId) != sizeof(rhint32))
+		if(	rhFileSystem.read(stream, chunkId, 4) != 4 ||
+			rhFileSystem.read(stream, &chunkSize, sizeof(rhint32)) != sizeof(rhint32))
 		{
 			print(rh, "WaveLoader: End of file, fail to load header");
 			goto Abort;
@@ -112,11 +111,11 @@ void WaveLoader::loadHeader()
 		if(strcasecmp(chunkId, "RIFF") == 0)
 		{
 			char format[5] = {0};
-			VERIFY(io_read(stream, format, 4, tId) == 4);
+			VERIFY(rhFileSystem.read(stream, format, 4) == 4);
 		}
 		else if(strcasecmp(chunkId, "FMT ") == 0)
 		{
-			VERIFY(io_read(stream, &format, chunkSize, tId) == chunkSize);
+			VERIFY(rhFileSystem.read(stream, &format, chunkSize) == chunkSize);
 		}
 		else if(strcasecmp(chunkId, "DATA") == 0)
 		{
@@ -137,7 +136,7 @@ void WaveLoader::loadHeader()
 			break;
 		}
 		else
-			VERIFY(io_seek(stream, chunkSize, SEEK_CUR, tId));
+			VERIFY(rhFileSystem.seek(stream, chunkSize, SEEK_CUR));
 	}
 
 	buffer->scratch = this;
@@ -150,14 +149,13 @@ Abort:
 
 void WaveLoader::loadData()
 {
-	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 	void* bufferData = NULL;
 
 	if(buffer->state == Resource::Aborted) goto Abort;
 	if(!stream) goto Abort;
 
-	if(!io_ready(stream, dataChunkSize, tId))
+	if(!rhFileSystem.readReady(stream, dataChunkSize))
 		return reSchedule();
 
 	{	unsigned end = dataChunkSize / format.format.blockAlign;
@@ -166,7 +164,7 @@ void WaveLoader::loadData()
 
 		ASSERT(bytesToWrite == dataChunkSize);
 
-		if(io_read(stream, bufferData, dataChunkSize, tId) != dataChunkSize)
+		if(rhFileSystem.read(stream, bufferData, dataChunkSize) != dataChunkSize)
 		{
 			print(rh, "WaveLoader: End of file, only partial load of audio data");
 			goto Abort;

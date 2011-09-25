@@ -110,30 +110,37 @@ RHINOCA_API void rhinoca_update(Rhinoca* rh);
 RHINOCA_API void rhinoca_processEvent(Rhinoca* rh, RhinocaEvent ev);
 
 // IO functions
-typedef void* (*rhinoca_io_open)(Rhinoca* rh, const char* uri, int threadId);
-typedef bool (*rhinoca_io_ready)(void* file, rhuint64 size, int threadId);
-typedef rhuint64 (*rhinoca_io_read)(void* file, void* buffer, rhuint64 size, int threadId);
-typedef rhint64 (*rhinoca_io_size)(void* file, int threadId);		/// Returns -1 if the file size is unknown.
-typedef int (*rhinoca_io_seek)(void* file, rhuint64 offset, int origin, int threadId);		/// Returns 1 for success, 0 for fail, -1 not supported. Origin: SEEK_SET, SEEK_CUR, SEEK_END.
-typedef void (*rhinoca_io_close)(void* file, int threadId);
-RHINOCA_API void rhinoca_io_setcallback(rhinoca_io_open open, rhinoca_io_ready ready, rhinoca_io_read read, rhinoca_io_size, rhinoca_io_seek seek, rhinoca_io_close close);
-RHINOCA_API rhinoca_io_open rhinoca_get_io_open();
-RHINOCA_API rhinoca_io_ready rhinoca_get_io_ready();
-RHINOCA_API rhinoca_io_read rhinoca_get_io_read();
-RHINOCA_API rhinoca_io_size rhinoca_get_io_size();
-RHINOCA_API rhinoca_io_seek rhinoca_get_io_seek();
-RHINOCA_API rhinoca_io_close rhinoca_get_io_close();
-RHINOCA_API void rhinoca_set_io_open(rhinoca_io_open);
-RHINOCA_API void rhinoca_set_io_ready(rhinoca_io_ready);
-RHINOCA_API void rhinoca_set_io_read(rhinoca_io_read);
-RHINOCA_API void rhinoca_set_io_size(rhinoca_io_size);
-RHINOCA_API void rhinoca_set_io_seek(rhinoca_io_seek);
-RHINOCA_API void rhinoca_set_io_close(rhinoca_io_close);
+struct RhFileSystem
+{
+// File operations:
+	typedef void* (*OpenFile)(Rhinoca* rh, const char* uri);
+	typedef bool (*ReadReady)(void* file, rhuint64 size);
+	typedef rhuint64 (*Read)(void* file, void* buffer, rhuint64 size);
+	typedef rhint64 (*Size)(void* file);		/// Returns -1 if the file size is unknown.
+	typedef int (*Seek)(void* file, rhuint64 offset, int origin);		/// Returns 1 for success, 0 for fail, -1 not supported. Origin: SEEK_SET, SEEK_CUR, SEEK_END.
+	typedef void (*CloseFile)(void* file);
 
-RHINOCA_API void* rhinoca_http_open(Rhinoca* rh, const char* uri, int threadId);
-RHINOCA_API bool rhinoca_http_ready(void* file, rhuint64 size, int threadId);
-RHINOCA_API rhuint64 rhinoca_http_read(void* file, void* buffer, rhuint64 size, int threadId);
-RHINOCA_API void rhinoca_http_close(void* file, int threadId);
+	OpenFile openFile;
+	ReadReady readReady;
+	Read read;
+	Size size;
+	Seek seek;
+	CloseFile closeFile;
+
+// Directory operations:
+	typedef void* (*OpenDir)(Rhinoca* rh, const char* uri);
+	typedef bool (*NextDir)(void* dir);
+	typedef const char* (*DirName)(void* dir);	/// The string returned is managed by the directory context, no need to free by user.
+	typedef void (*CloseDir)(void* dir);
+
+	OpenDir openDir;
+	NextDir nextDir;
+	DirName dirName;
+	CloseDir closeDir;
+};	// RhFileSystem
+
+RHINOCA_API RhFileSystem* rhinoca_getFileSystem();
+RHINOCA_API void rhinoca_setFileSystem(const RhFileSystem& fs);
 
 // Memory allocation
 RHINOCA_API void* rhinoca_malloc(rhuint size);

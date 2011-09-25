@@ -14,18 +14,17 @@ namespace Loader {
 class Stream : public jpeg_decoder_stream
 {
 public:
-	explicit Stream(void* f, int tId) : file(f), threadId(tId) {}
+	explicit Stream(void* f) : file(f) {}
 
 	int read(uchar* Pbuf, int max_bytes_to_read, bool* Peof_flag)
 	{
-		int readCount = (int)io_read(file, (char*)Pbuf, max_bytes_to_read, threadId);
+		int readCount = (int)rhFileSystem.read(file, (char*)Pbuf, max_bytes_to_read);
 		*Peof_flag = (readCount == 0);
 
 		return readCount;
 	}
 
 	void* file;
-	int threadId;
 };	// Stream
 
 Resource* createJpeg(const char* uri, ResourceManager* mgr)
@@ -80,19 +79,18 @@ void JpegLoader::run(TaskPool* taskPool)
 void JpegLoader::load(TaskPool* taskPool)
 {
 	texture->scratch = this;
-	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
 	void* f = NULL;
 
 	if(texture->state == Resource::Aborted) goto Abort;
-	f = io_open(rh, texture->uri(), tId);
+	f = rhFileSystem.openFile(rh, texture->uri());
 	if(!f) {
 		print(rh, "JpegLoader: Fail to open file '%s'\n", texture->uri().c_str());
 		goto Abort;
 	}
 
-	_decoder = new jpeg_decoder(_stream = new Stream(f, tId), true);
+	_decoder = new jpeg_decoder(_stream = new Stream(f), true);
 
 	if(_decoder->get_error_code() != JPGD_OKAY) {
 		print(rh, "JpegLoader: load error, operation aborted");
@@ -145,11 +143,11 @@ void JpegLoader::load(TaskPool* taskPool)
 			goto Abort;
 	}
 
-	io_close(f, tId);
+	rhFileSystem.closeFile(f);
 	return;
 
 Abort:
-	if(f) io_close(f, tId);
+	if(f) rhFileSystem.closeFile(f);
 	texture->state = Resource::Aborted;
 }
 

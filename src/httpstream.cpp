@@ -42,7 +42,7 @@ static void prepareForRead(HttpStream* s, unsigned readSize)
 	}
 }
 
-void* rhinoca_http_open(Rhinoca* rh, const char* uri, int threadId)
+void* rhinoca_http_open(Rhinoca* rh, const char* uri)
 {
 	// Perform character encoding
 	// http://www.blooberry.com/indexdot/html/topics/urlencoding.htm
@@ -105,7 +105,7 @@ OnError:
 	return NULL;
 }
 
-bool rhinoca_http_ready(void* file, rhuint64 size, int threadId)
+bool rhinoca_http_ready(void* file, rhuint64 size)
 {
 	ASSERT(file);
 
@@ -211,13 +211,13 @@ OnError:
 	return true;
 }
 
-rhuint64 rhinoca_http_read(void* file, void* buffer, rhuint64 size, int threadId)
+rhuint64 rhinoca_http_read(void* file, void* buffer, rhuint64 size)
 {
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
 
 	float timeout = 3;
 	while(!s->headerReceived || s->bufSize < size) {
-		if(rhinoca_http_ready(file, size, threadId))
+		if(rhinoca_http_ready(file, size))
 			break;
 		TaskPool::sleep(0);
 
@@ -248,7 +248,7 @@ rhuint64 rhinoca_http_read(void* file, void* buffer, rhuint64 size, int threadId
 	return dataToMove;
 }
 
-void rhinoca_http_close(void* file, int threadId)
+void rhinoca_http_close(void* file)
 {
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
 	delete s;

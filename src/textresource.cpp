@@ -30,7 +30,7 @@ public:
 
 	~TextLoader()
 	{
-		if(stream) io_close(stream, TaskPool::threadId());
+		if(stream) rhFileSystem.closeFile(stream);
 	}
 
 	override void run(TaskPool* taskPool);
@@ -77,15 +77,13 @@ const char* removeBom(Rhinoca* rh, const char* str, unsigned& len)
 
 void TextLoader::commit(TaskPool* taskPool)
 {
-	int tId = TaskPool::threadId();
-
 	if(!aborted) {
 		text->data.swap(data);
 		text->state = Resource::Loaded;
 
 		// Remove any BOM
 		unsigned len;
-		text->dataWithoutBOM = removeBom( manager->rhinoca, text->data.c_str(), len);
+		text->dataWithoutBOM = removeBom(manager->rhinoca, text->data.c_str(), len);
 	}
 	else
 		text->state = Resource::Aborted;
@@ -95,10 +93,9 @@ void TextLoader::commit(TaskPool* taskPool)
 
 void TextLoader::load(TaskPool* taskPool)
 {
-	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
-	if(!stream) stream = io_open(rh, text->uri(), tId);
+	if(!stream) stream = rhFileSystem.openFile(rh, text->uri());
 	if(!stream) {
 		print(rh, "TextLoader: Fail to open file '%s'\n", text->uri().c_str());
 		goto Abort;
@@ -108,11 +105,11 @@ void TextLoader::load(TaskPool* taskPool)
 	char buf[1024];
 
 	// If data not ready, give up in this round and do it again in next schedule
-	if(!io_ready(stream, sizeof(buf) * loopCount, tId))
+	if(!rhFileSystem.readReady(stream, sizeof(buf) * loopCount))
 		return reSchedule();
 
 	for(unsigned i=0; i<loopCount; ++i) {
-		rhuint64 readCount = io_read(stream, buf, sizeof(buf), tId);
+		rhuint64 readCount = rhFileSystem.read(stream, buf, sizeof(buf));
 
 		if(readCount > 0) {
 			data.append(buf, (size_t)readCount);

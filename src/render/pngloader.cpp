@@ -156,7 +156,7 @@ PngLoader::PngLoader(Texture* t, ResourceManager* mgr)
 
 PngLoader::~PngLoader()
 {
-	if(stream) io_close(stream, TaskPool::threadId());
+	if(stream) rhFileSystem.closeFile(stream);
 
 	rhinoca_free(pixelData);
 	// libpng will handle for null input pointers
@@ -173,11 +173,10 @@ void PngLoader::run(TaskPool* taskPool)
 
 void PngLoader::load(TaskPool* taskPool)
 {
-	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
 	if(texture->state == Resource::Aborted) goto Abort;
-	if(!stream) stream = io_open(rh, texture->uri(), tId);
+	if(!stream) stream = rhFileSystem.openFile(rh, texture->uri());
 	if(!stream) {
 		print(rh, "PngLoader: Fail to open file '%s'\n", texture->uri().c_str());
 		goto Abort;
@@ -191,13 +190,13 @@ void PngLoader::load(TaskPool* taskPool)
 		goto Abort;
 
 	do {
-		if(!io_ready(stream, sizeof(buff), tId)) {
+		if(!rhFileSystem.readReady(stream, sizeof(buff))) {
 			// Re-schedule the load operation
 			reSchedule();
 			return;
 		}
 
-		readCount = (unsigned)io_read(stream, buff, sizeof(buff), tId);
+		readCount = (unsigned)rhFileSystem.read(stream, buff, sizeof(buff));
 		png_process_data(png_ptr, info_ptr, (png_bytep)buff, readCount);
 
 		if(_aborted) goto Abort;

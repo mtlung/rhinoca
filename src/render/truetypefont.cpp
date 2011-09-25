@@ -121,7 +121,7 @@ public:
 
 	~TrueTypeFontLoader()
 	{
-		if(stream) io_close(stream, TaskPool::threadId());
+		if(stream) rhFileSystem.closeFile(stream);
 		delete impl;
 	}
 
@@ -149,7 +149,6 @@ void TrueTypeFontLoader::run(TaskPool* taskPool)
 
 void TrueTypeFontLoader::load()
 {
-	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
 	unsigned size = 0;
@@ -158,14 +157,14 @@ void TrueTypeFontLoader::load()
 	rhbyte* buf = (rhbyte*)rhinoca_malloc(bufSize);
 	rhbyte* p = buf;
 
-	if(!stream) stream = io_open(rh, font->uri(), tId);
+	if(!stream) stream = rhFileSystem.openFile(rh, font->uri());
 	if(!stream) {
 		print(rh, "TrueTypeFontLoader: Fail to open file '%s'\n", font->uri().c_str());
 		goto Abort;
 	}
 
 	// TODO: It would be much more efficient if we can know the file size in advance
-	while(unsigned read = (unsigned)io_read(stream, p, bufIncSize, tId)) {
+	while(unsigned read = (unsigned)rhFileSystem.read(stream, p, bufIncSize)) {
 		buf = (rhbyte*)rhinoca_realloc(buf, bufSize, bufSize + read);
 		size += read;
 		bufSize += read;
@@ -184,8 +183,6 @@ Abort:
 
 void TrueTypeFontLoader::commit()
 {
-	int tId = TaskPool::threadId();
-
 	if(!aborted) {
 		font->state = Resource::Loaded;
 		ASSERT(!font->impl);

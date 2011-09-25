@@ -417,6 +417,62 @@ bool utf8ToUtf32(rhuint32* dest, unsigned& destLen, const char* src, unsigned ma
 	return false;
 }
 
+bool utf16ToUtf8(char* dest, unsigned& destLen, const rhuint16* src, unsigned maxSrcLen)
+{
+	size_t destPos = 0, srcPos = 0;
+
+	while(true)
+	{
+		rhuint32 value;
+		size_t numAdds;
+
+		if(srcPos == maxSrcLen || src[srcPos] == L'\0') {
+			if(dest && destLen != destPos) {
+				ASSERT(false && "The provided destLen should equals to what we calculated here");
+				return false;
+			}
+			destLen = destPos;
+			return true;
+		}
+
+		value = src[srcPos++];
+
+		if(value < 0x80) {	// 0-127, US-ASCII (single byte)
+			if(dest)
+				dest[destPos] = char(value);
+			++destPos;
+			continue;
+		}
+
+		if(value >= 0xD800 && value < 0xE000) {
+			if(value >= 0xDC00 || srcPos == maxSrcLen)
+				break;
+			rhuint32 c2 = src[srcPos++];
+			if(c2 < 0xDC00 || c2 >= 0xE000)
+				break;
+			value = ((value - 0xD800) << 10) | (c2 - 0xDC00);
+		}
+
+		for(numAdds = 1; numAdds < 5; ++numAdds)
+			if(value < (rhuint32(1) << (numAdds * 5 + 6)))
+				break;
+
+		if(dest)
+			dest[destPos] = char(_utf8Limits[numAdds - 1] + (value >> (6 * numAdds)));
+		++destPos;
+
+		do {
+			--numAdds;
+			if(dest)
+				dest[destPos] = char(0x80 + ((value >> (6 * numAdds)) & 0x3F));
+			++destPos;
+		} while(numAdds != 0);
+	}
+
+	destLen = destPos;
+	return false;
+}
+
 StringHash::StringHash(const char* buf, size_t len)
 {
 	rhuint32 hash_ = 0;

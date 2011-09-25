@@ -28,7 +28,7 @@ public:
 
 	~BmpLoader()
 	{
-		if(stream) io_close(stream, TaskPool::threadId());
+		if(stream) rhFileSystem.closeFile(stream);
 		rhinoca_free(pixelData);
 	}
 
@@ -75,8 +75,6 @@ void BmpLoader::load(TaskPool* taskPool)
 
 void BmpLoader::commit(TaskPool* taskPool)
 {
-	int tId = TaskPool::threadId();
-
 	if(!aborted && texture->create(width, height, Driver::ANY, pixelData, pixelDataSize, pixelDataFormat))
 		texture->state = Resource::Loaded;
 	else
@@ -87,10 +85,9 @@ void BmpLoader::commit(TaskPool* taskPool)
 
 void BmpLoader::loadHeader()
 {
-	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
-	if(!stream) stream = io_open(rh, texture->uri(), tId);
+	if(!stream) stream = rhFileSystem.openFile(rh, texture->uri());
 	if(!stream) {
 		print(rh, "BmpLoader: Fail to open file '%s'\n", texture->uri().c_str());
 		goto Abort;
@@ -102,11 +99,11 @@ void BmpLoader::loadHeader()
 	memset(&fileHeader, 0, sizeof(fileHeader));
 
 	// If data not ready, give up in this round and do it again in next schedule
-	if(!io_ready(stream, sizeof(fileHeader) + sizeof(infoHeader), tId))
+	if(!rhFileSystem.readReady(stream, sizeof(fileHeader) + sizeof(infoHeader)))
 		return reSchedule();
 
 	// Read the file header
-	io_read(stream, &fileHeader, sizeof(fileHeader), tId);
+	rhFileSystem.read(stream, &fileHeader, sizeof(fileHeader));
 
 	// Check against the magic 2 bytes.
 	// The value of 'BM' in integer is 19778 (assuming little endian)
@@ -115,7 +112,7 @@ void BmpLoader::loadHeader()
 		goto Abort;
 	}
 
-	io_read(stream, &infoHeader, sizeof(infoHeader), tId);
+	rhFileSystem.read(stream, &infoHeader, sizeof(infoHeader));
 	width = infoHeader.biWidth;
 
 	pixelDataFormat = Driver::BGR;
@@ -149,7 +146,6 @@ Abort:
 
 void BmpLoader::loadPixelData()
 {
-	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
 	if(aborted || !stream) goto Abort;
@@ -161,7 +157,7 @@ void BmpLoader::loadPixelData()
 	pixelDataSize = rowByte * height;
 
 	// If data not ready, give up in this round and do it again in next schedule
-	if(!io_ready(stream, pixelDataSize, tId))
+	if(!rhFileSystem.readReady(stream, pixelDataSize))
 		return reSchedule();
 
 	pixelData = (char*)rhinoca_malloc(pixelDataSize);
@@ -178,7 +174,7 @@ void BmpLoader::loadPixelData()
 		const rhuint invertedH = flipVertical ? height - 1 - h : h;
 
 		char* p = pixelData + (invertedH * rowByte);
-		if(io_read(stream, p, rowByte, tId) != rowByte) {
+		if(rhFileSystem.read(stream, p, rowByte) != rowByte) {
 			print(rh, "BitmapLoader: End of file, bitmap data incomplete");
 			goto Abort;
 		}

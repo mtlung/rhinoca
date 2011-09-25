@@ -109,7 +109,7 @@ static void appendFileToString(void* file, String& str)
 {
 	char buf[128];
 	rhuint64 readCount;
-	while((readCount = io_read(file, buf, sizeof(buf), 0)))
+	while((readCount = rhFileSystem.read(file, buf, sizeof(buf))))
 		str.append(buf, (size_t)readCount);
 }
 

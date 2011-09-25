@@ -88,7 +88,7 @@ public:
 
 	~OggLoader()
 	{
-		if(stream) io_close(stream, TaskPool::threadId());
+		if(stream) rhFileSystem.closeFile(stream);
 		if(vorbis) stb_vorbis_close(vorbis);
 	}
 
@@ -140,21 +140,20 @@ static const unsigned _dataChunkSize = 1024 * 16;
 
 void OggLoader::loadHeader()
 {
-	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
-	if(!stream) stream = io_open(rh, buffer->uri(), tId);
+	if(!stream) stream = rhFileSystem.openFile(rh, buffer->uri());
 	if(!stream) {
 		print(rh, "OggLoader: Fail to open file '%s'\n", buffer->uri().c_str());
 		goto Abort;
 	}
 
-	if(!io_ready(stream, _dataChunkSize, tId))
+	if(!rhFileSystem.readReady(stream, _dataChunkSize))
 		return reSchedule();
 
 	{	// Read from stream and put to ring buffer
 		rhbyte* p = ringBuffer.write(_dataChunkSize);
-		unsigned readCount = (unsigned)io_read(stream, p, _dataChunkSize, tId);
+		unsigned readCount = (unsigned)rhFileSystem.read(stream, p, _dataChunkSize);
 		ringBuffer.commitWrite(readCount);
 
 		// Read from ring buffer and put to vorbis
@@ -194,13 +193,12 @@ Abort:
 
 void OggLoader::loadData()
 {
-	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
 	if(buffer->state == Resource::Aborted) goto Abort;
 	if(!stream) goto Abort;
 
-	if(!io_ready(stream, _dataChunkSize, tId))
+	if(!rhFileSystem.readReady(stream, _dataChunkSize))
 		return reSchedule();
 
 	{
@@ -211,11 +209,11 @@ void OggLoader::loadData()
 			print(rh, "OggLoader: Currently there are problem on seeking ogg: '%s'\n", buffer->uri().c_str());
 
 			const unsigned backupCurPos = stb_vorbis_get_sample_offset(vorbis);
-//			const rhint64 fileSize = io_size(stream, tId);
+//			const rhint64 fileSize = rhFileSystem.size(stream);
 			const float estimatedSamplePerByte = (sampleProduced * bytesRead == 0) ? 0 : float(sampleProduced) / bytesRead;
 
 			const unsigned fileSeekPos = bytesForHeader + unsigned(float(audioBufBegin) / estimatedSamplePerByte);
-			io_seek(stream, fileSeekPos, SEEK_SET, tId);
+			rhFileSystem.seek(stream, fileSeekPos, SEEK_SET);
 			stb_vorbis_flush_pushdata(vorbis);
 			ringBuffer.clear();
 		}
@@ -228,7 +226,7 @@ void OggLoader::loadData()
 
 		// Read from stream and put to ring buffer
 		rhbyte* p = ringBuffer.write(_dataChunkSize);
-		unsigned readCount = (unsigned)io_read(stream, p, _dataChunkSize, tId);
+		unsigned readCount = (unsigned)rhFileSystem.read(stream, p, _dataChunkSize);
 		ringBuffer.commitWrite(readCount);
 
 		if(readCount == 0) {	// EOF

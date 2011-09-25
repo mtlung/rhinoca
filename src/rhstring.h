@@ -106,6 +106,9 @@ char* replaceCharacterWithStr(const char* str, const char charArray[], const cha
 bool utf8ToUtf16(rhuint16* dest, unsigned& destLen, const char* src, unsigned maxSrcLen);
 bool utf8ToUtf32(rhuint32* dest, unsigned& destLen, const char* src, unsigned maxSrcLen);
 
+/// Convert wide string into utf-8 string, return true on success.
+bool utf16ToUtf8(char* dest, unsigned& destLen, const rhuint16* src, unsigned maxSrcLen);
+
 class StringHash;
 
 /*!	A string class that ensure only one memory block is allocated for each unique string,

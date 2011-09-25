@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "rhinoca.h"
 #include "context.h"
+#include "httpstream.h"
 #include "socket.h"
 #include "audio/audiodevice.h"
 #include "render/driver.h"
@@ -107,24 +108,27 @@ void rhinoca_processEvent(Rhinoca* context, RhinocaEvent ev)
 }
 
 // IO
+
 struct CompoundFS
 {
+	CompoundFS() : type(None), handle(NULL) {}
 	enum Type {
+		None,
 		Local,
 		Http
 	} type;
 	void* handle;
 };
 
-static void* default_ioOpen(Rhinoca* rh, const char* uri, int threadId)
+static void* default_ioOpenFile(Rhinoca* rh, const char* uri)
 {
-	if(uri[0] == '\0')
+	if(!uri || uri[0] == '\0')
 		return NULL;
 
 	CompoundFS* fs = new CompoundFS;
 	if(strstr(uri, "http://") == uri) {
 		fs->type = CompoundFS::Http;
-		fs->handle = rhinoca_http_open(rh, uri, threadId);
+		fs->handle = rhinoca_http_open(rh, uri);
 	}
 	else {
 #if defined(RHINOCA_IOS)
@@ -147,28 +151,28 @@ static void* default_ioOpen(Rhinoca* rh, const char* uri, int threadId)
 	return fs;
 }
 
-static bool default_ioReady(void* file, rhuint64 size, int threadId)
+static bool default_ioReadReady(void* file, rhuint64 size)
 {
 	CompoundFS* fs = reinterpret_cast<CompoundFS*>(file);
 
 	if(fs->type == CompoundFS::Http)
-		return rhinoca_http_ready(fs->handle, size, threadId);
+		return rhinoca_http_ready(fs->handle, size);
 
 	return true;
 }
 
-static rhuint64 default_ioRead(void* file, void* buffer, rhuint64 size, int threadId)
+static rhuint64 default_ioRead(void* file, void* buffer, rhuint64 size)
 {
 	CompoundFS* fs = reinterpret_cast<CompoundFS*>(file);
 
 	if(fs->type == CompoundFS::Http)
-		return rhinoca_http_read(fs->handle, buffer, size, threadId);
+		return rhinoca_http_read(fs->handle, buffer, size);
 
 	FILE* f = reinterpret_cast<FILE*>(fs->handle);
 	return (rhuint64)fread(buffer, 1, (size_t)size, f);
 }
 
-static rhint64 default_ioSize(void* file, int threadId)
+static rhint64 default_ioSize(void* file)
 {
 	CompoundFS* fs = reinterpret_cast<CompoundFS*>(file);
 
@@ -184,7 +188,7 @@ static rhint64 default_ioSize(void* file, int threadId)
 	return st.st_size;
 }
 
-static int default_ioSeek(void* file, rhuint64 offset, int origin, int threadId)
+static int default_ioSeek(void* file, rhuint64 offset, int origin)
 {
 	CompoundFS* fs = reinterpret_cast<CompoundFS*>(file);
 
@@ -195,12 +199,12 @@ static int default_ioSeek(void* file, rhuint64 offset, int origin, int threadId)
 	return fseek(f, (long int)offset, origin) == 0 ? 1 : 0;
 }
 
-static void default_ioClose(void* file, int threadId)
+static void default_ioCloseFile(void* file)
 {
 	CompoundFS* fs = reinterpret_cast<CompoundFS*>(file);
 
 	if(fs->type == CompoundFS::Http)
-		rhinoca_http_close(fs->handle, threadId);
+		rhinoca_http_close(fs->handle);
 	else {
 		FILE* f = reinterpret_cast<FILE*>(fs->handle);
 		fclose(f);
@@ -209,25 +213,187 @@ static void default_ioClose(void* file, int threadId)
 	delete fs;
 }
 
-rhinoca_io_open io_open = default_ioOpen;
-rhinoca_io_ready io_ready = default_ioReady;
-rhinoca_io_read io_read = default_ioRead;
-rhinoca_io_size io_size = default_ioSize;
-rhinoca_io_seek io_seek = default_ioSeek;
-rhinoca_io_close io_close = default_ioClose;
+struct OpenDirContext
+{
+#ifdef RHINOCA_VC
+	~OpenDirContext() {
+		if(handle != INVALID_HANDLE_VALUE)
+			::FindClose(handle);
+	}
 
-rhinoca_io_open rhinoca_get_io_open()	{ return io_open; }
-rhinoca_io_ready rhinoca_get_io_ready()	{ return io_ready; }
-rhinoca_io_read rhinoca_get_io_read()	{ return io_read; }
-rhinoca_io_seek rhinoca_get_io_seek()	{ return io_seek; }
-rhinoca_io_close rhinoca_get_io_close()	{ return io_close; }
+	HANDLE handle;
+	WIN32_FIND_DATA data;
+#endif
 
-void rhinoca_set_io_open(rhinoca_io_open f)		{ io_open = f; }
-void rhinoca_set_io_ready(rhinoca_io_ready f)	{ io_ready = f; }
-void rhinoca_set_io_read(rhinoca_io_read f)		{ io_read = f; }
-void rhinoca_set_io_size(rhinoca_io_size f)		{ io_size = f; }
-void rhinoca_set_io_seek(rhinoca_io_seek f)		{ io_seek = f; }
-void rhinoca_set_io_close(rhinoca_io_close f)	{ io_close = f; }
+	PreAllocVector<char, 128> str;
+};	// OpenDirContext
+
+static bool toUtf16(const char* str, PreAllocVector<rhuint16, 128>& result)
+{
+	unsigned len = 0;
+	if(!str || !utf8ToUtf16(NULL, len, str, UINT_MAX))
+		return false;
+
+	result.resize(len + 1);
+	if(len == 0 || !utf8ToUtf16(&result[0], len, str, UINT_MAX))
+		return false;
+
+	result[len] = 0;
+
+	return true;
+}
+
+static bool toUtf8(const rhuint16* str, PreAllocVector<char, 128>& result)
+{
+	unsigned len = 0;
+	if(!str || !utf16ToUtf8(NULL, len, str, UINT_MAX))
+		return false;
+
+	result.resize(len + 1);
+	if(len == 0 || !utf16ToUtf8(&result[0], len, str, UINT_MAX))
+		return false;
+
+	result[len] = 0;
+
+	return true;
+}
+
+static void* default_ioOpenDir(Rhinoca* rh, const char* uri)
+{
+	if(!uri || uri[0] == '\0')
+		return NULL;
+
+	CompoundFS* fs = new CompoundFS;
+
+	if(strstr(uri, "http://") == uri) {
+	}
+#ifdef RHINOCA_VC
+	else {
+		PreAllocVector<rhuint16, 128> buffer;
+		if(!toUtf16(uri, buffer)) {
+			delete fs;
+			return NULL;
+		}
+
+		OpenDirContext* c = new OpenDirContext;
+
+		// Add wild-card at the end of the path
+		buffer.resize(buffer.size() - 1);	// Remove the null terminator first
+		if(buffer.back() != L'/' && buffer.back() != L'\\')
+			buffer.push_back(L'/');
+		buffer.push_back(L'*');
+		buffer.push_back(L'\0');
+
+		HANDLE h = ::FindFirstFileW((wchar_t*)&buffer[0], &(c->data));
+
+		// Skip the ./ and ../
+		while(::wcscmp(c->data.cFileName, L".") == 0 || ::wcscmp(c->data.cFileName, L"..") == 0) {
+			if(!FindNextFile(h, &(c->data))) {
+				c->data.cFileName[0] = L'\0';
+				break;
+			}
+		}
+
+		if(h != INVALID_HANDLE_VALUE) {
+			c->handle = h;
+			fs->handle = c;
+		}
+		else
+			delete c;
+	}
+#endif
+
+	if(!fs->handle) {
+		delete fs;
+		fs = NULL;
+	}
+
+	return fs;
+}
+
+static bool default_ioNextDir(void* dir)
+{
+	if(!dir) return false;
+	CompoundFS* fs = reinterpret_cast<CompoundFS*>(dir);
+
+	if(fs->type == CompoundFS::Http) {
+		return false;
+	}
+#ifdef RHINOCA_VC
+	else {
+		OpenDirContext* c = reinterpret_cast<OpenDirContext*>(fs->handle);
+
+		if(!::FindNextFileW(c->handle, &(c->data))) {
+			c->str.resize(1);
+			c->str[0] = '\0';
+			return false;
+		}
+
+		return true;
+	}
+#endif
+
+	return false;
+}
+
+static const char* default_ioDirName(void* dir)
+{
+	if(!dir) return false;
+	CompoundFS* fs = reinterpret_cast<CompoundFS*>(dir);
+
+	if(fs->type == CompoundFS::Http) {
+		return "";
+	}
+	else {
+		OpenDirContext* c = reinterpret_cast<OpenDirContext*>(fs->handle);
+
+		if(!toUtf8((rhuint16*)c->data.cFileName, c->str)) {
+			c->str.resize(1);
+			c->str[0] = '\0';
+		}
+
+		return &c->str[0];
+	}
+}
+
+static void default_ioCloseDir(void* dir)
+{
+	if(!dir) return;
+	CompoundFS* fs = reinterpret_cast<CompoundFS*>(dir);
+
+	if(fs->type == CompoundFS::Http) {
+	}
+	else {
+		OpenDirContext* c = reinterpret_cast<OpenDirContext*>(fs->handle);
+		delete c;
+	}
+
+	delete fs;
+}
+
+RhFileSystem rhFileSystem = 
+{
+	default_ioOpenFile,
+	default_ioReadReady,
+	default_ioRead,
+	default_ioSize,
+	default_ioSeek,
+	default_ioCloseFile,
+	default_ioOpenDir,
+	default_ioNextDir,
+	default_ioDirName,
+	default_ioCloseDir
+};
+
+RhFileSystem* rhinoca_getFileSystem()
+{
+	return &rhFileSystem;
+}
+
+void rhinoca_setFileSystem(const RhFileSystem& fs)
+{
+	rhFileSystem = fs;
+}
 
 // Memory allocation
 void* rhinoca_realloca(void* ptr, unsigned int oldSize, unsigned int size);
