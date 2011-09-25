@@ -58,7 +58,7 @@ void NSImageLoader::run(TaskPool* taskPool)
 
 static size_t dataProviderGetBytes(void* f, void* buffer, size_t count)
 {
-	return io_read(f, buffer, count, 0);
+	return rhFileSystem.read(f, buffer, count);
 }
 
 static off_t dataProviderSkipForwardBytes(void* f, off_t count)
@@ -74,7 +74,7 @@ static void dataProviderRewind(void* f)
 
 static void dataProviderRelease(void* f)
 {
-	io_close(f, 0);
+	rhFileSystem.closeFile(f);
 }
 
 // http://www.gotow.net/creative/wordpress/?p=7
@@ -109,12 +109,11 @@ static CGImageRef shrinkImageToPOT(CGImageRef image)
 void NSImageLoader::load(TaskPool* taskPool)
 {
 	texture->scratch = this;
-	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
 	CGDataProviderRef dataProvider;
 
-	void* f = io_open(rh, texture->uri(), tId);
+	void* f = rhFileSystem.openFile(rh, texture->uri());
 	if(!f) {
 		print(rh, "NSImageLoader: Fail to open file '%s'\n", texture->uri().c_str());
 		goto Abort;
@@ -157,7 +156,7 @@ void NSImageLoader::load(TaskPool* taskPool)
 	return;
 
 Abort:
-	if(f) io_close(f, tId);
+	if(f) rhFileSystem.closeFile(f);
 	texture->state = Resource::Aborted;
 }
 

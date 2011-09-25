@@ -344,6 +344,7 @@ static const char* default_ioDirName(void* dir)
 	if(fs->type == CompoundFS::Http) {
 		return "";
 	}
+#ifdef RHINOCA_VC
 	else {
 		OpenDirContext* c = reinterpret_cast<OpenDirContext*>(fs->handle);
 
@@ -354,6 +355,9 @@ static const char* default_ioDirName(void* dir)
 
 		return &c->str[0];
 	}
+#endif
+
+	return "";
 }
 
 static void default_ioCloseDir(void* dir)

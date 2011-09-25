@@ -1,7 +1,7 @@
 #ifndef __RHINOCA_H__
 #define __RHINOCA_H__
 
-#include <vadefs.h>
+#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -138,6 +138,7 @@ struct RhFileSystem
 	DirName dirName;
 	CloseDir closeDir;
 };	// RhFileSystem
+typedef struct RhFileSystem RhFileSystem;
 
 RHINOCA_API RhFileSystem* rhinoca_getFileSystem();
 RHINOCA_API void rhinoca_setFileSystem(const RhFileSystem& fs);
