@@ -108,6 +108,7 @@ bool utf8ToUtf32(rhuint32* dest, unsigned& destLen, const char* src, unsigned ma
 
 /// Convert wide string into utf-8 string, return true on success.
 bool utf16ToUtf8(char* dest, unsigned& destLen, const rhuint16* src, unsigned maxSrcLen);
+bool utf16ToUtf8(String& dest, const rhuint16* src, unsigned maxSrcLen);
 
 class StringHash;
 

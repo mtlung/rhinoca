@@ -285,6 +285,9 @@ static const rhbyte _utf8Limits[] = {
 
 bool utf8ToUtf16(rhuint16* dest, unsigned& destLen, const char* src, unsigned maxSrcLen)
 {
+	if(!src)
+		return false;
+
 	unsigned destPos = 0, srcPos = 0;
 
 	while(true)
@@ -353,6 +356,9 @@ bool utf8ToUtf16(rhuint16* dest, unsigned& destLen, const char* src, unsigned ma
 
 bool utf8ToUtf32(rhuint32* dest, unsigned& destLen, const char* src, unsigned maxSrcLen)
 {
+	if(!src)
+		return false;
+
 	unsigned destPos = 0, srcPos = 0;
 
 	while(true)
@@ -419,6 +425,9 @@ bool utf8ToUtf32(rhuint32* dest, unsigned& destLen, const char* src, unsigned ma
 
 bool utf16ToUtf8(char* dest, unsigned& destLen, const rhuint16* src, unsigned maxSrcLen)
 {
+	if(!src)
+		return false;
+
 	size_t destPos = 0, srcPos = 0;
 
 	while(true)
@@ -471,6 +480,22 @@ bool utf16ToUtf8(char* dest, unsigned& destLen, const rhuint16* src, unsigned ma
 
 	destLen = destPos;
 	return false;
+}
+
+bool utf16ToUtf8(String& dest, const rhuint16* src, unsigned maxSrcLen)
+{
+	unsigned len = 0;
+	if(!utf16ToUtf8(NULL, len, src, maxSrcLen))
+		return false;
+
+	if(len == 0)
+		return false;
+
+	dest.resize(len);
+	if(!utf16ToUtf8(&dest[0], len, src, maxSrcLen))
+		return false;
+
+	return true;
 }
 
 StringHash::StringHash(const char* buf, size_t len)

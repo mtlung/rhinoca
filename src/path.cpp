@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "path.h"
 #include "common.h"
+#include "vector.h"
 #include <string.h>	// for strcasecmp()
 
 namespace {
@@ -222,21 +223,22 @@ int Path::compare(const Path& rhs) const
 Path Path::getCurrentPath()
 {
 #ifdef _WIN32
-	// TODO: Use GetCurrentDirectoryW since it directly support unicode
-
 	DWORD sz;
-	char dummy[1];	// Use a dummy to avoid a warning in Intel Thread Checker: passing NULL to GetCurrentDirectoryA
+	wchar_t dummy[1];	// Use a dummy to avoid a warning in Intel Thread Checker: passing NULL to GetCurrentDirectoryA
 
 	// Query the required buffer size
-	if((sz = ::GetCurrentDirectoryA(0, dummy)) == 0)
+	if((sz = ::GetCurrentDirectoryW(0, dummy)) == 0)
 		return Path();
 
-	char* buf = (char*)rhinoca_malloc(sz * sizeof(char));
-	if(::GetCurrentDirectoryA(sz, buf) == 0)
+	PreAllocVector<wchar_t, 256> wstr(sz);
+	if(::GetCurrentDirectoryW(sz, &wstr[0]) == 0)
 		return Path();
 
-	Path ret(buf);
-	rhinoca_free(buf);
+	String astr;
+	if(!utf16ToUtf8(astr, (rhuint16*)&wstr[0], UINT_MAX))
+		return false;
+
+	Path ret(astr.c_str());
 	return ret.normalize();
 #else
 	// For other system we assume it have a UTF-8 locale
@@ -247,6 +249,7 @@ Path Path::getCurrentPath()
 		return Path();
 
 	Path ret(buffer);
+	free(buffer);
 	return ret.normalize();
 #endif
 }
