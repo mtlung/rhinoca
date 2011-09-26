@@ -394,7 +394,7 @@ RhFileSystem* rhinoca_getFileSystem()
 	return &rhFileSystem;
 }
 
-void rhinoca_setFileSystem(const RhFileSystem& fs)
+void rhinoca_setFileSystem(RhFileSystem fs)
 {
 	rhFileSystem = fs;
 }

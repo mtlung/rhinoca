@@ -21,7 +21,7 @@
 		28EC4C5A11D54ECE0027AA9F /* LauncherViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 28EC4C5811D54ECE0027AA9F /* LauncherViewController.xib */; };
 		28FD15000DC6FC520079059D /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28FD14FF0DC6FC520079059D /* OpenGLES.framework */; };
 		28FD15080DC6FC5B0079059D /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28FD15070DC6FC5B0079059D /* QuartzCore.framework */; };
-		9C08AB74142F8C1E009E5398 /* EAGLView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C08AB73142F8C1E009E5398 /* EAGLView.mm */; };
+		9C054D861430BF6E00199D8C /* EAGLView.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C054D851430BF6E00199D8C /* EAGLView.m */; };
 		9C871A9F13AE0248009F1382 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C871A9E13AE0248009F1382 /* AudioToolbox.framework */; };
 		9C990DCE1406908500E72D24 /* biolab in Resources */ = {isa = PBXBuildFile; fileRef = 9C990DCD1406908500E72D24 /* biolab */; };
 		9CD888731382E0C1003751E2 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CD888721382E0C1003751E2 /* OpenAL.framework */; };
@@ -73,7 +73,7 @@
 		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		32CA4F630368D1EE00C91783 /* Launcher_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Launcher_Prefix.pch; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Launcher-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Launcher-Info.plist"; plistStructureDefinitionIdentifier = "com.apple.xcode.plist.structure-definition.iphone.info-plist"; sourceTree = "<group>"; };
-		9C08AB73142F8C1E009E5398 /* EAGLView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = EAGLView.mm; sourceTree = "<group>"; };
+		9C054D851430BF6E00199D8C /* EAGLView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLView.m; sourceTree = "<group>"; };
 		9C871A9E13AE0248009F1382 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		9C990DCD1406908500E72D24 /* biolab */ = {isa = PBXFileReference; lastKnownFileType = folder; name = biolab; path = ../../../demo/impactjs/biolab; sourceTree = "<group>"; };
 		9CD888721382E0C1003751E2 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
@@ -103,7 +103,7 @@
 			isa = PBXGroup;
 			children = (
 				28FD14FC0DC6FC130079059D /* EAGLView.h */,
-				9C08AB73142F8C1E009E5398 /* EAGLView.mm */,
+				9C054D851430BF6E00199D8C /* EAGLView.m */,
 				1D3623240D0F684500981E51 /* LauncherAppDelegate.h */,
 				1D3623250D0F684500981E51 /* LauncherAppDelegate.m */,
 				28EC4C5611D54ECE0027AA9F /* LauncherViewController.h */,
@@ -290,7 +290,7 @@
 				1D60589B0D05DD56006BFB54 /* main.m in Sources */,
 				1D3623260D0F684500981E51 /* LauncherAppDelegate.m in Sources */,
 				28EC4C5911D54ECE0027AA9F /* LauncherViewController.mm in Sources */,
-				9C08AB74142F8C1E009E5398 /* EAGLView.mm in Sources */,
+				9C054D861430BF6E00199D8C /* EAGLView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
