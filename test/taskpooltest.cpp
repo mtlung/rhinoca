@@ -133,3 +133,43 @@ TEST_FIXTURE(TaskPoolTest, singleThreadChild)
 		taskPool.finishAdd(t1);
 	}
 }
+
+// This test aim to stress the task pool with dependency
+TEST_FIXTURE(TaskPoolTest, dependencyDeadLock)
+{
+	class DummyTask : public Task
+	{
+	public:
+		override void run(TaskPool* taskPool)
+		{
+//			printf("%u %u\n", thisId, TaskPool::threadId());
+		}
+
+		TaskId thisId;
+		TaskId parent;
+		TaskId depend;
+	};
+
+	TaskPool taskPool;
+	taskPool.init(3);
+	DummyTask tasks[1000];
+
+	for(unsigned i=0; i<COUNTOF(tasks); ++i)
+	{
+		tasks[i].thisId = 0;
+		tasks[i].parent = 0;
+
+		// Task with bigger index depends on task with smaller index
+		tasks[i].depend = (i == 0) ? 0 : rand() % i;
+
+		tasks[i].thisId = taskPool.beginAdd(&tasks[i]);
+		taskPool.dependsOn(tasks[i].thisId, tasks[i].depend);
+		taskPool.addChild(tasks[i].parent, tasks[i].thisId);
+	}
+
+	for(unsigned i=0; i<COUNTOF(tasks); ++i) {
+		taskPool.finishAdd(tasks[i].thisId);
+	}
+
+	taskPool.waitAll();
+}

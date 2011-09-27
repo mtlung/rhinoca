@@ -139,9 +139,8 @@ bool loadText(Resource* resource, ResourceManager* mgr)
 
 	TextLoader* loaderTask = new TextLoader(text, mgr);
 
-	TaskId taskLoad = taskPool->beginAdd(loaderTask, ~taskPool->mainThreadId());
+	TaskId taskLoad = taskPool->addFinalized(loaderTask, 0, 0, ~taskPool->mainThreadId());
 	text->taskReady = text->taskLoaded = taskPool->addFinalized(loaderTask, 0, taskLoad, taskPool->mainThreadId());
-	taskPool->finishAdd(taskLoad);
 
 	return true;
 }

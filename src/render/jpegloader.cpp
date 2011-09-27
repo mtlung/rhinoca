@@ -174,9 +174,8 @@ bool loadJpeg(Resource* resource, ResourceManager* mgr)
 
 	JpegLoader* loaderTask = new JpegLoader(texture, mgr);
 
-	TaskId taskLoad = taskPool->beginAdd(loaderTask, ~taskPool->mainThreadId());
+	TaskId taskLoad = taskPool->addFinalized(loaderTask, 0, 0, ~taskPool->mainThreadId());
 	texture->taskReady = texture->taskLoaded = taskPool->addFinalized(loaderTask, 0, taskLoad, taskPool->mainThreadId());
-	taskPool->finishAdd(taskLoad);
 
 	return true;
 }

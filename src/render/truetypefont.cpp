@@ -212,7 +212,7 @@ bool loadTrueTypeFont(Resource* resource, ResourceManager* mgr)
 
 	TrueTypeFontLoader* loaderTask = new TrueTypeFontLoader(font, mgr);
 
-	font->taskReady = taskPool->beginAdd(loaderTask, ~taskPool->mainThreadId());
+	font->taskReady = taskPool->addFinalized(loaderTask, 0, 0, ~taskPool->mainThreadId());
 	font->taskLoaded = taskPool->addFinalized(loaderTask, 0, font->taskReady, taskPool->mainThreadId());
 	taskPool->finishAdd(font->taskReady);
 

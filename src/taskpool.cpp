@@ -215,6 +215,9 @@ void TaskPool::addChild(TaskId parent, TaskId child)
 	TaskProxy* parentProxy = _findProxyById(parent);
 	TaskProxy* childProxy = _findProxyById(child);
 
+	if(!parentProxy || !childProxy)
+		return;	// TODO: Gives warning?
+
 	ASSERT(parentProxy && !parentProxy->finalized && "Parameter 'parent' has already finalized");
 	ASSERT(childProxy && !childProxy->finalized && "Parameter 'child' has already finalized");
 	ASSERT(!childProxy->parent && "The given child task is already under");
@@ -427,7 +430,7 @@ void TaskPool::doSomeTask(float timeout)
 			ScopeUnlock unlock(mutex);
 			sleep(0);
 
-			// Hunt for most dependening job, to prevent job stavation.
+			// Hunt for most depending job, to prevent job starvation.
 			p = (p->dependency && (p->dependency->id == p->dependencyId)) ? p->dependency : next;
 		}
 	}
