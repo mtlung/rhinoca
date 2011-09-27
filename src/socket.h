@@ -20,7 +20,7 @@ typedef unsigned socket_t;
 #	define ENETRESET	WSAENETRESET	// Network dropped connection on reset
 #	define ENOBUFS		WSAENOBUFS		// No buffer space available (recoverable)
 #	define ENOTCONN		WSAENOTCONN		// Socket is not connected
-#	define ENOTSOCK		WSAENOTSOCK		// Socket operation on nonsocket
+#	define ENOTSOCK		WSAENOTSOCK		// Socket operation on non-socket
 #	define ETIMEDOUT	WSAETIMEDOUT	// Connection timed out
 #	define EWOULDBLOCK	WSAEWOULDBLOCK	// Operation would block (recoverable)
 #else
@@ -30,7 +30,7 @@ typedef unsigned socket_t;
 class IPAddress
 {
 public:
-	//!	Default constructor gives loopback ip
+	//!	Default constructor gives loop back ip
 	IPAddress();
 
 	explicit IPAddress(const sockaddr& ip);
@@ -54,14 +54,14 @@ public:
 
 	FixString getString() const;
 
-	sockaddr& nativeAddr() const;	//! Function that cast mSockAddr into sockaddr
+	sockaddr& nativeAddr() const;	//! Function that cast _sockAddr into sockaddr
 
 	bool operator==(const IPAddress& rhs) const;
 	bool operator!=(const IPAddress& rhs) const;
 	bool operator<(const IPAddress& rhs) const;
 
 protected:
-	char mSockAddr[16];
+	char _sockAddr[16];
 };	// IPAddress
 
 //!	Represent an IP address with a port
@@ -92,7 +92,7 @@ public:
 	bool operator<(const IPEndPoint& rhs) const;
 
 protected:
-	IPAddress mAddress;
+	IPAddress _address;
 };	// IPEndPoint
 
 /// Cross-platform BSD socket class
@@ -213,9 +213,7 @@ public:
 	void setFd(const socket_t& f);
 
 protected:
-	char mFd[4];	//!< File descriptor
-	IPEndPoint mLocalEndPoint;
-	mutable bool mIsConnected;
+	char _fd[4];	//!< File descriptor
 };	// BsdSocket
 
 #endif	// __MCD___SOCKET_H__NETWORK_BSDSOCKET__

@@ -62,6 +62,7 @@ public:
 			_realloc(newsize);
 	}
 
+	// TODO: For performance reason, don't use default fill on POD type
 	void resize(rhuint newsize, const T& fill = T())
 	{
 		if(newsize > _allocated)
@@ -237,6 +238,7 @@ public:
 			_realloc(newsize);
 	}
 
+	// TODO: For performance reason, don't use default fill on POD type
 	void resize(rhuint newsize, const T& fill = T())
 	{
 		if(newsize > _allocated)

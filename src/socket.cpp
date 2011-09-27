@@ -1,4 +1,4 @@
-#include "Pch.h"
+#include "pch.h"
 #include "socket.h"
 #include <fcntl.h>
 
@@ -49,7 +49,7 @@
 #	define INVALID_SOCKET -1
 #endif
 
-#if defined(MCD_APPLE)
+#if defined(RHINOCA_APPLE)
 #	define MSG_NOSIGNAL 0x2000	// http://lists.apple.com/archives/macnetworkprog/2002/Dec/msg00091.html
 #endif
 
@@ -92,9 +92,9 @@ IPAddress::IPAddress()
 IPAddress::IPAddress(rhuint64 ip)
 {
 	// Clear the sockaddr
-	::memset(mSockAddr, 0, sizeof(sockaddr));
+	::memset(_sockAddr, 0, sizeof(sockaddr));
 
-	// TODO: Initialize mAddress->sa_family with AF_INET6 when we support IPv6
+	// TODO: Initialize _address->sa_family with AF_INET6 when we support IPv6
 	nativeAddr().sa_family = AF_INET;
 	BigInt& bi = reinterpret_cast<BigInt&>(ip);
 
@@ -108,7 +108,7 @@ IPAddress::IPAddress(rhuint64 ip)
 IPAddress::IPAddress(const sockaddr& ip)
 {
 	ASSERT(AF_INET == ip.sa_family);
-	ASSERT(sizeof(sockaddr) == sizeof(mSockAddr));
+	ASSERT(sizeof(sockaddr) == sizeof(_sockAddr));
 	nativeAddr() = ip;
 }
 
@@ -192,7 +192,7 @@ rhuint64 IPAddress::getInt() const
 sockaddr& IPAddress::nativeAddr() const
 {
 	return const_cast<sockaddr&>(
-		reinterpret_cast<const sockaddr&>(mSockAddr)
+		reinterpret_cast<const sockaddr&>(_sockAddr)
 	);
 }
 
@@ -209,12 +209,12 @@ bool IPAddress::operator<(const IPAddress& rhs) const {
 }
 
 IPEndPoint::IPEndPoint(const sockaddr& addr)
-	: mAddress(addr)
+	: _address(addr)
 {
 }
 
 IPEndPoint::IPEndPoint(const IPAddress& address, rhuint16 port)
-	: mAddress(address)
+	: _address(address)
 {
 	setPort(port);
 }
@@ -226,7 +226,7 @@ bool IPEndPoint::parse(const char* addressAndPort)
 	if(strlen(addressAndPort) >= sizeof(address)) return false;
 
 	if(sscanf(addressAndPort, "%[^:]:%s", &address[0], &port[0]) == 2) {
-		if(!mAddress.parse(address))
+		if(!_address.parse(address))
 			return false;
 
 		int portNum;
@@ -236,39 +236,39 @@ bool IPEndPoint::parse(const char* addressAndPort)
 		return true;
 	}
 
-	return mAddress.parse(address);
+	return _address.parse(address);
 }
 
 IPAddress& IPEndPoint::address() {
-	return mAddress;
+	return _address;
 }
 
 const IPAddress& IPEndPoint::address() const {
-	return mAddress;
+	return _address;
 }
 
 void IPEndPoint::setAddress(const IPAddress& address) {
 	rhuint16 p = port();
-	mAddress = address;
+	_address = address;
 	setPort(p);
 }
 
 rhuint16 IPEndPoint::port() const {
-	return rhuint16( ntohs(*(unsigned short*)(mAddress.nativeAddr().sa_data)) );
+	return rhuint16( ntohs(*(unsigned short*)(_address.nativeAddr().sa_data)) );
 }
 
 void IPEndPoint::setPort(rhuint16 port) {
-	*(unsigned short*)(mAddress.nativeAddr().sa_data) = htons((unsigned short)port);
+	*(unsigned short*)(_address.nativeAddr().sa_data) = htons((unsigned short)port);
 }
 
 /*std::string IPEndPoint::getString() const {
 	std::stringstream ss;
-	ss << mAddress.getString() << ":" << port();
+	ss << _address.getString() << ":" << port();
 	return ss.str();
 }*/
 
 bool IPEndPoint::operator==(const IPEndPoint& rhs) const {
-	return mAddress == rhs.mAddress && port() == rhs.port();
+	return _address == rhs._address && port() == rhs.port();
 }
 
 bool IPEndPoint::operator!=(const IPEndPoint& rhs) const {
@@ -277,9 +277,9 @@ bool IPEndPoint::operator!=(const IPEndPoint& rhs) const {
 
 bool IPEndPoint::operator<(const IPEndPoint& rhs) const
 {
-	if(mAddress < rhs.mAddress)
+	if(_address < rhs._address)
 		return true;
-	if(mAddress == rhs.mAddress)
+	if(_address == rhs._address)
 		return port() < rhs.port();
 	return false;
 }
@@ -308,9 +308,8 @@ ErrorCode BsdSocket::closeApplication()
 
 BsdSocket::BsdSocket()
 	: lastError(0)
-	, mLocalEndPoint(IPAddress::getAny(), 0)
 {
-	ASSERT(sizeof(socket_t) == sizeof(mFd));
+	ASSERT(sizeof(socket_t) == sizeof(_fd));
 	setFd(INVALID_SOCKET);
 }
 
@@ -444,10 +443,10 @@ ErrorCode BsdSocket::shutDownRead()
 	if(fd() == INVALID_SOCKET || ::shutdown(fd(), SD_RECEIVE) == OK)
 		return lastError = OK;
 
-#ifdef MCD_APPLE
-	return lastError = OK;
-#else
+#ifdef RHINOCA_WINDOWS
 	return lastError = getLastError();
+#else
+	return lastError = OK;
 #endif
 }
 
@@ -456,10 +455,10 @@ ErrorCode BsdSocket::shutDownWrite()
 	if(fd() == INVALID_SOCKET || ::shutdown(fd(), SD_SEND) == OK)
 		return lastError = OK;
 
-#ifdef MCD_APPLE
-	return lastError = OK;
-#else
+#ifdef RHINOCA_WINDOWS
 	return lastError = getLastError();
+#else
+	return lastError = OK;
 #endif
 }
 
@@ -468,10 +467,10 @@ ErrorCode BsdSocket::shutDownReadWrite()
 	if(fd() == INVALID_SOCKET || ::shutdown(fd(), SD_BOTH) == OK)
 		return lastError = OK;
 
-#ifdef MCD_APPLE
-	return lastError = OK;
-#else
+#ifdef RHINOCA_WINDOWS
 	return lastError = getLastError();
+#else
+	return lastError = OK;
 #endif
 }
 
@@ -488,10 +487,10 @@ ErrorCode BsdSocket::close()
 		return lastError = OK;
 #endif
 
-#ifdef MCD_APPLE
-	return lastError = OK;
-#else
+#ifdef RHINOCA_WINDOWS
 	return lastError = getLastError();
+#else
+	return lastError = OK;
 #endif
 }
 
@@ -511,9 +510,9 @@ bool BsdSocket::inProgress(int code)
 }
 
 const socket_t& BsdSocket::fd() const {
-	return *reinterpret_cast<const socket_t*>(mFd);
+	return *reinterpret_cast<const socket_t*>(_fd);
 }
 
 void BsdSocket::setFd(const socket_t& f) {
-	*reinterpret_cast<socket_t*>(mFd) = f;
+	*reinterpret_cast<socket_t*>(_fd) = f;
 }

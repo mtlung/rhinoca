@@ -224,7 +224,7 @@ Path Path::getCurrentPath()
 {
 #ifdef _WIN32
 	DWORD sz;
-	wchar_t dummy[1];	// Use a dummy to avoid a warning in Intel Thread Checker: passing NULL to GetCurrentDirectoryA
+	wchar_t dummy[1];	// Use a dummy to avoid a warning in Intel Thread Checker: passing NULL to GetCurrentDirectoryW
 
 	// Query the required buffer size
 	if((sz = ::GetCurrentDirectoryW(0, dummy)) == 0)

@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "../src/socket.h"
-//#include "../../MCD/Core/System/Thread.h"
+#include "../src/taskpool.h"
 
 namespace {
 
@@ -48,18 +48,15 @@ protected:
 	IPEndPoint mAnyEndPoint;
 };	// BsdSocketTestFixture
 
-}	// namespace
-
-/*
-struct SimpleConnector : public MCD::Thread::IRunnable
+struct SimpleConnector : public Task
 {
 	SimpleConnector(const IPEndPoint& ep) : endPoint(ep) {}
 
-	sal_override void run(Thread& thread) throw() {
+	override void run(TaskPool* taskPool) throw() {
 		BsdSocket s;
 		VERIFY(0 == s.create(BsdSocket::TCP));
 		bool connected = false;
-		while(thread.keepRun()) {
+		while(taskPool->keepRun()) {
 			connected = s.connect(endPoint) == 0;
 
 			if(connected) {
@@ -81,12 +78,14 @@ TEST_FIXTURE(BsdSocketTestFixture, BlockingAcceptAndConnect)
 	CHECK_EQUAL(0, listenOn(s1));
 
 	SimpleConnector connector(mLocalEndPoint);
-	Thread thread(connector, false);
+	TaskPool taskPool;
+	taskPool.init(1);
+	TaskId task = taskPool.addFinalized(&connector, 0, 0, ~taskPool.mainThreadId());
 
 	BsdSocket s2;
 	CHECK_EQUAL(0, s1.accept(s2));
 
-	thread.wait();
+	taskPool.wait(task);
 }
 
 TEST_FIXTURE(BsdSocketTestFixture, NonBlockingAccept)
@@ -100,11 +99,13 @@ TEST_FIXTURE(BsdSocketTestFixture, NonBlockingAccept)
 	CHECK(BsdSocket::inProgress(s1.lastError));
 
 	SimpleConnector connector(mLocalEndPoint);
-	Thread thread(connector, false);
+	TaskPool taskPool;
+	taskPool.init(1);
+	TaskId task = taskPool.addFinalized(&connector, 0, 0, ~taskPool.mainThreadId());
 
 	while(BsdSocket::inProgress(s1.accept(s2))) {}
 
-	thread.wait();
+	taskPool.wait(task);
 }
 
 TEST_FIXTURE(BsdSocketTestFixture, TCPBlockingSendBlockingRecv)
@@ -113,7 +114,9 @@ TEST_FIXTURE(BsdSocketTestFixture, TCPBlockingSendBlockingRecv)
 	CHECK_EQUAL(0, listenOn(s1));
 
 	SimpleConnector connector(mLocalEndPoint);
-	Thread thread(connector, false);
+	TaskPool taskPool;
+	taskPool.init(1);
+	TaskId task = taskPool.addFinalized(&connector);
 
 	BsdSocket s2;
 	CHECK_EQUAL(0, s1.accept(s2));
@@ -124,9 +127,9 @@ TEST_FIXTURE(BsdSocketTestFixture, TCPBlockingSendBlockingRecv)
 	CHECK(receivedSize <= sizeof(buf));
 
 	CHECK(strcmp("Hello world!", buf) == 0);
-	thread.wait();
+	taskPool.wait(task);
 }
-*/
+
 TEST_FIXTURE(BsdSocketTestFixture, Shutdown)
 {
 	BsdSocket sl, sa, sc;
