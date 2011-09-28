@@ -25,7 +25,7 @@ public:
 // Attributes
 	/// The parsable textual representation of the rule.
 	/// This reflects the current state of the rule and not its initial value.
-	const char* cssTest();
+	const char* cssText();
 	void setCssText(const char* str);
 
 	const char* selectorText();

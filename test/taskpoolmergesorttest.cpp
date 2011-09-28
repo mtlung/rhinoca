@@ -147,7 +147,7 @@ static void mergeSortMultiThread(int* data, int* scratch, int begin, int end, Ta
 TEST(TaskPoolMultiThreadMergeSortTest)
 {
 	TaskPool taskPool;
-	taskPool.init(4);
+	taskPool.init(3);
 
 	Vector<int> data(testSize), scratch(testSize);
 	for(rhuint i=0; i<data.size(); ++i)

@@ -21,6 +21,15 @@ JSClass CanvasRenderingContext2D::jsClass = {
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
+static void getFloat(JSContext* cx, jsval* vp, float* dest, unsigned count)
+{
+	for(unsigned i=0; i<count; ++i) {
+		double tmp;
+		VERIFY(JS_ValueToNumber(cx, JS_ARGV(cx, vp)[i], &tmp));
+		dest[i] = (float)tmp;
+	}
+}
+
 static JSBool getCanvas(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
@@ -252,13 +261,10 @@ static JSBool clearRect(JSContext* cx, uintN argc, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
-	double x, y, w, h;
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &w));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &h));
+	struct { float x, y, w, h; } s;
+	getFloat(cx, vp, &s.x, 4);
 
-	self->clearRect((float)x, (float)y, (float)w, (float)h);
+	self->clearRect(s.x, s.y, s.w, s.h);
 
 	return JS_TRUE;
 }
@@ -314,42 +320,34 @@ static JSBool drawImage(JSContext* cx, uintN argc, jsval* vp)
 
 	const float scalex = float(texture->virtualWidth) / imgw;
 	const float scaley = float(texture->virtualHeight) / imgh;
-	double sx, sy, sw, sh;	// Source x, y, width and height
-	double dx, dy, dw, dh;	// Dest x, y, width and height
+
+	struct {
+		float sx, sy, sw, sh;	// Source x, y, width and height
+		float dx, dy, dw, dh;	// Dest x, y, width and height
+	} s;
 
 	switch(argc) {
 	case 3:
-		sx = sy = 0;
-		sw = texture->virtualWidth;
-		sh = texture->virtualHeight;
-		dw = imgw;
-		dh = imgh;
-		VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &dx));
-		VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &dy));
+		s.sx = s.sy = 0;
+		s.sw = (float)texture->virtualWidth;
+		s.sh = (float)texture->virtualHeight;
+		s.dw = (float)imgw;
+		s.dh = (float)imgh;
+		getFloat(cx, vp, &s.dx, argc-1);
 		break;
 	case 5:
-		sx = sy = 0;
-		sw = texture->virtualWidth;
-		sh = texture->virtualHeight;
-		VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &dx));
-		VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &dy));
-		VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &dw));
-		VERIFY(JS_ValueToNumber(cx, JS_ARGV4, &dh));
+		s.sx = s.sy = 0;
+		s.sw = (float)texture->virtualWidth;
+		s.sh = (float)texture->virtualHeight;
+		getFloat(cx, vp, &s.dx, argc-1);
 		break;
 	case 9:
-		VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &sx));
-		VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &sy));
-		VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &sw));
-		VERIFY(JS_ValueToNumber(cx, JS_ARGV4, &sh));
-		VERIFY(JS_ValueToNumber(cx, JS_ARGV5, &dx));
-		VERIFY(JS_ValueToNumber(cx, JS_ARGV6, &dy));
-		VERIFY(JS_ValueToNumber(cx, JS_ARGV7, &dw));
-		VERIFY(JS_ValueToNumber(cx, JS_ARGV8, &dh));
+		getFloat(cx, vp, &s.sx, argc-1);
 
-		sx *= scalex;
-		sy *= scaley;
-		sw *= scalex;
-		sh *= scaley;
+		s.sx *= scalex;
+		s.sy *= scaley;
+		s.sw *= scalex;
+		s.sh *= scaley;
 		break;
 	default:
 		return JS_FALSE;
@@ -357,8 +355,8 @@ static JSBool drawImage(JSContext* cx, uintN argc, jsval* vp)
 
 	self->drawImage(
 		texture, filter,
-		(float)sx, (float)sy, (float)sw, (float)sh,
-		(float)dx, (float)dy, (float)dw, (float)dh
+		s.sx, s.sy, s.sw, s.sh,
+		s.dx, s.dy, s.dw, s.dh
 	);
 
 	return JS_TRUE;
@@ -389,10 +387,9 @@ static JSBool scale(JSContext* cx, uintN argc, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
-	double x, y;
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
-	self->scale((float)x, (float)y);
+	struct { float x, y; } s;
+	getFloat(cx, vp, &s.x, 2);
+	self->scale(s.x, s.y);
 
 	return JS_TRUE;
 }
@@ -414,10 +411,9 @@ static JSBool translate(JSContext* cx, uintN argc, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
-	double x, y;
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
-	self->translate((float)x, (float)y);
+	struct { float x, y; } s;
+	getFloat(cx, vp, &s.x, 2);
+	self->translate(s.x, s.y);
 
 	return JS_TRUE;
 }
@@ -427,15 +423,10 @@ static JSBool transform(JSContext* cx, uintN argc, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
-	double m11, m12, m21, m22, dx, dy;
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &m11));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &m12));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &m21));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &m22));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV4, &dx));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV5, &dy));
+	struct { float m11, m12, m21, m22, dx, dy; } s;
+	getFloat(cx, vp, &s.m11, 6);
 
-	self->transform((float)m11, (float)m21, (float)m21, (float)m22, (float)dx, (float)dy);
+	self->transform(s.m11, s.m21, s.m21, s.m22, s.dx, s.dy);
 
 	return JS_TRUE;
 }
@@ -445,15 +436,10 @@ static JSBool setTransform(JSContext* cx, uintN argc, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
-	double m11, m12, m21, m22, dx, dy;
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &m11));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &m12));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &m21));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &m22));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV4, &dx));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV5, &dy));
+	struct { float m11, m12, m21, m22, dx, dy; } s;
+	getFloat(cx, vp, &s.m11, 6);
 
-	self->setTransform((float)m11, (float)m21, (float)m21, (float)m22, (float)dx, (float)dy);
+	self->setTransform(s.m11, s.m21, s.m21, s.m22, s.dx, s.dy);
 
 	return JS_TRUE;
 }
@@ -483,10 +469,9 @@ static JSBool moveTo(JSContext* cx, uintN argc, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
-	double x, y;
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
-	self->moveTo((float)x, (float)y);
+	struct { float x, y; } s;
+	getFloat(cx, vp, &s.x, 2);
+	self->moveTo(s.x, s.y);
 
 	return JS_TRUE;
 }
@@ -496,10 +481,9 @@ static JSBool lineTo(JSContext* cx, uintN argc, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
-	double x, y;
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
-	self->lineTo((float)x, (float)y);
+	struct { float x, y; } s;
+	getFloat(cx, vp, &s.x, 2);
+	self->lineTo(s.x, s.y);
 
 	return JS_TRUE;
 }
@@ -509,12 +493,9 @@ static JSBool quadraticCurveTo(JSContext* cx, uintN argc, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
-	double cpx, cpy, x, y;
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &cpx));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &cpy));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &x));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &y));
-	self->quadraticCurveTo((float)cpx, (float)cpy, (float)x, (float)y);
+	struct { float cpx, cpy, x, y; } s;
+	getFloat(cx, vp, &s.cpx, 4);
+	self->quadraticCurveTo(s.cpx, s.cpy, s.x, s.y);
 
 	return JS_TRUE;
 }
@@ -524,14 +505,9 @@ static JSBool bezierCurveTo(JSContext* cx, uintN argc, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
-	double cp1x, cp1y, cp2x, cp2y, x, y;
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &cp1x));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &cp1y));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &cp2x));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &cp2y));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV4, &x));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV5, &y));
-	self->bezierCurveTo((float)cp1x, (float)cp1y, (float)cp2x, (float)cp2y, (float)x, (float)y);
+	struct { float cp1x, cp1y, cp2x, cp2y, x, y; } s;
+	getFloat(cx, vp, &s.cp1x, 6);
+	self->bezierCurveTo(s.cp1x, s.cp1y, s.cp2x, s.cp2y, s.x, s.y);
 
 	return JS_TRUE;
 }
@@ -542,14 +518,10 @@ static JSBool arc(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	bool antiClockwise;
-	double x, y, radius, startAngle, endAngle;
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &radius));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &startAngle));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV4, &endAngle));
+	struct { float x, y, radius, startAngle, endAngle; } s;
+	getFloat(cx, vp, &s.x, 5);
 	VERIFY(JS_GetValue(cx, JS_ARGV5, antiClockwise));
-	self->arc((float)x, (float)y, (float)radius, (float)startAngle, (float)endAngle, antiClockwise);
+	self->arc(s.x, s.y, s.radius, s.startAngle, s.endAngle, antiClockwise);
 
 	return JS_TRUE;
 }
@@ -559,12 +531,9 @@ static JSBool rect(JSContext* cx, uintN argc, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
-	double x, y, w, h;
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &w));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &h));
-	self->rect((float)x, (float)y, (float)w, (float)h);
+	struct { float x, y, w, h; } s;
+	getFloat(cx, vp, &s.x, 4);
+	self->rect(s.x, s.y, s.w, s.h);
 
 	return JS_TRUE;
 }
@@ -577,13 +546,9 @@ static JSBool createLinearGradient(JSContext* cx, uintN argc, jsval* vp)
 	CanvasGradient* g = new CanvasGradient;
 	g->bind(cx, NULL);
 
-	double x1, y1, x2, y2;
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x1));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y1));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &x2));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &y2));
-
-	g->createLinear((float)x1, (float)y1, (float)x2, (float)y2);
+	struct { float x1, y1, x2, y2; } s;
+	getFloat(cx, vp, &s.x1, 4);
+	g->createLinear(s.x1, s.y1, s.x2, s.y2);
 
 	JS_RVAL(cx, vp) = *g;
 
@@ -598,15 +563,9 @@ static JSBool createRadialGradient(JSContext* cx, uintN argc, jsval* vp)
 	CanvasGradient* g = new CanvasGradient;
 	g->bind(cx, NULL);
 
-	double x1, y1, r1, x2, y2, r2;
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x1));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y1));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &r1));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &x2));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV4, &y2));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV5, &r2));
-
-	g->createRadial((float)x1, (float)y1, (float)r1, (float)x2, (float)y2, (float)r2);
+	struct { float x1, y1, r1, x2, y2, r2; } s;
+	getFloat(cx, vp, &s.x1, 6);
+	g->createRadial(s.x1, s.y1, s.r1, s.x2, s.y2, s.r2);
 
 	JS_RVAL(cx, vp) = *g;
 
@@ -628,12 +587,9 @@ static JSBool strokeRect(JSContext* cx, uintN argc, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
-	double x, y, w, h;
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &w));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &h));
-	self->strokeRect((float)x, (float)y, (float)w, (float)h);
+	struct { float x, y, w, h; } s;
+	getFloat(cx, vp, &s.x, 4);
+	self->strokeRect(s.x, s.y, s.w, s.h);
 
 	return JS_TRUE;
 }
@@ -653,12 +609,9 @@ static JSBool fillRect(JSContext* cx, uintN argc, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
-	double x, y, w, h;
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &x));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV1, &y));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV2, &w));
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV3, &h));
-	self->fillRect((float)x, (float)y, (float)w, (float)h);
+	struct { float x, y, w, h; } s;
+	getFloat(cx, vp, &s.x, 4);
+	self->fillRect(s.x, s.y, s.w, s.h);
 
 	return JS_TRUE;
 }

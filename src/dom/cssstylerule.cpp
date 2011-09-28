@@ -20,7 +20,7 @@ JSClass CSSStyleRule::jsClass = {
 static JSBool cssText(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	CSSStyleRule* self = getJsBindable<CSSStyleRule>(cx, obj);
-	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->cssTest()));
+	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->cssText()));
 	return JS_TRUE;
 }
 
@@ -141,7 +141,7 @@ static void cssParserCallback(ParserResult* result, Parser* parser)
 	}
 }
 
-const char* CSSStyleRule::cssTest()
+const char* CSSStyleRule::cssText()
 {
 	return _cssText.c_str();
 }
