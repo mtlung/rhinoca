@@ -175,6 +175,10 @@
 	</References>
 	<Files>
 		<File
+			RelativePath="..\..\test\bipbuffertest.cpp"
+			>
+		</File>
+		<File
 			RelativePath="..\..\test\ipendpointtest.cpp"
 			>
 		</File>
