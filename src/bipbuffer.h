@@ -10,18 +10,40 @@
 
 	// Lets write something to the buffer
 	const char src[] = "hello world!";
+	std::string dest;
 
-	do {
+	while(true) {
 		// Reserve space first
 		unsigned reserved = 0;
 		unsigned char* writePtr = buf.reserveWrite(sizeof(src), reserved);
 
+		if(!writePtr)
+			break;
+
+		// Do the write operation
 		const char* srcPtr = src;
 		memcpy(writePtr, src, reserved);
 
 		// In this case, we commit what we have reserved, but committing something
 		// less than the reserved is allowed.
 		buf.commitWrite(reserved);
+
+		src += reserved;
+	}
+
+	// Lets read back the data in the buffer
+	while(true) {
+		unsigned readSize = 0;
+
+		// Get a read pointer to the contiguous block of memory
+		const unsigned char* readPtr = buf.getReadPtr(readSize);
+		if(!readPtr)
+			break;
+
+		dest.append((const char*)readPtr, readSize);
+
+		// Tell the buffer you finish the read
+		buf.commitRead(readSize);
 	}
 	\endcode
  */

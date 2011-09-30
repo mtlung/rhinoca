@@ -103,6 +103,7 @@ void String::resize(unsigned size)
 String& String::append(const char* str, size_type count)
 {
 	if(count > 0) {
+		if(str[count - 1] == '\0') --count;	// Don't copy the null terminator, we will explicitly put one
 		ASSERT(count <= strlen(str));
 		_cstr = (char*)rhinoca_realloc(_length ? _cstr : NULL, _length + 1, _length + count + 1);
 		memcpy(_cstr + _length, str, count);

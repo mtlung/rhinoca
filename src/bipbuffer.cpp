@@ -66,7 +66,7 @@ unsigned char* BipBuffer::reserveWrite(unsigned sizeToReserve, unsigned& actuall
 		if(freespace >= _ia) {
 			if(freespace == 0) return NULL;
 			if(sizeToReserve < freespace) freespace = sizeToReserve;
-//				if((size < freespace) || (freespace >= _ia)) freespace = size;
+//			if((sizeToReserve < freespace) || (freespace >= _ia)) freespace = sizeToReserve;
 
 			szResrv = actuallyReserved = freespace;
 			ixResrv = _ia + _za;
