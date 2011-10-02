@@ -4,7 +4,7 @@
 BipBuffer::BipBuffer()
 	: _buffer(NULL), _bufLen(0), _realloc(NULL)
 {
-	_ia = _za = _ib = _zb = ixResrv = szResrv = 0;
+	clear();
 }
 
 BipBuffer::~BipBuffer()
@@ -17,9 +17,6 @@ bool BipBuffer::init(void* buf, unsigned size, Realloc reallocFunc)
 	if(reallocFunc && !buf)
 		buf = (unsigned char*)reallocFunc(buf, size);
 
-	// Copy the old data to the new one
-//	memcpy(buf, _buffer, 
-
 	// Free the old buffer
 	if(_realloc)
 		_realloc(_buffer, 0);
@@ -27,6 +24,9 @@ bool BipBuffer::init(void* buf, unsigned size, Realloc reallocFunc)
 	_buffer = (unsigned char*)buf;
 	_bufLen = size;
 	_realloc = reallocFunc;
+
+	clear();
+
 	return true;
 }
 
@@ -80,6 +80,11 @@ unsigned char* BipBuffer::reserveWrite(unsigned sizeToReserve, unsigned& actuall
 			return _buffer;
 		}
 	}
+}
+
+unsigned char* BipBuffer::reserveWrite(unsigned& actuallyReserved)
+{
+	return reserveWrite(bufferSize(), actuallyReserved);
 }
 
 void BipBuffer::commitWrite(unsigned size)
@@ -137,6 +142,11 @@ void BipBuffer::commitRead(unsigned size)
 		_za -= size;
 		_ia += size;
 	}
+}
+
+void BipBuffer::clear()
+{
+	_ia = _za = _ib = _zb = ixResrv = szResrv = 0;
 }
 
 unsigned BipBuffer::_getSpaceAfterA() const

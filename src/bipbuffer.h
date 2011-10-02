@@ -56,6 +56,7 @@ public:
 
 	typedef void* (*Realloc)(void*, unsigned);
 
+	/// Fail if there are outstanding reserved wirte
 	/// May fail if the new size is not large enough to fit committed write data.
 	bool init(void* buf, unsigned size, Realloc reallocFunc = NULL);
 
@@ -67,6 +68,9 @@ public:
 	/// Return NULL if no space can be allocated or a previous reservation has not been committed.
 	unsigned char* reserveWrite(unsigned sizeToReserve, unsigned& actuallyReserved);
 
+	/// Trys to reserve as much as it can.
+	unsigned char* reserveWrite(unsigned& actuallyReserved);
+
 	/// Committing a size of 0 will release the reservation.
 	/// Committing a size > than the reserved size will cause an assert in a debug build;
 	/// in a release build, the actual reserved size will be used.
@@ -77,12 +81,15 @@ public:
 
 	void commitRead(unsigned size);
 
+	/// Make the buffer to it's initial state, while the allocated raw buffer is kept
+	void clear();
+
 // Attributes:
-	/// Queries how much data (in total) can be read in the buffer.
-	unsigned readableSize() const
-	{
-		return _za + _zb;
-	}
+	/// Size of the raw buffer.
+	unsigned bufferSize() const { return _bufLen; }
+
+	/// How much data (in total) can be read in the buffer.
+	unsigned readableSize() const { return _za + _zb; }
 
 	unsigned _getSpaceAfterA() const;
 	unsigned _getBFreeSpace() const;
