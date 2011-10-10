@@ -10,6 +10,7 @@ extern "C" {
 
 typedef struct RhRenderDriverContext
 {
+	unsigned width, height;
 } RhRenderDriverContext;
 
 typedef struct RhRenderTarget
@@ -95,6 +96,7 @@ typedef struct RhRenderDriver
 	bool (*initContext)(RhRenderDriverContext* self, void* platformSpecificWindow);
 	void (*swapBuffers)(RhRenderDriverContext* self);
 	bool (*changeResolution)(RhRenderDriverContext* self, unsigned width, unsigned height);
+	void (*setViewport)(RhRenderDriverContext* self, unsigned x, unsigned y, unsigned width, unsigned height);
 
 // Render target
 /*	RhRenderTarget* (*newRenderTarget)(
@@ -137,6 +139,10 @@ typedef struct RhRenderDriver
 
 	bool (*bindProgramInput)(RhRenderShaderProgram* self, RhRenderShaderProgramInput* inputs, unsigned inputCount, unsigned* cacheId);	// Give NULL to cacheId if you don't want to create a cache for it
 	bool (*bindProgramInputCached)(RhRenderShaderProgram* self, unsigned cacheId);
+
+// Making draw call
+	void (*drawTriangle)(unsigned offset, unsigned vertexCount, unsigned flags);
+	void (*drawTriangleIndexed)(unsigned offset, unsigned indexCount, unsigned flags);
 
 // Driver version
 	const char* driverName;

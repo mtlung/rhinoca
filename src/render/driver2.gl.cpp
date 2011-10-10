@@ -31,6 +31,14 @@ extern bool _initContext(RhRenderDriverContext* self, void* platformSpecificWind
 extern void _swapBuffers(RhRenderDriverContext* self);
 extern bool _changeResolution(RhRenderDriverContext* self, unsigned width, unsigned height);
 
+static void _setViewport(RhRenderDriverContext* self, unsigned x, unsigned y, unsigned width, unsigned height)
+{
+//	glEnable(GL_SCISSOR_TEST);
+	glViewport((GLint)x, (GLint)y, (GLsizei)width, (GLsizei)height);
+//	glScissor((GLint)x, (GLint)y, (GLsizei)width, (GLsizei)height);
+//	glDepthRange(zmin, zmax);
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Buffer
 
@@ -653,6 +661,11 @@ ProgramInputMapping _programInputMappings[] = {
 
 bool _bindProgramInput(RhRenderShaderProgram* self, RhRenderShaderProgramInput* inputs, unsigned inputCount, unsigned* cacheId)
 {
+//	glShadeModel(GL_SMOOTH);
+//	glFrontFace(GL_CCW);			// OpenGl use counterclockwise as the default winding
+//	glDepthRange(-1, 1);
+//	glDisable(GL_DEPTH_TEST);
+
 	RhRenderShaderProgramImpl* impl = static_cast<RhRenderShaderProgramImpl*>(self);
 	if(!impl) return false;
 
@@ -685,7 +698,7 @@ bool _bindProgramInput(RhRenderShaderProgram* self, RhRenderShaderProgramInput* 
 			ProgramInputMapping* m = &_programInputMappings[i->elementCount];
 
 			// Generate nameHash if necessary
-			if(i->nameHash == 0)
+			if(i->nameHash == 0 && i->name)
 				i->nameHash = StringHash(i->name);
 
 			// See: http://www.opengl.org/sdk/docs/man/xhtml/glVertexAttribPointer.xml
@@ -701,6 +714,8 @@ bool _bindProgramInput(RhRenderShaderProgram* self, RhRenderShaderProgramInput* 
 					glEnableVertexAttribArray(a->location);
 				}
 			}
+			else
+				print(NULL, "attribute not found!");
 		}
 	}
 
@@ -716,6 +731,26 @@ bool _bindProgramInputCached(RhRenderShaderProgram* self, unsigned cacheId)
 
 	// TODO: Implement
 	return false;
+}
+
+//////////////////////////////////////////////////////////////////////////
+// Making draw call
+
+static void _drawTriangle(unsigned offset, unsigned vertexCount, unsigned flags)
+{
+	GLenum mode = GL_TRIANGLES;
+	glDrawArrays(mode, offset, vertexCount);
+}
+
+static void _drawTriangleIndexed(unsigned offset, unsigned indexCount, unsigned flags)
+{
+	GLenum mode = GL_TRIANGLES;
+	GLenum indexType = GL_UNSIGNED_SHORT;
+	unsigned byteOffset = offset * sizeof(rhuint16);
+
+	checkError();
+	glDrawElements(mode, indexCount, indexType, (void*)byteOffset);
+	checkError();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -736,6 +771,8 @@ RhRenderDriver* rhNewRenderDriver(const char* options)
 	ret->deleteContext = _deleteDriverContext;
 	ret->initContext = _initContext;
 	ret->swapBuffers = _swapBuffers;
+	ret->changeResolution = _changeResolution;
+	ret->setViewport = _setViewport;
 
 	ret->newBuffer = _newBuffer;
 	ret->deleteBuffer = _deleteBuffer;
@@ -766,6 +803,9 @@ RhRenderDriver* rhNewRenderDriver(const char* options)
 	ret->setUniformTexture = _setUniformTexture;
 	ret->bindProgramInput = _bindProgramInput;
 	ret->bindProgramInputCached = _bindProgramInputCached;
+
+	ret->drawTriangle = _drawTriangle;
+	ret->drawTriangleIndexed = _drawTriangleIndexed;
 
 	return ret;
 }

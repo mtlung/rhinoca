@@ -20,7 +20,7 @@ struct ContextImpl : public RhRenderDriverContext
 {
 	HWND hWnd;
 	HDC hDc;
-	unsigned width, height;
+	HGLRC hRc;
 	Vector<RhRenderShaderProgramInput> programInputCache;
 };	// ContextImpl
 
@@ -44,8 +44,15 @@ void _useDriverContext(RhRenderDriverContext* self)
 void _deleteDriverContext(RhRenderDriverContext* self)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
-	if(impl == _currentContext)
+	if(!impl) return;
+
+	if(impl == _currentContext) {
+		 wglMakeCurrent(NULL, NULL); 
 		_currentContext = NULL;
+	}
+
+	wglDeleteContext(impl->hRc);
+
 	delete static_cast<ContextImpl*>(self);
 }
 
@@ -77,7 +84,7 @@ bool _initContext(RhRenderDriverContext* self, void* platformSpecificWindow)
 	if(::SetPixelFormat(hDc, pixelFormat, &pfd) != TRUE)
 		return false;
 
-	HGLRC hRc = ::wglCreateContext(hDc);
+	HGLRC hRc = impl->hRc = ::wglCreateContext(hDc);
 	bool ret = ::wglMakeCurrent(hDc, hRc) == TRUE;
 
 	// Initialize opengl functions
@@ -104,7 +111,8 @@ void _swapBuffers(RhRenderDriverContext* self)
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	if(!impl) return;
 
-	RHVERIFY(::SwapBuffers(impl->hDc) == TRUE);
+//	RHVERIFY(::SwapBuffers(impl->hDc) == TRUE);
+	::SwapBuffers(impl->hDc);
 }
 
 bool _changeResolution(RhRenderDriverContext* self, unsigned width, unsigned height)
