@@ -89,7 +89,7 @@ struct AlBuffer
 
 	~AlBuffer()
 	{
-		ASSERT(referenceCount == 0);
+		RHASSERT(referenceCount == 0);
 	}
 
 	bool dataReady;
@@ -326,7 +326,7 @@ AudioSound* AudioDevice::createSound(const char* uri, ResourceManager* resourceM
 
 int AudioDevice::allocateAlBufferFor(AudioBuffer* src, unsigned begin, unsigned end)
 {
-	ASSERT(src);
+	RHASSERT(src);
 
 	for(unsigned i=0; i<MAX_AL_BUFFERS; ++i) {
 		AlBuffer& b = _alBuffers[i];
@@ -396,7 +396,7 @@ void AudioDevice::update()
 			continue;
 		}
 
-		ASSERT(sound.audioBuffer);
+		RHASSERT(sound.audioBuffer);
 		sound.audioBuffer->hotness++;
 
 		// Request the number of OpenAL Buffers have been processed (played) on the Source
@@ -522,7 +522,7 @@ void audiodevice_init()
 	if(_initCount > 0)
 		return;
 
-	ASSERT(!_alcDevice);
+	RHASSERT(!_alcDevice);
 	_alcDevice = alcOpenDevice(NULL);
 
 	if(!_alcDevice)

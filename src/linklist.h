@@ -1,7 +1,8 @@
 #ifndef __LINKLIST_H__
 #define __LINKLIST_H__
 
-#include "common.h"
+#include "assert.h"
+#include "noncopyable.h"
 
 /*!	The base class for an intrusive double linked list.
 	To use the link list, user have to extend the node first:
@@ -165,21 +166,21 @@ public:
 
 	//! Get the first node, assertion if the list is empty.
 	NodeBase& front() {
-		ASSERT(!isEmpty());
+		RHASSERT(!isEmpty());
 		return *mHead->mNext;
 	}
 	const NodeBase& front() const {
-		ASSERT(!isEmpty());
+		RHASSERT(!isEmpty());
 		return *mHead->mNext;
 	}
 
 	//! Get the last node, assertion if the list is empty.
 	NodeBase& back() {
-		ASSERT(!isEmpty());
+		RHASSERT(!isEmpty());
 		return *mTail->mPrev;
 	}
 	const NodeBase& back() const {
-		ASSERT(!isEmpty());
+		RHASSERT(!isEmpty());
 		return *mTail->mPrev;
 	}
 
@@ -233,13 +234,13 @@ public:
 	void pushBack(NodeBase& newNode);
 
 	/*!	Insert \em newNode before the node \em beforeThis.
-		Assertion fail if \em newNode is not already in any list and \em beforeThis
+		assertion fail if \em newNode is not already in any list and \em beforeThis
 		must already in this list.
 	 */
 	void insertBefore(NodeBase& newNode, const NodeBase& beforeThis);
 
 	/*!	Insert \em newNode after the node \em afterThis.
-		Assertion fail if \em newNode is not already in any list and \em afterThis
+		assertion fail if \em newNode is not already in any list and \em afterThis
 		must already in this list.
 	 */
 	void insertAfter(NodeBase& newNode, const NodeBase& afterThis);

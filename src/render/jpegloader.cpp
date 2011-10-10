@@ -116,7 +116,7 @@ void JpegLoader::load(TaskPool* taskPool)
 	height = _decoder->get_height();
 	rowBytes = _decoder->get_bytes_per_scan_line();
 
-	ASSERT(!pixelData);
+	RHASSERT(!pixelData);
 	pixelDataSize = rowBytes * height;
 	pixelData = (char*)rhinoca_malloc(pixelDataSize);
 
@@ -153,7 +153,7 @@ Abort:
 
 void JpegLoader::commit(TaskPool* taskPool)
 {
-	ASSERT(texture->scratch == this);
+	RHASSERT(texture->scratch == this);
 	texture->scratch = NULL;
 
 	if(texture->create(width, height, Driver::ANY, pixelData, pixelDataSize, pixelDataFormat))

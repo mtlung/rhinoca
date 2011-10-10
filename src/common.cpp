@@ -2,6 +2,12 @@
 #include "common.h"
 #include <ctype.h>
 #include <math.h>
+#include <assert.h>
+
+void rhAssert(const wchar_t* expression, const wchar_t* file, unsigned line)
+{
+	_wassert(expression, file, line);
+}
 
 // Reference: http://www.bsdlover.cn/study/UnixTree/V7/usr/src/libc/gen/atof.c.html
 double atof(const char* p, double onErr)

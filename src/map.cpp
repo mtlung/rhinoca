@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "map.h"
+#include "assert.h"
 
 namespace Impl {
 
@@ -36,7 +37,7 @@ bool AvlTree::Node::isBallanceOk() const
 
 AvlTree::Node::Direction AvlTree::Node::parentIdx() const
 {
-	ASSERT((this == mParent->mChildren[Left]) || (this == mParent->mChildren[Right]));
+	RHASSERT((this == mParent->mChildren[Left]) || (this == mParent->mChildren[Right]));
 	return this == mParent->mChildren[Left] ? Left : Right;
 }
 
@@ -59,9 +60,9 @@ size_t max(size_t lhs, size_t rhs)
 
 size_t AvlTree::Node::assertValid(size_t& total, const Node* parent, size_t nL, size_t nR) const
 {
-	ASSERT(mParent == parent);
-	ASSERT(isBallanceOk());
-	ASSERT(nL + mBallance == nR);
+	RHASSERT(mParent == parent);
+	RHASSERT(isBallanceOk());
+	RHASSERT(nL + mBallance == nR);
 
 	++total;
 	return max(nL, nR) + 1;
@@ -92,7 +93,7 @@ AvlTree::~AvlTree()
 
 bool AvlTree::isEmpty() const
 {
-	ASSERT(!mRoot == (mCount == 0));
+	RHASSERT(!mRoot == (mCount == 0));
 	return !mRoot;
 }
 
@@ -107,13 +108,13 @@ void AvlTree::insert(Node& node, Node* parent, int nIdx)
 	node.mBallance = 0;
 
 	if(parent) {
-		ASSERT(!parent->mChildren[nIdx]);
+		RHASSERT(!parent->mChildren[nIdx]);
 		parent->mChildren[nIdx] = &node;
 		parent->synLeftRight();
 
 		adjustBallance(*parent, nIdx ? 1 : -1, false);
 	} else {
-		ASSERT(!mRoot);
+		RHASSERT(!mRoot);
 		mRoot = &node;
 	}
 
@@ -122,7 +123,7 @@ void AvlTree::insert(Node& node, Node* parent, int nIdx)
 
 void AvlTree::remove(Node& node, Node* onlyChild)
 {
-	ASSERT(!node.mChildren[Left] || !node.mChildren[Right]);
+	RHASSERT(!node.mChildren[Left] || !node.mChildren[Right]);
 
 	if(onlyChild)
 		onlyChild->mParent = node.mParent;
@@ -137,7 +138,7 @@ void AvlTree::remove(Node& node, Node* onlyChild)
 	} else
 		mRoot = onlyChild;
 
-	ASSERT(mCount > 0);
+	RHASSERT(mCount > 0);
 	--mCount;
 }
 
@@ -209,28 +210,28 @@ void AvlTree::replaceFixTop(Node& node, Node& next)
 		node.mParent->synLeftRight();
 	}
 	else {
-		ASSERT(&node == mRoot);
+		RHASSERT(&node == mRoot);
 		mRoot = &next;
 	}
 }
 
 bool AvlTree::rotate(Node& node, int dir)
 {
-	ASSERT((-1 == dir) || (1 == dir));
+	RHASSERT((-1 == dir) || (1 == dir));
 	int nIdx = (Right == dir);
 
-	ASSERT(node.mBallance);
-	ASSERT(node.mBallance * dir < 0);
+	RHASSERT(node.mBallance);
+	RHASSERT(node.mBallance * dir < 0);
 
 	Node* pNext = node.mChildren[!nIdx];
-	ASSERT(pNext != NULL);
-	ASSERT(pNext->isBallanceOk());
+	RHASSERT(pNext != NULL);
+	RHASSERT(pNext->isBallanceOk());
 
 	if(dir == pNext->mBallance) {
-		VERIFY(!rotate(*pNext, -dir));
+		RHVERIFY(!rotate(*pNext, -dir));
 		pNext = pNext = node.mChildren[!nIdx];
-		ASSERT(pNext && pNext->isBallanceOk());
-		ASSERT(dir != pNext->mBallance);
+		RHASSERT(pNext && pNext->isBallanceOk());
+		RHASSERT(dir != pNext->mBallance);
 	}
 
 	bool bDepthDecrease = pNext->mBallance && !node.isBallanceOk();
@@ -257,11 +258,11 @@ bool AvlTree::rotate(Node& node, int dir)
 
 void AvlTree::adjustBallance(Node& node_, int dir, bool removed)
 {
-	ASSERT((1 == dir) || (-1 == dir));
+	RHASSERT((1 == dir) || (-1 == dir));
 	Node* node = &node_;
 
 	while(true) {
-		ASSERT(node->isBallanceOk());
+		RHASSERT(node->isBallanceOk());
 
 		Node* parent = node->mParent;
 		node->mBallance += dir;
@@ -286,7 +287,7 @@ void AvlTree::adjustBallance(Node& node_, int dir, bool removed)
 			match = rotate(*node, -1);
 			break;
 		default:
-			ASSERT(false);
+			RHASSERT(false);
 		}
 
 		if(!parent || (match ^ removed))

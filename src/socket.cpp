@@ -107,8 +107,8 @@ IPAddress::IPAddress(rhuint64 ip)
 
 IPAddress::IPAddress(const sockaddr& ip)
 {
-	ASSERT(AF_INET == ip.sa_family);
-	ASSERT(sizeof(sockaddr) == sizeof(_sockAddr));
+	RHASSERT(AF_INET == ip.sa_family);
+	RHASSERT(sizeof(sockaddr) == sizeof(_sockAddr));
 	nativeAddr() = ip;
 }
 
@@ -142,14 +142,14 @@ IPAddress IPAddress::getLoopBack()
 	return IPAddress(98048);
 #else
 	IPAddress tmp(0);
-	VERIFY(tmp.parse("localhost"));
+	RHVERIFY(tmp.parse("localhost"));
 	return tmp;
 #endif
 }
 
 IPAddress IPAddress::getIPv6LoopBack()
 {
-	ASSERT(false);
+	RHASSERT(false);
 	return IPAddress(0);
 }
 
@@ -159,7 +159,7 @@ IPAddress IPAddress::getAny() {
 
 IPAddress IPAddress::getIPv6Any()
 {
-	ASSERT(false);
+	RHASSERT(false);
 	return IPAddress(0);
 }
 
@@ -309,13 +309,13 @@ ErrorCode BsdSocket::closeApplication()
 BsdSocket::BsdSocket()
 	: lastError(0)
 {
-	ASSERT(sizeof(socket_t) == sizeof(_fd));
+	RHASSERT(sizeof(socket_t) == sizeof(_fd));
 	setFd(INVALID_SOCKET);
 }
 
 BsdSocket::~BsdSocket()
 {
-	VERIFY(close() == OK);
+	RHVERIFY(close() == OK);
 }
 
 ErrorCode BsdSocket::create(SocketType type)
@@ -337,7 +337,7 @@ ErrorCode BsdSocket::create(SocketType type)
 		// More reference: http://beej.us/guide/bgnet/output/html/multipage/sendman.html
 		// http://discuss.joelonsoftware.com/default.asp?design.4.575720.7
 		int b = 1;
-		VERIFY(setsockopt(fd(), SOL_SOCKET, SO_NOSIGPIPE, &b, sizeof(b)) == 0);
+		RHVERIFY(setsockopt(fd(), SOL_SOCKET, SO_NOSIGPIPE, &b, sizeof(b)) == 0);
 	}
 #endif
 
@@ -433,7 +433,7 @@ int BsdSocket::receiveFrom(void* buf, unsigned len, IPEndPoint& srcEndPoint, int
 	sockaddr& addr = srcEndPoint.address().nativeAddr();
 	socklen_t bufSize = sizeof(addr);
 	int ret = ::recvfrom(fd(), (char*)buf, toInt(len), flags, &addr, &bufSize);
-	ASSERT(bufSize == sizeof(addr));
+	RHASSERT(bufSize == sizeof(addr));
 	lastError = ret < 0 ? getLastError() : OK;
 	return ret;
 }

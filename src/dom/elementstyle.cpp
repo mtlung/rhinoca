@@ -198,11 +198,11 @@ static JSPropertySpec properties[] = {
 
 void ElementStyle::bind(JSContext* cx, JSObject* parent)
 {
-	ASSERT(!jsContext);
+	RHASSERT(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
-	VERIFY(JS_SetPrivate(cx, *this, this));
-	VERIFY(JS_DefineProperties(cx, *this, properties));
+	RHVERIFY(JS_SetPrivate(cx, *this, this));
+	RHVERIFY(JS_DefineProperties(cx, *this, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
@@ -447,23 +447,23 @@ void ElementStyle::setTransform(const char* transformStr)
 			}
 			else if(hash == StringHash("skew"))
 			{
-				ASSERT(false && "Not implemented");
+				RHASSERT(false && "Not implemented");
 			}
 			else if(hash == StringHash("skewx"))
 			{
-				ASSERT(false && "Not implemented");
+				RHASSERT(false && "Not implemented");
 			}
 			else if(hash == StringHash("skewy"))
 			{
-				ASSERT(false && "Not implemented");
+				RHASSERT(false && "Not implemented");
 			}
 			else if(hash == StringHash("matrix"))
 			{
-				ASSERT(false && "Not implemented");
+				RHASSERT(false && "Not implemented");
 			}
 			else
 			{
-				ASSERT(false && "invalid transform function");
+				RHASSERT(false && "invalid transform function");
 			}
 
 			// Apply the transform with origin adjustment
@@ -511,7 +511,7 @@ void ElementStyle::setTransform(const char* transformStr)
 				style->setIdentity();
 			}
 			else
-				ASSERT(false);
+				RHASSERT(false);
 		}
 	};	// ParserState
 
@@ -570,7 +570,7 @@ void ElementStyle::setTransformOrigin(const char* transformOriginStr)
 				style->_originUsePercentage[1] = state->usePercentage[1];
 			}
 			else
-				ASSERT(false);
+				RHASSERT(false);
 		}
 	};	// ParserState
 
@@ -628,7 +628,7 @@ bool ElementStyle::setBackgroundPosition(const char* cssBackgroundPosition)
 				style->backgroundPositionY = state->values[1];
 			}
 			else
-				ASSERT(false);
+				RHASSERT(false);
 		}
 	};	// ParserState
 

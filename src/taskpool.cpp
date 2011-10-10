@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "taskpool.h"
+#include "common.h"
 #include "platform.h"
 #include "timer.h"
 
@@ -57,10 +58,10 @@ TaskPool::TaskList::TaskList()
 
 TaskPool::TaskList::~TaskList()
 {
-	ASSERT(count == 0);
+	RHASSERT(count == 0);
 	while(freeBegin) {
 		TaskProxy* next = freeBegin->nextFree;
-		ASSERT(!freeBegin->task);
+		RHASSERT(!freeBegin->task);
 		delete freeBegin;
 		freeBegin = next;
 	}
@@ -79,7 +80,7 @@ TaskPool::TaskProxy* TaskPool::TaskList::alloc()
 	ret->nextFree = NULL;
 
 	ret->id = idCounter;
-	ASSERT(ret->task == NULL);
+	RHASSERT(ret->task == NULL);
 
 	return ret;
 }
@@ -88,13 +89,13 @@ void TaskPool::TaskList::free(TaskProxy* id)
 {
 #ifndef NDEBUG
 	for(TaskProxy* p = freeBegin; p; p = p->nextFree)
-		ASSERT(p != id);
+		RHASSERT(p != id);
 #endif
 
 	*id = TaskProxy();
 	id->nextFree = freeBegin;
 	freeBegin = id;
-	ASSERT(count > 0);
+	RHASSERT(count > 0);
 	--count;
 }
 
@@ -127,11 +128,11 @@ TaskPool::~TaskPool()
 
 #ifdef RHINOCA_WINDOWS
 		HANDLE h = reinterpret_cast<HANDLE>(_threadHandles[i]);
-		VERIFY(::WaitForSingleObject(h, INFINITE) == WAIT_OBJECT_0);
-		VERIFY(::CloseHandle(h));
+		RHVERIFY(::WaitForSingleObject(h, INFINITE) == WAIT_OBJECT_0);
+		RHVERIFY(::CloseHandle(h));
 #else
 		pthread_t h = reinterpret_cast<pthread_t>(_threadHandles[i]);
-		VERIFY(::pthread_join(h, NULL) == 0);
+		RHVERIFY(::pthread_join(h, NULL) == 0);
 		::pthread_detach(h);
 #endif
 	}
@@ -175,7 +176,7 @@ static void* _threadFunc(void* p) {
 
 void TaskPool::init(rhuint threadCount)
 {
-	ASSERT(!_threadHandles);
+	RHASSERT(!_threadHandles);
 	_threadCount = threadCount;
 	_threadHandles = rhnew<rhuint>(threadCount);
 
@@ -183,7 +184,7 @@ void TaskPool::init(rhuint threadCount)
 #ifdef RHINOCA_WINDOWS
 		_threadHandles[i] = reinterpret_cast<rhuint>(::CreateThread(NULL, 0, &_threadFunc, this, 0, NULL));
 #else
-		VERIFY(::pthread_create(reinterpret_cast<pthread_t*>(&_threadHandles[i]), NULL, &_threadFunc, this) == 0);
+		RHVERIFY(::pthread_create(reinterpret_cast<pthread_t*>(&_threadHandles[i]), NULL, &_threadFunc, this) == 0);
 #endif
 	}
 }
@@ -218,9 +219,9 @@ void TaskPool::addChild(TaskId parent, TaskId child)
 	if(!parentProxy || !childProxy)
 		return;	// TODO: Gives warning?
 
-	ASSERT(parentProxy && !parentProxy->finalized && "Parameter 'parent' has already finalized");
-	ASSERT(childProxy && !childProxy->finalized && "Parameter 'child' has already finalized");
-	ASSERT(!childProxy->parent && "The given child task is already under");
+	RHASSERT(parentProxy && !parentProxy->finalized && "Parameter 'parent' has already finalized");
+	RHASSERT(childProxy && !childProxy->finalized && "Parameter 'child' has already finalized");
+	RHASSERT(!childProxy->parent && "The given child task is already under");
 
 	_retainTask(parentProxy);	// Paired with releaseTask() in _doTask()
 	childProxy->parent = parentProxy;
@@ -233,7 +234,7 @@ void TaskPool::dependsOn(TaskId src, TaskId on)
 	TaskProxy* srcProxy = _findProxyById(src);
 	TaskProxy* onProxy = _findProxyById(on);
 
-	ASSERT(srcProxy && !srcProxy->finalized && "Parameter 'src' has already finalized");
+	RHASSERT(srcProxy && !srcProxy->finalized && "Parameter 'src' has already finalized");
 
 	srcProxy->dependency = onProxy;
 	srcProxy->dependencyId = on;
@@ -244,7 +245,7 @@ void TaskPool::finishAdd(TaskId id)
 	ScopeLock lock(mutex);
 
 	if(TaskProxy* p = _findProxyById(id)) {
-		ASSERT(!p->finalized && "Please call finishAdd() only once");
+		RHASSERT(!p->finalized && "Please call finishAdd() only once");
 		p->finalized = true;
 		_releaseTask(p);
 	}
@@ -262,7 +263,7 @@ TaskId TaskPool::addFinalized(Task* task, TaskId parent, TaskId dependency, int 
 
 	if(parent != 0) {
 		TaskProxy* parentProxy = _findProxyById(parent);
-		ASSERT(parentProxy && !parentProxy->finalized && "Parameter 'parent' has already finalized");
+		RHASSERT(parentProxy && !parentProxy->finalized && "Parameter 'parent' has already finalized");
 		_retainTask(parentProxy);	// Paired with releaseTask() in _doTask()
 		proxy->parent = parentProxy;
 	}
@@ -324,7 +325,7 @@ static const char _debugIndent[_debugMaxIndent+1] = "          ";
 
 void TaskPool::_wait(TaskProxy* p, int tId)
 {
-	ASSERT(mutex.isLocked());
+	RHASSERT(mutex.isLocked());
 	if(!p) return;
 
 #if DEBUG_PRINT
@@ -439,7 +440,7 @@ void TaskPool::doSomeTask(float timeout)
 // NOTE: Recursive and re-entrant
 void TaskPool::_doTask(TaskProxy* p, int tId)
 {
-	ASSERT(mutex.isLocked());
+	RHASSERT(mutex.isLocked());
 	
 	if(!p || !p->task) return;
 
@@ -450,7 +451,7 @@ void TaskPool::_doTask(TaskProxy* p, int tId)
 	Task* task = p->task;
 	p->task = NULL;
 
-	ASSERT(p->finalized);
+	RHASSERT(p->finalized);
 	_removePendingTask(p);
 
 	// NOTE: _wait() may trigger many things, therefore we need to _retainTask() here
@@ -481,7 +482,7 @@ void TaskPool::_doTask(TaskProxy* p, int tId)
 
 TaskPool::TaskProxy* TaskPool::_findProxyById(TaskId id)
 {
-	ASSERT(mutex.isLocked());
+	RHASSERT(mutex.isLocked());
 
 	if(!_openTasks) return NULL;
 	
@@ -502,8 +503,8 @@ void TaskPool::_retainTask(TaskProxy* p)
 
 void TaskPool::_releaseTask(TaskProxy* p)
 {
-	ASSERT(mutex.isLocked());
-	ASSERT(p->finalized);
+	RHASSERT(mutex.isLocked());
+	RHASSERT(p->finalized);
 	p->openChildCount--;
 	if(p->openChildCount == 0 && !p->task)
 		_removeOpenTask(p);
@@ -511,8 +512,8 @@ void TaskPool::_releaseTask(TaskProxy* p)
 
 void TaskPool::_removeOpenTask(TaskProxy* p)
 {
-	ASSERT(mutex.isLocked());
-	ASSERT(!p->task);
+	RHASSERT(mutex.isLocked());
+	RHASSERT(!p->task);
 	if(p->prevOpen) p->prevOpen->nextOpen = p->nextOpen;
 	if(p->nextOpen) p->nextOpen->prevOpen = p->prevOpen;
 	if(p == _openTasks) _openTasks = p->nextOpen;
@@ -521,7 +522,7 @@ void TaskPool::_removeOpenTask(TaskProxy* p)
 
 void TaskPool::_addPendingTask(TaskProxy* p)
 {
-	ASSERT(mutex.isLocked());
+	RHASSERT(mutex.isLocked());
 
 	static const bool addOnTail = true;
 
@@ -543,7 +544,7 @@ void TaskPool::_addPendingTask(TaskProxy* p)
 
 void TaskPool::_removePendingTask(TaskProxy* p)
 {
-	ASSERT(mutex.isLocked());
+	RHASSERT(mutex.isLocked());
 	if(p->prevPending) p->prevPending->nextPending = p->nextPending;
 	if(p->nextPending) p->nextPending->prevPending = p->prevPending;
 	p->prevPending = p->nextPending = NULL;

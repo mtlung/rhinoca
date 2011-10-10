@@ -76,7 +76,7 @@ ResourcePtr ResourceManager::load(const char* uri)
 			print(rhinoca, "No loader for \"%s\" can be found\n", uri);
 			return NULL;
 		}
-		VERIFY(_resources.insertUnique(*r));
+		RHVERIFY(_resources.insertUnique(*r));
 
 		// We will keep the resource alive such that the time for a Resource destruction
 		// is deterministic: always inside ResourceManager::collectUnused()
@@ -97,7 +97,7 @@ ResourcePtr ResourceManager::load(const char* uri)
 				break;
 			}
 		}
-		ASSERT(loadInvoked);
+		RHASSERT(loadInvoked);
 	}
 
 	return r;

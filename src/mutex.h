@@ -2,7 +2,8 @@
 #define __MUTEX_H__
 
 #include "rhinoca.h"
-#include "common.h"
+#include "assert.h"
+#include "noncopyable.h"
 
 #if !defined(RHINOCA_WINDOWS)
 #	include <pthread.h>

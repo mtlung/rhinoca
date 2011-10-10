@@ -25,7 +25,7 @@ static void getFloat(JSContext* cx, jsval* vp, float* dest, unsigned count)
 {
 	for(unsigned i=0; i<count; ++i) {
 		double tmp;
-		VERIFY(JS_ValueToNumber(cx, JS_ARGV(cx, vp)[i], &tmp));
+		RHVERIFY(JS_ValueToNumber(cx, JS_ARGV(cx, vp)[i], &tmp));
 		dest[i] = (float)tmp;
 	}
 }
@@ -400,7 +400,7 @@ static JSBool rotate(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	double angle;
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &angle));
+	RHVERIFY(JS_ValueToNumber(cx, JS_ARGV0, &angle));
 	self->rotate((float)angle);
 
 	return JS_TRUE;
@@ -520,7 +520,7 @@ static JSBool arc(JSContext* cx, uintN argc, jsval* vp)
 	bool antiClockwise;
 	struct { float x, y, radius, startAngle, endAngle; } s;
 	getFloat(cx, vp, &s.x, 5);
-	VERIFY(JS_GetValue(cx, JS_ARGV5, antiClockwise));
+	RHVERIFY(JS_GetValue(cx, JS_ARGV5, antiClockwise));
 	self->arc(s.x, s.y, s.radius, s.startAngle, s.endAngle, antiClockwise);
 
 	return JS_TRUE;
@@ -640,10 +640,10 @@ static JSBool getImageData(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	int32 x, y, w, h;
-	VERIFY(JS_ValueToInt32(cx, JS_ARGV0, &x));
-	VERIFY(JS_ValueToInt32(cx, JS_ARGV1, &y));
-	VERIFY(JS_ValueToInt32(cx, JS_ARGV2, &w));
-	VERIFY(JS_ValueToInt32(cx, JS_ARGV3, &h));
+	RHVERIFY(JS_ValueToInt32(cx, JS_ARGV0, &x));
+	RHVERIFY(JS_ValueToInt32(cx, JS_ARGV1, &y));
+	RHVERIFY(JS_ValueToInt32(cx, JS_ARGV2, &w));
+	RHVERIFY(JS_ValueToInt32(cx, JS_ARGV3, &h));
 	ImageData* imgData = self->getImageData(cx, x, y, w, h);
 
 	JS_RVAL(cx, vp) = *imgData;
@@ -664,15 +664,15 @@ static JSBool putImageData(JSContext* cx, uintN argc, jsval* vp)
 	int32 dirtyWidth = imgData->width;
 	int32 dirtyHeight = imgData->height;
 
-	VERIFY(JS_ValueToInt32(cx, JS_ARGV1, &dx));
-	VERIFY(JS_ValueToInt32(cx, JS_ARGV2, &dy));
+	RHVERIFY(JS_ValueToInt32(cx, JS_ARGV1, &dx));
+	RHVERIFY(JS_ValueToInt32(cx, JS_ARGV2, &dy));
 
 	if(argc >= 7) {
 		// TODO: Deal with negative values, as state in the spec
-		VERIFY(JS_ValueToInt32(cx, JS_ARGV3, &dirtyX));
-		VERIFY(JS_ValueToInt32(cx, JS_ARGV4, &dirtyY));
-		VERIFY(JS_ValueToInt32(cx, JS_ARGV5, &dirtyWidth));
-		VERIFY(JS_ValueToInt32(cx, JS_ARGV6, &dirtyHeight));
+		RHVERIFY(JS_ValueToInt32(cx, JS_ARGV3, &dirtyX));
+		RHVERIFY(JS_ValueToInt32(cx, JS_ARGV4, &dirtyY));
+		RHVERIFY(JS_ValueToInt32(cx, JS_ARGV5, &dirtyWidth));
+		RHVERIFY(JS_ValueToInt32(cx, JS_ARGV6, &dirtyHeight));
 	}
 
 	self->putImageData(imgData, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight);
@@ -821,12 +821,12 @@ CanvasRenderingContext2D::~CanvasRenderingContext2D()
 
 void CanvasRenderingContext2D::bind(JSContext* cx, JSObject* parent)
 {
-	ASSERT(!jsContext);
+	RHASSERT(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
-	VERIFY(JS_SetPrivate(cx, *this, this));
-	VERIFY(JS_DefineFunctions(cx, *this, methods));
-	VERIFY(JS_DefineProperties(cx, *this, properties));
+	RHVERIFY(JS_SetPrivate(cx, *this, this));
+	RHVERIFY(JS_DefineFunctions(cx, *this, methods));
+	RHVERIFY(JS_DefineProperties(cx, *this, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
@@ -875,13 +875,13 @@ void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 
 static JSBool construct(JSContext* cx, uintN argc, jsval* vp)
 {
-	ASSERT(false && "For compatible with javascript instanceof operator only, you are not suppose to new a CanvasRenderingContext2D directly");
+	RHASSERT(false && "For compatible with javascript instanceof operator only, you are not suppose to new a CanvasRenderingContext2D directly");
 	return JS_FALSE;
 }
 
 void CanvasRenderingContext2D::registerClass(JSContext* cx, JSObject* parent)
 {
-	VERIFY(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
+	RHVERIFY(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
 }
 
 void CanvasRenderingContext2D::drawImage(
@@ -922,7 +922,7 @@ void CanvasRenderingContext2D::drawImage(
 	unsigned w = width();
 	unsigned h = height();
 
-	ASSERT(w > 0 && h > 0);
+	RHASSERT(w > 0 && h > 0);
 
 	static const Driver::BlendState blendState = {
 		true,
@@ -945,7 +945,7 @@ void CanvasRenderingContext2D::drawImage(
 	srcy *= th; srch *= th;
 
 	// Use the texture
-	ASSERT(filter >= 0 && filter <= Driver::SamplerState::MIP_MAG_LINEAR);
+	RHASSERT(filter >= 0 && filter <= Driver::SamplerState::MIP_MAG_LINEAR);
 	Driver::SamplerState state = {
 		texture->handle, (Render::Driver::SamplerState::Filter)filter,
 		Driver::SamplerState::Edge,
@@ -1337,8 +1337,8 @@ ImageData* CanvasRenderingContext2D::getImageData(JSContext* cx, unsigned sx, un
 
 void CanvasRenderingContext2D::putImageData(ImageData* data, unsigned dx, unsigned dy, unsigned dirtyX, unsigned dirtyY, unsigned dirtyWidth, unsigned dirtyHeight)
 {
-	ASSERT("Not implemented" && dirtyX == 0 && dirtyY == 0);
-	ASSERT("Not implemented" && dirtyWidth == data->width && dirtyHeight == data->height);
+	RHASSERT("Not implemented" && dirtyX == 0 && dirtyY == 0);
+	RHASSERT("Not implemented" && dirtyWidth == data->width && dirtyHeight == data->height);
 
 	canvas->bindFramebuffer();
 	Driver::setSamplerState(0, noTexture);

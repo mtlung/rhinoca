@@ -1,7 +1,7 @@
 #ifndef ___MAP_H__
 #define ___MAP_H__
 
-#include "common.h"
+#include "noncopyable.h"
 
 /*!	\class MapBase
 	The base class for an intrusive associative map container.
@@ -77,7 +77,7 @@
 
 	BiDirMapNode* p1 = idToStr.find(123).getOuterSafe();
 	BiDirMapNode* p2 = strToId.find("123").getOuterSafe();
-	MCD_ASSERT(p1 == p2);
+	RHASSERT(p1 == p2);
 	\endcode
  */
 
@@ -332,7 +332,7 @@ public:
 			if(parent) {
 				Comparator hint(parent->mKey);
 				int cmp = hint.compare(mKey);
-				ASSERT(!cmp || (cmp == dir));
+				RHASSERT(!cmp || (cmp == dir));
 			}
 
 			size_t nL = static_cast<NodeBase*>(mChildren[Left])->assertValid(total, this, -1);
@@ -456,7 +456,7 @@ public:
 #ifndef NDEBUG
 		size_t nTotal = 0;
 		static_cast<NodeBase*>(mRoot)->assertValid(nTotal, NULL, 0);
-		MCD_ASSERT(nTotal == elementCount());
+		RHASSERT(nTotal == elementCount());
 #endif	// NDEBUG
 	}
 

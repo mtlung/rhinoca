@@ -35,7 +35,7 @@ String::String(const char* str)
 
 	if(_length) {
 		_cstr = (char*)rhinoca_malloc(_length + 1);
-		VERIFY(strncpy(_cstr, str, _length) == _cstr);
+		RHVERIFY(strncpy(_cstr, str, _length) == _cstr);
 		_cstr[_length] = '\0';
 	}
 	else
@@ -44,12 +44,12 @@ String::String(const char* str)
 
 String::String(const char* str, unsigned count)
 {
-	ASSERT(count <= strlen(str));
+	RHASSERT(count <= strlen(str));
 	_length = count;
 
 	if(_length) {
 		_cstr = (char*)rhinoca_malloc(_length + 1);
-		VERIFY(strncpy(_cstr, str, _length) == _cstr);
+		RHVERIFY(strncpy(_cstr, str, _length) == _cstr);
 		_cstr[_length] = '\0';
 	}
 	else
@@ -62,7 +62,7 @@ String::String(const String& str)
 
 	if(_length) {
 		_cstr = (char*)rhinoca_malloc(_length + 1);
-		VERIFY(strncpy(_cstr, str._cstr, _length) == _cstr);
+		RHVERIFY(strncpy(_cstr, str._cstr, _length) == _cstr);
 		_cstr[_length] = '\0';
 	}
 	else
@@ -104,7 +104,7 @@ String& String::append(const char* str, size_type count)
 {
 	if(count > 0) {
 		if(str[count - 1] == '\0') --count;	// Don't copy the null terminator, we will explicitly put one
-		ASSERT(count <= strlen(str));
+		RHASSERT(count <= strlen(str));
 		_cstr = (char*)rhinoca_realloc(_length ? _cstr : NULL, _length + 1, _length + count + 1);
 		memcpy(_cstr + _length, str, count);
 		_length += count;
@@ -130,7 +130,7 @@ String& String::erase(size_type offset, size_type count)
 	if(_length == 0)
 		return *this;
 
-	ASSERT(offset < _length);
+	RHASSERT(offset < _length);
 	if(count > _length - offset)
 		count = _length - offset;
 
@@ -190,7 +190,7 @@ String& String::operator+=(const char* str)
 {
 	if(const unsigned len = strlen(str)) {
 		_cstr = (char*)rhinoca_realloc(_length ? _cstr : NULL, _length + 1, _length + len + 1);
-		VERIFY(strcat(_cstr, str) == _cstr);
+		RHVERIFY(strcat(_cstr, str) == _cstr);
 		_length += len;
 	}
 	return *this;
@@ -200,7 +200,7 @@ String& String::operator+=(const String& str)
 {
 	if(!str.empty()) {
 		_cstr = (char*)rhinoca_realloc(_length ? _cstr : NULL, _length + 1, _length + str._length + 1);
-		VERIFY(strcat(_cstr, str._cstr) == _cstr);
+		RHVERIFY(strcat(_cstr, str._cstr) == _cstr);
 		_length += str._length;
 	}
 	return *this;
@@ -232,8 +232,8 @@ bool strToBool(const char* str, bool defaultValue)
 
 char* rstrstr(char* __restrict str1, const char* __restrict str2)
 {
-	size_t s1len = strlen(str1);
-	size_t s2len = strlen(str2);
+	unsigned s1len = strlen(str1);
+	unsigned s2len = strlen(str2);
 	char* s;
 
 	if(s2len > s1len)
@@ -298,7 +298,7 @@ bool utf8ToUtf16(rhuint16* dest, unsigned& destLen, const char* src, unsigned ma
 
 		if(srcPos == maxSrcLen || src[srcPos] == '\0') {
 			if(dest && destLen != destPos) {
-				ASSERT(false && "The provided destLen should equals to what we calculated here");
+				RHASSERT(false && "The provided destLen should equals to what we calculated here");
 				return false;
 			}
 
@@ -369,7 +369,7 @@ bool utf8ToUtf32(rhuint32* dest, unsigned& destLen, const char* src, unsigned ma
 
 		if(srcPos == maxSrcLen || src[srcPos] == '\0') {
 			if(dest && destLen != destPos) {
-				ASSERT(false && "The provided destLen should equals to what we calculated here");
+				RHASSERT(false && "The provided destLen should equals to what we calculated here");
 				return false;
 			}
 
@@ -429,16 +429,16 @@ bool utf16ToUtf8(char* dest, unsigned& destLen, const rhuint16* src, unsigned ma
 	if(!src)
 		return false;
 
-	size_t destPos = 0, srcPos = 0;
+	unsigned destPos = 0, srcPos = 0;
 
 	while(true)
 	{
 		rhuint32 value;
-		size_t numAdds;
+		unsigned numAdds;
 
 		if(srcPos == maxSrcLen || src[srcPos] == L'\0') {
 			if(dest && destLen != destPos) {
-				ASSERT(false && "The provided destLen should equals to what we calculated here");
+				RHASSERT(false && "The provided destLen should equals to what we calculated here");
 				return false;
 			}
 			destLen = destPos;
@@ -499,36 +499,36 @@ bool utf16ToUtf8(String& dest, const rhuint16* src, unsigned maxSrcLen)
 	return true;
 }
 
-StringHash::StringHash(const char* buf, size_t len)
+StringHash::StringHash(const char* buf, unsigned len)
 {
 	rhuint32 hash_ = 0;
-	len = len == 0 ? size_t(-1) : len;
+	len = len == 0 ? unsigned(-1) : len;
 
-	for(size_t i=0; i<len && buf[i] != '\0'; ++i) {
+	for(unsigned i=0; i<len && buf[i] != '\0'; ++i) {
 		//hash = hash * 65599 + buf[i];
 		hash_ = buf[i] + (hash_ << 6) + (hash_ << 16) - hash_;
 	}
 	hash = hash_;
 }
 
-StringHash::StringHash(const wchar_t* buf, size_t len)
+StringHash::StringHash(const wchar_t* buf, unsigned len)
 {
 	rhuint32 hash_ = 0;
-	len = len == 0 ? size_t(-1) : len;
+	len = len == 0 ? unsigned(-1) : len;
 
-	for(size_t i=0; i<len && buf[i] != L'\0'; ++i) {
+	for(unsigned i=0; i<len && buf[i] != L'\0'; ++i) {
 		//hash = hash * 65599 + buf[i];
 		hash_ = buf[i] + (hash_ << 6) + (hash_ << 16) - hash_;
 	}
 	hash = hash_;
 }
 
-StringLowerCaseHash::StringLowerCaseHash(const char* buf, size_t len)
+StringLowerCaseHash::StringLowerCaseHash(const char* buf, unsigned len)
 {
 	rhuint32 hash_ = 0;
-	len = len == 0 ? size_t(-1) : len;
+	len = len == 0 ? unsigned(-1) : len;
 
-	for(size_t i=0; i<len && buf[i] != '\0'; ++i) {
+	for(unsigned i=0; i<len && buf[i] != '\0'; ++i) {
 		//hash = hash * 65599 + buf[i];
 		hash_ = charTolower(buf[i]) + (hash_ << 6) + (hash_ << 16) - hash_;
 	}
@@ -541,7 +541,7 @@ struct FixString::Node
 	rhuint32 lowerCaseHashValue;
 	Node* next;
 	AtomicInteger refCount;
-	size_t size;	//!< Length of the string
+	unsigned size;	//!< Length of the string
 	const char* stringValue() const {
 		return reinterpret_cast<const char*>(this + 1);
 	}
@@ -562,14 +562,14 @@ public:
 	~FixStringHashTable()
 	{
 		remove(mNullNode);
-		ASSERT(mCount == 0 && "All instance of FixString should be destroyed before FixStringHashTable");
+		RHASSERT(mCount == 0 && "All instance of FixString should be destroyed before FixStringHashTable");
 	}
 
 	Node& find(rhuint32 hashValue) const
 	{
 		ScopeLock lock(mMutex);
 
-		const size_t index = hashValue % mBuckets.size();
+		const unsigned index = hashValue % mBuckets.size();
 		for(Node* n = mBuckets[index]; n; n = n->next) {
 			if(n->hashValue != hashValue)
 				continue;
@@ -586,17 +586,17 @@ public:
 		const rhuint32 hashValue = StringHash(str, 0).hash;
 
 		ScopeLock lock(mMutex);
-		const size_t index = hashValue % mBuckets.size();
+		const unsigned index = hashValue % mBuckets.size();
 
 		// Find any string with the same hash value
 		for(Node* n = mBuckets[index]; n; n = n->next) {
 			if(n->hashValue == hashValue) {
-				ASSERT(strcmp(n->stringValue(), str) == 0 && "String hash collision in FixString" );
+				RHASSERT(strcmp(n->stringValue(), str) == 0 && "String hash collision in FixString" );
 				return *n;
 			}
 		}
 
-		const size_t length = strlen(str) + 1;
+		const unsigned length = strlen(str) + 1;
 		if(Node* n = (Node*)rhinoca_malloc(sizeof(Node) + length)) {
 			memcpy((void*)n->stringValue(), str, length);
 			n->hashValue = hashValue;
@@ -623,7 +623,7 @@ public:
 			return;
 
 		ScopeLock lock(mMutex);
-		const size_t index = node.hashValue % mBuckets.size();
+		const unsigned index = node.hashValue % mBuckets.size();
 		Node* last = NULL;
 
 		for(Node* n = mBuckets[index]; n; last = n, n = n->next) {
@@ -637,18 +637,18 @@ public:
 				return;
 			}
 		}
-		ASSERT(false);
+		RHASSERT(false);
 	}
 
-	void resizeBucket(size_t bucketSize)
+	void resizeBucket(unsigned bucketSize)
 	{
 		Vector<Node*> newBuckets(bucketSize, NULL);
 
-		ASSERT(mMutex.isLocked());
-		for(size_t i=0; i<mBuckets.size(); ++i) {
+		RHASSERT(mMutex.isLocked());
+		for(unsigned i=0; i<mBuckets.size(); ++i) {
 			for(Node* n = mBuckets[i]; n; ) {
 				Node* next = n->next;
-				const size_t index = n->hashValue % bucketSize;
+				const unsigned index = n->hashValue % bucketSize;
 				n->next = newBuckets[index];
 				newBuckets[index] = n;
 				n = next;
@@ -659,7 +659,7 @@ public:
 	}
 
 	mutable Mutex mMutex;
-	size_t mCount;	//!< The actual number of elements in this table, can be <=> mBuckets.size()
+	unsigned mCount;	//!< The actual number of elements in this table, can be <=> mBuckets.size()
 	Vector<Node*> mBuckets;
 	Node& mNullNode;
 };	// FixStringHashTable
@@ -750,7 +750,7 @@ rhuint32 FixString::lowerCaseHashValue() const
 	return mNode->lowerCaseHashValue;
 }
 
-size_t FixString::size() const {
+unsigned FixString::size() const {
 	return mNode->size;
 }
 

@@ -78,8 +78,8 @@ static JSBool getContext(JSContext* cx, uintN argc, jsval* vp)
 		self->context->bind(cx, NULL);
 		// Create mutual reference between Canvas and Canvas2DContext, to make sure
 		// they live together in JSGC
-		VERIFY(JS_SetReservedSlot(cx, *self->context, 0, *self));
-		VERIFY(JS_SetReservedSlot(cx, *self, 0, *self->context));
+		RHVERIFY(JS_SetReservedSlot(cx, *self->context, 0, *self));
+		RHVERIFY(JS_SetReservedSlot(cx, *self, 0, *self->context));
 
 	}
 
@@ -127,12 +127,12 @@ HTMLCanvasElement::~HTMLCanvasElement()
 
 void HTMLCanvasElement::bind(JSContext* cx, JSObject* parent)
 {
-	ASSERT(!jsContext);
+	RHASSERT(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, Element::createPrototype(), parent);
-	VERIFY(JS_SetPrivate(cx, *this, this));
-	VERIFY(JS_DefineFunctions(cx, *this, methods));
-	VERIFY(JS_DefineProperties(cx, *this, properties));
+	RHVERIFY(JS_SetPrivate(cx, *this, this));
+	RHVERIFY(JS_DefineFunctions(cx, *this, methods));
+	RHVERIFY(JS_DefineProperties(cx, *this, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
@@ -182,7 +182,7 @@ void HTMLCanvasElement::render(CanvasRenderingContext2D* ctx)
 
 void HTMLCanvasElement::registerClass(JSContext* cx, JSObject* parent)
 {
-	VERIFY(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
+	RHVERIFY(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
 }
 
 static const FixString _tagName = "CANVAS";

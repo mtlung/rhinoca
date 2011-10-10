@@ -171,24 +171,24 @@ Element::Element(Rhinoca* rh)
 
 JSObject* Element::createPrototype()
 {
-	ASSERT(jsContext);
+	RHASSERT(jsContext);
 	JSObject* proto = JS_NewObject(jsContext, &jsClass, Node::createPrototype(), NULL);
-	VERIFY(JS_SetPrivate(jsContext, proto, this));
-	VERIFY(JS_DefineFunctions(jsContext, proto, elementMethods));
-	VERIFY(JS_DefineProperties(jsContext, proto, elementProperties));
+	RHVERIFY(JS_SetPrivate(jsContext, proto, this));
+	RHVERIFY(JS_DefineFunctions(jsContext, proto, elementMethods));
+	RHVERIFY(JS_DefineProperties(jsContext, proto, elementProperties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 	return proto;
 }
 
 static JSBool construct(JSContext* cx, uintN argc, jsval* vp)
 {
-	ASSERT(false && "For compatible with javascript instanceof operator only, you are not suppose to new a HTMLElement directly");
+	RHASSERT(false && "For compatible with javascript instanceof operator only, you are not suppose to new a HTMLElement directly");
 	return JS_FALSE;
 }
 
 void Element::registerClass(JSContext* cx, JSObject* parent)
 {
-	VERIFY(JS_InitClass(cx, parent, NULL, &jsClass, construct, 0, NULL, NULL, NULL, NULL));
+	RHVERIFY(JS_InitClass(cx, parent, NULL, &jsClass, construct, 0, NULL, NULL, NULL, NULL));
 }
 
 static Node* getElementsByTagNameFilter_(NodeIterator& iter, void* userData)
@@ -238,7 +238,7 @@ ElementStyle* Element::style()
 
 	if(!_style->jsObject) {
 		_style->bind(jsContext, *this);
-		VERIFY(JS_SetReservedSlot(jsContext, jsObjectOfType(&Element::jsClass), 0, *_style));
+		RHVERIFY(JS_SetReservedSlot(jsContext, jsObjectOfType(&Element::jsClass), 0, *_style));
 	}
 
 	return _style;

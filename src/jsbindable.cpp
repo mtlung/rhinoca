@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "jsbindable.h"
-#include "common.h"
 #include "rhinoca.h"
 
 #ifdef DEBUG
@@ -16,10 +15,10 @@ JsBindable::JsBindable()
 
 JsBindable::~JsBindable()
 {
-	ASSERT(refCount == 0);
-	ASSERT(gcRootCount == 0);
-//	ASSERT(!jsContext);
-//	ASSERT(!jsObject);
+	RHASSERT(refCount == 0);
+	RHASSERT(gcRootCount == 0);
+//	RHASSERT(!jsContext);
+//	RHASSERT(!jsObject);
 }
 
 void JsBindable::addGcRoot()
@@ -28,16 +27,16 @@ void JsBindable::addGcRoot()
 		return;
 
 	addReference();	// releaseReference() in JsBindable::releaseGcRoot()
-	ASSERT(jsContext);
+	RHASSERT(jsContext);
 	if(typeName.empty()) {
 #ifdef DEBUG
-		VERIFY(JS_AddNamedObjectRoot(jsContext, &jsObject, typeid(*this).name()));
+		RHVERIFY(JS_AddNamedObjectRoot(jsContext, &jsObject, typeid(*this).name()));
 #else
-		VERIFY(JS_AddObjectRoot(jsContext, &jsObject));
+		RHVERIFY(JS_AddObjectRoot(jsContext, &jsObject));
 #endif
 	}
 	else
-		VERIFY(JS_AddNamedObjectRoot(jsContext, &jsObject, typeName.c_str()));
+		RHVERIFY(JS_AddNamedObjectRoot(jsContext, &jsObject, typeName.c_str()));
 }
 
 void JsBindable::releaseGcRoot()
@@ -45,8 +44,8 @@ void JsBindable::releaseGcRoot()
 	if(--gcRootCount > 0)
 		return;
 
-	ASSERT(jsContext);
-	VERIFY(JS_RemoveObjectRoot(jsContext, &jsObject));
+	RHASSERT(jsContext);
+	RHVERIFY(JS_RemoveObjectRoot(jsContext, &jsObject));
 	releaseReference();
 }
 
@@ -57,7 +56,7 @@ void JsBindable::addReference()
 
 void JsBindable::releaseReference()
 {
-	ASSERT(refCount > 0);
+	RHASSERT(refCount > 0);
 	--refCount;
 	if(refCount > 0) return;
 	delete this;

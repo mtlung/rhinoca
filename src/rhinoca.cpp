@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "rhinoca.h"
+#include "assert.h"
 #include "context.h"
 #include "httpstream.h"
 #include "socket.h"
@@ -22,9 +23,9 @@ void rhinoca_init()
 	Render::Driver::useContext(driverContext);
 	Render::Driver::forceApplyCurrent();
 
-	VERIFY(vgCreateContextSH(1, 1));
+	RHVERIFY(vgCreateContextSH(1, 1));
 
-	VERIFY(BsdSocket::initApplication() == 0);
+	RHVERIFY(BsdSocket::initApplication() == 0);
 
 	audiodevice_init();
 }
@@ -38,7 +39,7 @@ void rhinoca_close()
 	vgDestroyContextSH();
 	Render::Driver::deleteContext(driverContext);
 
-	VERIFY(BsdSocket::closeApplication() == 0);
+	RHVERIFY(BsdSocket::closeApplication() == 0);
 
 	audiodevice_close();
 }
@@ -405,7 +406,8 @@ void* rhinoca_realloca(void* ptr, unsigned int oldSize, unsigned int size);
 // Others
 static void defaultPrintFunc(Rhinoca* context, const char* format, va_list ap)
 {
-	if(!context || !format) return;
+//	if(!context || !format) return;
+	if(!format) return;
 
 	vprintf(format, ap);
 }

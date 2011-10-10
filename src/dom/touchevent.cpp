@@ -58,11 +58,11 @@ static JSPropertySpec touch_properties[] = {
 
 void Touch::bind(JSContext* cx, JSObject* parent)
 {
-	ASSERT(!jsContext);
+	RHASSERT(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
-	VERIFY(JS_SetPrivate(cx, *this, this));
-	VERIFY(JS_DefineProperties(cx, *this, touch_properties));
+	RHVERIFY(JS_SetPrivate(cx, *this, this));
+	RHVERIFY(JS_DefineProperties(cx, *this, touch_properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
@@ -107,7 +107,7 @@ static JSBool identifiedTouch(JSContext* cx, uintN argc, jsval* vp)
 
 	// Scan touch with the same identifier
 	int32 index = rh->domWindow->findTouchIndexByIdentifier(identifier);
-	ASSERT(index < (int)touches.size());
+	RHASSERT(index < (int)touches.size());
 
 	if(index < 0) {
 		JS_RVAL(cx, vp) = JSVAL_NULL;
@@ -142,12 +142,12 @@ static JSPropertySpec touchList_properties[] = {
 
 void TouchList::bind(JSContext* cx, JSObject* parent)
 {
-	ASSERT(!jsContext);
+	RHASSERT(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
-	VERIFY(JS_SetPrivate(cx, *this, this));
-	VERIFY(JS_DefineFunctions(cx, *this, touchList_methods));
-	VERIFY(JS_DefineProperties(cx, *this, touchList_properties));
+	RHVERIFY(JS_SetPrivate(cx, *this, this));
+	RHVERIFY(JS_DefineFunctions(cx, *this, touchList_methods));
+	RHVERIFY(JS_DefineProperties(cx, *this, touchList_properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
@@ -240,7 +240,7 @@ static JSBool getTouches(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 	case changedTouches:
 		list->touches = self->changedTouches;
 		break;
-	default: ASSERT(false);
+	default: RHASSERT(false);
 	}
 
 	*vp = *list;
@@ -268,12 +268,12 @@ TouchEvent::~TouchEvent()
 
 void TouchEvent::bind(JSContext* cx, JSObject* parent)
 {
-	ASSERT(!jsContext);
+	RHASSERT(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, Event::createPrototype(), parent);
-	VERIFY(JS_SetPrivate(cx, *this, this));
-	VERIFY(JS_DefineFunctions(cx, *this, methods));
-	VERIFY(JS_DefineProperties(cx, *this, properties));
+	RHVERIFY(JS_SetPrivate(cx, *this, this));
+	RHVERIFY(JS_DefineFunctions(cx, *this, methods));
+	RHVERIFY(JS_DefineProperties(cx, *this, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 

@@ -192,12 +192,12 @@ HTMLDocument::~HTMLDocument()
 
 void HTMLDocument::bind(JSContext* cx, JSObject* parent)
 {
-	ASSERT(!jsContext);
+	RHASSERT(!jsContext);
 	jsContext = cx;
 	jsObject = JS_DefineObject(cx, parent, "document", &jsClass, Node::createPrototype(), JSPROP_ENUMERATE);
-	VERIFY(JS_SetPrivate(cx, *this, this));
-	VERIFY(JS_DefineFunctions(cx, *this, methods));
-	VERIFY(JS_DefineProperties(cx, *this, properties));
+	RHVERIFY(JS_SetPrivate(cx, *this, this));
+	RHVERIFY(JS_DefineFunctions(cx, *this, methods));
+	RHVERIFY(JS_DefineProperties(cx, *this, properties));
 
 	addReference();
 }

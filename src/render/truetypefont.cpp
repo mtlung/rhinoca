@@ -185,7 +185,7 @@ void TrueTypeFontLoader::commit()
 {
 	if(!aborted) {
 		font->state = Resource::Loaded;
-		ASSERT(!font->impl);
+		RHASSERT(!font->impl);
 		font->impl = impl;
 		impl = NULL;
 	}

@@ -1,8 +1,6 @@
 #ifndef __INTRUSIVEPTR_H__
 #define __INTRUSIVEPTR_H__
 
-#include "Platform.h"
-
 /*!	A smart pointer that uses intrusive reference counting.
 	Relies on unqualified calls to
 	void intrusivePtrAddRef(T* p);

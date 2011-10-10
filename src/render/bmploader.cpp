@@ -94,8 +94,8 @@ void BmpLoader::loadHeader()
 	}
 
 	// Windows.h gives us these types to work with the Bitmap files
-	ASSERT(sizeof(BITMAPFILEHEADER) == 14);
-	ASSERT(sizeof(BITMAPINFOHEADER) == 40);
+	RHASSERT(sizeof(BITMAPFILEHEADER) == 14);
+	RHASSERT(sizeof(BITMAPINFOHEADER) == 40);
 	memset(&fileHeader, 0, sizeof(fileHeader));
 
 	// If data not ready, give up in this round and do it again in next schedule
@@ -153,7 +153,7 @@ void BmpLoader::loadPixelData()
 	// Memory usage for one row of image
 	const rhuint rowByte = width * (sizeof(char) * 3);
 
-	ASSERT(!pixelData);
+	RHASSERT(!pixelData);
 	pixelDataSize = rowByte * height;
 
 	// If data not ready, give up in this round and do it again in next schedule

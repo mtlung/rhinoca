@@ -20,7 +20,7 @@ static JSBool addColorStop(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	double t;
-	VERIFY(JS_ValueToNumber(cx, JS_ARGV0, &t));
+	RHVERIFY(JS_ValueToNumber(cx, JS_ARGV0, &t));
 
 	JsString jss(cx, JS_ARGV1);
 	self->addColorStop((float)t, jss.c_str());
@@ -48,17 +48,17 @@ CanvasGradient::~CanvasGradient()
 
 void CanvasGradient::bind(JSContext* cx, JSObject* parent)
 {
-	ASSERT(!jsContext);
+	RHASSERT(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
-	VERIFY(JS_SetPrivate(cx, *this, this));
-	VERIFY(JS_DefineFunctions(cx, *this, methods));
+	RHVERIFY(JS_SetPrivate(cx, *this, this));
+	RHVERIFY(JS_DefineFunctions(cx, *this, methods));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
 void CanvasGradient::createLinear(float xStart, float yStart, float xEnd, float yEnd)
 {
-	ASSERT(!handle);
+	RHASSERT(!handle);
 	handle = vgCreatePaint();
 	vgSetParameteri(handle, VG_PAINT_COLOR_RAMP_SPREAD_MODE, VG_COLOR_RAMP_SPREAD_PAD);
 	vgSetParameteri(handle, VG_PAINT_TYPE, VG_PAINT_TYPE_LINEAR_GRADIENT);
@@ -68,7 +68,7 @@ void CanvasGradient::createLinear(float xStart, float yStart, float xEnd, float 
 
 void CanvasGradient::createRadial(float xStart, float yStart, float radiusStart, float xEnd, float yEnd, float radiusEnd)
 {
-	ASSERT(!handle);
+	RHASSERT(!handle);
 	handle = vgCreatePaint();
 	vgSetParameteri(handle, VG_PAINT_COLOR_RAMP_SPREAD_MODE, VG_COLOR_RAMP_SPREAD_PAD);
 	vgSetParameteri(handle, VG_PAINT_TYPE, VG_PAINT_TYPE_RADIAL_GRADIENT);

@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "path.h"
-#include "common.h"
 #include "vector.h"
 #include <string.h>	// for strcasecmp()
 
@@ -205,7 +204,7 @@ Path& Path::operator/=(const Path& rhs)
 {
 	normalize();
 
-	ASSERT(mStr.empty() || !rhs.hasRootDirectory());
+	RHASSERT(mStr.empty() || !rhs.hasRootDirectory());
 
 	if(!mStr.empty() && mStr[mStr.size()-1] != '/')
 		mStr += "/";

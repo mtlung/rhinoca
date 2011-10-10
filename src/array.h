@@ -1,7 +1,7 @@
 #ifndef __ARRAY_H__
 #define __ARRAY_H__
 
-#include "common.h"
+#include "assert.h"
 
 /*! Array class with checked limits.
 	A replacement for plan old array, adapted from boost's array.hpp
@@ -16,24 +16,24 @@ public:
 
 	T& operator[](rhuint i)
 	{
-		ASSERT(i < N);
+		RHASSERT(i < N);
 		return elems[i];
 	}
 
 	const T& operator[](rhuint i) const
 	{
-		ASSERT(i < N);
+		RHASSERT(i < N);
 		return elems[i];
 	}
 
 	//! Element access without range check, faster but use with care.
 	T& unsafeGetAt(rhuint i) {
-		ASSERT(i < N);
+		RHASSERT(i < N);
 		return elems[i];
 	}
 
 	const T& unsafeGetAt(rhuint i) const {
-		ASSERT(i < N);
+		RHASSERT(i < N);
 		return elems[i];
 	}
 
@@ -85,7 +85,7 @@ public:
 	StrideArray(const T* _data, rhuint elementCount, rhuint _stride=0)
 		: data((char*)_data), size(elementCount), stride(_stride == 0 ? sizeof(T) : _stride)
 	{
-		ASSERT(stride >= sizeof(T));
+		RHASSERT(stride >= sizeof(T));
 	}
 
 	//! Construct from non-const version of StrideArray<T>, U must have the const qualifier.
@@ -96,7 +96,7 @@ public:
 
 	T& operator[](rhuint i) const
 	{
-		ASSERT(i < size);
+		RHASSERT(i < size);
 		return *reinterpret_cast<T*>(data + i*stride);
 	}
 
@@ -134,7 +134,7 @@ public:
 
 	T& operator[](rhuint i) const
 	{
-		ASSERT(i < size);
+		RHASSERT(i < size);
 		return *reinterpret_cast<T*>(data + i*stride_);
 	}
 

@@ -2,17 +2,8 @@
 #define __COMMON_H__
 
 #include "rhinoca.h"
-#include "intrusiveptr.h"
-#include <assert.h>
+//#include "intrusiveptr.h"
 #include <stdlib.h>	// For _countof
-
-#ifdef NDEBUG
-#	define ASSERT(Expression) ((void)0)
-#	define VERIFY(Expression) ((void)(Expression))
-#else
-#	define ASSERT(Expression) assert(Expression)
-#	define VERIFY(Expression) assert(Expression)
-#endif
 
 // Memory allocation
 /// Typed version of malloc, use count of object rather than size in byte.
@@ -92,17 +83,5 @@ int strcasecmp(const char* s1, const char* s2);
 	((intptr_t(this) + 1) - intptr_t(&((OuterClass*)1)->ThisVar)); } \
 	OuterClass* getOuterSafe() { return this ? &getOuter() : NULL; } \
 	const OuterClass* getOuterSafe() const { return this ? &getOuter() : NULL; }
-
-class Noncopyable
-{
-protected:
-	Noncopyable() {}
-	~Noncopyable() {}
-
-private:
-	// Emphasize the following members are private
-	Noncopyable(const Noncopyable&);
-	const Noncopyable& operator=(const Noncopyable&);
-};	// Noncopyable
 
 #endif	// __COMMON_H__

@@ -81,12 +81,12 @@ static bool match(const SingleSelectorState& state, Element* ele)
 	switch(state.val[0])
 	{
 	case '#':	// Match id
-		ASSERT(state.len > 1);
+		RHASSERT(state.len > 1);
 		if(hashCompare(ele->id, state.val + 1, state.len - 1))
 			return true;
 		break;
 	case '.':	// Match class name
-		ASSERT(state.len > 1);
+		RHASSERT(state.len > 1);
 		if(hashCompare(ele->className, state.val + 1, state.len - 1))
 			return true;
 		break;
@@ -156,12 +156,12 @@ void CSSStyleRule::setCssText(const char* str)
 
 void CSSStyleRule::bind(JSContext* cx, JSObject* parent)
 {
-	ASSERT(!jsContext);
+	RHASSERT(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
-	VERIFY(JS_SetPrivate(cx, *this, this));
-//	VERIFY(JS_DefineFunctions(cx, *this, methods));
-	VERIFY(JS_DefineProperties(cx, *this, properties));
+	RHVERIFY(JS_SetPrivate(cx, *this, this));
+//	RHVERIFY(JS_DefineFunctions(cx, *this, methods));
+	RHVERIFY(JS_DefineProperties(cx, *this, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 

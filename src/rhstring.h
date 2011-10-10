@@ -1,6 +1,7 @@
 #ifndef __RHSTRING_H__
 #define __RHSTRING_H__
 
+#include "assert.h"
 #include "common.h"
 #include "rhinoca.h"
 
@@ -71,8 +72,8 @@ public:
 	char* c_str() { return _cstr; }
 	const char* c_str() const { return _cstr; }
 
-	char& operator[](unsigned index) { ASSERT(index < _length); return _cstr[index]; }
-	char operator[](unsigned index) const { ASSERT(index < _length); return _cstr[index]; }
+	char& operator[](unsigned index) { RHASSERT(index < _length); return _cstr[index]; }
+	char operator[](unsigned index) const { RHASSERT(index < _length); return _cstr[index]; }
 
 	static const size_type npos = size_type(-1);
 
@@ -156,7 +157,7 @@ public:
 	rhuint32 hashValue() const;
 	rhuint32 lowerCaseHashValue() const;
 
-	size_t size() const;
+	unsigned size() const;
 
 	bool empty() const;
 
@@ -237,8 +238,8 @@ public:
 	FORCE_INLINE StringHash(const char (&str)[21]) {	hash = StringHashDetail::sdbm<21>(str);	}
 
 	//!	Parameter \em len define the maximum length of the input string buf, 0 for auto length detection.
-	StringHash(const char* buf, size_t len);
-	StringHash(const wchar_t* buf, size_t len);
+	StringHash(const char* buf, unsigned len);
+	StringHash(const wchar_t* buf, unsigned len);
 
 	operator rhuint32() const {	return hash;	}
 
@@ -257,7 +258,7 @@ public:
 
 //	StringLowerCaseHash(const FixString& fixString) : hash(fixString.hashValue()) {}
 
-	StringLowerCaseHash(const char* buf, size_t len);
+	StringLowerCaseHash(const char* buf, unsigned len);
 };	// StringToLowerHash
 
 #endif	// __RHSTRING_H__

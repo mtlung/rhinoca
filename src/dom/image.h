@@ -2,6 +2,7 @@
 #define __DOM_IMAGE_H__
 
 #include "element.h"
+#include "../intrusiveptr.h"
 
 namespace Render {
 

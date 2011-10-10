@@ -1,7 +1,6 @@
 #ifndef __CONTEXT_H__
 #define __CONTEXT_H__
 
-#include "common.h"
 #include "resource.h"
 #include "rhstring.h"
 #include "dom/window.h"

@@ -46,8 +46,8 @@ LinkListBase::~LinkListBase()
 
 void LinkListBase::insertBefore(NodeBase& newNode, const NodeBase& beforeThis)
 {
-	ASSERT(!newNode.isInList());
-	ASSERT("Parameter 'beforeThis' should be in this list" &&
+	RHASSERT(!newNode.isInList());
+	RHASSERT("Parameter 'beforeThis' should be in this list" &&
 		beforeThis.mNext == NULL || beforeThis.getList() == this
 	);
 

@@ -2,7 +2,6 @@
 #define __RENDER_TEXTURE_H__
 
 #include "driver.h"
-#include "../common.h"
 #include "../resource.h"
 
 namespace Render {

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "timer.h"
+#include "assert.h"
 #include "common.h"
 #include "platform.h"
 #include <math.h>
@@ -39,8 +40,8 @@ rhuint64 getQueryPerformanceFrequency()
 {
 #if USE_RDTSC
 	LARGE_INTEGER ret;
-	VERIFY(::QueryPerformanceFrequency(&ret));
-	ASSERT(sizeof(rhuint64) == sizeof(ret.QuadPart));
+	RHVERIFY(::QueryPerformanceFrequency(&ret));
+	RHASSERT(sizeof(rhuint64) == sizeof(ret.QuadPart));
 
 	// Try to get the ratio between QueryPerformanceCounter and rdtsc
 	rhuint64 ticks1;

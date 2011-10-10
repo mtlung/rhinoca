@@ -60,7 +60,7 @@ static rhuint32 appendHash(rhuint32 h, rhuint32 val) {
 
 rhuint32 TextRenderer::makeHash(Font* font, unsigned fontPixelHeight, const char* utf8Str, unsigned utf8Len)
 {
-	ASSERT(font && utf8Str);
+	RHASSERT(font && utf8Str);
 
 	// Determine the string length
 	unsigned strLen = 0;
@@ -110,7 +110,7 @@ bool TextRenderer::drawText(rhuint32 hash, float x, float y, float* colorFloat4)
 rhuint32 TextRenderer::drawText(Font* font, unsigned fontPixelHeight, const char* utf8Str, unsigned strLen, float x, float y, float* colorFloat4)
 {
 	rhuint32 h = makeHash(font, fontPixelHeight, utf8Str, strLen);
-	VERIFY(drawText(h, x, y, colorFloat4));
+	RHVERIFY(drawText(h, x, y, colorFloat4));
 	return h;
 }
 

@@ -71,7 +71,7 @@ template<class T>
 static T* getJsBindable(JSContext* cx, jsval* vp)
 {
 	JsBindable* ret = getJsBindable<T>(cx, JS_THIS_OBJECT(cx, vp));
-	ASSERT(dynamic_cast<T*>(ret));
+	RHASSERT(dynamic_cast<T*>(ret));
 	return static_cast<T*>(ret);
 }
 

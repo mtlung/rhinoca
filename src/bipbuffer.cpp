@@ -96,7 +96,7 @@ void BipBuffer::commitWrite(unsigned size)
 	}
 
 	// If we try to commit more space than we asked for, clip to the size we asked for.
-//	ASSERT(size <= szResrv);
+//	RHASSERT(size <= szResrv);
 	if(size > szResrv)
 		size = szResrv;
 

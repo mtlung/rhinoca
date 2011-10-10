@@ -28,8 +28,8 @@ public:
 		void request(unsigned begin, unsigned end)
 		{
 			ScopeLock lock(mutex);
-			ASSERT(begin < end);
-			ASSERT(_begin <= _end);
+			RHASSERT(begin < end);
+			RHASSERT(_begin <= _end);
 			// Not contiguous, set seek to true
 			if((_seek = (begin < _begin || begin > _end)))
 				_begin = begin;
@@ -50,9 +50,9 @@ public:
 		void commit(unsigned begin, unsigned end)
 		{
 			ScopeLock lock(mutex);
-			ASSERT(_seek || begin == _begin && "Audio loader is leaving a gap in the audio data!");
-			ASSERT(begin < end);
-			ASSERT(_begin <= _end);
+			RHASSERT(_seek || begin == _begin && "Audio loader is leaving a gap in the audio data!");
+			RHASSERT(begin < end);
+			RHASSERT(_begin <= _end);
 			_begin = end;
 			_end = _end < _begin ? _begin : _end;
 		}

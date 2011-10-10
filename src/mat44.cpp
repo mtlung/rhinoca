@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "mat44.h"
-#include "common.h"
+#include "assert.h"
 #include <math.h>
 
 #if !defined(RHINOCA_GCC) || defined(__SSE__)
@@ -30,8 +30,8 @@ void Mat44::copyTo(float* p) const {
 
 void Mat44::mul(const Mat44& rhs, Mat44& ret) const
 {
-	ASSERT(&rhs != &ret);
-	ASSERT(this != &ret);
+	RHASSERT(&rhs != &ret);
+	RHASSERT(this != &ret);
 
 #if 0 && defined(RHINOCA_IOS_DEVICE)
 
@@ -120,7 +120,7 @@ Mat44& Mat44::operator*=(float rhs)
 
 void Mat44::transpose(Mat44& ret) const
 {
-	ASSERT(&ret != this);
+	RHASSERT(&ret != this);
 
 	ret.m00 = m00; ret.m01 = m10; ret.m02 = m20; ret.m03 = m30;
 	ret.m10 = m01; ret.m11 = m11; ret.m12 = m21; ret.m13 = m31;

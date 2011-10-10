@@ -90,7 +90,7 @@ void* rhinoca_http_open(Rhinoca* rh, const char* uri)
 	if(!adr.parse(host))
 		goto OnError;
 
-	VERIFY(s->socket.create(BsdSocket::TCP) == 0);
+	RHVERIFY(s->socket.create(BsdSocket::TCP) == 0);
 	s->socket.setBlocking(false);
 
 	ret = s->socket.connect(IPEndPoint(adr, 80));
@@ -107,7 +107,7 @@ OnError:
 
 bool rhinoca_http_ready(void* file, rhuint64 size)
 {
-	ASSERT(file);
+	RHASSERT(file);
 
     int ret = 0;
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
@@ -187,7 +187,7 @@ bool rhinoca_http_ready(void* file, rhuint64 size)
 	if(s->bufSize >= size)
 		return true;
 
-	ASSERT(s->headerReceived);
+	RHASSERT(s->headerReceived);
 
 	prepareForRead(s, (unsigned)size);
 	ret = s->socket.receive(s->buffer + s->bufSize, (unsigned)size - s->bufSize);

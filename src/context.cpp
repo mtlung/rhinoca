@@ -16,6 +16,7 @@
 #include "dom/touchevent.h"
 #include "dom/registerfactories.h"
 #include "render/driver.h"
+#include "render/texture.h"
 #include <string.h>	// for strlen() and strcasecmp()
 
 #ifdef RHINOCA_IOS
@@ -148,13 +149,13 @@ void Rhinoca::collectGarbage()
 
 void Rhinoca::_initGlobal()
 {
-	ASSERT(!domWindow);
+	RHASSERT(!domWindow);
 
 	// NOTE: We use the Window object as the global
 	jsGlobal = JS_NewCompartmentAndGlobalObject(jsContext, &Dom::Window::jsClass, NULL);
 	JS_SetGlobalObject(jsContext, jsGlobal);
 
-	VERIFY(JS_InitStandardClasses(jsContext, jsGlobal));
+	RHVERIFY(JS_InitStandardClasses(jsContext, jsGlobal));
 
 	Dom::registerClasses(jsContext, jsGlobal);
 
@@ -165,9 +166,9 @@ void Rhinoca::_initGlobal()
 
 	{	// Register the console object
 		jsConsole = JS_DefineObject(jsContext, jsGlobal, "console", &jsConsoleClass, 0, JSPROP_ENUMERATE);
-		VERIFY(JS_SetPrivate(jsContext, jsConsole, this));
-		VERIFY(JS_AddNamedObjectRoot(jsContext, &jsConsole, "console"));
-		VERIFY(JS_DefineFunctions(jsContext, jsConsole, jsConsoleMethods));
+		RHVERIFY(JS_SetPrivate(jsContext, jsConsole, this));
+		RHVERIFY(JS_AddNamedObjectRoot(jsContext, &jsConsole, "console"));
+		RHVERIFY(JS_DefineFunctions(jsContext, jsConsole, jsConsoleMethods));
 	}
 
 	{	// Run some default settings
@@ -180,7 +181,7 @@ void Rhinoca::_initGlobal()
 			"var Canvas = HTMLCanvasElement;"
 			"var Image = HTMLImageElement;"
 		;
-		VERIFY(JS_EvaluateScript(jsContext, jsGlobal, script, strlen(script), "", 0, NULL));
+		RHVERIFY(JS_EvaluateScript(jsContext, jsGlobal, script, strlen(script), "", 0, NULL));
 	}
 }
 
@@ -264,7 +265,7 @@ bool Rhinoca::openDoucment(const char* uri)
 				tolower(const_cast<char*>(name));
 
 				jsval v = STRING_TO_JSVAL(JS_NewStringCopyZ(jsContext, value));
-				VERIFY(JS_SetProperty(jsContext, *currentNode, name, &v));
+				RHVERIFY(JS_SetProperty(jsContext, *currentNode, name, &v));
 			}
 
 		}	break;
@@ -344,7 +345,7 @@ void Rhinoca::closeDocument()
 	// Clear all tasks before the VM shutdown, since any task would use the VM
 	taskPool.waitAll();
 
-	VERIFY(JS_RemoveObjectRoot(jsContext, &jsConsole));
+	RHVERIFY(JS_RemoveObjectRoot(jsContext, &jsConsole));
 	jsConsole = NULL;
 
 	if(domWindow)

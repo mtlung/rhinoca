@@ -1,8 +1,8 @@
 #include "pch.h"
 #include "driver.h"
 #include "driverdetail.h"
+#include "../assert.h"
 #include "../mat44.h"
-#include "../common.h"
 #include <memory>
 
 namespace Render {
@@ -153,7 +153,7 @@ rhuint16 Driver::vertex3f(float x, float y, float z)
 {
 	BufferBuilder* builder = currentBufferBuilder();
 
-	ASSERT("Too many vertice" && builder->vertexCount < rhuint16(-1));
+	RHASSERT("Too many vertice" && builder->vertexCount < rhuint16(-1));
 
 	const unsigned vertexSize = vertexSizeForFormat(builder->format);
 

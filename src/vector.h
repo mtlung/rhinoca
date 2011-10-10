@@ -1,6 +1,7 @@
 #ifndef __VECTOR_H__
 #define __VECTOR_H__
 
+#include "assert.h"
 #include "common.h"
 
 #ifndef _NEW_
@@ -98,7 +99,7 @@ public:
 		return *(new ((void *)&_vals[_size++]) T(val));
 	}
 
-	void pop_back() { ASSERT(_size > 0); _size--; _vals[_size].~T(); }
+	void pop_back() { RHASSERT(_size > 0); _size--; _vals[_size].~T(); }
 
 	void insert(rhuint idx, const T& val)
 	{
@@ -111,8 +112,8 @@ public:
 
 	void insert(iterator position, T* first, T* last)
 	{
-		ASSERT(_vals <= position && position <= _vals + _size);
-		ASSERT(first < last);
+		RHASSERT(_vals <= position && position <= _vals + _size);
+		RHASSERT(first < last);
 
 		const unsigned idx = position - _vals;
 		const unsigned amount = last - first;
@@ -125,7 +126,7 @@ public:
 
 	void remove(rhuint idx)
 	{
-		ASSERT(idx < _size);
+		RHASSERT(idx < _size);
 		_vals[idx].~T();
 		if(idx < (_size - 1)) {
 			memcpy(&_vals[idx], &_vals[idx+1], sizeof(T) * (_size - idx - 1));
@@ -153,20 +154,20 @@ public:
 
 	rhuint capacity() { return _allocated; }
 
-	T& top() { ASSERT(_size > 0); return _vals[_size - 1]; }
-	const T& top() const { ASSERT(_size > 0); return _vals[_size - 1]; }
+	T& top() { RHASSERT(_size > 0); return _vals[_size - 1]; }
+	const T& top() const { RHASSERT(_size > 0); return _vals[_size - 1]; }
 
-	T& front() { ASSERT(_size > 0); return _vals[0]; }
-	const T& front() const { ASSERT(_size > 0); return _vals[0]; }
+	T& front() { RHASSERT(_size > 0); return _vals[0]; }
+	const T& front() const { RHASSERT(_size > 0); return _vals[0]; }
 
-	T& back() { ASSERT(_size > 0); return _vals[_size - 1]; }
-	const T& back() const { ASSERT(_size > 0); return _vals[_size - 1]; }
+	T& back() { RHASSERT(_size > 0); return _vals[_size - 1]; }
+	const T& back() const { RHASSERT(_size > 0); return _vals[_size - 1]; }
 
-	T& at(rhuint pos) { ASSERT(pos < _size); return _vals[pos]; }
-	const T& at(rhuint pos) const { ASSERT(pos < _size); return _vals[pos]; }
+	T& at(rhuint pos) { RHASSERT(pos < _size); return _vals[pos]; }
+	const T& at(rhuint pos) const { RHASSERT(pos < _size); return _vals[pos]; }
 
-	T& operator[](rhuint pos) { ASSERT(pos < _size); return _vals[pos]; }
-	const T& operator[](rhuint pos) const { ASSERT(pos < _size); return _vals[pos]; }
+	T& operator[](rhuint pos) { RHASSERT(pos < _size); return _vals[pos]; }
+	const T& operator[](rhuint pos) const { RHASSERT(pos < _size); return _vals[pos]; }
 
 	T* _vals;
 
@@ -274,7 +275,7 @@ public:
 		return *(new ((void *)&_vals[_size++]) T(val));
 	}
 
-	void pop_back() { ASSERT(_size > 0); _size--; _vals[_size].~T(); }
+	void pop_back() { RHASSERT(_size > 0); _size--; _vals[_size].~T(); }
 
 	void insert(rhuint idx, const T& val)
 	{
@@ -287,8 +288,8 @@ public:
 
 	void insert(iterator position, T* first, T* last)
 	{
-		ASSERT(_vals <= position && position <= _vals + _size);
-		ASSERT(first < last);
+		RHASSERT(_vals <= position && position <= _vals + _size);
+		RHASSERT(first < last);
 
 		const unsigned idx = position - _vals;
 		const unsigned amount = last - first;
@@ -301,7 +302,7 @@ public:
 
 	void remove(rhuint idx)
 	{
-		ASSERT(idx < _size);
+		RHASSERT(idx < _size);
 		_vals[idx].~T();
 		if(idx < (_size - 1)) {
 			memcpy(&_vals[idx], &_vals[idx+1], sizeof(T) * (_size - idx - 1));
@@ -322,20 +323,20 @@ public:
 
 	rhuint capacity() { return _allocated; }
 
-	T& top() { ASSERT(_size > 0); return _vals[_size - 1]; }
-	const T& top() const { ASSERT(_size > 0); return _vals[_size - 1]; }
+	T& top() { RHASSERT(_size > 0); return _vals[_size - 1]; }
+	const T& top() const { RHASSERT(_size > 0); return _vals[_size - 1]; }
 
-	T& front() { ASSERT(_size > 0); return _vals[0]; }
-	const T& front() const { ASSERT(_size > 0); return _vals[0]; }
+	T& front() { RHASSERT(_size > 0); return _vals[0]; }
+	const T& front() const { RHASSERT(_size > 0); return _vals[0]; }
 
-	T& back() { ASSERT(_size > 0); return _vals[_size - 1]; }
-	const T& back() const { ASSERT(_size > 0); return _vals[_size - 1]; }
+	T& back() { RHASSERT(_size > 0); return _vals[_size - 1]; }
+	const T& back() const { RHASSERT(_size > 0); return _vals[_size - 1]; }
 
-	T& at(rhuint pos) { ASSERT(pos < _size); return _vals[pos]; }
-	const T& at(rhuint pos) const { ASSERT(pos < _size); return _vals[pos]; }
+	T& at(rhuint pos) { RHASSERT(pos < _size); return _vals[pos]; }
+	const T& at(rhuint pos) const { RHASSERT(pos < _size); return _vals[pos]; }
 
-	T& operator[](rhuint pos) { ASSERT(pos < _size); return _vals[pos]; }
-	const T& operator[](rhuint pos) const { ASSERT(pos < _size); return _vals[pos]; }
+	T& operator[](rhuint pos) { RHASSERT(pos < _size); return _vals[pos]; }
+	const T& operator[](rhuint pos) const { RHASSERT(pos < _size); return _vals[pos]; }
 
 	T* _vals;
 

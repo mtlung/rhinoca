@@ -1,7 +1,7 @@
 #ifndef __XMLPARSER_H__
 #define __XMLPARSER_H__
 
-#include "common.h"
+#include "noncopyable.h"
 
 /*!	XmlParser is intended to be a high speed and easy-to-use XML Parser specialized for
 	game development.

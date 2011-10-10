@@ -79,14 +79,13 @@ struct RhinocaRenderContext;
 typedef struct RhinocaRenderContext RhinocaRenderContext;
 
 /// Platform dependent key/mouse/gesture event data
-struct RhinocaEvent {
+typedef struct RhinocaEvent {
 	void* type;
 	int value1;
 	int value2;
 	int value3;
 	int value4;
-};
-typedef struct RhinocaEvent RhinocaEvent;
+} RhinocaEvent;
 
 // Context management
 RHINOCA_API void rhinoca_init();
@@ -110,7 +109,7 @@ RHINOCA_API void rhinoca_update(Rhinoca* rh);
 RHINOCA_API void rhinoca_processEvent(Rhinoca* rh, RhinocaEvent ev);
 
 // IO functions
-struct RhFileSystem
+typedef struct RhFileSystem
 {
 // File operations:
 	void* (*openFile)(Rhinoca* rh, const char* uri);
@@ -125,8 +124,7 @@ struct RhFileSystem
 	bool (*nextDir)(void* dir);
 	const char* (*dirName)(void* dir);	/// The string returned is managed by the directory context, no need to free by user.
 	void (*closeDir)(void* dir);
-};	// RhFileSystem
-typedef struct RhFileSystem RhFileSystem;
+} RhFileSystem;
 
 RHINOCA_API RhFileSystem* rhinoca_getFileSystem();
 RHINOCA_API void rhinoca_setFileSystem(RhFileSystem fs);

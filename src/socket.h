@@ -1,7 +1,7 @@
 #ifndef __SOCKET_H__
 #define __SOCKET_H__
 
-#include "common.h"
+#include "noncopyable.h"
 #include "rhstring.h"
 
 // Forward declaration of platform dependent type

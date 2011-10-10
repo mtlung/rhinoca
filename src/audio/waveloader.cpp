@@ -111,11 +111,11 @@ void WaveLoader::loadHeader()
 		if(strcasecmp(chunkId, "RIFF") == 0)
 		{
 			char format[5] = {0};
-			VERIFY(rhFileSystem.read(stream, format, 4) == 4);
+			RHVERIFY(rhFileSystem.read(stream, format, 4) == 4);
 		}
 		else if(strcasecmp(chunkId, "FMT ") == 0)
 		{
-			VERIFY(rhFileSystem.read(stream, &format, chunkSize) == chunkSize);
+			RHVERIFY(rhFileSystem.read(stream, &format, chunkSize) == chunkSize);
 		}
 		else if(strcasecmp(chunkId, "DATA") == 0)
 		{
@@ -136,7 +136,7 @@ void WaveLoader::loadHeader()
 			break;
 		}
 		else
-			VERIFY(rhFileSystem.seek(stream, chunkSize, SEEK_CUR));
+			RHVERIFY(rhFileSystem.seek(stream, chunkSize, SEEK_CUR));
 	}
 
 	buffer->scratch = this;
@@ -162,7 +162,7 @@ void WaveLoader::loadData()
 		unsigned bytesToWrite = 0;
 		bufferData = buffer->getWritePointerForRange(0, end, bytesToWrite);
 
-		ASSERT(bytesToWrite == dataChunkSize);
+		RHASSERT(bytesToWrite == dataChunkSize);
 
 		if(rhFileSystem.read(stream, bufferData, dataChunkSize) != dataChunkSize)
 		{

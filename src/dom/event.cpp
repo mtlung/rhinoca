@@ -72,22 +72,22 @@ Event::Event()
 
 void Event::bind(JSContext* cx, JSObject* parent)
 {
-	ASSERT(!jsContext);
+	RHASSERT(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
-	VERIFY(JS_SetPrivate(cx, *this, this));
-	VERIFY(JS_DefineFunctions(cx, *this, methods));
-	VERIFY(JS_DefineProperties(cx, *this, properties));
+	RHVERIFY(JS_SetPrivate(cx, *this, this));
+	RHVERIFY(JS_DefineFunctions(cx, *this, methods));
+	RHVERIFY(JS_DefineProperties(cx, *this, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
 JSObject* Event::createPrototype()
 {
-	ASSERT(jsContext);
+	RHASSERT(jsContext);
 	JSObject* proto = JS_NewObject(jsContext, &jsClass, NULL, NULL);
-	VERIFY(JS_SetPrivate(jsContext, proto, this));
-	VERIFY(JS_DefineFunctions(jsContext, proto, methods));
-	VERIFY(JS_DefineProperties(jsContext, proto, properties));
+	RHVERIFY(JS_SetPrivate(jsContext, proto, this));
+	RHVERIFY(JS_DefineFunctions(jsContext, proto, methods));
+	RHVERIFY(JS_DefineProperties(jsContext, proto, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 	return proto;
 }
@@ -174,7 +174,7 @@ EventTarget::~EventTarget()
 
 void EventTarget::addEventListener(const char* type, EventListener* listener, bool useCapture)
 {
-	ASSERT(listener && !listener->isInList());
+	RHASSERT(listener && !listener->isInList());
 	listener->_type = type;
 	listener->_useCapture = useCapture;
 
@@ -284,7 +284,7 @@ void EventTarget::removeAllEventListener()
 
 bool EventTarget::_dispatchEventNoCaptureBubble(Event* evt, JSObject* self)
 {
-	ASSERT(evt);
+	RHASSERT(evt);
 
 	for(EventListener* l = _eventListeners.begin(); l != _eventListeners.end(); ) {
 		// NOTE: In case the event listener callback invoke removeEventListener()
