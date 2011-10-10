@@ -179,6 +179,14 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\test\filesystemtest.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\test\graphicsdrivertest.cpp"
+			>
+		</File>
+		<File
 			RelativePath="..\..\test\ipendpointtest.cpp"
 			>
 		</File>

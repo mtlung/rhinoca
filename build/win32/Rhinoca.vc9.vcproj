@@ -419,6 +419,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\render\driver2.gl.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\render\driver2.gl.windows.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\render\driver2.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\render\driverdetail.h"
 				>
 			</File>
@@ -636,6 +648,10 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\src\assert.h"
+			>
+		</File>
+		<File
 			RelativePath="..\..\src\atomic.h"
 			>
 		</File>
@@ -729,6 +745,10 @@
 		</File>
 		<File
 			RelativePath="..\..\src\mutex.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\src\noncopyable.h"
 			>
 		</File>
 		<File

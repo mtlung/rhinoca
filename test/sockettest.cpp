@@ -11,12 +11,12 @@ protected:
 		: mLocalEndPoint(IPAddress::getLoopBack(), 1234)
 		, mAnyEndPoint(IPAddress::getAny(), 1234)
 	{
-		VERIFY(BsdSocket::initApplication() == 0);
+		RHVERIFY(BsdSocket::initApplication() == 0);
 	}
 
 	~BsdSocketTestFixture()
 	{
-		VERIFY(BsdSocket::closeApplication() == 0);
+		RHVERIFY(BsdSocket::closeApplication() == 0);
 	}
 
 	// Quickly create a listening socket
@@ -54,14 +54,14 @@ struct SimpleConnector : public Task
 
 	override void run(TaskPool* taskPool) throw() {
 		BsdSocket s;
-		VERIFY(0 == s.create(BsdSocket::TCP));
+		RHVERIFY(0 == s.create(BsdSocket::TCP));
 		bool connected = false;
 		while(taskPool->keepRun()) {
 			connected = s.connect(endPoint) == 0;
 
 			if(connected) {
 				const char msg[] = "Hello world!";
-				VERIFY(sizeof(msg) == s.send(msg, sizeof(msg)));
+				RHVERIFY(sizeof(msg) == s.send(msg, sizeof(msg)));
 				break;
 			}
 		}

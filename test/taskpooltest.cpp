@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "../src/common.h"
 #include "../src/taskpool.h"
 #include <math.h>
 
