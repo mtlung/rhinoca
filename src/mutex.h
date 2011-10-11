@@ -2,7 +2,7 @@
 #define __MUTEX_H__
 
 #include "rhinoca.h"
-#include "assert.h"
+#include "rhassert.h"
 #include "noncopyable.h"
 
 #if !defined(RHINOCA_WINDOWS)

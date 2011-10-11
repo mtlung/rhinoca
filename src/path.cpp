@@ -2,6 +2,7 @@
 #include "path.h"
 #include "vector.h"
 #include <string.h>	// for strcasecmp()
+#include <unistd.h>	// for getcwd()
 
 namespace {
 

@@ -82,6 +82,7 @@
 		9C11FA1713E9A1EB0024299D /* parser.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C11FA1513E9A1EB0024299D /* parser.h */; };
 		9C11FA1A13E9A20B0024299D /* cssparser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C11FA1813E9A20B0024299D /* cssparser.cpp */; };
 		9C11FA1B13E9A20B0024299D /* cssparser.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C11FA1913E9A20B0024299D /* cssparser.h */; };
+		9C323F7C1444953E00DD7543 /* rhassert.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C323F7B1444953E00DD7543 /* rhassert.h */; };
 		9C390962139D48A7001119F1 /* imagedata.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C390960139D48A7001119F1 /* imagedata.cpp */; };
 		9C390963139D48A7001119F1 /* imagedata.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C390961139D48A7001119F1 /* imagedata.h */; };
 		9C3B3BD3138558E400E3AE02 /* nsimageloader.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B3BD2138558E400E3AE02 /* nsimageloader.mm */; };
@@ -264,6 +265,7 @@
 		9C11FA1513E9A1EB0024299D /* parser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = parser.h; path = ../../../src/parser.h; sourceTree = "<group>"; };
 		9C11FA1813E9A20B0024299D /* cssparser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = cssparser.cpp; path = ../../../src/dom/cssparser.cpp; sourceTree = "<group>"; };
 		9C11FA1913E9A20B0024299D /* cssparser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cssparser.h; path = ../../../src/dom/cssparser.h; sourceTree = "<group>"; };
+		9C323F7B1444953E00DD7543 /* rhassert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = rhassert.h; path = ../../../src/rhassert.h; sourceTree = "<group>"; };
 		9C390960139D48A7001119F1 /* imagedata.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = imagedata.cpp; path = ../../../src/dom/imagedata.cpp; sourceTree = "<group>"; };
 		9C390961139D48A7001119F1 /* imagedata.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = imagedata.h; path = ../../../src/dom/imagedata.h; sourceTree = "<group>"; };
 		9C3B3BD2138558E400E3AE02 /* nsimageloader.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = nsimageloader.mm; path = ../../../src/render/nsimageloader.mm; sourceTree = "<group>"; };
@@ -401,6 +403,7 @@
 				9CF4B718137D69190025CF8E /* audio */,
 				187BCC2C12FABB050042FDB1 /* render */,
 				187BCA4812F9BBD20042FDB1 /* dom */,
+				9C323F7B1444953E00DD7543 /* rhassert.h */,
 				187BC9CD12F9B4560042FDB1 /* atomic.h */,
 				187BC9CE12F9B4560042FDB1 /* common.cpp */,
 				187BC9CF12F9B4560042FDB1 /* common.h */,
@@ -698,6 +701,7 @@
 				9CC7E1EE13F839D900435C60 /* cssstyledeclaration.h in Headers */,
 				9CC7E1F013F839D900435C60 /* cssstylerule.h in Headers */,
 				9CC7E1F213F839D900435C60 /* cssstylesheet.h in Headers */,
+				9C323F7C1444953E00DD7543 /* rhassert.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

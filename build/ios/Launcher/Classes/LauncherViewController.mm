@@ -208,7 +208,7 @@ void alertFunc(Rhinoca* rh, void* userData, const char* str)
 //	rhinoca_openDocument(rh, "http://192.168.1.100/rhinoca/demo/Pixastic/pixastic.html");
 //	rhinoca_openDocument(rh, "http://192.168.1.100/rhinoca/test/htmltest/audiotest/test.html");
 //	rhinoca_openDocument(rh, "http://192.168.1.100/rhinoca/demo/impactjs/drop/drop.html");
-	rhinoca_openDocument(rh, "http://192.168.1.100/rhinoca/demo/impactjs/biolab/biolab.html");
+	rhinoca_openDocument(rh, "biolab/biolab-ios.html");
 	assert(GL_NO_ERROR == glGetError());
 }
 

@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "timer.h"
-#include "assert.h"
 #include "common.h"
 #include "platform.h"
 #include <math.h>

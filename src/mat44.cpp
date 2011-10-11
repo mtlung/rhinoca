@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "mat44.h"
-#include "assert.h"
+#include "rhassert.h"
 #include <math.h>
 
 #if !defined(RHINOCA_GCC) || defined(__SSE__)

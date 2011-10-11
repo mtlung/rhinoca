@@ -1,7 +1,7 @@
 #ifndef __LINKLIST_H__
 #define __LINKLIST_H__
 
-#include "assert.h"
+#include "rhassert.h"
 #include "noncopyable.h"
 
 /*!	The base class for an intrusive double linked list.

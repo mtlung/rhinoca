@@ -15,7 +15,7 @@ Resource* createNSAudio(const char* uri, ResourceManager* mgr)
 	   uriExtensionMatch(uri, ".aifc") ||
 	   uriExtensionMatch(uri, ".aiff") ||
 	   uriExtensionMatch(uri, ".caf") ||
-	   uriExtensionMatch(uri, ".mp3") ||
+//	   uriExtensionMatch(uri, ".mp3") ||
 	   uriExtensionMatch(uri, ".m4a") ||
 	   uriExtensionMatch(uri, ".next") ||
 	   uriExtensionMatch(uri, ".wav") ||
@@ -31,7 +31,7 @@ public:
 
 	~NSAudioLoader()
 	{
-		if(stream) io_close(stream, TaskPool::threadId());
+		if(stream) rhFileSystem.closeFile(stream);
 		if(afs) AudioFileStreamClose(afs);
 	}
 
@@ -140,21 +140,20 @@ static const unsigned _dataChunkSize = 1024 * 64;
 
 void NSAudioLoader::run(TaskPool* taskPool)
 {
-	int tId = TaskPool::threadId();
 	Rhinoca* rh = manager->rhinoca;
 
-	if(!stream) stream = io_open(rh, buffer->uri(), tId);
+	if(!stream) stream = rhFileSystem.openFile(rh, buffer->uri());
 	if(!stream) {
 		print(rh, "NSAudioLoader: Fail to open file '%s'\n", buffer->uri().c_str());
 		goto Abort;
 	}
 
-	if(!io_ready(stream, _dataChunkSize, tId))
+	if(!rhFileSystem.readReady(stream, _dataChunkSize))
 		return reSchedule();
 
 	{	// Read from stream and pass to audio parser
 		rhbyte buf[_dataChunkSize];
-		unsigned readCount = io_read(stream, buf, _dataChunkSize, tId);
+		unsigned readCount = rhFileSystem.read(stream, buf, _dataChunkSize);
 		
 		if(readCount == 0) {
 			buffer->state = Resource::Loaded;
@@ -188,7 +187,7 @@ void NSAudioLoader::onDataReady(const rhbyte* data, unsigned len, unsigned numPa
 	}
 	else
 	{
-		ASSERT(len % format.blockAlignment == 0);
+		RHASSERT(len % format.blockAlignment == 0);
 		const unsigned sampleCount = len / format.blockAlignment;
 		const unsigned audioBufBegin = currentSamplePos;
 		const unsigned audioBufEnd = audioBufBegin + sampleCount;
@@ -198,8 +197,8 @@ void NSAudioLoader::onDataReady(const rhbyte* data, unsigned len, unsigned numPa
 			unsigned pos = audioBufEnd;
 
 			void* bufferData = buffer->getWritePointerForRange(currentSamplePos, pos, bytesToWrite);
-			ASSERT(bufferData);
-			ASSERT(bytesToWrite <= len);
+			RHASSERT(bufferData);
+			RHASSERT(bytesToWrite <= len);
 
 			memcpy(bufferData, data, bytesToWrite);
 			buffer->commitWriteForRange(currentSamplePos, pos);
@@ -221,7 +220,7 @@ bool loadNSAudio(Resource* resource, ResourceManager* mgr)
 	   uriExtensionMatch(uri, ".aifc") ||
 	   uriExtensionMatch(uri, ".aiff") ||
 	   uriExtensionMatch(uri, ".caf") ||
-	   uriExtensionMatch(uri, ".mp3") ||
+//	   uriExtensionMatch(uri, ".mp3") ||
 	   uriExtensionMatch(uri, ".m4a") ||
 	   uriExtensionMatch(uri, ".next") ||
 	   uriExtensionMatch(uri, ".wav") ||

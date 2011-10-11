@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "driver.h"
 #include "driverdetail.h"
-#include "../assert.h"
+#include "../rhassert.h"
 #include "../mat44.h"
 #include <memory>
 

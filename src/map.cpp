@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "map.h"
-#include "assert.h"
 
 namespace Impl {
 

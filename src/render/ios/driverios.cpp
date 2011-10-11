@@ -1,5 +1,6 @@
 #include "../driver.h"
 #include "../driverdetail.h"
+#include "../../rhassert.h"
 #include "../../common.h"
 #include "../../Vec3.h"
 #include <string.h>
@@ -231,7 +232,7 @@ static const int _minFilter[] = { GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEARE
 
 void Driver::forceApplyCurrent()
 {
-	ASSERT(GL_NO_ERROR == glGetError());
+	RHASSERT(GL_NO_ERROR == glGetError());
 
 	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)_context->renderTarget);
 
@@ -295,7 +296,7 @@ void Driver::forceApplyCurrent()
 	glLoadMatrixf(_context->projectionMatrix);
 	glMatrixMode(GL_MODELVIEW);
 
-	ASSERT(GL_NO_ERROR == glGetError());
+	RHASSERT(GL_NO_ERROR == glGetError());
 }
 
 // Capability
@@ -316,7 +317,7 @@ void* Driver::createRenderTargetExternal(void* externalHandle)
 
 void* Driver::createRenderTarget(void* existingRenderTarget, void** textureHandle, void** depthHandle, void** stencilHandle, unsigned width, unsigned height)
 {
-	ASSERT(GL_NO_ERROR == glGetError());
+	RHASSERT(GL_NO_ERROR == glGetError());
 
 	GLuint handle;
 
@@ -357,12 +358,12 @@ void* Driver::createRenderTarget(void* existingRenderTarget, void** textureHandl
 #ifndef NDEBUG
 	// See http://www.khronos.org/opengles/sdk/docs/man/xhtml/glCheckFramebufferStatus.xml
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	ASSERT(status != GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT);
-	ASSERT(status != GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT);
-	ASSERT(status != GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS);
-	ASSERT(status != GL_FRAMEBUFFER_UNSUPPORTED && "Most likely stencil not supported");
-	ASSERT(status == GL_FRAMEBUFFER_COMPLETE);
-	ASSERT(GL_NO_ERROR == glGetError());
+	RHASSERT(status != GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT);
+	RHASSERT(status != GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT);
+	RHASSERT(status != GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS);
+	RHASSERT(status != GL_FRAMEBUFFER_UNSUPPORTED && "Most likely stencil not supported");
+	RHASSERT(status == GL_FRAMEBUFFER_COMPLETE);
+	RHASSERT(GL_NO_ERROR == glGetError());
 #endif
 
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
@@ -427,7 +428,7 @@ void Driver::setViewMatrix(const float* matrix)
 #ifndef NDEBUG
 	int i;
 	glGetIntegerv(GL_MATRIX_MODE, &i);
-	ASSERT(i == GL_MODELVIEW);
+	RHASSERT(i == GL_MODELVIEW);
 #endif
 
 	glLoadMatrixf(matrix);
@@ -448,7 +449,7 @@ static Driver::TextureFormat autoChooseFormat(Driver::TextureFormat srcFormat)
 
 void* Driver::createTexture(void* existingTexture, unsigned width, unsigned height, TextureFormat internalFormat, const void* srcData, TextureFormat srcDataFormat, unsigned packAlignment)
 {
-	ASSERT(GL_NO_ERROR == glGetError());
+	RHASSERT(GL_NO_ERROR == glGetError());
 
 	const GLint maxTexSize = _context->maxTextureSize;
 	if(width > maxTexSize || height > maxTexSize) {
@@ -512,7 +513,7 @@ void* Driver::createTexture(void* existingTexture, unsigned width, unsigned heig
 		Driver::setSamplerState(0, backupState);
 	}
 
-	ASSERT(GL_NO_ERROR == glGetError());
+	RHASSERT(GL_NO_ERROR == glGetError());
 	return reinterpret_cast<void*>(handle);
 }
 
@@ -788,7 +789,7 @@ void Driver::setSamplerState(unsigned textureUnit, const SamplerState& state)
 			GLint magFilter;
 			glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, &magFilter);
 
-			ASSERT(_magFilter[state.filter] == magFilter);
+			RHASSERT(_magFilter[state.filter] == magFilter);
 		}
 #endif
 		return;
@@ -961,7 +962,7 @@ void Driver::draw(unsigned vertexCount, unsigned startingVertex)
 	InputAssemblerState& state = _context->inputAssemblerState;
 	VertexBuffer* vb = reinterpret_cast<VertexBuffer*>(state.vertexBuffer);
 
-	ASSERT(vertexCount <= vb->count);
+	RHASSERT(vertexCount <= vb->count);
 	glDrawArrays(state.primitiveType, startingVertex, vertexCount);
 }
 

@@ -1,8 +1,8 @@
 #ifndef ___MAP_H__
 #define ___MAP_H__
 
+#include "rhassert.h"
 #include "noncopyable.h"
-#include "rhinoca.h"	// To have correct NDEBUG macro
 
 /*!	\class MapBase
 	The base class for an intrusive associative map container.

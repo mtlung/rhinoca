@@ -1,7 +1,7 @@
 #ifndef __VECTOR_H__
 #define __VECTOR_H__
 
-#include "assert.h"
+#include "rhassert.h"
 #include "common.h"
 
 #ifndef _NEW_

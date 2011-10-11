@@ -1,7 +1,7 @@
 #ifndef __RHSTRING_H__
 #define __RHSTRING_H__
 
-#include "assert.h"
+#include "rhassert.h"
 #include "common.h"
 #include "rhinoca.h"
 

@@ -63,13 +63,13 @@ static size_t dataProviderGetBytes(void* f, void* buffer, size_t count)
 
 static off_t dataProviderSkipForwardBytes(void* f, off_t count)
 {
-	ASSERT(false);
+	RHASSERT(false);
 	return 0;
 }
 
 static void dataProviderRewind(void* f)
 {
-//	ASSERT(false);
+//	RHASSERT(false);
 }
 
 static void dataProviderRelease(void* f)
@@ -185,7 +185,7 @@ static void argbToRgba(unsigned char* data, unsigned width, unsigned rowBytes, u
 
 void NSImageLoader::commit(TaskPool* taskPool)
 {
-	ASSERT(texture->scratch == this);
+	RHASSERT(texture->scratch == this);
 	texture->scratch = NULL;
 
 	unsigned rowBytes;					// Image size padded by CGImage
@@ -235,10 +235,10 @@ void NSImageLoader::commit(TaskPool* taskPool)
 		case kCGImageAlphaLast:
 			break;
 		default:
-			ASSERT(false);
+			RHASSERT(false);
 			format = Driver::RGBA;
 		}
-		ASSERT(padding == 0);
+		RHASSERT(padding == 0);
 		break;
 	case 24:
 		internal = format = Driver::RGB;
@@ -251,7 +251,7 @@ void NSImageLoader::commit(TaskPool* taskPool)
 		internal = format = Driver::LUMINANCE;
 		break;
 	default:
-		ASSERT(false);
+		RHASSERT(false);
 	}
 
 	if(texture->create(texWidth, texHeight, internal, (const char*)pixels, pixelDataSize, format, rowAlignment))

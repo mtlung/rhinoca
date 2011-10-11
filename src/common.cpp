@@ -1,13 +1,16 @@
 #include "pch.h"
 #include "common.h"
+#include "rhassert.h"
 #include <ctype.h>
 #include <math.h>
 #include <assert.h>
 
+#ifdef _MSC_VER
 void rhAssert(const wchar_t* expression, const wchar_t* file, unsigned line)
 {
 	_wassert(expression, file, line);
 }
+#endif
 
 // Reference: http://www.bsdlover.cn/study/UnixTree/V7/usr/src/libc/gen/atof.c.html
 double atof(const char* p, double onErr)
