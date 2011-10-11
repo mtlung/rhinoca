@@ -107,7 +107,7 @@ const wchar_t* GraphicsDriverTest::windowClass = L"Rhinoca unit test";
 
 TEST_FIXTURE(GraphicsDriverTest, empty)
 {
-	createWindow(0, 0);
+	createWindow(1, 1);
 }
 
 TEST_FIXTURE(GraphicsDriverTest, basic)

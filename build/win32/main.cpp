@@ -15,13 +15,8 @@
 
 #include "DropHandler.h"
 
-#ifdef NDEBUG
-#	define ASSERT(Expression) ((void)0)
-#	define VERIFY(Expression) ((void)(Expression))
-#else
-#	define ASSERT(Expression) assert(Expression)
-#	define VERIFY(Expression) assert(Expression)
-#endif
+#include "../../src/render/driver2.h"
+#include "../../src/rhstring.h"
 
 static const wchar_t* windowClass = L"Rhinoca Launcher";
 
@@ -47,8 +42,8 @@ struct RhinocaRenderContext
 	unsigned texture;
 };
 
-int _width = -1;
-int _height = -1;
+int _width = 500;
+int _height = 500;
 
 void fileDropCallback(const char* filePath, void* userData)
 {
@@ -74,21 +69,21 @@ static bool setupFbo(unsigned width, unsigned height)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glBindTexture(GL_TEXTURE_2D, 0);
-	ASSERT(GL_NO_ERROR == glGetError());
+	RHASSERT(GL_NO_ERROR == glGetError());
 
 	// Generate frame buffer for depth and stencil
 	if(!renderContext.depth) glGenRenderbuffers(1, &renderContext.depth);
 	glBindRenderbuffer(GL_RENDERBUFFER, renderContext.depth);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-	ASSERT(GL_NO_ERROR == glGetError());
+	RHASSERT(GL_NO_ERROR == glGetError());
 
 	// Create render target for Rhinoca to draw to
 	if(!renderContext.fbo) glGenFramebuffers(1, &renderContext.fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, renderContext.fbo);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderContext.texture, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderContext.depth);
-	ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-	ASSERT(GL_NO_ERROR == glGetError());
+	RHASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+	RHASSERT(GL_NO_ERROR == glGetError());
 
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
@@ -147,7 +142,7 @@ HWND createWindow(HWND existingWindow, int& width, int& height, bool fullScreen)
 	wc.hCursor = ::LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = NULL;	// (HBRUSH)(COLOR_WINDOW);
 
-	VERIFY(::RegisterClassW(&wc) != 0);
+	RHVERIFY(::RegisterClassW(&wc) != 0);
 
 	if(existingWindow == 0)
 	{
@@ -190,27 +185,6 @@ HWND createWindow(HWND existingWindow, int& width, int& height, bool fullScreen)
 	return hWnd;
 }
 
-bool initOpenGl(HWND hWnd, HDC& dc)
-{
-	dc = ::GetDC(hWnd);
-
-	PIXELFORMATDESCRIPTOR pfd;
-	::ZeroMemory(&pfd, sizeof(pfd));
-	pfd.nVersion = 1;
-	pfd.nSize = sizeof(pfd);
-	pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-	pfd.iPixelType = PFD_TYPE_RGBA;
-	pfd.cColorBits = 32;
-	pfd.cDepthBits = 24;
-	pfd.cStencilBits = 8;
-	pfd.iLayerType = PFD_MAIN_PLANE;
-
-	int pixelFormat = ::ChoosePixelFormat(dc, &pfd);
-	if(::SetPixelFormat(dc, pixelFormat, &pfd) != TRUE) return false;
-	HGLRC rc = ::wglCreateContext(dc);
-	return ::wglMakeCurrent(dc, rc) == TRUE;
-}
-
 void alertFunc(Rhinoca* rh, void* userData, const char* str)
 {
 	MessageBoxA((HWND)userData, str, "Javascript alert", MB_OK);
@@ -230,8 +204,10 @@ int main()
 
 	HWND hWnd = createWindow(NULL, _width, _height, false);
 
-	HDC dc;
-	initOpenGl(hWnd, dc);
+	RhRenderDriver* driver = rhNewRenderDriver(NULL);
+	RhRenderDriverContext* context = driver->newContext();
+	driver->initContext(context, hWnd);
+
 	rhinoca_init();
 
 	if(!setupFbo(_width, _height)) {
@@ -252,7 +228,46 @@ int main()
 
 //	rhinoca_openDocument(rh, "../../test/htmlTest/audioTest/test.html");
 //	rhinoca_openDocument(rh, "../../demo/impactjs/drop/drop.html");
-	rhinoca_openDocument(rh, "../../demo/impactjs/biolab/biolab.html");
+//	rhinoca_openDocument(rh, "../../demo/impactjs/biolab/biolab-ios.html");
+	rhinoca_openDocument(rh, "../../test/htmlTest/cssTest/bg.html");
+//	rhinoca_openDocument(rh, "../../test.html");
+
+	RhRenderBuffer* buffer = driver->newBuffer();
+	driver->initBuffer(buffer, RhRenderBufferType_Vertex, NULL, 128);
+	driver->mapBuffer(buffer, RhRenderBufferMapUsage(RhRenderBufferMapUsage_Read | RhRenderBufferMapUsage_Write));
+	driver->unmapBuffer(buffer);
+	driver->deleteBuffer(buffer);
+
+	RhRenderTexture* texture = driver->newTexture();
+	driver->initTexture(texture, 64, 64, RhRenderTextureFormat_RGBA);
+	driver->commitTexture(texture, NULL);
+
+	RhRenderShader* vShader = driver->newShader();
+	RhRenderShader* pShader = driver->newShader();
+	RhRenderShaderProgram* program = driver->newShaderPprogram();
+
+	const char* vShaderSrc = "void main(void){gl_Position=ftransform();}";
+//	const char* vShaderSrc =
+//		"uniform Transformation{mat4 projection_matrix;mat4 modelview_matrix;};"
+//		"in vec3 vertex; void main(void){gl_Position=projection_matrix*modelview_matrix*vec4(vertex,1);}";
+	driver->initShader(vShader, RhRenderShaderType_Vertex, &vShaderSrc, 1);
+
+	const char* pShaderSrc =
+		"uniform vec4 u_color;"
+		"uniform sampler2D tex;"
+		"void main(void){gl_FragColor=u_color + texture2D(tex, vec2(0,0)).rgba;}";
+	driver->initShader(pShader, RhRenderShaderType_Pixel, &pShaderSrc, 1);
+
+	RhRenderShader* shaders[] = { vShader, pShader };
+	driver->initShaderProgram(program, shaders, 2);
+	float c[] = { 1, 1, 0, 1 };
+	driver->setUniform4fv(program, StringHash("u_color"), c, 1);
+	driver->setUniformTexture(program, StringHash("tex"), texture);
+
+	driver->deleteShader(vShader);
+	driver->deleteShader(pShader);
+	driver->deleteShaderProgram(program);
+	driver->deleteTexture(texture);
 
 	while(true) {
 		MSG message;
@@ -265,12 +280,12 @@ int main()
 		}
 
 		if(!_quitWindow) {
-			ASSERT(GL_NO_ERROR == glGetError());
+			RHASSERT(GL_NO_ERROR == glGetError());
 
 			glDepthMask(GL_FALSE);
 
 			rhinoca_update(rh);
-			ASSERT(GL_NO_ERROR == glGetError());
+			RHASSERT(GL_NO_ERROR == glGetError());
 
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -299,8 +314,8 @@ int main()
 				glVertex3i(0, _height, 0);
 			glEnd();
 
-			ASSERT(GL_NO_ERROR == glGetError());
-			VERIFY(::SwapBuffers(dc) == TRUE);
+			RHASSERT(GL_NO_ERROR == glGetError());
+			driver->swapBuffers();
 		} else
 			break;
 	}
@@ -319,6 +334,8 @@ int main()
 	}
 
 	OleUninitialize();
+
+	rhDeleteRenderDriver(driver);
 
 	return 0;
 }

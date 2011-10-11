@@ -116,6 +116,11 @@ bool _initDriverContext(RhRenderDriverContext* self, void* platformSpecificWindo
 			ret = ::wglMakeCurrent(hDc, hRc) == TRUE;
 			wglDeleteContext(impl->hRc);
 			impl->hRc = hRc;
+
+			// 3.0 or above requires a vertex array
+			GLuint vertexArray;
+			glGenVertexArrays(1, &vertexArray);
+			glBindVertexArray(vertexArray);
 		}
 	}
 
@@ -129,7 +134,7 @@ void _driverSwapBuffers()
 		return;
 	}
 
-//	RHVERIFY(::SwapBuffers(impl->hDc) == TRUE);
+//	RHVERIFY(::SwapBuffers(_currentContext->hDc) == TRUE);
 	::SwapBuffers(_currentContext->hDc);
 }
 
