@@ -25,18 +25,31 @@
 
 // These functions are implemented in platform specific src files, eg. driver2.gl.windows.cpp
 extern RhRenderDriverContext* _newDriverContext();
-extern void _useDriverContext(RhRenderDriverContext* self);
 extern void _deleteDriverContext(RhRenderDriverContext* self);
-extern bool _initContext(RhRenderDriverContext* self, void* platformSpecificWindow);
-extern void _swapBuffers(RhRenderDriverContext* self);
-extern bool _changeResolution(RhRenderDriverContext* self, unsigned width, unsigned height);
+extern bool _initDriverContext(RhRenderDriverContext* self, void* platformSpecificWindow);
+extern void _useDriverContext(RhRenderDriverContext* self);
 
-static void _setViewport(RhRenderDriverContext* self, unsigned x, unsigned y, unsigned width, unsigned height)
+extern void _driverSwapBuffers();
+extern bool _driverChangeResolution(unsigned width, unsigned height);
+
+static void _setViewport(unsigned x, unsigned y, unsigned width, unsigned height)
 {
 //	glEnable(GL_SCISSOR_TEST);
 	glViewport((GLint)x, (GLint)y, (GLsizei)width, (GLsizei)height);
 //	glScissor((GLint)x, (GLint)y, (GLsizei)width, (GLsizei)height);
 //	glDepthRange(zmin, zmax);
+}
+
+static void _clearColor(float r, float g, float b, float a)
+{
+	glClearColor(r, g, b, a);
+	glClear(GL_COLOR_BUFFER_BIT);
+}
+
+static void _clearDepth(float z)
+{
+	glClearDepth(z);
+	glClear(GL_DEPTH_BUFFER_BIT);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -769,9 +782,9 @@ RhRenderDriver* rhNewRenderDriver(const char* options)
 	ret->newContext = _newDriverContext;
 	ret->useContext = _useDriverContext;
 	ret->deleteContext = _deleteDriverContext;
-	ret->initContext = _initContext;
-	ret->swapBuffers = _swapBuffers;
-	ret->changeResolution = _changeResolution;
+	ret->initContext = _initDriverContext;
+	ret->swapBuffers = _driverSwapBuffers;
+	ret->changeResolution = _driverChangeResolution;
 	ret->setViewport = _setViewport;
 
 	ret->newBuffer = _newBuffer;

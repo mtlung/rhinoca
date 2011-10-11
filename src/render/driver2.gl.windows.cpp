@@ -35,12 +35,6 @@ RhRenderDriverContext* _newDriverContext()
 
 static ContextImpl* _currentContext = NULL;
 
-void _useDriverContext(RhRenderDriverContext* self)
-{
-	ContextImpl* impl = static_cast<ContextImpl*>(self);
-	_currentContext = impl;
-}
-
 void _deleteDriverContext(RhRenderDriverContext* self)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
@@ -56,7 +50,13 @@ void _deleteDriverContext(RhRenderDriverContext* self)
 	delete static_cast<ContextImpl*>(self);
 }
 
-bool _initContext(RhRenderDriverContext* self, void* platformSpecificWindow)
+void _useDriverContext(RhRenderDriverContext* self)
+{
+	ContextImpl* impl = static_cast<ContextImpl*>(self);
+	_currentContext = impl;
+}
+
+bool _initDriverContext(RhRenderDriverContext* self, void* platformSpecificWindow)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	if(!impl) return false;
@@ -103,24 +103,41 @@ bool _initContext(RhRenderDriverContext* self, void* platformSpecificWindow)
 		_oglFunctionInited = true;
 	}
 
+	if(wglCreateContextAttribsARB) {
+		const int attribs[] = {
+			WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+			WGL_CONTEXT_MINOR_VERSION_ARB, 2,
+			WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+			0
+		};
+
+		if((hRc = wglCreateContextAttribsARB(hDc, 0, attribs)))
+		{	// Delete the old GL context (GL2x and use the new one)
+			ret = ::wglMakeCurrent(hDc, hRc) == TRUE;
+			wglDeleteContext(impl->hRc);
+			impl->hRc = hRc;
+		}
+	}
+
 	return ret;
 }
 
-void _swapBuffers(RhRenderDriverContext* self)
+void _driverSwapBuffers()
 {
-	ContextImpl* impl = static_cast<ContextImpl*>(self);
-	if(!impl) return;
+	if(!_currentContext) {
+		RHASSERT(false && "Please call RhRenderDriver->useContext");
+		return;
+	}
 
 //	RHVERIFY(::SwapBuffers(impl->hDc) == TRUE);
-	::SwapBuffers(impl->hDc);
+	::SwapBuffers(_currentContext->hDc);
 }
 
-bool _changeResolution(RhRenderDriverContext* self, unsigned width, unsigned height)
+bool _driverChangeResolution(unsigned width, unsigned height)
 {
-	ContextImpl* impl = static_cast<ContextImpl*>(self);
-	if(!impl) return false;
+	if(!_currentContext) return false;
 
-	HWND hWnd = (HWND)impl->hWnd;
+	HWND hWnd = (HWND)_currentContext->hWnd;
 	RECT rcClient, rcWindow;
 	POINT ptDiff;
 
@@ -130,8 +147,8 @@ bool _changeResolution(RhRenderDriverContext* self, unsigned width, unsigned hei
 	ptDiff.y = (rcWindow.bottom - rcWindow.top) - rcClient.bottom;
 	::SetWindowPos(hWnd, 0, rcWindow.left, rcWindow.top, width + ptDiff.x, height + ptDiff.y, SWP_NOMOVE|SWP_NOZORDER);
 
-	impl->width = width;
-	impl->height = height;
+	_currentContext->width = width;
+	_currentContext->height = height;
 
 	return true;
 }

@@ -16,7 +16,8 @@ public:
 	~GraphicsDriverTest()
 	{
 		if(hWnd) {
-			PostQuitMessage(0);
+			::ShowWindow(hWnd, false);
+			::PostQuitMessage(0);
 			driver->deleteContext(context);
 			rhDeleteRenderDriver(driver);
 			if(HMODULE hModule = ::GetModuleHandle(NULL))
@@ -80,6 +81,7 @@ public:
 		driver = rhNewRenderDriver(NULL);
 		context = driver->newContext();
 		driver->initContext(context, hWnd);
+		driver->useContext(context);
 	}
 
 	bool keepRun()
@@ -110,7 +112,7 @@ TEST_FIXTURE(GraphicsDriverTest, empty)
 
 TEST_FIXTURE(GraphicsDriverTest, basic)
 {
-	// To draw a fullscreen quad:
+	// To draw a full screen quad:
 	// http://stackoverflow.com/questions/2588875/whats-the-best-way-to-draw-a-fullscreen-quad-in-opengl-3-2
 
 	createWindow(200, 200);
@@ -152,11 +154,11 @@ TEST_FIXTURE(GraphicsDriverTest, basic)
 	};
 	driver->bindProgramInput(program, input, COUNTOF(input), NULL);
 
-	driver->setViewport(context, 0, 0, context->width, context->height);
+	driver->setViewport(0, 0, context->width, context->height);
 
 	while(keepRun()) {
 		driver->drawTriangleIndexed(0, 6, 0);
-		driver->swapBuffers(context);
+		driver->swapBuffers();
 	}
 
 	driver->deleteBuffer(vbuffer);

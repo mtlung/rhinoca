@@ -11042,6 +11042,24 @@ typedef void (APIENTRYP PFNGLVDPAUUNMAPSURFACESNVPROC) (GLsizei numSurface, cons
 #endif
 
 
+// wglCreateContextAttribsARB stuffs added by Ricky Lung
+// See: http://www.opengl.org/registry/specs/ARB/wgl_create_context.txt
+#define WGL_CONTEXT_MAJOR_VERSION_ARB				0x2091
+#define WGL_CONTEXT_MINOR_VERSION_ARB				0x2092
+#define WGL_CONTEXT_LAYER_PLANE_ARB					0x2093
+#define WGL_CONTEXT_FLAGS_ARB						0x2094
+#define WGL_CONTEXT_PROFILE_MASK_ARB				0x9126
+#define WGL_CONTEXT_DEBUG_BIT_ARB					0x0001
+#define WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB		0x0002
+#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB			0x00000001
+#define WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB	0x00000002
+#define ERROR_INVALID_VERSION_ARB					0x2095
+#define ERROR_INVALID_PROFILE_ARB					0x2096
+
+// See: http://www.assembla.com/code/realview3/subversion/nodes/src/engine/src/scene.cpp?rev=1
+typedef HGLRC (APIENTRYP PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC, HGLRC, const int*);
+
+
 #ifdef __cplusplus
 }
 #endif

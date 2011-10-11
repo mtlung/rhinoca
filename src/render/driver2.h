@@ -91,12 +91,15 @@ typedef struct RhRenderDriver
 {
 // Context management
 	RhRenderDriverContext* (*newContext)();
-	void (*useContext)(RhRenderDriverContext* self);
 	void (*deleteContext)(RhRenderDriverContext* self);
 	bool (*initContext)(RhRenderDriverContext* self, void* platformSpecificWindow);
-	void (*swapBuffers)(RhRenderDriverContext* self);
-	bool (*changeResolution)(RhRenderDriverContext* self, unsigned width, unsigned height);
-	void (*setViewport)(RhRenderDriverContext* self, unsigned x, unsigned y, unsigned width, unsigned height);
+	void (*useContext)(RhRenderDriverContext* self);
+
+	void (*swapBuffers)();
+	bool (*changeResolution)(unsigned width, unsigned height);
+	void (*setViewport)(unsigned x, unsigned y, unsigned width, unsigned height);
+	void (*clearColor)(float r, float g, float b, float a);
+	void (*clearDepth)(float z);
 
 // Render target
 /*	RhRenderTarget* (*newRenderTarget)(

@@ -223,6 +223,10 @@ bool IPEndPoint::parse(const char* addressAndPort)
 {
 	char address[64];
 	char port[64];
+
+	address[0] = '\0';
+	port[0] = '\0';
+
 	if(strlen(addressAndPort) >= sizeof(address)) return false;
 
 	if(sscanf(addressAndPort, "%[^:]:%s", &address[0], &port[0]) == 2) {
