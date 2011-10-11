@@ -4,7 +4,7 @@
 #include <gl/gl.h>
 #include "gl/glext.h"
 
-#include "../assert.h"
+#include "../rhassert.h"
 #include "../vector.h"
 
 #pragma comment(lib, "OpenGL32")
@@ -30,6 +30,8 @@ RhRenderDriverContext* _newDriverContext()
 	ret->hWnd = NULL;
 	ret->hDc = NULL;
 	ret->width = ret->height = 0;
+	ret->magjorVersion = 2;
+	ret->minorVersion = 0;
 	return ret;
 }
 
@@ -105,8 +107,8 @@ bool _initDriverContext(RhRenderDriverContext* self, void* platformSpecificWindo
 
 	if(wglCreateContextAttribsARB) {
 		const int attribs[] = {
-			WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-			WGL_CONTEXT_MINOR_VERSION_ARB, 2,
+			WGL_CONTEXT_MAJOR_VERSION_ARB, impl->magjorVersion,
+			WGL_CONTEXT_MINOR_VERSION_ARB, impl->minorVersion,
 			WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
 			0
 		};

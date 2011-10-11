@@ -11,6 +11,7 @@ extern "C" {
 typedef struct RhRenderDriverContext
 {
 	unsigned width, height;
+	unsigned magjorVersion, minorVersion;
 } RhRenderDriverContext;
 
 typedef struct RhRenderTarget

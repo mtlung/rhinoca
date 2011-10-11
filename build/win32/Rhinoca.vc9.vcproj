@@ -648,10 +648,6 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\src\assert.h"
-			>
-		</File>
-		<File
 			RelativePath="..\..\src\atomic.h"
 			>
 		</File>
@@ -801,6 +797,10 @@
 		</File>
 		<File
 			RelativePath="..\..\src\resource.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\src\rhassert.h"
 			>
 		</File>
 		<File

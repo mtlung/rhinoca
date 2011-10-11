@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "../src/render/driver2.h"
-#include "../src/assert.h"
+#include "../src/rhassert.h"
 #include "../src/rhstring.h"
 
 #define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers

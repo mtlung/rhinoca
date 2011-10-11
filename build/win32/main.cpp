@@ -207,6 +207,7 @@ int main()
 	RhRenderDriver* driver = rhNewRenderDriver(NULL);
 	RhRenderDriverContext* context = driver->newContext();
 	driver->initContext(context, hWnd);
+	driver->useContext(context);
 
 	rhinoca_init();
 
@@ -231,43 +232,6 @@ int main()
 //	rhinoca_openDocument(rh, "../../demo/impactjs/biolab/biolab-ios.html");
 	rhinoca_openDocument(rh, "../../test/htmlTest/cssTest/bg.html");
 //	rhinoca_openDocument(rh, "../../test.html");
-
-	RhRenderBuffer* buffer = driver->newBuffer();
-	driver->initBuffer(buffer, RhRenderBufferType_Vertex, NULL, 128);
-	driver->mapBuffer(buffer, RhRenderBufferMapUsage(RhRenderBufferMapUsage_Read | RhRenderBufferMapUsage_Write));
-	driver->unmapBuffer(buffer);
-	driver->deleteBuffer(buffer);
-
-	RhRenderTexture* texture = driver->newTexture();
-	driver->initTexture(texture, 64, 64, RhRenderTextureFormat_RGBA);
-	driver->commitTexture(texture, NULL);
-
-	RhRenderShader* vShader = driver->newShader();
-	RhRenderShader* pShader = driver->newShader();
-	RhRenderShaderProgram* program = driver->newShaderPprogram();
-
-	const char* vShaderSrc = "void main(void){gl_Position=ftransform();}";
-//	const char* vShaderSrc =
-//		"uniform Transformation{mat4 projection_matrix;mat4 modelview_matrix;};"
-//		"in vec3 vertex; void main(void){gl_Position=projection_matrix*modelview_matrix*vec4(vertex,1);}";
-	driver->initShader(vShader, RhRenderShaderType_Vertex, &vShaderSrc, 1);
-
-	const char* pShaderSrc =
-		"uniform vec4 u_color;"
-		"uniform sampler2D tex;"
-		"void main(void){gl_FragColor=u_color + texture2D(tex, vec2(0,0)).rgba;}";
-	driver->initShader(pShader, RhRenderShaderType_Pixel, &pShaderSrc, 1);
-
-	RhRenderShader* shaders[] = { vShader, pShader };
-	driver->initShaderProgram(program, shaders, 2);
-	float c[] = { 1, 1, 0, 1 };
-	driver->setUniform4fv(program, StringHash("u_color"), c, 1);
-	driver->setUniformTexture(program, StringHash("tex"), texture);
-
-	driver->deleteShader(vShader);
-	driver->deleteShader(pShader);
-	driver->deleteShaderProgram(program);
-	driver->deleteTexture(texture);
 
 	while(true) {
 		MSG message;
@@ -335,6 +299,7 @@ int main()
 
 	OleUninitialize();
 
+	driver->deleteContext(context);
 	rhDeleteRenderDriver(driver);
 
 	return 0;

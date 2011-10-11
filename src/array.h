@@ -1,7 +1,7 @@
 #ifndef __ARRAY_H__
 #define __ARRAY_H__
 
-#include "assert.h"
+#include "rhassert.h"
 
 /*! Array class with checked limits.
 	A replacement for plan old array, adapted from boost's array.hpp
