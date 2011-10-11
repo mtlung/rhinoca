@@ -30,6 +30,15 @@ static void getFloat(JSContext* cx, jsval* vp, float* dest, unsigned count)
 	}
 }
 
+static void getFloat(JSContext* cx, jsval* vp, unsigned argOffset, float* dest, unsigned count)
+{
+	for(unsigned i=0; i<count; ++i) {
+		double tmp;
+		RHVERIFY(JS_ValueToNumber(cx, JS_ARGV(cx, vp)[i + argOffset], &tmp));
+		dest[i] = (float)tmp;
+	}
+}
+
 static JSBool getCanvas(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
@@ -333,16 +342,16 @@ static JSBool drawImage(JSContext* cx, uintN argc, jsval* vp)
 		s.sh = (float)texture->virtualHeight;
 		s.dw = (float)imgw;
 		s.dh = (float)imgh;
-		getFloat(cx, vp, &s.dx, argc-1);
+		getFloat(cx, vp, 1, &s.dx, argc-1);
 		break;
 	case 5:
 		s.sx = s.sy = 0;
 		s.sw = (float)texture->virtualWidth;
 		s.sh = (float)texture->virtualHeight;
-		getFloat(cx, vp, &s.dx, argc-1);
+		getFloat(cx, vp, 1, &s.dx, argc-1);
 		break;
 	case 9:
-		getFloat(cx, vp, &s.sx, argc-1);
+		getFloat(cx, vp, 1, &s.sx, argc-1);
 
 		s.sx *= scalex;
 		s.sy *= scaley;
