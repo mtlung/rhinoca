@@ -84,6 +84,8 @@ public:
 	{
 		driver = rhNewRenderDriver(NULL);
 		context = driver->newContext();
+		context->magjorVersion = 3;
+		context->minorVersion = 2;
 		driver->initContext(context, hWnd);
 		driver->useContext(context);
 	}

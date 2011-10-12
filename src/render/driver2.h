@@ -123,7 +123,7 @@ typedef struct RgDriver
 	RgDriverTexture* (*newTexture)();
 	void (*deleteTexture)(RgDriverTexture* self);
 	bool (*initTexture)(RgDriverTexture* self, unsigned width, unsigned height, RgDriverTextureFormat format);	// Can be invoked in loader thread
-	void (*commitTexture)(RgDriverTexture* self, void* data);	// Can only be invoked in render thread
+	void (*commitTexture)(RgDriverTexture* self, void* data, unsigned rowPaddingInBytes);	// Can only be invoked in render thread
 
 // Shader
 	RgDriverShader* (*newShader)();

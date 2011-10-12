@@ -284,7 +284,7 @@ unsigned char* _mipLevelData(RgDriverTextureImpl* self, unsigned mipIndex, unsig
 	return (unsigned char*)(data) + _mipLevelOffset(self, mipIndex, mipWidth, mipHeight);
 }
 
-void _commitTexture(RgDriverTexture* self, void* data)
+void _commitTexture(RgDriverTexture* self, void* data, unsigned rowPaddingInBytes)
 {
 	RgDriverTextureImpl* impl = static_cast<RgDriverTextureImpl*>(self);
 	if(!impl) return;
@@ -313,12 +313,43 @@ void _commitTexture(RgDriverTexture* self, void* data)
 			);
 		}
 		else {
-			glTexImage2D(
-				impl->glTarget, i, impl->formatMapping->glInternalFormat,
-				mipw, miph, 0,
-				mapping->glFormat, mapping->glType,
-				mipData
-			);
+			GLint alignmentBackup;
+			glGetIntegerv(GL_UNPACK_ALIGNMENT, &alignmentBackup);
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+			// Handling the empty padding at the end of each row of pixels
+			// NOTE: GL_UNPACK_ROW_LENGTH might help, but OpenGL ES didn't support it
+			// See: http://stackoverflow.com/questions/205522/opengl-subtexturing
+			if(rowPaddingInBytes == 0) {
+				glTexImage2D(
+					impl->glTarget, i, impl->formatMapping->glInternalFormat,
+					mipw, miph, 0,
+					mapping->glFormat, mapping->glType,
+					mipData
+				);
+			}
+			else {
+				// Create an empty texture object first
+				glTexImage2D(
+					impl->glTarget, i, impl->formatMapping->glInternalFormat,
+					mipw, miph, 0,
+					mapping->glFormat, mapping->glType,
+					NULL
+				);
+
+				// Then fill the pixels row by row
+				for(unsigned y=0; y<miph; ++y) {
+					const unsigned char* row = mipData + y * (mipw * mapping->glPixelSize + rowPaddingInBytes);
+					glTexSubImage2D(
+						impl->glTarget, i, 0, y,
+						mipw, 1,
+						mapping->glFormat, mapping->glType,
+						row
+					);
+				}
+			}
+
+			glPixelStorei(GL_UNPACK_ALIGNMENT, alignmentBackup);
 		}
 	}
 
