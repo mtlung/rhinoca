@@ -2,6 +2,7 @@
 #include "audiobuffer.h"
 #include "audioloader.h"
 #include "stb_vorbis.h"
+#include "../rhlog.h"
 #include <AudioToolbox/AudioFileStream.h>
 
 using namespace Audio;
@@ -53,7 +54,7 @@ public:
 	int discontinueFlag;	// Discontinuation in the data supply to AudioFileStreamParseBytes()
 };	// NSAudioLoader
 
-#define PRINTERROR(LABEL) printf("%s err %4.4s %d\n", LABEL, (char*)&err, (int)err)
+#define PRINTERROR(LABEL) rhLog("error", "%s err %4.4s %d\n", LABEL, (char*)&err, (int)err)
 	
 // This is called by audio file stream when it finds property values
 static void propertyListenerProc(
@@ -66,7 +67,7 @@ static void propertyListenerProc(
 
 	OSStatus err = noErr;
 
-//	printf("found property '%4.4s'\n", (char*)&inPropertyID);
+//	rhLog("verbose", "found property '%4.4s'\n", (char*)&inPropertyID);
 	
 	switch(inPropertyID) {
 	case kAudioFileStreamProperty_ReadyToProducePackets:
@@ -83,7 +84,7 @@ static void propertyListenerProc(
 		AudioFileStreamGetProperty(inAudioFileStream, kAudioFileStreamProperty_AudioDataByteCount, &asbdSize, &totalAudioBytes);
 
 		if(asbd.mBytesPerFrame == 0) {
-			print(self->manager->rhinoca, "NSAudioLoader: VBR format is not yet supported: '%s'\n", self->buffer->uri().c_str());		
+			rhLog("error", "NSAudioLoader: VBR format is not yet supported: '%s'\n", self->buffer->uri().c_str());		
 			goto Abort;
 		}
 
@@ -144,7 +145,7 @@ void NSAudioLoader::run(TaskPool* taskPool)
 
 	if(!stream) stream = rhFileSystem.openFile(rh, buffer->uri());
 	if(!stream) {
-		print(rh, "NSAudioLoader: Fail to open file '%s'\n", buffer->uri().c_str());
+		rhLog("error", "NSAudioLoader: Fail to open file '%s'\n", buffer->uri().c_str());
 		goto Abort;
 	}
 

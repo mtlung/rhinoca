@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "../render/texture.h"
+#include "../rhlog.h"
 #include "../platform.h"
 #import <UIKit/UIKit.h>
 
@@ -115,7 +116,7 @@ void NSImageLoader::load(TaskPool* taskPool)
 
 	void* f = rhFileSystem.openFile(rh, texture->uri());
 	if(!f) {
-		print(rh, "NSImageLoader: Fail to open file '%s'\n", texture->uri().c_str());
+		rhLog("error", "NSImageLoader: Fail to open file '%s'\n", texture->uri().c_str());
 		goto Abort;
 	}
 

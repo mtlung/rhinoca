@@ -170,11 +170,11 @@ static const Driver::DepthStencilState stencilState_tesselateTo_NonZero = Driver
 	true,
 	Driver::DepthStencilState::StencilState(
 		0, 0, Driver::DepthStencilState::Always,
-		Driver::DepthStencilState::StencilState::IncrWrap
+		Driver::DepthStencilState::StencilState::Incr
 	),
 	Driver::DepthStencilState::StencilState(
 		0, 0, Driver::DepthStencilState::Always,
-		Driver::DepthStencilState::StencilState::DecrWrap
+		Driver::DepthStencilState::StencilState::Decr
 	)
 );
 
