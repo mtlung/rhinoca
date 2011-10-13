@@ -94,12 +94,12 @@ void JpegLoader::load(TaskPool* taskPool)
 	_decoder = new jpeg_decoder(_stream = new Stream(f), true);
 
 	if(_decoder->get_error_code() != JPGD_OKAY) {
-		rhLog("error", "JpegLoader: load error, operation aborted");
+		rhLog("error", "JpegLoader: load error, operation aborted\n");
 		goto Abort;
 	}
 
 	if(_decoder->begin() != JPGD_OKAY) {
-		rhLog("error", "JpegLoader: load error, operation aborted");
+		rhLog("error", "JpegLoader: load error, operation aborted\n");
 		goto Abort;
 	}
 
@@ -109,7 +109,7 @@ void JpegLoader::load(TaskPool* taskPool)
 	else if(c == 3)
 		pixelDataFormat = Driver::RGBA;	// Note that the source format is 4 byte even c == 3
 	else {
-		rhLog("error", "JpegLoader: image with number of color component equals to %i is not supported, operation aborted", c);
+		rhLog("error", "JpegLoader: image with number of color component equals to %i is not supported, operation aborted\n", c);
 		goto Abort;
 	}
 

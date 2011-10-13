@@ -16,15 +16,15 @@
 
 static bool _oglFunctionInited = false;
 
-struct ContextImpl : public RhRenderDriverContext
+struct ContextImpl : public RgDriverContext
 {
 	HWND hWnd;
 	HDC hDc;
 	HGLRC hRc;
-	Vector<RhRenderShaderProgramInput> programInputCache;
+	Vector<RgDriverShaderProgramInput> programInputCache;
 };	// ContextImpl
 
-RhRenderDriverContext* _newDriverContext()
+RgDriverContext* _newDriverContext()
 {
 	ContextImpl* ret = new ContextImpl;
 	ret->hWnd = NULL;
@@ -37,7 +37,7 @@ RhRenderDriverContext* _newDriverContext()
 
 static ContextImpl* _currentContext = NULL;
 
-void _deleteDriverContext(RhRenderDriverContext* self)
+void _deleteDriverContext(RgDriverContext* self)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	if(!impl) return;
@@ -52,13 +52,13 @@ void _deleteDriverContext(RhRenderDriverContext* self)
 	delete static_cast<ContextImpl*>(self);
 }
 
-void _useDriverContext(RhRenderDriverContext* self)
+void _useDriverContext(RgDriverContext* self)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	_currentContext = impl;
 }
 
-bool _initDriverContext(RhRenderDriverContext* self, void* platformSpecificWindow)
+bool _initDriverContext(RgDriverContext* self, void* platformSpecificWindow)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	if(!impl) return false;
@@ -132,7 +132,7 @@ bool _initDriverContext(RhRenderDriverContext* self, void* platformSpecificWindo
 void _driverSwapBuffers()
 {
 	if(!_currentContext) {
-		RHASSERT(false && "Please call RhRenderDriver->useContext");
+		RHASSERT(false && "Please call RgDriver->useContext");
 		return;
 	}
 

@@ -109,7 +109,7 @@ void BmpLoader::loadHeader()
 	// Check against the magic 2 bytes.
 	// The value of 'BM' in integer is 19778 (assuming little endian)
 	if(fileHeader.bfType != 19778u) {
-		rhLog("error", "BitmapLoader: Invalid bitmap header, operation aborted");
+		rhLog("error", "BitmapLoader: Invalid bitmap header, operation aborted\n");
 		goto Abort;
 	}
 
@@ -119,12 +119,12 @@ void BmpLoader::loadHeader()
 	pixelDataFormat = Driver::BGR;
 
 	if(infoHeader.biBitCount != 24) {
-		rhLog("error", "BitmapLoader: Only 24-bit color is supported, operation aborted");
+		rhLog("error", "BitmapLoader: Only 24-bit color is supported, operation aborted\n");
 		goto Abort;
 	}
 
 	if(infoHeader.biCompression != 0) {
-		rhLog("error", "BitmapLoader: Compressed bmp is not supported, operation aborted");
+		rhLog("error", "BitmapLoader: Compressed bmp is not supported, operation aborted\n");
 		goto Abort;
 	}
 
@@ -162,7 +162,7 @@ void BmpLoader::loadPixelData()
 	pixelData = (char*)rhinoca_malloc(pixelDataSize);
 
 	if(!pixelData) {
-		rhLog("error", "BitmapLoader: Corruption of file or not enough memory, operation aborted");
+		rhLog("error", "BitmapLoader: Corruption of file or not enough memory, operation aborted\n");
 		goto Abort;
 	}
 
@@ -174,7 +174,7 @@ void BmpLoader::loadPixelData()
 
 		char* p = pixelData + (invertedH * rowByte);
 		if(rhFileSystem.read(stream, p, rowByte) != rowByte) {
-			rhLog("warn", "BitmapLoader: End of file, bitmap data incomplete");
+			rhLog("warn", "BitmapLoader: End of file, bitmap data incomplete\n");
 			goto Abort;
 		}
 	}

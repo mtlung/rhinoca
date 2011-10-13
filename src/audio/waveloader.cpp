@@ -105,7 +105,7 @@ void WaveLoader::loadHeader()
 		if(	rhFileSystem.read(stream, chunkId, 4) != 4 ||
 			rhFileSystem.read(stream, &chunkSize, sizeof(rhint32)) != sizeof(rhint32))
 		{
-			rhLog("error", "WaveLoader: End of file, fail to load header");
+			rhLog("error", "WaveLoader: End of file, fail to load header\n");
 			goto Abort;
 		}
 
@@ -166,7 +166,7 @@ void WaveLoader::loadData()
 
 		if(rhFileSystem.read(stream, bufferData, dataChunkSize) != dataChunkSize)
 		{
-			rhLog("error", "WaveLoader: End of file, only partial load of audio data");
+			rhLog("error", "WaveLoader: End of file, only partial load of audio data\n");
 			goto Abort;
 		}
 

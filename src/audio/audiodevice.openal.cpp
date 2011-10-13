@@ -527,7 +527,7 @@ void audiodevice_init()
 	_alcDevice = alcOpenDevice(NULL);
 
 	if(!_alcDevice)
-		rhLog("error", "Fail to initialize audio device");
+		rhLog("error", "Fail to initialize audio device\n");
 	else
 		++_initCount;
 }

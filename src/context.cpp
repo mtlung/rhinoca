@@ -56,7 +56,7 @@ JSBool jsConsoleLog(JSContext* cx, uintN argc, jsval* vp)
 	JsString jss(cx, JS_ARGV0);
 	if(!jss) return JS_FALSE;
 
-	rhLog("js", "%s", jss.c_str());
+	rhLog("js", "%s\n", jss.c_str());
 	return JS_TRUE;
 }
 

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "../src/render/driver2.h"
+#include "../src/render/rgutility.h"
 #include "../src/rhassert.h"
 #include "../src/rhstring.h"
 
@@ -18,11 +19,14 @@ public:
 		if(hWnd) {
 			::ShowWindow(hWnd, false);
 			::PostQuitMessage(0);
+			while(keepRun()) {}
 			driver->deleteContext(context);
 			rhDeleteRenderDriver(driver);
-			if(HMODULE hModule = ::GetModuleHandle(NULL))
-				::UnregisterClassW(windowClass, hModule);
+			::DestroyWindow(hWnd);
 		}
+
+		if(HMODULE hModule = ::GetModuleHandle(NULL))
+			::UnregisterClassW(windowClass, hModule);
 	}
 
 	static LRESULT CALLBACK wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -99,8 +103,8 @@ public:
 	}
 
 	HWND hWnd;
-	RhRenderDriver* driver;
-	RhRenderDriverContext* context;
+	RgDriver* driver;
+	RgDriverContext* context;
 };
 
 const wchar_t* GraphicsDriverTest::windowClass = L"Rhinoca unit test";
@@ -118,41 +122,110 @@ TEST_FIXTURE(GraphicsDriverTest, basic)
 	createWindow(200, 200);
 
 	// Create shader
-	RhRenderShader* vShader = driver->newShader();
-	RhRenderShader* pShader = driver->newShader();
-	RhRenderShaderProgram* program = driver->newShaderPprogram();
+	RgDriverShader* vShader = driver->newShader();
+	RgDriverShader* pShader = driver->newShader();
+	RgDriverShaderProgram* program = driver->newShaderPprogram();
 
 	const char* vShaderSrc =
 		"attribute vec4 vertex;"
 		"void main(void){gl_Position=vertex;}";
-	driver->initShader(vShader, RhRenderShaderType_Vertex, &vShaderSrc, 1);
+	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc, 1));
 
 	const char* pShaderSrc =
 		"uniform vec4 u_color;"
 		"void main(void){gl_FragColor=u_color;}";
-	driver->initShader(pShader, RhRenderShaderType_Pixel, &pShaderSrc, 1);
+	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc, 1));
 
-	RhRenderShader* shaders[] = { vShader, pShader };
-	driver->initShaderProgram(program, shaders, 2);
+	RgDriverShader* shaders[] = { vShader, pShader };
+	CHECK(driver->initShaderProgram(program, shaders, 2));
 	float c[] = { 1, 1, 0, 1 };
-	driver->setUniform4fv(program, StringHash("u_color"), c, 1);
+	CHECK(driver->setUniform4fv(program, StringHash("u_color"), c, 1));
 
 	// Create vertex buffer
 	float vertex[][4] = { {-1,1,0,1}, {-1,-1,0,1}, {1,-1,0,1}, {1,1,0,1} };
-	RhRenderBuffer* vbuffer = driver->newBuffer();
-	driver->initBuffer(vbuffer, RhRenderBufferType_Vertex, vertex, sizeof(vertex));
+	RgDriverBuffer* vbuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(vbuffer, RgDriverBufferType_Vertex, vertex, sizeof(vertex)));
 
 	// Create index buffer
 	rhuint16 index[][3] = { {0, 1, 2}, {0, 2, 3} };
-	RhRenderBuffer* ibuffer = driver->newBuffer();
-	driver->initBuffer(ibuffer, RhRenderBufferType_Index, index, sizeof(index));
+	RgDriverBuffer* ibuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ibuffer, RgDriverBufferType_Index, index, sizeof(index)));
 
 	// Bind shader input layout
-	RhRenderShaderProgramInput input[] = {
+	RgDriverShaderProgramInput input[] = {
 		{ vbuffer, "vertex", 4, 0, 0, 0, 0 },
 		{ ibuffer, NULL, 1, 0, 0, 0, 0 },
 	};
-	driver->bindProgramInput(program, input, COUNTOF(input), NULL);
+	CHECK(driver->bindProgramInput(program, input, COUNTOF(input), NULL));
+
+	driver->setViewport(0, 0, context->width, context->height);
+
+	while(keepRun()) {
+		driver->drawTriangleIndexed(0, 6, 0);
+		driver->swapBuffers();
+	}
+
+	driver->deleteBuffer(vbuffer);
+	driver->deleteBuffer(ibuffer);
+	driver->deleteShaderProgram(program);
+	driver->deleteShader(vShader);
+	driver->deleteShader(pShader);
+}
+
+TEST_FIXTURE(GraphicsDriverTest, 3d)
+{
+	createWindow(200, 200);
+
+	// Create shader
+	RgDriverShader* vShader = driver->newShader();
+	RgDriverShader* pShader = driver->newShader();
+	RgDriverShaderProgram* program = driver->newShaderPprogram();
+
+	const char* vShaderSrc =
+		"attribute vec4 vertex;"
+		"uniform mat4 modelViewMat;"
+		"uniform mat4 projectionMat;"
+		"void main(void){gl_Position=(projectionMat*modelViewMat)*vertex;}";
+	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc, 1));
+
+	const char* pShaderSrc =
+		"uniform vec4 u_color;"
+		"void main(void){gl_FragColor=u_color;}";
+	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc, 1));
+
+	RgDriverShader* shaders[] = { vShader, pShader };
+	driver->initShaderProgram(program, shaders, 2);
+	float c[] = { 1, 1, 0, 1 };
+	CHECK(driver->setUniform4fv(program, StringHash("u_color"), c, 1));
+
+	// Create vertex buffer
+	float vertex[][4] = { {-1,1,0,1}, {-1,-1,0,1}, {1,-1,0,1}, {1,1,0,1} };
+	RgDriverBuffer* vbuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(vbuffer, RgDriverBufferType_Vertex, vertex, sizeof(vertex)));
+
+	// Create index buffer
+	rhuint16 index[][3] = { {0, 1, 2}, {0, 2, 3} };
+	RgDriverBuffer* ibuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ibuffer, RgDriverBufferType_Index, index, sizeof(index)));
+
+	// Bind shader input layout
+	RgDriverShaderProgramInput input[] = {
+		{ vbuffer, "vertex", 3, 0, 16, 0, 0 },
+		{ ibuffer, NULL, 1, 0, 0, 0, 0 },
+	};
+	CHECK(driver->bindProgramInput(program, input, COUNTOF(input), NULL));
+
+	// Model view matrix
+	float modelView[16];
+	rgMat44MakeIdentity(modelView);
+	float translate[] =  { 0, 0, -3 };
+	rgMat44TranslateBy(modelView, translate);
+	CHECK(driver->setUniformMat44fv(program, StringHash("modelViewMat"), false, modelView, 1));
+
+	// Projection matrix
+	float prespective[16];
+	rgMat44MakePrespective(prespective, 90, 1, 2, 10);
+	CHECK(driver->setUniformMat44fv(program, StringHash("projectionMat"), false, prespective, 1));
 
 	driver->setViewport(0, 0, context->width, context->height);
 

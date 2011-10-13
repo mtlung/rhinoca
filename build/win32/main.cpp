@@ -204,8 +204,8 @@ int main()
 
 	HWND hWnd = createWindow(NULL, _width, _height, false);
 
-	RhRenderDriver* driver = rhNewRenderDriver(NULL);
-	RhRenderDriverContext* context = driver->newContext();
+	RgDriver* driver = rhNewRenderDriver(NULL);
+	RgDriverContext* context = driver->newContext();
 	driver->initContext(context, hWnd);
 	driver->useContext(context);
 
@@ -229,8 +229,8 @@ int main()
 
 //	rhinoca_openDocument(rh, "../../test/htmlTest/audioTest/test.html");
 //	rhinoca_openDocument(rh, "../../demo/impactjs/drop/drop.html");
-//	rhinoca_openDocument(rh, "../../demo/impactjs/biolab/biolab-ios.html");
-	rhinoca_openDocument(rh, "../../test/htmlTest/cssTest/bg.html");
+	rhinoca_openDocument(rh, "../../demo/impactjs/biolab/biolab-ios.html");
+//	rhinoca_openDocument(rh, "../../test/htmlTest/cssTest/bg.html");
 //	rhinoca_openDocument(rh, "../../test.html");
 
 	while(true) {

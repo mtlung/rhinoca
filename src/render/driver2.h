@@ -8,93 +8,93 @@
 extern "C" {
 #endif
 
-typedef struct RhRenderDriverContext
+typedef struct RgDriverContext
 {
 	unsigned width, height;
 	unsigned magjorVersion, minorVersion;
-} RhRenderDriverContext;
+} RgDriverContext;
 
-typedef struct RhRenderTarget
+typedef struct RgDriverTarget
 {
 	unsigned width, height;
-} RhRenderTarget;
+} RgDriverTarget;
 
-typedef enum RhRenderBufferType
+typedef enum RgDriverBufferType
 {
-	RhRenderBufferType_Vertex	= 1 << 0,	/// Vertex buffer
-	RhRenderBufferType_Index	= 1 << 1,	/// Index buffer
-	RhRenderBufferType_Uniform	= 1 << 2,	/// Shader uniform buffer
-	RhRenderBufferType_System	= 1 << 3,	/// Indicating the buffer will hold in system memory
-} RhRenderBufferType;
+	RgDriverBufferType_Vertex	= 1 << 0,	/// Vertex buffer
+	RgDriverBufferType_Index	= 1 << 1,	/// Index buffer
+	RgDriverBufferType_Uniform	= 1 << 2,	/// Shader uniform buffer
+	RgDriverBufferType_System	= 1 << 3,	/// Indicating the buffer will hold in system memory
+} RgDriverBufferType;
 
-typedef enum RhRenderBufferMapUsage
+typedef enum RgDriverBufferMapUsage
 {
-	RhRenderBufferMapUsage_Read	= 1 << 0,
-	RhRenderBufferMapUsage_Write= 1 << 1,
-} RhRenderBufferMapUsage;
+	RgDriverBufferMapUsage_Read	= 1 << 0,
+	RgDriverBufferMapUsage_Write= 1 << 1,
+} RgDriverBufferMapUsage;
 
-typedef struct RhRenderBuffer
+typedef struct RgDriverBuffer
 {
-	RhRenderBufferType type;
+	RgDriverBufferType type;
 	unsigned sizeInBytes;
-} RhRenderBuffer;
+} RgDriverBuffer;
 
-typedef enum RhRenderTextureFormat
+typedef enum RgDriverTextureFormat
 {
-	RhRenderTextureFormat_RGBA = 1,
-	RhRenderTextureFormat_R,
-	RhRenderTextureFormat_A,
-	RhRenderTextureFormat_Depth,
-	RhRenderTextureFormat_DepthStencil,
+	RgDriverTextureFormat_RGBA = 1,
+	RgDriverTextureFormat_R,
+	RgDriverTextureFormat_A,
+	RgDriverTextureFormat_Depth,
+	RgDriverTextureFormat_DepthStencil,
 
-	RhRenderTextureFormat_Compressed= 0x00010000,
-	RhRenderTextureFormat_PVRTC2	= 0x00010001,	// PowerVR texture compression 2-bpp
-	RhRenderTextureFormat_PVRTC4	= 0x00010002,	// PowerVR texture compression 4-bpp
-	RhRenderTextureFormat_DXT1		= 0x00010003,	// DirectX's DXT1 compression
-	RhRenderTextureFormat_DXT5		= 0x00010004,	// DirectX's DXT5 compression
-} RhRenderTextureFormat;
+	RgDriverTextureFormat_Compressed= 0x00010000,
+	RgDriverTextureFormat_PVRTC2	= 0x00010001,	// PowerVR texture compression 2-bpp
+	RgDriverTextureFormat_PVRTC4	= 0x00010002,	// PowerVR texture compression 4-bpp
+	RgDriverTextureFormat_DXT1		= 0x00010003,	// DirectX's DXT1 compression
+	RgDriverTextureFormat_DXT5		= 0x00010004,	// DirectX's DXT5 compression
+} RgDriverTextureFormat;
 
-typedef struct RhRenderTexture
+typedef struct RgDriverTexture
 {
 	unsigned width;
 	unsigned height;
-	RhRenderTextureFormat format;
-} RhRenderTexture;
+	RgDriverTextureFormat format;
+} RgDriverTexture;
 
-typedef enum RhRenderShaderType
+typedef enum RgDriverShaderType
 {
-	RhRenderShaderType_Vertex = 0,
-	RhRenderShaderType_Pixel,
-} RhRenderShaderType;
+	RgDriverShaderType_Vertex = 0,
+	RgDriverShaderType_Pixel,
+} RgDriverShaderType;
 
-typedef struct RhRenderShader
+typedef struct RgDriverShader
 {
-	RhRenderShaderType type;
-} RhRenderShader;
+	RgDriverShaderType type;
+} RgDriverShader;
 
-typedef struct RhRenderShaderProgram
+typedef struct RgDriverShaderProgram
 {
-} RhRenderShaderProgram;
+} RgDriverShaderProgram;
 
-typedef struct RhRenderShaderProgramInput
+typedef struct RgDriverShaderProgramInput
 {
-	RhRenderBuffer* buffer;
+	RgDriverBuffer* buffer;
 	const char* name;
 	unsigned elementCount;	/// Can be 1, 2, 3, or 4
 	unsigned offset;
 	unsigned stride;
 	unsigned nameHash;		/// after name is changed, reset it to zero will cause it to be re-calculated
 	unsigned cacheId;
-} RhRenderShaderProgramInput;
+} RgDriverShaderProgramInput;
 
 // 
-typedef struct RhRenderDriver
+typedef struct RgDriver
 {
 // Context management
-	RhRenderDriverContext* (*newContext)();
-	void (*deleteContext)(RhRenderDriverContext* self);
-	bool (*initContext)(RhRenderDriverContext* self, void* platformSpecificWindow);
-	void (*useContext)(RhRenderDriverContext* self);
+	RgDriverContext* (*newContext)();
+	void (*deleteContext)(RgDriverContext* self);
+	bool (*initContext)(RgDriverContext* self, void* platformSpecificWindow);
+	void (*useContext)(RgDriverContext* self);
 
 	void (*swapBuffers)();
 	bool (*changeResolution)(unsigned width, unsigned height);
@@ -103,46 +103,46 @@ typedef struct RhRenderDriver
 	void (*clearDepth)(float z);
 
 // Render target
-/*	RhRenderTarget* (*newRenderTarget)(
+/*	RgDriverTarget* (*newRenderTarget)(
 		void** textureHandle,
 		void** depthHandle, void** stencilHandle,
 		unsigned width, unsigned height
 	);
 
-	void (*deleteRenderTarget)(RhRenderTarget* self);*/
+	void (*deleteRenderTarget)(RgDriverTarget* self);*/
 
 // Buffer
-	RhRenderBuffer* (*newBuffer)();
-	void (*deleteBuffer)(RhRenderBuffer* self);
-	bool (*initBuffer)(RhRenderBuffer* self, RhRenderBufferType type, void* initData, unsigned sizeInBytes);
-	bool (*updateBuffer)(RhRenderBuffer* self, unsigned offsetInBytes, void* data, unsigned sizeInBytes);
-	void* (*mapBuffer)(RhRenderBuffer* self, RhRenderBufferMapUsage usage);
-	void (*unmapBuffer)(RhRenderBuffer* self);
+	RgDriverBuffer* (*newBuffer)();
+	void (*deleteBuffer)(RgDriverBuffer* self);
+	bool (*initBuffer)(RgDriverBuffer* self, RgDriverBufferType type, void* initData, unsigned sizeInBytes);
+	bool (*updateBuffer)(RgDriverBuffer* self, unsigned offsetInBytes, void* data, unsigned sizeInBytes);
+	void* (*mapBuffer)(RgDriverBuffer* self, RgDriverBufferMapUsage usage);
+	void (*unmapBuffer)(RgDriverBuffer* self);
 
 // Texture
-	RhRenderTexture* (*newTexture)();
-	void (*deleteTexture)(RhRenderTexture* self);
-	bool (*initTexture)(RhRenderTexture* self, unsigned width, unsigned height, RhRenderTextureFormat format);	// Can be invoked in loader thread
-	void (*commitTexture)(RhRenderTexture* self, void* data);	// Can only be invoked in render thread
+	RgDriverTexture* (*newTexture)();
+	void (*deleteTexture)(RgDriverTexture* self);
+	bool (*initTexture)(RgDriverTexture* self, unsigned width, unsigned height, RgDriverTextureFormat format);	// Can be invoked in loader thread
+	void (*commitTexture)(RgDriverTexture* self, void* data);	// Can only be invoked in render thread
 
 // Shader
-	RhRenderShader* (*newShader)();
-	void (*deleteShader)(RhRenderShader* self);
-	bool (*initShader)(RhRenderShader* self, RhRenderShaderType type, const char** sources, unsigned sourceCount);
+	RgDriverShader* (*newShader)();
+	void (*deleteShader)(RgDriverShader* self);
+	bool (*initShader)(RgDriverShader* self, RgDriverShaderType type, const char** sources, unsigned sourceCount);
 
-	RhRenderShaderProgram* (*newShaderPprogram)();
-	void (*deleteShaderProgram)(RhRenderShaderProgram* self);
-	bool (*initShaderProgram)(RhRenderShaderProgram* self, RhRenderShader** shaders, unsigned shaderCount);
+	RgDriverShaderProgram* (*newShaderPprogram)();
+	void (*deleteShaderProgram)(RgDriverShaderProgram* self);
+	bool (*initShaderProgram)(RgDriverShaderProgram* self, RgDriverShader** shaders, unsigned shaderCount);
 
-	bool (*setUniform1fv)(RhRenderShaderProgram* self, unsigned nameHash, const float* value, unsigned count);
-	bool (*setUniform2fv)(RhRenderShaderProgram* self, unsigned nameHash, const float* value, unsigned count);
-	bool (*setUniform3fv)(RhRenderShaderProgram* self, unsigned nameHash, const float* value, unsigned count);
-	bool (*setUniform4fv)(RhRenderShaderProgram* self, unsigned nameHash, const float* value, unsigned count);
-	bool (*setUniformMatrix4fv)(RhRenderShaderProgram* self, unsigned nameHash, bool transpose, const float* value, unsigned count);
-	bool (*setUniformTexture)(RhRenderShaderProgram* self, unsigned nameHash, RhRenderTexture* texture);
+	bool (*setUniform1fv)(RgDriverShaderProgram* self, unsigned nameHash, const float* value, unsigned count);
+	bool (*setUniform2fv)(RgDriverShaderProgram* self, unsigned nameHash, const float* value, unsigned count);
+	bool (*setUniform3fv)(RgDriverShaderProgram* self, unsigned nameHash, const float* value, unsigned count);
+	bool (*setUniform4fv)(RgDriverShaderProgram* self, unsigned nameHash, const float* value, unsigned count);
+	bool (*setUniformMat44fv)(RgDriverShaderProgram* self, unsigned nameHash, bool transpose, const float* value, unsigned count);
+	bool (*setUniformTexture)(RgDriverShaderProgram* self, unsigned nameHash, RgDriverTexture* texture);
 
-	bool (*bindProgramInput)(RhRenderShaderProgram* self, RhRenderShaderProgramInput* inputs, unsigned inputCount, unsigned* cacheId);	// Give NULL to cacheId if you don't want to create a cache for it
-	bool (*bindProgramInputCached)(RhRenderShaderProgram* self, unsigned cacheId);
+	bool (*bindProgramInput)(RgDriverShaderProgram* self, RgDriverShaderProgramInput* inputs, unsigned inputCount, unsigned* cacheId);	// Give NULL to cacheId if you don't want to create a cache for it
+	bool (*bindProgramInputCached)(RgDriverShaderProgram* self, unsigned cacheId);
 
 // Making draw call
 	void (*drawTriangle)(unsigned offset, unsigned vertexCount, unsigned flags);
@@ -152,11 +152,11 @@ typedef struct RhRenderDriver
 	const char* driverName;
 	unsigned majorVersion;
 	unsigned minorVersion;
-} RhRenderDriver;
+} RgDriver;
 
-RhRenderDriver* rhNewRenderDriver(const char* options);
+RgDriver* rhNewRenderDriver(const char* options);
 
-void rhDeleteRenderDriver(RhRenderDriver* self);
+void rhDeleteRenderDriver(RgDriver* self);
 
 #ifdef __cplusplus
 }
