@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "../render/texture.h"
+#include "../rhlog.h"
 #include "../platform.h"
 #include "../../thirdparty/SmallJpeg/jpegdecoder.h"
 
@@ -86,19 +87,19 @@ void JpegLoader::load(TaskPool* taskPool)
 	if(texture->state == Resource::Aborted) goto Abort;
 	f = rhFileSystem.openFile(rh, texture->uri());
 	if(!f) {
-		print(rh, "JpegLoader: Fail to open file '%s'\n", texture->uri().c_str());
+		rhLog("error", "JpegLoader: Fail to open file '%s'\n", texture->uri().c_str());
 		goto Abort;
 	}
 
 	_decoder = new jpeg_decoder(_stream = new Stream(f), true);
 
 	if(_decoder->get_error_code() != JPGD_OKAY) {
-		print(rh, "JpegLoader: load error, operation aborted");
+		rhLog("error", "JpegLoader: load error, operation aborted");
 		goto Abort;
 	}
 
 	if(_decoder->begin() != JPGD_OKAY) {
-		print(rh, "JpegLoader: load error, operation aborted");
+		rhLog("error", "JpegLoader: load error, operation aborted");
 		goto Abort;
 	}
 
@@ -108,7 +109,7 @@ void JpegLoader::load(TaskPool* taskPool)
 	else if(c == 3)
 		pixelDataFormat = Driver::RGBA;	// Note that the source format is 4 byte even c == 3
 	else {
-		print(rh, "JpegLoader: image with number of color component equals to %i is not supported, operation aborted", c);
+		rhLog("error", "JpegLoader: image with number of color component equals to %i is not supported, operation aborted", c);
 		goto Abort;
 	}
 

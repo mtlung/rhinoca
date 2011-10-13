@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "truetypefont.h"
+#include "../rhlog.h"
 #include "../vector.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -159,7 +160,7 @@ void TrueTypeFontLoader::load()
 
 	if(!stream) stream = rhFileSystem.openFile(rh, font->uri());
 	if(!stream) {
-		print(rh, "TrueTypeFontLoader: Fail to open file '%s'\n", font->uri().c_str());
+		rhLog("error", "TrueTypeFontLoader: Fail to open file '%s'\n", font->uri().c_str());
 		goto Abort;
 	}
 

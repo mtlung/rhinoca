@@ -110,20 +110,3 @@ int strcasecmp(const char* s1, const char* s2)
 	return _stricmp(s1, s2);
 }
 #endif
-
-extern rhinoca_printFunc rhinoca_print;
-
-void print(Rhinoca* rh, const char* format, ...)
-{
-	if(!format) return;
-
-	va_list vl;
-	va_start(vl, format);
-	rhinoca_print(rh, format, vl);
-	va_end(vl);
-}
-
-void vprint(Rhinoca* rh, const char* format, va_list ap)
-{
-	rhinoca_print(rh, format, ap);
-}

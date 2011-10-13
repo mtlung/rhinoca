@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "audiobuffer.h"
 #include "audioloader.h"
+#include "../rhlog.h"
 #include <string.h>
 
 namespace Loader {
@@ -90,7 +91,7 @@ void WaveLoader::loadHeader()
 
 	if(!stream) stream = rhFileSystem.openFile(rh, buffer->uri());
 	if(!stream) {
-		print(rh, "WaveLoader: Fail to open file '%s'\n", buffer->uri().c_str());
+		rhLog("error", "WaveLoader: Fail to open file '%s'\n", buffer->uri().c_str());
 		goto Abort;
 	}
 
@@ -104,7 +105,7 @@ void WaveLoader::loadHeader()
 		if(	rhFileSystem.read(stream, chunkId, 4) != 4 ||
 			rhFileSystem.read(stream, &chunkSize, sizeof(rhint32)) != sizeof(rhint32))
 		{
-			print(rh, "WaveLoader: End of file, fail to load header");
+			rhLog("error", "WaveLoader: End of file, fail to load header");
 			goto Abort;
 		}
 
@@ -149,7 +150,6 @@ Abort:
 
 void WaveLoader::loadData()
 {
-	Rhinoca* rh = manager->rhinoca;
 	void* bufferData = NULL;
 
 	if(buffer->state == Resource::Aborted) goto Abort;
@@ -166,7 +166,7 @@ void WaveLoader::loadData()
 
 		if(rhFileSystem.read(stream, bufferData, dataChunkSize) != dataChunkSize)
 		{
-			print(rh, "WaveLoader: End of file, only partial load of audio data");
+			rhLog("error", "WaveLoader: End of file, only partial load of audio data");
 			goto Abort;
 		}
 

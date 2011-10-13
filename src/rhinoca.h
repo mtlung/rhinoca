@@ -135,8 +135,6 @@ RHINOCA_API void rhinoca_free(void* ptr);
 RHINOCA_API void* rhinoca_realloc(void* ptr, rhuint oldSize, rhuint size);
 
 // Others
-typedef void (*rhinoca_printFunc)(Rhinoca* rh, const char* format, va_list ap);
-RHINOCA_API void rhinoca_setPrintFunc(rhinoca_printFunc printFunc);
 typedef void (*rhinoca_alertFunc)(Rhinoca* rh, void* userData, const char* str);
 RHINOCA_API void rhinoca_setAlertFunc(rhinoca_alertFunc alertFunc, void* userData);
 RHINOCA_API void rhinoca_collectGarbage(Rhinoca* rh);

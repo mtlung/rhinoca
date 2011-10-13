@@ -5,6 +5,7 @@
 #include "cssparser.h"
 #include "document.h"
 #include "../context.h"
+#include "../rhlog.h"
 #include "../path.h"
 
 using namespace Parsing;
@@ -27,7 +28,7 @@ static JSBool JS_ValueToCssDimension(JSContext *cx, jsval v, float& val)
 		ret = (sscanf(jss.c_str(), "%f%s", &val, buf) == 2) ? JS_TRUE : JS_FALSE;
 
 		if(strcasecmp(buf, "px") != 0)
-			print(cx, "%s", "Only 'px' is supported for CSS dimension unit\n");
+			rhLog("warn", "%s", "Only 'px' is supported for CSS dimension unit\n");
 	}
 
 	return ret;
@@ -150,7 +151,7 @@ static JSBool styleSetBG(JSContext* cx, JSObject* obj, jsid id, JSBool strict, j
 
 	JsString jss(cx, *vp);
 	if(!jss || !self->setBackgroundImage(jss.c_str()))
-		print(cx, "Invalid CSS background image: %s\n", jss ? jss.c_str() : "");
+		rhLog("warn", "Invalid CSS background image: %s\n", jss ? jss.c_str() : "");
 
 	return JS_TRUE;
 }
@@ -161,7 +162,7 @@ static JSBool styleSetBGColor(JSContext* cx, JSObject* obj, jsid id, JSBool stri
 
 	JsString jss(cx, *vp);
 	if(!jss || !self->setBackgroundColor(jss.c_str()))
-		print(cx, "Invalid CSS color: %s\n", jss ? jss.c_str() : "");
+		rhLog("warn", "Invalid CSS color: %s\n", jss ? jss.c_str() : "");
 
 	return JS_TRUE;
 }
@@ -172,7 +173,7 @@ static JSBool styleSetBGPos(JSContext* cx, JSObject* obj, jsid id, JSBool strict
 
 	JsString jss(cx, *vp);
 	if(!jss || !self->setBackgroundPosition(jss.c_str()))
-		print(cx, "Invalid CSS backgroundPosition: %s\n", jss ? jss.c_str() : "");
+		rhLog("warn", "Invalid CSS backgroundPosition: %s\n", jss ? jss.c_str() : "");
 
 	return JS_TRUE;
 }

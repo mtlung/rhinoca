@@ -2,6 +2,7 @@
 #include "audiodevice.h"
 #include "../array.h"
 #include "../linklist.h"
+#include "../rhlog.h"
 #include "../resource.h"
 #include "../vector.h"
 
@@ -74,7 +75,7 @@ static bool checkAndPrintError(const char* prefixMessage)
 	if(err == AL_NO_ERROR)
 		return true;
 
-	print(NULL, "%s%s\n", prefixMessage, getALErrorString(err));
+	rhLog("error", "%s%s\n", prefixMessage, getALErrorString(err));
 	return false;
 }
 
@@ -349,7 +350,7 @@ int AudioDevice::allocateAlBufferFor(AudioBuffer* src, unsigned begin, unsigned 
 	}
 
 	// No more buffer to play around, the last audio request will be ignored
-	print(NULL, "Not enough audio buffers for simultaneous sound play, last audio play request will be ignored\n");
+	rhLog("warn", "Not enough audio buffers for simultaneous sound play, last audio play request will be ignored\n");
 
 	return -1;
 }
@@ -526,7 +527,7 @@ void audiodevice_init()
 	_alcDevice = alcOpenDevice(NULL);
 
 	if(!_alcDevice)
-		print(NULL, "Fail to initialize audio device");
+		rhLog("error", "Fail to initialize audio device");
 	else
 		++_initCount;
 }

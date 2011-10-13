@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "../render/texture.h"
+#include "../rhlog.h"
 #include "../platform.h"
 
 // http://www.spacesimulator.net/tut4_3dsloader.html
@@ -89,7 +90,7 @@ void BmpLoader::loadHeader()
 
 	if(!stream) stream = rhFileSystem.openFile(rh, texture->uri());
 	if(!stream) {
-		print(rh, "BmpLoader: Fail to open file '%s'\n", texture->uri().c_str());
+		rhLog("error", "BmpLoader: Fail to open file '%s'\n", texture->uri().c_str());
 		goto Abort;
 	}
 
@@ -108,7 +109,7 @@ void BmpLoader::loadHeader()
 	// Check against the magic 2 bytes.
 	// The value of 'BM' in integer is 19778 (assuming little endian)
 	if(fileHeader.bfType != 19778u) {
-		print(rh, "BitmapLoader: Invalid bitmap header, operation aborted");
+		rhLog("error", "BitmapLoader: Invalid bitmap header, operation aborted");
 		goto Abort;
 	}
 
@@ -118,12 +119,12 @@ void BmpLoader::loadHeader()
 	pixelDataFormat = Driver::BGR;
 
 	if(infoHeader.biBitCount != 24) {
-		print(rh, "BitmapLoader: Only 24-bit color is supported, operation aborted");
+		rhLog("error", "BitmapLoader: Only 24-bit color is supported, operation aborted");
 		goto Abort;
 	}
 
 	if(infoHeader.biCompression != 0) {
-		print(rh, "BitmapLoader: Compressed bmp is not supported, operation aborted");
+		rhLog("error", "BitmapLoader: Compressed bmp is not supported, operation aborted");
 		goto Abort;
 	}
 
@@ -146,8 +147,6 @@ Abort:
 
 void BmpLoader::loadPixelData()
 {
-	Rhinoca* rh = manager->rhinoca;
-
 	if(aborted || !stream) goto Abort;
 
 	// Memory usage for one row of image
@@ -163,7 +162,7 @@ void BmpLoader::loadPixelData()
 	pixelData = (char*)rhinoca_malloc(pixelDataSize);
 
 	if(!pixelData) {
-		print(rh, "BitmapLoader: Corruption of file or not enough memory, operation aborted");
+		rhLog("error", "BitmapLoader: Corruption of file or not enough memory, operation aborted");
 		goto Abort;
 	}
 
@@ -175,7 +174,7 @@ void BmpLoader::loadPixelData()
 
 		char* p = pixelData + (invertedH * rowByte);
 		if(rhFileSystem.read(stream, p, rowByte) != rowByte) {
-			print(rh, "BitmapLoader: End of file, bitmap data incomplete");
+			rhLog("warn", "BitmapLoader: End of file, bitmap data incomplete");
 			goto Abort;
 		}
 	}

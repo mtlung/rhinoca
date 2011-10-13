@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "../render/texture.h"
+#include "../rhlog.h"
 #include "../platform.h"
 #include "../../thirdparty/png/png.h"
 
@@ -178,7 +179,7 @@ void PngLoader::load(TaskPool* taskPool)
 	if(texture->state == Resource::Aborted) goto Abort;
 	if(!stream) stream = rhFileSystem.openFile(rh, texture->uri());
 	if(!stream) {
-		print(rh, "PngLoader: Fail to open file '%s'\n", texture->uri().c_str());
+		rhLog("error", "PngLoader: Fail to open file '%s'\n", texture->uri().c_str());
 		goto Abort;
 	}
 

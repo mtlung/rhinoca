@@ -27,9 +27,6 @@ inline T* rhrenew(const T* ptr, rhuint oldCount, rhuint newCount) {
 // IO
 extern RhFileSystem rhFileSystem;
 
-extern void print(Rhinoca* rh, const char* format, ...);
-extern void vprint(Rhinoca* rh, const char* format, va_list ap);
-
 double atof(const char* str, double onErr);
 
 #if defined(_MSC_VER)

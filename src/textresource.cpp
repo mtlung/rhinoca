@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "textresource.h"
+#include "rhlog.h"
 #include "platform.h"
 
 TextResource::TextResource(const char* uri)
@@ -56,14 +57,14 @@ void TextLoader::run(TaskPool* taskPool)
 		commit(taskPool);
 }
 
-const char* removeBom(Rhinoca* rh, const char* str, unsigned& len)
+const char* removeBom(const char* str, unsigned& len)
 {
 	if(len < 3) return str;
 
 	if( (str[0] == (char)0xFE && str[1] == (char)0xFF) ||
 		(str[0] == (char)0xFF && str[1] == (char)0xFE))
 	{
-		print(rh, "'%s' is encoded using UTF-16 which is not supported\n");
+		rhLog("error", "'%s' is encoded using UTF-16 which is not supported\n");
 		len = 0;
 		return NULL;
 	}
@@ -83,7 +84,7 @@ void TextLoader::commit(TaskPool* taskPool)
 
 		// Remove any BOM
 		unsigned len;
-		text->dataWithoutBOM = removeBom(manager->rhinoca, text->data.c_str(), len);
+		text->dataWithoutBOM = removeBom(text->data.c_str(), len);
 	}
 	else
 		text->state = Resource::Aborted;
@@ -97,7 +98,7 @@ void TextLoader::load(TaskPool* taskPool)
 
 	if(!stream) stream = rhFileSystem.openFile(rh, text->uri());
 	if(!stream) {
-		print(rh, "TextLoader: Fail to open file '%s'\n", text->uri().c_str());
+		rhLog("error", "TextLoader: Fail to open file '%s'\n", text->uri().c_str());
 		goto Abort;
 	}
 

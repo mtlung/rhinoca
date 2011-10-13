@@ -122,8 +122,6 @@ private:
 	JsString& operator=(const JsString&);
 };	// JsString
 
-extern void print(JSContext* cx, const char* format, ...);
-
 JSBool JS_GetValue(JSContext *cx, jsval jv, bool& val);
 JSBool JS_GetValue(JSContext *cx, jsval jv, int& val);
 JSBool JS_GetValue(JSContext *cx, jsval jv, unsigned& val);

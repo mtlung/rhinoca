@@ -3,6 +3,7 @@
 #include "assert.h"
 #include "context.h"
 #include "httpstream.h"
+#include "rhlog.h"
 #include "socket.h"
 #include "audio/audiodevice.h"
 #include "render/driver.h"
@@ -89,7 +90,7 @@ Rhinoca* currentContext = NULL;
 void rhinoca_openDocument(Rhinoca* rh, const char* uri)
 {
 	if(!rh->openDoucment(uri))
-		print(rh, "Fail to load '%s'\n", uri);
+		rhLog("error", "Fail to load '%s'\n", uri);
 }
 
 void rhinoca_closeDocument(Rhinoca* rh)
@@ -404,21 +405,6 @@ void rhinoca_setFileSystem(RhFileSystem fs)
 void* rhinoca_realloca(void* ptr, unsigned int oldSize, unsigned int size);
 
 // Others
-static void defaultPrintFunc(Rhinoca* context, const char* format, va_list ap)
-{
-//	if(!context || !format) return;
-	if(!format) return;
-
-	vprintf(format, ap);
-}
-
-rhinoca_printFunc rhinoca_print = defaultPrintFunc;
-
-void rhinoca_setPrintFunc(rhinoca_printFunc printFunc)
-{
-	rhinoca_print = printFunc;
-}
-
 rhinoca_alertFunc alertFunc = NULL;
 void* alertFuncUserData = NULL;
 

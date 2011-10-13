@@ -812,6 +812,14 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\src\rhlog.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\src\rhlog.h"
+			>
+		</File>
+		<File
 			RelativePath="..\..\src\rhstring.cpp"
 			>
 		</File>

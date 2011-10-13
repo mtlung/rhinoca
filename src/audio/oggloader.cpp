@@ -2,6 +2,7 @@
 #include "audiobuffer.h"
 #include "audioloader.h"
 #include "stb_vorbis.h"
+#include "../rhlog.h"
 #include <string.h>	// for memcpy()
 
 using namespace Audio;
@@ -144,7 +145,7 @@ void OggLoader::loadHeader()
 
 	if(!stream) stream = rhFileSystem.openFile(rh, buffer->uri());
 	if(!stream) {
-		print(rh, "OggLoader: Fail to open file '%s'\n", buffer->uri().c_str());
+		rhLog("error", "OggLoader: Fail to open file '%s'\n", buffer->uri().c_str());
 		goto Abort;
 	}
 
@@ -193,8 +194,6 @@ Abort:
 
 void OggLoader::loadData()
 {
-	Rhinoca* rh = manager->rhinoca;
-
 	if(buffer->state == Resource::Aborted) goto Abort;
 	if(!stream) goto Abort;
 
@@ -206,7 +205,7 @@ void OggLoader::loadData()
 
 		if(requestQueue.getRequest(audioBufBegin, audioBufEnd))
 		{
-			print(rh, "OggLoader: Currently there are problem on seeking ogg: '%s'\n", buffer->uri().c_str());
+			rhLog("warn", "OggLoader: Currently there are problem on seeking ogg: '%s'\n", buffer->uri().c_str());
 
 			const unsigned backupCurPos = stb_vorbis_get_sample_offset(vorbis);
 //			const rhint64 fileSize = rhFileSystem.size(stream);

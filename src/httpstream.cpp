@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "httpstream.h"
+#include "rhlog.h"
 #include "socket.h"
 #include "taskpool.h"
 #include "timer.h"
@@ -29,7 +30,6 @@ struct HttpStream
 
 	char getCmd[256];
 
-	Rhinoca* rh;
 	DeltaTimer timer;
 };
 
@@ -82,7 +82,6 @@ void* rhinoca_http_open(Rhinoca* rh, const char* uri)
 	s->bufSize = 0;
 	s->bufCapacity = 0;
 	s->expectedTotalSize = 0;
-	s->rh = rh;
 
 	s->userReadCount = 0;
 
@@ -100,7 +99,7 @@ void* rhinoca_http_open(Rhinoca* rh, const char* uri)
 	return s;
 
 OnError:
-	print(rh, "Connection to %s failed\n", host);
+	rhLog("error", "Connection to %s failed\n", host);
 	delete s;
 	return NULL;
 }
@@ -179,7 +178,7 @@ bool rhinoca_http_ready(void* file, rhuint64 size)
 		}
 		else
 		{
-			print(s->rh, "Http stream receive server error code '%d'\n", serverRetCode);
+			rhLog("error", "Http stream receive server error code '%d'\n", serverRetCode);
 			goto OnError;
 		}
 	}
@@ -206,7 +205,7 @@ OnEof:
 	return true;
 
 OnError:
-	print(s->rh, "read failed\n");
+	rhLog("error", "read failed\n");
 	s->httpError = true;
 	return true;
 }

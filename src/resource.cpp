@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "resource.h"
+#include "rhlog.h"
 #include <string.h>
 
 Resource::Resource(const char* p)
@@ -73,7 +74,7 @@ ResourcePtr ResourceManager::load(const char* uri)
 			r = _factories[i].create(uri, this);
 
 		if(!r) {
-			print(rhinoca, "No loader for \"%s\" can be found\n", uri);
+			rhLog("error", "No loader for \"%s\" can be found\n", uri);
 			return NULL;
 		}
 		RHVERIFY(_resources.insertUnique(*r));

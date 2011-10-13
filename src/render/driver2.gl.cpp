@@ -7,6 +7,7 @@
 
 #include "../array.h"
 #include "../common.h"
+#include "../rhlog.h"
 #include "../vector.h"
 #include "../rhstring.h"
 
@@ -17,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////////
 // Common stuffs
 
-#define checkError() { GLenum err = glGetError(); if(err != GL_NO_ERROR) print(NULL, "unhandled GL error 0x%04x before %s %d\n", err, __FILE__, __LINE__); }
+#define checkError() { GLenum err = glGetError(); if(err != GL_NO_ERROR) rhLog("error", "unhandled GL error 0x%04x before %s %d\n", err, __FILE__, __LINE__); }
 #define clearError() { glGetError(); }
 
 //////////////////////////////////////////////////////////////////////////
@@ -34,6 +35,7 @@ extern bool _driverChangeResolution(unsigned width, unsigned height);
 
 static void _setViewport(unsigned x, unsigned y, unsigned width, unsigned height)
 {
+	rhLog("error", "attribute not found!");
 //	glEnable(GL_SCISSOR_TEST);
 	glViewport((GLint)x, (GLint)y, (GLsizei)width, (GLsizei)height);
 //	glScissor((GLint)x, (GLint)y, (GLsizei)width, (GLsizei)height);
@@ -384,7 +386,7 @@ bool _initShader(RhRenderShader* self, RhRenderShaderType type, const char** sou
 			String buf;
 			buf.resize(len);
 			glGetShaderInfoLog(impl->glh, len, NULL, buf.c_str());
-			print(NULL, "glCompileShader failed: %s", buf.c_str());
+			rhLog("error", "glCompileShader failed: %s", buf.c_str());
 		}
 
 		clearError();
@@ -490,7 +492,7 @@ bool _initShaderProgram(RhRenderShaderProgram* self, RhRenderShader** shaders, u
 			String buf;
 			buf.resize(len);
 			glGetProgramInfoLog(impl->glh, len, NULL, buf.c_str());
-			print(NULL, "glLinkProgram failed: %s", buf.c_str());
+			rhLog("error", "glLinkProgram failed: %s", buf.c_str());
 		}
 
 		clearError();
@@ -506,7 +508,7 @@ bool _initShaderProgram(RhRenderShaderProgram* self, RhRenderShader** shaders, u
 		glGetProgramiv(impl->glh, GL_ACTIVE_UNIFORMS, &uniformCount);
 
 		if(impl->uniforms.capacity() < (unsigned)uniformCount)
-			print(NULL, "dynamic memory need for PreAllocVector in %s %d\n", __FILE__, __LINE__);
+			rhLog("verbose", "dynamic memory need for PreAllocVector in %s %d\n", __FILE__, __LINE__);
 
 		impl->uniforms.resize(uniformCount);
 
@@ -556,7 +558,7 @@ bool _initShaderProgram(RhRenderShaderProgram* self, RhRenderShader** shaders, u
 		glGetProgramiv(impl->glh, GL_ACTIVE_ATTRIBUTES, &attributeCount);
 
 		if(impl->attributes.capacity() < (unsigned)attributeCount)
-			print(NULL, "dynamic memory need for PreAllocVector in %s %d\n", __FILE__, __LINE__);
+			rhLog("verbose", "dynamic memory need for PreAllocVector in %s %d\n", __FILE__, __LINE__);
 
 		impl->attributes.resize(attributeCount);
 
@@ -728,7 +730,7 @@ bool _bindProgramInput(RhRenderShaderProgram* self, RhRenderShaderProgramInput* 
 				}
 			}
 			else
-				print(NULL, "attribute not found!");
+				rhLog("error", "attribute not found!");
 		}
 	}
 

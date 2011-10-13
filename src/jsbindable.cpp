@@ -141,17 +141,6 @@ JsBindable* getJsBindableExactType(JSContext* cx, JSObject* obj, JSClass* jsClas
 }
 
 
-void print(JSContext* cx, const char* format, ...)
-{
-	if(!format) return;
-
-	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
-	va_list vl;
-	va_start(vl, format);
-	vprint(rh, format, vl);
-	va_end(vl);
-}
-
 JSBool JS_GetValue(JSContext *cx, jsval jv, bool& val)
 {
 	JSBool b;

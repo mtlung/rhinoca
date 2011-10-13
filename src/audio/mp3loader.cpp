@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "audiobuffer.h"
 #include "audioloader.h"
+#include "../rhlog.h"
 #include "../../thirdParty/libmpg/mpg123.h"
 
 #ifdef RHINOCA_VC
@@ -99,7 +100,7 @@ void Mp3Loader::loadHeader()
 
 	if(!stream) stream = rhFileSystem.openFile(rh, buffer->uri());
 	if(!stream) {
-		print(rh, "Mp3Loader: Fail to open file '%s'\n", buffer->uri().c_str());
+		rhLog("error", "Mp3Loader: Fail to open file '%s'\n", buffer->uri().c_str());
 		goto Abort;
 	}
 
@@ -149,8 +150,6 @@ Abort:
 
 void Mp3Loader::loadData()
 {
-	Rhinoca* rh = manager->rhinoca;
-
 	if(buffer->state == Resource::Aborted) goto Abort;
 	if(!stream) goto Abort;
 
@@ -221,7 +220,7 @@ void Mp3Loader::loadData()
 		goto Abort;
 
 	if(mpgRet == MPG123_NEW_FORMAT)
-		print(rh, "Mp3Loader: Changing audio format in the middle of loading is not supported '%s'\n", buffer->uri().c_str());
+		rhLog("error", "Mp3Loader: Changing audio format in the middle of loading is not supported '%s'\n", buffer->uri().c_str());
 
 	if(decodeBytes > 0) {
 		currentSamplePos = mpg123_tell(mpg);

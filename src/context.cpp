@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "context.h"
 #include "loader.h"
+#include "rhlog.h"
 #include "path.h"
 #include "platform.h"
 #include "rhinoca.h"
@@ -35,8 +36,7 @@
 
 void jsReportError(JSContext* cx, const char* message, JSErrorReport* report)
 {
-	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
-	print(rh, "JS %s: %s:%u\n%s\n",
+	rhLog("js", "JS %s: %s:%u\n%s\n",
 		JSREPORT_IS_WARNING(report->flags) ? "warning" : "error",
 		report->filename ? report->filename : "<no filename>",
 		(unsigned int)report->lineno,
@@ -56,8 +56,7 @@ JSBool jsConsoleLog(JSContext* cx, uintN argc, jsval* vp)
 	JsString jss(cx, JS_ARGV0);
 	if(!jss) return JS_FALSE;
 
-	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
-	print(rh, "%s", jss.c_str());
+	rhLog("js", "%s", jss.c_str());
 	return JS_TRUE;
 }
 
