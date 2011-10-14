@@ -16,6 +16,12 @@ public:
 	GraphicsDriverTest() : hWnd(0), driver(NULL), context(NULL) {}
 	~GraphicsDriverTest()
 	{
+		if(driver) {
+			driver->deleteShaderProgram(program);
+			driver->deleteShader(vShader);
+			driver->deleteShader(pShader);
+		}
+
 		if(hWnd) {
 			::ShowWindow(hWnd, false);
 			::PostQuitMessage(0);
@@ -88,6 +94,12 @@ public:
 		context->minorVersion = 2;
 		driver->initContext(context, hWnd);
 		driver->useContext(context);
+
+		driver->setViewport(0, 0, context->width, context->height);
+
+		vShader = driver->newShader();
+		pShader = driver->newShader();
+		program = driver->newShaderPprogram();
 	}
 
 	bool keepRun()
@@ -107,6 +119,9 @@ public:
 	HWND hWnd;
 	RgDriver* driver;
 	RgDriverContext* context;
+	RgDriverShader* vShader;
+	RgDriverShader* pShader;
+	RgDriverShaderProgram* program;
 };
 
 const wchar_t* GraphicsDriverTest::windowClass = L"Rhinoca unit test";
@@ -123,11 +138,7 @@ TEST_FIXTURE(GraphicsDriverTest, basic)
 
 	createWindow(200, 200);
 
-	// Create shader
-	RgDriverShader* vShader = driver->newShader();
-	RgDriverShader* pShader = driver->newShader();
-	RgDriverShaderProgram* program = driver->newShaderPprogram();
-
+	// Init shader
 	const char* vShaderSrc =
 		"attribute vec4 vertex;"
 		"void main(void){gl_Position=vertex;}";
@@ -160,8 +171,6 @@ TEST_FIXTURE(GraphicsDriverTest, basic)
 	};
 	CHECK(driver->bindProgramInput(program, input, COUNTOF(input), NULL));
 
-	driver->setViewport(0, 0, context->width, context->height);
-
 	while(keepRun()) {
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();
@@ -169,25 +178,18 @@ TEST_FIXTURE(GraphicsDriverTest, basic)
 
 	driver->deleteBuffer(vbuffer);
 	driver->deleteBuffer(ibuffer);
-	driver->deleteShaderProgram(program);
-	driver->deleteShader(vShader);
-	driver->deleteShader(pShader);
 }
 
 TEST_FIXTURE(GraphicsDriverTest, 3d)
 {
 	createWindow(200, 200);
 
-	// Create shader
-	RgDriverShader* vShader = driver->newShader();
-	RgDriverShader* pShader = driver->newShader();
-	RgDriverShaderProgram* program = driver->newShaderPprogram();
-
+	// Init shader
 	const char* vShaderSrc =
-		"attribute vec4 vertex;"
+		"attribute vec3 vertex;"
 		"uniform mat4 modelViewMat;"
 		"uniform mat4 projectionMat;"
-		"void main(void){gl_Position=(projectionMat*modelViewMat)*vertex;}";
+		"void main(void){gl_Position=(projectionMat*modelViewMat)*vec4(vertex,1);}";
 	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc, 1));
 
 	const char* pShaderSrc =
@@ -201,7 +203,7 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 	CHECK(driver->setUniform4fv(program, StringHash("u_color"), c, 1));
 
 	// Create vertex buffer
-	float vertex[][4] = { {-1,1,0,1}, {-1,-1,0,1}, {1,-1,0,1}, {1,1,0,1} };
+	float vertex[][3] = { {-1,1,0}, {-1,-1,0}, {1,-1,0}, {1,1,0} };
 	RgDriverBuffer* vbuffer = driver->newBuffer();
 	CHECK(driver->initBuffer(vbuffer, RgDriverBufferType_Vertex, vertex, sizeof(vertex)));
 
@@ -212,7 +214,7 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 
 	// Bind shader input layout
 	RgDriverShaderProgramInput input[] = {
-		{ vbuffer, "vertex", 3, 0, 16, 0, 0 },
+		{ vbuffer, "vertex", 3, 0, 0, 0, 0 },
 		{ ibuffer, NULL, 1, 0, 0, 0, 0 },
 	};
 	CHECK(driver->bindProgramInput(program, input, COUNTOF(input), NULL));
@@ -229,8 +231,6 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 	rgMat44MakePrespective(prespective, 90, 1, 2, 10);
 	CHECK(driver->setUniformMat44fv(program, StringHash("projectionMat"), false, prespective, 1));
 
-	driver->setViewport(0, 0, context->width, context->height);
-
 	while(keepRun()) {
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();
@@ -238,7 +238,82 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 
 	driver->deleteBuffer(vbuffer);
 	driver->deleteBuffer(ibuffer);
-	driver->deleteShaderProgram(program);
-	driver->deleteShader(vShader);
-	driver->deleteShader(pShader);
+}
+
+TEST_FIXTURE(GraphicsDriverTest, blending)
+{
+	createWindow(200, 200);
+
+	// Init shader
+	const char* vShaderSrc =
+		"attribute vec4 vertex;"
+		"void main(void){gl_Position=vertex;}";
+	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc, 1));
+
+	const char* pShaderSrc =
+		"uniform vec4 u_color;"
+		"void main(void){gl_FragColor=u_color;}";
+	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc, 1));
+
+	RgDriverShader* shaders[] = { vShader, pShader };
+	CHECK(driver->initShaderProgram(program, shaders, 2));
+
+	// Create vertex buffer
+	float vertex1[][4] = { {-1,1,0,1}, {-1,-0.5f,0,1}, {0.5f,-0.5f,0,1}, {0.5f,1,0,1} };
+	RgDriverBuffer* vbuffer1 = driver->newBuffer();
+	CHECK(driver->initBuffer(vbuffer1, RgDriverBufferType_Vertex, vertex1, sizeof(vertex1)));
+
+	float vertex2[][4] = { {-0.5f,0.5f,0,1}, {-0.5f,-1,0,1}, {1,-1,0,1}, {1,0.5f,0,1} };
+	RgDriverBuffer* vbuffer2 = driver->newBuffer();
+	CHECK(driver->initBuffer(vbuffer2, RgDriverBufferType_Vertex, vertex2, sizeof(vertex2)));
+
+	// Create index buffer
+	rhuint16 index[][3] = { {0, 1, 2}, {0, 2, 3} };
+	RgDriverBuffer* ibuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ibuffer, RgDriverBufferType_Index, index, sizeof(index)));
+
+	// Set the blend state
+	RgDriverBlendState blend = {
+		0, 1,
+		RgDriverBlendOp_Add, RgDriverBlendOp_Add,
+		RgDriverBlendValue_SrcAlpha, RgDriverBlendValue_InvSrcAlpha,
+		RgDriverBlendValue_One, RgDriverBlendValue_Zero
+	};
+
+	driver->setBlendState(&blend);
+
+	while(keepRun())
+	{
+		{	// Draw the first quad
+			RgDriverShaderProgramInput input[] = {
+				{ vbuffer1, "vertex", 4, 0, 0, 0, 0 },
+				{ ibuffer, NULL, 1, 0, 0, 0, 0 },
+			};
+			CHECK(driver->bindProgramInput(program, input, COUNTOF(input), NULL));
+
+			float c[] = { 1, 1, 0, 0.5f };
+			CHECK(driver->setUniform4fv(program, StringHash("u_color"), c, 1));
+
+			driver->drawTriangleIndexed(0, 6, 0);
+		}
+
+		{	// Draw the second quad
+			RgDriverShaderProgramInput input[] = {
+				{ vbuffer2, "vertex", 4, 0, 0, 0, 0 },
+				{ ibuffer, NULL, 1, 0, 0, 0, 0 },
+			};
+			CHECK(driver->bindProgramInput(program, input, COUNTOF(input), NULL));
+
+			float c[] = { 1, 0, 0, 0.5f };
+			CHECK(driver->setUniform4fv(program, StringHash("u_color"), c, 1));
+
+			driver->drawTriangleIndexed(0, 6, 0);
+		}
+
+		driver->swapBuffers();
+	}
+
+	driver->deleteBuffer(vbuffer1);
+	driver->deleteBuffer(vbuffer2);
+	driver->deleteBuffer(ibuffer);
 }

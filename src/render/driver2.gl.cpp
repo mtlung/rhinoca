@@ -54,9 +54,82 @@ static void _clearDepth(float z)
 }
 
 //////////////////////////////////////////////////////////////////////////
+// State management
+
+static unsigned _hash(const void* data, unsigned len)
+{
+	unsigned h = 0;
+	const char* data_ = reinterpret_cast<const char*>(data);
+	for(unsigned i=0; i<len; ++i)
+		h = data_[i] + (h << 6) + (h << 16) - h;
+	return h;
+}
+
+static const Array<GLenum, 5> _blendOp = {
+	GL_FUNC_ADD,
+	GL_FUNC_SUBTRACT,
+	GL_FUNC_REVERSE_SUBTRACT,
+	GL_MIN,
+	GL_MAX,
+};
+
+static const Array<GLenum, 10> _blendValue = {
+	GL_ZERO,
+	GL_ONE,
+	GL_SRC_COLOR,
+	GL_ONE_MINUS_SRC_COLOR,
+	GL_SRC_ALPHA,
+	GL_ONE_MINUS_SRC_ALPHA,
+	GL_DST_COLOR,
+	GL_ONE_MINUS_DST_COLOR,
+	GL_DST_ALPHA,
+	GL_ONE_MINUS_DST_ALPHA,
+};
+
+// See: http://www.opengl.org/wiki/Blending
+static void _setBlendState(RgDriverBlendState* blendState)
+{
+	if(!blendState) return;
+
+	// Generate the hash value if not yet
+	if(blendState->hash == 0) {
+		blendState->hash = _hash(
+			&blendState->enable,
+			sizeof(RgDriverBlendState) - offsetof(RgDriverBlendState, RgDriverBlendState::enable)
+		);
+	}
+	else {
+		// TODO: Make use of the hash value
+	}
+
+	if(blendState->enable)
+		glEnable(GL_BLEND);
+	else {
+		glDisable(GL_BLEND);
+		return;
+	}
+
+	glBlendEquationSeparate(
+		_blendOp[blendState->colorOp],
+		_blendOp[blendState->alphaOp]
+	);
+
+/*	glBlendFunc(
+		_blendValue[blendState->colorSrc],
+		_blendValue[blendState->colorDst]
+	);*/
+	glBlendFuncSeparate(
+		_blendValue[blendState->colorSrc],
+		_blendValue[blendState->colorDst],
+		_blendValue[blendState->alphaSrc],
+		_blendValue[blendState->alphaDst]
+	);
+}
+
+//////////////////////////////////////////////////////////////////////////
 // Buffer
 
-static Array<GLenum, 9> _bufferTarget = {
+static const Array<GLenum, 9> _bufferTarget = {
 	0,
 	GL_ARRAY_BUFFER,
 	GL_ELEMENT_ARRAY_BUFFER, 0,
@@ -66,7 +139,7 @@ static Array<GLenum, 9> _bufferTarget = {
 };
 
 #if !defined(CR_GLES_2)
-static Array<GLenum, 4> _bufferMapUsage = {
+static const Array<GLenum, 4> _bufferMapUsage = {
 	0,
 	GL_READ_ONLY,
 	GL_WRITE_ONLY,
@@ -359,7 +432,7 @@ void _commitTexture(RgDriverTexture* self, void* data, unsigned rowPaddingInByte
 //////////////////////////////////////////////////////////////////////////
 // Shader
 
-static Array<GLenum, 5> _shaderTypes = {
+static const Array<GLenum, 5> _shaderTypes = {
 	GL_VERTEX_SHADER,
 	GL_FRAGMENT_SHADER,
 #if !defined(CR_GLES_2)
@@ -818,6 +891,8 @@ RgDriver* rhNewRenderDriver(const char* options)
 	ret->swapBuffers = _driverSwapBuffers;
 	ret->changeResolution = _driverChangeResolution;
 	ret->setViewport = _setViewport;
+
+	ret->setBlendState = _setBlendState;
 
 	ret->newBuffer = _newBuffer;
 	ret->deleteBuffer = _deleteBuffer;

@@ -87,6 +87,36 @@ typedef struct RgDriverShaderProgramInput
 	unsigned cacheId;
 } RgDriverShaderProgramInput;
 
+typedef enum RgDriverBlendOp {
+	RgDriverBlendOp_Add = 0,
+	RgDriverBlendOp_Subtract,
+	RgDriverBlendOp_RevSubtract,
+	RgDriverBlendOp_Min,
+	RgDriverBlendOp_Max,
+} RgDriverBlendOp;
+
+typedef enum RgDriverBlendValue {
+	RgDriverBlendValue_Zero = 0,
+	RgDriverBlendValue_One,
+	RgDriverBlendValue_SrcColor,
+	RgDriverBlendValue_InvSrcColor,
+	RgDriverBlendValue_SrcAlpha,
+	RgDriverBlendValue_InvSrcAlpha,
+	RgDriverBlendValue_DstColor,
+	RgDriverBlendValue_InvDstColor,
+	RgDriverBlendValue_DstAlpha,
+	RgDriverBlendValue_InvDstAlpha,
+} RgDriverBlendValue;
+
+typedef struct RgDriverBlendState
+{
+	unsigned hash;		/// RgDriverBlendState() will set this for you
+	unsigned enable;	/// Use unsigned to avoid any padding
+	RgDriverBlendOp colorOp, alphaOp;
+	RgDriverBlendValue colorSrc, colorDst, alphaSrc, alphaDst;
+//	ColorWriteEnable wirteMask;
+} RgDriverBlendState;
+
 // 
 typedef struct RgDriver
 {
@@ -101,6 +131,9 @@ typedef struct RgDriver
 	void (*setViewport)(unsigned x, unsigned y, unsigned width, unsigned height);
 	void (*clearColor)(float r, float g, float b, float a);
 	void (*clearDepth)(float z);
+
+// State management
+	void (*setBlendState)(RgDriverBlendState* blendState);
 
 // Render target
 /*	RgDriverTarget* (*newRenderTarget)(
