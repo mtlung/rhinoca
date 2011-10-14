@@ -30,6 +30,8 @@ RgDriverContext* _newDriverContext()
 	ret->hWnd = NULL;
 	ret->hDc = NULL;
 	ret->width = ret->height = 0;
+	ret->currentBlendStateHash = 0;
+	ret->currentDepthStencilStateHash = 0;
 	ret->magjorVersion = 2;
 	ret->minorVersion = 0;
 	return ret;
@@ -56,6 +58,11 @@ void _useDriverContext(RgDriverContext* self)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	_currentContext = impl;
+}
+
+RgDriverContext* _getCurrentContext()
+{
+	return _currentContext;
 }
 
 bool _initDriverContext(RgDriverContext* self, void* platformSpecificWindow)

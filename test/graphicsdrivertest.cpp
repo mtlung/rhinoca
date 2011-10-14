@@ -280,8 +280,6 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 		RgDriverBlendValue_One, RgDriverBlendValue_Zero
 	};
 
-	driver->setBlendState(&blend);
-
 	while(keepRun())
 	{
 		{	// Draw the first quad
@@ -306,6 +304,8 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 
 			float c[] = { 1, 0, 0, 0.5f };
 			CHECK(driver->setUniform4fv(program, StringHash("u_color"), c, 1));
+
+			driver->setBlendState(&blend);
 
 			driver->drawTriangleIndexed(0, 6, 0);
 		}

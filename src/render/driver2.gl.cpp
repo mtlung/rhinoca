@@ -29,6 +29,7 @@ extern RgDriverContext* _newDriverContext();
 extern void _deleteDriverContext(RgDriverContext* self);
 extern bool _initDriverContext(RgDriverContext* self, void* platformSpecificWindow);
 extern void _useDriverContext(RgDriverContext* self);
+extern RgDriverContext* _getCurrentContext();
 
 extern void _driverSwapBuffers();
 extern bool _driverChangeResolution(unsigned width, unsigned height);
@@ -87,22 +88,26 @@ static const Array<GLenum, 10> _blendValue = {
 };
 
 // See: http://www.opengl.org/wiki/Blending
-static void _setBlendState(RgDriverBlendState* blendState)
+static void _setBlendState(RgDriverBlendState* state)
 {
-	if(!blendState) return;
+	RgDriverContext* ctx = _getCurrentContext();
+	if(!state || !ctx) return;
 
 	// Generate the hash value if not yet
-	if(blendState->hash == 0) {
-		blendState->hash = _hash(
-			&blendState->enable,
+	if(state->hash == 0) {
+		state->hash = _hash(
+			&state->enable,
 			sizeof(RgDriverBlendState) - offsetof(RgDriverBlendState, RgDriverBlendState::enable)
 		);
+		ctx->currentBlendStateHash = state->hash;
 	}
+	else if(state->hash == ctx->currentBlendStateHash)
+		return;
 	else {
-		// TODO: Make use of the hash value
+		// TODO: Make use of the hash value, if OpenGL support state block
 	}
 
-	if(blendState->enable)
+	if(state->enable)
 		glEnable(GL_BLEND);
 	else {
 		glDisable(GL_BLEND);
@@ -110,20 +115,103 @@ static void _setBlendState(RgDriverBlendState* blendState)
 	}
 
 	glBlendEquationSeparate(
-		_blendOp[blendState->colorOp],
-		_blendOp[blendState->alphaOp]
+		_blendOp[state->colorOp],
+		_blendOp[state->alphaOp]
 	);
 
 /*	glBlendFunc(
-		_blendValue[blendState->colorSrc],
-		_blendValue[blendState->colorDst]
+		_blendValue[state->colorSrc],
+		_blendValue[state->colorDst]
 	);*/
 	glBlendFuncSeparate(
-		_blendValue[blendState->colorSrc],
-		_blendValue[blendState->colorDst],
-		_blendValue[blendState->alphaSrc],
-		_blendValue[blendState->alphaDst]
+		_blendValue[state->colorSrc],
+		_blendValue[state->colorDst],
+		_blendValue[state->alphaSrc],
+		_blendValue[state->alphaDst]
 	);
+}
+
+static const Array<GLenum, 8> _compareFunc = {
+	GL_NEVER,
+	GL_LESS,
+	GL_EQUAL,
+	GL_LEQUAL,
+	GL_GREATER,
+	GL_NOTEQUAL,
+	GL_GEQUAL,
+	GL_ALWAYS,
+};
+
+static const Array<GLenum, 8> _stencilOp = {
+	GL_ZERO,
+	GL_INVERT,
+	GL_KEEP,
+	GL_REPLACE,
+	GL_INCR,
+	GL_DECR,
+	GL_INCR_WRAP,
+	GL_DECR_WRAP,
+};
+
+static void _setDepthStencilState(RgDriverDepthStencilState* state)
+{
+	RgDriverContext* ctx = _getCurrentContext();
+	if(!state || !ctx) return;
+
+	// Generate the hash value if not yet
+	if(state->hash == 0) {
+		state->hash = _hash(
+			&state->enableDepth,
+			sizeof(RgDriverDepthStencilState) - offsetof(RgDriverDepthStencilState, RgDriverDepthStencilState::enableDepth)
+		);
+		ctx->currentDepthStencilStateHash = state->hash;
+	}
+	else if(state->hash == ctx->currentDepthStencilStateHash)
+		return;
+	else {
+		// TODO: Make use of the hash value, if OpenGL support state block
+	}
+
+	if(!state->enableStencil) {
+		glDisable(GL_DEPTH_TEST);
+	}
+	else {
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(_compareFunc[state->depthFunc]);
+	}
+
+	if(!state->enableStencil) {
+		glDisable(GL_STENCIL_TEST);
+	}
+	else {
+		glEnable(GL_STENCIL_TEST);
+		glStencilFuncSeparate(
+			GL_FRONT,
+			state->front.func,
+			state->front.refValue,
+			state->front.mask
+		);
+		glStencilFuncSeparate(
+			GL_BACK,
+			state->back.func,
+			state->back.refValue,
+			state->back.mask
+		);
+
+		glStencilOpSeparate(
+			GL_FRONT,
+			_stencilOp[state->front.failOp],
+			_stencilOp[state->front.zFailOp],
+			_stencilOp[state->front.passOp]
+		);
+
+		glStencilOpSeparate(
+			GL_BACK,
+			_stencilOp[state->back.failOp],
+			_stencilOp[state->back.zFailOp],
+			_stencilOp[state->back.passOp]
+		);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -885,14 +973,16 @@ RgDriver* rhNewRenderDriver(const char* options)
 
 	// Setup the function pointers
 	ret->newContext = _newDriverContext;
-	ret->useContext = _useDriverContext;
 	ret->deleteContext = _deleteDriverContext;
 	ret->initContext = _initDriverContext;
+	ret->useContext = _useDriverContext;
+	ret->currentContext = _getCurrentContext;
 	ret->swapBuffers = _driverSwapBuffers;
 	ret->changeResolution = _driverChangeResolution;
 	ret->setViewport = _setViewport;
 
 	ret->setBlendState = _setBlendState;
+	ret->setDepthStencilState = _setDepthStencilState;
 
 	ret->newBuffer = _newBuffer;
 	ret->deleteBuffer = _deleteBuffer;

@@ -11,6 +11,8 @@ extern "C" {
 typedef struct RgDriverContext
 {
 	unsigned width, height;
+	unsigned currentBlendStateHash;
+	unsigned currentDepthStencilStateHash;
 	unsigned magjorVersion, minorVersion;
 } RgDriverContext;
 
@@ -48,10 +50,10 @@ typedef enum RgDriverTextureFormat
 	RgDriverTextureFormat_DepthStencil,
 
 	RgDriverTextureFormat_Compressed= 0x00010000,
-	RgDriverTextureFormat_PVRTC2	= 0x00010001,	// PowerVR texture compression 2-bpp
-	RgDriverTextureFormat_PVRTC4	= 0x00010002,	// PowerVR texture compression 4-bpp
-	RgDriverTextureFormat_DXT1		= 0x00010003,	// DirectX's DXT1 compression
-	RgDriverTextureFormat_DXT5		= 0x00010004,	// DirectX's DXT5 compression
+	RgDriverTextureFormat_PVRTC2	= 0x00010001,	/// PowerVR texture compression 2-bpp
+	RgDriverTextureFormat_PVRTC4	= 0x00010002,	/// PowerVR texture compression 4-bpp
+	RgDriverTextureFormat_DXT1		= 0x00010003,	/// DirectX's DXT1 compression
+	RgDriverTextureFormat_DXT5		= 0x00010004,	/// DirectX's DXT5 compression
 } RgDriverTextureFormat;
 
 typedef struct RgDriverTexture
@@ -87,7 +89,8 @@ typedef struct RgDriverShaderProgramInput
 	unsigned cacheId;
 } RgDriverShaderProgramInput;
 
-typedef enum RgDriverBlendOp {
+typedef enum RgDriverBlendOp
+{
 	RgDriverBlendOp_Add = 0,
 	RgDriverBlendOp_Subtract,
 	RgDriverBlendOp_RevSubtract,
@@ -95,7 +98,8 @@ typedef enum RgDriverBlendOp {
 	RgDriverBlendOp_Max,
 } RgDriverBlendOp;
 
-typedef enum RgDriverBlendValue {
+typedef enum RgDriverBlendValue
+{
 	RgDriverBlendValue_Zero = 0,
 	RgDriverBlendValue_One,
 	RgDriverBlendValue_SrcColor,
@@ -110,12 +114,54 @@ typedef enum RgDriverBlendValue {
 
 typedef struct RgDriverBlendState
 {
-	unsigned hash;		/// RgDriverBlendState() will set this for you
+	unsigned hash;		/// Set it to 0 when ever the state is changed
 	unsigned enable;	/// Use unsigned to avoid any padding
 	RgDriverBlendOp colorOp, alphaOp;
 	RgDriverBlendValue colorSrc, colorDst, alphaSrc, alphaDst;
 //	ColorWriteEnable wirteMask;
 } RgDriverBlendState;
+
+typedef enum RgDriverCompareFunc
+{
+	RgDriverDepthCompareFunc_Never = 0,	/// Never pass, 
+	RgDriverDepthCompareFunc_Less,		/// Pass if src depth < dst depth, pass if (ref & mask) < (stencil & mask)
+	RgDriverDepthCompareFunc_Equal,
+	RgDriverDepthCompareFunc_LEqual,
+	RgDriverDepthCompareFunc_Greater,
+	RgDriverDepthCompareFunc_NotEqual,
+	RgDriverDepthCompareFunc_GEqual,
+	RgDriverDepthCompareFunc_Always,
+} RgDriverDepthCompareFunc;
+
+typedef enum RgDriverStencilOp
+{
+	RgDriverStencilOp_Zero = 0,
+	RgDriverStencilOp_Invert,
+	RgDriverStencilOp_Keep,
+	RgDriverStencilOp_Replace,
+	RgDriverStencilOp_Incr,
+	RgDriverStencilOp_Decr,
+	RgDriverStencilOp_IncrWrap,
+	RgDriverStencilOp_DecrWrap,
+};
+
+typedef struct RgDriverStencilState
+{
+	unsigned short refValue;
+	unsigned short mask;
+	RgDriverCompareFunc func;
+	RgDriverStencilOp failOp, zFailOp, passOp;
+} RgDriverStencilState;
+
+typedef struct RgDriverDepthStencilState
+{
+	unsigned hash;		/// Set it to 0 when ever the state is changed
+	unsigned short enableDepth;
+	unsigned short enableStencil;
+
+	RgDriverCompareFunc depthFunc;
+	RgDriverStencilState front, back;
+} RgDriverDepthStencilState;
 
 // 
 typedef struct RgDriver
@@ -125,6 +171,7 @@ typedef struct RgDriver
 	void (*deleteContext)(RgDriverContext* self);
 	bool (*initContext)(RgDriverContext* self, void* platformSpecificWindow);
 	void (*useContext)(RgDriverContext* self);
+	RgDriverContext* (*currentContext)();
 
 	void (*swapBuffers)();
 	bool (*changeResolution)(unsigned width, unsigned height);
@@ -134,6 +181,7 @@ typedef struct RgDriver
 
 // State management
 	void (*setBlendState)(RgDriverBlendState* blendState);
+	void (*setDepthStencilState)(RgDriverDepthStencilState* depthStencilState);
 
 // Render target
 /*	RgDriverTarget* (*newRenderTarget)(
