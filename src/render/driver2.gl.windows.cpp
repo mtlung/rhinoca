@@ -4,6 +4,7 @@
 #include <gl/gl.h>
 #include "gl/glext.h"
 
+#include "../array.h"
 #include "../rhassert.h"
 #include "../vector.h"
 
@@ -16,7 +17,20 @@
 
 static bool _oglFunctionInited = false;
 
-struct ContextImpl : public RgDriverContext
+// NOTE: The struct should be the same as in driver2.gl.cpp
+struct RgDriverContextImpl : public RgDriverContext
+{
+	unsigned currentBlendStateHash;
+	unsigned currentDepthStencilStateHash;
+
+	struct TextureState {
+		unsigned hash;
+		GLuint glh;
+	};
+	Array<TextureState, 64> textureStateCache;
+};	// RgDriverContextImpl
+
+struct ContextImpl : public RgDriverContextImpl
 {
 	HWND hWnd;
 	HDC hDc;
@@ -32,6 +46,10 @@ RgDriverContext* _newDriverContext()
 	ret->width = ret->height = 0;
 	ret->currentBlendStateHash = 0;
 	ret->currentDepthStencilStateHash = 0;
+
+	RgDriverContextImpl::TextureState texState = { 0, 0 };
+	ret->textureStateCache.assign(texState);
+
 	ret->magjorVersion = 2;
 	ret->minorVersion = 0;
 	return ret;
@@ -44,6 +62,13 @@ void _deleteDriverContext(RgDriverContext* self)
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	if(!impl) return;
 
+	// Free the sampler state cache
+	for(unsigned i=0; i<impl->textureStateCache.size(); ++i) {
+		if(impl->textureStateCache[i].glh != 0)
+			glDeleteSamplers(1, &impl->textureStateCache[i].glh);
+	}
+	
+		
 	if(impl == _currentContext) {
 		 wglMakeCurrent(NULL, NULL); 
 		_currentContext = NULL;

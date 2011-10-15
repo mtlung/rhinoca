@@ -11,8 +11,6 @@ extern "C" {
 typedef struct RgDriverContext
 {
 	unsigned width, height;
-	unsigned currentBlendStateHash;
-	unsigned currentDepthStencilStateHash;
 	unsigned magjorVersion, minorVersion;
 } RgDriverContext;
 
@@ -163,6 +161,30 @@ typedef struct RgDriverDepthStencilState
 	RgDriverStencilState front, back;
 } RgDriverDepthStencilState;
 
+typedef enum RgDriverTextureFilterMode
+{
+	RgDriverTextureFilterMode_MinMagPoint = 0,
+	RgDriverTextureFilterMode_MinMagLinear,
+	RgDriverTextureFilterMode_MipMagPoint,
+	RgDriverTextureFilterMode_MipMagLinear
+} RgDriverTextureFilterMode;
+
+typedef enum RgDriverTextureAddressMode
+{
+	RgDriverTextureAddressMode_Repeat = 0,
+	RgDriverTextureAddressMode_Edge,
+	RgDriverTextureAddressMode_Border,
+	RgDriverTextureAddressMode_MirrorRepeat
+} RgDriverTextureAddressMode;
+
+typedef struct RgDriverTextureState
+{
+	unsigned hash;		/// Set it to 0 when ever the state is changed
+	RgDriverTextureFilterMode filter;
+	RgDriverTextureAddressMode u, v;
+	unsigned maxAnisotropy;
+} RgDriverTextureState;	// RgDriverTextureState
+
 // 
 typedef struct RgDriver
 {
@@ -182,6 +204,7 @@ typedef struct RgDriver
 // State management
 	void (*setBlendState)(RgDriverBlendState* blendState);
 	void (*setDepthStencilState)(RgDriverDepthStencilState* depthStencilState);
+	void (*setTextureState)(RgDriverTextureState* textureStates, unsigned stateCount, unsigned startingTextureUnit);
 
 // Render target
 /*	RgDriverTarget* (*newRenderTarget)(
@@ -204,7 +227,7 @@ typedef struct RgDriver
 	RgDriverTexture* (*newTexture)();
 	void (*deleteTexture)(RgDriverTexture* self);
 	bool (*initTexture)(RgDriverTexture* self, unsigned width, unsigned height, RgDriverTextureFormat format);	// Can be invoked in loader thread
-	void (*commitTexture)(RgDriverTexture* self, void* data, unsigned rowPaddingInBytes);	// Can only be invoked in render thread
+	bool (*commitTexture)(RgDriverTexture* self, const void* data, unsigned rowPaddingInBytes);	// Can only be invoked in render thread
 
 // Shader
 	RgDriverShader* (*newShader)();

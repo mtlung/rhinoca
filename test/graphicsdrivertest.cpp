@@ -180,6 +180,74 @@ TEST_FIXTURE(GraphicsDriverTest, basic)
 	driver->deleteBuffer(ibuffer);
 }
 
+TEST_FIXTURE(GraphicsDriverTest, _texture)
+{
+	createWindow(200, 200);
+
+	// Init shader
+	const char* vShaderSrc =
+		"attribute vec4 vertex;"
+		"varying vec2 texCoord;"
+		"void main(void){texCoord=(vertex+1)/2;gl_Position=vertex;}";
+	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc, 1));
+
+	const char* pShaderSrc =
+		"uniform sampler2D u_tex;"
+		"varying vec2 texCoord;"
+		"void main(void){gl_FragColor=texture2D(u_tex, texCoord);}";
+	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc, 1));
+
+	RgDriverShader* shaders[] = { vShader, pShader };
+	CHECK(driver->initShaderProgram(program, shaders, 2));
+
+	// Init texture
+	const unsigned char texData[][4] = {
+		// a,  b,  g,  r
+		{255,254,  0,  0}, {255,  0,255,  0}, {255,  0,  0,255}, {255,255,255,255},		// Bottom row
+		{255,254,253,252}, {255,255,  0,  0}, {255,  0,255,  0}, {255,  0,  0,255},		//
+		{255,  0,255,255}, {255,255,255,255}, {255,255,  0,  0}, {255,  0,255,  0},		//
+		{255,  0,255,  0}, {255,  0,  0,255}, {255,255,255,255}, {255,255,  0,  0}		// Top row
+	};
+	RgDriverTexture* texture = driver->newTexture();
+	CHECK(driver->initTexture(texture, 4, 4, RgDriverTextureFormat_RGBA));
+	CHECK(driver->commitTexture(texture, texData, 0));
+	CHECK(driver->setUniformTexture(program, StringHash("u_tex"), texture));
+
+	// Set the texture state
+	RgDriverTextureState textureState =  {
+		0,
+		RgDriverTextureFilterMode_MinMagLinear,
+		RgDriverTextureAddressMode_Repeat, RgDriverTextureAddressMode_Repeat
+	};
+
+	// Create vertex buffer
+	float vertex[][4] = { {-1,1,0,1}, {-1,-1,0,1}, {1,-1,0,1}, {1,1,0,1} };
+	RgDriverBuffer* vbuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(vbuffer, RgDriverBufferType_Vertex, vertex, sizeof(vertex)));
+
+	// Create index buffer
+	rhuint16 index[][3] = { {0, 1, 2}, {0, 2, 3} };
+	RgDriverBuffer* ibuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ibuffer, RgDriverBufferType_Index, index, sizeof(index)));
+
+	// Bind shader input layout
+	RgDriverShaderProgramInput input[] = {
+		{ vbuffer, "vertex", 4, 0, 0, 0, 0 },
+		{ ibuffer, NULL, 1, 0, 0, 0, 0 },
+	};
+	CHECK(driver->bindProgramInput(program, input, COUNTOF(input), NULL));
+
+	while(keepRun()) {
+		driver->setTextureState(&textureState, 1, 0);
+		driver->drawTriangleIndexed(0, 6, 0);
+		driver->swapBuffers();
+	}
+
+	driver->deleteTexture(texture);
+	driver->deleteBuffer(vbuffer);
+	driver->deleteBuffer(ibuffer);
+}
+
 TEST_FIXTURE(GraphicsDriverTest, 3d)
 {
 	createWindow(200, 200);
@@ -274,7 +342,7 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 
 	// Set the blend state
 	RgDriverBlendState blend = {
-		0, 1,
+		0, true,
 		RgDriverBlendOp_Add, RgDriverBlendOp_Add,
 		RgDriverBlendValue_SrcAlpha, RgDriverBlendValue_InvSrcAlpha,
 		RgDriverBlendValue_One, RgDriverBlendValue_Zero

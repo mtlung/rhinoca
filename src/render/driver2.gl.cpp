@@ -24,6 +24,18 @@
 //////////////////////////////////////////////////////////////////////////
 // Context management
 
+struct RgDriverContextImpl : public RgDriverContext
+{
+	unsigned currentBlendStateHash;
+	unsigned currentDepthStencilStateHash;
+
+	struct TextureState {
+		unsigned hash;
+		GLuint glh;
+	};
+	Array<TextureState, 64> textureStateCache;
+};	// RgDriverContextImpl
+
 // These functions are implemented in platform specific src files, eg. driver2.gl.windows.cpp
 extern RgDriverContext* _newDriverContext();
 extern void _deleteDriverContext(RgDriverContext* self);
@@ -36,9 +48,9 @@ extern bool _driverChangeResolution(unsigned width, unsigned height);
 
 static void _setViewport(unsigned x, unsigned y, unsigned width, unsigned height)
 {
-//	glEnable(GL_SCISSOR_TEST);
+	glEnable(GL_SCISSOR_TEST);
 	glViewport((GLint)x, (GLint)y, (GLsizei)width, (GLsizei)height);
-//	glScissor((GLint)x, (GLint)y, (GLsizei)width, (GLsizei)height);
+	glScissor((GLint)x, (GLint)y, (GLsizei)width, (GLsizei)height);
 //	glDepthRange(zmin, zmax);
 }
 
@@ -90,7 +102,7 @@ static const Array<GLenum, 10> _blendValue = {
 // See: http://www.opengl.org/wiki/Blending
 static void _setBlendState(RgDriverBlendState* state)
 {
-	RgDriverContext* ctx = _getCurrentContext();
+	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext());
 	if(!state || !ctx) return;
 
 	// Generate the hash value if not yet
@@ -155,7 +167,7 @@ static const Array<GLenum, 8> _stencilOp = {
 
 static void _setDepthStencilState(RgDriverDepthStencilState* state)
 {
-	RgDriverContext* ctx = _getCurrentContext();
+	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext());
 	if(!state || !ctx) return;
 
 	// Generate the hash value if not yet
@@ -212,6 +224,67 @@ static void _setDepthStencilState(RgDriverDepthStencilState* state)
 			_stencilOp[state->back.passOp]
 		);
 	}
+}
+
+static const Array<GLenum, 4> _magFilter = { GL_NEAREST, GL_LINEAR, GL_NEAREST, GL_LINEAR };
+static const Array<GLenum, 4> _minFilter = { GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_LINEAR };
+static const Array<GLenum, 4> _textureAddressMode = { GL_REPEAT, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER, GL_MIRRORED_REPEAT_ARB };
+
+// For OpenGl sampler object, see: http://www.geeks3d.com/20110908/opengl-3-3-sampler-objects-control-your-texture-units/
+// and http://www.opengl.org/registry/specs/ARB/sampler_objects.txt
+void _setTextureState(RgDriverTextureState* states, unsigned stateCount, unsigned startingTextureUnit)
+{
+	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext());
+	if(!ctx || !states || stateCount == 0) return;
+
+	for(unsigned i=0; i<stateCount; ++i)
+	{
+		RgDriverTextureState& state = states[i];
+
+		// Generate the hash value if not yet
+		if(state.hash == 0) {
+			state.hash = _hash(
+				&state.filter,
+				sizeof(RgDriverTextureState) - offsetof(RgDriverTextureState, RgDriverTextureState::filter)
+			);
+		}
+
+		GLuint glh = 0;
+		int freeCacheSlot = -1;
+
+		// Try to search for the state in the cache
+		for(unsigned j=0; j<ctx->textureStateCache.size(); ++j) {
+			if(state.hash == ctx->textureStateCache[j].hash) {
+				glh = ctx->textureStateCache[j].glh;
+				break;
+			}
+			if(freeCacheSlot == -1 && ctx->textureStateCache[j].glh == 0)
+				freeCacheSlot = j;
+		}
+
+		// Cache miss, create the state object
+		if(glh == 0) {
+			// Not enough cache slot
+			if(freeCacheSlot == -1) {
+				glBindSampler(startingTextureUnit + i, 0);
+				rhLog("error", "RgDriver texture cache slot full\n");
+				return;
+			}
+
+			glGenSamplers(1, &glh);
+			glSamplerParameteri(glh, GL_TEXTURE_WRAP_S, _textureAddressMode[state.u]);
+			glSamplerParameteri(glh, GL_TEXTURE_WRAP_T, _textureAddressMode[state.v]);
+			glSamplerParameteri(glh, GL_TEXTURE_MAG_FILTER, _magFilter[state.filter]);
+			glSamplerParameteri(glh, GL_TEXTURE_MIN_FILTER, _minFilter[state.filter]);
+			glSamplerParameterf(glh, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)state.maxAnisotropy);
+
+			ctx->textureStateCache[freeCacheSlot].glh = glh;
+			ctx->textureStateCache[freeCacheSlot].hash = state.hash;
+		}
+
+		glBindSampler(startingTextureUnit + i, glh);
+	}
+
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -357,6 +430,7 @@ typedef struct TextureFormatMapping
 } TextureFormatMapping;
 
 TextureFormatMapping _textureFormatMappings[] = {
+	{ RgDriverTextureFormat(0),				0, 0, 0, 0 },
 	{ RgDriverTextureFormat_RGBA,			4, GL_RGBA8, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8 },
 	{ RgDriverTextureFormat_R,				1, GL_R8, GL_RED, GL_UNSIGNED_BYTE },
 	{ RgDriverTextureFormat_A,				1, GL_ALPHA, GL_ALPHA, GL_UNSIGNED_BYTE },
@@ -434,7 +508,7 @@ unsigned _mipLevelOffset(RgDriverTextureImpl* self, unsigned mipIndex, unsigned&
 	return offset;
 }
 
-unsigned char* _mipLevelData(RgDriverTextureImpl* self, unsigned mipIndex, unsigned& mipWidth, unsigned& mipHeight, void* data)
+unsigned char* _mipLevelData(RgDriverTextureImpl* self, unsigned mipIndex, unsigned& mipWidth, unsigned& mipHeight, const void* data)
 {
 	mipWidth = self->width;
 	mipHeight = self->height;
@@ -445,16 +519,22 @@ unsigned char* _mipLevelData(RgDriverTextureImpl* self, unsigned mipIndex, unsig
 	return (unsigned char*)(data) + _mipLevelOffset(self, mipIndex, mipWidth, mipHeight);
 }
 
-void _commitTexture(RgDriverTexture* self, void* data, unsigned rowPaddingInBytes)
+bool _commitTexture(RgDriverTexture* self, const void* data, unsigned rowPaddingInBytes)
 {
 	RgDriverTextureImpl* impl = static_cast<RgDriverTextureImpl*>(self);
-	if(!impl) return;
-	if(!impl->format) return;
+	if(!impl) return false;
+	if(!impl->format) return false;
 
 	checkError();
 
 	glGenTextures(1, &impl->glh);
 	glBindTexture(impl->glTarget, impl->glh);
+
+	// Give the texture object a valid sampler state, even we might use sampler object
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
 	const unsigned mipCount = 1;	// TODO: Allow loading mip maps
 	TextureFormatMapping* mapping = impl->formatMapping;
@@ -483,7 +563,7 @@ void _commitTexture(RgDriverTexture* self, void* data, unsigned rowPaddingInByte
 			// See: http://stackoverflow.com/questions/205522/opengl-subtexturing
 			if(rowPaddingInBytes == 0) {
 				glTexImage2D(
-					impl->glTarget, i, impl->formatMapping->glInternalFormat,
+					impl->glTarget, i, mapping->glInternalFormat,
 					mipw, miph, 0,
 					mapping->glFormat, mapping->glType,
 					mipData
@@ -492,7 +572,7 @@ void _commitTexture(RgDriverTexture* self, void* data, unsigned rowPaddingInByte
 			else {
 				// Create an empty texture object first
 				glTexImage2D(
-					impl->glTarget, i, impl->formatMapping->glInternalFormat,
+					impl->glTarget, i, mapping->glInternalFormat,
 					mipw, miph, 0,
 					mapping->glFormat, mapping->glType,
 					NULL
@@ -515,6 +595,8 @@ void _commitTexture(RgDriverTexture* self, void* data, unsigned rowPaddingInByte
 	}
 
 	checkError();
+
+	return true;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -983,6 +1065,7 @@ RgDriver* rhNewRenderDriver(const char* options)
 
 	ret->setBlendState = _setBlendState;
 	ret->setDepthStencilState = _setDepthStencilState;
+	ret->setTextureState = _setTextureState;
 
 	ret->newBuffer = _newBuffer;
 	ret->deleteBuffer = _deleteBuffer;

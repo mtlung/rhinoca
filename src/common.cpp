@@ -8,7 +8,9 @@
 #ifdef _MSC_VER
 void rhAssert(const wchar_t* expression, const wchar_t* file, unsigned line)
 {
+#ifndef NDEBUG
 	_wassert(expression, file, line);
+#endif
 }
 #endif
 
