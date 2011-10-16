@@ -266,9 +266,10 @@ typedef struct RgDriver
 	const char* driverName;
 	unsigned majorVersion;
 	unsigned minorVersion;
+	void (*destructor)(RgDriver* self);
 } RgDriver;
 
-RgDriver* rhNewRenderDriver(const char* options);
+RgDriver* rhNewRenderDriver(const char* driverType, const char* options);
 
 void rhDeleteRenderDriver(RgDriver* self);
 

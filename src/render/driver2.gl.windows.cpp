@@ -1,12 +1,12 @@
 #include "pch.h"
 #include "driver2.h"
 
-#include <gl/gl.h>
-#include "gl/glext.h"
-
 #include "../array.h"
 #include "../rhassert.h"
 #include "../vector.h"
+
+#include <gl/gl.h>
+#include "gl/glext.h"
 
 #pragma comment(lib, "OpenGL32")
 #pragma comment(lib, "GLU32")
@@ -14,6 +14,8 @@
 #define _(DECLAR, NAME) DECLAR NAME = NULL;
 #	include "win32/extensionswin32list.h"
 #undef _
+
+namespace {
 
 static bool _oglFunctionInited = false;
 
@@ -38,7 +40,9 @@ struct ContextImpl : public RgDriverContextImpl
 	Vector<RgDriverShaderProgramInput> programInputCache;
 };	// ContextImpl
 
-RgDriverContext* _newDriverContext()
+}	// namespace
+
+RgDriverContext* _newDriverContext_GL()
 {
 	ContextImpl* ret = new ContextImpl;
 	ret->hWnd = NULL;
@@ -57,7 +61,7 @@ RgDriverContext* _newDriverContext()
 
 static ContextImpl* _currentContext = NULL;
 
-void _deleteDriverContext(RgDriverContext* self)
+void _deleteDriverContext_GL(RgDriverContext* self)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	if(!impl) return;
@@ -67,8 +71,7 @@ void _deleteDriverContext(RgDriverContext* self)
 		if(impl->textureStateCache[i].glh != 0)
 			glDeleteSamplers(1, &impl->textureStateCache[i].glh);
 	}
-	
-		
+
 	if(impl == _currentContext) {
 		 wglMakeCurrent(NULL, NULL); 
 		_currentContext = NULL;
@@ -79,18 +82,18 @@ void _deleteDriverContext(RgDriverContext* self)
 	delete static_cast<ContextImpl*>(self);
 }
 
-void _useDriverContext(RgDriverContext* self)
+void _useDriverContext_GL(RgDriverContext* self)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	_currentContext = impl;
 }
 
-RgDriverContext* _getCurrentContext()
+RgDriverContext* _getCurrentContext_GL()
 {
 	return _currentContext;
 }
 
-bool _initDriverContext(RgDriverContext* self, void* platformSpecificWindow)
+bool _initDriverContext_GL(RgDriverContext* self, void* platformSpecificWindow)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	if(!impl) return false;
@@ -161,7 +164,7 @@ bool _initDriverContext(RgDriverContext* self, void* platformSpecificWindow)
 	return ret;
 }
 
-void _driverSwapBuffers()
+void _driverSwapBuffers_GL()
 {
 	if(!_currentContext) {
 		RHASSERT(false && "Please call RgDriver->useContext");
@@ -172,7 +175,7 @@ void _driverSwapBuffers()
 	::SwapBuffers(_currentContext->hDc);
 }
 
-bool _driverChangeResolution(unsigned width, unsigned height)
+bool _driverChangeResolution_GL(unsigned width, unsigned height)
 {
 	if(!_currentContext) return false;
 

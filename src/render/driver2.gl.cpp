@@ -37,14 +37,14 @@ struct RgDriverContextImpl : public RgDriverContext
 };	// RgDriverContextImpl
 
 // These functions are implemented in platform specific src files, eg. driver2.gl.windows.cpp
-extern RgDriverContext* _newDriverContext();
-extern void _deleteDriverContext(RgDriverContext* self);
-extern bool _initDriverContext(RgDriverContext* self, void* platformSpecificWindow);
-extern void _useDriverContext(RgDriverContext* self);
-extern RgDriverContext* _getCurrentContext();
+extern RgDriverContext* _newDriverContext_GL();
+extern void _deleteDriverContext_GL(RgDriverContext* self);
+extern bool _initDriverContext_GL(RgDriverContext* self, void* platformSpecificWindow);
+extern void _useDriverContext_GL(RgDriverContext* self);
+extern RgDriverContext* _getCurrentContext_GL();
 
-extern void _driverSwapBuffers();
-extern bool _driverChangeResolution(unsigned width, unsigned height);
+extern void _driverSwapBuffers_GL();
+extern bool _driverChangeResolution_GL(unsigned width, unsigned height);
 
 static void _setViewport(unsigned x, unsigned y, unsigned width, unsigned height)
 {
@@ -102,7 +102,7 @@ static const Array<GLenum, 10> _blendValue = {
 // See: http://www.opengl.org/wiki/Blending
 static void _setBlendState(RgDriverBlendState* state)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext());
+	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
 	if(!state || !ctx) return;
 
 	// Generate the hash value if not yet
@@ -174,7 +174,7 @@ static const Array<GLenum, 8> _stencilOp = {
 
 static void _setDepthStencilState(RgDriverDepthStencilState* state)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext());
+	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
 	if(!state || !ctx) return;
 
 	// Generate the hash value if not yet
@@ -241,7 +241,7 @@ static const Array<GLenum, 4> _textureAddressMode = { GL_REPEAT, GL_CLAMP_TO_EDG
 // and http://www.opengl.org/registry/specs/ARB/sampler_objects.txt
 void _setTextureState(RgDriverTextureState* states, unsigned stateCount, unsigned startingTextureUnit)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext());
+	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx || !states || stateCount == 0) return;
 
 	for(unsigned i=0; i<stateCount; ++i)
@@ -1054,19 +1054,25 @@ struct RgDriverImpl : public RgDriver
 {
 };	// RgDriver
 
-RgDriver* rhNewRenderDriver(const char* options)
+static void _rhDeleteRenderDriver_GL(RgDriver* self)
+{
+	delete static_cast<RgDriverImpl*>(self);
+}
+
+RgDriver* _rhNewRenderDriver_GL(const char* options)
 {
 	RgDriverImpl* ret = new RgDriverImpl;
 	memset(ret, 0, sizeof(*ret));
+	ret->destructor = &_rhDeleteRenderDriver_GL;
 
 	// Setup the function pointers
-	ret->newContext = _newDriverContext;
-	ret->deleteContext = _deleteDriverContext;
-	ret->initContext = _initDriverContext;
-	ret->useContext = _useDriverContext;
-	ret->currentContext = _getCurrentContext;
-	ret->swapBuffers = _driverSwapBuffers;
-	ret->changeResolution = _driverChangeResolution;
+	ret->newContext = _newDriverContext_GL;
+	ret->deleteContext = _deleteDriverContext_GL;
+	ret->initContext = _initDriverContext_GL;
+	ret->useContext = _useDriverContext_GL;
+	ret->currentContext = _getCurrentContext_GL;
+	ret->swapBuffers = _driverSwapBuffers_GL;
+	ret->changeResolution = _driverChangeResolution_GL;
 	ret->setViewport = _setViewport;
 	ret->clearColor = _clearColor;
 	ret->clearDepth = _clearDepth;
@@ -1109,9 +1115,4 @@ RgDriver* rhNewRenderDriver(const char* options)
 	ret->drawTriangleIndexed = _drawTriangleIndexed;
 
 	return ret;
-}
-
-void rhDeleteRenderDriver(RgDriver* self)
-{
-	delete static_cast<RgDriverImpl*>(self);
 }

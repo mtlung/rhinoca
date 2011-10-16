@@ -419,6 +419,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\render\driver2.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\render\driver2.dx11.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\render\driver2.dx11.windows.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\render\driver2.gl.cpp"
 				>
 			</File>

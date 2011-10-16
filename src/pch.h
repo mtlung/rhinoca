@@ -4,7 +4,6 @@
 #ifdef _MSC_VER
 
 #include "platform.h"
-#include <gl/gl.h>
 
 #define XP_WIN
 #include <assert.h>

@@ -88,7 +88,7 @@ public:
 
 	void initContext()
 	{
-		driver = rhNewRenderDriver(NULL);
+		driver = rhNewRenderDriver("GL", NULL);
 		context = driver->newContext();
 		context->magjorVersion = 3;
 		context->minorVersion = 2;
@@ -136,7 +136,6 @@ TEST_FIXTURE(GraphicsDriverTest, basic)
 	// To draw a full screen quad:
 	// http://stackoverflow.com/questions/2588875/whats-the-best-way-to-draw-a-fullscreen-quad-in-opengl-3-2
 
-	return;
 	createWindow(200, 200);
 
 	// Init shader
@@ -253,7 +252,6 @@ TEST_FIXTURE(GraphicsDriverTest, _texture)
 
 TEST_FIXTURE(GraphicsDriverTest, 3d)
 {
-	return;
 	createWindow(200, 200);
 
 	// Init shader
@@ -315,7 +313,6 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 
 TEST_FIXTURE(GraphicsDriverTest, blending)
 {
-	return;
 	createWindow(200, 200);
 
 	// Init shader

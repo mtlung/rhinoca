@@ -204,7 +204,7 @@ int main()
 
 	HWND hWnd = createWindow(NULL, _width, _height, false);
 
-	RgDriver* driver = rhNewRenderDriver(NULL);
+	RgDriver* driver = rhNewRenderDriver("GL", NULL);
 	RgDriverContext* context = driver->newContext();
 	driver->initContext(context, hWnd);
 	driver->useContext(context);
