@@ -119,6 +119,13 @@ static void _setBlendState(RgDriverBlendState* state)
 		// TODO: Make use of the hash value, if OpenGL support state block
 	}
 
+	glColorMask(
+		(state->wirteMask & RgDriverColorWriteMask_EnableRed) > 0,
+		(state->wirteMask & RgDriverColorWriteMask_EnableGreen) > 0,
+		(state->wirteMask & RgDriverColorWriteMask_EnableBlue) > 0,
+		(state->wirteMask & RgDriverColorWriteMask_EnableAlpha) > 0
+	);
+
 	if(state->enable)
 		glEnable(GL_BLEND);
 	else {
@@ -284,7 +291,6 @@ void _setTextureState(RgDriverTextureState* states, unsigned stateCount, unsigne
 
 		glBindSampler(startingTextureUnit + i, glh);
 	}
-
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1062,6 +1068,8 @@ RgDriver* rhNewRenderDriver(const char* options)
 	ret->swapBuffers = _driverSwapBuffers;
 	ret->changeResolution = _driverChangeResolution;
 	ret->setViewport = _setViewport;
+	ret->clearColor = _clearColor;
+	ret->clearDepth = _clearDepth;
 
 	ret->setBlendState = _setBlendState;
 	ret->setDepthStencilState = _setDepthStencilState;

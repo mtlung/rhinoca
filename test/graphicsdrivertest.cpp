@@ -136,6 +136,7 @@ TEST_FIXTURE(GraphicsDriverTest, basic)
 	// To draw a full screen quad:
 	// http://stackoverflow.com/questions/2588875/whats-the-best-way-to-draw-a-fullscreen-quad-in-opengl-3-2
 
+	return;
 	createWindow(200, 200);
 
 	// Init shader
@@ -172,6 +173,7 @@ TEST_FIXTURE(GraphicsDriverTest, basic)
 	CHECK(driver->bindProgramInput(program, input, COUNTOF(input), NULL));
 
 	while(keepRun()) {
+		driver->clearColor(0, 0, 0, 0);
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();
 	}
@@ -238,6 +240,7 @@ TEST_FIXTURE(GraphicsDriverTest, _texture)
 	CHECK(driver->bindProgramInput(program, input, COUNTOF(input), NULL));
 
 	while(keepRun()) {
+		driver->clearColor(0, 0, 0, 0);
 		driver->setTextureState(&textureState, 1, 0);
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();
@@ -250,6 +253,7 @@ TEST_FIXTURE(GraphicsDriverTest, _texture)
 
 TEST_FIXTURE(GraphicsDriverTest, 3d)
 {
+	return;
 	createWindow(200, 200);
 
 	// Init shader
@@ -300,6 +304,7 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 	CHECK(driver->setUniformMat44fv(program, StringHash("projectionMat"), false, prespective, 1));
 
 	while(keepRun()) {
+		driver->clearColor(0, 0, 0, 0);
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();
 	}
@@ -310,6 +315,7 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 
 TEST_FIXTURE(GraphicsDriverTest, blending)
 {
+	return;
 	createWindow(200, 200);
 
 	// Init shader
@@ -345,11 +351,15 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 		0, true,
 		RgDriverBlendOp_Add, RgDriverBlendOp_Add,
 		RgDriverBlendValue_SrcAlpha, RgDriverBlendValue_InvSrcAlpha,
-		RgDriverBlendValue_One, RgDriverBlendValue_Zero
+		RgDriverBlendValue_One, RgDriverBlendValue_Zero,
+		RgDriverColorWriteMask_EnableAll
 	};
 
 	while(keepRun())
 	{
+		driver->clearColor(0, 0, 0, 0);
+		driver->setBlendState(&blend);
+
 		{	// Draw the first quad
 			RgDriverShaderProgramInput input[] = {
 				{ vbuffer1, "vertex", 4, 0, 0, 0, 0 },
@@ -372,8 +382,6 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 
 			float c[] = { 1, 0, 0, 0.5f };
 			CHECK(driver->setUniform4fv(program, StringHash("u_color"), c, 1));
-
-			driver->setBlendState(&blend);
 
 			driver->drawTriangleIndexed(0, 6, 0);
 		}

@@ -110,13 +110,23 @@ typedef enum RgDriverBlendValue
 	RgDriverBlendValue_InvDstAlpha,
 } RgDriverBlendValue;
 
+typedef enum RgDriverColorWriteMask
+{
+	RgDriverColorWriteMask_DisableAll	= 0,
+	RgDriverColorWriteMask_EnableRed	= 1,
+	RgDriverColorWriteMask_EnableGreen	= 2,
+	RgDriverColorWriteMask_EnableBlue	= 4,
+	RgDriverColorWriteMask_EnableAlpha	= 8,
+	RgDriverColorWriteMask_EnableAll	= 1 | 2 | 4 | 8,
+} RgDriverColorWriteMask;
+
 typedef struct RgDriverBlendState
 {
 	unsigned hash;		/// Set it to 0 when ever the state is changed
 	unsigned enable;	/// Use unsigned to avoid any padding
 	RgDriverBlendOp colorOp, alphaOp;
 	RgDriverBlendValue colorSrc, colorDst, alphaSrc, alphaDst;
-//	ColorWriteEnable wirteMask;
+	RgDriverColorWriteMask wirteMask;
 } RgDriverBlendState;
 
 typedef enum RgDriverCompareFunc
