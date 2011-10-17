@@ -825,7 +825,7 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 				case GL_SAMPLER_1D_SHADOW:
 				case GL_SAMPLER_2D_SHADOW:
 #endif
-					glUniform1i(i, texunit++);	// Create mapping between uniform location and texture unit
+					glUniform1i(uniform->location, texunit++);	// Create mapping between uniform location and texture unit
 					break;
 				default:
 					uniform->texunit = -1;

@@ -95,7 +95,7 @@ public:
 		driver->initContext(context, hWnd);
 		driver->useContext(context);
 
-		driver->setViewport(0, 0, context->width, context->height);
+		driver->setViewport(0, 0, context->width, context->height, 0, 1);
 
 		vShader = driver->newShader();
 		pShader = driver->newShader();
