@@ -207,9 +207,10 @@ typedef struct RgDriver
 
 	void (*swapBuffers)();
 	bool (*changeResolution)(unsigned width, unsigned height);
-	void (*setViewport)(unsigned x, unsigned y, unsigned width, unsigned height);
+	void (*setViewport)(unsigned x, unsigned y, unsigned width, unsigned height, float zmin, float zmax);
 	void (*clearColor)(float r, float g, float b, float a);
 	void (*clearDepth)(float z);
+	void (*clearStencil)(unsigned char s);
 
 // State management
 	void (*setBlendState)(RgDriverBlendState* blendState);

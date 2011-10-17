@@ -11,10 +11,6 @@
 #include "../vector.h"
 #include "../rhstring.h"
 
-// DirectX stuffs
-// State Object:	http://msdn.microsoft.com/en-us/library/bb205071.aspx
-// DX migration:	http://msdn.microsoft.com/en-us/library/windows/desktop/ff476190%28v=vs.85%29.aspx
-
 //////////////////////////////////////////////////////////////////////////
 // Common stuffs
 
@@ -23,6 +19,18 @@
 
 //////////////////////////////////////////////////////////////////////////
 // Context management
+
+// These functions are implemented in platform specific src files, eg. driver2.gl.windows.cpp
+extern RgDriverContext* _newDriverContext_GL();
+extern void _deleteDriverContext_GL(RgDriverContext* self);
+extern bool _initDriverContext_GL(RgDriverContext* self, void* platformSpecificWindow);
+extern void _useDriverContext_GL(RgDriverContext* self);
+extern RgDriverContext* _getCurrentContext_GL();
+
+extern void _driverSwapBuffers_GL();
+extern bool _driverChangeResolution_GL(unsigned width, unsigned height);
+
+namespace {
 
 struct RgDriverContextImpl : public RgDriverContext
 {
@@ -36,22 +44,12 @@ struct RgDriverContextImpl : public RgDriverContext
 	Array<TextureState, 64> textureStateCache;
 };	// RgDriverContextImpl
 
-// These functions are implemented in platform specific src files, eg. driver2.gl.windows.cpp
-extern RgDriverContext* _newDriverContext_GL();
-extern void _deleteDriverContext_GL(RgDriverContext* self);
-extern bool _initDriverContext_GL(RgDriverContext* self, void* platformSpecificWindow);
-extern void _useDriverContext_GL(RgDriverContext* self);
-extern RgDriverContext* _getCurrentContext_GL();
-
-extern void _driverSwapBuffers_GL();
-extern bool _driverChangeResolution_GL(unsigned width, unsigned height);
-
-static void _setViewport(unsigned x, unsigned y, unsigned width, unsigned height)
+static void _setViewport(unsigned x, unsigned y, unsigned width, unsigned height, float zmin, float zmax)
 {
 	glEnable(GL_SCISSOR_TEST);
 	glViewport((GLint)x, (GLint)y, (GLsizei)width, (GLsizei)height);
 	glScissor((GLint)x, (GLint)y, (GLsizei)width, (GLsizei)height);
-//	glDepthRange(zmin, zmax);
+	glDepthRange(zmin, zmax);
 }
 
 static void _clearColor(float r, float g, float b, float a)
@@ -64,6 +62,12 @@ static void _clearDepth(float z)
 {
 	glClearDepth(z);
 	glClear(GL_DEPTH_BUFFER_BIT);
+}
+
+static void _clearStencil(unsigned char s)
+{
+	glClearStencil(s);
+	glClear(GL_STENCIL_BUFFER_BIT);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -239,7 +243,7 @@ static const Array<GLenum, 4> _textureAddressMode = { GL_REPEAT, GL_CLAMP_TO_EDG
 
 // For OpenGl sampler object, see: http://www.geeks3d.com/20110908/opengl-3-3-sampler-objects-control-your-texture-units/
 // and http://www.opengl.org/registry/specs/ARB/sampler_objects.txt
-void _setTextureState(RgDriverTextureState* states, unsigned stateCount, unsigned startingTextureUnit)
+static void _setTextureState(RgDriverTextureState* states, unsigned stateCount, unsigned startingTextureUnit)
 {
 	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx || !states || stateCount == 0) return;
@@ -641,10 +645,10 @@ static void _deleteShader(RgDriverShader* self)
 	delete static_cast<RgDriverShaderImpl*>(self);
 }
 
-bool _initShader(RgDriverShader* self, RgDriverShaderType type, const char** sources, unsigned sourceCount)
+static bool _initShader(RgDriverShader* self, RgDriverShaderType type, const char** sources, unsigned sourceCount)
 {
 	RgDriverShaderImpl* impl = static_cast<RgDriverShaderImpl*>(self);
-	if(!impl) return false;
+	if(!impl || sourceCount == 0) return false;
 
 	checkError();
 
@@ -742,10 +746,10 @@ static void _deleteShaderProgram(RgDriverShaderProgram* self)
 	delete static_cast<RgDriverShaderProgramImpl*>(self);
 }
 
-bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** shaders, unsigned shaderCount)
+static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** shaders, unsigned shaderCount)
 {
 	RgDriverShaderProgramImpl* impl = static_cast<RgDriverShaderProgramImpl*>(self);
-	if(!impl) return false;
+	if(!impl || !shaders || shaderCount == 0) return false;
 
 	checkError();
 
@@ -1059,6 +1063,8 @@ static void _rhDeleteRenderDriver_GL(RgDriver* self)
 	delete static_cast<RgDriverImpl*>(self);
 }
 
+}	// namespace
+
 RgDriver* _rhNewRenderDriver_GL(const char* options)
 {
 	RgDriverImpl* ret = new RgDriverImpl;
@@ -1076,6 +1082,7 @@ RgDriver* _rhNewRenderDriver_GL(const char* options)
 	ret->setViewport = _setViewport;
 	ret->clearColor = _clearColor;
 	ret->clearDepth = _clearDepth;
+	ret->clearStencil = _clearStencil;
 
 	ret->setBlendState = _setBlendState;
 	ret->setDepthStencilState = _setDepthStencilState;

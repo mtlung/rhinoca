@@ -30,6 +30,13 @@ struct RgDriverContextImpl : public RgDriverContext
 	unsigned currentBlendStateHash;
 	unsigned currentDepthStencilStateHash;
 
+	ID3D11Device* dxDevice;
+	ID3D11DeviceContext* dxDeviceContext;
+	IDXGISwapChain* dxSwapChain;
+	ID3D11RenderTargetView* dxRenderTargetView;
+	ID3D11Texture2D* dxDepthStencilTexture;
+	ID3D11DepthStencilView* dxDepthStencilView;
+
 	struct TextureState {
 		unsigned hash;
 	};
@@ -39,12 +46,6 @@ struct RgDriverContextImpl : public RgDriverContext
 struct ContextImpl : public RgDriverContextImpl
 {
 	HWND hWnd;
-
-	ID3D11Device* dxDevice;
-	ID3D11DeviceContext* dxDeviceContext;
-	IDXGISwapChain* dxSwapChain;
-	ID3D11RenderTargetView* dxRenderTargetView;
-	ID3D11Texture2D* dxDepthStencilTexture;
 
 	Vector<RgDriverShaderProgramInput> programInputCache;
 };	// ContextImpl
@@ -186,6 +187,7 @@ bool _initDriverContext_DX11(RgDriverContext* self, void* platformSpecificWindow
 	// Create depth - stencil buffer
 	// reference: http://www.dx11.org.uk/3dcube.htm
 	D3D11_TEXTURE2D_DESC depthDesc;
+	ZeroMemory(&depthDesc, sizeof(depthDesc));
 	depthDesc.Width = swapChainDesc.BufferDesc.Width;
 	depthDesc.Height = swapChainDesc.BufferDesc.Height;
 	depthDesc.MipLevels = 1;
@@ -206,11 +208,26 @@ bool _initDriverContext_DX11(RgDriverContext* self, void* platformSpecificWindow
 		return false;
 	}
 
+	D3D11_DEPTH_STENCIL_VIEW_DESC depthViewDesc;
+	ZeroMemory(&depthViewDesc, sizeof(depthViewDesc));
+	depthViewDesc.Format = depthDesc.Format;
+	depthViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	depthViewDesc.Texture2D.MipSlice = 0;
+
+	ID3D11DepthStencilView* depthStencilView = NULL;
+	hr = device->CreateDepthStencilView(depthStencilTexture, &depthViewDesc, &depthStencilView);
+
+	if(FAILED(hr)) {
+		rhLog("error", "CreateDepthStencilView failed\n");
+		return false;
+	}
+
 	impl->dxSwapChain = swapChain;
 	impl->dxDevice = device;
 	impl->dxDeviceContext = immediateContext;
 	impl->dxRenderTargetView = renderTargetView;
 	impl->dxDepthStencilTexture = depthStencilTexture;
+	impl->dxDepthStencilView = depthStencilView;
 
 	return true;
 }
