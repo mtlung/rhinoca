@@ -196,6 +196,14 @@ public:
 	{
 	}
 
+	// This non template copy constructor is needed, for the
+	// placement new copy operator to work correctly
+	PreAllocVector(const PreAllocVector<T, PreAllocSize>& v)
+		: _vals(_buffer), _size(0), _allocated(PreAllocSize)
+	{
+		copy(v);
+	}
+
 	template<unsigned N>
 	PreAllocVector(const PreAllocVector<T, N>& v)
 		: _vals(_buffer), _size(0), _allocated(PreAllocSize)
@@ -366,5 +374,13 @@ protected:
 	rhuint _allocated;
 	T _buffer[PreAllocSize];
 };	// PreAllocVector
+
+template<typename T, typename V>
+T* rhFind(T* begin, T* end, const V& v)
+{
+	for(T* i=begin; i!=end; ++i)
+		if(*i == v) return i;
+	return NULL;
+}
 
 #endif	// __VECTOR_H__
