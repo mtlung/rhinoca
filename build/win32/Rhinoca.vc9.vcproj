@@ -435,6 +435,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\render\driver2.gl.inl"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\render\driver2.gl.windows.cpp"
 				>
 			</File>

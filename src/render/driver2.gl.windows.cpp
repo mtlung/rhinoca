@@ -17,30 +17,19 @@
 
 namespace {
 
-static bool _oglFunctionInited = false;
-
-// NOTE: The struct should be the same as in driver2.gl.cpp
-struct RgDriverContextImpl : public RgDriverContext
-{
-	unsigned currentBlendStateHash;
-	unsigned currentDepthStencilStateHash;
-
-	struct TextureState {
-		unsigned hash;
-		GLuint glh;
-	};
-	Array<TextureState, 64> textureStateCache;
-};	// RgDriverContextImpl
+#include "driver2.gl.inl"
 
 struct ContextImpl : public RgDriverContextImpl
 {
 	HWND hWnd;
 	HDC hDc;
 	HGLRC hRc;
-	Vector<RgDriverShaderProgramInput> programInputCache;
+	Vector<RgDriverShaderInput> programInputCache;
 };	// ContextImpl
 
 }	// namespace
+
+static bool _oglFunctionInited = false;
 
 RgDriverContext* _newDriverContext_GL()
 {
@@ -50,6 +39,8 @@ RgDriverContext* _newDriverContext_GL()
 	ret->width = ret->height = 0;
 	ret->currentBlendStateHash = 0;
 	ret->currentDepthStencilStateHash = 0;
+
+	ret->currentShaderProgram = NULL;
 
 	RgDriverContextImpl::TextureState texState = { 0, 0 };
 	ret->textureStateCache.assign(texState);
@@ -65,6 +56,12 @@ void _deleteDriverContext_GL(RgDriverContext* self)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	if(!impl) return;
+
+	// Destroy any shader program
+	glUseProgram(0);
+	for(unsigned i=0; i<impl->shaderProgramCache.size(); ++i) {
+		glDeleteProgram(impl->shaderProgramCache[i].glh);
+	}
 
 	// Free the sampler state cache
 	for(unsigned i=0; i<impl->textureStateCache.size(); ++i) {

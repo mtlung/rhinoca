@@ -1,21 +1,31 @@
 #include "pch.h"
 #include "driver2.h"
 
-#include <gl/gl.h>
-#include "gl/glext.h"
-#include "win32/extensionswin32fwd.h"
-
 #include "../array.h"
 #include "../common.h"
 #include "../rhlog.h"
 #include "../vector.h"
 #include "../rhstring.h"
 
+#include "../platform.h"
+#include <gl/gl.h>
+#include "gl/glext.h"
+#include "win32/extensionswin32fwd.h"
+
 //////////////////////////////////////////////////////////////////////////
 // Common stuffs
 
 #define checkError() { GLenum err = glGetError(); if(err != GL_NO_ERROR) rhLog("error", "unhandled GL error 0x%04x before %s %d\n", err, __FILE__, __LINE__); }
 #define clearError() { glGetError(); }
+
+static unsigned _hash(const void* data, unsigned len)
+{
+	unsigned h = 0;
+	const char* data_ = reinterpret_cast<const char*>(data);
+	for(unsigned i=0; i<len; ++i)
+		h = data_[i] + (h << 6) + (h << 16) - h;
+	return h;
+}
 
 //////////////////////////////////////////////////////////////////////////
 // Context management
@@ -32,17 +42,7 @@ extern bool _driverChangeResolution_GL(unsigned width, unsigned height);
 
 namespace {
 
-struct RgDriverContextImpl : public RgDriverContext
-{
-	unsigned currentBlendStateHash;
-	unsigned currentDepthStencilStateHash;
-
-	struct TextureState {
-		unsigned hash;
-		GLuint glh;
-	};
-	Array<TextureState, 64> textureStateCache;
-};	// RgDriverContextImpl
+#include "driver2.gl.inl"
 
 static void _setViewport(unsigned x, unsigned y, unsigned width, unsigned height, float zmin, float zmax)
 {
@@ -72,15 +72,6 @@ static void _clearStencil(unsigned char s)
 
 //////////////////////////////////////////////////////////////////////////
 // State management
-
-static unsigned _hash(const void* data, unsigned len)
-{
-	unsigned h = 0;
-	const char* data_ = reinterpret_cast<const char*>(data);
-	for(unsigned i=0; i<len; ++i)
-		h = data_[i] + (h << 6) + (h << 16) - h;
-	return h;
-}
 
 static const Array<GLenum, 5> _blendOp = {
 	GL_FUNC_ADD,
@@ -461,14 +452,14 @@ struct RgDriverTextureImpl : public RgDriverTexture
 	TextureFormatMapping* formatMapping;
 };	// RgDriverTextureImpl
 
-RgDriverTexture* _newTexture()
+static RgDriverTexture* _newTexture()
 {
 	RgDriverTextureImpl* ret = new RgDriverTextureImpl;
 	memset(ret, 0, sizeof(*ret));
 	return ret;
 }
 
-void _deleteTexture(RgDriverTexture* self)
+static void _deleteTexture(RgDriverTexture* self)
 {
 	RgDriverTextureImpl* impl = static_cast<RgDriverTextureImpl*>(self);
 	if(!impl) return;
@@ -479,7 +470,7 @@ void _deleteTexture(RgDriverTexture* self)
 	delete static_cast<RgDriverTextureImpl*>(self);
 }
 
-bool _initTexture(RgDriverTexture* self, unsigned width, unsigned height, RgDriverTextureFormat format)
+static bool _initTexture(RgDriverTexture* self, unsigned width, unsigned height, RgDriverTextureFormat format)
 {
 	RgDriverTextureImpl* impl = static_cast<RgDriverTextureImpl*>(self);
 	if(!impl) return false;
@@ -494,7 +485,7 @@ bool _initTexture(RgDriverTexture* self, unsigned width, unsigned height, RgDriv
 	return true;
 }
 
-unsigned _mipLevelOffset(RgDriverTextureImpl* self, unsigned mipIndex, unsigned& mipWidth, unsigned& mipHeight)
+static unsigned _mipLevelOffset(RgDriverTextureImpl* self, unsigned mipIndex, unsigned& mipWidth, unsigned& mipHeight)
 {
 	unsigned i = 0;
 	unsigned offset = 0;
@@ -518,7 +509,7 @@ unsigned _mipLevelOffset(RgDriverTextureImpl* self, unsigned mipIndex, unsigned&
 	return offset;
 }
 
-unsigned char* _mipLevelData(RgDriverTextureImpl* self, unsigned mipIndex, unsigned& mipWidth, unsigned& mipHeight, const void* data)
+static unsigned char* _mipLevelData(RgDriverTextureImpl* self, unsigned mipIndex, unsigned& mipWidth, unsigned& mipHeight, const void* data)
 {
 	mipWidth = self->width;
 	mipHeight = self->height;
@@ -529,7 +520,7 @@ unsigned char* _mipLevelData(RgDriverTextureImpl* self, unsigned mipIndex, unsig
 	return (unsigned char*)(data) + _mipLevelOffset(self, mipIndex, mipWidth, mipHeight);
 }
 
-bool _commitTexture(RgDriverTexture* self, const void* data, unsigned rowPaddingInBytes)
+static bool _commitTexture(RgDriverTexture* self, const void* data, unsigned rowPaddingInBytes)
 {
 	RgDriverTextureImpl* impl = static_cast<RgDriverTextureImpl*>(self);
 	if(!impl) return false;
@@ -622,11 +613,6 @@ static const Array<GLenum, 5> _shaderTypes = {
 #endif
 };
 
-struct RgDriverShaderImpl : public RgDriverShader
-{
-	GLuint glh;
-};	// RgDriverShaderImpl
-
 static RgDriverShader* _newShader()
 {
 	RgDriverShaderImpl* ret = new RgDriverShaderImpl;
@@ -636,8 +622,34 @@ static RgDriverShader* _newShader()
 
 static void _deleteShader(RgDriverShader* self)
 {
+	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
 	RgDriverShaderImpl* impl = static_cast<RgDriverShaderImpl*>(self);
-	if(!impl) return;
+	if(!ctx || !impl) return;
+
+	// Remove any shader program that use this shader
+	for(unsigned i=0; i<ctx->shaderProgramCache.size();) {
+		RgDriverShaderProgramImpl& program = ctx->shaderProgramCache[i];
+
+		RgDriverShaderImpl** cache = rhFind(
+			program.shaders.begin(),
+			program.shaders.end(),
+			impl
+		);
+
+		// Destroy the shader program
+		if(cache) {
+			glUseProgram(0);
+			glDeleteProgram(program.glh);
+
+			program.glh = 0;	// For safety
+			program.hash = 0;	//
+
+			ctx->shaderProgramCache.remove(i);
+			ctx->currentShaderProgram = NULL;
+		}
+		else
+			++i;
+	}
 
 	if(impl->glh)
 		glDeleteShader(impl->glh);
@@ -681,31 +693,12 @@ static bool _initShader(RgDriverShader* self, RgDriverShaderType type, const cha
 	return true;
 }
 
-typedef struct ProgramUniform
+static ProgramUniform* _findProgramUniform(unsigned nameHash)
 {
-	unsigned nameHash;		// Hash value for the uniform name
-	GLuint location;
-	GLuint arraySize;		// Equals to 1 if not an array
-	int texunit;
-} ProgramUniform;
+	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	if(!ctx) return NULL;
 
-typedef struct ProgramAttribute
-{
-	unsigned nameHash;		// Hash value for the uniform name
-	GLuint location;
-} ProgramAttribute;
-
-struct RgDriverShaderProgramImpl : public RgDriverShaderProgram
-{
-	RgDriverShaderProgramImpl() : glh(0) {}
-	GLuint glh;
-	PreAllocVector<ProgramUniform, 16> uniforms;
-	PreAllocVector<ProgramAttribute, 16> attributes;
-};	// RgDriverShaderProgramImpl
-
-static ProgramUniform* _findProgramUniform(RgDriverShaderProgram* self, unsigned nameHash)
-{
-	RgDriverShaderProgramImpl* impl = static_cast<RgDriverShaderProgramImpl*>(self);
+	RgDriverShaderProgramImpl* impl = ctx->currentShaderProgram;
 	if(!impl) return NULL;
 
 	for(unsigned i=0; i<impl->uniforms.size(); ++i) {
@@ -727,25 +720,6 @@ static ProgramAttribute* _findProgramAttribute(RgDriverShaderProgram* self, unsi
 	return NULL;
 }
 
-static RgDriverShaderProgram* _newShaderProgram()
-{
-	RgDriverShaderProgramImpl* ret = new RgDriverShaderProgramImpl;
-	return ret;
-}
-
-static void _deleteShaderProgram(RgDriverShaderProgram* self)
-{
-	RgDriverShaderProgramImpl* impl = static_cast<RgDriverShaderProgramImpl*>(self);
-	if(!impl) return;
-
-	if(impl->glh) {
-		glUseProgram(0);
-		glDeleteProgram(impl->glh);
-	}
-
-	delete static_cast<RgDriverShaderProgramImpl*>(self);
-}
-
 static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** shaders, unsigned shaderCount)
 {
 	RgDriverShaderProgramImpl* impl = static_cast<RgDriverShaderProgramImpl*>(self);
@@ -755,10 +729,15 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 
 	impl->glh = glCreateProgram();
 
+	// Assign the hash value
+	impl->hash = _hash(shaders, shaderCount * sizeof(*shaders));
+
 	// Attach shaders
 	for(unsigned i=0; i<shaderCount; ++i) {
-		if(shaders[i])
+		if(shaders[i]) {
 			glAttachShader(impl->glh, static_cast<RgDriverShaderImpl*>(shaders[i])->glh);
+			impl->shaders.push_back(static_cast<RgDriverShaderImpl*>(shaders[i]));
+		}
 	}
 
 	// Perform linking
@@ -872,54 +851,88 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 	return true;
 }
 
-bool _setUniform1fv(RgDriverShaderProgram* self, unsigned nameHash, const float* value, unsigned count)
+bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 {
-	if(ProgramUniform* uniform = _findProgramUniform(self, nameHash)) {
+	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	if(!ctx || !shaders || shaderCount == 0) return false;
+
+	// Hash the address of the shaders to see if a shader program is already created or not
+	unsigned hash = _hash(shaders, shaderCount * sizeof(*shaders));
+
+	RgDriverShaderProgramImpl* program = NULL;
+	// Linear search in the shader program cache
+	// TODO: Find using hash table
+	for(unsigned i=0; i<ctx->shaderProgramCache.size(); ++i) {
+		if(ctx->shaderProgramCache[i].hash == hash) {
+			program = &ctx->shaderProgramCache[i];
+			break;
+		}
+	}
+
+	checkError();
+
+	if(!program) {
+		ctx->shaderProgramCache.resize(ctx->shaderProgramCache.size() + 1);
+		program = &ctx->shaderProgramCache.back();
+		_initShaderProgram(program, shaders, shaderCount);
+	}
+
+	glUseProgram(program->glh);
+	ctx->currentShaderProgram = program;
+
+	checkError();
+
+	return true;
+}
+
+bool _setUniform1fv(unsigned nameHash, const float* value, unsigned count)
+{
+	if(ProgramUniform* uniform = _findProgramUniform(nameHash)) {
 		glUniform1fv(uniform->location, count, value);
 		return true;
 	}
 	return false;
 }
 
-bool _setUniform2fv(RgDriverShaderProgram* self, unsigned nameHash, const float* value, unsigned count)
+bool _setUniform2fv(unsigned nameHash, const float* value, unsigned count)
 {
-	if(ProgramUniform* uniform = _findProgramUniform(self, nameHash)) {
+	if(ProgramUniform* uniform = _findProgramUniform(nameHash)) {
 		glUniform2fv(uniform->location, count, value);
 		return true;
 	}
 	return false;
 }
 
-bool _setUniform3fv(RgDriverShaderProgram* self, unsigned nameHash, const float* value, unsigned count)
+bool _setUniform3fv(unsigned nameHash, const float* value, unsigned count)
 {
-	if(ProgramUniform* uniform = _findProgramUniform(self, nameHash)) {
+	if(ProgramUniform* uniform = _findProgramUniform(nameHash)) {
 		glUniform3fv(uniform->location, count, value);
 		return true;
 	}
 	return false;
 }
 
-bool _setUniform4fv(RgDriverShaderProgram* self, unsigned nameHash, const float* value, unsigned count)
+bool _setUniform4fv(unsigned nameHash, const float* value, unsigned count)
 {
-	if(ProgramUniform* uniform = _findProgramUniform(self, nameHash)) {
+	if(ProgramUniform* uniform = _findProgramUniform(nameHash)) {
 		glUniform4fv(uniform->location, count, value);
 		return true;
 	}
 	return false;
 }
 
-bool _setUniformMat44fv(RgDriverShaderProgram* self, unsigned nameHash, bool transpose, const float* value, unsigned count)
+bool _setUniformMat44fv(unsigned nameHash, bool transpose, const float* value, unsigned count)
 {
-	if(ProgramUniform* uniform = _findProgramUniform(self, nameHash)) {
+	if(ProgramUniform* uniform = _findProgramUniform(nameHash)) {
 		glUniformMatrix4fv(uniform->location, count, transpose, value);
 		return true;
 	}
 	return false;
 }
 
-bool _setUniformTexture(RgDriverShaderProgram* self, unsigned nameHash, RgDriverTexture* texture)
+bool _setUniformTexture(unsigned nameHash, RgDriverTexture* texture)
 {
-	ProgramUniform* uniform = _findProgramUniform(self, nameHash);
+	ProgramUniform* uniform = _findProgramUniform(nameHash);
 	if(!uniform ) return false;
 
 	checkError();
@@ -957,21 +970,21 @@ ProgramInputMapping _programInputMappings[] = {
 	{ GL_FLOAT,	false },
 };
 
-bool _bindProgramInput(RgDriverShaderProgram* self, RgDriverShaderProgramInput* inputs, unsigned inputCount, unsigned* cacheId)
+bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned* cacheId)
 {
 //	glShadeModel(GL_SMOOTH);
 //	glFrontFace(GL_CCW);			// OpenGl use counterclockwise as the default winding
-//	glDepthRange(-1, 1);
-//	glDisable(GL_DEPTH_TEST);
 
-	RgDriverShaderProgramImpl* impl = static_cast<RgDriverShaderProgramImpl*>(self);
+	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	if(!ctx) return false;
+	RgDriverShaderProgramImpl* impl = static_cast<RgDriverShaderProgramImpl*>(ctx->currentShaderProgram);
 	if(!impl) return false;
 
 	checkError();
 
 	for(unsigned attri=0; attri<inputCount; ++attri)
 	{
-		RgDriverShaderProgramInput* i = &inputs[attri];
+		RgDriverShaderInput* i = &inputs[attri];
 
 		if(!i || !i->buffer)
 			continue;
@@ -1000,7 +1013,7 @@ bool _bindProgramInput(RgDriverShaderProgram* self, RgDriverShaderProgramInput* 
 				i->nameHash = StringHash(i->name);
 
 			// See: http://www.opengl.org/sdk/docs/man/xhtml/glVertexAttribPointer.xml
-			if(ProgramAttribute* a = _findProgramAttribute(self, i->nameHash)) {
+			if(ProgramAttribute* a = _findProgramAttribute(ctx->currentShaderProgram, i->nameHash)) {
 				if(buffer->type & RgDriverBufferType_System) {
 					glBindBuffer(GL_ARRAY_BUFFER, 0);
 					glVertexAttribPointer(a->location, i->elementCount, m->elementType, m->normalized, i->stride, (char*)buffer->systemBuf + i->offset);
@@ -1022,9 +1035,11 @@ bool _bindProgramInput(RgDriverShaderProgram* self, RgDriverShaderProgramInput* 
 	return true;
 }
 
-bool _bindProgramInputCached(RgDriverShaderProgram* self, unsigned cacheId)
+bool _bindShaderInputCached(unsigned cacheId)
 {
-	RgDriverShaderProgramImpl* impl = static_cast<RgDriverShaderProgramImpl*>(self);
+	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	if(!ctx) return false;
+	RgDriverShaderProgramImpl* impl = static_cast<RgDriverShaderProgramImpl*>(ctx->currentShaderProgram);
 	if(!impl) return false;
 
 	// TODO: Implement
@@ -1102,21 +1117,18 @@ RgDriver* _rhNewRenderDriver_GL(const char* options)
 
 	ret->newShader = _newShader;
 	ret->deleteShader = _deleteShader;
-
-	ret->newShaderPprogram = _newShaderProgram;
-	ret->deleteShaderProgram = _deleteShaderProgram;
 	ret->initShader = _initShader;
-	ret->initShaderProgram = _initShaderProgram;
-	ret->deleteShaderProgram = _deleteShaderProgram;
-	ret->initShaderProgram = _initShaderProgram;
+
+	ret->bindShaders = _bindShaders;
 	ret->setUniform1fv = _setUniform1fv;
 	ret->setUniform2fv = _setUniform2fv;
 	ret->setUniform3fv = _setUniform3fv;
 	ret->setUniform4fv = _setUniform4fv;
 	ret->setUniformMat44fv = _setUniformMat44fv;
 	ret->setUniformTexture = _setUniformTexture;
-	ret->bindProgramInput = _bindProgramInput;
-	ret->bindProgramInputCached = _bindProgramInputCached;
+
+	ret->bindShaderInput = _bindShaderInput;
+	ret->bindShaderInputCached = _bindShaderInputCached;
 
 	ret->drawTriangle = _drawTriangle;
 	ret->drawTriangleIndexed = _drawTriangleIndexed;

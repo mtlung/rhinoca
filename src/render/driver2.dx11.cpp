@@ -218,31 +218,7 @@ static bool _initShader(RgDriverShader* self, RgDriverShaderType type, const cha
 	return true;
 }
 
-struct RgDriverShaderProgramImpl : public RgDriverShaderProgram
-{
-	ID3D11VertexShader* dxVs;
-	ID3D11PixelShader*dxPs;
-};	// RgDriverShaderProgramImpl
-
-static RgDriverShaderProgram* _newShaderProgram()
-{
-	RgDriverShaderProgramImpl* ret = new RgDriverShaderProgramImpl;
-	memset(ret, 0, sizeof(*ret));
-	return ret;
-}
-
-static void _deleteShaderProgram(RgDriverShaderProgram* self)
-{
-	RgDriverShaderProgramImpl* impl = static_cast<RgDriverShaderProgramImpl*>(self);
-	if(!impl) return;
-
-	safeRelease(impl->dxVs);
-	safeRelease(impl->dxPs);
-
-	delete static_cast<RgDriverShaderProgramImpl*>(self);
-}
-
-static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** shaders, unsigned shaderCount)
+/*static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** shaders, unsigned shaderCount)
 {
 	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	RgDriverShaderProgramImpl* impl = static_cast<RgDriverShaderProgramImpl*>(self);
@@ -267,7 +243,7 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 	}
 
 	return true;
-}
+}*/
 
 //////////////////////////////////////////////////////////////////////////
 // Making draw call
@@ -322,11 +298,9 @@ RgDriver* _rhNewRenderDriver_DX11(const char* options)
 
 	ret->newShader = _newShader;
 	ret->deleteShader = _deleteShader;
-
-	ret->newShaderPprogram = _newShaderProgram;
-	ret->deleteShaderProgram = _deleteShaderProgram;
 	ret->initShader = _initShader;
-	ret->initShaderProgram = _initShaderProgram;
+
+//	ret->initShaderProgram = _initShaderProgram;
 
 	return ret;
 }

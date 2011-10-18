@@ -47,7 +47,7 @@ struct ContextImpl : public RgDriverContextImpl
 {
 	HWND hWnd;
 
-	Vector<RgDriverShaderProgramInput> programInputCache;
+	Vector<RgDriverShaderInput> programInputCache;
 };	// ContextImpl
 
 }	// namespace

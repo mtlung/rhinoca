@@ -72,11 +72,7 @@ typedef struct RgDriverShader
 	RgDriverShaderType type;
 } RgDriverShader;
 
-typedef struct RgDriverShaderProgram
-{
-} RgDriverShaderProgram;
-
-typedef struct RgDriverShaderProgramInput
+typedef struct RgDriverShaderInput
 {
 	RgDriverBuffer* buffer;
 	const char* name;
@@ -85,7 +81,7 @@ typedef struct RgDriverShaderProgramInput
 	unsigned stride;
 	unsigned nameHash;		/// after name is changed, reset it to zero will cause it to be re-calculated
 	unsigned cacheId;
-} RgDriverShaderProgramInput;
+} RgDriverShaderInput;
 
 typedef enum RgDriverBlendOp
 {
@@ -245,19 +241,16 @@ typedef struct RgDriver
 	void (*deleteShader)(RgDriverShader* self);
 	bool (*initShader)(RgDriverShader* self, RgDriverShaderType type, const char** sources, unsigned sourceCount);
 
-	RgDriverShaderProgram* (*newShaderPprogram)();
-	void (*deleteShaderProgram)(RgDriverShaderProgram* self);
-	bool (*initShaderProgram)(RgDriverShaderProgram* self, RgDriverShader** shaders, unsigned shaderCount);
+	bool (*bindShaders)(RgDriverShader** shaders, unsigned shaderCount);
+	bool (*setUniform1fv)(unsigned nameHash, const float* value, unsigned count);
+	bool (*setUniform2fv)(unsigned nameHash, const float* value, unsigned count);
+	bool (*setUniform3fv)(unsigned nameHash, const float* value, unsigned count);
+	bool (*setUniform4fv)(unsigned nameHash, const float* value, unsigned count);
+	bool (*setUniformMat44fv)(unsigned nameHash, bool transpose, const float* value, unsigned count);
+	bool (*setUniformTexture)(unsigned nameHash, RgDriverTexture* texture);
 
-	bool (*setUniform1fv)(RgDriverShaderProgram* self, unsigned nameHash, const float* value, unsigned count);
-	bool (*setUniform2fv)(RgDriverShaderProgram* self, unsigned nameHash, const float* value, unsigned count);
-	bool (*setUniform3fv)(RgDriverShaderProgram* self, unsigned nameHash, const float* value, unsigned count);
-	bool (*setUniform4fv)(RgDriverShaderProgram* self, unsigned nameHash, const float* value, unsigned count);
-	bool (*setUniformMat44fv)(RgDriverShaderProgram* self, unsigned nameHash, bool transpose, const float* value, unsigned count);
-	bool (*setUniformTexture)(RgDriverShaderProgram* self, unsigned nameHash, RgDriverTexture* texture);
-
-	bool (*bindProgramInput)(RgDriverShaderProgram* self, RgDriverShaderProgramInput* inputs, unsigned inputCount, unsigned* cacheId);	// Give NULL to cacheId if you don't want to create a cache for it
-	bool (*bindProgramInputCached)(RgDriverShaderProgram* self, unsigned cacheId);
+	bool (*bindShaderInput)(RgDriverShaderInput* inputs, unsigned inputCount, unsigned* cacheId);	// Give NULL to cacheId if you don't want to create a cache for it
+	bool (*bindShaderInputCached)(unsigned cacheId);
 
 // Making draw call
 	void (*drawTriangle)(unsigned offset, unsigned vertexCount, unsigned flags);
