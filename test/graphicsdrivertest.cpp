@@ -151,7 +151,13 @@ TEST_FIXTURE(GraphicsDriverTest, basic)
 		"struct PixelInputType { float4 position:SV_POSITION; };"
 		"PixelInputType main(VertexInputType input)"
 		"{  PixelInputType output; output.position=input.position; return output; }";
-	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc, 1));*/
+	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc, 1));
+
+	const char* pShaderSrc =
+		"struct PixelInputType { float4 position:SV_POSITION; };"
+		"float4 main(PixelInputType input) : SV_TARGET"
+		"{  return float4(1,0,0,1); }";
+	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc, 1));*/
 
 	RgDriverShader* shaders[] = { vShader, pShader };
 

@@ -427,6 +427,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\render\driver2.dx11.inl"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\render\driver2.dx11.windows.cpp"
 				>
 			</File>

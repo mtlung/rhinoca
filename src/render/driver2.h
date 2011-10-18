@@ -65,6 +65,7 @@ typedef enum RgDriverShaderType
 {
 	RgDriverShaderType_Vertex = 0,
 	RgDriverShaderType_Pixel,
+	RgDriverShaderType_Geometry,
 } RgDriverShaderType;
 
 typedef struct RgDriverShader

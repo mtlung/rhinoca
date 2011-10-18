@@ -4,8 +4,8 @@
 #include "../array.h"
 #include "../common.h"
 #include "../rhlog.h"
-#include "../vector.h"
 #include "../rhstring.h"
+#include "../vector.h"
 
 #include "../platform.h"
 #include <gl/gl.h>

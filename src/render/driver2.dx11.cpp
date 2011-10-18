@@ -13,6 +13,7 @@
 // DirectX stuffs
 // State Object:	http://msdn.microsoft.com/en-us/library/bb205071.aspx
 // DX migration:	http://msdn.microsoft.com/en-us/library/windows/desktop/ff476190%28v=vs.85%29.aspx
+// DX11 tutorial:	http://www.rastertek.com/tutindex.html
 
 //////////////////////////////////////////////////////////////////////////
 // Common stuffs
@@ -21,6 +22,26 @@ template<typename T> void safeRelease(T*& t)
 {
 	if(t) t->Release();
 	t = NULL;
+}
+
+static const char* _shaderTarget[5][3] = {
+	{ "vs_5_0", "ps_5_0", "gs_5_0" },
+	{ "vs_4_1", "ps_4_1", "gs_4_1" },
+	{ "vs_4_0", "ps_4_0", "gs_4_0" },
+	{ "vs_4_0_level_9_3", "ps_4_0_level_9_3", "gs_4_0_level_9_3" },
+	{ "vs_4_0_level_9_1", "ps_4_0_level_9_1", "gs_4_0_level_9_1" },
+};
+
+static const char* _getShaderTarget(ID3D11Device* d3dDevice, RgDriverShaderType type)
+{
+	RHASSERT(int(type) < 3);
+	switch(d3dDevice->GetFeatureLevel()) {
+	case D3D_FEATURE_LEVEL_11_0:	return _shaderTarget[0][type];
+	case D3D_FEATURE_LEVEL_10_1:	return _shaderTarget[1][type];
+	case D3D_FEATURE_LEVEL_10_0:	return _shaderTarget[2][type];
+	case D3D_FEATURE_LEVEL_9_3:		return _shaderTarget[3][type];
+	default:						return _shaderTarget[4][type];
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -38,23 +59,7 @@ extern bool _driverChangeResolution_DX11(unsigned width, unsigned height);
 
 //namespace {
 
-struct RgDriverContextImpl : public RgDriverContext
-{
-	unsigned currentBlendStateHash;
-	unsigned currentDepthStencilStateHash;
-
-	ID3D11Device* dxDevice;
-	ID3D11DeviceContext* dxDeviceContext;
-	IDXGISwapChain* dxSwapChain;
-	ID3D11RenderTargetView* dxRenderTargetView;
-	ID3D11Texture2D* dxDepthStencilTexture;
-	ID3D11DepthStencilView* dxDepthStencilView;
-
-	struct TextureState {
-		unsigned hash;
-	};
-	Array<TextureState, 64> textureStateCache;
-};	// RgDriverContextImpl
+#include "driver2.dx11.inl"
 
 static void _setViewport(unsigned x, unsigned y, unsigned width, unsigned height, float zmin, float zmax)
 {
@@ -181,15 +186,16 @@ static bool _initShader(RgDriverShader* self, RgDriverShaderType type, const cha
 	}
 
 	ID3D10Blob* shaderBlob = NULL, * errorMessage = NULL;
+	const char* shaderProfile = _getShaderTarget(ctx->dxDevice, type);
 
 	HRESULT hr = D3DX11CompileFromMemory(
 		sources[0], strlen(sources[0]), NULL,
-		NULL,		// D3D10_SHADER_MACRO
-		NULL,		// LPD3D10INCLUDE
-		"main",		// Entry point
-		"vs_5_0",	// Shader profile
+		NULL,			// D3D10_SHADER_MACRO
+		NULL,			// LPD3D10INCLUDE
+		"main",			// Entry point
+		shaderProfile,	// Shader profile
 		D3D10_SHADER_ENABLE_STRICTNESS, 0,
-		NULL,		// ID3DX11ThreadPump, for async loading
+		NULL,			// ID3DX11ThreadPump, for async loading
 		&shaderBlob,
 		&errorMessage,
 		NULL
@@ -203,10 +209,15 @@ static bool _initShader(RgDriverShader* self, RgDriverShaderType type, const cha
 		return false;
 	}
 
+	self->type = type;
 	if(type == RgDriverShaderType_Vertex)
 		hr = ctx->dxDevice->CreateVertexShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, (ID3D11VertexShader**)&impl->dxShader);
+	else if(type == RgDriverShaderType_Geometry)
+		hr = ctx->dxDevice->CreateGeometryShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, (ID3D11GeometryShader**)&impl->dxShader);
 	else if(type == RgDriverShaderType_Pixel)
 		hr = ctx->dxDevice->CreatePixelShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, (ID3D11PixelShader**)&impl->dxShader);
+	else
+		RHASSERT(false);
 
 	safeRelease(shaderBlob);
 
@@ -218,42 +229,42 @@ static bool _initShader(RgDriverShader* self, RgDriverShaderType type, const cha
 	return true;
 }
 
-/*static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** shaders, unsigned shaderCount)
+bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 {
 	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
-	RgDriverShaderProgramImpl* impl = static_cast<RgDriverShaderProgramImpl*>(self);
-	if(!ctx || !impl || !shaders || shaderCount == 0) return false;
+	if(!ctx || !shaders || shaderCount == 0) return false;
 
-	for(unsigned i=0; i<shaderCount; ++i)
-	{
+	for(unsigned i=0; i<shaderCount; ++i) {
 		RgDriverShaderImpl* shader = static_cast<RgDriverShaderImpl*>(shaders[i]);
 		if(!shader) continue;
 
-		if(!shader->dxShader) {
-			rhLog("error", "Passing uninitialized shader to initShaderProgram\n");
-			return false;
-		}
-
 		if(shader->type == RgDriverShaderType_Vertex)
-			impl->dxVs = (ID3D11VertexShader*)shader->dxShader;
+			ctx->dxDeviceContext->VSSetShader(static_cast<ID3D11VertexShader*>(shader->dxShader), NULL, 0);
 		else if(shader->type == RgDriverShaderType_Pixel)
-			impl->dxPs = (ID3D11PixelShader*)shader->dxShader;
-
-		shader->dxShader->AddRef();
+			ctx->dxDeviceContext->GSSetShader(static_cast<ID3D11GeometryShader*>(shader->dxShader), NULL, 0);
+		else if(shader->type == RgDriverShaderType_Geometry)
+			ctx->dxDeviceContext->PSSetShader(static_cast<ID3D11PixelShader*>(shader->dxShader), NULL, 0);
+		else
+			RHASSERT(false);
 	}
 
 	return true;
-}*/
+}
 
 //////////////////////////////////////////////////////////////////////////
 // Making draw call
 
 static void _drawTriangle(unsigned offset, unsigned vertexCount, unsigned flags)
 {
+	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	if(!ctx) return;
 }
 
 static void _drawTriangleIndexed(unsigned offset, unsigned indexCount, unsigned flags)
 {
+	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	if(!ctx) return;
+	ctx->dxDeviceContext->DrawIndexed(indexCount, offset, 0);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -300,7 +311,10 @@ RgDriver* _rhNewRenderDriver_DX11(const char* options)
 	ret->deleteShader = _deleteShader;
 	ret->initShader = _initShader;
 
-//	ret->initShaderProgram = _initShaderProgram;
+	ret->bindShaders = _bindShaders;
+
+	ret->drawTriangle = _drawTriangle;
+	ret->drawTriangleIndexed = _drawTriangleIndexed;
 
 	return ret;
 }
