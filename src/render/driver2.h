@@ -21,9 +21,9 @@ typedef struct RgDriverTarget
 
 typedef enum RgDriverBufferType
 {
-	RgDriverBufferType_Vertex	= 1 << 0,	/// Vertex buffer
-	RgDriverBufferType_Index	= 1 << 1,	/// Index buffer
-	RgDriverBufferType_Uniform	= 1 << 2,	/// Shader uniform buffer
+	RgDriverBufferType_Vertex	= 1,	/// Vertex buffer
+	RgDriverBufferType_Index	= 2,	/// Index buffer
+	RgDriverBufferType_Uniform	= 3,	/// Shader uniform buffer
 	RgDriverBufferType_System	= 1 << 3,	/// Indicating the buffer will hold in system memory
 } RgDriverBufferType;
 
@@ -76,6 +76,7 @@ typedef struct RgDriverShader
 typedef struct RgDriverShaderInput
 {
 	RgDriverBuffer* buffer;
+	RgDriverShader* shader;
 	const char* name;
 	unsigned elementCount;	/// Can be 1, 2, 3, or 4
 	unsigned offset;

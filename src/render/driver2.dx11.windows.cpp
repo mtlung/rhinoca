@@ -18,30 +18,13 @@
 
 namespace {
 
+#include "driver2.dx11.inl"
+
 template<typename T> void safeRelease(T*& t)
 {
 	if(t) t->Release();
 	t = NULL;
 }
-
-// NOTE: The struct should be the same as in driver2.dx11.cpp
-struct RgDriverContextImpl : public RgDriverContext
-{
-	unsigned currentBlendStateHash;
-	unsigned currentDepthStencilStateHash;
-
-	ID3D11Device* dxDevice;
-	ID3D11DeviceContext* dxDeviceContext;
-	IDXGISwapChain* dxSwapChain;
-	ID3D11RenderTargetView* dxRenderTargetView;
-	ID3D11Texture2D* dxDepthStencilTexture;
-	ID3D11DepthStencilView* dxDepthStencilView;
-
-	struct TextureState {
-		unsigned hash;
-	};
-	Array<TextureState, 64> textureStateCache;
-};	// RgDriverContextImpl
 
 struct ContextImpl : public RgDriverContextImpl
 {
@@ -55,19 +38,28 @@ struct ContextImpl : public RgDriverContextImpl
 RgDriverContext* _newDriverContext_DX11()
 {
 	ContextImpl* ret = new ContextImpl;
-	ret->hWnd = NULL;
-	ret->dxSwapChain = NULL;
-	ret->dxDevice = NULL;
-	ret->dxDeviceContext = NULL;
+
 	ret->width = ret->height = 0;
+	ret->magjorVersion = 0;
+	ret->minorVersion = 0;
+
 	ret->currentBlendStateHash = 0;
 	ret->currentDepthStencilStateHash = 0;
+
+	ret->dxDevice = NULL;
+	ret->dxDeviceContext = NULL;
+	ret->dxSwapChain = NULL;
+	ret->dxRenderTargetView = NULL;
+	ret->dxDepthStencilTexture = NULL;
+	ret->dxDepthStencilView = NULL;
+
+	ret->currentShaders.assign(NULL);
 
 	RgDriverContextImpl::TextureState texState = { 0 };
 	ret->textureStateCache.assign(texState);
 
-	ret->magjorVersion = 0;
-	ret->minorVersion = 0;
+	ret->hWnd = NULL;
+
 	return ret;
 }
 
@@ -77,6 +69,9 @@ void _deleteDriverContext_DX11(RgDriverContext* self)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	if(!impl) return;
+
+	for(unsigned i=0; i<impl->currentShaders.size(); ++i)
+		RHASSERT(!impl->currentShaders[i] && "Please destroy all shaders before detroy the context");
 
 	// Free the sampler state cache
 //	for(unsigned i=0; i<impl->textureStateCache.size(); ++i) {
@@ -219,6 +214,31 @@ bool _initDriverContext_DX11(RgDriverContext* self, void* platformSpecificWindow
 
 	if(FAILED(hr)) {
 		rhLog("error", "CreateDepthStencilView failed\n");
+		return false;
+	}
+
+	immediateContext->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
+
+	// Create rasterizer state
+	D3D11_RASTERIZER_DESC rasterDesc;
+	rasterDesc.AntialiasedLineEnable = false;
+	rasterDesc.CullMode = D3D11_CULL_NONE;//D3D11_CULL_BACK;
+	rasterDesc.DepthBias = 0;
+	rasterDesc.DepthBiasClamp = 0.0f;
+	rasterDesc.DepthClipEnable = true;
+	rasterDesc.FillMode = D3D11_FILL_SOLID;
+	rasterDesc.FrontCounterClockwise = false;
+	rasterDesc.MultisampleEnable = false;
+	rasterDesc.ScissorEnable = false;
+	rasterDesc.SlopeScaledDepthBias = 0.0f;
+
+	ID3D11RasterizerState* rasterizerState;
+	hr = device->CreateRasterizerState(&rasterDesc, &rasterizerState);
+	immediateContext->RSSetState(rasterizerState);
+	safeRelease(rasterizerState);
+
+	if(FAILED(hr)) {
+		rhLog("error", "CreateRasterizerState failed\n");
 		return false;
 	}
 

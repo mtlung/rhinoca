@@ -291,12 +291,12 @@ static void _setTextureState(RgDriverTextureState* states, unsigned stateCount, 
 //////////////////////////////////////////////////////////////////////////
 // Buffer
 
-static const Array<GLenum, 9> _bufferTarget = {
+static const Array<GLenum, 4> _bufferTarget = {
 	0,
 	GL_ARRAY_BUFFER,
-	GL_ELEMENT_ARRAY_BUFFER, 0,
+	GL_ELEMENT_ARRAY_BUFFER,
 #if !defined(CR_GLES_2)
-	GL_UNIFORM_BUFFER, 0, 0, 0, 0
+	GL_UNIFORM_BUFFER
 #endif
 };
 
@@ -350,9 +350,10 @@ static bool _initBuffer(RgDriverBuffer* self, RgDriverBufferType type, void* ini
 	else {
 		checkError();
 		glGenBuffers(1, &impl->glh);
-		RHASSERT("Invalid RgDriverBufferType" && _bufferTarget[type] != 0);
-		glBindBuffer(_bufferTarget[type], impl->glh);
-		glBufferData(_bufferTarget[type], sizeInBytes, initData, GL_STREAM_DRAW);
+		GLenum t = _bufferTarget[type & (~RgDriverBufferType_System)];
+		RHASSERT("Invalid RgDriverBufferType" && t != 0);
+		glBindBuffer(t, impl->glh);
+		glBufferData(t, sizeInBytes, initData, GL_STREAM_DRAW);
 		RHASSERT(impl->glh);
 		checkError();
 	}
@@ -372,8 +373,9 @@ static bool _updateBuffer(RgDriverBuffer* self, unsigned offsetInBytes, void* da
 		memcpy(((char*)impl->systemBuf) + offsetInBytes, data, sizeInBytes);
 	else {
 		checkError();
-		glBindBuffer(_bufferTarget[self->type], impl->glh);
-		glBufferSubData(_bufferTarget[self->type], offsetInBytes, sizeInBytes, data);
+		GLenum t = _bufferTarget[self->type & (~RgDriverBufferType_System)];
+		glBindBuffer(t, impl->glh);
+		glBufferSubData(t, offsetInBytes, sizeInBytes, data);
 		checkError();
 	}
 
@@ -392,8 +394,9 @@ static void* _mapBuffer(RgDriverBuffer* self, RgDriverBufferMapUsage usage)
 	void* ret = NULL;
 	checkError();
 	RHASSERT("Invalid RgDriverBufferMapUsage" && _bufferMapUsage[usage] != 0);
-	glBindBuffer(_bufferTarget[self->type], impl->glh);
-	ret = glMapBuffer(_bufferTarget[self->type], _bufferMapUsage[usage]);
+	GLenum t = _bufferTarget[self->type & (~RgDriverBufferType_System)];
+	glBindBuffer(t, impl->glh);
+	ret = glMapBuffer(t, _bufferMapUsage[usage]);
 	checkError();
 	return ret;
 #endif
@@ -412,8 +415,9 @@ static void _unmapBuffer(RgDriverBuffer* self)
 
 #if !defined(CR_GLES_2)
 	checkError();
-	glBindBuffer(_bufferTarget[self->type], impl->glh);
-	glUnmapBuffer(_bufferTarget[self->type]);
+	GLenum t = _bufferTarget[self->type & (~RgDriverBufferType_System)];
+	glBindBuffer(t, impl->glh);
+	glUnmapBuffer(t);
 	checkError();
 #endif
 }

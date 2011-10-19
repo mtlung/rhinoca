@@ -87,7 +87,7 @@ public:
 
 	void initContext()
 	{
-		driver = rhNewRenderDriver("GL", NULL);
+		driver = rhNewRenderDriver("DX11", NULL);
 		context = driver->newContext();
 		context->magjorVersion = 3;
 		context->minorVersion = 2;
@@ -136,7 +136,7 @@ TEST_FIXTURE(GraphicsDriverTest, basic)
 	createWindow(200, 200);
 
 	// Init shader
-	const char* vShaderSrc =
+/*	const char* vShaderSrc =
 		"attribute vec4 vertex;"
 		"void main(void){gl_Position=vertex;}";
 	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc, 1));
@@ -144,9 +144,9 @@ TEST_FIXTURE(GraphicsDriverTest, basic)
 	const char* pShaderSrc =
 		"uniform vec4 u_color;"
 		"void main(void){gl_FragColor=u_color;}";
-	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc, 1));
+	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc, 1));*/
 
-/*	const char* vShaderSrc =
+	const char* vShaderSrc =
 		"struct VertexInputType { float4 position:POSITION; };"
 		"struct PixelInputType { float4 position:SV_POSITION; };"
 		"PixelInputType main(VertexInputType input)"
@@ -156,13 +156,13 @@ TEST_FIXTURE(GraphicsDriverTest, basic)
 	const char* pShaderSrc =
 		"struct PixelInputType { float4 position:SV_POSITION; };"
 		"float4 main(PixelInputType input) : SV_TARGET"
-		"{  return float4(1,0,0,1); }";
-	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc, 1));*/
+		"{  return float4(1,1,1,1); }";
+	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc, 1));
 
 	RgDriverShader* shaders[] = { vShader, pShader };
 
 	// Create vertex buffer
-	float vertex[][4] = { {-1,1,0,1}, {-1,-1,0,1}, {1,-1,0,1}, {1,1,0,1} };
+	float vertex[][4] = { {-1,1,0,1}, {-1,-1,0,1}, {1,-1,0,1}, {0.5f,1,0,1} };
 	RgDriverBuffer* vbuffer = driver->newBuffer();
 	CHECK(driver->initBuffer(vbuffer, RgDriverBufferType_Vertex, vertex, sizeof(vertex)));
 
@@ -172,8 +172,8 @@ TEST_FIXTURE(GraphicsDriverTest, basic)
 	CHECK(driver->initBuffer(ibuffer, RgDriverBufferType_Index, index, sizeof(index)));
 
 	RgDriverShaderInput shaderInput[] = {
-		{ vbuffer, "vertex", 4, 0, 0, 0, 0 },
-		{ ibuffer, NULL, 1, 0, 0, 0, 0 },
+		{ vbuffer, vShader, "POSITION", 4, 0, 4*sizeof(float), 0, 0 },
+		{ ibuffer, NULL, NULL, 1, 0, 0, 0, 0 },
 	};
 
 	while(keepRun()) {
@@ -182,8 +182,8 @@ TEST_FIXTURE(GraphicsDriverTest, basic)
 		CHECK(driver->bindShaders(shaders, 2));
 		CHECK(driver->bindShaderInput(shaderInput, COUNTOF(shaderInput), NULL));
 
-		float c[] = { 1, 1, 0, 1 };
-		CHECK(driver->setUniform4fv(StringHash("u_color"), c, 1));
+//		float c[] = { 1, 1, 0, 1 };
+//		CHECK(driver->setUniform4fv(StringHash("u_color"), c, 1));
 
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();
@@ -192,7 +192,7 @@ TEST_FIXTURE(GraphicsDriverTest, basic)
 	driver->deleteBuffer(vbuffer);
 	driver->deleteBuffer(ibuffer);
 }
-
+/*
 TEST_FIXTURE(GraphicsDriverTest, _texture)
 {
 	createWindow(200, 200);
@@ -409,3 +409,4 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 	driver->deleteBuffer(vbuffer2);
 	driver->deleteBuffer(ibuffer);
 }
+*/

@@ -127,6 +127,7 @@ static void _setTextureState(RgDriverTextureState* states, unsigned stateCount, 
 
 struct RgDriverBufferImpl : public RgDriverBuffer
 {
+	ID3D11Buffer* dxBuffer;
 	void* systemBuf;
 };	// RgDriverBufferImpl
 
@@ -142,8 +143,52 @@ static void _deleteBuffer(RgDriverBuffer* self)
 	RgDriverBufferImpl* impl = static_cast<RgDriverBufferImpl*>(self);
 	if(!impl) return;
 
+	safeRelease(impl->dxBuffer);
+
 	rhinoca_free(impl->systemBuf);
 	delete static_cast<RgDriverBufferImpl*>(self);
+}
+
+static const Array<D3D11_BIND_FLAG, 4> _bufferBindFlag = {
+	D3D11_BIND_FLAG(0),
+	D3D11_BIND_VERTEX_BUFFER,
+	D3D11_BIND_INDEX_BUFFER,
+	D3D11_BIND_CONSTANT_BUFFER
+};
+
+static bool _initBuffer(RgDriverBuffer* self, RgDriverBufferType type, void* initData, unsigned sizeInBytes)
+{
+	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	RgDriverBufferImpl* impl = static_cast<RgDriverBufferImpl*>(self);
+	if(!ctx || !impl) return false;
+
+	self->type = type;
+	self->sizeInBytes = sizeInBytes;
+
+	D3D11_BIND_FLAG flag = _bufferBindFlag[type & (~RgDriverBufferType_System)];
+
+	D3D11_BUFFER_DESC desc;
+	ZeroMemory(&desc, sizeof(desc));
+	desc.Usage = D3D11_USAGE_DEFAULT;
+	desc.ByteWidth = sizeInBytes;
+	desc.BindFlags = flag;
+	desc.CPUAccessFlags = 0;
+	desc.MiscFlags = 0;
+	desc.StructureByteStride = 0;
+
+	D3D11_SUBRESOURCE_DATA data;
+	data.pSysMem = initData;
+	data.SysMemPitch = 0;
+	data.SysMemSlicePitch = 0;
+
+	HRESULT hr = ctx->dxDevice->CreateBuffer(&desc, &data, &impl->dxBuffer);
+
+	if(FAILED(hr)) {
+		rhLog("error", "Fail to create buffer\n");
+		return false;
+	}
+
+	return true;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -151,11 +196,6 @@ static void _deleteBuffer(RgDriverBuffer* self)
 
 //////////////////////////////////////////////////////////////////////////
 // Shader
-
-struct RgDriverShaderImpl : public RgDriverShader
-{
-	ID3D11DeviceChild* dxShader;
-};	// RgDriverShaderImpl
 
 static RgDriverShader* _newShader()
 {
@@ -166,10 +206,15 @@ static RgDriverShader* _newShader()
 
 static void _deleteShader(RgDriverShader* self)
 {
+	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	RgDriverShaderImpl* impl = static_cast<RgDriverShaderImpl*>(self);
-	if(!impl) return;
+	if(!ctx || !impl) return;
+
+	for(unsigned i=0; i<ctx->currentShaders.size(); ++i)
+		if(ctx->currentShaders[i] == impl) ctx->currentShaders[i] = NULL;
 
 	safeRelease(impl->dxShader);
+	safeRelease(impl->dxShaderBlob);
 
 	delete static_cast<RgDriverShaderImpl*>(self);
 }
@@ -210,16 +255,20 @@ static bool _initShader(RgDriverShader* self, RgDriverShaderType type, const cha
 	}
 
 	self->type = type;
+
+	void* p = shaderBlob->GetBufferPointer();
+	SIZE_T size = shaderBlob->GetBufferSize();
+
 	if(type == RgDriverShaderType_Vertex)
-		hr = ctx->dxDevice->CreateVertexShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, (ID3D11VertexShader**)&impl->dxShader);
+		hr = ctx->dxDevice->CreateVertexShader(p, size, NULL, (ID3D11VertexShader**)&impl->dxShader);
 	else if(type == RgDriverShaderType_Geometry)
-		hr = ctx->dxDevice->CreateGeometryShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, (ID3D11GeometryShader**)&impl->dxShader);
+		hr = ctx->dxDevice->CreateGeometryShader(p, size, NULL, (ID3D11GeometryShader**)&impl->dxShader);
 	else if(type == RgDriverShaderType_Pixel)
-		hr = ctx->dxDevice->CreatePixelShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, (ID3D11PixelShader**)&impl->dxShader);
+		hr = ctx->dxDevice->CreatePixelShader(p, size, NULL, (ID3D11PixelShader**)&impl->dxShader);
 	else
 		RHASSERT(false);
 
-	safeRelease(shaderBlob);
+	impl->dxShaderBlob = shaderBlob;
 
 	if(FAILED(hr)) {
 		rhLog("error", "Fail to create shader\n");
@@ -234,18 +283,98 @@ bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx || !shaders || shaderCount == 0) return false;
 
+	ctx->currentShaders.assign(NULL);
+
+	// Bind used shaders
 	for(unsigned i=0; i<shaderCount; ++i) {
 		RgDriverShaderImpl* shader = static_cast<RgDriverShaderImpl*>(shaders[i]);
 		if(!shader) continue;
 
+		ctx->currentShaders[shader->type] = shader;
 		if(shader->type == RgDriverShaderType_Vertex)
 			ctx->dxDeviceContext->VSSetShader(static_cast<ID3D11VertexShader*>(shader->dxShader), NULL, 0);
 		else if(shader->type == RgDriverShaderType_Pixel)
-			ctx->dxDeviceContext->GSSetShader(static_cast<ID3D11GeometryShader*>(shader->dxShader), NULL, 0);
-		else if(shader->type == RgDriverShaderType_Geometry)
 			ctx->dxDeviceContext->PSSetShader(static_cast<ID3D11PixelShader*>(shader->dxShader), NULL, 0);
+		else if(shader->type == RgDriverShaderType_Geometry)
+			ctx->dxDeviceContext->GSSetShader(static_cast<ID3D11GeometryShader*>(shader->dxShader), NULL, 0);
 		else
 			RHASSERT(false);
+	}
+
+	// Unbind any previous shaders (where ctx->currentShaders is still NULL)
+	for(unsigned i=0; i<ctx->currentShaders.size(); ++i) {
+		if(ctx->currentShaders[i]) continue;
+
+		RgDriverShaderType type = RgDriverShaderType(i);
+		if(type == RgDriverShaderType_Vertex)
+			ctx->dxDeviceContext->VSSetShader(NULL, NULL, 0);
+		else if(type == RgDriverShaderType_Pixel)
+			ctx->dxDeviceContext->PSSetShader(NULL, NULL, 0);
+		else if(type == RgDriverShaderType_Geometry)
+			ctx->dxDeviceContext->GSSetShader(NULL, NULL, 0);		
+		else
+			RHASSERT(false);
+	}
+
+	return true;
+}
+
+bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned* cacheId)
+{
+	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	if(!ctx || !inputs || inputCount == 0) return false;
+
+	for(unsigned i=0; i<inputCount; ++i)
+	{
+		RgDriverBufferImpl* buffer = static_cast<RgDriverBufferImpl*>(inputs[i].buffer);
+		if(!buffer) continue;
+
+		if(buffer->type == RgDriverBufferType_Index) {
+			ctx->dxDeviceContext->IASetIndexBuffer(buffer->dxBuffer, DXGI_FORMAT_R16_UINT, 0);
+			continue;
+		}
+
+		RgDriverShaderImpl* shader = static_cast<RgDriverShaderImpl*>(inputs[i].shader);
+		if(!shader) continue;
+
+		D3D11_INPUT_ELEMENT_DESC inputDesc;
+		inputDesc.SemanticName = inputs[i].name;
+		inputDesc.SemanticIndex = 0;
+		inputDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;	// TODO: Fix me
+		inputDesc.InputSlot = 0;
+		inputDesc.AlignedByteOffset = 0;
+		inputDesc.InputSlotClass =  D3D11_INPUT_PER_VERTEX_DATA;
+		inputDesc.InstanceDataStepRate = 0;
+
+		if(!ctx->currentShaders[buffer->type]) {
+			rhLog("error", "Call bindShaders() before calling bindShaderInput()\n"); 
+			return false;
+		}
+
+		ID3D11InputLayout* layout;
+		ID3D10Blob* shaderBlob = shader->dxShaderBlob;
+
+		if(!shaderBlob)
+			return false;
+
+		HRESULT hr = ctx->dxDevice->CreateInputLayout(
+			&inputDesc, 1,
+			shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(),
+			&layout
+		);
+
+		ctx->dxDeviceContext->IASetInputLayout(layout);
+		safeRelease(layout);
+
+		if(FAILED(hr)) {
+			rhLog("error", "Fail to CreateInputLayout\n");
+			return false;
+		}
+
+		// TOOD: IASetVertexBuffers() should invoked once but not in a loop
+		UINT stride = inputs[i].stride;
+		UINT offset = inputs[i].offset;
+		ctx->dxDeviceContext->IASetVertexBuffers(0, 1, &buffer->dxBuffer, &stride, &offset);
 	}
 
 	return true;
@@ -264,6 +393,7 @@ static void _drawTriangleIndexed(unsigned offset, unsigned indexCount, unsigned 
 {
 	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx) return;
+	ctx->dxDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	ctx->dxDeviceContext->DrawIndexed(indexCount, offset, 0);
 }
 
@@ -306,12 +436,14 @@ RgDriver* _rhNewRenderDriver_DX11(const char* options)
 
 	ret->newBuffer = _newBuffer;
 	ret->deleteBuffer = _deleteBuffer;
+	ret->initBuffer = _initBuffer;
 
 	ret->newShader = _newShader;
 	ret->deleteShader = _deleteShader;
 	ret->initShader = _initShader;
 
 	ret->bindShaders = _bindShaders;
+	ret->bindShaderInput = _bindShaderInput;
 
 	ret->drawTriangle = _drawTriangle;
 	ret->drawTriangleIndexed = _drawTriangleIndexed;
