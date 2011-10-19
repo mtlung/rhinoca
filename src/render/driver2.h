@@ -193,7 +193,8 @@ typedef struct RgDriverTextureState
 	unsigned maxAnisotropy;
 } RgDriverTextureState;	// RgDriverTextureState
 
-// 
+// Default states:
+// CCW -> front face
 typedef struct RgDriver
 {
 // Context management

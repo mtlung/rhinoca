@@ -147,22 +147,17 @@ TEST_FIXTURE(GraphicsDriverTest, basic)
 	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc, 1));*/
 
 	const char* vShaderSrc =
-		"struct VertexInputType { float4 position:POSITION; };"
-		"struct PixelInputType { float4 position:SV_POSITION; };"
-		"PixelInputType main(VertexInputType input)"
-		"{  PixelInputType output; output.position=input.position; return output; }";
+		"float4 main(float4 pos:POSITION):SV_POSITION{return pos;}";
 	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc, 1));
 
 	const char* pShaderSrc =
-		"struct PixelInputType { float4 position:SV_POSITION; };"
-		"float4 main(PixelInputType input) : SV_TARGET"
-		"{  return float4(1,1,1,1); }";
+		"float4 main(float4 pos:SV_POSITION):SV_Target{return float4(1,1,1,1);}";
 	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc, 1));
 
 	RgDriverShader* shaders[] = { vShader, pShader };
 
 	// Create vertex buffer
-	float vertex[][4] = { {-1,1,0,1}, {-1,-1,0,1}, {1,-1,0,1}, {0.5f,1,0,1} };
+	float vertex[][4] = { {-1,1,0,1}, {-1,-1,0,1}, {1,-1,0,1}, {1,1,0,1} };
 	RgDriverBuffer* vbuffer = driver->newBuffer();
 	CHECK(driver->initBuffer(vbuffer, RgDriverBufferType_Vertex, vertex, sizeof(vertex)));
 
@@ -177,7 +172,7 @@ TEST_FIXTURE(GraphicsDriverTest, basic)
 	};
 
 	while(keepRun()) {
-		driver->clearColor(0, 0, 0, 0);
+		driver->clearColor(0, 0.125f, 0.3f, 1);
 
 		CHECK(driver->bindShaders(shaders, 2));
 		CHECK(driver->bindShaderInput(shaderInput, COUNTOF(shaderInput), NULL));
@@ -243,8 +238,8 @@ TEST_FIXTURE(GraphicsDriverTest, _texture)
 
 	// Bind shader input layout
 	RgDriverShaderInput input[] = {
-		{ vbuffer, "vertex", 4, 0, 0, 0, 0 },
-		{ ibuffer, NULL, 1, 0, 0, 0, 0 },
+		{ vbuffer, vShader,"vertex", 4, 0, 0, 0, 0 },
+		{ ibuffer, NULL, NULL, 1, 0, 0, 0, 0 },
 	};
 
 	while(keepRun()) {
@@ -296,8 +291,8 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 
 	// Bind shader input layout
 	RgDriverShaderInput input[] = {
-		{ vbuffer, "vertex", 3, 0, 0, 0, 0 },
-		{ ibuffer, NULL, 1, 0, 0, 0, 0 },
+		{ vbuffer, vShader, "vertex", 3, 0, 0, 0, 0 },
+		{ ibuffer, NULL, NULL, 1, 0, 0, 0, 0 },
 	};
 
 	// Model view matrix
@@ -378,8 +373,8 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 
 		{	// Draw the first quad
 			RgDriverShaderInput input[] = {
-				{ vbuffer1, "vertex", 4, 0, 0, 0, 0 },
-				{ ibuffer, NULL, 1, 0, 0, 0, 0 },
+				{ vbuffer1, vShader, "vertex", 4, 0, 0, 0, 0 },
+				{ ibuffer, NULL, NULL, 1, 0, 0, 0, 0 },
 			};
 			CHECK(driver->bindShaderInput(input, COUNTOF(input), NULL));
 
@@ -391,8 +386,8 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 
 		{	// Draw the second quad
 			RgDriverShaderInput input[] = {
-				{ vbuffer2, "vertex", 4, 0, 0, 0, 0 },
-				{ ibuffer, NULL, 1, 0, 0, 0, 0 },
+				{ vbuffer2, vShader, "vertex", 4, 0, 0, 0, 0 },
+				{ ibuffer, NULL, NULL, 1, 0, 0, 0, 0 },
 			};
 			CHECK(driver->bindShaderInput(input, COUNTOF(input), NULL));
 
