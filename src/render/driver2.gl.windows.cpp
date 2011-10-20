@@ -31,12 +31,15 @@ struct ContextImpl : public RgDriverContextImpl
 
 static bool _oglFunctionInited = false;
 
-RgDriverContext* _newDriverContext_GL()
+RgDriverContext* _newDriverContext_GL(RgDriver* driver)
 {
 	ContextImpl* ret = new ContextImpl;
-	ret->hWnd = NULL;
-	ret->hDc = NULL;
+
+	ret->driver = driver;
 	ret->width = ret->height = 0;
+	ret->magjorVersion = 2;
+	ret->minorVersion = 0;
+
 	ret->currentBlendStateHash = 0;
 	ret->currentDepthStencilStateHash = 0;
 
@@ -45,8 +48,10 @@ RgDriverContext* _newDriverContext_GL()
 	RgDriverContextImpl::TextureState texState = { 0, 0 };
 	ret->textureStateCache.assign(texState);
 
-	ret->magjorVersion = 2;
-	ret->minorVersion = 0;
+	ret->hWnd = NULL;
+	ret->hDc = NULL;
+	ret->hRc = NULL;
+
 	return ret;
 }
 
@@ -156,6 +161,32 @@ bool _initDriverContext_GL(RgDriverContext* self, void* platformSpecificWindow)
 			glGenVertexArrays(1, &vertexArray);
 			glBindVertexArray(vertexArray);
 		}
+	}
+
+	impl->driver->useContext(impl);
+
+	{	// Give the context a default depth stencil state
+		RgDriverDepthStencilState state = {
+			0,
+			false, true,
+			RgDriverDepthCompareFunc_Less,
+			{	0xFF, 0xFF,
+				RgDriverDepthCompareFunc_Always,
+				RgDriverStencilOp_Keep,
+				RgDriverStencilOp_Incr,
+				RgDriverStencilOp_Keep
+			},
+			{	0xFF, 0xFF,
+				RgDriverDepthCompareFunc_Always,
+				RgDriverStencilOp_Keep,
+				RgDriverStencilOp_Decr,
+				RgDriverStencilOp_Keep
+			}
+		};
+
+		impl->driver->setDepthStencilState(&state);
+		impl->driver->clearDepth(1);
+		impl->driver->clearStencil(0);
 	}
 
 	return ret;

@@ -35,10 +35,11 @@ struct ContextImpl : public RgDriverContextImpl
 
 }	// namespace
 
-RgDriverContext* _newDriverContext_DX11()
+RgDriverContext* _newDriverContext_DX11(RgDriver* driver)
 {
 	ContextImpl* ret = new ContextImpl;
 
+	ret->driver = driver;
 	ret->width = ret->height = 0;
 	ret->magjorVersion = 0;
 	ret->minorVersion = 0;
@@ -223,41 +224,6 @@ bool _initDriverContext_DX11(RgDriverContext* self, void* platformSpecificWindow
 
 	immediateContext->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
 
-	// Create
-	D3D11_DEPTH_STENCIL_DESC depthStencilDesc;
-	ZeroMemory(&depthStencilDesc, sizeof(depthStencilDesc));
-
-	// Set up the description of the stencil state.
-	depthStencilDesc.DepthEnable = false;
-	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
-
-	depthStencilDesc.StencilEnable = true;
-	depthStencilDesc.StencilReadMask = 0xFF;
-	depthStencilDesc.StencilWriteMask = 0xFF;
-
-	// Stencil operations if pixel is front-facing.
-	depthStencilDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-	depthStencilDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
-	depthStencilDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-	depthStencilDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-
-	// Stencil operations if pixel is back-facing.
-	depthStencilDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-	depthStencilDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
-	depthStencilDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-	depthStencilDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-
-	ID3D11DepthStencilState* depthStencilState = NULL;
-	hr = device->CreateDepthStencilState(&depthStencilDesc, &depthStencilState);
-
-	if(FAILED(hr)) {
-		rhLog("error", "CreateDepthStencilState failed\n");
-		return false;
-	}
-
-	immediateContext->OMSetDepthStencilState(depthStencilState, 1);
-
 	// Create rasterizer state
 	D3D11_RASTERIZER_DESC rasterDesc;
 	rasterDesc.AntialiasedLineEnable = false;
@@ -287,6 +253,32 @@ bool _initDriverContext_DX11(RgDriverContext* self, void* platformSpecificWindow
 	impl->dxRenderTargetView = renderTargetView;
 	impl->dxDepthStencilTexture = depthStencilTexture;
 	impl->dxDepthStencilView = depthStencilView;
+
+	impl->driver->useContext(impl);
+
+	{	// Give the context a default depth stencil state
+		RgDriverDepthStencilState state = {
+			0,
+			false, true,
+			RgDriverDepthCompareFunc_Less,
+			{	0xFF, 0xFF,
+				RgDriverDepthCompareFunc_Always,
+				RgDriverStencilOp_Keep,
+				RgDriverStencilOp_Incr,
+				RgDriverStencilOp_Keep
+			},
+			{	0xFF, 0xFF,
+				RgDriverDepthCompareFunc_Always,
+				RgDriverStencilOp_Keep,
+				RgDriverStencilOp_Decr,
+				RgDriverStencilOp_Keep
+			}
+		};
+
+		impl->driver->setDepthStencilState(&state);
+		impl->driver->clearDepth(1);
+		impl->driver->clearStencil(0);
+	}
 
 	return true;
 }

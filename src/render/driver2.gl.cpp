@@ -31,7 +31,7 @@ static unsigned _hash(const void* data, unsigned len)
 // Context management
 
 // These functions are implemented in platform specific src files, eg. driver2.gl.windows.cpp
-extern RgDriverContext* _newDriverContext_GL();
+extern RgDriverContext* _newDriverContext_GL(RgDriver* driver);
 extern void _deleteDriverContext_GL(RgDriverContext* self);
 extern bool _initDriverContext_GL(RgDriverContext* self, void* platformSpecificWindow);
 extern void _useDriverContext_GL(RgDriverContext* self);
@@ -60,12 +60,14 @@ static void _clearColor(float r, float g, float b, float a)
 
 static void _clearDepth(float z)
 {
+	// See: http://www.opengl.org/sdk/docs/man/xhtml/glClearDepth.xml
 	glClearDepth(z);
 	glClear(GL_DEPTH_BUFFER_BIT);
 }
 
 static void _clearStencil(unsigned char s)
 {
+	// See: http://www.opengl.org/sdk/docs/man/xhtml/glClearStencil.xml
 	glClearStencil(s);
 	glClear(GL_STENCIL_BUFFER_BIT);
 }
@@ -102,7 +104,7 @@ static void _setBlendState(RgDriverBlendState* state)
 
 	// Generate the hash value if not yet
 	if(state->hash == 0) {
-		state->hash = _hash(
+		state->hash = (void*)_hash(
 			&state->enable,
 			sizeof(RgDriverBlendState) - offsetof(RgDriverBlendState, RgDriverBlendState::enable)
 		);
@@ -174,7 +176,7 @@ static void _setDepthStencilState(RgDriverDepthStencilState* state)
 
 	// Generate the hash value if not yet
 	if(state->hash == 0) {
-		state->hash = _hash(
+		state->hash = (void*)_hash(
 			&state->enableDepth,
 			sizeof(RgDriverDepthStencilState) - offsetof(RgDriverDepthStencilState, RgDriverDepthStencilState::enableDepth)
 		);
@@ -201,13 +203,13 @@ static void _setDepthStencilState(RgDriverDepthStencilState* state)
 		glEnable(GL_STENCIL_TEST);
 		glStencilFuncSeparate(
 			GL_FRONT,
-			state->front.func,
+			_compareFunc[state->front.func],
 			state->front.refValue,
 			state->front.mask
 		);
 		glStencilFuncSeparate(
 			GL_BACK,
-			state->back.func,
+			_compareFunc[state->back.func],
 			state->back.refValue,
 			state->back.mask
 		);
@@ -245,7 +247,7 @@ static void _setTextureState(RgDriverTextureState* states, unsigned stateCount, 
 
 		// Generate the hash value if not yet
 		if(state.hash == 0) {
-			state.hash = _hash(
+			state.hash = (void*)_hash(
 				&state.filter,
 				sizeof(RgDriverTextureState) - offsetof(RgDriverTextureState, RgDriverTextureState::filter)
 			);
@@ -1084,7 +1086,7 @@ static void _rhDeleteRenderDriver_GL(RgDriver* self)
 
 }	// namespace
 
-RgDriver* _rhNewRenderDriver_GL(const char* options)
+RgDriver* _rgNewRenderDriver_GL(const char* options)
 {
 	RgDriverImpl* ret = new RgDriverImpl;
 	memset(ret, 0, sizeof(*ret));

@@ -33,14 +33,14 @@ struct RgDriverShaderProgramImpl : public RgDriverShaderProgram
 
 struct RgDriverContextImpl : public RgDriverContext
 {
-	unsigned currentBlendStateHash;
-	unsigned currentDepthStencilStateHash;
+	void* currentBlendStateHash;
+	void* currentDepthStencilStateHash;
 
 	PreAllocVector<RgDriverShaderProgramImpl, 256> shaderProgramCache;
 	RgDriverShaderProgramImpl* currentShaderProgram;
 
 	struct TextureState {
-		unsigned hash;
+		void* hash;
 		GLuint glh;
 	};
 	Array<TextureState, 64> textureStateCache;

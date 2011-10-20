@@ -98,6 +98,11 @@ bool AvlTree::isEmpty() const
 
 void AvlTree::insert(Node& node, Node* parent, int nIdx)
 {
+	if(node.mAvlTree == this)
+		return;
+
+	RHASSERT(!node.mAvlTree && "Remove the node from one container before adding to another");
+
 	node.mChildren[Left] = NULL;
 	node.mChildren[Right] = NULL;
 	node.synLeftRight();

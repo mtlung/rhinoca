@@ -26,7 +26,7 @@ public:
 			::PostQuitMessage(0);
 			while(keepRun()) {}
 			driver->deleteContext(context);
-			rhDeleteRenderDriver(driver);
+			rgDeleteRenderDriver(driver);
 			::DestroyWindow(hWnd);
 		}
 
@@ -87,8 +87,8 @@ public:
 
 	void initContext()
 	{
-		driver = rhNewRenderDriver("DX11", NULL);
-		context = driver->newContext();
+		driver = rgNewRenderDriver("DX11", NULL);
+		context = driver->newContext(driver);
 		context->magjorVersion = 3;
 		context->minorVersion = 2;
 		driver->initContext(context, hWnd);

@@ -8,8 +8,11 @@
 extern "C" {
 #endif
 
+struct RgDriver;
+
 typedef struct RgDriverContext
 {
+	RgDriver* driver;
 	unsigned width, height;
 	unsigned magjorVersion, minorVersion;
 } RgDriverContext;
@@ -120,7 +123,7 @@ typedef enum RgDriverColorWriteMask
 
 typedef struct RgDriverBlendState
 {
-	unsigned hash;		/// Set it to 0 when ever the state is changed
+	void* hash;		/// Set it to 0 when ever the state is changed
 	unsigned enable;	/// Use unsigned to avoid any padding
 	RgDriverBlendOp colorOp, alphaOp;
 	RgDriverBlendValue colorSrc, colorDst, alphaSrc, alphaDst;
@@ -161,7 +164,7 @@ typedef struct RgDriverStencilState
 
 typedef struct RgDriverDepthStencilState
 {
-	unsigned hash;		/// Set it to 0 when ever the state is changed
+	void* hash;		/// Set it to 0 when ever the state is changed
 	unsigned short enableDepth;
 	unsigned short enableStencil;
 
@@ -187,7 +190,7 @@ typedef enum RgDriverTextureAddressMode
 
 typedef struct RgDriverTextureState
 {
-	unsigned hash;		/// Set it to 0 when ever the state is changed
+	void* hash;		/// Set it to 0 when ever the state is changed
 	RgDriverTextureFilterMode filter;
 	RgDriverTextureAddressMode u, v;
 	unsigned maxAnisotropy;
@@ -198,7 +201,7 @@ typedef struct RgDriverTextureState
 typedef struct RgDriver
 {
 // Context management
-	RgDriverContext* (*newContext)();
+	RgDriverContext* (*newContext)(RgDriver* driver);
 	void (*deleteContext)(RgDriverContext* self);
 	bool (*initContext)(RgDriverContext* self, void* platformSpecificWindow);
 	void (*useContext)(RgDriverContext* self);
@@ -266,9 +269,9 @@ typedef struct RgDriver
 	void (*destructor)(RgDriver* self);
 } RgDriver;
 
-RgDriver* rhNewRenderDriver(const char* driverType, const char* options);
+RgDriver* rgNewRenderDriver(const char* driverType, const char* options);
 
-void rhDeleteRenderDriver(RgDriver* self);
+void rgDeleteRenderDriver(RgDriver* self);
 
 #ifdef __cplusplus
 }

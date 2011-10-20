@@ -6,8 +6,8 @@ struct RgDriverShaderImpl : public RgDriverShader
 
 struct RgDriverContextImpl : public RgDriverContext
 {
-	unsigned currentBlendStateHash;
-	unsigned currentDepthStencilStateHash;
+	void* currentBlendStateHash;
+	void* currentDepthStencilStateHash;
 
 	ID3D11Device* dxDevice;
 	ID3D11DeviceContext* dxDeviceContext;
@@ -18,8 +18,10 @@ struct RgDriverContextImpl : public RgDriverContext
 
 	Array<RgDriverShaderImpl*, 3> currentShaders;
 
+//	Vector<ID3D11DepthStencilState*> depthStencilStateCache;
+
 	struct TextureState {
-		unsigned hash;
+		void* hash;
 	};
 	Array<TextureState, 64> textureStateCache;
 };	// RgDriverContextImpl
