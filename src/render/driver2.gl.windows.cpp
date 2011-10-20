@@ -95,6 +95,25 @@ RgDriverContext* _getCurrentContext_GL()
 	return _currentContext;
 }
 
+static void initGlFunc()
+{
+	// Initialize opengl functions
+	if(!_oglFunctionInited)
+	{
+		#define GET_FUNC_PTR(type, ptr) \
+		if(!(ptr = (type) wglGetProcAddress(#ptr))) \
+		{	ptr = (type) wglGetProcAddress(#ptr"EXT");	}
+
+		#define _(DECLAR, NAME) GET_FUNC_PTR(DECLAR, NAME);
+		#	include "win32/extensionswin32list.h"
+		#undef _
+
+		#undef GET_FUNC_PTR
+
+		_oglFunctionInited = true;
+	}
+}
+
 bool _initDriverContext_GL(RgDriverContext* self, void* platformSpecificWindow)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
@@ -126,23 +145,10 @@ bool _initDriverContext_GL(RgDriverContext* self, void* platformSpecificWindow)
 	HGLRC hRc = impl->hRc = ::wglCreateContext(hDc);
 	bool ret = ::wglMakeCurrent(hDc, hRc) == TRUE;
 
-	// Initialize opengl functions
-	if(!_oglFunctionInited)
-	{
-		#define GET_FUNC_PTR(type, ptr) \
-		if(!(ptr = (type) wglGetProcAddress(#ptr))) \
-		{	ptr = (type) wglGetProcAddress(#ptr"EXT");	}
-
-		#define _(DECLAR, NAME) GET_FUNC_PTR(DECLAR, NAME);
-		#	include "win32/extensionswin32list.h"
-		#undef _
-
-		#undef GET_FUNC_PTR
-
-		_oglFunctionInited = true;
-	}
+	wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)(wglGetProcAddress("wglCreateContextAttribsARB"));
 
 	if(wglCreateContextAttribsARB) {
+
 		const int attribs[] = {
 			WGL_CONTEXT_MAJOR_VERSION_ARB, impl->magjorVersion,
 			WGL_CONTEXT_MINOR_VERSION_ARB, impl->minorVersion,
@@ -155,39 +161,19 @@ bool _initDriverContext_GL(RgDriverContext* self, void* platformSpecificWindow)
 			ret = ::wglMakeCurrent(hDc, hRc) == TRUE;
 			wglDeleteContext(impl->hRc);
 			impl->hRc = hRc;
-
-			// 3.0 or above requires a vertex array
-			GLuint vertexArray;
-			glGenVertexArrays(1, &vertexArray);
-			glBindVertexArray(vertexArray);
 		}
 	}
 
-	impl->driver->useContext(impl);
+	initGlFunc();
 
-	{	// Give the context a default depth stencil state
-		RgDriverDepthStencilState state = {
-			0,
-			false, true,
-			RgDriverDepthCompareFunc_Less,
-			{	0xFF, 0xFF,
-				RgDriverDepthCompareFunc_Always,
-				RgDriverStencilOp_Keep,
-				RgDriverStencilOp_Incr,
-				RgDriverStencilOp_Keep
-			},
-			{	0xFF, 0xFF,
-				RgDriverDepthCompareFunc_Always,
-				RgDriverStencilOp_Keep,
-				RgDriverStencilOp_Decr,
-				RgDriverStencilOp_Keep
-			}
-		};
-
-		impl->driver->setDepthStencilState(&state);
-		impl->driver->clearDepth(1);
-		impl->driver->clearStencil(0);
+	// 3.0 or above requires a vertex array
+	if(glGenVertexArrays) {
+		GLuint vertexArray;
+		glGenVertexArrays(1, &vertexArray);
+		glBindVertexArray(vertexArray);
 	}
+
+	impl->driver->applyDefaultState(impl);
 
 	return ret;
 }

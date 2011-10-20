@@ -19,3 +19,48 @@ void rgDeleteRenderDriver(RgDriver* self)
 	if(!self) return;
 	(self->destructor)(self);
 }
+
+void rgDriverApplyDefaultState(RgDriverContext* self)
+{
+	if(!self) return;
+	RgDriver* driver = self->driver;
+	if(!driver) return;
+
+	driver->useContext(self);
+
+	{	// Give the context a default blend state
+		RgDriverBlendState state = {
+			0,
+			false,
+			RgDriverBlendOp_Add, RgDriverBlendOp_Add,
+			RgDriverBlendValue_One, RgDriverBlendValue_Zero,
+			RgDriverBlendValue_One, RgDriverBlendValue_Zero,
+			RgDriverColorWriteMask_EnableAll
+		};
+
+		driver->setBlendState(&state);
+	}
+
+	{	// Give the context a default depth stencil state
+		RgDriverDepthStencilState state = {
+			0,
+			false, true,
+			RgDriverDepthCompareFunc_Less,
+			0, -1,
+			{	RgDriverDepthCompareFunc_Always,
+				RgDriverStencilOp_Keep,
+				RgDriverStencilOp_Keep,
+				RgDriverStencilOp_Keep
+			},
+			{	RgDriverDepthCompareFunc_Always,
+				RgDriverStencilOp_Keep,
+				RgDriverStencilOp_Keep,
+				RgDriverStencilOp_Keep
+			}
+		};
+
+		driver->setDepthStencilState(&state);
+		driver->clearDepth(1);
+		driver->clearStencil(0);
+	}
+}

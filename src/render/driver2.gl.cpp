@@ -40,6 +40,8 @@ extern RgDriverContext* _getCurrentContext_GL();
 extern void _driverSwapBuffers_GL();
 extern bool _driverChangeResolution_GL(unsigned width, unsigned height);
 
+extern void rgDriverApplyDefaultState(RgDriverContext* self);
+
 namespace {
 
 #include "driver2.gl.inl"
@@ -130,6 +132,7 @@ static void _setBlendState(RgDriverBlendState* state)
 		return;
 	}
 
+	// See: http://www.opengl.org/sdk/docs/man/xhtml/glBlendEquationSeparate.xml
 	glBlendEquationSeparate(
 		_blendOp[state->colorOp],
 		_blendOp[state->alphaOp]
@@ -139,6 +142,7 @@ static void _setBlendState(RgDriverBlendState* state)
 		_blendValue[state->colorSrc],
 		_blendValue[state->colorDst]
 	);*/
+	// See: http://www.opengl.org/sdk/docs/man/xhtml/glBlendFuncSeparate.xml
 	glBlendFuncSeparate(
 		_blendValue[state->colorSrc],
 		_blendValue[state->colorDst],
@@ -188,7 +192,7 @@ static void _setDepthStencilState(RgDriverDepthStencilState* state)
 		// TODO: Make use of the hash value, if OpenGL support state block
 	}
 
-	if(!state->enableStencil) {
+	if(!state->enableDepth) {
 		glDisable(GL_DEPTH_TEST);
 	}
 	else {
@@ -204,16 +208,17 @@ static void _setDepthStencilState(RgDriverDepthStencilState* state)
 		glStencilFuncSeparate(
 			GL_FRONT,
 			_compareFunc[state->front.func],
-			state->front.refValue,
-			state->front.mask
+			state->stencilRefValue,
+			state->stencilMask
 		);
 		glStencilFuncSeparate(
 			GL_BACK,
 			_compareFunc[state->back.func],
-			state->back.refValue,
-			state->back.mask
+			state->stencilRefValue,
+			state->stencilMask
 		);
 
+		// See: http://www.opengl.org/sdk/docs/man/xhtml/glStencilOpSeparate.xml
 		glStencilOpSeparate(
 			GL_FRONT,
 			_stencilOp[state->front.failOp],
@@ -1105,6 +1110,7 @@ RgDriver* _rgNewRenderDriver_GL(const char* options)
 	ret->clearDepth = _clearDepth;
 	ret->clearStencil = _clearStencil;
 
+	ret->applyDefaultState = rgDriverApplyDefaultState;
 	ret->setBlendState = _setBlendState;
 	ret->setDepthStencilState = _setDepthStencilState;
 	ret->setTextureState = _setTextureState;

@@ -14,6 +14,7 @@
 // State Object:	http://msdn.microsoft.com/en-us/library/bb205071.aspx
 // DX migration:	http://msdn.microsoft.com/en-us/library/windows/desktop/ff476190%28v=vs.85%29.aspx
 // DX11 tutorial:	http://www.rastertek.com/tutindex.html
+// DX10 porting:	http://developer.amd.com/.../Riguer-DX10_tips_and_tricks_for_print.pdf
 
 //////////////////////////////////////////////////////////////////////////
 // Common stuffs
@@ -22,6 +23,15 @@ template<typename T> void safeRelease(T*& t)
 {
 	if(t) t->Release();
 	t = NULL;
+}
+
+static unsigned _hash(const void* data, unsigned len)
+{
+	unsigned h = 0;
+	const char* data_ = reinterpret_cast<const char*>(data);
+	for(unsigned i=0; i<len; ++i)
+		h = data_[i] + (h << 6) + (h << 16) - h;
+	return h;
 }
 
 static const char* _shaderTarget[5][3] = {
@@ -56,6 +66,8 @@ extern RgDriverContext* _getCurrentContext_DX11();
 
 extern void _driverSwapBuffers_DX11();
 extern bool _driverChangeResolution_DX11(unsigned width, unsigned height);
+
+extern void rgDriverApplyDefaultState(RgDriverContext* self);
 
 //namespace {
 
@@ -104,10 +116,83 @@ static void _clearStencil(unsigned char s)
 //////////////////////////////////////////////////////////////////////////
 // State management
 
+static const Array<D3D11_BLEND_OP, 5> _blendOp = {
+	D3D11_BLEND_OP_ADD,
+	D3D11_BLEND_OP_SUBTRACT,
+	D3D11_BLEND_OP_REV_SUBTRACT,
+	D3D11_BLEND_OP_MIN,
+	D3D11_BLEND_OP_MAX
+};
+
+static const Array<D3D11_BLEND, 10> _blendValue = {
+	D3D11_BLEND_ZERO,
+	D3D11_BLEND_ONE,
+	D3D11_BLEND_SRC_COLOR,
+	D3D11_BLEND_INV_SRC_COLOR,
+	D3D11_BLEND_SRC_ALPHA,
+	D3D11_BLEND_INV_SRC_ALPHA,
+	D3D11_BLEND_DEST_COLOR,
+	D3D11_BLEND_INV_DEST_COLOR,
+	D3D11_BLEND_DEST_ALPHA,
+	D3D11_BLEND_INV_DEST_ALPHA
+};
+
+static const Array<unsigned, 16> _colorWriteMask = {
+	0,
+	D3D11_COLOR_WRITE_ENABLE_RED,
+	D3D11_COLOR_WRITE_ENABLE_GREEN, 0,
+	D3D11_COLOR_WRITE_ENABLE_BLUE, 0, 0, 0,
+	D3D11_COLOR_WRITE_ENABLE_ALPHA, 0, 0, 0, 0, 0, 0,
+	D3D11_COLOR_WRITE_ENABLE_ALL
+};
+
 static void _setBlendState(RgDriverBlendState* state)
 {
 	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!state || !ctx) return;
+
+	// Generate the hash value if not yet
+	if(state->hash == 0) {
+		state->hash = (void*)_hash(
+			&state->enable,
+			sizeof(RgDriverBlendState) - offsetof(RgDriverBlendState, RgDriverBlendState::enable)
+		);
+		ctx->currentBlendStateHash = state->hash;
+	}
+	else if(state->hash == ctx->currentBlendStateHash)
+		return;
+	else {
+		// TODO: Make use of the hash value
+	}
+
+	D3D11_BLEND_DESC desc;
+	ZeroMemory(&desc, sizeof(desc));
+
+	desc.AlphaToCoverageEnable = false;
+	desc.IndependentBlendEnable = false;
+	desc.RenderTarget[0].BlendEnable = state->enable;
+	desc.RenderTarget[0].SrcBlend = _blendValue[state->colorSrc];
+	desc.RenderTarget[0].DestBlend = _blendValue[state->colorDst];
+	desc.RenderTarget[0].BlendOp = _blendOp[state->colorOp];
+	desc.RenderTarget[0].SrcBlendAlpha = _blendValue[state->alphaSrc];
+	desc.RenderTarget[0].DestBlendAlpha = _blendValue[state->alphaDst];
+	desc.RenderTarget[0].BlendOpAlpha = _blendOp[state->alphaOp];
+	desc.RenderTarget[0].RenderTargetWriteMask = _colorWriteMask[state->wirteMask];
+
+	ID3D11BlendState* s = NULL;
+	HRESULT hr = ctx->dxDevice->CreateBlendState(&desc, &s);
+
+	if(FAILED(hr)) {
+		rhLog("error", "CreateBlendState failed\n");
+		return;
+	}
+
+	ctx->dxDeviceContext->OMSetBlendState(
+		s,
+		0,	// The blend factor, which to use with D3D11_BLEND_BLEND_FACTOR, but we didn't support it yet
+		-1	// Bit mask to do with the multi-sample, not used so set all bits to 1
+	);
+	safeRelease(s);
 }
 
 static const Array<D3D11_COMPARISON_FUNC, 8> _comparisonFuncs = {
@@ -137,40 +222,54 @@ static void _setDepthStencilState(RgDriverDepthStencilState* state)
 	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!state || !ctx) return;
 
-	D3D11_DEPTH_STENCIL_DESC depthStencilDesc;
-	ZeroMemory(&depthStencilDesc, sizeof(depthStencilDesc));
+	// Generate the hash value if not yet
+	if(state->hash == 0) {
+		state->hash = (void*)_hash(
+			&state->enableDepth,
+			sizeof(RgDriverDepthStencilState) - offsetof(RgDriverDepthStencilState, RgDriverDepthStencilState::enableDepth)
+		);
+		ctx->currentDepthStencilStateHash = state->hash;
+	}
+	else if(state->hash == ctx->currentDepthStencilStateHash)
+		return;
+	else {
+		// TODO: Make use of the hash value
+	}
+
+	D3D11_DEPTH_STENCIL_DESC desc;
+	ZeroMemory(&desc, sizeof(desc));
 
 	// Set up the description of the stencil state.
-	depthStencilDesc.DepthEnable = state->enableDepth;
-	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	depthStencilDesc.DepthFunc = _comparisonFuncs[state->depthFunc];
+	desc.DepthEnable = state->enableDepth;
+	desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	desc.DepthFunc = _comparisonFuncs[state->depthFunc];
 
-	depthStencilDesc.StencilEnable = state->enableStencil;
-	depthStencilDesc.StencilReadMask = 0xFF;
-	depthStencilDesc.StencilWriteMask = 0xFF;
+	desc.StencilEnable = state->enableStencil;
+	desc.StencilReadMask = static_cast<UINT>(state->stencilMask);
+	desc.StencilWriteMask = static_cast<UINT>(state->stencilMask);
 
 	// Stencil operations if pixel is front-facing.
-	depthStencilDesc.FrontFace.StencilFailOp = _stencilOps[state->front.failOp];
-	depthStencilDesc.FrontFace.StencilDepthFailOp = _stencilOps[state->front.zFailOp];
-	depthStencilDesc.FrontFace.StencilPassOp = _stencilOps[state->front.passOp];
-	depthStencilDesc.FrontFace.StencilFunc = _comparisonFuncs[state->front.func];
+	desc.FrontFace.StencilFailOp = _stencilOps[state->front.failOp];
+	desc.FrontFace.StencilDepthFailOp = _stencilOps[state->front.zFailOp];
+	desc.FrontFace.StencilPassOp = _stencilOps[state->front.passOp];
+	desc.FrontFace.StencilFunc = _comparisonFuncs[state->front.func];
 
 	// Stencil operations if pixel is back-facing.
-	depthStencilDesc.BackFace.StencilFailOp = _stencilOps[state->back.failOp];
-	depthStencilDesc.BackFace.StencilDepthFailOp = _stencilOps[state->back.zFailOp];
-	depthStencilDesc.BackFace.StencilPassOp = _stencilOps[state->back.passOp];
-	depthStencilDesc.BackFace.StencilFunc = _comparisonFuncs[state->back.func];
+	desc.BackFace.StencilFailOp = _stencilOps[state->back.failOp];
+	desc.BackFace.StencilDepthFailOp = _stencilOps[state->back.zFailOp];
+	desc.BackFace.StencilPassOp = _stencilOps[state->back.passOp];
+	desc.BackFace.StencilFunc = _comparisonFuncs[state->back.func];
 
-	ID3D11DepthStencilState* depthStencilState = NULL;
-	HRESULT hr = ctx->dxDevice->CreateDepthStencilState(&depthStencilDesc, &depthStencilState);
+	ID3D11DepthStencilState* s = NULL;
+	HRESULT hr = ctx->dxDevice->CreateDepthStencilState(&desc, &s);
 
 	if(FAILED(hr)) {
 		rhLog("error", "CreateDepthStencilState failed\n");
 		return;
 	}
 
-	ctx->dxDeviceContext->OMSetDepthStencilState(depthStencilState, 1);
-	safeRelease(depthStencilState);
+	ctx->dxDeviceContext->OMSetDepthStencilState(s, state->stencilRefValue);
+	safeRelease(s);
 }
 
 static void _setTextureState(RgDriverTextureState* states, unsigned stateCount, unsigned startingTextureUnit)
@@ -487,6 +586,7 @@ RgDriver* _rgNewRenderDriver_DX11(const char* options)
 	ret->clearDepth = _clearDepth;
 	ret->clearStencil = _clearStencil;
 
+	ret->applyDefaultState = rgDriverApplyDefaultState;
 	ret->setBlendState = _setBlendState;
 	ret->setDepthStencilState = _setDepthStencilState;
 	ret->setTextureState = _setTextureState;

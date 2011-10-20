@@ -254,31 +254,7 @@ bool _initDriverContext_DX11(RgDriverContext* self, void* platformSpecificWindow
 	impl->dxDepthStencilTexture = depthStencilTexture;
 	impl->dxDepthStencilView = depthStencilView;
 
-	impl->driver->useContext(impl);
-
-	{	// Give the context a default depth stencil state
-		RgDriverDepthStencilState state = {
-			0,
-			false, true,
-			RgDriverDepthCompareFunc_Less,
-			{	0xFF, 0xFF,
-				RgDriverDepthCompareFunc_Always,
-				RgDriverStencilOp_Keep,
-				RgDriverStencilOp_Incr,
-				RgDriverStencilOp_Keep
-			},
-			{	0xFF, 0xFF,
-				RgDriverDepthCompareFunc_Always,
-				RgDriverStencilOp_Keep,
-				RgDriverStencilOp_Decr,
-				RgDriverStencilOp_Keep
-			}
-		};
-
-		impl->driver->setDepthStencilState(&state);
-		impl->driver->clearDepth(1);
-		impl->driver->clearStencil(0);
-	}
+	impl->driver->applyDefaultState(impl);
 
 	return true;
 }

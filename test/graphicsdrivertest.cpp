@@ -25,7 +25,7 @@ public:
 			::ShowWindow(hWnd, false);
 			::PostQuitMessage(0);
 			while(keepRun()) {}
-			driver->deleteContext(context);
+			if(driver) driver->deleteContext(context);
 			rgDeleteRenderDriver(driver);
 			::DestroyWindow(hWnd);
 		}
@@ -81,13 +81,11 @@ public:
 		);
 
 		::ShowWindow(hWnd, true);
-
-		initContext();
 	}
 
-	void initContext()
+	void initContext(const char* driverStr)
 	{
-		driver = rgNewRenderDriver("DX11", NULL);
+		driver = rgNewRenderDriver(driverStr, NULL);
 		context = driver->newContext(driver);
 		context->magjorVersion = 3;
 		context->minorVersion = 2;
@@ -134,6 +132,7 @@ TEST_FIXTURE(GraphicsDriverTest, basic)
 	// http://stackoverflow.com/questions/2588875/whats-the-best-way-to-draw-a-fullscreen-quad-in-opengl-3-2
 
 	createWindow(200, 200);
+	initContext("DX11");
 
 	// Init shader
 /*	const char* vShaderSrc =

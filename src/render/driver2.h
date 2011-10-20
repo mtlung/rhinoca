@@ -156,8 +156,6 @@ typedef enum RgDriverStencilOp
 
 typedef struct RgDriverStencilState
 {
-	unsigned short refValue;
-	unsigned short mask;
 	RgDriverCompareFunc func;
 	RgDriverStencilOp failOp, zFailOp, passOp;
 } RgDriverStencilState;
@@ -167,8 +165,10 @@ typedef struct RgDriverDepthStencilState
 	void* hash;		/// Set it to 0 when ever the state is changed
 	unsigned short enableDepth;
 	unsigned short enableStencil;
-
 	RgDriverCompareFunc depthFunc;
+
+	unsigned short stencilRefValue;
+	unsigned short stencilMask;
 	RgDriverStencilState front, back;
 } RgDriverDepthStencilState;
 
@@ -215,6 +215,7 @@ typedef struct RgDriver
 	void (*clearStencil)(unsigned char s);
 
 // State management
+	void (*applyDefaultState)(RgDriverContext* self);
 	void (*setBlendState)(RgDriverBlendState* blendState);
 	void (*setDepthStencilState)(RgDriverDepthStencilState* depthStencilState);
 	void (*setTextureState)(RgDriverTextureState* textureStates, unsigned stateCount, unsigned startingTextureUnit);
