@@ -298,6 +298,8 @@ static void _setTextureState(RgDriverTextureState* states, unsigned stateCount, 
 //////////////////////////////////////////////////////////////////////////
 // Buffer
 
+// See: http://www.opengl.org/wiki/Buffer_Object
+
 static const Array<GLenum, 4> _bufferTarget = {
 	0,
 	GL_ARRAY_BUFFER,
@@ -719,6 +721,21 @@ static ProgramUniform* _findProgramUniform(unsigned nameHash)
 	return NULL;
 }
 
+static ProgramUniformBlock* _findProgramUniformBlock(unsigned nameHash)
+{
+	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	if(!ctx) return NULL;
+
+	RgDriverShaderProgramImpl* impl = ctx->currentShaderProgram;
+	if(!impl) return NULL;
+
+	for(unsigned i=0; i<impl->uniformBlocks.size(); ++i) {
+		if(impl->uniformBlocks[i].nameHash == nameHash)
+			return &impl->uniformBlocks[i];
+	}
+	return NULL;
+}
+
 static ProgramAttribute* _findProgramAttribute(RgDriverShaderProgram* self, unsigned nameHash)
 {
 	RgDriverShaderProgramImpl* impl = static_cast<RgDriverShaderProgramImpl*>(self);
@@ -787,7 +804,7 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 
 		for(GLint i=0; i<uniformCount; ++i)
 		{
-			char uniformName[64];
+			GLchar uniformName[64];
 			GLsizei uniformNameLength;
 			GLint uniformSize;
 			GLenum uniformType;
@@ -821,6 +838,33 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 					uniform->texunit = -1;
 					break;
 			}
+		}
+	}
+
+	checkError();
+
+	// Query shader uniform block
+	if(glGetUniformIndices)
+	{
+		GLint blockCount;
+		glGetProgramiv(impl->glh, GL_ACTIVE_UNIFORM_BLOCKS, &blockCount);
+
+		impl->uniformBlocks.resize(blockCount);
+
+		for(GLint i=0; i<blockCount; ++i)
+		{
+			GLchar blockName[64];
+			GLsizei blockNameLength;
+			glGetActiveUniformBlockName(impl->glh, i, sizeof(blockName), &blockNameLength, blockName);
+
+			GLint blockSize;
+			glGetActiveUniformBlockiv(impl->glh, i, GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize);
+
+			ProgramUniformBlock* block = &impl->uniformBlocks[i];
+			block->nameHash = StringHash(blockName);
+			block->index = i;	// NOTE: Differ than the uniform location, using i as index is ok
+
+			glGetActiveUniformBlockiv(impl->glh, i, GL_UNIFORM_BLOCK_DATA_SIZE, &block->blockSizeInBytes);
 		}
 	}
 
@@ -890,6 +934,39 @@ bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 
 	glUseProgram(program->glh);
 	ctx->currentShaderProgram = program;
+
+	checkError();
+
+	return true;
+}
+
+// See: http://www.opengl.org/wiki/Uniform_Buffer_Object
+// See: http://arcsynthesis.org/gltut/Positioning/Tut07%20Shared%20Uniforms.html
+bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer)
+{
+	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	if(!ctx) return false;
+
+	RgDriverShaderProgramImpl* program = ctx->currentShaderProgram;
+	if(!program) return false;
+
+	ProgramUniformBlock* block = _findProgramUniformBlock(nameHash);
+	if(!block) return false;
+
+	RgDriverBufferImpl* bufferImpl = static_cast<RgDriverBufferImpl*>(buffer);
+	if(!bufferImpl) return false;
+
+	checkError();
+
+/*	GLuint buffer_id;
+	glGenBuffers(1, &buffer_id);
+	glBindBuffer(GL_UNIFORM_BUFFER, buffer_id);
+	glBufferData(GL_UNIFORM_BUFFER, block->blockSizeInBytes, data, GL_DYNAMIC_DRAW);*/
+
+	if(int(bufferImpl->sizeInBytes) < block->blockSizeInBytes) return false;
+
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, bufferImpl->glh);
+	glUniformBlockBinding(bufferImpl->glh, block->index, 0);
 
 	checkError();
 
@@ -1132,6 +1209,7 @@ RgDriver* _rgNewRenderDriver_GL(const char* options)
 	ret->initShader = _initShader;
 
 	ret->bindShaders = _bindShaders;
+	ret->setUniformBuffer = _setUniformBuffer;
 	ret->setUniform1fv = _setUniform1fv;
 	ret->setUniform2fv = _setUniform2fv;
 	ret->setUniform3fv = _setUniform3fv;

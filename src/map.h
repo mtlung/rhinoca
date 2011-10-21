@@ -86,7 +86,7 @@ namespace Impl {
 
 /*!	The core Avl tree implementation for the Map class.
 	It is a non template class thus save code size for the Map class.
-	\sa http://www.codeproject.com/KB/tips/Containers.aspx
+	\sa http://www.codeproject.com/KB/recipes/Containers.aspx
  */
 class AvlTree : Noncopyable
 {

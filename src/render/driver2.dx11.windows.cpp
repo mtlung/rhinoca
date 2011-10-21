@@ -85,13 +85,13 @@ void _deleteDriverContext_DX11(RgDriverContext* self)
 		_currentContext = NULL;
 	}
 
-	safeRelease(impl->dxDepthStencilTexture);
-	safeRelease(impl->dxRenderTargetView);
-
 	// Change back to windowed mode before releasing swap chain
 	impl->dxSwapChain->SetFullscreenState(false, NULL);
-	safeRelease(impl->dxSwapChain);
 
+	safeRelease(impl->dxDepthStencilView);
+	safeRelease(impl->dxDepthStencilTexture);
+	safeRelease(impl->dxRenderTargetView);
+	safeRelease(impl->dxSwapChain);
 	safeRelease(impl->dxDeviceContext);
 	safeRelease(impl->dxDevice);
 

@@ -249,6 +249,7 @@ typedef struct RgDriver
 	bool (*initShader)(RgDriverShader* self, RgDriverShaderType type, const char** sources, unsigned sourceCount);
 
 	bool (*bindShaders)(RgDriverShader** shaders, unsigned shaderCount);
+	bool (*setUniformBuffer)(unsigned nameHash, RgDriverBuffer* buffer);
 	bool (*setUniform1fv)(unsigned nameHash, const float* value, unsigned count);
 	bool (*setUniform2fv)(unsigned nameHash, const float* value, unsigned count);
 	bool (*setUniform3fv)(unsigned nameHash, const float* value, unsigned count);

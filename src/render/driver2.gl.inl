@@ -15,6 +15,13 @@ typedef struct ProgramUniform
 	int texunit;
 } ProgramUniform;
 
+typedef struct ProgramUniformBlock
+{
+	unsigned nameHash;		// Hash value for the uniform name
+	GLuint index;
+	GLint blockSizeInBytes;
+} ProgramUniformBlock;
+
 typedef struct ProgramAttribute
 {
 	unsigned nameHash;		// Hash value for the uniform name
@@ -27,8 +34,9 @@ struct RgDriverShaderProgramImpl : public RgDriverShaderProgram
 	unsigned hash;	/// Base on the shader pointers
 	GLuint glh;
 	PreAllocVector<RgDriverShaderImpl*, 8> shaders;	/// When ever a shader is destroyed, one should also remove it from this list
-	PreAllocVector<ProgramUniform, 16> uniforms;
-	PreAllocVector<ProgramAttribute, 16> attributes;
+	PreAllocVector<ProgramUniform, 8> uniforms;
+	PreAllocVector<ProgramUniformBlock, 8> uniformBlocks;
+	PreAllocVector<ProgramAttribute, 8> attributes;
 };	// RgDriverShaderProgramImpl
 
 struct RgDriverContextImpl : public RgDriverContext

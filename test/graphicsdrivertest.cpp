@@ -126,8 +126,70 @@ TEST_FIXTURE(GraphicsDriverTest, empty)
 	createWindow(1, 1);
 }
 
+TEST_FIXTURE(GraphicsDriverTest, glUniformBuffer)
+{
+	// To draw a full screen quad:
+	// http://stackoverflow.com/questions/2588875/whats-the-best-way-to-draw-a-fullscreen-quad-in-opengl-3-2
+
+	createWindow(200, 200);
+	initContext("GL");
+
+	// Init shader
+	const char* vShaderSrc =
+	"attribute vec4 vertex;"
+	"void main(void){gl_Position=vertex;}";
+	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc, 1));
+
+	const char* pShaderSrc =
+	"uniform vec4 u_color;"
+	"uniform colors0 { vec4 myColor; } a;"
+	"void main(void){gl_FragColor=u_color*a.myColor;}";
+	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc, 1));
+
+	RgDriverShader* shaders[] = { vShader, pShader };
+
+	// Create vertex buffer
+	float vertex[][4] = { {-1,1,0,1}, {-1,-1,0,1}, {1,-1,0,1}, {1,1,0,1} };
+	RgDriverBuffer* vbuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(vbuffer, RgDriverBufferType_Vertex, vertex, sizeof(vertex)));
+
+	// Create index buffer
+	rhuint16 index[][3] = { {0, 1, 2}, {0, 2, 3} };
+	RgDriverBuffer* ibuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ibuffer, RgDriverBufferType_Index, index, sizeof(index)));
+
+	RgDriverShaderInput shaderInput[] = {
+		{ vbuffer, vShader, "vertex", 4, 0, 4*sizeof(float), 0, 0 },
+		{ ibuffer, NULL, NULL, 1, 0, 0, 0, 0 },
+	};
+
+	// Create uniform buffer
+	float c[] = { 0.4f, 0.4f, 0, 1 };
+	RgDriverBuffer* ubuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ubuffer, RgDriverBufferType_Vertex, c, sizeof(c)));
+
+	while(keepRun()) {
+		driver->clearColor(0, 0.125f, 0.3f, 1);
+
+		CHECK(driver->bindShaders(shaders, 2));
+		CHECK(driver->bindShaderInput(shaderInput, COUNTOF(shaderInput), NULL));
+
+		float c[] = { 0.4f, 0.4f, 0, 1 };
+		CHECK(driver->setUniformBuffer(StringHash("colors0"), ubuffer));
+		CHECK(driver->setUniform4fv(StringHash("u_color"), c, 1));
+
+		driver->drawTriangleIndexed(0, 6, 0);
+		driver->swapBuffers();
+	}
+
+	driver->deleteBuffer(ubuffer);
+	driver->deleteBuffer(vbuffer);
+	driver->deleteBuffer(ibuffer);
+}
+
 TEST_FIXTURE(GraphicsDriverTest, basic)
 {
+	return;
 	// To draw a full screen quad:
 	// http://stackoverflow.com/questions/2588875/whats-the-best-way-to-draw-a-fullscreen-quad-in-opengl-3-2
 

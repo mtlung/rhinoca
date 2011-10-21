@@ -15,6 +15,8 @@
 // DX migration:	http://msdn.microsoft.com/en-us/library/windows/desktop/ff476190%28v=vs.85%29.aspx
 // DX11 tutorial:	http://www.rastertek.com/tutindex.html
 // DX10 porting:	http://developer.amd.com/.../Riguer-DX10_tips_and_tricks_for_print.pdf
+// DX10 FAQ:		http://msdn.microsoft.com/en-us/library/windows/desktop/ee416643%28v=vs.85%29.aspx#constant_buffers
+// DX10 cbuffer:	http://www.gamedev.net/topic/574711-d3d10-equivalent-of-gluniform/
 
 //////////////////////////////////////////////////////////////////////////
 // Common stuffs
@@ -328,7 +330,7 @@ static bool _initBuffer(RgDriverBuffer* self, RgDriverBufferType type, void* ini
 	desc.Usage = D3D11_USAGE_DEFAULT;
 	desc.ByteWidth = sizeInBytes;
 	desc.BindFlags = flag;
-	desc.CPUAccessFlags = 0;
+	desc.CPUAccessFlags = 0;//D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
 	desc.MiscFlags = 0;
 	desc.StructureByteStride = 0;
 
