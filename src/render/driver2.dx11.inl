@@ -1,7 +1,17 @@
+typedef struct ConstantBuffer
+{
+	unsigned nameHash;		// Hash value for the constant buffer
+	unsigned bindPoint;
+} ConstantBuffer;
+
 struct RgDriverShaderImpl : public RgDriverShader
 {
+	RgDriverShaderImpl() : dxShader(NULL), dxShaderBlob(NULL) {}
+
 	ID3D11DeviceChild* dxShader;
 	ID3D10Blob* dxShaderBlob;
+
+	PreAllocVector<ConstantBuffer, 4> constantBuffers;
 };	// RgDriverShaderImpl
 
 struct RgDriverContextImpl : public RgDriverContext

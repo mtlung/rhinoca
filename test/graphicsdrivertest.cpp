@@ -126,25 +126,52 @@ TEST_FIXTURE(GraphicsDriverTest, empty)
 	createWindow(1, 1);
 }
 
+static const unsigned driverIndex = 1;
+
+static const char* driverStr[] = 
+{
+	"GL",
+	"DX11"
+};
+
+static const char* vShaderSrc[] = 
+{
+	// GLSL
+	"#version 140\n"
+	"in vec4 position;"
+	"void main(void){gl_Position=position;}",
+
+	// HLSL
+	"float4 main(float4 pos:position):SV_POSITION{return pos;}"
+};
+
+static const char* pShaderSrc[] = 
+{
+	// GLSL
+	"#version 140\n"
+	"uniform vec4 color1;"
+	"uniform color2 { vec4 _color2; };"
+	"uniform color3 { vec4 _color3; };"
+	"out vec4 outColor;"
+	"void main(void){outColor=color1+_color2+_color3;}",
+
+	"cbuffer color1 { float4 _color1; }"
+	"cbuffer color2 { float4 _color2; }"
+	"cbuffer color3 { float4 _color3; }"
+	"float4 main(float4 pos:SV_POSITION):SV_Target{return _color1+_color2+_color3;}"
+};
+
 TEST_FIXTURE(GraphicsDriverTest, glUniformBuffer)
 {
 	// To draw a full screen quad:
 	// http://stackoverflow.com/questions/2588875/whats-the-best-way-to-draw-a-fullscreen-quad-in-opengl-3-2
 
 	createWindow(200, 200);
-	initContext("GL");
+	initContext(driverStr[driverIndex]);
 
 	// Init shader
-	const char* vShaderSrc =
-	"attribute vec4 vertex;"
-	"void main(void){gl_Position=vertex;}";
-	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc, 1));
-
-	const char* pShaderSrc =
-	"uniform vec4 u_color;"
-	"uniform colors0 { vec4 myColor; } a;"
-	"void main(void){gl_FragColor=u_color*a.myColor;}";
-	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc, 1));
+	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
 
 	RgDriverShader* shaders[] = { vShader, pShader };
 
@@ -159,14 +186,18 @@ TEST_FIXTURE(GraphicsDriverTest, glUniformBuffer)
 	CHECK(driver->initBuffer(ibuffer, RgDriverBufferType_Index, index, sizeof(index)));
 
 	RgDriverShaderInput shaderInput[] = {
-		{ vbuffer, vShader, "vertex", 4, 0, 4*sizeof(float), 0, 0 },
+		{ vbuffer, vShader, "position", 4, 0, 4*sizeof(float), 0, 0 },
 		{ ibuffer, NULL, NULL, 1, 0, 0, 0, 0 },
 	};
 
 	// Create uniform buffer
-	float c[] = { 0.4f, 0.4f, 0, 1 };
+	float c[] = { 0.2f, 0, 0, 1 };
 	RgDriverBuffer* ubuffer = driver->newBuffer();
-	CHECK(driver->initBuffer(ubuffer, RgDriverBufferType_Vertex, c, sizeof(c)));
+	CHECK(driver->initBuffer(ubuffer, RgDriverBufferType_Uniform, c, sizeof(c)));
+
+	float c2[] = { 0, 0.9f, 0, 1 };
+	RgDriverBuffer* ubuffer2 = driver->newBuffer();
+	CHECK(driver->initBuffer(ubuffer2, RgDriverBufferType_Uniform, c2, sizeof(c2)));
 
 	while(keepRun()) {
 		driver->clearColor(0, 0.125f, 0.3f, 1);
@@ -174,77 +205,22 @@ TEST_FIXTURE(GraphicsDriverTest, glUniformBuffer)
 		CHECK(driver->bindShaders(shaders, 2));
 		CHECK(driver->bindShaderInput(shaderInput, COUNTOF(shaderInput), NULL));
 
-		float c[] = { 0.4f, 0.4f, 0, 1 };
-		CHECK(driver->setUniformBuffer(StringHash("colors0"), ubuffer));
-		CHECK(driver->setUniform4fv(StringHash("u_color"), c, 1));
+		float* p = (float*)driver->mapBuffer(ubuffer, RgDriverBufferMapUsage(RgDriverBufferMapUsage_Read | RgDriverBufferMapUsage_Write));
+		p[0] += 0.01f;
+//		p[1] += 0.01f;
+//		p[2] += 0.01f;
+		driver->unmapBuffer(ubuffer);
+
+		float c[] = { 0, 0, 0, 1 };
+//		CHECK(driver->setUniform4fv(StringHash("color1"), c, 1));
+		CHECK(driver->setUniformBuffer(StringHash("color2"), ubuffer));
+		CHECK(driver->setUniformBuffer(StringHash("color3"), ubuffer2));
 
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();
 	}
 
 	driver->deleteBuffer(ubuffer);
-	driver->deleteBuffer(vbuffer);
-	driver->deleteBuffer(ibuffer);
-}
-
-TEST_FIXTURE(GraphicsDriverTest, basic)
-{
-	return;
-	// To draw a full screen quad:
-	// http://stackoverflow.com/questions/2588875/whats-the-best-way-to-draw-a-fullscreen-quad-in-opengl-3-2
-
-	createWindow(200, 200);
-	initContext("DX11");
-
-	// Init shader
-/*	const char* vShaderSrc =
-		"attribute vec4 vertex;"
-		"void main(void){gl_Position=vertex;}";
-	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc, 1));
-
-	const char* pShaderSrc =
-		"uniform vec4 u_color;"
-		"void main(void){gl_FragColor=u_color;}";
-	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc, 1));*/
-
-	const char* vShaderSrc =
-		"float4 main(float4 pos:POSITION):SV_POSITION{return pos;}";
-	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc, 1));
-
-	const char* pShaderSrc =
-		"float4 main(float4 pos:SV_POSITION):SV_Target{return float4(1,1,1,1);}";
-	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc, 1));
-
-	RgDriverShader* shaders[] = { vShader, pShader };
-
-	// Create vertex buffer
-	float vertex[][4] = { {-1,1,0,1}, {-1,-1,0,1}, {1,-1,0,1}, {1,1,0,1} };
-	RgDriverBuffer* vbuffer = driver->newBuffer();
-	CHECK(driver->initBuffer(vbuffer, RgDriverBufferType_Vertex, vertex, sizeof(vertex)));
-
-	// Create index buffer
-	rhuint16 index[][3] = { {0, 1, 2}, {0, 2, 3} };
-	RgDriverBuffer* ibuffer = driver->newBuffer();
-	CHECK(driver->initBuffer(ibuffer, RgDriverBufferType_Index, index, sizeof(index)));
-
-	RgDriverShaderInput shaderInput[] = {
-		{ vbuffer, vShader, "POSITION", 4, 0, 4*sizeof(float), 0, 0 },
-		{ ibuffer, NULL, NULL, 1, 0, 0, 0, 0 },
-	};
-
-	while(keepRun()) {
-		driver->clearColor(0, 0.125f, 0.3f, 1);
-
-		CHECK(driver->bindShaders(shaders, 2));
-		CHECK(driver->bindShaderInput(shaderInput, COUNTOF(shaderInput), NULL));
-
-//		float c[] = { 1, 1, 0, 1 };
-//		CHECK(driver->setUniform4fv(StringHash("u_color"), c, 1));
-
-		driver->drawTriangleIndexed(0, 6, 0);
-		driver->swapBuffers();
-	}
-
 	driver->deleteBuffer(vbuffer);
 	driver->deleteBuffer(ibuffer);
 }

@@ -8,6 +8,7 @@
 #include "../rhstring.h"
 
 #include <dxgi.h>
+#include <D3Dcompiler.h>
 #include <D3DX11async.h>
 
 // DirectX stuffs
@@ -77,7 +78,7 @@ extern void rgDriverApplyDefaultState(RgDriverContext* self);
 
 static void _setViewport(unsigned x, unsigned y, unsigned width, unsigned height, float zmin, float zmax)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx || !ctx->dxDeviceContext) return;
 
 	D3D11_VIEWPORT viewport;
@@ -92,7 +93,7 @@ static void _setViewport(unsigned x, unsigned y, unsigned width, unsigned height
 
 static void _clearColor(float r, float g, float b, float a)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx || !ctx->dxDeviceContext) return;
 
 	float color[4] = { r, g, b, a };
@@ -101,7 +102,7 @@ static void _clearColor(float r, float g, float b, float a)
 
 static void _clearDepth(float z)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx || !ctx->dxDeviceContext) return;
 
 	ctx->dxDeviceContext->ClearDepthStencilView(ctx->dxDepthStencilView, D3D11_CLEAR_DEPTH, z, 0);
@@ -109,7 +110,7 @@ static void _clearDepth(float z)
 
 static void _clearStencil(unsigned char s)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx || !ctx->dxDeviceContext) return;
 
 	ctx->dxDeviceContext->ClearDepthStencilView(ctx->dxDepthStencilView, D3D11_CLEAR_STENCIL, 1, s);
@@ -150,7 +151,7 @@ static const Array<unsigned, 16> _colorWriteMask = {
 
 static void _setBlendState(RgDriverBlendState* state)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!state || !ctx) return;
 
 	// Generate the hash value if not yet
@@ -221,7 +222,7 @@ static const Array<D3D11_STENCIL_OP, 8> _stencilOps = {
 
 static void _setDepthStencilState(RgDriverDepthStencilState* state)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!state || !ctx) return;
 
 	// Generate the hash value if not yet
@@ -276,7 +277,7 @@ static void _setDepthStencilState(RgDriverDepthStencilState* state)
 
 static void _setTextureState(RgDriverTextureState* states, unsigned stateCount, unsigned startingTextureUnit)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx || !states || stateCount == 0) return;
 }
 
@@ -316,7 +317,7 @@ static const Array<D3D11_BIND_FLAG, 4> _bufferBindFlag = {
 
 static bool _initBuffer(RgDriverBuffer* self, RgDriverBufferType type, void* initData, unsigned sizeInBytes)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	RgDriverBufferImpl* impl = static_cast<RgDriverBufferImpl*>(self);
 	if(!ctx || !impl) return false;
 
@@ -327,10 +328,10 @@ static bool _initBuffer(RgDriverBuffer* self, RgDriverBufferType type, void* ini
 
 	D3D11_BUFFER_DESC desc;
 	ZeroMemory(&desc, sizeof(desc));
-	desc.Usage = D3D11_USAGE_DEFAULT;
+	desc.Usage = D3D11_USAGE_DYNAMIC;
 	desc.ByteWidth = sizeInBytes;
 	desc.BindFlags = flag;
-	desc.CPUAccessFlags = 0;//D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+	desc.CPUAccessFlags =  D3D11_CPU_ACCESS_WRITE;
 	desc.MiscFlags = 0;
 	desc.StructureByteStride = 0;
 
@@ -349,6 +350,70 @@ static bool _initBuffer(RgDriverBuffer* self, RgDriverBufferType type, void* ini
 	return true;
 }
 
+static bool _updateBuffer(RgDriverBuffer* self, unsigned offsetInBytes, void* data, unsigned sizeInBytes)
+{
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	RgDriverBufferImpl* impl = static_cast<RgDriverBufferImpl*>(self);
+	if(!ctx || !impl) return false;
+
+	if(offsetInBytes + sizeInBytes > self->sizeInBytes)
+		return false;
+
+	if(self->type & RgDriverBufferType_System)
+		memcpy(((char*)impl->systemBuf) + offsetInBytes, data, sizeInBytes);
+	else {
+//		ctx->dxDeviceContext->UpdateSubresource(impl->dxBuffer, 
+	}
+
+	return true;
+}
+
+static void* _mapBuffer(RgDriverBuffer* self, RgDriverBufferMapUsage usage)
+{
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	RgDriverBufferImpl* impl = static_cast<RgDriverBufferImpl*>(self);
+	if(!ctx || !impl) return false;
+
+	if(impl->systemBuf)
+		return impl->systemBuf;
+
+	if(!impl->dxBuffer)
+		return NULL;
+
+	D3D11_MAPPED_SUBRESOURCE mapped = {0};
+	HRESULT hr = ctx->dxDeviceContext->Map(
+		impl->dxBuffer,
+		0,
+		D3D11_MAP_READ_WRITE,	// TODO: Rewise it later
+		0,
+		&mapped
+	);
+
+	if(FAILED(hr)) {
+		rhLog("error", "Fail to create map buffer\n");
+		return NULL;
+	}
+
+	return mapped.pData;
+}
+
+static void _unmapBuffer(RgDriverBuffer* self)
+{
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	RgDriverBufferImpl* impl = static_cast<RgDriverBufferImpl*>(self);
+	if(!ctx || !impl) return;
+
+	if(impl->systemBuf) {
+		// Nothing need to do to un-map the system memory
+		return;
+	}
+
+	if(!impl->dxBuffer)
+		return;
+
+	ctx->dxDeviceContext->Unmap(impl->dxBuffer, 0);
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Texture
 
@@ -358,13 +423,12 @@ static bool _initBuffer(RgDriverBuffer* self, RgDriverBufferType type, void* ini
 static RgDriverShader* _newShader()
 {
 	RgDriverShaderImpl* ret = new RgDriverShaderImpl;
-	memset(ret, 0, sizeof(*ret));
 	return ret;
 }
 
 static void _deleteShader(RgDriverShader* self)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	RgDriverShaderImpl* impl = static_cast<RgDriverShaderImpl*>(self);
 	if(!ctx || !impl) return;
 
@@ -379,7 +443,7 @@ static void _deleteShader(RgDriverShader* self)
 
 static bool _initShader(RgDriverShader* self, RgDriverShaderType type, const char** sources, unsigned sourceCount)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	RgDriverShaderImpl* impl = static_cast<RgDriverShaderImpl*>(self);
 	if(!ctx || !impl || sourceCount == 0) return false;
 
@@ -433,12 +497,32 @@ static bool _initShader(RgDriverShader* self, RgDriverShaderType type, const cha
 		return false;
 	}
 
+	// Query the resource binding point
+	// See: http://stackoverflow.com/questions/3198904/d3d10-hlsl-how-do-i-bind-a-texture-to-a-global-texture2d-via-reflection
+	ID3D11ShaderReflection* reflector = NULL; 
+	D3DReflect(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&reflector);
+
+    D3D11_SHADER_DESC shaderDesc;
+    reflector->GetDesc(&shaderDesc);
+
+	for(unsigned i=0; i<shaderDesc.BoundResources; ++i) {
+		D3D11_SHADER_INPUT_BIND_DESC desc;
+		hr = reflector->GetResourceBindingDesc(i, &desc);
+		if(FAILED(hr))
+			break;
+
+		ConstantBuffer cb = { StringHash(desc.Name, 0), desc.BindPoint };
+		impl->constantBuffers.push_back(cb);
+	}
+
+	safeRelease(reflector);
+
 	return true;
 }
 
 bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx || !shaders || shaderCount == 0) return false;
 
 	ctx->currentShaders.assign(NULL);
@@ -477,9 +561,46 @@ bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 	return true;
 }
 
+bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer)
+{
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	if(!ctx) return false;
+
+	RgDriverBufferImpl* bufferImpl = static_cast<RgDriverBufferImpl*>(buffer);
+	if(!bufferImpl) return false;
+
+	RgDriverShaderImpl* shader = NULL;
+	ConstantBuffer* cb = NULL;
+
+	// Search for the constand buffer with the matching name
+	for(unsigned i=0; i<ctx->currentShaders.size() && !cb; ++i) {
+		shader = ctx->currentShaders[i];
+		if(!shader) continue;
+
+		for(unsigned j=0; j<shader->constantBuffers.size(); ++j) {
+			ConstantBuffer& b = shader->constantBuffers[j];
+			if(b.nameHash == nameHash) {
+				cb = &b;
+				break;
+			}
+		}
+	}
+
+	if(!shader || !cb) return false;
+
+	if(shader->type == RgDriverShaderType_Vertex)
+		ctx->dxDeviceContext->VSSetConstantBuffers(cb->bindPoint, 1, &bufferImpl->dxBuffer);
+	else if(shader->type == RgDriverShaderType_Pixel)
+		ctx->dxDeviceContext->PSSetConstantBuffers(cb->bindPoint, 1, &bufferImpl->dxBuffer);
+	else if(shader->type == RgDriverShaderType_Geometry)
+		ctx->dxDeviceContext->GSSetConstantBuffers(cb->bindPoint, 1, &bufferImpl->dxBuffer);
+
+	return true;
+}
+
 bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned* cacheId)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx || !inputs || inputCount == 0) return false;
 
 	for(unsigned i=0; i<inputCount; ++i)
@@ -509,7 +630,7 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 			return false;
 		}
 
-		ID3D11InputLayout* layout;
+		ID3D11InputLayout* layout = NULL;
 		ID3D10Blob* shaderBlob = shader->dxShaderBlob;
 
 		if(!shaderBlob)
@@ -543,13 +664,13 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 
 static void _drawTriangle(unsigned offset, unsigned vertexCount, unsigned flags)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx) return;
 }
 
 static void _drawTriangleIndexed(unsigned offset, unsigned indexCount, unsigned flags)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx) return;
 	ctx->dxDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	ctx->dxDeviceContext->DrawIndexed(indexCount, offset, 0);
@@ -596,12 +717,16 @@ RgDriver* _rgNewRenderDriver_DX11(const char* options)
 	ret->newBuffer = _newBuffer;
 	ret->deleteBuffer = _deleteBuffer;
 	ret->initBuffer = _initBuffer;
+	ret->updateBuffer = _updateBuffer;
+	ret->mapBuffer = _mapBuffer;
+	ret->unmapBuffer = _unmapBuffer;
 
 	ret->newShader = _newShader;
 	ret->deleteShader = _deleteShader;
 	ret->initShader = _initShader;
 
 	ret->bindShaders = _bindShaders;
+	ret->setUniformBuffer = _setUniformBuffer;
 	ret->bindShaderInput = _bindShaderInput;
 
 	ret->drawTriangle = _drawTriangle;

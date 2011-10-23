@@ -101,7 +101,7 @@ static const Array<GLenum, 10> _blendValue = {
 // See: http://www.opengl.org/wiki/Blending
 static void _setBlendState(RgDriverBlendState* state)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
 	if(!state || !ctx) return;
 
 	// Generate the hash value if not yet
@@ -175,7 +175,7 @@ static const Array<GLenum, 8> _stencilOp = {
 
 static void _setDepthStencilState(RgDriverDepthStencilState* state)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
 	if(!state || !ctx) return;
 
 	// Generate the hash value if not yet
@@ -243,7 +243,7 @@ static const Array<GLenum, 4> _textureAddressMode = { GL_REPEAT, GL_CLAMP_TO_EDG
 // and http://www.opengl.org/registry/specs/ARB/sampler_objects.txt
 static void _setTextureState(RgDriverTextureState* states, unsigned stateCount, unsigned startingTextureUnit)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx || !states || stateCount == 0) return;
 
 	for(unsigned i=0; i<stateCount; ++i)
@@ -420,6 +420,7 @@ static void _unmapBuffer(RgDriverBuffer* self)
 
 	if(impl->systemBuf) {
 		// Nothing need to do to un-map the system memory
+		return;
 	}
 
 #if !defined(CR_GLES_2)
@@ -635,7 +636,7 @@ static RgDriverShader* _newShader()
 
 static void _deleteShader(RgDriverShader* self)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
 	RgDriverShaderImpl* impl = static_cast<RgDriverShaderImpl*>(self);
 	if(!ctx || !impl) return;
 
@@ -708,7 +709,7 @@ static bool _initShader(RgDriverShader* self, RgDriverShaderType type, const cha
 
 static ProgramUniform* _findProgramUniform(unsigned nameHash)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return NULL;
 
 	RgDriverShaderProgramImpl* impl = ctx->currentShaderProgram;
@@ -723,7 +724,7 @@ static ProgramUniform* _findProgramUniform(unsigned nameHash)
 
 static ProgramUniformBlock* _findProgramUniformBlock(unsigned nameHash)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return NULL;
 
 	RgDriverShaderProgramImpl* impl = ctx->currentShaderProgram;
@@ -908,7 +909,7 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 
 bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx || !shaders || shaderCount == 0) return false;
 
 	// Hash the address of the shaders to see if a shader program is already created or not
@@ -944,7 +945,7 @@ bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 // See: http://arcsynthesis.org/gltut/Positioning/Tut07%20Shared%20Uniforms.html
 bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return false;
 
 	RgDriverShaderProgramImpl* program = ctx->currentShaderProgram;
@@ -956,17 +957,12 @@ bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer)
 	RgDriverBufferImpl* bufferImpl = static_cast<RgDriverBufferImpl*>(buffer);
 	if(!bufferImpl) return false;
 
-	checkError();
-
-/*	GLuint buffer_id;
-	glGenBuffers(1, &buffer_id);
-	glBindBuffer(GL_UNIFORM_BUFFER, buffer_id);
-	glBufferData(GL_UNIFORM_BUFFER, block->blockSizeInBytes, data, GL_DYNAMIC_DRAW);*/
-
 	if(int(bufferImpl->sizeInBytes) < block->blockSizeInBytes) return false;
 
-	glBindBufferBase(GL_UNIFORM_BUFFER, 0, bufferImpl->glh);
-	glUniformBlockBinding(bufferImpl->glh, block->index, 0);
+	checkError();
+
+	glBindBufferBase(GL_UNIFORM_BUFFER, block->index, bufferImpl->glh);
+	glUniformBlockBinding(program->glh, block->index, block->index);
 
 	checkError();
 
@@ -1027,8 +1023,8 @@ bool _setUniformTexture(unsigned nameHash, RgDriverTexture* texture)
 
 	if(texture) {
 		glActiveTexture(GL_TEXTURE0 + uniform->texunit);
-		GLenum glTarget = reinterpret_cast<RgDriverTextureImpl*>(texture)->glTarget;
-		GLuint glh = reinterpret_cast<RgDriverTextureImpl*>(texture)->glh;
+		GLenum glTarget = static_cast<RgDriverTextureImpl*>(texture)->glTarget;
+		GLuint glh = static_cast<RgDriverTextureImpl*>(texture)->glh;
 
 		glBindTexture(glTarget, glh);
 //		glTexParameteri(glTarget, GL_TEXTURE_MAG_FILTER, crGL_SAMPLER_MAG_FILTER[sampler->filter]);
@@ -1063,7 +1059,7 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 //	glShadeModel(GL_SMOOTH);
 //	glFrontFace(GL_CCW);			// OpenGl use counterclockwise as the default winding
 
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return false;
 	RgDriverShaderProgramImpl* impl = static_cast<RgDriverShaderProgramImpl*>(ctx->currentShaderProgram);
 	if(!impl) return false;
@@ -1077,7 +1073,7 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 		if(!i || !i->buffer)
 			continue;
 
-		RgDriverBufferImpl* buffer = reinterpret_cast<RgDriverBufferImpl*>(i->buffer);
+		RgDriverBufferImpl* buffer = static_cast<RgDriverBufferImpl*>(i->buffer);
 
 		// Bind index buffer
 		if(buffer->type & RgDriverBufferType_Index)
@@ -1125,7 +1121,7 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 
 bool _bindShaderInputCached(unsigned cacheId)
 {
-	RgDriverContextImpl* ctx = reinterpret_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return false;
 	RgDriverShaderProgramImpl* impl = static_cast<RgDriverShaderProgramImpl*>(ctx->currentShaderProgram);
 	if(!impl) return false;
