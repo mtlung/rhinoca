@@ -220,15 +220,12 @@ template<typename TKeyArg>
 struct MapComparator {
 	typedef TKeyArg KeyArg;
 
-	explicit MapComparator(KeyArg key)
-		: mKey(key)
-	{
-	}
+	explicit MapComparator(KeyArg key) : mKey(key) {}
 
 	/*!	Returns:
-		-1	if \em key <  \em mKey
-		 0	if \em key == \em mKey
-		 1	if \em key >  \em mKey
+		- if \em key <  \em mKey
+		0 if \em key == \em mKey
+		+ if \em key >  \em mKey
 	 */
 	int compare(KeyArg key) {
 		return (key < mKey) ? (-1) : (key == mKey) ? 0 : 1;
@@ -238,6 +235,18 @@ struct MapComparator {
 	KeyArg mKey;
 };	// MapComparator
 
+/// Specialized comparator for int type
+template<> struct MapComparator<const int> {
+	explicit MapComparator(int key) : mKey(key) {}
+	int compare(int key) { return key - mKey; }
+	int mKey;
+};	// MapComparator
+
+template<> struct MapComparator<const unsigned> {
+	explicit MapComparator(int key) : mKey(key) {}
+	int compare(int key) { return key - mKey; }
+	int mKey;
+};	// MapComparator
 
 template<
 	class TKey,	//! The key type
@@ -333,7 +342,8 @@ public:
 			if(parent) {
 				Comparator hint(parent->mKey);
 				int cmp = hint.compare(mKey);
-				RHASSERT(!cmp || (cmp == dir));
+				bool sameSign = cmp < 0 && dir < 0;
+				RHASSERT(!cmp || sameSign);
 			}
 
 			size_t nL = static_cast<NodeBase*>(mChildren[Left])->assertValid(total, this, -1);
@@ -370,55 +380,6 @@ public:
 		}
 	};	// Node
 
-	NodeBase* find(KeyArg key) {
-		return find<true, 0>(key);
-	}
-	const NodeBase* find(KeyArg key) const {
-		return const_cast<MapBase*>(this)->find(key);
-	}
-
-	NodeBase* findMin() {
-		return static_cast<NodeBase*>(getExtrRootL());
-	}
-	const NodeBase* findMin() const {
-		return const_cast<MapBase*>(this)->findMin();
-	}
-
-	NodeBase* findMax() {
-		return static_cast<NodeBase*>(getExtrRootR());
-	}
-	const NodeBase* findMax() const {
-		return const_cast<MapBase*>(this)->findMax();
-	}
-
-	NodeBase* findSmaller(KeyArg key) {
-		return find<false, -1>(key);
-	}
-	const NodeBase* findSmaller(KeyArg key) const {
-		return const_cast<MapBase*>(this)->findSmaller(key);
-	}
-
-	NodeBase* findBigger(KeyArg key) {
-		return find<false, 1>(key);
-	}
-	const NodeBase* findBigger(KeyArg key) const {
-		return const_cast<MapBase*>(this)->findBigger(key);
-	}
-
-	NodeBase* findExactSmaller(KeyArg key) {
-		return find<true, -1>(key);
-	}
-	const NodeBase* findExactSmaller(KeyArg key) const {
-		return const_cast<MapBase*>(this)->findExactSmaller(key);
-	}
-
-	NodeBase* findExactBigger(KeyArg key) {
-		return find<true, 1>(key);
-	}
-	const NodeBase* findExactBigger(KeyArg key) const {
-		return const_cast<MapBase*>(this)->findExactBigger(key);
-	}
-
 	void insert(NodeBase& newNode)
 	{
 		if(mRoot) {
@@ -439,7 +400,7 @@ public:
 	//! This function will ensure the insertion will not create more duplicated key.
 	bool insertUnique(NodeBase& newNode)
 	{
-		if(find(newNode.getKey()) != NULL)
+		if(find<true, 0>(newNode.getKey()) != NULL)
 			return false;
 		insert(newNode);
 		return true;
@@ -461,7 +422,7 @@ public:
 #endif	// NDEBUG
 	}
 
-private:
+protected:
 	template<bool Exact, int Dir>
 	NodeBase* find(KeyArg key)
 	{
@@ -469,14 +430,15 @@ private:
 		NodeBase* match = NULL;
 
 		for(NodeBase* node = static_cast<NodeBase*>(mRoot); node;) {
-			int cmp = hint.compare(node->mKey);
+			const int cmp = hint.compare(node->mKey);
+			const int ltz = cmp < 0;
 
 			if(Exact && cmp == 0)
 				return node;	// Exact match.
-			else if(cmp == Dir)
+			else if(Dir < 0 && ltz)
 				match = node;
 
-			node = static_cast<NodeBase*>(node->mChildren[cmp < 0]);
+			node = static_cast<NodeBase*>(node->mChildren[ltz]);
 		}
 		return match;
 	}
@@ -494,62 +456,26 @@ public:
 	typedef typename Super::KeyArg KeyArg;
 	typedef typename Super::Comparator Comparator;
 
-	Node* find(KeyArg key) {
-		return static_cast<Node*>(Super::find(key));
-	}
-	const Node* find(KeyArg key) const {
-		return const_cast<Map*>(this)->find(key);
-	}
+	Node*		find(KeyArg key)					{ return static_cast<Node*>(Super::find<true, 0>(key)); }
+	const Node*	find(KeyArg key) const				{ return const_cast<Map*>(this)->find(key); }
 
-	Node* findMin() {
-		return static_cast<Node*>(Super::findMin());
-	}
-	const Node* findMin(KeyArg key) const {
-		return const_cast<Map*>(this)->findMin(key);
-	}
+	Node*		findMin()							{ return static_cast<Node*>(Super::getExtrRootL()); }
+	const Node*	findMin(KeyArg key) const			{ return const_cast<Map*>(this)->findMin(key); }
+	Node*		findMax()							{ return static_cast<Node*>(Super::getExtrRootR()); }
+	const Node*	findMax(KeyArg key) const			{ return const_cast<Map*>(this)->findMax(key); }
 
-	Node* findMax() {
-		return static_cast<Node*>(Super::findMax());
-	}
-	const Node* findMax(KeyArg key) const {
-		return const_cast<Map*>(this)->findMax(key);
-	}
+	Node*		findSmaller(KeyArg key)				{ return static_cast<Node*>(Super::find<false, -1>(key)); }
+	const Node*	findSmaller(KeyArg key) const		{ return const_cast<Map*>(this)->findSmaller(key); }
+	Node*		findBigger(KeyArg key)				{ return static_cast<Node*>(Super::find<false, 1>(key)); }
+	const Node*	findBigger(KeyArg key) const		{ return const_cast<Map*>(this)->findBigger(key); }
 
-	Node* findSmaller(KeyArg key) {
-		return static_cast<Node*>(Super::findSmaller(key));
-	}
-	const Node* findSmaller(KeyArg key) const {
-		return const_cast<Map*>(this)->findSmaller(key);
-	}
+	Node*		findExactSmaller(KeyArg key)		{ return static_cast<Node*>(Super::find<true, -1>(key)); }
+	const Node*	findExactSmaller(KeyArg key) const	{ return const_cast<Map*>(this)->findExactSmaller(key); }
+	Node*		findExactBigger(KeyArg key)			{ return static_cast<Node*>(Super::find<true, 1>(key)); }
+	const Node*	findExactBigger(KeyArg key) const	{ return const_cast<Map*>(this)->findExactBigger(key); }
 
-	Node* findBigger(KeyArg key) {
-		return static_cast<Node*>(Super::findBigger(key));
-	}
-	const Node* findBigger(KeyArg key) const {
-		return const_cast<Map*>(this)->findBigger(key);
-	}
-
-	Node* findExactSmaller(KeyArg key) {
-		return static_cast<Node*>(Super::findExactSmaller(key));
-	}
-	const Node* findExactSmaller(KeyArg key) const {
-		return const_cast<Map*>(this)->findExactSmaller(key);
-	}
-
-	Node* findExactBigger(KeyArg key) {
-		return static_cast<Node*>(Super::findExactBigger(key));
-	}
-	const Node* findExactBigger(KeyArg key) const {
-		return const_cast<Map*>(this)->findExactBigger(key);
-	}
-
-	void insert(Node& newNode) {
-		Super::insert(newNode);
-	}
-
-	bool insertUnique(Node& newNode) {
-		return Super::insertUnique(newNode);
-	}
+	void		insert(Node& newNode)				{ Super::insert(newNode); }
+	bool		insertUnique(Node& newNode)			{ return Super::insertUnique(newNode); }
 };	// Map
 
 #endif	// ___MAP_H__

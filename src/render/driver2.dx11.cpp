@@ -331,7 +331,7 @@ static bool _initBuffer(RgDriverBuffer* self, RgDriverBufferType type, void* ini
 	desc.Usage = D3D11_USAGE_DYNAMIC;
 	desc.ByteWidth = sizeInBytes;
 	desc.BindFlags = flag;
-	desc.CPUAccessFlags =  D3D11_CPU_ACCESS_WRITE;
+	desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;	// TODO: Revise it later
 	desc.MiscFlags = 0;
 	desc.StructureByteStride = 0;
 
@@ -384,13 +384,13 @@ static void* _mapBuffer(RgDriverBuffer* self, RgDriverBufferMapUsage usage)
 	HRESULT hr = ctx->dxDeviceContext->Map(
 		impl->dxBuffer,
 		0,
-		D3D11_MAP_READ_WRITE,	// TODO: Rewise it later
+		D3D11_MAP_WRITE_DISCARD,	// TODO: Revise it later
 		0,
 		&mapped
 	);
 
 	if(FAILED(hr)) {
-		rhLog("error", "Fail to create map buffer\n");
+		rhLog("error", "Fail to map buffer\n");
 		return NULL;
 	}
 
@@ -572,7 +572,7 @@ bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer)
 	RgDriverShaderImpl* shader = NULL;
 	ConstantBuffer* cb = NULL;
 
-	// Search for the constand buffer with the matching name
+	// Search for the constant buffer with the matching name
 	for(unsigned i=0; i<ctx->currentShaders.size() && !cb; ++i) {
 		shader = ctx->currentShaders[i];
 		if(!shader) continue;
