@@ -168,7 +168,7 @@ void AvlTree::remove(Node& node)
 
 void AvlTree::removeAll()
 {
-	// NOTE: The simplest way, but too slow because
+	// NOTE: The simplest way, but slow because
 	// all the tree balancing act is just a waste.
 //	while(!isEmpty())
 //		mRoot->removeThis();
@@ -185,26 +185,10 @@ void AvlTree::removeAll()
 
 void AvlTree::destroyAll()
 {
-	// NOTE: The simplest way, but too slow because
+	// NOTE: The simplest way, but slow because
 	// all the tree balancing act is just a waste.
 	while(!isEmpty())
 		mRoot->destroyThis();
-
-	// NOTE: A faster destroy all approach, but use more temporary memory
-/*	Node** tmp = (Node**)MCD_STACKALLOCA(mCount * sizeof(Node*));
-	size_t i = 0;
-	for(Node* n = getExtrRootL(); n != NULL; n = n->next(), ++i)
-		tmp[i] = n;
-
-	for(; mCount--; ) {
-		tmp[mCount]->mAvlTree = NULL;
-		tmp[mCount]->destroyThis();
-	}
-
-	mCount = 0;
-	mRoot = NULL;
-
-	MCD_STACKFREE(tmp);*/
 }
 
 void AvlTree::replaceFixTop(Node& node, Node& next)

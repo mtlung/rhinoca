@@ -309,13 +309,20 @@ static void _deleteBuffer(RgDriverBuffer* self)
 }
 
 static const Array<D3D11_BIND_FLAG, 4> _bufferBindFlag = {
-	D3D11_BIND_FLAG(0),
+	D3D11_BIND_FLAG(-1),
 	D3D11_BIND_VERTEX_BUFFER,
 	D3D11_BIND_INDEX_BUFFER,
 	D3D11_BIND_CONSTANT_BUFFER
 };
 
-static bool _initBuffer(RgDriverBuffer* self, RgDriverBufferType type, void* initData, unsigned sizeInBytes)
+static const Array<D3D11_USAGE, 4> _bufferUsage = {
+	D3D11_USAGE(-1),
+	D3D11_USAGE_DEFAULT,
+	D3D11_USAGE_STAGING,
+	D3D11_USAGE_DYNAMIC
+};
+
+static bool _initBuffer(RgDriverBuffer* self, RgDriverBufferType type, RgDriverDataUsage usage, void* initData, unsigned sizeInBytes)
 {
 	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	RgDriverBufferImpl* impl = static_cast<RgDriverBufferImpl*>(self);
@@ -324,11 +331,11 @@ static bool _initBuffer(RgDriverBuffer* self, RgDriverBufferType type, void* ini
 	self->type = type;
 	self->sizeInBytes = sizeInBytes;
 
-	D3D11_BIND_FLAG flag = _bufferBindFlag[type & (~RgDriverBufferType_System)];
+	D3D11_BIND_FLAG flag = _bufferBindFlag[type];
 
 	D3D11_BUFFER_DESC desc;
 	ZeroMemory(&desc, sizeof(desc));
-	desc.Usage = D3D11_USAGE_DYNAMIC;
+	desc.Usage = _bufferUsage[usage];
 	desc.ByteWidth = sizeInBytes;
 	desc.BindFlags = flag;
 	desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;	// TODO: Revise it later
@@ -359,11 +366,11 @@ static bool _updateBuffer(RgDriverBuffer* self, unsigned offsetInBytes, void* da
 	if(offsetInBytes + sizeInBytes > self->sizeInBytes)
 		return false;
 
-	if(self->type & RgDriverBufferType_System)
-		memcpy(((char*)impl->systemBuf) + offsetInBytes, data, sizeInBytes);
-	else {
+//	if(self->type & RgDriverBufferType_System)
+//		memcpy(((char*)impl->systemBuf) + offsetInBytes, data, sizeInBytes);
+//	else {
 //		ctx->dxDeviceContext->UpdateSubresource(impl->dxBuffer, 
-	}
+//	}
 
 	return true;
 }
@@ -379,6 +386,13 @@ static void* _mapBuffer(RgDriverBuffer* self, RgDriverBufferMapUsage usage)
 
 	if(!impl->dxBuffer)
 		return NULL;
+
+	if(impl->type == RgDriverBufferType_Uniform) {
+		if(usage & RgDriverBufferMapUsage_Read) {
+			rhLog("error", "DX11 driver didn't support read back of constant buffer\n");
+			return NULL;
+		}
+	}
 
 	D3D11_MAPPED_SUBRESOURCE mapped = {0};
 	HRESULT hr = ctx->dxDeviceContext->Map(
@@ -433,7 +447,9 @@ static void _deleteShader(RgDriverShader* self)
 	if(!ctx || !impl) return;
 
 	for(unsigned i=0; i<ctx->currentShaders.size(); ++i)
-		if(ctx->currentShaders[i] == impl) ctx->currentShaders[i] = NULL;
+		if(ctx->currentShaders[i] == impl) {
+			ctx->currentShaders[i] = NULL;
+		}
 
 	safeRelease(impl->dxShader);
 	safeRelease(impl->dxShaderBlob);
@@ -520,10 +536,11 @@ static bool _initShader(RgDriverShader* self, RgDriverShaderType type, const cha
 	return true;
 }
 
+// If shaders == NULL || shaderCount == 0, this function will unbind all shaders
 bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 {
 	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
-	if(!ctx || !shaders || shaderCount == 0) return false;
+	if(!ctx) return false;
 
 	ctx->currentShaders.assign(NULL);
 

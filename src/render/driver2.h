@@ -27,8 +27,14 @@ typedef enum RgDriverBufferType
 	RgDriverBufferType_Vertex	= 1,	/// Vertex buffer
 	RgDriverBufferType_Index	= 2,	/// Index buffer
 	RgDriverBufferType_Uniform	= 3,	/// Shader uniform buffer
-	RgDriverBufferType_System	= 1 << 3,	/// Indicating the buffer will hold in system memory
 } RgDriverBufferType;
+
+typedef enum RgDriverDataUsage
+{
+	RgDriverDataUsage_Static	= 1,	/// No access for CPU after initialized
+	RgDriverDataUsage_Stream	= 2,	/// Upload to the GPU for every draw call
+	RgDriverDataUsage_Dynamic	= 3,	/// Write by CPU and read by GPU for several times
+} RgDriverDataUsage;
 
 typedef enum RgDriverBufferMapUsage
 {
@@ -39,6 +45,7 @@ typedef enum RgDriverBufferMapUsage
 typedef struct RgDriverBuffer
 {
 	RgDriverBufferType type;
+	RgDriverDataUsage usage;
 	unsigned sizeInBytes;
 } RgDriverBuffer;
 
@@ -232,7 +239,7 @@ typedef struct RgDriver
 // Buffer
 	RgDriverBuffer* (*newBuffer)();
 	void (*deleteBuffer)(RgDriverBuffer* self);
-	bool (*initBuffer)(RgDriverBuffer* self, RgDriverBufferType type, void* initData, unsigned sizeInBytes);
+	bool (*initBuffer)(RgDriverBuffer* self, RgDriverBufferType type, RgDriverDataUsage usage, void* initData, unsigned sizeInBytes);
 	bool (*updateBuffer)(RgDriverBuffer* self, unsigned offsetInBytes, void* data, unsigned sizeInBytes);
 	void* (*mapBuffer)(RgDriverBuffer* self, RgDriverBufferMapUsage usage);
 	void (*unmapBuffer)(RgDriverBuffer* self);

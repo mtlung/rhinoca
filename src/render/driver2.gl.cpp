@@ -343,26 +343,34 @@ static void _deleteBuffer(RgDriverBuffer* self)
 	delete static_cast<RgDriverBufferImpl*>(self);
 }
 
-static bool _initBuffer(RgDriverBuffer* self, RgDriverBufferType type, void* initData, unsigned sizeInBytes)
+static const Array<GLenum, 4> _bufferUsage = {
+	0,
+	GL_STATIC_DRAW,
+	GL_STREAM_DRAW,
+	GL_DYNAMIC_DRAW
+};
+
+static bool _initBuffer(RgDriverBuffer* self, RgDriverBufferType type, RgDriverDataUsage usage, void* initData, unsigned sizeInBytes)
 {
 	RgDriverBufferImpl* impl = static_cast<RgDriverBufferImpl*>(self);
 	if(!impl) return false;
 
 	self->type = type;
 	self->sizeInBytes = sizeInBytes;
+	self->usage = usage;
 
-	if(type & RgDriverBufferType_System) {
+	if(usage == RgDriverDataUsage_Stream) {
 		impl->systemBuf = rhinoca_malloc(sizeInBytes);
 		if(initData)
-			memcpy(impl->systemBuf, initData, sizeInBytes);
-	}
-	else {
+ 			memcpy(impl->systemBuf, initData, sizeInBytes);
+ 	}
+ 	else {
 		checkError();
 		glGenBuffers(1, &impl->glh);
-		GLenum t = _bufferTarget[type & (~RgDriverBufferType_System)];
+		GLenum t = _bufferTarget[type];
 		RHASSERT("Invalid RgDriverBufferType" && t != 0);
 		glBindBuffer(t, impl->glh);
-		glBufferData(t, sizeInBytes, initData, GL_STREAM_DRAW);
+		glBufferData(t, sizeInBytes, initData, _bufferUsage[usage]);
 		RHASSERT(impl->glh);
 		checkError();
 	}
@@ -378,11 +386,11 @@ static bool _updateBuffer(RgDriverBuffer* self, unsigned offsetInBytes, void* da
 	if(offsetInBytes + sizeInBytes > self->sizeInBytes)
 		return false;
 
-	if(self->type & RgDriverBufferType_System)
-		memcpy(((char*)impl->systemBuf) + offsetInBytes, data, sizeInBytes);
-	else {
+ 	if(impl->usage == RgDriverDataUsage_Stream)
+ 		memcpy(((char*)impl->systemBuf) + offsetInBytes, data, sizeInBytes);
+ 	else {
 		checkError();
-		GLenum t = _bufferTarget[self->type & (~RgDriverBufferType_System)];
+		GLenum t = _bufferTarget[self->type];
 		glBindBuffer(t, impl->glh);
 		glBufferSubData(t, offsetInBytes, sizeInBytes, data);
 		checkError();
@@ -403,7 +411,7 @@ static void* _mapBuffer(RgDriverBuffer* self, RgDriverBufferMapUsage usage)
 	void* ret = NULL;
 	checkError();
 	RHASSERT("Invalid RgDriverBufferMapUsage" && _bufferMapUsage[usage] != 0);
-	GLenum t = _bufferTarget[self->type & (~RgDriverBufferType_System)];
+	GLenum t = _bufferTarget[self->type];
 	glBindBuffer(t, impl->glh);
 	ret = glMapBuffer(t, _bufferMapUsage[usage]);
 	checkError();
@@ -425,7 +433,7 @@ static void _unmapBuffer(RgDriverBuffer* self)
 
 #if !defined(CR_GLES_2)
 	checkError();
-	GLenum t = _bufferTarget[self->type & (~RgDriverBufferType_System)];
+	GLenum t = _bufferTarget[self->type];
 	glBindBuffer(t, impl->glh);
 	glUnmapBuffer(t);
 	checkError();
@@ -652,14 +660,17 @@ static void _deleteShader(RgDriverShader* self)
 
 		// Destroy the shader program
 		if(cache) {
-			glUseProgram(0);
+			if(ctx->currentShaderProgram == &program) {
+				ctx->currentShaderProgram = NULL;
+				glUseProgram(0);
+			}
+
 			glDeleteProgram(program.glh);
 
 			program.glh = 0;	// For safety
 			program.hash = 0;	//
 
 			ctx->shaderProgramCache.remove(i);
-			ctx->currentShaderProgram = NULL;
 		}
 		else
 			++i;
@@ -910,7 +921,12 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 {
 	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
-	if(!ctx || !shaders || shaderCount == 0) return false;
+	if(!ctx) return false;
+
+	if(!shaders || shaderCount == 0) {
+		glUseProgram(0);
+		return true;
+	}
 
 	// Hash the address of the shaders to see if a shader program is already created or not
 	unsigned hash = _hash(shaders, shaderCount * sizeof(*shaders));
@@ -1078,14 +1094,8 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 		// Bind index buffer
 		if(buffer->type & RgDriverBufferType_Index)
 		{
-			if(buffer->type & RgDriverBufferType_System) {
-//				crGpuFixedIndexPtr = (char*)buffer->sysMem;
-				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-			}
-			else {
-//				crGpuFixedIndexPtr = nullptr;
-				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->glh);
-			}
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->glh);
+			ctx->currentIndexBufSysMemPtr = buffer->systemBuf;
 		}
 		// Bind vertex buffer
 		else if(buffer->type & RgDriverBufferType_Vertex)
@@ -1098,16 +1108,10 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 
 			// See: http://www.opengl.org/sdk/docs/man/xhtml/glVertexAttribPointer.xml
 			if(ProgramAttribute* a = _findProgramAttribute(ctx->currentShaderProgram, i->nameHash)) {
-				if(buffer->type & RgDriverBufferType_System) {
-					glBindBuffer(GL_ARRAY_BUFFER, 0);
-					glVertexAttribPointer(a->location, i->elementCount, m->elementType, m->normalized, i->stride, (char*)buffer->systemBuf + i->offset);
-					glEnableVertexAttribArray(a->location);
-				}
-				else {
-					glBindBuffer(GL_ARRAY_BUFFER, buffer->glh);
-					glVertexAttribPointer(a->location, i->elementCount, m->elementType, m->normalized, i->stride, (void*)i->offset);
-					glEnableVertexAttribArray(a->location);
-				}
+				// TODO: glVertexAttribPointer only work for vertex array but not plain system memory in certain GL version
+				glEnableVertexAttribArray(a->location);
+				glBindBuffer(GL_ARRAY_BUFFER, buffer->glh);
+				glVertexAttribPointer(a->location, i->elementCount, m->elementType, m->normalized, i->stride, (void*)(ptrdiff_t(buffer->systemBuf) + i->offset));
 			}
 			else
 				rhLog("error", "attribute not found!\n");
@@ -1141,11 +1145,17 @@ static void _drawTriangle(unsigned offset, unsigned vertexCount, unsigned flags)
 
 static void _drawTriangleIndexed(unsigned offset, unsigned indexCount, unsigned flags)
 {
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	if(!ctx) return;
+
 	GLenum mode = GL_TRIANGLES;
 	GLenum indexType = GL_UNSIGNED_SHORT;
-	unsigned byteOffset = offset * sizeof(rhuint16);
+	ptrdiff_t byteOffset = offset * sizeof(rhuint16);
 
 	checkError();
+	if(ctx->currentIndexBufSysMemPtr)
+		byteOffset += ptrdiff_t(ctx->currentIndexBufSysMemPtr);
+
 	glDrawElements(mode, indexCount, indexType, (void*)byteOffset);
 	checkError();
 }

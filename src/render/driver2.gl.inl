@@ -44,6 +44,8 @@ struct RgDriverContextImpl : public RgDriverContext
 	void* currentBlendStateHash;
 	void* currentDepthStencilStateHash;
 
+	void* currentIndexBufSysMemPtr;
+
 	PreAllocVector<RgDriverShaderProgramImpl, 256> shaderProgramCache;
 	RgDriverShaderProgramImpl* currentShaderProgram;
 

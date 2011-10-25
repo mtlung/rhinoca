@@ -38,10 +38,12 @@ RgDriverContext* _newDriverContext_GL(RgDriver* driver)
 	ret->driver = driver;
 	ret->width = ret->height = 0;
 	ret->magjorVersion = 2;
-	ret->minorVersion = 0;
+	ret->minorVersion = 2;
 
 	ret->currentBlendStateHash = 0;
 	ret->currentDepthStencilStateHash = 0;
+
+	ret->currentIndexBufSysMemPtr = NULL;
 
 	ret->currentShaderProgram = NULL;
 
