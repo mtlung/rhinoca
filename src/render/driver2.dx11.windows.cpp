@@ -7,9 +7,7 @@
 #include "../vector.h"
 
 #include <dxgi.h>
-//#include <d3dcommon.h>
 #include <d3d11.h>
-//#include <d3dx10math.h>
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dx11.lib")
@@ -271,7 +269,7 @@ void _driverSwapBuffers_DX11()
 	int sync = 1;	// use 0 for not vertical sync
 	RHVERIFY(SUCCEEDED(_currentContext->dxSwapChain->Present(sync, 0)));
 }
-/*
+
 bool _driverChangeResolution_DX11(unsigned width, unsigned height)
 {
 	if(!_currentContext) return false;
@@ -291,4 +289,3 @@ bool _driverChangeResolution_DX11(unsigned width, unsigned height)
 
 	return true;
 }
-*/

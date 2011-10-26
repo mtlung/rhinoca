@@ -338,7 +338,7 @@ static bool _initBuffer(RgDriverBuffer* self, RgDriverBufferType type, RgDriverD
 	desc.Usage = _bufferUsage[usage];
 	desc.ByteWidth = sizeInBytes;
 	desc.BindFlags = flag;
-	desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;	// TODO: Revise it later
+	desc.CPUAccessFlags = (usage == RgDriverDataUsage_Static) ? 0 : D3D11_CPU_ACCESS_WRITE;
 	desc.MiscFlags = 0;
 	desc.StructureByteStride = 0;
 
@@ -366,11 +366,20 @@ static bool _updateBuffer(RgDriverBuffer* self, unsigned offsetInBytes, void* da
 	if(offsetInBytes + sizeInBytes > self->sizeInBytes)
 		return false;
 
-//	if(self->type & RgDriverBufferType_System)
-//		memcpy(((char*)impl->systemBuf) + offsetInBytes, data, sizeInBytes);
-//	else {
-//		ctx->dxDeviceContext->UpdateSubresource(impl->dxBuffer, 
-//	}
+ 	if(impl->usage == RgDriverDataUsage_Stream)
+ 		memcpy(((char*)impl->systemBuf) + offsetInBytes, data, sizeInBytes);
+ 	else
+	{
+		// There are restriction on updating constant buffer
+		if(impl->type == RgDriverBufferType_Uniform) {
+			if(offsetInBytes != 0 && sizeInBytes != impl->sizeInBytes) {
+				rhLog("error", "DX11 didn't support partial update of constant buffer\n");
+				return false;
+			}
+		}
+
+		ctx->dxDeviceContext->UpdateSubresource(impl->dxBuffer, 0, NULL, data, 0, 0);
+	}
 
 	return true;
 }

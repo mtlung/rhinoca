@@ -39,7 +39,10 @@ public:
 
 	static LRESULT CALLBACK wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
+		GraphicsDriverTest* test = reinterpret_cast<GraphicsDriverTest*>(::GetWindowLongPtr(hWnd, GWLP_USERDATA));
 		if(uMsg == WM_CLOSE) PostQuitMessage(0);
+		if(uMsg == WM_SIZE)
+			test->resize(LOWORD(lParam), HIWORD(lParam));
 		return ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 
@@ -83,6 +86,7 @@ public:
 			NULL
 		);
 
+		::SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG>(this));
 		::ShowWindow(hWnd, true);
 	}
 
@@ -115,6 +119,12 @@ public:
 		return true;
 	}
 
+	void resize(unsigned width, unsigned height)
+	{
+		driver->changeResolution(width, height);
+		driver->setViewport(0, 0, context->width, context->height, 0, 1);
+	}
+
 	HWND hWnd;
 	RgDriver* driver;
 	RgDriverContext* context;
@@ -129,7 +139,7 @@ TEST_FIXTURE(GraphicsDriverTest, empty)
 	createWindow(1, 1);
 }
 
-static const unsigned driverIndex = 0;
+static const unsigned driverIndex = 1;
 
 static const char* driverStr[] = 
 {
@@ -179,7 +189,7 @@ TEST_FIXTURE(GraphicsDriverTest, glUniformBuffer)
 	// Create vertex buffer
 	float vertex[][4] = { {-1,1,0,1}, {-1,-1,0,1}, {1,-1,0,1}, {1,1,0,1} };
 	RgDriverBuffer* vbuffer = driver->newBuffer();
-	CHECK(driver->initBuffer(vbuffer, RgDriverBufferType_Vertex, RgDriverDataUsage_Stream, vertex, sizeof(vertex)));
+	CHECK(driver->initBuffer(vbuffer, RgDriverBufferType_Vertex, RgDriverDataUsage_Static, vertex, sizeof(vertex)));
 
 	// Create index buffer
 	rhuint16 index[][3] = { {0, 1, 2}, {0, 2, 3} };
@@ -213,11 +223,9 @@ TEST_FIXTURE(GraphicsDriverTest, glUniformBuffer)
 		color2[1] = (cos(timer.seconds()) + 1) / 2;
 		color2[6] = (cos(timer.seconds() * 2) + 1) / 2;
 
-		float* p = (float*)driver->mapBuffer(ubuffer1, RgDriverBufferMapUsage(RgDriverBufferMapUsage_Write));
-		memcpy(p, color1, sizeof(color1));
-		driver->unmapBuffer(ubuffer1);
+		driver->updateBuffer(ubuffer1, 0, color1, sizeof(color1));
 
-		p = (float*)driver->mapBuffer(ubuffer2, RgDriverBufferMapUsage(RgDriverBufferMapUsage_Write));
+		float* p = (float*)driver->mapBuffer(ubuffer2, RgDriverBufferMapUsage(RgDriverBufferMapUsage_Write));
 		memcpy(p, color2, sizeof(color2));
 		driver->unmapBuffer(ubuffer2);
 
