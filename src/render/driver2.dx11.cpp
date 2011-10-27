@@ -740,7 +740,7 @@ RgDriver* _rgNewRenderDriver_DX11(const char* options)
 	ret->useContext = _useDriverContext_DX11;
 	ret->currentContext = _getCurrentContext_DX11;
 	ret->swapBuffers = _driverSwapBuffers_DX11;
-//	ret->changeResolution = _driverChangeResolution_DX11;
+	ret->changeResolution = _driverChangeResolution_DX11;
 	ret->setViewport = _setViewport;
 	ret->clearColor = _clearColor;
 	ret->clearDepth = _clearDepth;

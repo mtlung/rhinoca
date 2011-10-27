@@ -14,6 +14,7 @@
 
 // OpenGL stuffs
 // Pixel buffer object:	http://www.songho.ca/opengl/gl_pbo.html
+// Opengl on Mac:		http://developer.apple.com/library/mac/#documentation/GraphicsImaging/Conceptual/OpenGL-MacProgGuide/opengl_intro/opengl_intro.html
 
 //////////////////////////////////////////////////////////////////////////
 // Common stuffs
@@ -545,15 +546,39 @@ static unsigned char* _mipLevelData(RgDriverTextureImpl* self, unsigned mipIndex
 	return (unsigned char*)(data) + _mipLevelOffset(self, mipIndex, mipWidth, mipHeight);
 }
 
+static unsigned _textureSize(RgDriverTextureImpl* self, unsigned mipCount)
+{
+	unsigned ret = 0;
+	unsigned w, h;
+	for(unsigned i=0; i<mipCount; ++i) {
+		ret += _mipLevelOffset(self, i+1, w, h);
+	}
+	return ret;
+}
+
 static bool _commitTexture(RgDriverTexture* self, const void* data, unsigned rowPaddingInBytes)
 {
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
 	RgDriverTextureImpl* impl = static_cast<RgDriverTextureImpl*>(self);
-	if(!impl) return false;
+	if(!ctx || !impl) return false;
 	if(!impl->format) return false;
 
 	checkError();
 
-	glGenTextures(1, &impl->glh);
+	if(!impl->glh)
+		glGenTextures(1, &impl->glh);
+
+	const unsigned mipCount = 1;	// TODO: Allow loading mip maps
+
+	// Using PBO
+	static const bool usePbo = true;
+	if(usePbo) {
+		unsigned textureSize = _textureSize(impl, mipCount);
+		GLuint pbo = ctx->pixelBufferCache[(ctx->currentPixelBufferIndex++) % ctx->pixelBufferCache.size()];
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
+		glBufferData(GL_PIXEL_UNPACK_BUFFER, textureSize, data, GL_STREAM_DRAW_ARB);
+	}
+
 	glBindTexture(impl->glTarget, impl->glh);
 
 	// Give the texture object a valid sampler state, even we might use sampler object
@@ -562,13 +587,12 @@ static bool _commitTexture(RgDriverTexture* self, const void* data, unsigned row
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-	const unsigned mipCount = 1;	// TODO: Allow loading mip maps
 	TextureFormatMapping* mapping = impl->formatMapping;
 
 	for(unsigned i=0; i<mipCount; ++i)
 	{
 		unsigned mipw, miph;
-		unsigned char* mipData = _mipLevelData(impl, i, mipw, miph, data);
+		unsigned char* mipData = _mipLevelData(impl, i, mipw, miph, usePbo ? NULL : data);
 
 		if(impl->format & RgDriverTextureFormat_Compressed) {
 			unsigned imgSize = (mipw * miph) >> mapping->glPixelSize;
@@ -619,6 +643,9 @@ static bool _commitTexture(RgDriverTexture* self, const void* data, unsigned row
 			glPixelStorei(GL_UNPACK_ALIGNMENT, alignmentBackup);
 		}
 	}
+
+	if(usePbo)
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
 	checkError();
 

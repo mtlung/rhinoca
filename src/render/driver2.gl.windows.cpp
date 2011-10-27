@@ -47,6 +47,9 @@ RgDriverContext* _newDriverContext_GL(RgDriver* driver)
 
 	ret->currentShaderProgram = NULL;
 
+	ret->currentPixelBufferIndex = 0;
+	ret->pixelBufferCache.resize(ret->pixelBufferCache.capacity());
+
 	RgDriverContextImpl::TextureState texState = { 0, 0 };
 	ret->textureStateCache.assign(texState);
 
@@ -75,6 +78,9 @@ void _deleteDriverContext_GL(RgDriverContext* self)
 		if(impl->textureStateCache[i].glh != 0)
 			glDeleteSamplers(1, &impl->textureStateCache[i].glh);
 	}
+
+	// Free the pixel buffer cache
+	glDeleteBuffers(impl->pixelBufferCache.size(), &impl->pixelBufferCache[0]);
 
 	if(impl == _currentContext) {
 		 wglMakeCurrent(NULL, NULL); 
@@ -176,6 +182,9 @@ bool _initDriverContext_GL(RgDriverContext* self, void* platformSpecificWindow)
 	}
 
 	impl->driver->applyDefaultState(impl);
+
+	// Init pixel buffer cache
+	glGenBuffers(impl->pixelBufferCache.size(), &impl->pixelBufferCache[0]);
 
 	return ret;
 }

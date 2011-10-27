@@ -46,8 +46,12 @@ struct RgDriverContextImpl : public RgDriverContext
 
 	void* currentIndexBufSysMemPtr;
 
-	PreAllocVector<RgDriverShaderProgramImpl, 256> shaderProgramCache;
+	PreAllocVector<RgDriverShaderProgramImpl, 64> shaderProgramCache;
 	RgDriverShaderProgramImpl* currentShaderProgram;
+
+	// A ring of pixel buffer object
+	PreAllocVector<GLuint, 1> pixelBufferCache;
+	unsigned currentPixelBufferIndex;
 
 	struct TextureState {
 		void* hash;

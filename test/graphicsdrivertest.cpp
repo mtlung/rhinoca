@@ -139,7 +139,7 @@ TEST_FIXTURE(GraphicsDriverTest, empty)
 	createWindow(1, 1);
 }
 
-static const unsigned driverIndex = 1;
+static const unsigned driverIndex = 0;
 
 static const char* driverStr[] = 
 {
@@ -172,8 +172,9 @@ static const char* pShaderSrc[] =
 	"float4 main(float4 pos:SV_POSITION):SV_Target{return _color1+_color2+_color3;}"
 };
 
-TEST_FIXTURE(GraphicsDriverTest, glUniformBuffer)
+TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 {
+	return;
 	// To draw a full screen quad:
 	// http://stackoverflow.com/questions/2588875/whats-the-best-way-to-draw-a-fullscreen-quad-in-opengl-3-2
 
@@ -238,6 +239,76 @@ TEST_FIXTURE(GraphicsDriverTest, glUniformBuffer)
 
 	driver->deleteBuffer(ubuffer1);
 	driver->deleteBuffer(ubuffer2);
+	driver->deleteBuffer(vbuffer);
+	driver->deleteBuffer(ibuffer);
+}
+
+TEST_FIXTURE(GraphicsDriverTest, textureCommit)
+{
+	createWindow(200, 200);
+	initContext(driverStr[driverIndex]);
+
+	// Init shader
+	const char* vShaderSrc =
+		"attribute vec4 vertex;"
+		"varying vec2 texCoord;"
+		"void main(void){texCoord=(vertex+1)/2;gl_Position=vertex;}";
+	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc, 1));
+
+	const char* pShaderSrc =
+		"uniform sampler2D u_tex;"
+		"varying vec2 texCoord;"
+		"void main(void){gl_FragColor=texture2D(u_tex, texCoord);}";
+	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc, 1));
+
+	RgDriverShader* shaders[] = { vShader, pShader };
+
+	// Init texture
+	const unsigned char* texData = (const unsigned char*)malloc(sizeof(float) * 4 * 1024 * 1024);
+
+	RgDriverTexture* texture = driver->newTexture();
+	CHECK(driver->initTexture(texture, 1024, 1024, RgDriverTextureFormat_RGBA));
+	CHECK(driver->commitTexture(texture, texData, 0));
+
+	// Set the texture state
+	RgDriverTextureState textureState =  {
+		0,
+		RgDriverTextureFilterMode_MinMagLinear,
+		RgDriverTextureAddressMode_Repeat, RgDriverTextureAddressMode_Repeat
+	};
+
+	// Create vertex buffer
+	float vertex[][4] = { {-1,1,0,1}, {-1,-1,0,1}, {1,-1,0,1}, {1,1,0,1} };
+	RgDriverBuffer* vbuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(vbuffer, RgDriverBufferType_Vertex, RgDriverDataUsage_Static, vertex, sizeof(vertex)));
+
+	// Create index buffer
+	rhuint16 index[][3] = { {0, 1, 2}, {0, 2, 3} };
+	RgDriverBuffer* ibuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ibuffer, RgDriverBufferType_Index, RgDriverDataUsage_Static, index, sizeof(index)));
+
+	// Bind shader input layout
+	RgDriverShaderInput input[] = {
+		{ vbuffer, vShader,"vertex", 4, 0, 0, 0, 0 },
+		{ ibuffer, NULL, NULL, 1, 0, 0, 0, 0 },
+	};
+
+	while(keepRun()) {
+		driver->clearColor(0, 0, 0, 0);
+
+		CHECK(driver->commitTexture(texture, texData, 0));
+
+		CHECK(driver->bindShaders(shaders, 2));
+		CHECK(driver->bindShaderInput(input, COUNTOF(input), NULL));
+
+		driver->setTextureState(&textureState, 1, 0);
+		CHECK(driver->setUniformTexture(StringHash("u_tex"), texture));
+
+		driver->drawTriangleIndexed(0, 6, 0);
+		driver->swapBuffers();
+	}
+
+	driver->deleteTexture(texture);
 	driver->deleteBuffer(vbuffer);
 	driver->deleteBuffer(ibuffer);
 }
