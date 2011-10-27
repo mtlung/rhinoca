@@ -12,6 +12,9 @@
 #include "gl/glext.h"
 #include "win32/extensionswin32fwd.h"
 
+// OpenGL stuffs
+// Pixel buffer object:	http://www.songho.ca/opengl/gl_pbo.html
+
 //////////////////////////////////////////////////////////////////////////
 // Common stuffs
 

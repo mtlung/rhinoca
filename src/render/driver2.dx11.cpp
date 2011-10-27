@@ -12,12 +12,23 @@
 #include <D3DX11async.h>
 
 // DirectX stuffs
-// State Object:	http://msdn.microsoft.com/en-us/library/bb205071.aspx
-// DX migration:	http://msdn.microsoft.com/en-us/library/windows/desktop/ff476190%28v=vs.85%29.aspx
-// DX11 tutorial:	http://www.rastertek.com/tutindex.html
-// DX10 porting:	http://developer.amd.com/.../Riguer-DX10_tips_and_tricks_for_print.pdf
-// DX10 FAQ:		http://msdn.microsoft.com/en-us/library/windows/desktop/ee416643%28v=vs.85%29.aspx#constant_buffers
-// DX10 cbuffer:	http://www.gamedev.net/topic/574711-d3d10-equivalent-of-gluniform/
+// State Object:					http://msdn.microsoft.com/en-us/library/bb205071.aspx
+// DX migration:					http://msdn.microsoft.com/en-us/library/windows/desktop/ff476190%28v=vs.85%29.aspx
+// DX11 tutorial:					http://www.rastertek.com/tutindex.html
+// DX10 porting:					http://developer.amd.com/.../Riguer-DX10_tips_and_tricks_for_print.pdf
+// DX10 FAQ:						http://msdn.microsoft.com/en-us/library/windows/desktop/ee416643%28v=vs.85%29.aspx#constant_buffers
+// DX10 cbuffer:					http://www.gamedev.net/topic/574711-d3d10-equivalent-of-gluniform/
+// DX10 resources usage:			http://msdn.microsoft.com/en-us/library/windows/desktop/bb205127%28v=VS.85%29.aspx
+// Ogre impl of buffer:				https://arkeon.dyndns.org/svn-scol/trunk/dependencies/Ogre/Sources/RenderSystems/Direct3D11/src/OgreD3D11HardwareBuffer.cpp
+// UpdateSubResource vs staging:	http://forums.create.msdn.com/forums/t/47875.aspx
+
+// Table of DX11 usage and CPU access:
+/*								Access Flag		UpdateSubresource						Map							Multi-sample
+	D3D11_USAGE_DEFAULT				0					Yes								No								No
+	D3D11_USAGE_IMMUTABLE 			0					No								No
+	D3D11_USAGE_DYNAMIC				Write				No				MAP_WRITE_DISCARD, MAP_WRITE_NO_OVERWRITE
+	D3D11_USAGE_STAGING			Read,Write
+ */
 
 //////////////////////////////////////////////////////////////////////////
 // Common stuffs
