@@ -12,6 +12,7 @@ typedef struct ProgramUniform
 	unsigned nameHash;		// Hash value for the uniform name
 	GLuint location;
 	GLuint arraySize;		// Equals to 1 if not an array
+	GLenum type;
 	int texunit;
 } ProgramUniform;
 

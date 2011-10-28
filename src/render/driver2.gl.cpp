@@ -13,11 +13,14 @@
 #include "win32/extensionswin32fwd.h"
 
 // OpenGL stuffs
-// Pixel buffer object:	http://www.songho.ca/opengl/gl_pbo.html
-// Opengl on Mac:		http://developer.apple.com/library/mac/#documentation/GraphicsImaging/Conceptual/OpenGL-MacProgGuide/opengl_intro/opengl_intro.html
+// Pixel buffer object:		http://www.songho.ca/opengl/gl_pbo.html
+// Buffer object streaming:	http://www.opengl.org/wiki/Buffer_Object_Streaming
+// Opengl on Mac:			http://developer.apple.com/library/mac/#documentation/GraphicsImaging/Conceptual/OpenGL-MacProgGuide/opengl_intro/opengl_intro.html
 
 //////////////////////////////////////////////////////////////////////////
 // Common stuffs
+
+//#define RG_GLES 1
 
 #define checkError() { GLenum err = glGetError(); if(err != GL_NO_ERROR) rhLog("error", "unhandled GL error 0x%04x before %s %d\n", err, __FILE__, __LINE__); }
 #define clearError() { glGetError(); }
@@ -308,12 +311,12 @@ static const Array<GLenum, 4> _bufferTarget = {
 	0,
 	GL_ARRAY_BUFFER,
 	GL_ELEMENT_ARRAY_BUFFER,
-#if !defined(CR_GLES_2)
+#if !defined(RG_GLES)
 	GL_UNIFORM_BUFFER
 #endif
 };
 
-#if !defined(CR_GLES_2)
+#if !defined(RG_GLES)
 static const Array<GLenum, 4> _bufferMapUsage = {
 	0,
 	GL_READ_ONLY,
@@ -411,7 +414,7 @@ static void* _mapBuffer(RgDriverBuffer* self, RgDriverBufferMapUsage usage)
 	if(impl->systemBuf)
 		return impl->systemBuf;
 
-#if !defined(CR_GLES_2)
+#if !defined(RG_GLES)
 	void* ret = NULL;
 	checkError();
 	RHASSERT("Invalid RgDriverBufferMapUsage" && _bufferMapUsage[usage] != 0);
@@ -435,7 +438,7 @@ static void _unmapBuffer(RgDriverBuffer* self)
 		return;
 	}
 
-#if !defined(CR_GLES_2)
+#if !defined(RG_GLES)
 	checkError();
 	GLenum t = _bufferTarget[self->type];
 	glBindBuffer(t, impl->glh);
@@ -570,6 +573,7 @@ static bool _commitTexture(RgDriverTexture* self, const void* data, unsigned row
 
 	const unsigned mipCount = 1;	// TODO: Allow loading mip maps
 
+#if !defined(RG_GLES)
 	// Using PBO
 	static const bool usePbo = true;
 	if(usePbo) {
@@ -578,6 +582,7 @@ static bool _commitTexture(RgDriverTexture* self, const void* data, unsigned row
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
 		glBufferData(GL_PIXEL_UNPACK_BUFFER, textureSize, data, GL_STREAM_DRAW_ARB);
 	}
+#endif
 
 	glBindTexture(impl->glTarget, impl->glh);
 
@@ -644,8 +649,10 @@ static bool _commitTexture(RgDriverTexture* self, const void* data, unsigned row
 		}
 	}
 
+#if !defined(RG_GLES)
 	if(usePbo)
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+#endif
 
 	checkError();
 
@@ -658,7 +665,7 @@ static bool _commitTexture(RgDriverTexture* self, const void* data, unsigned row
 static const Array<GLenum, 5> _shaderTypes = {
 	GL_VERTEX_SHADER,
 	GL_FRAGMENT_SHADER,
-#if !defined(CR_GLES_2)
+#if !defined(RG_GLES)
 	GL_GEOMETRY_SHADER,
 	GL_TESS_CONTROL_SHADER,
 	GL_TESS_EVALUATION_SHADER,
@@ -864,11 +871,12 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 			uniform->nameHash = StringHash(uniformName);
 			uniform->location = glGetUniformLocation(impl->glh, uniformName);
 			uniform->arraySize = uniformSize;
+			uniform->type = uniformType;
 
 			switch(uniformType) {
 				case GL_SAMPLER_2D:
 				case GL_SAMPLER_CUBE:
-#if !defined(CR_GLES_2)
+#if !defined(RG_GLES)
 				case GL_SAMPLER_1D:
 				case GL_SAMPLER_3D:
 				case GL_SAMPLER_1D_SHADOW:
@@ -1007,8 +1015,12 @@ bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer)
 
 	checkError();
 
+#if !defined(RG_GLES)
 	glBindBufferBase(GL_UNIFORM_BUFFER, block->index, bufferImpl->glh);
 	glUniformBlockBinding(program->glh, block->index, block->index);
+#else
+	// TODO: Implement
+#endif
 
 	checkError();
 
