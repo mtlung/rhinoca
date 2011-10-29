@@ -22,7 +22,11 @@
 
 //#define RG_GLES 1
 
+#ifndef NDEBUG
 #define checkError() { GLenum err = glGetError(); if(err != GL_NO_ERROR) rhLog("error", "unhandled GL error 0x%04x before %s %d\n", err, __FILE__, __LINE__); }
+#else
+#define checkError()
+#endif
 #define clearError() { glGetError(); }
 
 static unsigned _hash(const void* data, unsigned len)
@@ -582,6 +586,8 @@ static bool _commitTexture(RgDriverTexture* self, const void* data, unsigned row
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
 		glBufferData(GL_PIXEL_UNPACK_BUFFER, textureSize, data, GL_STREAM_DRAW_ARB);
 	}
+#else
+	static const bool usePbo = false;
 #endif
 
 	glBindTexture(impl->glTarget, impl->glh);
@@ -997,7 +1003,7 @@ bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 
 // See: http://www.opengl.org/wiki/Uniform_Buffer_Object
 // See: http://arcsynthesis.org/gltut/Positioning/Tut07%20Shared%20Uniforms.html
-bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer)
+bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer, RgDriverShaderInput* input = NULL)
 {
 	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return false;
@@ -1005,71 +1011,59 @@ bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer)
 	RgDriverShaderProgramImpl* program = ctx->currentShaderProgram;
 	if(!program) return false;
 
-	ProgramUniformBlock* block = _findProgramUniformBlock(nameHash);
-	if(!block) return false;
-
 	RgDriverBufferImpl* bufferImpl = static_cast<RgDriverBufferImpl*>(buffer);
 	if(!bufferImpl) return false;
 
-	if(int(bufferImpl->sizeInBytes) < block->blockSizeInBytes) return false;
+	if(bufferImpl->type != RgDriverBufferType_Uniform)
+		return false;
 
 	checkError();
 
+	do {	// Breakable scope
+
 #if !defined(RG_GLES)
-	glBindBufferBase(GL_UNIFORM_BUFFER, block->index, bufferImpl->glh);
-	glUniformBlockBinding(program->glh, block->index, block->index);
+	// Find the nameHash in the uniform block
+	if(ProgramUniformBlock* block = _findProgramUniformBlock(nameHash)) {
+		if(int(bufferImpl->sizeInBytes) < block->blockSizeInBytes)
+			return false;
+
+		glBindBufferBase(GL_UNIFORM_BUFFER, block->index, bufferImpl->glh);
+		glUniformBlockBinding(program->glh, block->index, block->index);
+		break;
+	}
 #else
 	// TODO: Implement
 #endif
 
+	if(!bufferImpl->systemBuf) {
+		RHASSERT(false);
+		return false;
+	}
+
+	if(ProgramUniform* uniform = _findProgramUniform(nameHash)) {
+		char* data = (char*)(bufferImpl->systemBuf) + input->offset;
+		switch(uniform->type) {
+		case GL_FLOAT_VEC2:
+			glUniform2fv(uniform->location, input->elementCount, (float*)data);
+			break;
+		case GL_FLOAT_VEC3:
+			glUniform3fv(uniform->location, input->elementCount, (float*)data);
+			break;
+		case GL_FLOAT_VEC4:
+			glUniform4fv(uniform->location, input->elementCount, (float*)data);
+			break;
+		case GL_FLOAT_MAT4:
+			glUniformMatrix4fv(uniform->location, input->elementCount, false, (float*)data);
+			break;
+		default: break;
+		}
+	}
+
+	} while(false);	// Breakable scope
+
 	checkError();
 
 	return true;
-}
-
-bool _setUniform1fv(unsigned nameHash, const float* value, unsigned count)
-{
-	if(ProgramUniform* uniform = _findProgramUniform(nameHash)) {
-		glUniform1fv(uniform->location, count, value);
-		return true;
-	}
-	return false;
-}
-
-bool _setUniform2fv(unsigned nameHash, const float* value, unsigned count)
-{
-	if(ProgramUniform* uniform = _findProgramUniform(nameHash)) {
-		glUniform2fv(uniform->location, count, value);
-		return true;
-	}
-	return false;
-}
-
-bool _setUniform3fv(unsigned nameHash, const float* value, unsigned count)
-{
-	if(ProgramUniform* uniform = _findProgramUniform(nameHash)) {
-		glUniform3fv(uniform->location, count, value);
-		return true;
-	}
-	return false;
-}
-
-bool _setUniform4fv(unsigned nameHash, const float* value, unsigned count)
-{
-	if(ProgramUniform* uniform = _findProgramUniform(nameHash)) {
-		glUniform4fv(uniform->location, count, value);
-		return true;
-	}
-	return false;
-}
-
-bool _setUniformMat44fv(unsigned nameHash, bool transpose, const float* value, unsigned count)
-{
-	if(ProgramUniform* uniform = _findProgramUniform(nameHash)) {
-		glUniformMatrix4fv(uniform->location, count, transpose, value);
-		return true;
-	}
-	return false;
 }
 
 bool _setUniformTexture(unsigned nameHash, RgDriverTexture* texture)
@@ -1114,9 +1108,6 @@ ProgramInputMapping _programInputMappings[] = {
 
 bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned* cacheId)
 {
-//	glShadeModel(GL_SMOOTH);
-//	glFrontFace(GL_CCW);			// OpenGl use counterclockwise as the default winding
-
 	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return false;
 	RgDriverShaderProgramImpl* impl = static_cast<RgDriverShaderProgramImpl*>(ctx->currentShaderProgram);
@@ -1124,6 +1115,54 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 
 	checkError();
 
+	// Make a hash value for the inputs
+	unsigned inputHash = 0;
+	for(unsigned attri=0; attri<inputCount; ++attri)
+	{
+		RgDriverShaderInput* i = &inputs[attri];
+		RgDriverBufferImpl* buffer = static_cast<RgDriverBufferImpl*>(i->buffer);
+		RgDriverShaderImpl* shader = static_cast<RgDriverShaderImpl*>(i->shader);
+		if(!i || !i->buffer || !shader) continue;
+		if(!(buffer->type == RgDriverBufferType_Vertex)) continue;	// VAO only consider vertex buffer
+
+		// TODO: Also hash element type
+		struct BlockToHash {
+			void* systemBuf;
+			GLuint shader, vbo;
+			unsigned elementCount, stride, offset;
+		};
+
+		BlockToHash block = {
+			buffer->systemBuf,
+			shader->glh, buffer->glh,
+			i->elementCount, i->stride, i->offset
+		};
+
+		inputHash += _hash(&block, sizeof(block));	// We use += such that the order of inputs are not important
+	}
+
+	// Search for existing VAO
+	GLuint vao = 0;
+	bool vaoCacheFound = false;
+	for(unsigned i=0; i<ctx->vaoCache.size(); ++i)
+	{
+		if(inputHash == ctx->vaoCache[i].hash) {
+			vao = ctx->vaoCache[i].glh;
+			ctx->vaoCache[i].hotness += 1.0f;
+			vaoCacheFound = true;
+			break;
+		}
+	}
+
+	if(vao == 0) {
+		glGenVertexArrays(1, &vao);
+		VertexArrayObject o = { inputHash, vao, 1.0f };
+		ctx->vaoCache.push_back(o);
+	}
+
+	glBindVertexArray(vao);
+
+	// Loop for each inputs and do the necessary binding
 	for(unsigned attri=0; attri<inputCount; ++attri)
 	{
 		RgDriverShaderInput* i = &inputs[attri];
@@ -1134,13 +1173,13 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 		RgDriverBufferImpl* buffer = static_cast<RgDriverBufferImpl*>(i->buffer);
 
 		// Bind index buffer
-		if(buffer->type & RgDriverBufferType_Index)
+		if(buffer->type == RgDriverBufferType_Index)
 		{
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->glh);
 			ctx->currentIndexBufSysMemPtr = buffer->systemBuf;
 		}
 		// Bind vertex buffer
-		else if(buffer->type & RgDriverBufferType_Vertex)
+		else if((buffer->type == RgDriverBufferType_Vertex) && !vaoCacheFound)
 		{
 			ProgramInputMapping* m = &_programInputMappings[i->elementCount];
 
@@ -1153,10 +1192,22 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 				// TODO: glVertexAttribPointer only work for vertex array but not plain system memory in certain GL version
 				glEnableVertexAttribArray(a->location);
 				glBindBuffer(GL_ARRAY_BUFFER, buffer->glh);
+				// TODO: Use correct element type
 				glVertexAttribPointer(a->location, i->elementCount, m->elementType, m->normalized, i->stride, (void*)(ptrdiff_t(buffer->systemBuf) + i->offset));
 			}
-			else
+			else {
 				rhLog("error", "attribute not found!\n");
+				return false;
+			}
+		}
+		else if(buffer->type == RgDriverBufferType_Uniform)
+		{
+			// Generate nameHash if necessary
+			if(i->nameHash == 0 && i->name)
+				i->nameHash = StringHash(i->name);
+
+			if(!_setUniformBuffer(i->nameHash, buffer, i))
+				return false;
 		}
 	}
 
@@ -1257,12 +1308,6 @@ RgDriver* _rgNewRenderDriver_GL(const char* options)
 	ret->initShader = _initShader;
 
 	ret->bindShaders = _bindShaders;
-	ret->setUniformBuffer = _setUniformBuffer;
-	ret->setUniform1fv = _setUniform1fv;
-	ret->setUniform2fv = _setUniform2fv;
-	ret->setUniform3fv = _setUniform3fv;
-	ret->setUniform4fv = _setUniform4fv;
-	ret->setUniformMat44fv = _setUniformMat44fv;
 	ret->setUniformTexture = _setUniformTexture;
 
 	ret->bindShaderInput = _bindShaderInput;

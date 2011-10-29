@@ -29,6 +29,13 @@ typedef struct ProgramAttribute
 	GLuint location;
 } ProgramAttribute;
 
+typedef struct VertexArrayObject	// TODO: Use a decay mechanizm to clean this up
+{
+	unsigned hash;
+	GLuint glh;
+	float hotness;
+} VertexArrayObject;
+
 struct RgDriverShaderProgramImpl : public RgDriverShaderProgram
 {
 	RgDriverShaderProgramImpl() : hash(0), glh(0) {}
@@ -53,6 +60,8 @@ struct RgDriverContextImpl : public RgDriverContext
 	// A ring of pixel buffer object
 	PreAllocVector<GLuint, 1> pixelBufferCache;
 	unsigned currentPixelBufferIndex;
+
+	PreAllocVector<VertexArrayObject, 16> vaoCache;
 
 	struct TextureState {
 		void* hash;

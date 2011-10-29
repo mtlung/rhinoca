@@ -11,6 +11,10 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
+static float randf() {
+	return (float)rand() / RAND_MAX;
+}
+
 class GraphicsDriverTest
 {
 public:
@@ -94,8 +98,8 @@ public:
 	{
 		driver = rgNewRenderDriver(driverStr, NULL);
 		context = driver->newContext(driver);
-		context->magjorVersion = 3;
-		context->minorVersion = 2;
+		context->magjorVersion = 2;
+		context->minorVersion = 0;
 		driver->initContext(context, hWnd);
 		driver->useContext(context);
 
@@ -174,7 +178,6 @@ static const char* pShaderSrc[] =
 
 TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 {
-	return;
 	// To draw a full screen quad:
 	// http://stackoverflow.com/questions/2588875/whats-the-best-way-to-draw-a-fullscreen-quad-in-opengl-3-2
 
@@ -197,11 +200,6 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 	RgDriverBuffer* ibuffer = driver->newBuffer();
 	CHECK(driver->initBuffer(ibuffer, RgDriverBufferType_Index, RgDriverDataUsage_Static, index, sizeof(index)));
 
-	RgDriverShaderInput shaderInput[] = {
-		{ vbuffer, vShader, "position", 4, 0, 4*sizeof(float), 0, 0 },
-		{ ibuffer, NULL, NULL, 1, 0, 0, 0, 0 },
-	};
-
 	// Create uniform buffer
 	float color1[] = { 0, 0, 0, 1 };
 	RgDriverBuffer* ubuffer1 = driver->newBuffer();
@@ -210,6 +208,13 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 	float color2[] = { 0, 0, 0, 1,  0, 0, 0, 1 };
 	RgDriverBuffer* ubuffer2 = driver->newBuffer();
 	CHECK(driver->initBuffer(ubuffer2, RgDriverBufferType_Uniform, RgDriverDataUsage_Dynamic, color2, sizeof(color2)));
+
+	RgDriverShaderInput shaderInput[] = {
+		{ vbuffer, vShader, "position", 0, 4, 0, 4*sizeof(float), 0 },
+		{ ibuffer, NULL, NULL, 0, 1, 0, 0, 0 },
+		{ ubuffer1, pShader, "color1", 0, 1, 0, 0, 0 },
+		{ ubuffer2, pShader, "color2", 0, 1, 0, 0, 0 },
+	};
 
 	Timer timer;
 
@@ -230,17 +235,14 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 		memcpy(p, color2, sizeof(color2));
 		driver->unmapBuffer(ubuffer2);
 
-		CHECK(driver->setUniformBuffer(StringHash("color1"), ubuffer1));
-		CHECK(driver->setUniformBuffer(StringHash("color2"), ubuffer2));
-
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();
 	}
 
-	driver->deleteBuffer(ubuffer1);
-	driver->deleteBuffer(ubuffer2);
 	driver->deleteBuffer(vbuffer);
 	driver->deleteBuffer(ibuffer);
+	driver->deleteBuffer(ubuffer1);
+	driver->deleteBuffer(ubuffer2);
 }
 
 TEST_FIXTURE(GraphicsDriverTest, textureCommit)
@@ -264,10 +266,11 @@ TEST_FIXTURE(GraphicsDriverTest, textureCommit)
 	RgDriverShader* shaders[] = { vShader, pShader };
 
 	// Init texture
-	const unsigned char* texData = (const unsigned char*)malloc(sizeof(float) * 4 * 1024 * 1024);
+	const unsigned texDim = 1024;
+	const unsigned char* texData = (const unsigned char*)malloc(sizeof(char) * 4 * texDim * texDim);
 
 	RgDriverTexture* texture = driver->newTexture();
-	CHECK(driver->initTexture(texture, 1024, 1024, RgDriverTextureFormat_RGBA));
+	CHECK(driver->initTexture(texture, texDim, texDim, RgDriverTextureFormat_RGBA));
 	CHECK(driver->commitTexture(texture, texData, 0));
 
 	// Set the texture state
@@ -289,13 +292,20 @@ TEST_FIXTURE(GraphicsDriverTest, textureCommit)
 
 	// Bind shader input layout
 	RgDriverShaderInput input[] = {
-		{ vbuffer, vShader,"vertex", 4, 0, 0, 0, 0 },
-		{ ibuffer, NULL, NULL, 1, 0, 0, 0, 0 },
+		{ vbuffer, vShader,"vertex", 0, 4, 0, 0, 0 },
+		{ ibuffer, NULL, NULL, 0, 1, 0, 0, 0 },
 	};
 
 	while(keepRun()) {
 		driver->clearColor(0, 0, 0, 0);
 
+		// Make some noise in the texture
+		for(unsigned i=texDim; i--;) {
+			unsigned idx = unsigned(randf() * (texDim * texDim));
+			unsigned* pixel = ((unsigned*)texData) + idx % (texDim * texDim);
+			*pixel = unsigned(randf() * UINT_MAX);
+			pixel = pixel;
+		}
 		CHECK(driver->commitTexture(texture, texData, 0));
 
 		CHECK(driver->bindShaders(shaders, 2));
@@ -311,6 +321,7 @@ TEST_FIXTURE(GraphicsDriverTest, textureCommit)
 	driver->deleteTexture(texture);
 	driver->deleteBuffer(vbuffer);
 	driver->deleteBuffer(ibuffer);
+	free((void*)texData);
 }
 /*
 TEST_FIXTURE(GraphicsDriverTest, _texture)
@@ -363,8 +374,8 @@ TEST_FIXTURE(GraphicsDriverTest, _texture)
 
 	// Bind shader input layout
 	RgDriverShaderInput input[] = {
-		{ vbuffer, vShader,"vertex", 4, 0, 0, 0, 0 },
-		{ ibuffer, NULL, NULL, 1, 0, 0, 0, 0 },
+		{ vbuffer, vShader,"vertex", 0, 4, 0, 0, 0 },
+		{ ibuffer, NULL, NULL, 0, 1, 0, 0, 0 },
 	};
 
 	while(keepRun()) {
@@ -384,10 +395,11 @@ TEST_FIXTURE(GraphicsDriverTest, _texture)
 	driver->deleteBuffer(vbuffer);
 	driver->deleteBuffer(ibuffer);
 }
-
+*/
 TEST_FIXTURE(GraphicsDriverTest, 3d)
 {
 	createWindow(200, 200);
+	initContext(driverStr[driverIndex]);
 
 	// Init shader
 	const char* vShaderSrc =
@@ -414,21 +426,35 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 	RgDriverBuffer* ibuffer = driver->newBuffer();
 	CHECK(driver->initBuffer(ibuffer, RgDriverBufferType_Index, RgDriverDataUsage_Static, index, sizeof(index)));
 
-	// Bind shader input layout
-	RgDriverShaderInput input[] = {
-		{ vbuffer, vShader, "vertex", 3, 0, 0, 0, 0 },
-		{ ibuffer, NULL, NULL, 1, 0, 0, 0, 0 },
-	};
+	// Create uniform buffer
+	RgDriverBuffer* ubuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ubuffer, RgDriverBufferType_Uniform, RgDriverDataUsage_Stream, NULL, sizeof(float)*(16*2+4)));
 
 	// Model view matrix
-	float modelView[16];
+	float* modelView = (float*)driver->mapBuffer(ubuffer, RgDriverBufferMapUsage_Write);
+
 	rgMat44MakeIdentity(modelView);
 	float translate[] =  { 0, 0, -3 };
 	rgMat44TranslateBy(modelView, translate);
 
 	// Projection matrix
-	float prespective[16];
+	float* prespective = modelView + 16;
 	rgMat44MakePrespective(prespective, 90, 1, 2, 10);
+
+	// Color
+	float color[] = { 1, 1, 0, 1 };
+	memcpy(prespective + 16, color, sizeof(color));
+
+	driver->unmapBuffer(ubuffer);
+
+	// Bind shader input layout
+	RgDriverShaderInput input[] = {
+		{ vbuffer, vShader, "vertex", 0, 3, 0, 0, 0 },
+		{ ibuffer, NULL, NULL, 0, 1, 0, 0, 0 },
+		{ ubuffer, pShader, "modelViewMat", 0, 1, 0, 0, 0 },
+		{ ubuffer, pShader, "projectionMat", 0, 1, sizeof(float)*16, 0, 0 },
+		{ ubuffer, pShader, "u_color", 0, 1, sizeof(float)*16*2, 0, 0 },
+	};
 
 	while(keepRun()) {
 		driver->clearColor(0, 0, 0, 0);
@@ -436,23 +462,19 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 		CHECK(driver->bindShaders(shaders, 2));
 		CHECK(driver->bindShaderInput(input, COUNTOF(input), NULL));
 
-		CHECK(driver->setUniformMat44fv(StringHash("modelViewMat"), false, modelView, 1));
-		CHECK(driver->setUniformMat44fv(StringHash("projectionMat"), false, prespective, 1));
-
-		float c[] = { 1, 1, 0, 1 };
-		CHECK(driver->setUniform4fv(StringHash("u_color"), c, 1));
-
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();
 	}
 
 	driver->deleteBuffer(vbuffer);
 	driver->deleteBuffer(ibuffer);
+	driver->deleteBuffer(ubuffer);
 }
 
 TEST_FIXTURE(GraphicsDriverTest, blending)
 {
 	createWindow(200, 200);
+	initContext(driverStr[driverIndex]);
 
 	// Init shader
 	const char* vShaderSrc =
@@ -481,6 +503,10 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 	RgDriverBuffer* ibuffer = driver->newBuffer();
 	CHECK(driver->initBuffer(ibuffer, RgDriverBufferType_Index, RgDriverDataUsage_Static, index, sizeof(index)));
 
+	// Create uniform buffer
+	RgDriverBuffer* ubuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ubuffer, RgDriverBufferType_Uniform, RgDriverDataUsage_Stream, NULL, sizeof(float)*4));
+
 	// Set the blend state
 	RgDriverBlendState blend = {
 		0, true,
@@ -497,27 +523,29 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 		CHECK(driver->bindShaders(shaders, 2));
 
 		{	// Draw the first quad
+			float color[] = { 1, 1, 0, 0.5f };
+			driver->updateBuffer(ubuffer, 0, color, sizeof(color));
+
 			RgDriverShaderInput input[] = {
-				{ vbuffer1, vShader, "vertex", 4, 0, 0, 0, 0 },
-				{ ibuffer, NULL, NULL, 1, 0, 0, 0, 0 },
+				{ vbuffer1, vShader, "vertex", 0, 4, 0, 0, 0 },
+				{ ibuffer, NULL, NULL, 0, 1, 0, 0, 0 },
+				{ ubuffer, pShader, "u_color", 0, 1, 0, 0, 0 },
 			};
 			CHECK(driver->bindShaderInput(input, COUNTOF(input), NULL));
-
-			float c[] = { 1, 1, 0, 0.5f };
-			CHECK(driver->setUniform4fv(StringHash("u_color"), c, 1));
 
 			driver->drawTriangleIndexed(0, 6, 0);
 		}
 
 		{	// Draw the second quad
+			float color[] = { 1, 0, 0, 0.5f };
+			driver->updateBuffer(ubuffer, 0, color, sizeof(color));
+
 			RgDriverShaderInput input[] = {
-				{ vbuffer2, vShader, "vertex", 4, 0, 0, 0, 0 },
-				{ ibuffer, NULL, NULL, 1, 0, 0, 0, 0 },
+				{ vbuffer2, vShader, "vertex", 0, 4, 0, 0, 0 },
+				{ ibuffer, NULL, NULL, 0, 1, 0, 0, 0 },
+				{ ubuffer, pShader, "u_color", 0, 1, 0, 0, 0 },
 			};
 			CHECK(driver->bindShaderInput(input, COUNTOF(input), NULL));
-
-			float c[] = { 1, 0, 0, 0.5f };
-			CHECK(driver->setUniform4fv(StringHash("u_color"), c, 1));
 
 			driver->drawTriangleIndexed(0, 6, 0);
 		}
@@ -528,5 +556,5 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 	driver->deleteBuffer(vbuffer1);
 	driver->deleteBuffer(vbuffer2);
 	driver->deleteBuffer(ibuffer);
+	driver->deleteBuffer(ubuffer);
 }
-*/

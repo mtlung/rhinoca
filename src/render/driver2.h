@@ -88,10 +88,10 @@ typedef struct RgDriverShaderInput
 	RgDriverBuffer* buffer;
 	RgDriverShader* shader;
 	const char* name;
+	unsigned nameHash;		/// after name is changed, reset it to zero will cause it to be re-calculated
 	unsigned elementCount;	/// Can be 1, 2, 3, or 4
 	unsigned offset;
 	unsigned stride;
-	unsigned nameHash;		/// after name is changed, reset it to zero will cause it to be re-calculated
 	unsigned cacheId;
 } RgDriverShaderInput;
 
@@ -257,11 +257,6 @@ typedef struct RgDriver
 
 	bool (*bindShaders)(RgDriverShader** shaders, unsigned shaderCount);
 	bool (*setUniformBuffer)(unsigned nameHash, RgDriverBuffer* buffer);
-	bool (*setUniform1fv)(unsigned nameHash, const float* value, unsigned count);
-	bool (*setUniform2fv)(unsigned nameHash, const float* value, unsigned count);
-	bool (*setUniform3fv)(unsigned nameHash, const float* value, unsigned count);
-	bool (*setUniform4fv)(unsigned nameHash, const float* value, unsigned count);
-	bool (*setUniformMat44fv)(unsigned nameHash, bool transpose, const float* value, unsigned count);
 	bool (*setUniformTexture)(unsigned nameHash, RgDriverTexture* texture);
 
 	bool (*bindShaderInput)(RgDriverShaderInput* inputs, unsigned inputCount, unsigned* cacheId);	// Give NULL to cacheId if you don't want to create a cache for it

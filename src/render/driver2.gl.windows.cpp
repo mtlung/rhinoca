@@ -3,6 +3,7 @@
 
 #include "../array.h"
 #include "../rhassert.h"
+#include "../rhlog.h"
 #include "../vector.h"
 
 #include <gl/gl.h>
@@ -153,10 +154,15 @@ bool _initDriverContext_GL(RgDriverContext* self, void* platformSpecificWindow)
 	HGLRC hRc = impl->hRc = ::wglCreateContext(hDc);
 	bool ret = ::wglMakeCurrent(hDc, hRc) == TRUE;
 
+	// Get the current Opengl version
+	const char* version = (const char*)glGetString(GL_VERSION);
+	unsigned v1, v2;
+	sscanf(version, "%u.%u", &v1, &v2);
+
 	wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)(wglGetProcAddress("wglCreateContextAttribsARB"));
 
-	if(wglCreateContextAttribsARB) {
-
+	// Create a newer driver if necessary
+	if(wglCreateContextAttribsARB && v1 <= impl->magjorVersion && v2 < impl->minorVersion) {
 		const int attribs[] = {
 			WGL_CONTEXT_MAJOR_VERSION_ARB, impl->magjorVersion,
 			WGL_CONTEXT_MINOR_VERSION_ARB, impl->minorVersion,
@@ -172,14 +178,12 @@ bool _initDriverContext_GL(RgDriverContext* self, void* platformSpecificWindow)
 		}
 	}
 
-	initGlFunc();
+	impl->magjorVersion = v1;
+	impl->minorVersion = v2;
 
-	// 3.0 or above requires a vertex array
-	if(glGenVertexArrays) {
-		GLuint vertexArray;
-		glGenVertexArrays(1, &vertexArray);
-		glBindVertexArray(vertexArray);
-	}
+	rhLog("verbose", "Using Opengl version: %u.%u\n", v1, v2);
+
+	initGlFunc();
 
 	impl->driver->applyDefaultState(impl);
 
@@ -194,6 +198,20 @@ void _driverSwapBuffers_GL()
 	if(!_currentContext) {
 		RHASSERT(false && "Please call RgDriver->useContext");
 		return;
+	}
+
+	// Clean up not frequently used VAO
+	if(glDeleteVertexArrays)
+	for(unsigned i=0; i<_currentContext->vaoCache.size();) {
+		float& hotness = _currentContext->vaoCache[i].hotness;
+		hotness *= 0.5f;
+
+		if(hotness < 0.0001f) {
+			glDeleteVertexArrays(1, &_currentContext->vaoCache[i].glh);
+			_currentContext->vaoCache.remove(i);
+		}
+		else
+			++i;
 	}
 
 //	RHVERIFY(::SwapBuffers(_currentContext->hDc) == TRUE);
