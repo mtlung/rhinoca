@@ -598,7 +598,7 @@ bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 	return true;
 }
 
-bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer)
+bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer, RgDriverShaderInput* input)
 {
 	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx) return false;
@@ -642,55 +642,73 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 
 	for(unsigned i=0; i<inputCount; ++i)
 	{
-		RgDriverBufferImpl* buffer = static_cast<RgDriverBufferImpl*>(inputs[i].buffer);
+		RgDriverShaderInput* input = &inputs[i];
+		if(!input) continue;
+
+		RgDriverBufferImpl* buffer = static_cast<RgDriverBufferImpl*>(input->buffer);
 		if(!buffer) continue;
 
-		if(buffer->type == RgDriverBufferType_Index) {
+		// Bind index buffer
+		if(buffer->type == RgDriverBufferType_Index)
+		{
 			ctx->dxDeviceContext->IASetIndexBuffer(buffer->dxBuffer, DXGI_FORMAT_R16_UINT, 0);
 			continue;
 		}
+		// Bind vertex buffer
+		else if(buffer->type == RgDriverBufferType_Vertex)
+		{
+			RgDriverShaderImpl* shader = static_cast<RgDriverShaderImpl*>(input->shader);
+			if(!shader) continue;
 
-		RgDriverShaderImpl* shader = static_cast<RgDriverShaderImpl*>(inputs[i].shader);
-		if(!shader) continue;
+			D3D11_INPUT_ELEMENT_DESC inputDesc;
+			inputDesc.SemanticName = input->name;
+			inputDesc.SemanticIndex = 0;
+			inputDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;	// TODO: Fix me
+			inputDesc.InputSlot = 0;
+			inputDesc.AlignedByteOffset = 0;
+			inputDesc.InputSlotClass =  D3D11_INPUT_PER_VERTEX_DATA;
+			inputDesc.InstanceDataStepRate = 0;
 
-		D3D11_INPUT_ELEMENT_DESC inputDesc;
-		inputDesc.SemanticName = inputs[i].name;
-		inputDesc.SemanticIndex = 0;
-		inputDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;	// TODO: Fix me
-		inputDesc.InputSlot = 0;
-		inputDesc.AlignedByteOffset = 0;
-		inputDesc.InputSlotClass =  D3D11_INPUT_PER_VERTEX_DATA;
-		inputDesc.InstanceDataStepRate = 0;
+			if(!ctx->currentShaders[buffer->type]) {
+				rhLog("error", "Call bindShaders() before calling bindShaderInput()\n"); 
+				return false;
+			}
 
-		if(!ctx->currentShaders[buffer->type]) {
-			rhLog("error", "Call bindShaders() before calling bindShaderInput()\n"); 
-			return false;
+			ID3D11InputLayout* layout = NULL;
+			ID3D10Blob* shaderBlob = shader->dxShaderBlob;
+
+			if(!shaderBlob)
+				return false;
+
+			HRESULT hr = ctx->dxDevice->CreateInputLayout(
+				&inputDesc, 1,
+				shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(),
+				&layout
+			);
+
+			ctx->dxDeviceContext->IASetInputLayout(layout);
+			safeRelease(layout);
+
+			if(FAILED(hr)) {
+				rhLog("error", "Fail to CreateInputLayout\n");
+				return false;
+			}
+
+			// TOOD: IASetVertexBuffers() should invoked once but not in a loop
+			UINT stride = input->stride;
+			UINT offset = input->offset;
+			ctx->dxDeviceContext->IASetVertexBuffers(0, 1, &buffer->dxBuffer, &stride, &offset);
 		}
+		// Bind uniform buffer
+		else if(buffer->type == RgDriverBufferType_Uniform)
+		{
+			// Generate nameHash if necessary
+			if(input->nameHash == 0 && input->name)
+				input->nameHash = StringHash(input->name);
 
-		ID3D11InputLayout* layout = NULL;
-		ID3D10Blob* shaderBlob = shader->dxShaderBlob;
-
-		if(!shaderBlob)
-			return false;
-
-		HRESULT hr = ctx->dxDevice->CreateInputLayout(
-			&inputDesc, 1,
-			shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(),
-			&layout
-		);
-
-		ctx->dxDeviceContext->IASetInputLayout(layout);
-		safeRelease(layout);
-
-		if(FAILED(hr)) {
-			rhLog("error", "Fail to CreateInputLayout\n");
-			return false;
+			if(!_setUniformBuffer(input->nameHash, buffer, input))
+				return false;
 		}
-
-		// TOOD: IASetVertexBuffers() should invoked once but not in a loop
-		UINT stride = inputs[i].stride;
-		UINT offset = inputs[i].offset;
-		ctx->dxDeviceContext->IASetVertexBuffers(0, 1, &buffer->dxBuffer, &stride, &offset);
 	}
 
 	return true;
@@ -763,7 +781,6 @@ RgDriver* _rgNewRenderDriver_DX11(const char* options)
 	ret->initShader = _initShader;
 
 	ret->bindShaders = _bindShaders;
-	ret->setUniformBuffer = _setUniformBuffer;
 	ret->bindShaderInput = _bindShaderInput;
 
 	ret->drawTriangle = _drawTriangle;

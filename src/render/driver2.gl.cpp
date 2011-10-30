@@ -1003,7 +1003,7 @@ bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 
 // See: http://www.opengl.org/wiki/Uniform_Buffer_Object
 // See: http://arcsynthesis.org/gltut/Positioning/Tut07%20Shared%20Uniforms.html
-bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer, RgDriverShaderInput* input = NULL)
+bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer, RgDriverShaderInput* input)
 {
 	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return false;
@@ -1031,8 +1031,6 @@ bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer, RgDriverShader
 		glUniformBlockBinding(program->glh, block->index, block->index);
 		break;
 	}
-#else
-	// TODO: Implement
 #endif
 
 	if(!bufferImpl->systemBuf) {
@@ -1200,6 +1198,7 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 				return false;
 			}
 		}
+		// Bind uniforms
 		else if(buffer->type == RgDriverBufferType_Uniform)
 		{
 			// Generate nameHash if necessary

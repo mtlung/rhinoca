@@ -143,7 +143,7 @@ TEST_FIXTURE(GraphicsDriverTest, empty)
 	createWindow(1, 1);
 }
 
-static const unsigned driverIndex = 0;
+static const unsigned driverIndex = 1;
 
 static const char* driverStr[] = 
 {
@@ -171,6 +171,7 @@ static const char* pShaderSrc[] =
 	"out vec4 outColor;"
 	"void main(void){outColor=_color1+_color2+_color3;}",
 
+	// HLSL
 	"cbuffer color1 { float4 _color1; }"
 	"cbuffer color2 { float4 _color2; float4 _color3; }"
 	"float4 main(float4 pos:SV_POSITION):SV_Target{return _color1+_color2+_color3;}"
@@ -221,9 +222,6 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 	while(keepRun()) {
 		driver->clearColor(0, 0.125f, 0.3f, 1);
 
-		CHECK(driver->bindShaders(shaders, 2));
-		CHECK(driver->bindShaderInput(shaderInput, COUNTOF(shaderInput), NULL));
-
 		// Animate the color
 		color1[0] = (sin(timer.seconds()) + 1) / 2;
 		color2[1] = (cos(timer.seconds()) + 1) / 2;
@@ -234,6 +232,9 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 		float* p = (float*)driver->mapBuffer(ubuffer2, RgDriverBufferMapUsage(RgDriverBufferMapUsage_Write));
 		memcpy(p, color2, sizeof(color2));
 		driver->unmapBuffer(ubuffer2);
+
+		CHECK(driver->bindShaders(shaders, 2));
+		CHECK(driver->bindShaderInput(shaderInput, COUNTOF(shaderInput), NULL));
 
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();
@@ -246,7 +247,7 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 }
 
 TEST_FIXTURE(GraphicsDriverTest, textureCommit)
-{
+{return;
 	createWindow(200, 200);
 	initContext(driverStr[driverIndex]);
 
@@ -397,7 +398,7 @@ TEST_FIXTURE(GraphicsDriverTest, _texture)
 }
 */
 TEST_FIXTURE(GraphicsDriverTest, 3d)
-{
+{return;
 	createWindow(200, 200);
 	initContext(driverStr[driverIndex]);
 
@@ -472,7 +473,7 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 }
 
 TEST_FIXTURE(GraphicsDriverTest, blending)
-{
+{return;
 	createWindow(200, 200);
 	initContext(driverStr[driverIndex]);
 
