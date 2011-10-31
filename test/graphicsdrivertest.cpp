@@ -151,38 +151,38 @@ static const char* driverStr[] =
 	"DX11"
 };
 
-static const char* vShaderSrc[] = 
-{
-	// GLSL
-	"#version 140\n"
-	"in vec4 position;"
-	"void main(void){gl_Position=position;}",
-
-	// HLSL
-	"float4 main(float4 pos:position):SV_POSITION{return pos;}"
-};
-
-static const char* pShaderSrc[] = 
-{
-	// GLSL
-	"#version 140\n"
-	"uniform color1 { vec4 _color1; };"
-	"uniform color2 { vec4 _color2; vec4 _color3; };"
-	"out vec4 outColor;"
-	"void main(void){outColor=_color1+_color2+_color3;}",
-
-	// HLSL
-	"cbuffer color1 { float4 _color1; }"
-	"cbuffer color2 { float4 _color2; float4 _color3; }"
-	"float4 main(float4 pos:SV_POSITION):SV_Target{return _color1+_color2+_color3;}"
-};
-
 TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 {
+	static const char* vShaderSrc[] = 
+	{
+		// GLSL
+		"#version 140\n"
+		"in vec4 position;"
+		"void main(void){gl_Position=position;}",
+
+		// HLSL
+		"float4 main(float4 pos:position):SV_POSITION{return pos;}"
+	};
+
+	static const char* pShaderSrc[] = 
+	{
+		// GLSL
+		"#version 140\n"
+		"uniform color1 { vec4 _color1; };"
+		"uniform color2 { vec4 _color2; vec4 _color3; };"
+		"out vec4 outColor;"
+		"void main(void){outColor=_color1+_color2+_color3;}",
+
+		// HLSL
+		"cbuffer color1 { float4 _color1; }"
+		"cbuffer color2 { float4 _color2; float4 _color3; }"
+		"float4 main(float4 pos:SV_POSITION):SV_Target{return _color1+_color2+_color3;}"
+	};
+
 	// To draw a full screen quad:
 	// http://stackoverflow.com/questions/2588875/whats-the-best-way-to-draw-a-fullscreen-quad-in-opengl-3-2
 
-	createWindow(200, 200);
+	createWindow(2, 2);
 	initContext(driverStr[driverIndex]);
 
 	// Init shader
@@ -204,11 +204,11 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 	// Create uniform buffer
 	float color1[] = { 0, 0, 0, 1 };
 	RgDriverBuffer* ubuffer1 = driver->newBuffer();
-	CHECK(driver->initBuffer(ubuffer1, RgDriverBufferType_Uniform, RgDriverDataUsage_Dynamic, color1, sizeof(color1)));
+	CHECK(driver->initBuffer(ubuffer1, RgDriverBufferType_Uniform, RgDriverDataUsage_Stream, color1, sizeof(color1)));
 
 	float color2[] = { 0, 0, 0, 1,  0, 0, 0, 1 };
 	RgDriverBuffer* ubuffer2 = driver->newBuffer();
-	CHECK(driver->initBuffer(ubuffer2, RgDriverBufferType_Uniform, RgDriverDataUsage_Dynamic, color2, sizeof(color2)));
+	CHECK(driver->initBuffer(ubuffer2, RgDriverBufferType_Uniform, RgDriverDataUsage_Stream, color2, sizeof(color2)));
 
 	RgDriverShaderInput shaderInput[] = {
 		{ vbuffer, vShader, "position", 0, 4, 0, 4*sizeof(float), 0 },
@@ -398,22 +398,38 @@ TEST_FIXTURE(GraphicsDriverTest, _texture)
 }
 */
 TEST_FIXTURE(GraphicsDriverTest, 3d)
-{return;
+{
+	static const char* vShaderSrc[] = 
+	{
+		// GLSL
+		"attribute vec3 vertex;"
+		"uniform mat4 modelViewMat;"
+		"uniform mat4 projectionMat;"
+		"void main(void){gl_Position=(projectionMat*modelViewMat)*vec4(vertex,1);}",
+
+		// HLSL
+		"cbuffer modelViewMat { matrix _modelViewMat; };"
+		"cbuffer projectionMat { matrix _projectionMat; };"
+		"float4 main(float4 pos:position):SV_POSITION{return _projectionMat*_modelViewMat*pos;}"
+	};
+
+	static const char* pShaderSrc[] = 
+	{
+		// GLSL
+		"uniform vec4 u_color;"
+		"void main(void){gl_FragColor=u_color;}",
+
+		// HLSL
+		"cbuffer u_color { float4 _u_color; };"
+		"float4 main(float4 pos:SV_POSITION):SV_Target{return _u_color;}"
+	};
+
 	createWindow(200, 200);
 	initContext(driverStr[driverIndex]);
 
 	// Init shader
-	const char* vShaderSrc =
-		"attribute vec3 vertex;"
-		"uniform mat4 modelViewMat;"
-		"uniform mat4 projectionMat;"
-		"void main(void){gl_Position=(projectionMat*modelViewMat)*vec4(vertex,1);}";
-	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc, 1));
-
-	const char* pShaderSrc =
-		"uniform vec4 u_color;"
-		"void main(void){gl_FragColor=u_color;}";
-	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc, 1));
+	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
 
 	RgDriverShader* shaders[] = { vShader, pShader };
 

@@ -350,6 +350,7 @@ static void _deleteBuffer(RgDriverBuffer* self)
 	if(impl->glh)
 		glDeleteBuffers(1, &impl->glh);
 
+	RHASSERT(!impl->isMapped);
 	rhinoca_free(impl->systemBuf);
 	delete static_cast<RgDriverBufferImpl*>(self);
 }
@@ -394,8 +395,10 @@ static bool _updateBuffer(RgDriverBuffer* self, unsigned offsetInBytes, void* da
 	RgDriverBufferImpl* impl = static_cast<RgDriverBufferImpl*>(self);
 	if(!impl) return false;
 
-	if(offsetInBytes + sizeInBytes > self->sizeInBytes)
-		return false;
+	if(!data) return false;
+	if(impl->isMapped) return false;
+	if(offsetInBytes + sizeInBytes > self->sizeInBytes) return false;
+	if(impl->usage == RgDriverDataUsage_Static) return false;
 
  	if(impl->usage == RgDriverDataUsage_Stream)
  		memcpy(((char*)impl->systemBuf) + offsetInBytes, data, sizeInBytes);
@@ -413,10 +416,12 @@ static bool _updateBuffer(RgDriverBuffer* self, unsigned offsetInBytes, void* da
 static void* _mapBuffer(RgDriverBuffer* self, RgDriverBufferMapUsage usage)
 {
 	RgDriverBufferImpl* impl = static_cast<RgDriverBufferImpl*>(self);
-	if(!impl) return false;
+	if(!impl) return NULL;
 
 	if(impl->systemBuf)
 		return impl->systemBuf;
+
+	if(impl->isMapped) return NULL;
 
 #if !defined(RG_GLES)
 	void* ret = NULL;
@@ -424,8 +429,17 @@ static void* _mapBuffer(RgDriverBuffer* self, RgDriverBufferMapUsage usage)
 	RHASSERT("Invalid RgDriverBufferMapUsage" && _bufferMapUsage[usage] != 0);
 	GLenum t = _bufferTarget[self->type];
 	glBindBuffer(t, impl->glh);
+
+	// The write discard optimization
+	if(!usage & RgDriverBufferMapUsage_Read)
+		glBufferData(t, 0, NULL, GL_STREAM_COPY);
+
 	ret = glMapBuffer(t, _bufferMapUsage[usage]);
 	checkError();
+
+	impl->isMapped = true;
+	impl->mapUsage = usage;
+
 	return ret;
 #endif
 
@@ -435,10 +449,11 @@ static void* _mapBuffer(RgDriverBuffer* self, RgDriverBufferMapUsage usage)
 static void _unmapBuffer(RgDriverBuffer* self)
 {
 	RgDriverBufferImpl* impl = static_cast<RgDriverBufferImpl*>(self);
-	if(!impl) return;
+	if(!impl || !impl->isMapped) return;
 
 	if(impl->systemBuf) {
 		// Nothing need to do to un-map the system memory
+		impl->isMapped = false;
 		return;
 	}
 
@@ -449,6 +464,8 @@ static void _unmapBuffer(RgDriverBuffer* self)
 	glUnmapBuffer(t);
 	checkError();
 #endif
+
+	impl->isMapped = false;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -584,7 +601,7 @@ static bool _commitTexture(RgDriverTexture* self, const void* data, unsigned row
 		unsigned textureSize = _textureSize(impl, mipCount);
 		GLuint pbo = ctx->pixelBufferCache[(ctx->currentPixelBufferIndex++) % ctx->pixelBufferCache.size()];
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
-		glBufferData(GL_PIXEL_UNPACK_BUFFER, textureSize, data, GL_STREAM_DRAW_ARB);
+		glBufferData(GL_PIXEL_UNPACK_BUFFER, textureSize, data, GL_STREAM_DRAW);
 	}
 #else
 	static const bool usePbo = false;

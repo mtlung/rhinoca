@@ -44,8 +44,10 @@ typedef enum RgDriverBufferMapUsage
 
 typedef struct RgDriverBuffer
 {
-	RgDriverBufferType type;
-	RgDriverDataUsage usage;
+	RgDriverBufferType type : 8;
+	RgDriverDataUsage usage : 8;
+	unsigned isMapped : 8;
+	RgDriverBufferMapUsage mapUsage : 8;
 	unsigned sizeInBytes;
 } RgDriverBuffer;
 
