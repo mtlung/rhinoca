@@ -364,7 +364,7 @@ static bool _initBuffer(RgDriverBuffer* self, RgDriverBufferType type, RgDriverD
 	data.SysMemPitch = 0;
 	data.SysMemSlicePitch = 0;
 
-	HRESULT hr = ctx->dxDevice->CreateBuffer(&desc, &data, &impl->dxBuffer);
+	HRESULT hr = ctx->dxDevice->CreateBuffer(&desc, initData ? &data : NULL, &impl->dxBuffer);
 
 	if(FAILED(hr)) {
 		rhLog("error", "Fail to create buffer\n");
@@ -656,12 +656,25 @@ bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer, RgDriverShader
 
 	if(!shader || !cb) return false;
 
+	// Offset is not supported in DX11, have to wait until DX11.1.
+	// Now we create a tmp buffer to emulate this feature.
+	// NOTE: This is a slow path
+	RgDriverBufferImpl* tmpBuf = bufferImpl;
+	if(input->offset > 0) {
+		tmpBuf = static_cast<RgDriverBufferImpl*>(_newBuffer());
+		_initBuffer(tmpBuf, RgDriverBufferType_Uniform, RgDriverDataUsage_Dynamic, NULL, bufferImpl->sizeInBytes - input->offset);
+//		ctx->dxDeviceContext->CopySubresourceRegion(tmpBuf->dxBuffer, 0, input->offset, 0, 0, bufferImpl->dxBuffer, 0, NULL);
+		ctx->dxDeviceContext->CopyResource(tmpBuf->dxBuffer, bufferImpl->dxBuffer);
+//		rhLog("error", "Offset is not supported in DX11 set constant buffer, but will be improved in DX11.1\n");
+//		return false;
+	}
+
 	if(shader->type == RgDriverShaderType_Vertex)
-		ctx->dxDeviceContext->VSSetConstantBuffers(cb->bindPoint, 1, &bufferImpl->dxBuffer);
+		ctx->dxDeviceContext->VSSetConstantBuffers(cb->bindPoint, 1, &tmpBuf->dxBuffer);
 	else if(shader->type == RgDriverShaderType_Pixel)
-		ctx->dxDeviceContext->PSSetConstantBuffers(cb->bindPoint, 1, &bufferImpl->dxBuffer);
+		ctx->dxDeviceContext->PSSetConstantBuffers(cb->bindPoint, 1, &tmpBuf->dxBuffer);
 	else if(shader->type == RgDriverShaderType_Geometry)
-		ctx->dxDeviceContext->GSSetConstantBuffers(cb->bindPoint, 1, &bufferImpl->dxBuffer);
+		ctx->dxDeviceContext->GSSetConstantBuffers(cb->bindPoint, 1, &tmpBuf->dxBuffer);
 
 	return true;
 }

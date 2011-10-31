@@ -143,7 +143,7 @@ TEST_FIXTURE(GraphicsDriverTest, empty)
 	createWindow(1, 1);
 }
 
-static const unsigned driverIndex = 1;
+static const unsigned driverIndex = 0;
 
 static const char* driverStr[] = 
 {
@@ -182,7 +182,7 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 	// To draw a full screen quad:
 	// http://stackoverflow.com/questions/2588875/whats-the-best-way-to-draw-a-fullscreen-quad-in-opengl-3-2
 
-	createWindow(2, 2);
+	createWindow(200, 200);
 	initContext(driverStr[driverIndex]);
 
 	// Init shader
@@ -402,15 +402,15 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 	static const char* vShaderSrc[] = 
 	{
 		// GLSL
-		"attribute vec3 vertex;"
+		"attribute vec3 position;"
 		"uniform mat4 modelViewMat;"
 		"uniform mat4 projectionMat;"
-		"void main(void){gl_Position=(projectionMat*modelViewMat)*vec4(vertex,1);}",
+		"void main(void){gl_Position=(projectionMat*modelViewMat)*vec4(position,1);}",
 
 		// HLSL
-		"cbuffer modelViewMat { matrix _modelViewMat; };"
-		"cbuffer projectionMat { matrix _projectionMat; };"
-		"float4 main(float4 pos:position):SV_POSITION{return _projectionMat*_modelViewMat*pos;}"
+		"cbuffer modelViewMat { float4x4 _modelViewMat; };"
+		"cbuffer projectionMat { float4x4 _projectionMat; };"
+		"float4 main(float4 pos:position):SV_POSITION{ pos.w=1; pos=mul(pos,_modelViewMat); return mul(pos,_projectionMat); }"
 	};
 
 	static const char* pShaderSrc[] = 
@@ -466,10 +466,10 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 
 	// Bind shader input layout
 	RgDriverShaderInput input[] = {
-		{ vbuffer, vShader, "vertex", 0, 3, 0, 0, 0 },
+		{ vbuffer, vShader, "position", 0, 3, 0, 0, 0 },
 		{ ibuffer, NULL, NULL, 0, 1, 0, 0, 0 },
-		{ ubuffer, pShader, "modelViewMat", 0, 1, 0, 0, 0 },
-		{ ubuffer, pShader, "projectionMat", 0, 1, sizeof(float)*16, 0, 0 },
+		{ ubuffer, vShader, "modelViewMat", 0, 1, 0, 0, 0 },
+		{ ubuffer, vShader, "projectionMat", 0, 1, sizeof(float)*16, 0, 0 },
 		{ ubuffer, pShader, "u_color", 0, 1, sizeof(float)*16*2, 0, 0 },
 	};
 
