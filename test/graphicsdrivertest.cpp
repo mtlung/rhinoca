@@ -144,7 +144,7 @@ TEST_FIXTURE(GraphicsDriverTest, empty)
 	createWindow(1, 1);
 }
 
-static const unsigned driverIndex = 0;
+static const unsigned driverIndex = 1;
 
 static const char* driverStr[] = 
 {
@@ -411,8 +411,7 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 		// HLSL
 		"cbuffer modelViewMat { float4x4 _modelViewMat; };"
 		"cbuffer projectionMat { float4x4 _projectionMat; };"
-//		"float4 main(float3 pos:position):SV_POSITION{ float4 pos4=float4(pos,1); pos4=mul(_projectionMat,pos4); return mul(_modelViewMat,pos4); }"
-		"float4 main(float3 pos:position):SV_POSITION{ return mul(mul(_projectionMat,_modelViewMat),float4(pos,1)); }"
+		"float4 main(float3 pos:position):SV_POSITION{ float4 ret=mul(mul(_projectionMat,_modelViewMat),float4(pos,1)); ret.z=ret.z*0.5+0.5; return ret;}"
 	};
 
 	static const char* pShaderSrc[] = 

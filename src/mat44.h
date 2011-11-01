@@ -54,6 +54,9 @@ public:
 	Mat44& operator*=(const Mat44& rhs);
 	Mat44& operator*=(float rhs);
 
+// Vector multiplication
+	void mul(const float* rhs4, float* result4) const;
+
 // Transpose
 	void transpose(Mat44& result) const;
 	Mat44 transpose() const;

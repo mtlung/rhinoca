@@ -274,6 +274,8 @@ bool _driverChangeResolution_DX11(unsigned width, unsigned height)
 {
 	if(!_currentContext) return false;
 
+	if(width * height == 0) return true;	// Do nothing if the dimension is zero
+
 	HWND hWnd = (HWND)_currentContext->hWnd;
 	RECT rcClient, rcWindow;
 	POINT ptDiff;

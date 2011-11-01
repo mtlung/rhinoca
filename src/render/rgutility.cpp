@@ -52,3 +52,21 @@ void rgMat44TranslateBy(float outMat[16], const float xyz[3])
 	out.m13 += xyz[1];
 	out.m23 += xyz[2];
 }
+
+static void swap(float& a, float& b)
+{
+	float tmp = a;
+	a = b;
+	b = tmp;
+}
+
+void rgMat44Transpose(float mat[16])
+{
+	Mat44& out = *reinterpret_cast<Mat44*>(mat);
+	swap(out.m01, out.m10);
+	swap(out.m02, out.m20);
+	swap(out.m03, out.m30);
+	swap(out.m12, out.m21);
+	swap(out.m13, out.m31);
+	swap(out.m23, out.m32);
+}

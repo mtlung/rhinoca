@@ -15,6 +15,8 @@ void rgMat44Transform(const float mat[16], float xyz[3]);
 
 void rgMat44TranslateBy(float outMat[16], const float xyz[3]);
 
+void rgMat44Transpose(float mat[16]);
+
 #ifdef __cplusplus
 }
 #endif

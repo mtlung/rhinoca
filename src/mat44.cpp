@@ -119,6 +119,47 @@ Mat44& Mat44::operator*=(float rhs)
 	return *this;
 }
 
+void Mat44::mul(const float* rhs4, float* result4) const
+{
+#if defined(_MSC_VER) || defined(__SSE__)
+	__m128 x0 = _mm_loadu_ps(c0);
+	__m128 x1 = _mm_loadu_ps(c1);
+	__m128 x2 = _mm_loadu_ps(c2);
+	__m128 x3 = _mm_loadu_ps(c3);
+
+	__m128 v = _mm_loadu_ps(rhs4);
+	__m128 v0 = _mm_shuffle_ps(v, v, _MM_SHUFFLE(0,0,0,0));
+	__m128 v1 = _mm_shuffle_ps(v, v, _MM_SHUFFLE(1,1,1,1));
+	__m128 v2 = _mm_shuffle_ps(v, v, _MM_SHUFFLE(2,2,2,2));
+	__m128 v3 = _mm_shuffle_ps(v, v, _MM_SHUFFLE(3,3,3,3));
+
+	v0 = _mm_mul_ps(x0, v0);
+	v1 = _mm_mul_ps(x1, v1);
+	v2 = _mm_mul_ps(x2, v2);
+	v3 = _mm_mul_ps(x3, v3);
+
+	x0 = _mm_add_ps(v0, v1);
+	x1 = _mm_add_ps(v2, v3);
+	v = _mm_add_ps(x0, x1);
+
+	_mm_storeu_ps(result4, v);
+
+#else
+
+	// Local variables to prevent parameter aliasing
+	const float x = rhs4[0];
+	const float y = rhs4[1];
+	const float z = rhs4[2];
+	const float w = rhs4[3];
+
+	result4[0] = m00 * x + m01 * y + m02 * z + m03 * w;
+	result4[1] = m10 * x + m11 * y + m12 * z + m13 * w;
+	result4[2] = m20 * x + m21 * y + m22 * z + m23 * w;
+	result4[3] = m30 * x + m31 * y + m32 * z + m33 * w;
+
+#endif
+}
+
 void Mat44::transpose(Mat44& ret) const
 {
 	RHASSERT(&ret != this);
