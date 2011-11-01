@@ -125,6 +125,7 @@ public:
 
 	void resize(unsigned width, unsigned height)
 	{
+		if(!driver) return;
 		driver->changeResolution(width, height);
 		driver->setViewport(0, 0, context->width, context->height, 0, 1);
 	}
@@ -211,7 +212,7 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 	CHECK(driver->initBuffer(ubuffer2, RgDriverBufferType_Uniform, RgDriverDataUsage_Stream, color2, sizeof(color2)));
 
 	RgDriverShaderInput shaderInput[] = {
-		{ vbuffer, vShader, "position", 0, 4, 0, 4*sizeof(float), 0 },
+		{ vbuffer, vShader, "position", 0, 4, 0, 0, 0 },
 		{ ibuffer, NULL, NULL, 0, 1, 0, 0, 0 },
 		{ ubuffer1, pShader, "color1", 0, 1, 0, 0, 0 },
 		{ ubuffer2, pShader, "color2", 0, 1, 0, 0, 0 },
@@ -293,7 +294,7 @@ TEST_FIXTURE(GraphicsDriverTest, textureCommit)
 
 	// Bind shader input layout
 	RgDriverShaderInput input[] = {
-		{ vbuffer, vShader,"vertex", 0, 4, 0, 0, 0 },
+		{ vbuffer, vShader, "vertex", 0, 4, 0, 0, 0 },
 		{ ibuffer, NULL, NULL, 0, 1, 0, 0, 0 },
 	};
 
@@ -410,7 +411,8 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 		// HLSL
 		"cbuffer modelViewMat { float4x4 _modelViewMat; };"
 		"cbuffer projectionMat { float4x4 _projectionMat; };"
-		"float4 main(float4 pos:position):SV_POSITION{ pos.w=1; pos=mul(pos,_modelViewMat); return mul(pos,_projectionMat); }"
+//		"float4 main(float3 pos:position):SV_POSITION{ float4 pos4=float4(pos,1); pos4=mul(_projectionMat,pos4); return mul(_modelViewMat,pos4); }"
+		"float4 main(float3 pos:position):SV_POSITION{ return mul(mul(_projectionMat,_modelViewMat),float4(pos,1)); }"
 	};
 
 	static const char* pShaderSrc[] = 

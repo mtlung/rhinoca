@@ -572,7 +572,16 @@ static bool _initShader(RgDriverShader* self, RgDriverShaderType type, const cha
     D3D11_SHADER_DESC shaderDesc;
     reflector->GetDesc(&shaderDesc);
 
-	for(unsigned i=0; i<shaderDesc.BoundResources; ++i) {
+	for(unsigned i=0; i<shaderDesc.InputParameters; ++i)
+	{
+		D3D11_SIGNATURE_PARAMETER_DESC paramDesc;	// TODO: Any use of this information?
+		hr = reflector->GetInputParameterDesc(i, &paramDesc);
+		if(FAILED(hr))
+			break;
+	}
+
+	for(unsigned i=0; i<shaderDesc.BoundResources; ++i)
+	{
 		D3D11_SHADER_INPUT_BIND_DESC desc;
 		hr = reflector->GetResourceBindingDesc(i, &desc);
 		if(FAILED(hr))
@@ -598,7 +607,7 @@ bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 	// Bind used shaders
 	for(unsigned i=0; i<shaderCount; ++i) {
 		RgDriverShaderImpl* shader = static_cast<RgDriverShaderImpl*>(shaders[i]);
-		if(!shader) continue;
+		if(!shader || !shader->dxShader) continue;
 
 		ctx->currentShaders[shader->type] = shader;
 		if(shader->type == RgDriverShaderType_Vertex)
@@ -663,10 +672,8 @@ bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer, RgDriverShader
 	if(input->offset > 0) {
 		tmpBuf = static_cast<RgDriverBufferImpl*>(_newBuffer());
 		_initBuffer(tmpBuf, RgDriverBufferType_Uniform, RgDriverDataUsage_Dynamic, NULL, bufferImpl->sizeInBytes - input->offset);
-//		ctx->dxDeviceContext->CopySubresourceRegion(tmpBuf->dxBuffer, 0, input->offset, 0, 0, bufferImpl->dxBuffer, 0, NULL);
-		ctx->dxDeviceContext->CopyResource(tmpBuf->dxBuffer, bufferImpl->dxBuffer);
-//		rhLog("error", "Offset is not supported in DX11 set constant buffer, but will be improved in DX11.1\n");
-//		return false;
+		D3D11_BOX srcBox = { input->offset, 0, 0, bufferImpl->sizeInBytes, 1, 1 };
+		ctx->dxDeviceContext->CopySubresourceRegion(tmpBuf->dxBuffer, 0, 0, 0, 0, bufferImpl->dxBuffer, 0, &srcBox);
 	}
 
 	if(shader->type == RgDriverShaderType_Vertex)
@@ -675,6 +682,9 @@ bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer, RgDriverShader
 		ctx->dxDeviceContext->PSSetConstantBuffers(cb->bindPoint, 1, &tmpBuf->dxBuffer);
 	else if(shader->type == RgDriverShaderType_Geometry)
 		ctx->dxDeviceContext->GSSetConstantBuffers(cb->bindPoint, 1, &tmpBuf->dxBuffer);
+
+	if(input->offset > 0)
+		_deleteBuffer(tmpBuf);
 
 	return true;
 }
@@ -707,7 +717,7 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 			D3D11_INPUT_ELEMENT_DESC inputDesc;
 			inputDesc.SemanticName = input->name;
 			inputDesc.SemanticIndex = 0;
-			inputDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;	// TODO: Fix me
+			inputDesc.Format = input->elementCount == 3 ? DXGI_FORMAT_R32G32B32_FLOAT : DXGI_FORMAT_R32G32B32A32_FLOAT;	// TODO: Fix me
 			inputDesc.InputSlot = 0;
 			inputDesc.AlignedByteOffset = 0;
 			inputDesc.InputSlotClass =  D3D11_INPUT_PER_VERTEX_DATA;
@@ -738,8 +748,8 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 				return false;
 			}
 
-			// TOOD: IASetVertexBuffers() should invoked once but not in a loop
-			UINT stride = input->stride;
+			// TOOD: Invocations to IASetVertexBuffers() can be batched together
+			UINT stride = input->stride == 0 ? input->elementCount * sizeof(float) : input->stride;	// TODO: Fix me
 			UINT offset = input->offset;
 			ctx->dxDeviceContext->IASetVertexBuffers(0, 1, &buffer->dxBuffer, &stride, &offset);
 		}
