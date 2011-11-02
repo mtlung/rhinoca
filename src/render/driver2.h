@@ -260,7 +260,6 @@ typedef struct RgDriver
 	bool (*initShader)(RgDriverShader* self, RgDriverShaderType type, const char** sources, unsigned sourceCount);
 
 	bool (*bindShaders)(RgDriverShader** shaders, unsigned shaderCount);
-	bool (*setUniformBuffer)(unsigned nameHash, RgDriverBuffer* buffer);
 	bool (*setUniformTexture)(unsigned nameHash, RgDriverTexture* texture);
 
 	bool (*bindShaderInput)(RgDriverShaderInput* inputs, unsigned inputCount, unsigned* cacheId);	// Give NULL to cacheId if you don't want to create a cache for it
