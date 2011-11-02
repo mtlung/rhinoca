@@ -25,6 +25,7 @@ public:
 	{
 		if(driver) {
 			driver->deleteShader(vShader);
+			driver->deleteShader(gShader);
 			driver->deleteShader(pShader);
 		}
 
@@ -106,6 +107,7 @@ public:
 		driver->setViewport(0, 0, context->width, context->height, 0, 1);
 
 		vShader = driver->newShader();
+		gShader = driver->newShader();
 		pShader = driver->newShader();
 	}
 
@@ -134,6 +136,7 @@ public:
 	RgDriver* driver;
 	RgDriverContext* context;
 	RgDriverShader* vShader;
+	RgDriverShader* gShader;
 	RgDriverShader* pShader;
 };
 
@@ -144,7 +147,7 @@ TEST_FIXTURE(GraphicsDriverTest, empty)
 	createWindow(1, 1);
 }
 
-static const unsigned driverIndex = 0;
+static const unsigned driverIndex = 1;
 
 static const char* driverStr[] = 
 {
@@ -159,10 +162,10 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 		// GLSL
 		"#version 140\n"
 		"in vec4 position;"
-		"void main(void){gl_Position=position;}",
+		"void main(void) { gl_Position = position; }",
 
 		// HLSL
-		"float4 main(float4 pos:position):SV_POSITION{return pos;}"
+		"float4 main(float4 pos:position):SV_POSITION { return pos; }"
 	};
 
 	static const char* pShaderSrc[] = 
@@ -172,12 +175,12 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 		"uniform color1 { vec4 _color1; };"
 		"uniform color2 { vec4 _color2; vec4 _color3; };"
 		"out vec4 outColor;"
-		"void main(void){outColor=_color1+_color2+_color3;}",
+		"void main(void) { outColor = _color1+_color2+_color3; }",
 
 		// HLSL
 		"cbuffer color1 { float4 _color1; }"
 		"cbuffer color2 { float4 _color2; float4 _color3; }"
-		"float4 main(float4 pos:SV_POSITION):SV_Target{return _color1+_color2+_color3;}"
+		"float4 main(float4 pos:SV_POSITION):SV_Target { return _color1+_color2+_color3; }"
 	};
 
 	// To draw a full screen quad:
@@ -234,7 +237,7 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 		memcpy(p, color2, sizeof(color2));
 		driver->unmapBuffer(ubuffer2);
 
-		CHECK(driver->bindShaders(shaders, 2));
+		CHECK(driver->bindShaders(shaders, COUNTOF(shaders)));
 		CHECK(driver->bindShaderInput(shaderInput, COUNTOF(shaderInput), NULL));
 
 		driver->drawTriangleIndexed(0, 6, 0);
@@ -248,22 +251,46 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 }
 
 TEST_FIXTURE(GraphicsDriverTest, textureCommit)
-{return;
+{
 	createWindow(200, 200);
 	initContext(driverStr[driverIndex]);
 
 	// Init shader
-	const char* vShaderSrc =
-		"attribute vec4 vertex;"
-		"varying vec2 texCoord;"
-		"void main(void){texCoord=(vertex+1)/2;gl_Position=vertex;}";
-	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc, 1));
+	static const char* vShaderSrc[] = 
+	{
+		// GLSL
+		"in vec4 position;"
+		"in vec2 texCoord;"
+		"out varying vec2 _texCoord;"
+		"void main(void) { gl_Position=position; _texCoord = texCoord; }",
 
-	const char* pShaderSrc =
-		"uniform sampler2D u_tex;"
-		"varying vec2 texCoord;"
-		"void main(void){gl_FragColor=texture2D(u_tex, texCoord);}";
-	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc, 1));
+		// HLSL
+		"struct VertexInputType { float4 pos : POSITION; float2 texCoord : TEXCOORD0; };"
+		"struct PixelInputType { float4 pos : SV_POSITION; float2 texCoord : TEXCOORD0; };"
+		"PixelInputType main(VertexInputType input) {"
+		"	PixelInputType output; output.pos = input.pos; output.texCoord = input.texCoord;"
+		"	return output;"
+		"}"
+	};
+
+	static const char* pShaderSrc[] = 
+	{
+		// GLSL
+		"uniform sampler2D tex;"
+		"in vec2 _texCoord;"
+		"void main(void) { gl_FragColor = texture2D(tex, _texCoord); }",
+
+		// HLSL
+		"Texture2D tex;"
+		"SamplerState sampleType;"
+		"struct PixelInputType { float4 pos : SV_POSITION; float2 texCoord : TEXCOORD0; };"
+		"float4 main(PixelInputType input):SV_Target {"
+		"	return tex.Sample(sampleType, input.texCoord);"
+		"}"
+	};
+
+	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
 
 	RgDriverShader* shaders[] = { vShader, pShader };
 
@@ -283,7 +310,7 @@ TEST_FIXTURE(GraphicsDriverTest, textureCommit)
 	};
 
 	// Create vertex buffer
-	float vertex[][4] = { {-1,1,0,1}, {-1,-1,0,1}, {1,-1,0,1}, {1,1,0,1} };
+	float vertex[][6] = { {-1,1,0,1, 0,1}, {-1,-1,0,1, 0,0}, {1,-1,0,1, 1,0}, {1,1,0,1, 1,1} };
 	RgDriverBuffer* vbuffer = driver->newBuffer();
 	CHECK(driver->initBuffer(vbuffer, RgDriverBufferType_Vertex, RgDriverDataUsage_Static, vertex, sizeof(vertex)));
 
@@ -294,7 +321,8 @@ TEST_FIXTURE(GraphicsDriverTest, textureCommit)
 
 	// Bind shader input layout
 	RgDriverShaderInput input[] = {
-		{ vbuffer, vShader, "vertex", 0, 4, 0, 0, 0 },
+		{ vbuffer, vShader, "position", 0, 4, 0, sizeof(float)*6, 0 },
+		{ vbuffer, vShader, "texCoord", 0, 2, sizeof(float)*4, sizeof(float)*6, 0 },
 		{ ibuffer, NULL, NULL, 0, 1, 0, 0, 0 },
 	};
 
@@ -310,11 +338,11 @@ TEST_FIXTURE(GraphicsDriverTest, textureCommit)
 		}
 		CHECK(driver->commitTexture(texture, texData, 0));
 
-		CHECK(driver->bindShaders(shaders, 2));
+		CHECK(driver->bindShaders(shaders, COUNTOF(shaders)));
 		CHECK(driver->bindShaderInput(input, COUNTOF(input), NULL));
 
 		driver->setTextureState(&textureState, 1, 0);
-		CHECK(driver->setUniformTexture(StringHash("u_tex"), texture));
+		CHECK(driver->setUniformTexture(StringHash("tex"), texture));
 
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();
@@ -383,7 +411,7 @@ TEST_FIXTURE(GraphicsDriverTest, _texture)
 	while(keepRun()) {
 		driver->clearColor(0, 0, 0, 0);
 
-		CHECK(driver->bindShaders(shaders, 2));
+		CHECK(driver->bindShaders(shaders, COUNTOF(shaders)));
 		CHECK(driver->bindShaderInput(input, COUNTOF(input), NULL));
 
 		driver->setTextureState(&textureState, 1, 0);
@@ -406,23 +434,23 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 		"attribute vec3 position;"
 		"uniform mat4 modelViewMat;"
 		"uniform mat4 projectionMat;"
-		"void main(void){gl_Position=(projectionMat*modelViewMat)*vec4(position,1);}",
+		"void main(void) { gl_Position = (projectionMat*modelViewMat)*vec4(position,1); }",
 
 		// HLSL
 		"cbuffer modelViewMat { float4x4 _modelViewMat; };"
 		"cbuffer projectionMat { float4x4 _projectionMat; };"
-		"float4 main(float3 pos:position):SV_POSITION{ return mul(mul(_projectionMat,_modelViewMat),float4(pos,1));}"
+		"float4 main(float3 pos : position) : SV_POSITION { return mul(mul(_projectionMat,_modelViewMat),float4(pos,1)); }"
 	};
 
 	static const char* pShaderSrc[] = 
 	{
 		// GLSL
 		"uniform vec4 color;"
-		"void main(void){gl_FragColor=color;}",
+		"void main(void) { gl_FragColor = color; }",
 
 		// HLSL
 		"cbuffer color { float4 _color; };"
-		"float4 main(float4 pos:SV_POSITION):SV_Target{return _color;}"
+		"float4 main(float4 pos : SV_POSITION) : SV_Target { return _color; }"
 	};
 
 	createWindow(200, 200);
@@ -478,7 +506,7 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 	while(keepRun()) {
 		driver->clearColor(0, 0, 0, 0);
 
-		CHECK(driver->bindShaders(shaders, 2));
+		CHECK(driver->bindShaders(shaders, COUNTOF(shaders)));
 		CHECK(driver->bindShaderInput(input, COUNTOF(input), NULL));
 
 		driver->drawTriangleIndexed(0, 6, 0);
@@ -500,21 +528,21 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 	{
 		// GLSL
 		"attribute vec4 position;"
-		"void main(void){gl_Position=position;}",
+		"void main(void) { gl_Position = position; }",
 
 		// HLSL
-		"float4 main(float4 pos:position):SV_POSITION{return pos;}"
+		"float4 main(float4 pos : position) : SV_POSITION { return pos; }"
 	};
 
 	static const char* pShaderSrc[] = 
 	{
 		// GLSL
 		"uniform vec4 color;"
-		"void main(void){gl_FragColor=color;}",
+		"void main(void) { gl_FragColor = color; }",
 
 		// HLSL
 		"cbuffer color { float4 _color; }"
-		"float4 main(float4 pos:SV_POSITION):SV_Target{return _color;}"
+		"float4 main(float4 pos : SV_POSITION) : SV_Target { return _color; }"
 	};
 
 	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
@@ -553,7 +581,7 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 	{
 		driver->clearColor(0, 0, 0, 0);
 		driver->setBlendState(&blend);
-		CHECK(driver->bindShaders(shaders, 2));
+		CHECK(driver->bindShaders(shaders, COUNTOF(shaders)));
 
 		{	// Draw the first quad
 			float color[] = { 1, 1, 0, 0.5f };
@@ -588,6 +616,117 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 
 	driver->deleteBuffer(vbuffer1);
 	driver->deleteBuffer(vbuffer2);
+	driver->deleteBuffer(ibuffer);
+	driver->deleteBuffer(ubuffer);
+}
+
+TEST_FIXTURE(GraphicsDriverTest, GeometryShader)
+{
+	static const char* vShaderSrc[] = 
+	{
+		// GLSL
+		"attribute vec3 position;"
+		"uniform mat4 modelViewMat;"
+		"uniform mat4 projectionMat;"
+		"void main(void) { gl_Position = (projectionMat*modelViewMat)*vec4(position,1); }",
+
+		// HLSL
+		"cbuffer modelViewMat { float4x4 _modelViewMat; };"
+		"cbuffer projectionMat { float4x4 _projectionMat; };"
+		"float4 main(float3 pos : position) : SV_POSITION { return mul(mul(_projectionMat,_modelViewMat),float4(pos,1)); }"
+	};
+
+	static const char* gShaderSrc[] = 
+	{
+		// GLSL
+		"#version 150\n"
+		"layout(triangles) in;"
+		"layout(triangle_strip, max_vertices=3) out;"
+		"void main(void) {"
+		"for(int i=0; i<gl_in.length(); ++i) {"
+		"	gl_Position = gl_in[i].gl_Position;"
+		"	EmitVertex();"
+		"} EndPrimitive();"
+		"}",
+
+		// HLSL
+		"cbuffer color { float4 _color; };"
+		"float4 main(float4 pos:SV_POSITION):SV_Target{return _color;}"
+	};
+
+	static const char* pShaderSrc[] = 
+	{
+		// GLSL
+		"uniform vec4 color;"
+		"void main(void){gl_FragColor=color;}",
+
+		// HLSL
+		"cbuffer color { float4 _color; };"
+		"float4 main(float4 pos:SV_POSITION):SV_Target{return _color;}"
+	};
+
+	createWindow(200, 200);
+	initContext(driverStr[driverIndex]);
+
+	// Init shader
+	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(gShader, RgDriverShaderType_Geometry, &gShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
+
+	RgDriverShader* shaders[] = { vShader, gShader, pShader };
+
+	// Create vertex buffer
+	float vertex[][3] = { {-1,1,0}, {-1,-1,0}, {1,-1,0}, {1,1,0} };
+	RgDriverBuffer* vbuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(vbuffer, RgDriverBufferType_Vertex, RgDriverDataUsage_Static, vertex, sizeof(vertex)));
+
+	// Create index buffer
+	rhuint16 index[][3] = { {0, 1, 2}, {0, 2, 3} };
+	RgDriverBuffer* ibuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ibuffer, RgDriverBufferType_Index, RgDriverDataUsage_Static, index, sizeof(index)));
+
+	// Create uniform buffer
+	RgDriverBuffer* ubuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ubuffer, RgDriverBufferType_Uniform, RgDriverDataUsage_Stream, NULL, sizeof(float)*(16*2+4)));
+
+	// Model view matrix
+	float* modelView = (float*)driver->mapBuffer(ubuffer, RgDriverBufferMapUsage_Write);
+
+	rgMat44MakeIdentity(modelView);
+	float translate[] =  { 0, 0, -3 };
+	rgMat44TranslateBy(modelView, translate);
+
+	// Projection matrix
+	float* prespective = modelView + 16;
+	rgMat44MakePrespective(prespective, 90, 1, 2, 10);
+	driver->adjustDepthRangeMatrix(prespective);
+
+	// Color
+	float color[] = { 1, 1, 0, 1 };
+	memcpy(prespective + 16, color, sizeof(color));
+
+	driver->unmapBuffer(ubuffer);
+
+	// Bind shader input layout
+	RgDriverShaderInput input[] = {
+		{ vbuffer, vShader, "position", 0, 3, 0, 0, 0 },
+		{ ibuffer, NULL, NULL, 0, 1, 0, 0, 0 },
+		{ ubuffer, vShader, "modelViewMat", 0, 1, 0, 0, 0 },
+		{ ubuffer, vShader, "projectionMat", 0, 1, sizeof(float)*16, 0, 0 },
+		{ ubuffer, pShader, "color", 0, 1, sizeof(float)*16*2, 0, 0 },
+	};
+
+	while(keepRun()) {
+		driver->clearColor(0, 0, 0, 0);
+
+		CHECK(driver->bindShaders(shaders, COUNTOF(shaders)));
+		CHECK(driver->bindShaderInput(input, COUNTOF(input), NULL));
+
+		driver->drawTriangleIndexed(0, 6, 0);
+		driver->swapBuffers();
+	}
+
+	driver->deleteBuffer(vbuffer);
 	driver->deleteBuffer(ibuffer);
 	driver->deleteBuffer(ubuffer);
 }

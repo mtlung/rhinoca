@@ -83,7 +83,7 @@ extern bool _driverChangeResolution_DX11(unsigned width, unsigned height);
 
 extern void rgDriverApplyDefaultState(RgDriverContext* self);
 
-namespace {
+//namespace {
 
 #include "driver2.dx11.inl"
 
@@ -491,6 +491,55 @@ static void _unmapBuffer(RgDriverBuffer* self)
 //////////////////////////////////////////////////////////////////////////
 // Texture
 
+struct RgDriverTextureImpl : public RgDriverTexture
+{
+	ID3D11Resource* dxTexture;	// May store a 1d, 2d or 3d texture
+	D3D11_RESOURCE_DIMENSION dxDimension;
+//	TextureFormatMapping* formatMapping;
+};	// RgDriverTextureImpl
+
+static RgDriverTexture* _newTexture()
+{
+	RgDriverTextureImpl* ret = new RgDriverTextureImpl;
+	memset(ret, 0, sizeof(*ret));
+	return ret;
+}
+
+static void _deleteTexture(RgDriverTexture* self)
+{
+	RgDriverTextureImpl* impl = static_cast<RgDriverTextureImpl*>(self);
+	if(!impl) return;
+
+	safeRelease(impl->dxTexture);
+
+	delete static_cast<RgDriverTextureImpl*>(self);
+}
+
+static bool _initTexture(RgDriverTexture* self, unsigned width, unsigned height, RgDriverTextureFormat format)
+{
+	RgDriverTextureImpl* impl = static_cast<RgDriverTextureImpl*>(self);
+	if(!impl) return false;
+	if(impl->format || impl->dxTexture) return false;
+
+	impl->width = width;
+	impl->height = height;
+	impl->format = format;
+	impl->dxDimension = D3D11_RESOURCE_DIMENSION_TEXTURE2D;
+//	impl->formatMapping = &(_textureFormatMappings[format]);
+
+	return true;
+}
+
+static bool _commitTexture(RgDriverTexture* self, const void* data, unsigned rowPaddingInBytes)
+{
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	RgDriverTextureImpl* impl = static_cast<RgDriverTextureImpl*>(self);
+	if(!ctx || !impl) return false;
+	if(impl->dxDimension == D3D11_RESOURCE_DIMENSION_UNKNOWN) return false;
+
+	return true;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Shader
 
@@ -743,6 +792,7 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 			if(!shaderBlob)
 				return false;
 
+			// TODO: Must gather all input layout and submit at once
 			HRESULT hr = ctx->dxDevice->CreateInputLayout(
 				&inputDesc, 1,
 				shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(),
@@ -806,7 +856,7 @@ static void _rhDeleteRenderDriver_DX11(RgDriver* self)
 	delete static_cast<RgDriverImpl*>(self);
 }
 
-}	// namespace
+//}	// namespace
 
 RgDriver* _rgNewRenderDriver_DX11(const char* options)
 {
@@ -840,6 +890,11 @@ RgDriver* _rgNewRenderDriver_DX11(const char* options)
 	ret->updateBuffer = _updateBuffer;
 	ret->mapBuffer = _mapBuffer;
 	ret->unmapBuffer = _unmapBuffer;
+
+	ret->newTexture = _newTexture;
+	ret->deleteTexture = _deleteTexture;
+	ret->initTexture = _initTexture;
+	ret->commitTexture = _commitTexture;
 
 	ret->newShader = _newShader;
 	ret->deleteShader = _deleteShader;

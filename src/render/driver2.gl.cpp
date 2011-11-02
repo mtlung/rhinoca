@@ -13,8 +13,10 @@
 #include "win32/extensionswin32fwd.h"
 
 // OpenGL stuffs
+// Instancing:				http://sol.gfxile.net/instancing.html
 // Pixel buffer object:		http://www.songho.ca/opengl/gl_pbo.html
 // Buffer object streaming:	http://www.opengl.org/wiki/Buffer_Object_Streaming
+// Geometry shader examples:http://renderingwonders.wordpress.com/tag/geometry-shader/
 // Opengl on Mac:			http://developer.apple.com/library/mac/#documentation/GraphicsImaging/Conceptual/OpenGL-MacProgGuide/opengl_intro/opengl_intro.html
 
 //////////////////////////////////////////////////////////////////////////
