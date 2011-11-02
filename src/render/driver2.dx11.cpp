@@ -83,7 +83,7 @@ extern bool _driverChangeResolution_DX11(unsigned width, unsigned height);
 
 extern void rgDriverApplyDefaultState(RgDriverContext* self);
 
-//namespace {
+namespace {
 
 #include "driver2.dx11.inl"
 
@@ -125,6 +125,15 @@ static void _clearStencil(unsigned char s)
 	if(!ctx || !ctx->dxDeviceContext) return;
 
 	ctx->dxDeviceContext->ClearDepthStencilView(ctx->dxDepthStencilView, D3D11_CLEAR_STENCIL, 1, s);
+}
+
+static void _adjustDepthRangeMatrix(float* mat)
+{
+	// Transform the z from range -1, 1 to 0, 1
+	mat[2 + 0*4] = (mat[2 + 0*4] + mat[3 + 0*4]) * 0.5f;
+	mat[2 + 1*4] = (mat[2 + 1*4] + mat[3 + 1*4]) * 0.5f;
+	mat[2 + 2*4] = (mat[2 + 2*4] + mat[3 + 2*4]) * 0.5f;
+	mat[2 + 3*4] = (mat[2 + 3*4] + mat[3 + 3*4]) * 0.5f;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -797,7 +806,7 @@ static void _rhDeleteRenderDriver_DX11(RgDriver* self)
 	delete static_cast<RgDriverImpl*>(self);
 }
 
-//}	// namespace
+}	// namespace
 
 RgDriver* _rgNewRenderDriver_DX11(const char* options)
 {
@@ -817,6 +826,8 @@ RgDriver* _rgNewRenderDriver_DX11(const char* options)
 	ret->clearColor = _clearColor;
 	ret->clearDepth = _clearDepth;
 	ret->clearStencil = _clearStencil;
+
+	ret->adjustDepthRangeMatrix = _adjustDepthRangeMatrix;
 
 	ret->applyDefaultState = rgDriverApplyDefaultState;
 	ret->setBlendState = _setBlendState;

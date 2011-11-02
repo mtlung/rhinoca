@@ -33,7 +33,7 @@ typedef enum RgDriverDataUsage
 {
 	RgDriverDataUsage_Static	= 1,	/// No access for CPU after initialized
 	RgDriverDataUsage_Stream	= 2,	/// Upload to the GPU for every draw call
-	RgDriverDataUsage_Dynamic	= 3,	/// Write by CPU and read by GPU for several times
+	RgDriverDataUsage_Dynamic	= 3,	/// Write by CPU a few times and read by GPU for many times
 } RgDriverDataUsage;
 
 typedef enum RgDriverBufferMapUsage
@@ -75,9 +75,9 @@ typedef struct RgDriverTexture
 
 typedef enum RgDriverShaderType
 {
-	RgDriverShaderType_Vertex = 0,
-	RgDriverShaderType_Pixel,
-	RgDriverShaderType_Geometry,
+	RgDriverShaderType_Vertex	= 0,
+	RgDriverShaderType_Pixel	= 1,
+	RgDriverShaderType_Geometry	= 2,
 } RgDriverShaderType;
 
 typedef struct RgDriverShader
@@ -171,7 +171,7 @@ typedef struct RgDriverStencilState
 
 typedef struct RgDriverDepthStencilState
 {
-	void* hash;		/// Set it to 0 when ever the state is changed
+	void* hash;		/// Set it to 0 whenever the state is changed
 	unsigned short enableDepth;
 	unsigned short enableStencil;
 	RgDriverCompareFunc depthFunc;
@@ -222,6 +222,8 @@ typedef struct RgDriver
 	void (*clearColor)(float r, float g, float b, float a);
 	void (*clearDepth)(float z);
 	void (*clearStencil)(unsigned char s);
+
+	void (*adjustDepthRangeMatrix)(float* inoutMat44);
 
 // State management
 	void (*applyDefaultState)(RgDriverContext* self);

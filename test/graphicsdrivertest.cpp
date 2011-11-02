@@ -144,7 +144,7 @@ TEST_FIXTURE(GraphicsDriverTest, empty)
 	createWindow(1, 1);
 }
 
-static const unsigned driverIndex = 1;
+static const unsigned driverIndex = 0;
 
 static const char* driverStr[] = 
 {
@@ -411,18 +411,18 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 		// HLSL
 		"cbuffer modelViewMat { float4x4 _modelViewMat; };"
 		"cbuffer projectionMat { float4x4 _projectionMat; };"
-		"float4 main(float3 pos:position):SV_POSITION{ float4 ret=mul(mul(_projectionMat,_modelViewMat),float4(pos,1)); ret.z=ret.z*0.5+0.5; return ret;}"
+		"float4 main(float3 pos:position):SV_POSITION{ return mul(mul(_projectionMat,_modelViewMat),float4(pos,1));}"
 	};
 
 	static const char* pShaderSrc[] = 
 	{
 		// GLSL
-		"uniform vec4 u_color;"
-		"void main(void){gl_FragColor=u_color;}",
+		"uniform vec4 color;"
+		"void main(void){gl_FragColor=color;}",
 
 		// HLSL
-		"cbuffer u_color { float4 _u_color; };"
-		"float4 main(float4 pos:SV_POSITION):SV_Target{return _u_color;}"
+		"cbuffer color { float4 _color; };"
+		"float4 main(float4 pos:SV_POSITION):SV_Target{return _color;}"
 	};
 
 	createWindow(200, 200);
@@ -458,6 +458,7 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 	// Projection matrix
 	float* prespective = modelView + 16;
 	rgMat44MakePrespective(prespective, 90, 1, 2, 10);
+	driver->adjustDepthRangeMatrix(prespective);
 
 	// Color
 	float color[] = { 1, 1, 0, 1 };
@@ -471,7 +472,7 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 		{ ibuffer, NULL, NULL, 0, 1, 0, 0, 0 },
 		{ ubuffer, vShader, "modelViewMat", 0, 1, 0, 0, 0 },
 		{ ubuffer, vShader, "projectionMat", 0, 1, sizeof(float)*16, 0, 0 },
-		{ ubuffer, pShader, "u_color", 0, 1, sizeof(float)*16*2, 0, 0 },
+		{ ubuffer, pShader, "color", 0, 1, sizeof(float)*16*2, 0, 0 },
 	};
 
 	while(keepRun()) {
@@ -490,20 +491,34 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 }
 
 TEST_FIXTURE(GraphicsDriverTest, blending)
-{return;
+{
 	createWindow(200, 200);
 	initContext(driverStr[driverIndex]);
 
 	// Init shader
-	const char* vShaderSrc =
-		"attribute vec4 vertex;"
-		"void main(void){gl_Position=vertex;}";
-	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc, 1));
+	static const char* vShaderSrc[] = 
+	{
+		// GLSL
+		"attribute vec4 position;"
+		"void main(void){gl_Position=position;}",
 
-	const char* pShaderSrc =
-		"uniform vec4 u_color;"
-		"void main(void){gl_FragColor=u_color;}";
-	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc, 1));
+		// HLSL
+		"float4 main(float4 pos:position):SV_POSITION{return pos;}"
+	};
+
+	static const char* pShaderSrc[] = 
+	{
+		// GLSL
+		"uniform vec4 color;"
+		"void main(void){gl_FragColor=color;}",
+
+		// HLSL
+		"cbuffer color { float4 _color; }"
+		"float4 main(float4 pos:SV_POSITION):SV_Target{return _color;}"
+	};
+
+	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
 
 	RgDriverShader* shaders[] = { vShader, pShader };
 
@@ -545,9 +560,9 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 			driver->updateBuffer(ubuffer, 0, color, sizeof(color));
 
 			RgDriverShaderInput input[] = {
-				{ vbuffer1, vShader, "vertex", 0, 4, 0, 0, 0 },
+				{ vbuffer1, vShader, "position", 0, 4, 0, 0, 0 },
 				{ ibuffer, NULL, NULL, 0, 1, 0, 0, 0 },
-				{ ubuffer, pShader, "u_color", 0, 1, 0, 0, 0 },
+				{ ubuffer, pShader, "color", 0, 1, 0, 0, 0 },
 			};
 			CHECK(driver->bindShaderInput(input, COUNTOF(input), NULL));
 
@@ -559,9 +574,9 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 			driver->updateBuffer(ubuffer, 0, color, sizeof(color));
 
 			RgDriverShaderInput input[] = {
-				{ vbuffer2, vShader, "vertex", 0, 4, 0, 0, 0 },
+				{ vbuffer2, vShader, "position", 0, 4, 0, 0, 0 },
 				{ ibuffer, NULL, NULL, 0, 1, 0, 0, 0 },
-				{ ubuffer, pShader, "u_color", 0, 1, 0, 0, 0 },
+				{ ubuffer, pShader, "color", 0, 1, 0, 0, 0 },
 			};
 			CHECK(driver->bindShaderInput(input, COUNTOF(input), NULL));
 

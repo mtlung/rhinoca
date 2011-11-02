@@ -85,6 +85,11 @@ static void _clearStencil(unsigned char s)
 	glClear(GL_STENCIL_BUFFER_BIT);
 }
 
+static void _adjustDepthRangeMatrix(float* mat44)
+{
+	// Do nothing
+}
+
 //////////////////////////////////////////////////////////////////////////
 // State management
 
@@ -362,32 +367,49 @@ static const Array<GLenum, 4> _bufferUsage = {
 	GL_DYNAMIC_DRAW
 };
 
-static bool _initBuffer(RgDriverBuffer* self, RgDriverBufferType type, RgDriverDataUsage usage, void* initData, unsigned sizeInBytes)
+static bool _initBufferSpecificLocation(RgDriverBufferImpl* impl, RgDriverBufferType type, RgDriverDataUsage usage, void* initData, unsigned sizeInBytes, bool systemMemory)
 {
-	RgDriverBufferImpl* impl = static_cast<RgDriverBufferImpl*>(self);
-	if(!impl) return false;
+	impl->type = type;
+	impl->sizeInBytes = sizeInBytes;
+	impl->usage = usage;
 
-	self->type = type;
-	self->sizeInBytes = sizeInBytes;
-	self->usage = usage;
+	checkError();
 
-	if(usage == RgDriverDataUsage_Stream) {
+	if(systemMemory) {
 		impl->systemBuf = rhinoca_malloc(sizeInBytes);
 		if(initData)
  			memcpy(impl->systemBuf, initData, sizeInBytes);
+
+		if(impl->glh) {
+			impl->isMapped = false;	// Calling glDeleteBuffers also implies glUnmapBuffer
+			glDeleteBuffers(1, &impl->glh);
+			impl->glh = 0;
+		}
  	}
- 	else {
-		checkError();
+ 	else
+	{
 		glGenBuffers(1, &impl->glh);
 		GLenum t = _bufferTarget[type];
 		RHASSERT("Invalid RgDriverBufferType" && t != 0);
 		glBindBuffer(t, impl->glh);
 		glBufferData(t, sizeInBytes, initData, _bufferUsage[usage]);
 		RHASSERT(impl->glh);
-		checkError();
+
+		rhinoca_free(impl->systemBuf);
 	}
 
+	checkError();
+
 	return true;
+}
+
+static bool _initBuffer(RgDriverBuffer* self, RgDriverBufferType type, RgDriverDataUsage usage, void* initData, unsigned sizeInBytes)
+{
+	RgDriverBufferImpl* impl = static_cast<RgDriverBufferImpl*>(self);
+	if(!impl) return false;
+
+	RHASSERT(!impl->glh && !impl->systemBuf);
+	return _initBufferSpecificLocation(impl, type, usage, initData, sizeInBytes, false);
 }
 
 static bool _updateBuffer(RgDriverBuffer* self, unsigned offsetInBytes, void* data, unsigned sizeInBytes)
@@ -400,7 +422,7 @@ static bool _updateBuffer(RgDriverBuffer* self, unsigned offsetInBytes, void* da
 	if(offsetInBytes + sizeInBytes > self->sizeInBytes) return false;
 	if(impl->usage == RgDriverDataUsage_Static) return false;
 
- 	if(impl->usage == RgDriverDataUsage_Stream)
+ 	if(impl->systemBuf)
  		memcpy(((char*)impl->systemBuf) + offsetInBytes, data, sizeInBytes);
  	else {
 		checkError();
@@ -466,6 +488,21 @@ static void _unmapBuffer(RgDriverBuffer* self)
 #endif
 
 	impl->isMapped = false;
+}
+
+static bool _switchBufferMode(RgDriverBufferImpl* impl)
+{
+	RHASSERT((impl->glh != 0) != (impl->systemBuf != NULL) && "Only glh or system buffer but not using both");
+
+	if(impl->glh) {
+		if(void* data = _mapBuffer(impl, RgDriverBufferMapUsage_Read))
+			return _initBufferSpecificLocation(impl, impl->type, impl->usage, data, impl->sizeInBytes, true);
+	}
+	else if(impl->systemBuf) {
+		return _initBufferSpecificLocation(impl, impl->type, impl->usage, impl->systemBuf, impl->sizeInBytes, false);
+	}
+
+	return false;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1044,16 +1081,19 @@ bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer, RgDriverShader
 		if(int(bufferImpl->sizeInBytes) < block->blockSizeInBytes)
 			return false;
 
+		// Switch to buffer object mode
+		if(bufferImpl->glh == 0)
+			RHVERIFY(_switchBufferMode(bufferImpl));
+
 		glBindBufferBase(GL_UNIFORM_BUFFER, block->index, bufferImpl->glh);
 		glUniformBlockBinding(program->glh, block->index, block->index);
 		break;
 	}
 #endif
 
-	if(!bufferImpl->systemBuf) {
-		RHASSERT(false);
-		return false;
-	}
+	// Switch to system memory mode
+	if(!bufferImpl->systemBuf)
+		RHVERIFY(_switchBufferMode(bufferImpl));
 
 	if(ProgramUniform* uniform = _findProgramUniform(nameHash)) {
 		char* data = (char*)(bufferImpl->systemBuf) + input->offset;
@@ -1301,6 +1341,8 @@ RgDriver* _rgNewRenderDriver_GL(const char* options)
 	ret->clearColor = _clearColor;
 	ret->clearDepth = _clearDepth;
 	ret->clearStencil = _clearStencil;
+
+	ret->adjustDepthRangeMatrix = _adjustDepthRangeMatrix;
 
 	ret->applyDefaultState = rgDriverApplyDefaultState;
 	ret->setBlendState = _setBlendState;
