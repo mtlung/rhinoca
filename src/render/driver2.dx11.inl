@@ -45,7 +45,8 @@ struct RgDriverContextImpl : public RgDriverContext
 	ComPtr<ID3D11Texture2D> dxDepthStencilTexture;
 	ComPtr<ID3D11DepthStencilView> dxDepthStencilView;
 
-	Array<RgDriverShaderImpl*, 3> currentShaders;
+	typedef Array<RgDriverShaderImpl*, 3> CurrentShaders;
+	CurrentShaders currentShaders;
 
 //	Vector<ID3D11DepthStencilState*> depthStencilStateCache;
 

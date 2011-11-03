@@ -703,6 +703,7 @@ bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx) return false;
 
+	RgDriverContextImpl::CurrentShaders binded = ctx->currentShaders;	// For detecting redudant state change
 	ctx->currentShaders.assign(NULL);
 
 	// Bind used shaders
@@ -711,6 +712,10 @@ bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 		if(!shader || !shader->dxShader) continue;
 
 		ctx->currentShaders[shader->type] = shader;
+
+		if(binded[shader->type] == shader)	// Avoid redudant state change
+			continue;
+
 		if(shader->type == RgDriverShaderType_Vertex)
 			ctx->dxDeviceContext->VSSetShader(static_cast<ID3D11VertexShader*>(shader->dxShader.ptr), NULL, 0);
 		else if(shader->type == RgDriverShaderType_Pixel)
@@ -724,6 +729,9 @@ bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 	// Unbind any previous shaders (where ctx->currentShaders is still NULL)
 	for(unsigned i=0; i<ctx->currentShaders.size(); ++i) {
 		if(ctx->currentShaders[i]) continue;
+
+		if(!binded[i])	// Avoid redudant state change
+			continue;
 
 		RgDriverShaderType type = RgDriverShaderType(i);
 		if(type == RgDriverShaderType_Vertex)
@@ -839,7 +847,7 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 			inputDesc.SemanticIndex = 0;
 			inputDesc.Format = input->elementCount == 3 ? DXGI_FORMAT_R32G32B32_FLOAT : DXGI_FORMAT_R32G32B32A32_FLOAT;	// TODO: Fix me
 			inputDesc.InputSlot = 0;
-			inputDesc.AlignedByteOffset = 0;
+			inputDesc.AlignedByteOffset = input->offset;
 			inputDesc.InputSlotClass =  D3D11_INPUT_PER_VERTEX_DATA;
 			inputDesc.InstanceDataStepRate = 0;
 
@@ -851,7 +859,7 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 			UINT offset = input->offset;
 
 			inputLayout.strides.push_back(stride);
-			inputLayout.offsets.push_back(offset);
+			inputLayout.offsets.push_back(0);
 			inputLayout.buffers.push_back(buffer->dxBuffer);
 		}
 		// Bind uniform buffer

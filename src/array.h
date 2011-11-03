@@ -3,6 +3,15 @@
 
 #include "rhassert.h"
 
+template<typename T>
+T* rhArrayFind(T* begin, unsigned count, const T& val)
+{
+	for(unsigned i=0; i<count; ++i)
+		if(begin[i] == val)
+			return begin + i;
+	return NULL;
+}
+
 /*! Array class with checked limits.
 	A replacement for plan old array, adapted from boost's array.hpp
 	The index operator[] has range check in debug mode.
