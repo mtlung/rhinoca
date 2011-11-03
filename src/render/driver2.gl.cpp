@@ -15,6 +15,7 @@
 // OpenGL stuffs
 // Instancing:				http://sol.gfxile.net/instancing.html
 // Pixel buffer object:		http://www.songho.ca/opengl/gl_pbo.html
+// Silhouette shader:		http://prideout.net/blog/p54/Silhouette.glsl
 // Buffer object streaming:	http://www.opengl.org/wiki/Buffer_Object_Streaming
 // Geometry shader examples:http://renderingwonders.wordpress.com/tag/geometry-shader/
 // Opengl on Mac:			http://developer.apple.com/library/mac/#documentation/GraphicsImaging/Conceptual/OpenGL-MacProgGuide/opengl_intro/opengl_intro.html

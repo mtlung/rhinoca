@@ -33,12 +33,6 @@
 //////////////////////////////////////////////////////////////////////////
 // Common stuffs
 
-template<typename T> void safeRelease(T*& t)
-{
-	if(t) t->Release();
-	t = NULL;
-}
-
 static unsigned _hash(const void* data, unsigned len)
 {
 	unsigned h = 0;
@@ -202,8 +196,8 @@ static void _setBlendState(RgDriverBlendState* state)
 	desc.RenderTarget[0].BlendOpAlpha = _blendOp[state->alphaOp];
 	desc.RenderTarget[0].RenderTargetWriteMask = _colorWriteMask[state->wirteMask];
 
-	ID3D11BlendState* s = NULL;
-	HRESULT hr = ctx->dxDevice->CreateBlendState(&desc, &s);
+	ComPtr<ID3D11BlendState> s;
+	HRESULT hr = ctx->dxDevice->CreateBlendState(&desc, &s.ptr);
 
 	if(FAILED(hr)) {
 		rhLog("error", "CreateBlendState failed\n");
@@ -215,7 +209,6 @@ static void _setBlendState(RgDriverBlendState* state)
 		0,	// The blend factor, which to use with D3D11_BLEND_BLEND_FACTOR, but we didn't support it yet
 		-1	// Bit mask to do with the multi-sample, not used so set all bits to 1
 	);
-	safeRelease(s);
 }
 
 static const Array<D3D11_COMPARISON_FUNC, 8> _comparisonFuncs = {
@@ -283,8 +276,8 @@ static void _setDepthStencilState(RgDriverDepthStencilState* state)
 	desc.BackFace.StencilPassOp = _stencilOps[state->back.passOp];
 	desc.BackFace.StencilFunc = _comparisonFuncs[state->back.func];
 
-	ID3D11DepthStencilState* s = NULL;
-	HRESULT hr = ctx->dxDevice->CreateDepthStencilState(&desc, &s);
+	ComPtr<ID3D11DepthStencilState> s;
+	HRESULT hr = ctx->dxDevice->CreateDepthStencilState(&desc, &s.ptr);
 
 	if(FAILED(hr)) {
 		rhLog("error", "CreateDepthStencilState failed\n");
@@ -292,7 +285,6 @@ static void _setDepthStencilState(RgDriverDepthStencilState* state)
 	}
 
 	ctx->dxDeviceContext->OMSetDepthStencilState(s, state->stencilRefValue);
-	safeRelease(s);
 }
 
 static void _setTextureState(RgDriverTextureState* states, unsigned stateCount, unsigned startingTextureUnit)
@@ -306,8 +298,8 @@ static void _setTextureState(RgDriverTextureState* states, unsigned stateCount, 
 
 struct RgDriverBufferImpl : public RgDriverBuffer
 {
-	ID3D11Buffer* dxBuffer;
-	ID3D11Buffer* dxStaging;
+	ComPtr<ID3D11Buffer> dxBuffer;
+	ComPtr<ID3D11Buffer> dxStaging;
 };	// RgDriverBufferImpl
 
 static RgDriverBuffer* _newBuffer()
@@ -321,9 +313,6 @@ static void _deleteBuffer(RgDriverBuffer* self)
 {
 	RgDriverBufferImpl* impl = static_cast<RgDriverBufferImpl*>(self);
 	if(!impl) return;
-
-	safeRelease(impl->dxBuffer);
-	safeRelease(impl->dxStaging);
 
 	RHASSERT(!impl->isMapped);
 
@@ -373,7 +362,7 @@ static bool _initBuffer(RgDriverBuffer* self, RgDriverBufferType type, RgDriverD
 	data.SysMemPitch = 0;
 	data.SysMemSlicePitch = 0;
 
-	HRESULT hr = ctx->dxDevice->CreateBuffer(&desc, initData ? &data : NULL, &impl->dxBuffer);
+	HRESULT hr = ctx->dxDevice->CreateBuffer(&desc, initData ? &data : NULL, &impl->dxBuffer.ptr);
 
 	if(FAILED(hr)) {
 		rhLog("error", "Fail to create buffer\n");
@@ -400,14 +389,13 @@ static bool _updateBuffer(RgDriverBuffer* self, unsigned offsetInBytes, void* da
 		sizeInBytes, D3D11_USAGE_STAGING,
 		0, D3D11_CPU_ACCESS_WRITE, 0, 0
 	};
-	ID3D11Buffer* stagingBuffer = NULL;
+	ComPtr<ID3D11Buffer> stagingBuffer;
 	D3D11_SUBRESOURCE_DATA dxData = { data, 0, 0 };
-	HRESULT hr = ctx->dxDevice->CreateBuffer(&stagingBufferDesc, &dxData, &stagingBuffer);
+	HRESULT hr = ctx->dxDevice->CreateBuffer(&stagingBufferDesc, &dxData, &stagingBuffer.ptr);
 	if(FAILED(hr))
 		return false;
 
-	ctx->dxDeviceContext->CopySubresourceRegion(impl->dxBuffer, 0, offsetInBytes, 0, 0, stagingBuffer, 0, NULL);
-	safeRelease(stagingBuffer);
+	ctx->dxDeviceContext->CopySubresourceRegion(impl->dxBuffer.ptr, 0, offsetInBytes, 0, 0, stagingBuffer, 0, NULL);
 
 	return true;
 }
@@ -441,7 +429,7 @@ static void* _mapBuffer(RgDriverBuffer* self, RgDriverBufferMapUsage usage)
 	};
 
 	RHASSERT(!impl->dxStaging);
-	HRESULT hr = ctx->dxDevice->CreateBuffer(&stagingBufferDesc, NULL, &impl->dxStaging);
+	HRESULT hr = ctx->dxDevice->CreateBuffer(&stagingBufferDesc, NULL, &impl->dxStaging.ptr);
 	if(FAILED(hr) || !impl->dxStaging)
 		return NULL;
 
@@ -483,8 +471,7 @@ static void _unmapBuffer(RgDriverBuffer* self)
 	if(impl->mapUsage & RgDriverBufferMapUsage_Write)
 		ctx->dxDeviceContext->CopyResource(impl->dxBuffer, impl->dxStaging);
 
-	safeRelease(impl->dxStaging);
-
+	impl->dxStaging = (ID3D11Buffer*)NULL;
 	impl->isMapped = false;
 }
 
@@ -493,7 +480,7 @@ static void _unmapBuffer(RgDriverBuffer* self)
 
 struct RgDriverTextureImpl : public RgDriverTexture
 {
-	ID3D11Resource* dxTexture;	// May store a 1d, 2d or 3d texture
+	ComPtr<ID3D11Resource> dxTexture;	// May store a 1d, 2d or 3d texture
 	D3D11_RESOURCE_DIMENSION dxDimension;
 //	TextureFormatMapping* formatMapping;
 };	// RgDriverTextureImpl
@@ -509,8 +496,6 @@ static void _deleteTexture(RgDriverTexture* self)
 {
 	RgDriverTextureImpl* impl = static_cast<RgDriverTextureImpl*>(self);
 	if(!impl) return;
-
-	safeRelease(impl->dxTexture);
 
 	delete static_cast<RgDriverTextureImpl*>(self);
 }
@@ -530,12 +515,64 @@ static bool _initTexture(RgDriverTexture* self, unsigned width, unsigned height,
 	return true;
 }
 
+typedef struct TextureFormatMapping
+{
+	RgDriverTextureFormat format;
+	unsigned pixelSizeInBytes;
+	DXGI_FORMAT dxFormat;
+} TextureFormatMapping;
+
+TextureFormatMapping _textureFormatMappings[] = {
+	{ RgDriverTextureFormat(0),				0,	DXGI_FORMAT(0) },
+	{ RgDriverTextureFormat_RGBA,			4,	DXGI_FORMAT_R8G8B8A8_UINT },
+	{ RgDriverTextureFormat_R,				1,	DXGI_FORMAT_R16_UINT },
+	{ RgDriverTextureFormat_A,				0,	DXGI_FORMAT(0) },
+	{ RgDriverTextureFormat_Depth,			0,	DXGI_FORMAT(0) },
+	{ RgDriverTextureFormat_DepthStencil,	0,	DXGI_FORMAT(0) },
+	{ RgDriverTextureFormat_PVRTC2,			0,	DXGI_FORMAT(0) },
+	{ RgDriverTextureFormat_PVRTC4,			0,	DXGI_FORMAT(0) },
+	{ RgDriverTextureFormat_DXT1,			0,	DXGI_FORMAT_BC1_UNORM },
+	{ RgDriverTextureFormat_DXT5,			0,	DXGI_FORMAT_BC3_UNORM },
+};
+
 static bool _commitTexture(RgDriverTexture* self, const void* data, unsigned rowPaddingInBytes)
 {
 	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	RgDriverTextureImpl* impl = static_cast<RgDriverTextureImpl*>(self);
 	if(!ctx || !impl) return false;
 	if(impl->dxDimension == D3D11_RESOURCE_DIMENSION_UNKNOWN) return false;
+
+	const unsigned mipCount = 1;	// TODO: Allow loading mip maps
+
+	DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };		// 1 sample, quality level 0
+	D3D11_TEXTURE2D_DESC desc = {
+		impl->width, impl->height,
+		mipCount,	// MipLevels
+		1,			// ArraySize
+		_textureFormatMappings[impl->format].dxFormat,
+		sampleDesc,
+		D3D11_USAGE_DEFAULT,
+		0,	// CPUAccessFlags
+		0	// MiscFlags 
+	};
+
+	if(rowPaddingInBytes == 0)
+		rowPaddingInBytes = impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes;
+
+	D3D11_SUBRESOURCE_DATA dataDesc = {
+		data,
+		rowPaddingInBytes,
+		0	// Only meaningful for 3d texture
+	};
+
+	ID3D11Texture2D* tex2d = NULL;
+	HRESULT hr = ctx->dxDevice->CreateTexture2D(&desc, data ? &dataDesc : NULL, &tex2d);
+	impl->dxTexture = tex2d;
+
+	if(FAILED(hr)) {
+		rhLog("error", "CreateTexture2D failed\n");
+		return false;
+	}
 
 	return true;
 }
@@ -559,9 +596,6 @@ static void _deleteShader(RgDriverShader* self)
 		if(ctx->currentShaders[i] == impl) {
 			ctx->currentShaders[i] = NULL;
 		}
-
-	safeRelease(impl->dxShader);
-	safeRelease(impl->dxShaderBlob);
 
 	delete static_cast<RgDriverShaderImpl*>(self);
 }
@@ -624,8 +658,8 @@ static bool _initShader(RgDriverShader* self, RgDriverShaderType type, const cha
 
 	// Query the resource binding point
 	// See: http://stackoverflow.com/questions/3198904/d3d10-hlsl-how-do-i-bind-a-texture-to-a-global-texture2d-via-reflection
-	ID3D11ShaderReflection* reflector = NULL; 
-	D3DReflect(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&reflector);
+	ComPtr<ID3D11ShaderReflection> reflector; 
+	D3DReflect(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&reflector.ptr);
 
     D3D11_SHADER_DESC shaderDesc;
     reflector->GetDesc(&shaderDesc);
@@ -649,8 +683,6 @@ static bool _initShader(RgDriverShader* self, RgDriverShaderType type, const cha
 		impl->constantBuffers.push_back(cb);
 	}
 
-	safeRelease(reflector);
-
 	return true;
 }
 
@@ -669,11 +701,11 @@ bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 
 		ctx->currentShaders[shader->type] = shader;
 		if(shader->type == RgDriverShaderType_Vertex)
-			ctx->dxDeviceContext->VSSetShader(static_cast<ID3D11VertexShader*>(shader->dxShader), NULL, 0);
+			ctx->dxDeviceContext->VSSetShader(static_cast<ID3D11VertexShader*>(shader->dxShader.ptr), NULL, 0);
 		else if(shader->type == RgDriverShaderType_Pixel)
-			ctx->dxDeviceContext->PSSetShader(static_cast<ID3D11PixelShader*>(shader->dxShader), NULL, 0);
+			ctx->dxDeviceContext->PSSetShader(static_cast<ID3D11PixelShader*>(shader->dxShader.ptr), NULL, 0);
 		else if(shader->type == RgDriverShaderType_Geometry)
-			ctx->dxDeviceContext->GSSetShader(static_cast<ID3D11GeometryShader*>(shader->dxShader), NULL, 0);
+			ctx->dxDeviceContext->GSSetShader(static_cast<ID3D11GeometryShader*>(shader->dxShader.ptr), NULL, 0);
 		else
 			RHASSERT(false);
 	}
@@ -735,11 +767,11 @@ bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer, RgDriverShader
 	}
 
 	if(shader->type == RgDriverShaderType_Vertex)
-		ctx->dxDeviceContext->VSSetConstantBuffers(cb->bindPoint, 1, &tmpBuf->dxBuffer);
+		ctx->dxDeviceContext->VSSetConstantBuffers(cb->bindPoint, 1, &tmpBuf->dxBuffer.ptr);
 	else if(shader->type == RgDriverShaderType_Pixel)
-		ctx->dxDeviceContext->PSSetConstantBuffers(cb->bindPoint, 1, &tmpBuf->dxBuffer);
+		ctx->dxDeviceContext->PSSetConstantBuffers(cb->bindPoint, 1, &tmpBuf->dxBuffer.ptr);
 	else if(shader->type == RgDriverShaderType_Geometry)
-		ctx->dxDeviceContext->GSSetConstantBuffers(cb->bindPoint, 1, &tmpBuf->dxBuffer);
+		ctx->dxDeviceContext->GSSetConstantBuffers(cb->bindPoint, 1, &tmpBuf->dxBuffer.ptr);
 
 	if(input->offset > 0)
 		_deleteBuffer(tmpBuf);
@@ -750,7 +782,7 @@ bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer, RgDriverShader
 struct InputLayout
 {
 	InputLayout() : layout(NULL), shader(NULL) {}
-	ID3D11InputLayout* layout;
+	ComPtr<ID3D11InputLayout> layout;
 	RgDriverShaderImpl* shader;
 	PreAllocVector<D3D11_INPUT_ELEMENT_DESC, 8> inputDescs;
 
@@ -834,7 +866,7 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 		HRESULT hr = ctx->dxDevice->CreateInputLayout(
 			&inputLayout.inputDescs.front(), inputCount,
 			shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(),
-			&inputLayout.layout
+			&inputLayout.layout.ptr
 		);
 
 		if(FAILED(hr)) {
@@ -843,7 +875,6 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 		}
 
 		ctx->dxDeviceContext->IASetInputLayout(inputLayout.layout);
-		safeRelease(inputLayout.layout);
 
 		ctx->dxDeviceContext->IASetVertexBuffers(0, inputCount,
 			&inputLayout.buffers.front(),

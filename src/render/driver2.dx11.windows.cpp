@@ -20,12 +20,6 @@ namespace {
 
 #include "driver2.dx11.inl"
 
-template<typename T> void safeRelease(T*& t)
-{
-	if(t) t->Release();
-	t = NULL;
-}
-
 struct ContextImpl : public RgDriverContextImpl
 {
 	HWND hWnd;
@@ -46,13 +40,6 @@ RgDriverContext* _newDriverContext_DX11(RgDriver* driver)
 
 	ret->currentBlendStateHash = 0;
 	ret->currentDepthStencilStateHash = 0;
-
-	ret->dxDevice = NULL;
-	ret->dxDeviceContext = NULL;
-	ret->dxSwapChain = NULL;
-	ret->dxRenderTargetView = NULL;
-	ret->dxDepthStencilTexture = NULL;
-	ret->dxDepthStencilView = NULL;
 
 	ret->currentShaders.assign(NULL);
 
@@ -87,13 +74,6 @@ void _deleteDriverContext_DX11(RgDriverContext* self)
 
 	// Change back to windowed mode before releasing swap chain
 	impl->dxSwapChain->SetFullscreenState(false, NULL);
-
-	safeRelease(impl->dxDepthStencilView);
-	safeRelease(impl->dxDepthStencilTexture);
-	safeRelease(impl->dxRenderTargetView);
-	safeRelease(impl->dxSwapChain);
-	safeRelease(impl->dxDeviceContext);
-	safeRelease(impl->dxDevice);
 
 	delete static_cast<ContextImpl*>(self);
 }
@@ -172,12 +152,11 @@ bool _initDriverContext_DX11(RgDriverContext* self, void* platformSpecificWindow
 	swapChain->SetFullscreenState((BOOL)false, NULL);
 
 	// Create render target
-	ID3D11Resource* backBuffer;
-	swapChain->GetBuffer(0, __uuidof(backBuffer), reinterpret_cast<void**>(&backBuffer));
+	ComPtr<ID3D11Resource> backBuffer;
+	swapChain->GetBuffer(0, __uuidof(backBuffer), reinterpret_cast<void**>(&backBuffer.ptr));
 
 	ID3D11RenderTargetView* renderTargetView = NULL;
 	hr = device->CreateRenderTargetView(backBuffer, NULL, &renderTargetView);
-	safeRelease(backBuffer);
 
 	if(FAILED(hr)) {
 		rhLog("error", "CreateRenderTargetView failed\n");
@@ -237,10 +216,9 @@ bool _initDriverContext_DX11(RgDriverContext* self, void* platformSpecificWindow
 	rasterDesc.ScissorEnable = false;
 	rasterDesc.SlopeScaledDepthBias = 0.0f;
 
-	ID3D11RasterizerState* rasterizerState;
-	hr = device->CreateRasterizerState(&rasterDesc, &rasterizerState);
+	ComPtr<ID3D11RasterizerState> rasterizerState;
+	hr = device->CreateRasterizerState(&rasterDesc, &rasterizerState.ptr);
 	immediateContext->RSSetState(rasterizerState);
-	safeRelease(rasterizerState);
 
 	if(FAILED(hr)) {
 		rhLog("error", "CreateRasterizerState failed\n");
