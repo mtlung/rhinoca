@@ -481,6 +481,7 @@ static void _unmapBuffer(RgDriverBuffer* self)
 struct RgDriverTextureImpl : public RgDriverTexture
 {
 	ComPtr<ID3D11Resource> dxTexture;	// May store a 1d, 2d or 3d texture
+	ComPtr<ID3D11ShaderResourceView> dxView;
 	D3D11_RESOURCE_DIMENSION dxDimension;
 //	TextureFormatMapping* formatMapping;
 };	// RgDriverTextureImpl
@@ -524,7 +525,7 @@ typedef struct TextureFormatMapping
 
 TextureFormatMapping _textureFormatMappings[] = {
 	{ RgDriverTextureFormat(0),				0,	DXGI_FORMAT(0) },
-	{ RgDriverTextureFormat_RGBA,			4,	DXGI_FORMAT_R8G8B8A8_UINT },
+	{ RgDriverTextureFormat_RGBA,			4,	DXGI_FORMAT_R8G8B8A8_UNORM },
 	{ RgDriverTextureFormat_R,				1,	DXGI_FORMAT_R16_UINT },
 	{ RgDriverTextureFormat_A,				0,	DXGI_FORMAT(0) },
 	{ RgDriverTextureFormat_Depth,			0,	DXGI_FORMAT(0) },
@@ -552,6 +553,7 @@ static bool _commitTexture(RgDriverTexture* self, const void* data, unsigned row
 		_textureFormatMappings[impl->format].dxFormat,
 		sampleDesc,
 		D3D11_USAGE_DEFAULT,
+		D3D11_BIND_SHADER_RESOURCE,
 		0,	// CPUAccessFlags
 		0	// MiscFlags 
 	};
@@ -571,6 +573,15 @@ static bool _commitTexture(RgDriverTexture* self, const void* data, unsigned row
 
 	if(FAILED(hr)) {
 		rhLog("error", "CreateTexture2D failed\n");
+		return false;
+	}
+
+	ID3D11ShaderResourceView* view = NULL;
+	hr = ctx->dxDevice->CreateShaderResourceView(impl->dxTexture, NULL, &view);
+	impl->dxView = view;
+
+	if(FAILED(hr)) {
+		rhLog("error", "CreateShaderResourceView failed\n");
 		return false;
 	}
 
@@ -888,6 +899,15 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 
 bool _setUniformTexture(unsigned nameHash, RgDriverTexture* texture)
 {
+	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
+	RgDriverTextureImpl* impl = static_cast<RgDriverTextureImpl*>(texture);
+	if(!ctx || !impl) return false;
+	if(impl->dxDimension == D3D11_RESOURCE_DIMENSION_UNKNOWN) return false;
+
+	ctx->dxDeviceContext->PSSetShaderResources(0, 1, &impl->dxView.ptr);	// TODO: Fix me
+	ID3D11SamplerState* samplerStates = NULL;
+	ctx->dxDeviceContext->PSSetSamplers(0, 1, &samplerStates);
+
 	return true;
 }
 
