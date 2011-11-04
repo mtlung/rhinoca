@@ -931,7 +931,7 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 					uniformName[j] = '\0';
 
 			ProgramUniform* uniform = &impl->uniforms[i];
-			uniform->nameHash = StringHash(uniformName);
+			uniform->nameHash = StringHash(uniformName, 0);
 			uniform->location = glGetUniformLocation(impl->glh, uniformName);
 			uniform->arraySize = uniformSize;
 			uniform->type = uniformType;
@@ -974,7 +974,7 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 			glGetActiveUniformBlockiv(impl->glh, i, GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize);
 
 			ProgramUniformBlock* block = &impl->uniformBlocks[i];
-			block->nameHash = StringHash(blockName);
+			block->nameHash = StringHash(blockName, 0);
 			block->index = i;	// NOTE: Differ than the uniform location, using i as index is ok
 
 			glGetActiveUniformBlockiv(impl->glh, i, GL_UNIFORM_BLOCK_DATA_SIZE, &block->blockSizeInBytes);
@@ -1009,8 +1009,24 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 
 			ProgramAttribute* attribute = &impl->attributes[i];
 			attribute = &impl->attributes[i];
-			attribute->nameHash = StringHash(attributeName);
+			attribute->nameHash = StringHash(attributeName, 0);
 			attribute->location = glGetAttribLocation(impl->glh, attributeName);
+			// NOTE: From the Opengl documentation, this suppose to be the size of the arrtibute array,
+			// but I just have no idea on how to make attribute as array in the first place
+			attribute->type = attributeType;
+			attribute->arraySize = attributeSize;
+
+			switch(attributeType) {
+				case GL_FLOAT:			attribute->elementType = GL_FLOAT;	attribute->elementCount = 1; break;
+				case GL_FLOAT_VEC2:		attribute->elementType = GL_FLOAT;	attribute->elementCount = 2; break;
+				case GL_FLOAT_VEC3:		attribute->elementType = GL_FLOAT;	attribute->elementCount = 3; break;
+				case GL_FLOAT_VEC4:		attribute->elementType = GL_FLOAT;	attribute->elementCount = 4; break;
+				case GL_INT:			attribute->elementType = GL_INT;	attribute->elementCount = 1; break;
+				case GL_INT_VEC2:		attribute->elementType = GL_INT;	attribute->elementCount = 2; break;
+				case GL_INT_VEC3:		attribute->elementType = GL_INT;	attribute->elementCount = 3; break;
+				case GL_INT_VEC4:		attribute->elementType = GL_INT;	attribute->elementCount = 4; break;
+				default: RHASSERT(false && "Not supported");
+			}
 		}
 	}
 
@@ -1102,16 +1118,16 @@ bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer, RgDriverShader
 		char* data = (char*)(bufferImpl->systemBuf) + input->offset;
 		switch(uniform->type) {
 		case GL_FLOAT_VEC2:
-			glUniform2fv(uniform->location, input->elementCount, (float*)data);
+			glUniform2fv(uniform->location, uniform->arraySize, (float*)data);
 			break;
 		case GL_FLOAT_VEC3:
-			glUniform3fv(uniform->location, input->elementCount, (float*)data);
+			glUniform3fv(uniform->location, uniform->arraySize, (float*)data);
 			break;
 		case GL_FLOAT_VEC4:
-			glUniform4fv(uniform->location, input->elementCount, (float*)data);
+			glUniform4fv(uniform->location, uniform->arraySize, (float*)data);
 			break;
 		case GL_FLOAT_MAT4:
-			glUniformMatrix4fv(uniform->location, input->elementCount, false, (float*)data);
+			glUniformMatrix4fv(uniform->location, uniform->arraySize, false, (float*)data);
 			break;
 		default: break;
 		}
@@ -1184,13 +1200,13 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 		struct BlockToHash {
 			void* systemBuf;
 			GLuint shader, vbo;
-			unsigned elementCount, stride, offset;
+			unsigned stride, offset;
 		};
 
 		BlockToHash block = {
 			buffer->systemBuf,
 			shader->glh, buffer->glh,
-			i->elementCount, i->stride, i->offset
+			i->stride, i->offset
 		};
 
 		inputHash += _hash(&block, sizeof(block));	// We use += such that the order of inputs are not important
@@ -1225,8 +1241,6 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 		if(!i || !i->buffer)
 			continue;
 
-		RHASSERT(i->elementType != RgDriverBufferType_None);
-
 		RgDriverBufferImpl* buffer = static_cast<RgDriverBufferImpl*>(i->buffer);
 
 		// Bind index buffer
@@ -1240,14 +1254,14 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 		{
 			// Generate nameHash if necessary
 			if(i->nameHash == 0 && i->name)
-				i->nameHash = StringHash(i->name);
+				i->nameHash = StringHash(i->name, 0);
 
 			// See: http://www.opengl.org/sdk/docs/man/xhtml/glVertexAttribPointer.xml
 			if(ProgramAttribute* a = _findProgramAttribute(ctx->currentShaderProgram, i->nameHash)) {
 				// TODO: glVertexAttribPointer only work for vertex array but not plain system memory in certain GL version
 				glEnableVertexAttribArray(a->location);
 				glBindBuffer(GL_ARRAY_BUFFER, buffer->glh);
-				glVertexAttribPointer(a->location, i->elementCount, _elementTypeMappings[i->elementType], false, i->stride, (void*)(ptrdiff_t(buffer->systemBuf) + i->offset));
+				glVertexAttribPointer(a->location, a->elementCount, a->elementType, false, i->stride, (void*)(ptrdiff_t(buffer->systemBuf) + i->offset));
 			}
 			else {
 				rhLog("error", "attribute not found!\n");
@@ -1259,7 +1273,7 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 		{
 			// Generate nameHash if necessary
 			if(i->nameHash == 0 && i->name)
-				i->nameHash = StringHash(i->name);
+				i->nameHash = StringHash(i->name, 0);
 
 			if(!_setUniformBuffer(i->nameHash, buffer, i))
 				return false;

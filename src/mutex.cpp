@@ -7,7 +7,7 @@
 Mutex::Mutex(int spinCount)
 {
 	// If you see this static assert, please check the size of the CRITICAL_SECTION
-	RHASSERT(sizeof(mMutex) == sizeof(CRITICAL_SECTION));
+	RHSTATICASSERT(sizeof(mMutex) == sizeof(CRITICAL_SECTION));
 
 	// Fallback to InitializeCriticalSection if InitializeCriticalSectionAndSpinCount didn't success
 	if(spinCount < 0 || !::InitializeCriticalSectionAndSpinCount((LPCRITICAL_SECTION)&mMutex, spinCount))

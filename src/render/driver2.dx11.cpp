@@ -484,7 +484,6 @@ struct RgDriverTextureImpl : public RgDriverTexture
 	ComPtr<ID3D11Resource> dxTexture;	// May store a 1d, 2d or 3d texture
 	ComPtr<ID3D11ShaderResourceView> dxView;
 	D3D11_RESOURCE_DIMENSION dxDimension;
-//	TextureFormatMapping* formatMapping;
 };	// RgDriverTextureImpl
 
 static RgDriverTexture* _newTexture()
@@ -512,7 +511,6 @@ static bool _initTexture(RgDriverTexture* self, unsigned width, unsigned height,
 	impl->height = height;
 	impl->format = format;
 	impl->dxDimension = D3D11_RESOURCE_DIMENSION_TEXTURE2D;
-//	impl->formatMapping = &(_textureFormatMappings[format]);
 
 	return true;
 }
@@ -612,6 +610,14 @@ static void _deleteShader(RgDriverShader* self)
 	delete static_cast<RgDriverShaderImpl*>(self);
 }
 
+static unsigned _countBits(int v)
+{
+	unsigned c;
+	for(c=0; v; ++c)	// Accumulates the total bits set in v
+		v &= v - 1;		// Clear the least significant bit set
+	return c;
+}
+
 static bool _initShader(RgDriverShader* self, RgDriverShaderType type, const char** sources, unsigned sourceCount)
 {
 	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
@@ -683,7 +689,7 @@ static bool _initShader(RgDriverShader* self, RgDriverShaderType type, const cha
 		if(FAILED(hr))
 			break;
 
-		InputParam ip = { StringHash(paramDesc.SemanticName, 0).hash, paramDesc.Mask + 1, paramDesc.ComponentType };	// TODO: Fix me
+		InputParam ip = { StringLowerCaseHash(paramDesc.SemanticName, 0).hash, _countBits(paramDesc.Mask), paramDesc.ComponentType };	// TODO: Fix me
 		impl->inputParams.push_back(ip);
 	}
 
@@ -814,11 +820,14 @@ struct InputLayout
 	PreAllocVector<UINT, 8> offsets;
 };
 
+RHSTATICASSERT(D3D10_REGISTER_COMPONENT_UINT32 == 1);
+RHSTATICASSERT(D3D10_REGISTER_COMPONENT_SINT32 == 2);
+RHSTATICASSERT(D3D10_REGISTER_COMPONENT_FLOAT32 == 3);
 static const Array<DXGI_FORMAT, 20> _inputFormatMapping = {
-	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_UNKNOWN,							// D3D10_REGISTER_COMPONENT_UNKNOWN
-	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_R32_UINT, DXGI_FORMAT_R32G32_UINT, DXGI_FORMAT_R32G32B32_UINT, DXGI_FORMAT_R32G32B32A32_UINT,		// D3D10_REGISTER_COMPONENT_UINT32
-	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_R32_SINT, DXGI_FORMAT_R32G32_SINT, DXGI_FORMAT_R32G32B32_SINT, DXGI_FORMAT_R32G32B32A32_SINT,		// D3D10_REGISTER_COMPONENT_SINT32
-	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_R32_FLOAT, DXGI_FORMAT_R32G32_FLOAT, DXGI_FORMAT_R32G32B32_FLOAT, DXGI_FORMAT_R32G32B32A32_FLOAT,	// D3D10_REGISTER_COMPONENT_FLOAT32
+	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_UNKNOWN,	DXGI_FORMAT_UNKNOWN,		DXGI_FORMAT_UNKNOWN,		DXGI_FORMAT_UNKNOWN,			// D3D10_REGISTER_COMPONENT_UNKNOWN
+	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_R32_UINT,	DXGI_FORMAT_R32G32_UINT,	DXGI_FORMAT_R32G32B32_UINT,	DXGI_FORMAT_R32G32B32A32_UINT,	// D3D10_REGISTER_COMPONENT_UINT32
+	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_R32_SINT,	DXGI_FORMAT_R32G32_SINT,	DXGI_FORMAT_R32G32B32_SINT,	DXGI_FORMAT_R32G32B32A32_SINT,	// D3D10_REGISTER_COMPONENT_SINT32
+	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_R32_FLOAT,	DXGI_FORMAT_R32G32_FLOAT,	DXGI_FORMAT_R32G32B32_FLOAT,DXGI_FORMAT_R32G32B32A32_FLOAT,	// D3D10_REGISTER_COMPONENT_FLOAT32
 };
 
 bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned* cacheId)
@@ -836,14 +845,8 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 		RgDriverBufferImpl* buffer = static_cast<RgDriverBufferImpl*>(input->buffer);
 		if(!buffer) continue;
 
-		// Bind index buffer
-		if(buffer->type == RgDriverBufferType_Index)
-		{
-			ctx->dxDeviceContext->IASetIndexBuffer(buffer->dxBuffer, DXGI_FORMAT_R16_UINT, 0);
-			continue;
-		}
 		// Gather information for creating input layout and binding vertex buffer
-		else if(buffer->type == RgDriverBufferType_Vertex)
+		if(buffer->type == RgDriverBufferType_Vertex)
 		{
 			RgDriverShaderImpl* shader = static_cast<RgDriverShaderImpl*>(input->shader);
 			if(!shader) continue;
@@ -853,10 +856,27 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 				return false;
 			}
 
+			// Generate nameHash if necessary
+			// NOTE: We use lower case hash for semantic name
+			if(input->nameHash == 0 && input->name)
+				input->nameHash = StringLowerCaseHash(input->name, 0);
+
+			// Search for the input param name
+			InputParam* inputParam = NULL;
+			for(unsigned j=0; j<shader->inputParams.size(); ++j) {
+				if(shader->inputParams[j].nameHash == input->nameHash) {
+					inputParam = &shader->inputParams[j];
+					break;
+				}
+			}
+
+			if(!inputParam)
+				continue;
+
 			D3D11_INPUT_ELEMENT_DESC inputDesc;
 			inputDesc.SemanticName = input->name;
 			inputDesc.SemanticIndex = 0;
-			inputDesc.Format = input->elementCount == 3 ? DXGI_FORMAT_R32G32B32_FLOAT : DXGI_FORMAT_R32G32B32A32_FLOAT;	// TODO: Fix me
+			inputDesc.Format = _inputFormatMapping[inputParam->type * 5 + inputParam->elementCount];
 			inputDesc.InputSlot = 0;
 			inputDesc.AlignedByteOffset = input->offset;
 			inputDesc.InputSlotClass =  D3D11_INPUT_PER_VERTEX_DATA;
@@ -866,7 +886,7 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 			inputLayout.shader = shader;
 
 			// Info for IASetVertexBuffers
-			UINT stride = input->stride == 0 ? input->elementCount * sizeof(float) : input->stride;	// TODO: Fix me
+			UINT stride = input->stride == 0 ? inputParam->elementCount * sizeof(float) : input->stride;
 
 			inputLayout.strides.push_back(stride);
 			inputLayout.offsets.push_back(0);
@@ -877,11 +897,17 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 		{
 			// Generate nameHash if necessary
 			if(input->nameHash == 0 && input->name)
-				input->nameHash = StringHash(input->name);
+				input->nameHash = StringHash(input->name, 0);
 
 			if(!_setUniformBuffer(input->nameHash, buffer, input))
 				return false;
 		}
+		// Bind index buffer
+		else if(buffer->type == RgDriverBufferType_Index)
+		{
+			ctx->dxDeviceContext->IASetIndexBuffer(buffer->dxBuffer, DXGI_FORMAT_R16_UINT, 0);
+		}
+		else { RHASSERT(false); }
 	}
 
 	// Create input layout

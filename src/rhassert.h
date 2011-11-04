@@ -1,6 +1,7 @@
 #ifndef __ASSERT_H__
 #define __ASSERT_H__
 
+// Declar rhAssert()
 #ifdef _MSC_VER
 void rhAssert(const wchar_t* expression, const wchar_t* file, unsigned line);
 #else
@@ -11,6 +12,7 @@ void rhAssert(const wchar_t* expression, const wchar_t* file, unsigned line);
 #	define NDEBUG
 #endif
 
+// Declar RHASSERT and RHVERIFY
 #ifdef NDEBUG
 #	define RHASSERT(expression) ((void)0)
 #	define RHVERIFY(expression) ((void)(expression))
@@ -24,5 +26,8 @@ void rhAssert(const wchar_t* expression, const wchar_t* file, unsigned line);
 #	endif
 #	define RHVERIFY(expression) RHASSERT(expression)
 #endif
+
+// Declar RHSTATICASSERT
+#define RHSTATICASSERT(expression) typedef char __static_assert_t[(expression)]
 
 #endif	// __ASSERT_H__

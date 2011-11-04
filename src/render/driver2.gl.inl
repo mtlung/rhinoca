@@ -12,7 +12,7 @@ typedef struct ProgramUniform
 	unsigned nameHash;		// Hash value for the uniform name
 	GLuint location;
 	GLuint arraySize;		// Equals to 1 if not an array
-	GLenum type;
+	GLenum type;			// GL_FLOAT, GL_FLOAT_VEC4, GL_SAMPLER_2D etc
 	int texunit;
 } ProgramUniform;
 
@@ -27,6 +27,10 @@ typedef struct ProgramAttribute
 {
 	unsigned nameHash;		// Hash value for the uniform name
 	GLuint location;
+	GLenum type;			// GL_FLOAT_VEC4, GL_FLOAT_MAT4 etc (all are float)
+	GLint arraySize;		// Equals to 1 if not an array
+	GLenum elementType;		// GL_FLOAT, GL_INT etc
+	GLint elementCount;		// 1, 2, 3 or 4
 } ProgramAttribute;
 
 typedef struct VertexArrayObject	// TODO: Use a decay mechanizm to clean this up
