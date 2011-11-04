@@ -17,6 +17,13 @@ template<typename T> struct ComPtr
 	T* ptr;
 };
 
+typedef struct InputParam
+{
+	unsigned nameHash;		// Hash value for the input semantic
+	unsigned elementCount;
+	D3D10_REGISTER_COMPONENT_TYPE type;
+} InputParam;
+
 typedef struct ConstantBuffer
 {
 	unsigned nameHash;		// Hash value for the constant buffer
@@ -30,6 +37,7 @@ struct RgDriverShaderImpl : public RgDriverShader
 	ComPtr<ID3D11DeviceChild> dxShader;
 	ComPtr<ID3D10Blob> dxShaderBlob;
 
+	PreAllocVector<InputParam, 4> inputParams;
 	PreAllocVector<ConstantBuffer, 4> constantBuffers;
 };	// RgDriverShaderImpl
 

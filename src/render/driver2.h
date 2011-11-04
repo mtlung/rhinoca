@@ -22,6 +22,18 @@ typedef struct RgDriverTarget
 	unsigned width, height;
 } RgDriverTarget;
 
+typedef enum RgDriverElementType
+{
+	RgDriverBufferType_None		= 0,
+	RgDriverBufferType_Float,
+	RgDriverBufferType_Int8,
+	RgDriverBufferType_UInt8,
+	RgDriverBufferType_Int16,
+	RgDriverBufferType_UInt16,
+	RgDriverBufferType_Int32,
+	RgDriverBufferType_UInt32,
+} RgDriverElementType;
+
 typedef enum RgDriverBufferType
 {
 	RgDriverBufferType_Vertex	= 1,	/// Vertex buffer
@@ -91,6 +103,7 @@ typedef struct RgDriverShaderInput
 	RgDriverShader* shader;
 	const char* name;
 	unsigned nameHash;		/// after name is changed, reset it to zero will cause it to be re-calculated
+	RgDriverElementType elementType;
 	unsigned elementCount;	/// Can be 1, 2, 3, or 4
 	unsigned offset;
 	unsigned stride;

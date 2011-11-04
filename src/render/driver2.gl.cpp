@@ -1150,18 +1150,15 @@ bool _setUniformTexture(unsigned nameHash, RgDriverTexture* texture)
 	return true;
 }
 
-typedef struct ProgramInputMapping
-{
-	GLenum elementType;
-	GLboolean normalized;
-} ProgramInputMapping;
-
-ProgramInputMapping _programInputMappings[] = {
-	{ 0,		false },
-	{ GL_FLOAT,	false },
-	{ GL_FLOAT,	false },
-	{ GL_FLOAT,	false },
-	{ GL_FLOAT,	false },
+static const Array<GLenum, 8> _elementTypeMappings = {
+	GLenum(0),
+	GL_FLOAT,
+	GL_BYTE,
+	GL_UNSIGNED_BYTE,
+	GL_SHORT,
+	GL_UNSIGNED_SHORT,
+	GL_INT,
+	GL_UNSIGNED_INT
 };
 
 bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned* cacheId)
@@ -1228,6 +1225,8 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 		if(!i || !i->buffer)
 			continue;
 
+		RHASSERT(i->elementType != RgDriverBufferType_None);
+
 		RgDriverBufferImpl* buffer = static_cast<RgDriverBufferImpl*>(i->buffer);
 
 		// Bind index buffer
@@ -1239,8 +1238,6 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 		// Bind vertex buffer
 		else if((buffer->type == RgDriverBufferType_Vertex) && !vaoCacheFound)
 		{
-			ProgramInputMapping* m = &_programInputMappings[i->elementCount];
-
 			// Generate nameHash if necessary
 			if(i->nameHash == 0 && i->name)
 				i->nameHash = StringHash(i->name);
@@ -1250,8 +1247,7 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 				// TODO: glVertexAttribPointer only work for vertex array but not plain system memory in certain GL version
 				glEnableVertexAttribArray(a->location);
 				glBindBuffer(GL_ARRAY_BUFFER, buffer->glh);
-				// TODO: Use correct element type
-				glVertexAttribPointer(a->location, i->elementCount, m->elementType, m->normalized, i->stride, (void*)(ptrdiff_t(buffer->systemBuf) + i->offset));
+				glVertexAttribPointer(a->location, i->elementCount, _elementTypeMappings[i->elementType], false, i->stride, (void*)(ptrdiff_t(buffer->systemBuf) + i->offset));
 			}
 			else {
 				rhLog("error", "attribute not found!\n");

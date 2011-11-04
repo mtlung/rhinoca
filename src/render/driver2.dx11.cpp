@@ -12,15 +12,16 @@
 #include <D3DX11async.h>
 
 // DirectX stuffs
-// State Object:					http://msdn.microsoft.com/en-us/library/bb205071.aspx
-// DX migration:					http://msdn.microsoft.com/en-us/library/windows/desktop/ff476190%28v=vs.85%29.aspx
 // DX11 tutorial:					http://www.rastertek.com/tutindex.html
-// DX10 porting:					http://developer.amd.com/.../Riguer-DX10_tips_and_tricks_for_print.pdf
-// DX10 FAQ:						http://msdn.microsoft.com/en-us/library/windows/desktop/ee416643%28v=vs.85%29.aspx#constant_buffers
-// DX10 cbuffer:					http://www.gamedev.net/topic/574711-d3d10-equivalent-of-gluniform/
-// DX10 resources usage:			http://msdn.microsoft.com/en-us/library/windows/desktop/bb205127%28v=VS.85%29.aspx
-// Ogre impl of buffer:				https://arkeon.dyndns.org/svn-scol/trunk/dependencies/Ogre/Sources/RenderSystems/Direct3D11/src/OgreD3D11HardwareBuffer.cpp
 // UpdateSubResource vs staging:	http://forums.create.msdn.com/forums/t/47875.aspx
+// State Object:					http://msdn.microsoft.com/en-us/library/bb205071.aspx
+// DXGI formats:					http://www.directxtutorial.com/TutorialArticles/2-Formats.aspx
+// DX10 cbuffer:					http://www.gamedev.net/topic/574711-d3d10-equivalent-of-gluniform/
+// DX10 porting:					http://developer.amd.com/.../Riguer-DX10_tips_and_tricks_for_print.pdf
+// DX migration:					http://msdn.microsoft.com/en-us/library/windows/desktop/ff476190%28v=vs.85%29.aspx
+// DX10 resources usage:			http://msdn.microsoft.com/en-us/library/windows/desktop/bb205127%28v=VS.85%29.aspx
+// DX10 FAQ:						http://msdn.microsoft.com/en-us/library/windows/desktop/ee416643%28v=vs.85%29.aspx#constant_buffers
+// Ogre impl of buffer:				https://arkeon.dyndns.org/svn-scol/trunk/dependencies/Ogre/Sources/RenderSystems/Direct3D11/src/OgreD3D11HardwareBuffer.cpp
 
 // Table of DX11 usage and CPU access:
 /*								Access Flag		UpdateSubresource						Map							Multi-sample
@@ -677,10 +678,13 @@ static bool _initShader(RgDriverShader* self, RgDriverShaderType type, const cha
 
 	for(unsigned i=0; i<shaderDesc.InputParameters; ++i)
 	{
-		D3D11_SIGNATURE_PARAMETER_DESC paramDesc;	// TODO: Any use of this information?
+		D3D11_SIGNATURE_PARAMETER_DESC paramDesc;
 		hr = reflector->GetInputParameterDesc(i, &paramDesc);
 		if(FAILED(hr))
 			break;
+
+		InputParam ip = { StringHash(paramDesc.SemanticName, 0).hash, paramDesc.Mask + 1, paramDesc.ComponentType };	// TODO: Fix me
+		impl->inputParams.push_back(ip);
 	}
 
 	for(unsigned i=0; i<shaderDesc.BoundResources; ++i)
@@ -703,7 +707,7 @@ bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx) return false;
 
-	RgDriverContextImpl::CurrentShaders binded = ctx->currentShaders;	// For detecting redudant state change
+	RgDriverContextImpl::CurrentShaders binded = ctx->currentShaders;	// For detecting redundant state change
 	ctx->currentShaders.assign(NULL);
 
 	// Bind used shaders
@@ -713,7 +717,7 @@ bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 
 		ctx->currentShaders[shader->type] = shader;
 
-		if(binded[shader->type] == shader)	// Avoid redudant state change
+		if(binded[shader->type] == shader)	// Avoid redundant state change
 			continue;
 
 		if(shader->type == RgDriverShaderType_Vertex)
@@ -810,6 +814,13 @@ struct InputLayout
 	PreAllocVector<UINT, 8> offsets;
 };
 
+static const Array<DXGI_FORMAT, 20> _inputFormatMapping = {
+	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_UNKNOWN,							// D3D10_REGISTER_COMPONENT_UNKNOWN
+	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_R32_UINT, DXGI_FORMAT_R32G32_UINT, DXGI_FORMAT_R32G32B32_UINT, DXGI_FORMAT_R32G32B32A32_UINT,		// D3D10_REGISTER_COMPONENT_UINT32
+	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_R32_SINT, DXGI_FORMAT_R32G32_SINT, DXGI_FORMAT_R32G32B32_SINT, DXGI_FORMAT_R32G32B32A32_SINT,		// D3D10_REGISTER_COMPONENT_SINT32
+	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_R32_FLOAT, DXGI_FORMAT_R32G32_FLOAT, DXGI_FORMAT_R32G32B32_FLOAT, DXGI_FORMAT_R32G32B32A32_FLOAT,	// D3D10_REGISTER_COMPONENT_FLOAT32
+};
+
 bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned* cacheId)
 {
 	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
@@ -856,7 +867,6 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 
 			// Info for IASetVertexBuffers
 			UINT stride = input->stride == 0 ? input->elementCount * sizeof(float) : input->stride;	// TODO: Fix me
-			UINT offset = input->offset;
 
 			inputLayout.strides.push_back(stride);
 			inputLayout.offsets.push_back(0);
