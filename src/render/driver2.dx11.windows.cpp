@@ -244,7 +244,18 @@ void _driverSwapBuffers_DX11()
 		return;
 	}
 
-	int sync = 1;	// use 0 for not vertical sync
+	// Clean up not frequently used ipnut layout cache
+	for(unsigned i=0; i<_currentContext->inputLayoutCache.size();) {
+		float& hotness = _currentContext->inputLayoutCache[i].hotness;
+		hotness *= 0.5f;
+
+		if(hotness < 0.0001f)
+			_currentContext->inputLayoutCache.remove(i);
+		else
+			++i;
+	}
+
+	int sync = 0;	// use 0 for no vertical sync
 	RHVERIFY(SUCCEEDED(_currentContext->dxSwapChain->Present(sync, 0)));
 }
 

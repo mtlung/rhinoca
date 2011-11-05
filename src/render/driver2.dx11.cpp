@@ -808,18 +808,6 @@ bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer, RgDriverShader
 	return true;
 }
 
-struct InputLayout
-{
-	InputLayout() : layout(NULL), shader(NULL) {}
-	ComPtr<ID3D11InputLayout> layout;
-	RgDriverShaderImpl* shader;
-	PreAllocVector<D3D11_INPUT_ELEMENT_DESC, 8> inputDescs;
-
-	PreAllocVector<ID3D11Buffer*, 8> buffers;
-	PreAllocVector<UINT, 8> strides;
-	PreAllocVector<UINT, 8> offsets;
-};
-
 RHSTATICASSERT(D3D10_REGISTER_COMPONENT_UINT32 == 1);
 RHSTATICASSERT(D3D10_REGISTER_COMPONENT_SINT32 == 2);
 RHSTATICASSERT(D3D10_REGISTER_COMPONENT_FLOAT32 == 3);
@@ -835,8 +823,50 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx || !inputs || inputCount == 0) return false;
 
-	InputLayout inputLayout;
+	// Make a hash value for the inputs
+	unsigned inputHash = 0;
+	for(unsigned attri=0; attri<inputCount; ++attri)
+	{
+		RgDriverShaderInput* i = &inputs[attri];
+		RgDriverBufferImpl* buffer = static_cast<RgDriverBufferImpl*>(i->buffer);
+		if(!i || !i->buffer) continue;
+		if(buffer->type != RgDriverBufferType_Vertex) continue;	// Input layout only consider vertex buffer
 
+		struct BlockToHash {
+			ID3D11Buffer* dxBuffer;
+			unsigned stride, offset;
+		};
+
+		BlockToHash block = {
+			buffer->dxBuffer,
+			i->stride, i->offset
+		};
+
+		inputHash += _hash(&block, sizeof(block));	// We use += such that the order of inputs are not important
+	}
+
+	// Search for existing input layout
+	InputLayout* inputLayout = NULL;
+	bool inputLayoutCacheFound = false;
+	for(unsigned i=0; i<ctx->inputLayoutCache.size(); ++i)
+	{
+		if(inputHash == ctx->inputLayoutCache[i].hash) {
+			inputLayout = &ctx->inputLayoutCache[i];
+			ctx->inputLayoutCache[i].hotness += 1.0f;
+			inputLayoutCacheFound = true;
+			break;
+		}
+	}
+
+	if(!inputLayout) {
+		InputLayout tmp;
+		tmp.hash = inputHash;
+		tmp.hotness = 1.0f;
+		ctx->inputLayoutCache.push_back(tmp);
+		inputLayout = &ctx->inputLayoutCache.back();
+	}
+
+	// Loop for each inputs and do the necessary binding
 	for(unsigned i=0; i<inputCount; ++i)
 	{
 		RgDriverShaderInput* input = &inputs[i];
@@ -848,6 +878,8 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 		// Gather information for creating input layout and binding vertex buffer
 		if(buffer->type == RgDriverBufferType_Vertex)
 		{
+			if(inputLayoutCacheFound) continue;
+
 			RgDriverShaderImpl* shader = static_cast<RgDriverShaderImpl*>(input->shader);
 			if(!shader) continue;
 
@@ -882,15 +914,15 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 			inputDesc.InputSlotClass =  D3D11_INPUT_PER_VERTEX_DATA;
 			inputDesc.InstanceDataStepRate = 0;
 
-			inputLayout.inputDescs.push_back(inputDesc);
-			inputLayout.shader = shader;
+			inputLayout->inputDescs.push_back(inputDesc);
+			inputLayout->shader = shader->dxShaderBlob;
 
 			// Info for IASetVertexBuffers
 			UINT stride = input->stride == 0 ? inputParam->elementCount * sizeof(float) : input->stride;
 
-			inputLayout.strides.push_back(stride);
-			inputLayout.offsets.push_back(0);
-			inputLayout.buffers.push_back(buffer->dxBuffer);
+			inputLayout->strides.push_back(stride);
+			inputLayout->offsets.push_back(0);
+			inputLayout->buffers.push_back(buffer->dxBuffer);
 		}
 		// Bind uniform buffer
 		else if(buffer->type == RgDriverBufferType_Uniform)
@@ -911,32 +943,31 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 	}
 
 	// Create input layout
-	if(!inputLayout.inputDescs.empty()) {
-		ID3D10Blob* shaderBlob = inputLayout.shader->dxShaderBlob;
+	if(!inputLayoutCacheFound && !inputLayout->inputDescs.empty()) {
+		ID3D10Blob* shaderBlob = inputLayout->shader;
 		if(!shaderBlob)
 			return false;
 
-		const unsigned inputCount = inputLayout.inputDescs.size();
-
 		HRESULT hr = ctx->dxDevice->CreateInputLayout(
-			&inputLayout.inputDescs.front(), inputCount,
+			&inputLayout->inputDescs.front(), inputLayout->inputDescs.size(),
 			shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(),
-			&inputLayout.layout.ptr
+			&inputLayout->layout.ptr
 		);
 
 		if(FAILED(hr)) {
 			rhLog("error", "Fail to CreateInputLayout\n");
 			return false;
 		}
-
-		ctx->dxDeviceContext->IASetInputLayout(inputLayout.layout);
-
-		ctx->dxDeviceContext->IASetVertexBuffers(0, inputCount,
-			&inputLayout.buffers.front(),
-			&inputLayout.strides.front(),
-			&inputLayout.offsets.front()
-		);
 	}
+
+	ctx->dxDeviceContext->IASetInputLayout(inputLayout->layout);
+
+	ctx->dxDeviceContext->IASetVertexBuffers(
+		0, inputLayout->inputDescs.size(),
+		(ID3D11Buffer**)&inputLayout->buffers.front(),
+		&inputLayout->strides.front(),
+		&inputLayout->offsets.front()
+	);
 
 	return true;
 }

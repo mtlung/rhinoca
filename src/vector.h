@@ -84,6 +84,9 @@ public:
 
 	void clear()
 	{
+		// NOTE: There are 2 choices here, to call the destructor in
+		// ascending or decending order.
+		// decending is more correct, but ascending is faster
 		for(rhuint i = 0; i < _size; i++)
 			_vals[i].~T();
 		_size = 0;
@@ -192,27 +195,27 @@ public:
 	typedef const T* const_iterator;
 
 	PreAllocVector()
-		: _vals(_buffer), _size(0), _allocated(PreAllocSize)
+		: _vals((T*)_buffer), _size(0), _allocated(PreAllocSize)
 	{
 	}
 
 	// This non template copy constructor is needed, for the
 	// placement new copy operator to work correctly
 	PreAllocVector(const PreAllocVector<T, PreAllocSize>& v)
-		: _vals(_buffer), _size(0), _allocated(PreAllocSize)
+		: _vals((T*)_buffer), _size(0), _allocated(PreAllocSize)
 	{
 		copy(v);
 	}
 
 	template<unsigned N>
 	PreAllocVector(const PreAllocVector<T, N>& v)
-		: _vals(_buffer), _size(0), _allocated(PreAllocSize)
+		: _vals((T*)_buffer), _size(0), _allocated(PreAllocSize)
 	{
 		copy(v);
 	}
 
 	explicit PreAllocVector(rhuint initSize, const T& fill = T())
-		: _vals(_buffer), _size(0), _allocated(PreAllocSize)
+		: _vals((T*)_buffer), _size(0), _allocated(PreAllocSize)
 	{
 		resize(initSize, fill);
 	}
@@ -220,7 +223,7 @@ public:
 	~PreAllocVector()
 	{
 		clear();
-		if(_vals != _buffer)
+		if(_vals != (T*)_buffer)
 			rhdelete(_vals);
 	}
 
@@ -268,6 +271,9 @@ public:
 
 	void clear()
 	{
+		// NOTE: There are 2 choices here, to call the destructor in
+		// ascending or decending order.
+		// decending is more correct, but ascending is faster
 		for(rhuint i = 0; i < _size; i++)
 			_vals[i].~T();
 		_size = 0;
@@ -355,12 +361,12 @@ protected:
 		if(newsize <= PreAllocSize && PreAllocSize < _allocated) {
 			memcpy(_buffer, _vals, sizeof(T) * _size);
 			rhdelete(_vals);
-			_vals = _buffer;
+			_vals = (T*)_buffer;
 			_allocated = PreAllocSize;
 		}
 		// Transit from static to dynamic
 		else {
-			_vals = (_vals == _buffer) ? NULL : _vals;
+			_vals = (_vals == (T*)_buffer) ? NULL : _vals;
 			_vals = rhrenew(_vals, _allocated, newsize);
 
 			if(_allocated == PreAllocSize)
@@ -372,7 +378,7 @@ protected:
 
 	rhuint _size;
 	rhuint _allocated;
-	T _buffer[PreAllocSize];
+	char* _buffer[PreAllocSize * sizeof(T)];
 };	// PreAllocVector
 
 template<typename T, typename V>

@@ -869,6 +869,8 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 
 	impl->glh = glCreateProgram();
 
+	impl->textureCount = 0;
+
 	// Assign the hash value
 	impl->hash = _hash(shaders, shaderCount * sizeof(*shaders));
 
@@ -914,13 +916,14 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 
 		impl->uniforms.resize(uniformCount);
 
+		GLuint texunit = 0;
+
 		for(GLint i=0; i<uniformCount; ++i)
 		{
 			GLchar uniformName[64];
 			GLsizei uniformNameLength;
 			GLint uniformSize;
 			GLenum uniformType;
-			GLuint texunit = 0;
 
 			// See: http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml
 			glGetActiveUniform(impl->glh, i, sizeof(uniformName), &uniformNameLength, &uniformSize, &uniformType, uniformName);
@@ -946,6 +949,7 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 				case GL_SAMPLER_2D_SHADOW:
 #endif
 					glUniform1i(uniform->location, texunit++);	// Create mapping between uniform location and texture unit
+					impl->textureCount++;
 					break;
 				default:
 					uniform->texunit = -1;
@@ -1194,9 +1198,8 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 		RgDriverBufferImpl* buffer = static_cast<RgDriverBufferImpl*>(i->buffer);
 		RgDriverShaderImpl* shader = static_cast<RgDriverShaderImpl*>(i->shader);
 		if(!i || !i->buffer || !shader) continue;
-		if(!(buffer->type == RgDriverBufferType_Vertex)) continue;	// VAO only consider vertex buffer
+		if(buffer->type != RgDriverBufferType_Vertex) continue;	// VAO only consider vertex buffer
 
-		// TODO: Also hash element type
 		struct BlockToHash {
 			void* systemBuf;
 			GLuint shader, vbo;

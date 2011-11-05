@@ -17,18 +17,18 @@ template<typename T> struct ComPtr
 	T* ptr;
 };
 
-typedef struct InputParam
+struct InputParam
 {
 	unsigned nameHash;		// Hash value for the input semantic
 	unsigned elementCount;
 	D3D10_REGISTER_COMPONENT_TYPE type;
-} InputParam;
+};
 
-typedef struct ConstantBuffer
+struct ConstantBuffer
 {
 	unsigned nameHash;		// Hash value for the constant buffer
 	unsigned bindPoint;
-} ConstantBuffer;
+};
 
 struct RgDriverShaderImpl : public RgDriverShader
 {
@@ -40,6 +40,20 @@ struct RgDriverShaderImpl : public RgDriverShader
 	PreAllocVector<InputParam, 4> inputParams;
 	PreAllocVector<ConstantBuffer, 4> constantBuffers;
 };	// RgDriverShaderImpl
+
+struct InputLayout
+{
+	unsigned hash;
+	float hotness;
+
+	ComPtr<ID3D11InputLayout> layout;
+	ComPtr<ID3D10Blob> shader;
+	PreAllocVector<D3D11_INPUT_ELEMENT_DESC, 4> inputDescs;
+
+	PreAllocVector<ComPtr<ID3D11Buffer>, 4> buffers;
+	PreAllocVector<UINT, 4> strides;
+	PreAllocVector<UINT, 4> offsets;
+};
 
 struct RgDriverContextImpl : public RgDriverContext
 {
@@ -55,6 +69,8 @@ struct RgDriverContextImpl : public RgDriverContext
 
 	typedef Array<RgDriverShaderImpl*, 3> CurrentShaders;
 	CurrentShaders currentShaders;
+
+	PreAllocVector<InputLayout, 16> inputLayoutCache;
 
 //	Vector<ID3D11DepthStencilState*> depthStencilStateCache;
 
