@@ -300,7 +300,7 @@ static void _setTextureState(RgDriverTextureState* states, unsigned stateCount, 
 struct RgDriverBufferImpl : public RgDriverBuffer
 {
 	ComPtr<ID3D11Buffer> dxBuffer;
-	ComPtr<ID3D11Buffer> dxStaging;
+	StagingBuffer* dxStaging;
 };	// RgDriverBufferImpl
 
 static RgDriverBuffer* _newBuffer()
@@ -373,6 +373,62 @@ static bool _initBuffer(RgDriverBuffer* self, RgDriverBufferType type, RgDriverD
 	return true;
 }
 
+static StagingBuffer* _getStagingBuffer(RgDriverContextImpl* ctx, void* initData, unsigned size)
+{
+	RHASSERT(ctx);
+
+	HRESULT hr;
+	StagingBuffer* ret = NULL;
+
+	for(unsigned i=0; i<ctx->stagingBufferCache.size(); ++i) {
+		StagingBuffer* sb = &ctx->stagingBufferCache[i];
+		if(sb->size == size && !sb->busyFrame) {
+			ret = sb;
+			break;
+		}
+	}
+
+	if(!ret) {
+		// Cache miss, create new one
+		D3D11_BUFFER_DESC stagingBufferDesc = {
+			size, D3D11_USAGE_STAGING,
+			0, D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE, 0, 0
+		};
+
+		ret = &ctx->stagingBufferCache.push_back();
+		hr = ctx->dxDevice->CreateBuffer(&stagingBufferDesc, NULL, &ret->dxBuffer.ptr);
+		if(FAILED(hr) || !ret->dxBuffer)
+			return NULL;
+	}
+
+	static const unsigned FrameCountForAnyBufferLockFinished = 2;
+	ret->size = size;
+	ret->mapped = false;
+	ret->hotness = 1.0f;
+	ret->busyFrame = FrameCountForAnyBufferLockFinished;
+
+	if(initData) {
+		D3D11_MAPPED_SUBRESOURCE mapped = {0};
+		hr = ctx->dxDeviceContext->Map(
+			ret->dxBuffer,
+			0,
+			D3D11_MAP_WRITE,
+			D3D11_MAP_FLAG_DO_NOT_WAIT,
+			&mapped
+		);
+
+		if(FAILED(hr)) {
+			rhLog("error", "Fail to map buffer\n");
+			return NULL;
+		}
+
+		memcpy(mapped.pData, initData, size);
+		ctx->dxDeviceContext->Unmap(ret->dxBuffer, 0);
+	}
+
+	return ret;
+}
+
 static bool _updateBuffer(RgDriverBuffer* self, unsigned offsetInBytes, void* data, unsigned sizeInBytes)
 {
 	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_DX11());
@@ -385,20 +441,12 @@ static bool _updateBuffer(RgDriverBuffer* self, unsigned offsetInBytes, void* da
 	if(impl->usage == RgDriverDataUsage_Static) return false;
 
 	// Use staging buffer to do the update
-	// TODO: Reduce the dynamic creation/destruction of the staging buffer
-	D3D11_BUFFER_DESC stagingBufferDesc = {
-		sizeInBytes, D3D11_USAGE_STAGING,
-		0, D3D11_CPU_ACCESS_WRITE, 0, 0
-	};
-	ComPtr<ID3D11Buffer> stagingBuffer;
-	D3D11_SUBRESOURCE_DATA dxData = { data, 0, 0 };
-	HRESULT hr = ctx->dxDevice->CreateBuffer(&stagingBufferDesc, &dxData, &stagingBuffer.ptr);
-	if(FAILED(hr))
-		return false;
+	if(StagingBuffer* staging = _getStagingBuffer(ctx, data, sizeInBytes)) {
+		ctx->dxDeviceContext->CopySubresourceRegion(impl->dxBuffer.ptr, 0, offsetInBytes, 0, 0, staging->dxBuffer, 0, NULL);
+		return true;
+	}
 
-	ctx->dxDeviceContext->CopySubresourceRegion(impl->dxBuffer.ptr, 0, offsetInBytes, 0, 0, stagingBuffer, 0, NULL);
-
-	return true;
+	return false;
 }
 
 static const Array<D3D11_MAP, 5> _mapUsage = {
@@ -419,31 +467,22 @@ static void* _mapBuffer(RgDriverBuffer* self, RgDriverBufferMapUsage usage)
 	if(!impl->dxBuffer) return NULL;
 
 	// Create staging buffer for read/write
-	D3D11_CPU_ACCESS_FLAG flag = D3D11_CPU_ACCESS_FLAG(
-		usage & RgDriverBufferMapUsage_Read ? D3D11_CPU_ACCESS_READ : 0 |
-		usage & RgDriverBufferMapUsage_Write ? D3D11_CPU_ACCESS_WRITE : 0
-	);
-
-	D3D11_BUFFER_DESC stagingBufferDesc = {
-		impl->sizeInBytes, D3D11_USAGE_STAGING,
-		0, flag, 0, 0
-	};
+	StagingBuffer* staging = _getStagingBuffer(ctx, NULL, impl->sizeInBytes);
+	if(!staging)
+		return NULL;
 
 	RHASSERT(!impl->dxStaging);
-	HRESULT hr = ctx->dxDevice->CreateBuffer(&stagingBufferDesc, NULL, &impl->dxStaging.ptr);
-	if(FAILED(hr) || !impl->dxStaging)
-		return NULL;
 
 	// Prepare for read
 	if(usage & RgDriverBufferMapUsage_Read)
-		ctx->dxDeviceContext->CopyResource(impl->dxStaging, impl->dxBuffer);
+		ctx->dxDeviceContext->CopyResource(staging->dxBuffer, impl->dxBuffer);
 
 	D3D11_MAPPED_SUBRESOURCE mapped = {0};
-	hr = ctx->dxDeviceContext->Map(
-		impl->dxStaging,
+	HRESULT hr = ctx->dxDeviceContext->Map(
+		staging->dxBuffer,
 		0,
 		_mapUsage[usage],
-		0,
+		D3D11_MAP_FLAG_DO_NOT_WAIT,
 		&mapped
 	);
 
@@ -452,8 +491,10 @@ static void* _mapBuffer(RgDriverBuffer* self, RgDriverBufferMapUsage usage)
 		return NULL;
 	}
 
+	staging->mapped = true;
 	impl->isMapped = true;
 	impl->mapUsage = usage;
+	impl->dxStaging = staging;
 
 	return mapped.pData;
 }
@@ -467,12 +508,15 @@ static void _unmapBuffer(RgDriverBuffer* self)
 	if(!impl->dxBuffer || !impl->dxStaging)
 		return;
 
-	ctx->dxDeviceContext->Unmap(impl->dxStaging, 0);
+	RHASSERT(impl->dxStaging->dxBuffer);
+
+	ctx->dxDeviceContext->Unmap(impl->dxStaging->dxBuffer, 0);
 
 	if(impl->mapUsage & RgDriverBufferMapUsage_Write)
-		ctx->dxDeviceContext->CopyResource(impl->dxBuffer, impl->dxStaging);
+		ctx->dxDeviceContext->CopyResource(impl->dxBuffer, impl->dxStaging->dxBuffer);
 
-	impl->dxStaging = (ID3D11Buffer*)NULL;
+	impl->dxStaging->mapped = false;
+	impl->dxStaging = NULL;
 	impl->isMapped = false;
 }
 

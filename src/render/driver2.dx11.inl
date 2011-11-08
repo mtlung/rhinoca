@@ -30,6 +30,15 @@ struct ConstantBuffer
 	unsigned bindPoint;
 };
 
+struct StagingBuffer
+{
+	unsigned size:29;
+	unsigned mapped:1;
+	unsigned busyFrame:2;	// How many frame till the staging buffer becomes available again
+	float hotness;
+	ComPtr<ID3D11Buffer> dxBuffer;
+};
+
 struct RgDriverShaderImpl : public RgDriverShader
 {
 	RgDriverShaderImpl() : dxShader(NULL), dxShaderBlob(NULL) {}
@@ -71,6 +80,8 @@ struct RgDriverContextImpl : public RgDriverContext
 	CurrentShaders currentShaders;
 
 	PreAllocVector<InputLayout, 16> inputLayoutCache;
+
+	PreAllocVector<StagingBuffer, 4> stagingBufferCache;
 
 //	Vector<ID3D11DepthStencilState*> depthStencilStateCache;
 

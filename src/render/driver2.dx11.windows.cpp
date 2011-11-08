@@ -244,13 +244,28 @@ void _driverSwapBuffers_DX11()
 		return;
 	}
 
-	// Clean up not frequently used ipnut layout cache
+	// Clean up not frequently used input layout cache
 	for(unsigned i=0; i<_currentContext->inputLayoutCache.size();) {
 		float& hotness = _currentContext->inputLayoutCache[i].hotness;
 		hotness *= 0.5f;
 
 		if(hotness < 0.0001f)
 			_currentContext->inputLayoutCache.remove(i);
+		else
+			++i;
+	}
+
+	// Update and clean up on staging buffer cache
+	for(unsigned i=0; i<_currentContext->stagingBufferCache.size();) {
+		StagingBuffer& staging = _currentContext->stagingBufferCache[i];
+
+		staging.hotness *= staging.mapped ? 1.0f : 0.5f;
+
+		if(staging.busyFrame > 0)
+			staging.busyFrame--;
+
+		if(staging.hotness < 0.0001f)
+			_currentContext->stagingBufferCache.remove(i);
 		else
 			++i;
 	}
