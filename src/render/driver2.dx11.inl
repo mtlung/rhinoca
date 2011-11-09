@@ -39,6 +39,13 @@ struct StagingBuffer
 	ComPtr<ID3D11Buffer> dxBuffer;
 };
 
+struct StagingTexture
+{
+	unsigned hash;
+	float hotness;
+	ComPtr<ID3D11Resource> dxTexture;
+};
+
 struct RgDriverShaderImpl : public RgDriverShader
 {
 	RgDriverShaderImpl() : dxShader(NULL), dxShaderBlob(NULL) {}
@@ -81,7 +88,8 @@ struct RgDriverContextImpl : public RgDriverContext
 
 	PreAllocVector<InputLayout, 16> inputLayoutCache;
 
-	PreAllocVector<StagingBuffer, 4> stagingBufferCache;
+	Vector<StagingBuffer> stagingBufferCache;
+	Vector<StagingTexture> stagingTextureCache;
 
 //	Vector<ID3D11DepthStencilState*> depthStencilStateCache;
 

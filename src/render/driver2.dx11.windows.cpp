@@ -270,6 +270,18 @@ void _driverSwapBuffers_DX11()
 			++i;
 	}
 
+	// Update and clean up on staging texture cache
+	for(unsigned i=0; i<_currentContext->stagingTextureCache.size();) {
+		StagingTexture& staging = _currentContext->stagingTextureCache[i];
+
+		staging.hotness *= 0.5f;
+
+		if(staging.hotness < 0.0001f)
+			_currentContext->stagingTextureCache.remove(i);
+		else
+			++i;
+	}
+
 	int sync = 0;	// use 0 for no vertical sync
 	RHVERIFY(SUCCEEDED(_currentContext->dxSwapChain->Present(sync, 0)));
 }

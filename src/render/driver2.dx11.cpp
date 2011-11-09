@@ -588,35 +588,109 @@ static bool _commitTexture(RgDriverTexture* self, const void* data, unsigned row
 
 	const unsigned mipCount = 1;	// TODO: Allow loading mip maps
 
-	DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };		// 1 sample, quality level 0
 	D3D11_TEXTURE2D_DESC desc = {
 		impl->width, impl->height,
 		mipCount,	// MipLevels
 		1,			// ArraySize
 		_textureFormatMappings[impl->format].dxFormat,
-		sampleDesc,
+		{ 1, 0 },	// DXGI_SAMPLE_DESC: 1 sample, quality level 0
 		D3D11_USAGE_DEFAULT,
 		D3D11_BIND_SHADER_RESOURCE,
-		0,	// CPUAccessFlags
-		0	// MiscFlags 
-	};
-
-	if(rowPaddingInBytes == 0)
-		rowPaddingInBytes = impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes;
-
-	D3D11_SUBRESOURCE_DATA dataDesc = {
-		data,
-		rowPaddingInBytes,
-		0	// Only meaningful for 3d texture
+		0,			// CPUAccessFlags
+		0			// MiscFlags 
 	};
 
 	ID3D11Texture2D* tex2d = NULL;
-	HRESULT hr = ctx->dxDevice->CreateTexture2D(&desc, data ? &dataDesc : NULL, &tex2d);
+	HRESULT hr = ctx->dxDevice->CreateTexture2D(&desc, NULL, &tex2d);
 	impl->dxTexture = tex2d;
 
 	if(FAILED(hr)) {
 		rhLog("error", "CreateTexture2D failed\n");
 		return false;
+	}
+
+	// Create staging texture for async upload
+	StagingTexture* staging = NULL;
+	unsigned hash = _hash(&desc, sizeof(desc));
+	unsigned cacheIndex = 0;
+
+	desc.Usage = D3D11_USAGE_STAGING;
+	desc.BindFlags = 0;
+	desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+
+	// We need to keep try looking at the cache for a free to use cache
+	if(data) while(!staging)
+	{
+		for(; cacheIndex<ctx->stagingTextureCache.size(); ++cacheIndex) {
+			StagingTexture* st = &ctx->stagingTextureCache[cacheIndex];
+			if(st->hash == hash) {
+				staging = st;
+				break;
+			}
+		}
+
+		if(!staging) {
+			// Cache miss, create new one
+			staging = &ctx->stagingTextureCache.push_back();
+
+			HRESULT hr = ctx->dxDevice->CreateTexture2D(&desc, NULL, (ID3D11Texture2D**)&staging->dxTexture.ptr);
+
+			if(FAILED(hr)) {
+				rhLog("error", "CreateTexture2D failed\n");
+				return false;
+			}
+		}
+
+		// Copy the source pixel data to the staging texture
+		const unsigned rowSizeInBytes = impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes;
+
+		if(rowPaddingInBytes == 0)
+			rowPaddingInBytes = rowSizeInBytes;
+
+		D3D11_MAPPED_SUBRESOURCE mapped = {0};
+		HRESULT hr = ctx->dxDeviceContext->Map(
+			staging->dxTexture,
+			0,
+			D3D11_MAP_WRITE,
+			D3D11_MAP_FLAG_DO_NOT_WAIT,
+			&mapped
+		);
+
+		if(FAILED(hr)) {
+			// If this staging texture is still busy, keep try to search
+			// for another in the cache list, or create a new one.
+			if(hr == DXGI_ERROR_WAS_STILL_DRAWING) {
+				staging = NULL;
+				++cacheIndex;
+				continue;
+			}
+
+			rhLog("error", "Fail to map staging texture\n");
+			return false;
+		}
+
+		// If we come to here it means that we have a ready to use staging texture
+		staging->hash = hash;
+		staging->hotness = 1.0f;
+
+		// Copy the source data row by row
+		char* pSrc = (char*)data;
+		char* pDst = (char*)mapped.pData;
+		for(unsigned r=0; r<impl->height; ++r, pSrc +=rowPaddingInBytes, pDst += rowSizeInBytes)
+			memcpy(pDst, pSrc, rowSizeInBytes);
+
+		ctx->dxDeviceContext->Unmap(staging->dxTexture, 0);
+
+		// Preform async upload using CopySubresourceRegion
+		D3D11_BOX box = { 0, 0, 0, impl->width, impl->height, 1 };
+		ctx->dxDeviceContext->CopySubresourceRegion(
+			impl->dxTexture, 0,
+			0, 0, 0,
+			staging->dxTexture, 0,
+			NULL
+		);
+
+		break;
 	}
 
 	ID3D11ShaderResourceView* view = NULL;
