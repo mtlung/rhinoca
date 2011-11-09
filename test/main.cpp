@@ -12,6 +12,7 @@ int main()
 	CppTestHarness::TestRunner runner;
 	runner.ShowTestName(true);
 
+//	ret = runner.RunTest("GraphicsDriverTest::textureCommit");
 	ret = runner.RunAllTests();
 
 	return int(ret);

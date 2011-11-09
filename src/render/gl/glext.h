@@ -11059,6 +11059,8 @@ typedef void (APIENTRYP PFNGLVDPAUUNMAPSURFACESNVPROC) (GLsizei numSurface, cons
 // See: http://www.assembla.com/code/realview3/subversion/nodes/src/engine/src/scene.cpp?rev=1
 typedef HGLRC (APIENTRYP PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC, HGLRC, const int*);
 
+typedef BOOL (APIENTRYP PFNWGLSWAPINTERVALEXTPROC)(int interval);
+
 
 #ifdef __cplusplus
 }

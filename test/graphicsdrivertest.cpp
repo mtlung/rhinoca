@@ -20,7 +20,7 @@ class GraphicsDriverTest
 public:
 	static const wchar_t* windowClass;
 
-	GraphicsDriverTest() : hWnd(0), driver(NULL), context(NULL) {}
+	GraphicsDriverTest() : hWnd(0), driver(NULL), context(NULL), averageFrameDuration(0) {}
 	~GraphicsDriverTest()
 	{
 		if(driver) {
@@ -122,6 +122,11 @@ public:
 				return false;
 		}
 
+		float elasped = timer.getDelta();
+		averageFrameDuration = elasped/60 + averageFrameDuration * 59.0f / 60;
+
+		printf("\rFPS: %f, frame duration: %fms", 1.0f/averageFrameDuration, averageFrameDuration*1000);
+
 		return true;
 	}
 
@@ -138,6 +143,9 @@ public:
 	RgDriverShader* vShader;
 	RgDriverShader* gShader;
 	RgDriverShader* pShader;
+
+	DeltaTimer timer;
+	float averageFrameDuration;
 };
 
 const wchar_t* GraphicsDriverTest::windowClass = L"Rhinoca unit test";

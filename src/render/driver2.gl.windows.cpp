@@ -185,6 +185,9 @@ bool _initDriverContext_GL(RgDriverContext* self, void* platformSpecificWindow)
 
 	initGlFunc();
 
+	// Disable v-sync
+	wglSwapIntervalEXT(0);
+
 	impl->driver->applyDefaultState(impl);
 
 	// Init pixel buffer cache
