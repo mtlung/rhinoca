@@ -1,0 +1,21 @@
+;	Append the following text to C:\Program Files\Microsoft Visual Studio 9\Common7\Packages\Debugger\autoexp.dat
+;	Reference: http://www.virtualdub.org/blog/pivot/entry.php?id=120
+
+;------------------------------------------------------------------------------
+;  ro::Array
+;------------------------------------------------------------------------------
+ro::Array<*> {
+	preview (
+		#(
+			"data=", (void*)$e._data, " size=", $e._size, " capacity=", $e._capacity
+		)
+	)
+
+	children (
+		#array
+		(
+			expr : ($e._data)[$i],
+			size : $e._size
+		)
+	)
+}

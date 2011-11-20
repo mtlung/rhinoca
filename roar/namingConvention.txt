@@ -1,0 +1,25 @@
+Folder and file name:
+	Camel case begin with lower case
+
+Namespace:
+	For C++ our root namespace is ro
+	and for C struct,enum,type,variable,function we use prefix ro
+
+Basic types:
+	For some simple typedefs for instance:
+	roSize
+
+Macro:
+	Eg. roASSERT, roFOREACH, roOS_WIN32
+	
+Class/struct/enum name:
+	Camel case begin with upper case
+	Eg. ro::Array
+
+Enum member:
+	Type of the enum + underscore + value name
+	Eg. enum DriverBufferType { DriverBufferType_Vertex=0 };
+
+Function:
+	Camel case begin with lower case
+	Eg. Ro::sleep()
