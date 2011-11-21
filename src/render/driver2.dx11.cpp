@@ -858,7 +858,7 @@ bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 	for(unsigned i=0; i<ctx->currentShaders.size(); ++i) {
 		if(ctx->currentShaders[i]) continue;
 
-		if(!binded[i])	// Avoid redudant state change
+		if(!binded[i])	// Avoid redundant state change
 			continue;
 
 		RgDriverShaderType type = RgDriverShaderType(i);

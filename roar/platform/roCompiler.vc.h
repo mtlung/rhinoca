@@ -1,0 +1,32 @@
+typedef __int8 roInt8;
+typedef __int16 roInt16;
+typedef __int32 roInt32;
+typedef __int64 roInt64;
+typedef unsigned __int8 roUint8;
+typedef unsigned __int16 roUint16;
+typedef unsigned __int32 roUint32;
+typedef unsigned __int64 roUint64;
+
+#ifdef _M_IX86
+#	define roCPU_x86 1
+#endif
+
+#ifdef _M_X64
+#	define roCPU_x86_64 1
+#endif
+
+#ifdef _WIN64
+#	define roOS_WIN64 1
+#elif _WIN32
+#	define roOS_WIN32 1
+#endif
+
+// The inclusion of <assert.h> of VC was heavy, here we try to avoid that overhead
+#ifdef _DEBUG
+#	define __roWIDEN(str) L ## str
+#	define _roWIDEN(str) __roWIDEN(str)
+#	define roAssert(expression) (void)( (!!(expression)) || (_roAssert(_roWIDEN(#expression), _roWIDEN(__FILE__), __LINE__), 0) )
+	void _roAssert(const wchar_t* expression, const wchar_t* file, unsigned line);
+#else
+#	define roAssert(expression) ((void)0)
+#endif

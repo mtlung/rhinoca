@@ -10,11 +10,14 @@
 #endif
 
 // Assertions
-#define roAssert(x) assert(x)
+#ifndef roAssert
+#	define roAssert(x) assert(x)
+#endif
+
 #ifdef _DEBUG
-#	define roVerify(x) assert(x)
+#	define roVerify(x) roAssert(x)
 #else
-#	define (x)
+#	define roVerify(x) (x)
 #endif
 
 #define roStaticAssert(x) typedef char __static_assert_t[(x)]

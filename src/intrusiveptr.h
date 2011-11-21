@@ -160,8 +160,8 @@ IntrusivePtr<T> dynamic_pointer_cast(const IntrusivePtr<U>& p) {
 	return dynamic_cast<T*>(p.get());
 }
 
-/*!	A handly class for you to inherit from, in order to uss IntrusivePtr painlessly.
-	\note Inherit from this class will make your class polymorhpic, don't use this
+/*!	A handy class for you to inherit from, in order to use IntrusivePtr painlessly.
+	\note Inherit from this class will make your class polymorphic, don't use this
 		class if you don't want to pay for this overhead.
  */
 template<typename CounterType>

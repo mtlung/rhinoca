@@ -6,7 +6,7 @@ namespace ro {
 class NonCopyable
 {
 protected:
-	Noncopyable() {}
+	NonCopyable() {}
 
 private:
 	// Emphasize the following members are private

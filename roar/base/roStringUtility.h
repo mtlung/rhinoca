@@ -1,7 +1,7 @@
 #ifndef __roStringUtility_h__
 #define __roStringUtility_h__
 
-#include "roCompiler.h"
+#include "../platform/roCompiler.h"
 
 inline char roCharToLower(char c);
 inline char roCharToUpper(char c);
