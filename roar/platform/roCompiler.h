@@ -9,6 +9,10 @@
 #	include "roCompiler.gcc.h"
 #endif
 
+#ifndef NULL
+#	define NULL 0
+#endif
+
 // Assertions
 #ifndef roAssert
 #	define roAssert(x) assert(x)
@@ -23,7 +27,12 @@
 #define roStaticAssert(x) typedef char __static_assert_t[(x)]
 
 // Types for 32/64 bits compatibility
-#define roSize size_t
-#define roPtrDiff ptrdiff_t
+#ifndef roSize
+#	define roSize size_t
+#endif
+
+#ifndef roPtrDiff
+#	define roPtrDiff ptrdiff_t
+#endif
 
 #endif	// __roCompiler_h__

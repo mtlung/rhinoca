@@ -9,10 +9,14 @@ typedef unsigned __int64 roUint64;
 
 #ifdef _M_IX86
 #	define roCPU_x86 1
+#	define roSize __w64 unsigned int
+#	define roPtrDiff __w64 int
 #endif
 
 #ifdef _M_X64
 #	define roCPU_x86_64 1
+#	define roSize unsigned __int64
+#	define roPtrDiff __int64
 #endif
 
 #ifdef _WIN64
@@ -30,3 +34,4 @@ typedef unsigned __int64 roUint64;
 #else
 #	define roAssert(expression) ((void)0)
 #endif
+

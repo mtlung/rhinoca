@@ -343,6 +343,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roTaskPool.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roTaskPool.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roTypeCast.h"
 				>
 			</File>

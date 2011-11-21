@@ -173,16 +173,16 @@ public:
 	//! Construct from non-const version of StrideArray<T>, U must have the const qualifier.
 	template<class U>
 	StrideArray(const StrideArray<U>& rhs)
-		: data((char*)const_cast<T*>(rhs.getPtr())), size(rhs.size), stride(rhs.stride)
+		: data(rhs.data), size(rhs.size), stride(rhs.stride)
 	{}
 
 	T& operator[](roSize i) const
 	{
 		roAssert(i < size);
-		return *reinterpret_cast<T*>(data + i*stride);
+		return *(data + i*stride).cast<T>();
 	}
 
-	T* getPtr() const			{ return reinterpret_cast<T*>(data); }
+	T* typedPtr() const			{ return data.cast<T>(); }
 	roBytePtr bytePtr() const	{ return data; }
 
 	roSize byteSize() const		{ return size * stride; }
@@ -199,8 +199,8 @@ template<class T, roSize stride_=sizeof(T)>
 class ConstStrideArray
 {
 public:
-	ConstStrideArray(const T* _data, roSize elementCount)
-		: data((char*)_data), size(elementCount)
+	ConstStrideArray(const T* data, roSize elementCount)
+		: data(data), size(elementCount)
 #ifdef _DEBUG
 		, cStride(stride_)
 #endif
@@ -209,7 +209,7 @@ public:
 	//! Construct from non-const version of ConstStrideArray<T>, U must have the const qualifier.
 	template<class U>
 	ConstStrideArray(const ConstStrideArray<U>& rhs)
-		: data((char*)const_cast<T*>(rhs.getPtr())), size(rhs.size)
+		: data(rhs.data), size(rhs.size)
 #ifdef _DEBUG
 		, cStride(rhs.stride())
 #endif
@@ -218,16 +218,16 @@ public:
 	T& operator[](roSize i) const
 	{
 		roAssert(i < size);
-		return *reinterpret_cast<T*>(data + i*stride_);
+		return *(data + i*stride_).cast<T>();
 	}
 
-	T* getPtr() const { return reinterpret_cast<T*>(data); }
+	T* typedPtr() const { return data.cast<T>(); }
 	roBytePtr bytePtr() const { return data; }
 
 	roSize stride() const { return stride_; }
 	roSize byteSize() const { return size * stride_; }
 
-	char* data;
+	roBytePtr data;
 	roSize size;	//!< Element count.
 
 #ifdef _DEBUG

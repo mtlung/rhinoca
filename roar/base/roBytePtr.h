@@ -1,7 +1,7 @@
 #ifndef __roBytePtr_h__
 #define __roBytePtr_h__
 
-#include "roCompiler.h"
+#include "../platform/roCompiler.h"
 
 // A compiler can convert any pointer to void*, we also need such
 // auto conversion for char* when we are working with raw byte of memory.
@@ -12,6 +12,8 @@ struct roBytePtr
 	operator char*()			{ return ptr; }
 	operator const char*() const{ return ptr; }
 	operator bool() const		{ return ptr != NULL; }
+
+	template<class T> T* cast()	{ return reinterpret_cast<T*>(ptr); }
 
 	roBytePtr operator++()		{ ptr++; return *this; }
 	roBytePtr operator--()		{ ptr--; return *this; }

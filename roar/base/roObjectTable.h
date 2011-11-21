@@ -43,7 +43,7 @@ struct ObjectTable
 		i.next = _nullIdx;
 
 		// Setup entry in the object array
-		arrayIncSize(_objects, _Object());	// NOTE: Uncessary copying
+		arrayIncSize(_objects, _Object());	// NOTE: Unnecessary copying
 		_objects.back().id = i.id;
 
 		return i.id;
@@ -88,6 +88,10 @@ struct ObjectTable
 
 	roUint16 size() const { return num_cast<roUint16>(_objects.size()); }
 
+	// For iterating all the objects, the order is non-deterministic
+	T&			iterateAt(roSize idx)		{ return _objects[idx]._object; }
+	const T&	iterateAt(roSize idx) const	{ return _objects[idx]._object; }
+
 	struct _Index {
 		roUint32 id;
 		roUint16 objectIdx;
@@ -105,11 +109,11 @@ struct ObjectTable
 	static const roUint32 _countInc = 0x00010000;
 	static const roUint16 _nullIdx = roUint16(-1);
 
-	roUint16 _freeListEnque;	// We enque and deque at different point,
+	roUint16 _freeListEnque;	// We enqueue and deque at different point,
 	roUint16 _freeListDeque;	// so that less chance for id collision when overflow
 	Array<_Index> _index;
 	Array<_Object> _objects;
-};
+};	// ObjectTable
 
 }	// namespace ro
 
