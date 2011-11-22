@@ -1,8 +1,8 @@
 #include "pch.h"
 #include "roTaskPool.h"
 #include "roObjectTable.h"
+#include "roStopWatch.h"
 #include "../platform/roPlatformHeaders.h"
-//#include "timer.h"
 
 // Inspired by BitSquid engine:
 // http://bitsquid.blogspot.com/2010/03/task-management-practical-example.html
@@ -409,9 +409,8 @@ void TaskPool::doSomeTask(float timeout)
 	if(p == _pendingTasksTail)
 		return;
 
-	(void)timeout;
-/*	Timer timer;
-	const float beginTime = timer.seconds();
+	StopWatch watch;
+	const double beginTime = watch.get();
 	int tId = threadId();
 
 	while(p && p != _pendingTasksTail) {
@@ -428,7 +427,7 @@ void TaskPool::doSomeTask(float timeout)
 			p = _pendingTasksHead->nextPending;
 		}
 		else {
-			if(timeout > 0 && timer.seconds() > beginTime + timeout)
+			if(timeout > 0 && watch.get() > beginTime + timeout)
 				return;
 
 			ScopeUnlock unlock(mutex);
@@ -437,7 +436,7 @@ void TaskPool::doSomeTask(float timeout)
 			// Hunt for most depending job, to prevent job starvation.
 			p = (p->dependency && (p->dependency->id == p->dependencyId)) ? p->dependency : next;
 		}
-	}*/
+	}
 }
 
 // NOTE: Recursive and re-entrant

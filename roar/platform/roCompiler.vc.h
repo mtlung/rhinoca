@@ -1,3 +1,5 @@
+#define	roCOMPILER_VC 1
+
 typedef __int8 roInt8;
 typedef __int16 roInt16;
 typedef __int32 roInt32;
