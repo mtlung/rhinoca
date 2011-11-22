@@ -7,7 +7,7 @@
 
 namespace ro {
 
-//! Generic functions for operate on different kind of array classes
+/// Generic functions for operate on different kind of array classes
 
 template<class A> inline
 void arrayResize(A& ary, roSize newSize, const typename A::T& fill);
@@ -27,14 +27,13 @@ void arrayRemoveBySwap(A& ary, roSize idx);
 template<class T> inline
 T* arrayFind(T* begin, roSize count, const T& val);
 
-/*! Array class with static size.
-	A replacement for plan old array, the index operator[] has range check in debug mode.
- */
+/// Array class with static size.
+/// A replacement for plan old array, the index operator[] has range check in debug mode.
 template<class T, roSize N_>
 struct StaticArray
 {
 	enum { N = N_ };
-	T data[N];	//! Fixed-size array of elements of type T
+	T data[N];	///< Fixed-size array of elements of type T
 
 	T& operator[](roSize i)				{ roAssert(i < N); return data[i]; }
 	const T& operator[](roSize i) const	{ roAssert(i < N); return data[i]; }
@@ -54,7 +53,7 @@ struct StaticArray
 	roBytePtr bytePtr()				{ return data; }
 	const roBytePtr bytePtr() const	{ return data; }
 
-	//! Assign one value to all elements
+	/// Assign one value to all elements
 	void assign(const T& value) {
 		for(roSize i=0; i<size(); ++i)
 			data[i] = value;
@@ -63,7 +62,7 @@ struct StaticArray
 	roStaticAssert(N_ > 0);
 };	// StaticArray
 
-//! Interface for common dynamic array operations
+/// Interface for common dynamic array operations
 template<class T_>
 class IArray
 {
@@ -111,7 +110,7 @@ public:
 	T* _data;
 };	// IArray
 
-//! Dynamic array in it's standard form (similar to std::vector)
+/// Dynamic array in it's standard form (similar to std::vector)
 template<class T>
 class Array : public IArray<T>
 {
@@ -145,7 +144,7 @@ public:
 
 	inline TinyArray& operator=(const TinyArray& rhs);
 
-	// Operations
+// Operations
 	inline void insert(roSize idx, const T& val);
 
 	void setCapacity(roSize newSize)
@@ -156,10 +155,9 @@ public:
 	}
 };	// TinyArray
 
-/*!	An class that wrap around a raw pointer and tread it as an array of type T.
-	This class also support array stride, making it very useful when working with
-	vertex buffer.
- */
+/// An class that wrap around a raw pointer and tread it as an array of type T.
+/// This class also support array stride, making it very useful when working with
+/// vertex buffer.
 template<class T>
 class StrideArray
 {
@@ -170,7 +168,7 @@ public:
 		roAssert(stride >= sizeof(T));
 	}
 
-	//! Construct from non-const version of StrideArray<T>, U must have the const qualifier.
+	/// Construct from non-const version of StrideArray<T>, U must have the const qualifier.
 	template<class U>
 	StrideArray(const StrideArray<U>& rhs)
 		: data(rhs.data), size(rhs.size), stride(rhs.stride)
@@ -190,11 +188,11 @@ public:
 	bool isEmpty() const		{ return !data || size == 0 || stride == 0; }
 
 	roBytePtr data;
-	roSize size;	//!< Element count.
+	roSize size;	///< Element count.
 	roSize stride;
 };	// StrideArray
 
-//!	Specialization of StrideArray which give more room for the compiler to do optimization.
+///	Specialization of StrideArray which give more room for the compiler to do optimization.
 template<class T, roSize stride_=sizeof(T)>
 class ConstStrideArray
 {
@@ -206,7 +204,7 @@ public:
 #endif
 	{}
 
-	//! Construct from non-const version of ConstStrideArray<T>, U must have the const qualifier.
+	/// Construct from non-const version of ConstStrideArray<T>, U must have the const qualifier.
 	template<class U>
 	ConstStrideArray(const ConstStrideArray<U>& rhs)
 		: data(rhs.data), size(rhs.size)
@@ -228,11 +226,10 @@ public:
 	roSize byteSize() const { return size * stride_; }
 
 	roBytePtr data;
-	roSize size;	//!< Element count.
+	roSize size;	///< Element count.
 
 #ifdef _DEBUG
-	//! For Visual Studio debugger visualization purpose.
-	roSize cStride;
+	roSize cStride;	///< For Visual Studio debugger visualization purpose.
 #endif
 };	// ConstStrideArray
 

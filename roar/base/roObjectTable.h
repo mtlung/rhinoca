@@ -6,9 +6,8 @@
 
 namespace ro {
 
-/*!	Id to object look up table
-	http://bitsquid.blogspot.com/2011/09/managing-decoupling-part-4-id-lookup.html
- */
+/// Id to object look up table
+/// http://bitsquid.blogspot.com/2011/09/managing-decoupling-part-4-id-lookup.html
 template<class T>
 struct ObjectTable
 {
@@ -18,6 +17,7 @@ struct ObjectTable
 		_freeListDeque = _nullIdx;
 	}
 
+// Operations:
 	roUint32 create()
 	{
 		roAssert(_index.size() < TypeOf<roUint16>::valueMax());
@@ -86,12 +86,14 @@ struct ObjectTable
 		_freeListEnque = indexIdx;
 	}
 
-	roUint16 size() const { return num_cast<roUint16>(_objects.size()); }
-
 	// For iterating all the objects, the order is non-deterministic
 	T&			iterateAt(roSize idx)		{ return _objects[idx]._object; }
 	const T&	iterateAt(roSize idx) const	{ return _objects[idx]._object; }
 
+// Attributes:
+	roUint16 size() const { return num_cast<roUint16>(_objects.size()); }
+
+// Private:
 	struct _Index {
 		roUint32 id;
 		roUint16 objectIdx;

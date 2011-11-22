@@ -3,8 +3,8 @@
 
 #include "../platform/roCompiler.h"
 
-// A compiler can convert any pointer to void*, we also need such
-// auto conversion for char* when we are working with raw byte of memory.
+/// A compiler can convert any pointer to void*, we also need such
+/// auto conversion for char* when we are working with raw byte of memory.
 struct roBytePtr
 {
 	roBytePtr(const void* p=NULL) { ptr = (char*)p; }

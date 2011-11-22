@@ -1,7 +1,6 @@
 #ifndef __roTaskPool_h__
 #define __roTaskPool_h__
 
-//#include "atomic.h"
 #include "roMutex.h"
 
 namespace ro {
@@ -146,9 +145,8 @@ protected:
 
 		void free(TaskProxy* id);
 
-		//AtomicInteger count;
-		//AtomicInteger idCounter;
-		int count, idCounter;
+		roSize count;
+		roSize idCounter;
 		TaskProxy* freeBegin;	///< Point to the first free entry
 	};	// TaskList
 

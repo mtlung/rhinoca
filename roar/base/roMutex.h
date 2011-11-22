@@ -13,9 +13,8 @@ namespace ro {
 class Mutex : private NonCopyable
 {
 public:
-	/*!	Construct a mutex with an optional spin count.
-		Use spinCount = -1 to disable spinning.
-	 */
+	/// Construct a mutex with an optional spin count.
+	/// Use spinCount = -1 to disable spinning.
 	explicit Mutex(int spinCount = 200);
 	~Mutex();
 
@@ -24,20 +23,18 @@ public:
 	bool tryLock();
 
 #ifdef _DEBUG
-	/*!	For use in debug mode to assert that the mutex is locked.
-		\note Do not assert for not locked, since the return value
-			itself is not reliable if the mutex is not locked.
-	 */
+	/// For use in debug mode to assert that the mutex is locked.
+	/// \note Do not assert for not locked, since the return value
+	/// itself is not reliable if the mutex is not locked.
 	bool isLocked() const { return _locked; }
 #endif
 
 #ifdef roUSE_PTHREAD
 	pthread_mutex_t mMutex;
 #else
-	/*!	A char buffer that pretended to be a CRITICAL_SECTION.
-		Using such an approach, we need not to include Windows.h
-		The sizeof(CRITICAL_SECTION) is 24 on win32
-	 */
+	/// A char buffer that pretended to be a CRITICAL_SECTION.
+	/// Using such an approach, we need not to include Windows.h
+	/// The sizeof(CRITICAL_SECTION) is 24 on win32
 	char mMutex[8 + 4 * sizeof(void*)];
 #endif
 
@@ -48,13 +45,12 @@ protected:
 #endif
 };	// Mutex
 
-//! RecursiveMutex
+/// RecursiveMutex
 class RecursiveMutex : private NonCopyable
 {
 public:
-	/*!	Construct a recursive mutex with an optional spin count.
-		Use spinCount = -1 to disable spinning.
-	 */
+	/// Construct a recursive mutex with an optional spin count.
+	/// Use spinCount = -1 to disable spinning.
 	explicit RecursiveMutex(int spintCount = 200);
 	~RecursiveMutex();
 
@@ -63,10 +59,9 @@ public:
 	bool tryLock();
 
 #ifdef _DEBUG
-	/*!	For use in debug mode to assert that the mutex is locked.
-		\note Do not assert for not locked, since the return value
-			itself is not reliable if the mutex is not locked.
-	 */
+	/// For use in debug mode to assert that the mutex is locked.
+	/// \note Do not assert for not locked, since the return value
+	/// 	itself is not reliable if the mutex is not locked.
 	bool isLocked() const;
 	int lockCount() const;
 #endif
@@ -83,7 +78,7 @@ protected:
 #endif
 };	// RecursiveMutex
 
-//! Common class for some cancel-able classes.
+/// Common class for some cancel-able classes.
 class Cancelable {
 public:
 	Cancelable() : mCanceled(false) {}
@@ -120,7 +115,7 @@ protected:
 	Mutex* m;
 };	// ScopeLock
 
-//! Unlocking mutex in scope.
+/// Unlocking mutex in scope.
 class ScopeUnlock : public Cancelable, private NonCopyable
 {
 public:
@@ -134,9 +129,8 @@ protected:
 	Mutex* m;
 };	// ScopeUnlock
 
-/*! Unlocking mutex in scope.
-	\note Make sure the mutex is locked before ScopeUnlockOnly try to unlock it.
- */
+/// Unlocking mutex in scope.
+/// \note Make sure the mutex is locked before ScopeUnlockOnly try to unlock it.
 class ScopeUnlockOnly : public Cancelable, private NonCopyable
 {
 public:
@@ -149,7 +143,7 @@ protected:
 	Mutex* m;
 };	// ScopeUnlockOnly
 
-//! Lock recursive mutex in scope.
+/// Lock recursive mutex in scope.
 class ScopeRecursiveLock : public Cancelable, private NonCopyable
 {
 public:
@@ -164,7 +158,7 @@ protected:
 	RecursiveMutex* m;
 };	// ScopeRecursiveLock
 
-//! Unlocking recursive mutex in scope.
+/// Unlocking recursive mutex in scope.
 class ScopeRecursiveUnlock : public Cancelable, private NonCopyable
 {
 public:
@@ -178,7 +172,7 @@ protected:
 	RecursiveMutex* m;
 };	// ScopeRecursiveUnlock
 
-//! Unlocking recursive mutex in scope.
+/// Unlocking recursive mutex in scope.
 class ScopeRecursiveUnlockOnly : public Cancelable, private NonCopyable
 {
 public:

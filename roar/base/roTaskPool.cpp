@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "roTaskPool.h"
-#include "roObjectTable.h"
 #include "roStopWatch.h"
 #include "../platform/roPlatformHeaders.h"
 
@@ -31,10 +30,6 @@ public:
 	TaskProxy* nextOpen, *prevOpen;
 	TaskProxy* nextPending, *prevPending;
 };	// TaskProxy
-
-/*struct TaskList : public ObjectTable<TaskPool::TaskProxy>
-{
-};*/
 
 TaskPool::TaskProxy::TaskProxy()
 	: id(0)
@@ -90,7 +85,7 @@ TaskPool::TaskProxy* TaskPool::TaskList::alloc()
 
 void TaskPool::TaskList::free(TaskProxy* id)
 {
-#ifndef NDEBUG
+#ifdef _DEBUG
 	for(TaskProxy* p = freeBegin; p; p = p->nextFree)
 		roAssert(p != id);
 #endif
@@ -151,7 +146,7 @@ void TaskPool::sleep(int ms)
 #ifdef roUSE_PTHREAD
 	::usleep(useconds_t(ms * 1000));
 #else
-		::Sleep(DWORD(ms));
+	::Sleep(DWORD(ms));
 #endif
 }
 

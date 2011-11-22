@@ -13,7 +13,7 @@ struct TypeOf {
 #ifdef _MSC_VER
 	static bool isPOD() { return __is_pod(T); }
 #else
-	static bool isPOD() { return false; }	//! Is plain old data type
+	static bool isPOD() { return false; }	///< Is plain old data type
 #endif
 };
 

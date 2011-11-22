@@ -37,3 +37,14 @@ typedef unsigned __int64 roUint64;
 #	define roAssert(expression) ((void)0)
 #endif
 
+// Counting the number of array elements
+#define roCOUNTOF(x) _countof(x)
+
+// Source code annotation
+#if !defined(__midl) && defined(_PREFAST_) 
+#	define override __declspec("__override")
+#else
+#	define override virtual
+#endif
+
+#pragma warning(disable : 4127)	// conditional expression is constant
