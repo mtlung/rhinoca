@@ -54,6 +54,17 @@ inline char* roStrChr(char* sz, char ch)
 	return NULL;
 }
 
+inline char* roStrrChr(char* sz, char ch)
+{
+	roSize len = roStrLen(sz);
+	if(len == 0) return NULL;
+	char* s = &sz[len - 1];
+	for( ; s > sz; --s) {
+		if(*s == ch) return s;
+	}
+	return NULL;
+}
+
 inline const char* roStrChr(const char* sz, char ch)
 {
 	return roStrChr((char*)sz, ch);

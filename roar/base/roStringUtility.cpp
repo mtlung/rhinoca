@@ -19,6 +19,21 @@ char* roStrStr(char* a, const char* b)
 	return NULL;
 }
 
+char* roStrrStr(char* a, const char* b)
+{
+	roSize alen = roStrLen(a);
+	roSize blen = roStrLen(b);
+
+	if(blen > alen) return NULL;
+
+	for(char* p = a + alen - blen; p >= a; --p) {
+		if(roStrnCmp(p, b, blen) == 0)
+			return p;
+	}
+
+	return NULL;
+}
+
 void roToLower(char* str)
 {
 	while(*str != '\0') {

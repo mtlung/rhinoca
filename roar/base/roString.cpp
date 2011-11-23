@@ -135,8 +135,8 @@ String& String::erase(roSize offset, roSize count)
 
 roSize String::find(char c, roSize offset) const
 {
-	char str[] = { c, '\0' };
-	return find(str, offset);
+	const char* ret = roStrChr(_cstr + offset, c);
+	return ret ? ret - _cstr : npos;
 }
 
 roSize String::find(const char* str, roSize offset) const
@@ -153,7 +153,7 @@ roSize String::rfind(char c, roSize offset) const
 
 roSize String::rfind(const char* str, roSize offset) const
 {
-	roSize l1 = offset > _length ? _length : offset;
+	roSize l1 = roMinOf2(offset, _length);
 	roSize l2 = roStrLen(str);
 
 	if(l2 > l1) return npos;
