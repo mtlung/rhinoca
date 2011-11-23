@@ -114,7 +114,7 @@ TaskPool::TaskPool()
 
 TaskPool::~TaskPool()
 {
-	int tId = threadId();
+	roSize tId = threadId();
 	ScopeLock lock(mutex);
 
 	_keepRun = false;
@@ -299,7 +299,7 @@ roSize TaskPool::threadId()
 // NOTE: Recursive and re-entrant
 void TaskPool::wait(TaskId id)
 {
-	int tId = threadId();
+	roSize tId = threadId();
 	ScopeLock lock(mutex);
 	if(TaskProxy* p = _findProxyById(id))
 		_wait(p, tId);
@@ -406,7 +406,7 @@ void TaskPool::doSomeTask(float timeout)
 
 	StopWatch watch;
 	const double beginTime = watch.get();
-	int tId = threadId();
+	roSize tId = threadId();
 
 	while(p && p != _pendingTasksTail) {
 		TaskProxy* next = p->nextPending;

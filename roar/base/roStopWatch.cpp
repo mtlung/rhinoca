@@ -5,7 +5,7 @@
 
 #if RHINOCA_APPLE
 #	include <mach/mach_time.h>
-#elif roOS_WIN
+#elif roOS_WIN32
 #	define USE_RDTSC 1
 #endif
 

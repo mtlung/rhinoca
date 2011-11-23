@@ -11,15 +11,18 @@ typedef unsigned __int64 roUint64;
 
 #ifdef _M_IX86
 #	define roCPU_x86 1
-#	define roSize __w64 unsigned int
-#	define roPtrDiff __w64 int
+	typedef __w64 unsigned int _roSize;
+	typedef __w64 int _roPtrDiff;
 #endif
 
 #ifdef _M_X64
 #	define roCPU_x86_64 1
-#	define roSize unsigned __int64
-#	define roPtrDiff __int64
+	typedef unsigned __int64 _roSize;
+	typedef __int64 _roPtrDiff;
 #endif
+
+#define roSize _roSize
+#define roPtrDiff _roPtrDiff
 
 #ifdef _WIN64
 #	define roOS_WIN64 1

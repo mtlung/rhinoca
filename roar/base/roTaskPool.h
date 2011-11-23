@@ -146,7 +146,7 @@ protected:
 		void free(TaskProxy* id);
 
 		roSize count;
-		roSize idCounter;
+		TaskId idCounter;
 		TaskProxy* freeBegin;	///< Point to the first free entry
 	};	// TaskList
 
@@ -160,7 +160,7 @@ protected:
 	roSize _threadCount;
 	roSize* _threadHandles;
 
-	int _mainThreadId;
+	roSize _mainThreadId;
 
 	mutable Mutex mutex;
 };	// TaskPool

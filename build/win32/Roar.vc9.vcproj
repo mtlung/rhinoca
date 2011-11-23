@@ -339,6 +339,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roString.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roString.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roStringUtility.cpp"
 				>
 			</File>

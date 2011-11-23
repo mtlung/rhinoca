@@ -2,18 +2,35 @@
 #include "roStringUtility.h"
 #include "roUtility.h"
 
-void roStrToLower(char* str)
+char* roStrStr(char* a, const char* b)
+{
+	char* sa = a;
+	const char* sb = b;
+	if(*b == 0) return NULL;
+	for( ; *a; ++a) {
+		sa = a;
+		sb = b;
+		for(;;) {
+			if(*sb == 0) return a;	// Found
+			if(*sb != *sa) break;
+			++sa; ++sb;
+		}
+	}
+	return NULL;
+}
+
+void roToLower(char* str)
 {
 	while(*str != '\0') {
-		*str = roCharToLower(*str);
+		*str = roToLower(*str);
 		++str;
 	}
 }
 
-void roStrToUpper(char* str)
+void roToUpper(char* str)
 {
 	while(*str != '\0') {
-		*str = (char)roCharToUpper(*str);
+		*str = (char)roToUpper(*str);
 		++str;
 	}
 }
