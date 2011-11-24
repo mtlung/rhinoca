@@ -1,3 +1,19 @@
+#ifndef _NEW_
+// Define our own placement new and delete operator such that we need not to include <new>
+//#include <new>
+inline void* operator new(size_t, void* where) { return where; }
+inline void operator delete(void*, void*) {}
+#endif	// _NEW_
+
+namespace ro {
+
+template<class A>
+void arrayResize(A& ary, roSize newSize)
+{
+	typedef typename A::T T;
+	arrayResize(ary, newSize, T());
+}
+
 template<class A>
 void arrayResize(A& ary, roSize newSize, const typename A::T& fill)
 {
@@ -21,9 +37,17 @@ void arrayResize(A& ary, roSize newSize, const typename A::T& fill)
 }
 
 template<class A>
-void arrayIncSize(A& ary, const typename A::T& fill)
+typename A::T& arrayIncSize(A& ary)
+{
+	arrayResize(ary, ary.size() + 1);
+	return ary.back();
+}
+
+template<class A>
+typename A::T& arrayIncSize(A& ary, const typename A::T& fill)
 {
 	arrayResize(ary, ary.size() + 1, fill);
+	return ary.back();
 }
 
 template<class A>
@@ -52,15 +76,13 @@ void arrayInsert(A& ary, roSize idx, const typename A::T& val)
 template<class A>
 void arrayRemove(A& ary, roSize idx)
 {
-	roAssert(idx < _size);
+	roAssert(idx < ary._size);
 	if(idx >= ary._size) return;
 
 	typedef typename A::T T;
-	ary[idx].~T();
-	if(idx < ary._size - 1)
-		memcpy(&ary[idx], &ary[idx+1], sizeof(A::T) * (ary._size - idx - 1));
-
 	ary.popBack();
+	if(idx < ary._size)
+		memcpy(&ary[idx], &ary[idx+1], sizeof(A::T) * (ary._size - idx));
 }
 
 template<class A>
@@ -70,7 +92,6 @@ void arrayRemoveBySwap(A& ary, roSize idx)
 	if(idx >= ary._size) return;
 
 	typedef typename A::T T;
-	ary[idx].~T();
 	if(ary._size > 1)
 		roSwap(ary[idx], ary.back());
 
@@ -85,3 +106,14 @@ T* arrayFind(T* begin, roSize count, const T& val)
 			return begin + i;
 	return NULL;
 }
+
+template<class T>
+T* arrayFind(T* begin, T* end, const T& val)
+{
+	for(T* i=begin; i!=end; ++i)
+		if(*i == val)
+			return i;
+	return NULL;
+}
+
+}	// namespace ro

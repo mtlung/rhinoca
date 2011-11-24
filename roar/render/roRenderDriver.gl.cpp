@@ -1,16 +1,19 @@
 #include "pch.h"
-#include "driver2.h"
+#include "roRenderDriver.h"
 
-#include "../array.h"
-#include "../common.h"
-#include "../rhlog.h"
-#include "../rhstring.h"
-#include "../vector.h"
+#include "../base/roArray.h"
+#include "../base/roLog.h"
+#include "../base/roString.h"
+#include "../base/roStringHash.h"
 
-#include "../platform.h"
+#include "../platform/roPlatformHeaders.h"
 #include <gl/gl.h>
-#include "gl/glext.h"
-#include "win32/extensionswin32fwd.h"
+#include "../../src/render/gl/glext.h"
+#include "platform.win/extensionsfwd.h"
+
+#include <malloc.h>
+
+using namespace ro;
 
 // OpenGL stuffs
 // Instancing:				http://sol.gfxile.net/instancing.html
@@ -25,11 +28,12 @@
 
 //#define RG_GLES 1
 
-#ifndef NDEBUG
-#define checkError() { GLenum err = glGetError(); if(err != GL_NO_ERROR) rhLog("error", "unhandled GL error 0x%04x before %s %d\n", err, __FILE__, __LINE__); }
+#if roDEBUG
+#	define checkError() { GLenum err = glGetError(); if(err != GL_NO_ERROR) roLog("error", "unhandled GL error 0x%04x before %s %d\n", err, __FILE__, __LINE__); }
 #else
-#define checkError()
+#	define checkError()
 #endif
+
 #define clearError() { glGetError(); }
 
 static unsigned _hash(const void* data, unsigned len)
@@ -45,20 +49,20 @@ static unsigned _hash(const void* data, unsigned len)
 // Context management
 
 // These functions are implemented in platform specific src files, eg. driver2.gl.windows.cpp
-extern RgDriverContext* _newDriverContext_GL(RgDriver* driver);
-extern void _deleteDriverContext_GL(RgDriverContext* self);
-extern bool _initDriverContext_GL(RgDriverContext* self, void* platformSpecificWindow);
-extern void _useDriverContext_GL(RgDriverContext* self);
-extern RgDriverContext* _getCurrentContext_GL();
+extern roRDriverContext* _newDriverContext_GL(roRDriver* driver);
+extern void _deleteDriverContext_GL(roRDriverContext* self);
+extern bool _initDriverContext_GL(roRDriverContext* self, void* platformSpecificWindow);
+extern void _useDriverContext_GL(roRDriverContext* self);
+extern roRDriverContext* _getCurrentContext_GL();
 
 extern void _driverSwapBuffers_GL();
 extern bool _driverChangeResolution_GL(unsigned width, unsigned height);
 
-extern void rgDriverApplyDefaultState(RgDriverContext* self);
+extern void rgDriverApplyDefaultState(roRDriverContext* self);
 
 namespace {
 
-#include "driver2.gl.inl"
+#include "roRenderDriver.gl.inl"
 
 static void _setViewport(unsigned x, unsigned y, unsigned width, unsigned height, float zmin, float zmax)
 {
@@ -91,12 +95,13 @@ static void _clearStencil(unsigned char s)
 static void _adjustDepthRangeMatrix(float* mat44)
 {
 	// Do nothing
+	(void)mat44;
 }
 
 //////////////////////////////////////////////////////////////////////////
 // State management
 
-static const Array<GLenum, 5> _blendOp = {
+static const StaticArray<GLenum, 5> _blendOp = {
 	GL_FUNC_ADD,
 	GL_FUNC_SUBTRACT,
 	GL_FUNC_REVERSE_SUBTRACT,
@@ -104,7 +109,7 @@ static const Array<GLenum, 5> _blendOp = {
 	GL_MAX,
 };
 
-static const Array<GLenum, 10> _blendValue = {
+static const StaticArray<GLenum, 10> _blendValue = {
 	GL_ZERO,
 	GL_ONE,
 	GL_SRC_COLOR,
@@ -118,16 +123,16 @@ static const Array<GLenum, 10> _blendValue = {
 };
 
 // See: http://www.opengl.org/wiki/Blending
-static void _setBlendState(RgDriverBlendState* state)
+static void _setBlendState(roRDriverBlendState* state)
 {
-	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	if(!state || !ctx) return;
 
 	// Generate the hash value if not yet
 	if(state->hash == 0) {
 		state->hash = (void*)_hash(
 			&state->enable,
-			sizeof(RgDriverBlendState) - offsetof(RgDriverBlendState, RgDriverBlendState::enable)
+			sizeof(roRDriverBlendState) - offsetof(roRDriverBlendState, roRDriverBlendState::enable)
 		);
 		ctx->currentBlendStateHash = state->hash;
 	}
@@ -138,10 +143,10 @@ static void _setBlendState(RgDriverBlendState* state)
 	}
 
 	glColorMask(
-		(state->wirteMask & RgDriverColorWriteMask_EnableRed) > 0,
-		(state->wirteMask & RgDriverColorWriteMask_EnableGreen) > 0,
-		(state->wirteMask & RgDriverColorWriteMask_EnableBlue) > 0,
-		(state->wirteMask & RgDriverColorWriteMask_EnableAlpha) > 0
+		(state->wirteMask & roRDriverColorWriteMask_EnableRed) > 0,
+		(state->wirteMask & roRDriverColorWriteMask_EnableGreen) > 0,
+		(state->wirteMask & roRDriverColorWriteMask_EnableBlue) > 0,
+		(state->wirteMask & roRDriverColorWriteMask_EnableAlpha) > 0
 	);
 
 	if(state->enable)
@@ -170,7 +175,7 @@ static void _setBlendState(RgDriverBlendState* state)
 	);
 }
 
-static const Array<GLenum, 8> _compareFunc = {
+static const StaticArray<GLenum, 8> _compareFunc = {
 	GL_NEVER,
 	GL_LESS,
 	GL_EQUAL,
@@ -181,7 +186,7 @@ static const Array<GLenum, 8> _compareFunc = {
 	GL_ALWAYS,
 };
 
-static const Array<GLenum, 8> _stencilOp = {
+static const StaticArray<GLenum, 8> _stencilOp = {
 	GL_ZERO,
 	GL_INVERT,
 	GL_KEEP,
@@ -192,16 +197,16 @@ static const Array<GLenum, 8> _stencilOp = {
 	GL_DECR_WRAP,
 };
 
-static void _setDepthStencilState(RgDriverDepthStencilState* state)
+static void _setDepthStencilState(roRDriverDepthStencilState* state)
 {
-	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	if(!state || !ctx) return;
 
 	// Generate the hash value if not yet
 	if(state->hash == 0) {
 		state->hash = (void*)_hash(
 			&state->enableDepth,
-			sizeof(RgDriverDepthStencilState) - offsetof(RgDriverDepthStencilState, RgDriverDepthStencilState::enableDepth)
+			sizeof(roRDriverDepthStencilState) - offsetof(roRDriverDepthStencilState, roRDriverDepthStencilState::enableDepth)
 		);
 		ctx->currentDepthStencilStateHash = state->hash;
 	}
@@ -254,34 +259,34 @@ static void _setDepthStencilState(RgDriverDepthStencilState* state)
 	}
 }
 
-static const Array<GLenum, 4> _magFilter = { GL_NEAREST, GL_LINEAR, GL_NEAREST, GL_LINEAR };
-static const Array<GLenum, 4> _minFilter = { GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_LINEAR };
-static const Array<GLenum, 4> _textureAddressMode = { GL_REPEAT, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER, GL_MIRRORED_REPEAT_ARB };
+static const StaticArray<GLenum, 4> _magFilter = { GL_NEAREST, GL_LINEAR, GL_NEAREST, GL_LINEAR };
+static const StaticArray<GLenum, 4> _minFilter = { GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_LINEAR };
+static const StaticArray<GLenum, 4> _textureAddressMode = { GL_REPEAT, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER, GL_MIRRORED_REPEAT_ARB };
 
 // For OpenGl sampler object, see: http://www.geeks3d.com/20110908/opengl-3-3-sampler-objects-control-your-texture-units/
 // and http://www.opengl.org/registry/specs/ARB/sampler_objects.txt
-static void _setTextureState(RgDriverTextureState* states, unsigned stateCount, unsigned startingTextureUnit)
+static void _setTextureState(roRDriverTextureState* states, unsigned stateCount, unsigned startingTextureUnit)
 {
-	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx || !states || stateCount == 0) return;
 
 	for(unsigned i=0; i<stateCount; ++i)
 	{
-		RgDriverTextureState& state = states[i];
+		roRDriverTextureState& state = states[i];
 
 		// Generate the hash value if not yet
 		if(state.hash == 0) {
 			state.hash = (void*)_hash(
 				&state.filter,
-				sizeof(RgDriverTextureState) - offsetof(RgDriverTextureState, RgDriverTextureState::filter)
+				sizeof(roRDriverTextureState) - offsetof(roRDriverTextureState, roRDriverTextureState::filter)
 			);
 		}
 
 		GLuint glh = 0;
-		int freeCacheSlot = -1;
+		roSize freeCacheSlot = roSize(-1);
 
 		// Try to search for the state in the cache
-		for(unsigned j=0; j<ctx->textureStateCache.size(); ++j) {
+		for(roSize j=0; j<ctx->textureStateCache.size(); ++j) {
 			if(state.hash == ctx->textureStateCache[j].hash) {
 				glh = ctx->textureStateCache[j].glh;
 				break;
@@ -295,7 +300,7 @@ static void _setTextureState(RgDriverTextureState* states, unsigned stateCount, 
 			// Not enough cache slot
 			if(freeCacheSlot == -1) {
 				glBindSampler(startingTextureUnit + i, 0);
-				rhLog("error", "RgDriver texture cache slot full\n");
+				roLog("error", "roRDriver texture cache slot full\n");
 				return;
 			}
 
@@ -319,7 +324,7 @@ static void _setTextureState(RgDriverTextureState* states, unsigned stateCount, 
 
 // See: http://www.opengl.org/wiki/Buffer_Object
 
-static const Array<GLenum, 4> _bufferTarget = {
+static const StaticArray<GLenum, 4> _bufferTarget = {
 	0,
 	GL_ARRAY_BUFFER,
 	GL_ELEMENT_ARRAY_BUFFER,
@@ -329,7 +334,7 @@ static const Array<GLenum, 4> _bufferTarget = {
 };
 
 #if !defined(RG_GLES)
-static const Array<GLenum, 4> _bufferMapUsage = {
+static const StaticArray<GLenum, 4> _bufferMapUsage = {
 	0,
 	GL_READ_ONLY,
 	GL_WRITE_ONLY,
@@ -337,40 +342,40 @@ static const Array<GLenum, 4> _bufferMapUsage = {
 };
 #endif
 
-struct RgDriverBufferImpl : public RgDriverBuffer
+struct roRDriverBufferImpl : public roRDriverBuffer
 {
 	GLuint glh;
 	void* systemBuf;
-};	// RgDriverBufferImpl
+};	// roRDriverBufferImpl
 
-static RgDriverBuffer* _newBuffer()
+static roRDriverBuffer* _newBuffer()
 {
-	RgDriverBufferImpl* ret = new RgDriverBufferImpl;
+	roRDriverBufferImpl* ret = new roRDriverBufferImpl;
 	memset(ret, 0, sizeof(*ret));
 	return ret;
 }
 
-static void _deleteBuffer(RgDriverBuffer* self)
+static void _deleteBuffer(roRDriverBuffer* self)
 {
-	RgDriverBufferImpl* impl = static_cast<RgDriverBufferImpl*>(self);
+	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl) return;
 
 	if(impl->glh)
 		glDeleteBuffers(1, &impl->glh);
 
-	RHASSERT(!impl->isMapped);
-	rhinoca_free(impl->systemBuf);
-	delete static_cast<RgDriverBufferImpl*>(self);
+	roAssert(!impl->isMapped);
+	free(impl->systemBuf);
+	delete static_cast<roRDriverBufferImpl*>(self);
 }
 
-static const Array<GLenum, 4> _bufferUsage = {
+static const StaticArray<GLenum, 4> _bufferUsage = {
 	0,
 	GL_STATIC_DRAW,
 	GL_STREAM_DRAW,
 	GL_DYNAMIC_DRAW
 };
 
-static bool _initBufferSpecificLocation(RgDriverBufferImpl* impl, RgDriverBufferType type, RgDriverDataUsage usage, void* initData, unsigned sizeInBytes, bool systemMemory)
+static bool _initBufferSpecificLocation(roRDriverBufferImpl* impl, roRDriverBufferType type, roRDriverDataUsage usage, void* initData, unsigned sizeInBytes, bool systemMemory)
 {
 	impl->type = type;
 	impl->sizeInBytes = sizeInBytes;
@@ -379,7 +384,7 @@ static bool _initBufferSpecificLocation(RgDriverBufferImpl* impl, RgDriverBuffer
 	checkError();
 
 	if(systemMemory) {
-		impl->systemBuf = rhinoca_malloc(sizeInBytes);
+		impl->systemBuf = malloc(sizeInBytes);
 		if(initData)
  			memcpy(impl->systemBuf, initData, sizeInBytes);
 
@@ -393,12 +398,12 @@ static bool _initBufferSpecificLocation(RgDriverBufferImpl* impl, RgDriverBuffer
 	{
 		glGenBuffers(1, &impl->glh);
 		GLenum t = _bufferTarget[type];
-		RHASSERT("Invalid RgDriverBufferType" && t != 0);
+		roAssert("Invalid roRDriverBufferType" && t != 0);
 		glBindBuffer(t, impl->glh);
 		glBufferData(t, sizeInBytes, initData, _bufferUsage[usage]);
-		RHASSERT(impl->glh);
+		roAssert(impl->glh);
 
-		rhinoca_free(impl->systemBuf);
+		free(impl->systemBuf);
 	}
 
 	checkError();
@@ -406,24 +411,24 @@ static bool _initBufferSpecificLocation(RgDriverBufferImpl* impl, RgDriverBuffer
 	return true;
 }
 
-static bool _initBuffer(RgDriverBuffer* self, RgDriverBufferType type, RgDriverDataUsage usage, void* initData, unsigned sizeInBytes)
+static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriverDataUsage usage, void* initData, unsigned sizeInBytes)
 {
-	RgDriverBufferImpl* impl = static_cast<RgDriverBufferImpl*>(self);
+	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl) return false;
 
-	RHASSERT(!impl->glh && !impl->systemBuf);
+	roAssert(!impl->glh && !impl->systemBuf);
 	return _initBufferSpecificLocation(impl, type, usage, initData, sizeInBytes, false);
 }
 
-static bool _updateBuffer(RgDriverBuffer* self, unsigned offsetInBytes, void* data, unsigned sizeInBytes)
+static bool _updateBuffer(roRDriverBuffer* self, unsigned offsetInBytes, void* data, unsigned sizeInBytes)
 {
-	RgDriverBufferImpl* impl = static_cast<RgDriverBufferImpl*>(self);
+	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl) return false;
 
 	if(!data) return false;
 	if(impl->isMapped) return false;
 	if(offsetInBytes + sizeInBytes > self->sizeInBytes) return false;
-	if(impl->usage == RgDriverDataUsage_Static) return false;
+	if(impl->usage == roRDriverDataUsage_Static) return false;
 
  	if(impl->systemBuf)
  		memcpy(((char*)impl->systemBuf) + offsetInBytes, data, sizeInBytes);
@@ -438,9 +443,9 @@ static bool _updateBuffer(RgDriverBuffer* self, unsigned offsetInBytes, void* da
 	return true;
 }
 
-static void* _mapBuffer(RgDriverBuffer* self, RgDriverBufferMapUsage usage)
+static void* _mapBuffer(roRDriverBuffer* self, roRDriverBufferMapUsage usage)
 {
-	RgDriverBufferImpl* impl = static_cast<RgDriverBufferImpl*>(self);
+	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl) return NULL;
 
 	if(impl->systemBuf)
@@ -451,12 +456,12 @@ static void* _mapBuffer(RgDriverBuffer* self, RgDriverBufferMapUsage usage)
 #if !defined(RG_GLES)
 	void* ret = NULL;
 	checkError();
-	RHASSERT("Invalid RgDriverBufferMapUsage" && _bufferMapUsage[usage] != 0);
+	roAssert("Invalid roRDriverBufferMapUsage" && _bufferMapUsage[usage] != 0);
 	GLenum t = _bufferTarget[self->type];
 	glBindBuffer(t, impl->glh);
 
 	// The write discard optimization
-	if(!usage & RgDriverBufferMapUsage_Read)
+	if(!usage & roRDriverBufferMapUsage_Read)
 		glBufferData(t, 0, NULL, GL_STREAM_COPY);
 
 	ret = glMapBuffer(t, _bufferMapUsage[usage]);
@@ -466,14 +471,14 @@ static void* _mapBuffer(RgDriverBuffer* self, RgDriverBufferMapUsage usage)
 	impl->mapUsage = usage;
 
 	return ret;
-#endif
-
+#else
 	return NULL;
+#endif
 }
 
-static void _unmapBuffer(RgDriverBuffer* self)
+static void _unmapBuffer(roRDriverBuffer* self)
 {
-	RgDriverBufferImpl* impl = static_cast<RgDriverBufferImpl*>(self);
+	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl || !impl->isMapped) return;
 
 	if(impl->systemBuf) {
@@ -493,12 +498,12 @@ static void _unmapBuffer(RgDriverBuffer* self)
 	impl->isMapped = false;
 }
 
-static bool _switchBufferMode(RgDriverBufferImpl* impl)
+static bool _switchBufferMode(roRDriverBufferImpl* impl)
 {
-	RHASSERT((impl->glh != 0) != (impl->systemBuf != NULL) && "Only glh or system buffer but not using both");
+	roAssert((impl->glh != 0) != (impl->systemBuf != NULL) && "Only glh or system buffer but not using both");
 
 	if(impl->glh) {
-		if(void* data = _mapBuffer(impl, RgDriverBufferMapUsage_Read))
+		if(void* data = _mapBuffer(impl, roRDriverBufferMapUsage_Read))
 			return _initBufferSpecificLocation(impl, impl->type, impl->usage, data, impl->sizeInBytes, true);
 	}
 	else if(impl->systemBuf) {
@@ -513,7 +518,7 @@ static bool _switchBufferMode(RgDriverBufferImpl* impl)
 
 typedef struct TextureFormatMapping
 {
-	RgDriverTextureFormat format;
+	roRDriverTextureFormat format;
 	unsigned glPixelSize;
 	GLint glInternalFormat;	// eg. GL_RGBA8
 	GLenum glFormat;		// eg. GL_RGBA
@@ -521,48 +526,48 @@ typedef struct TextureFormatMapping
 } TextureFormatMapping;
 
 TextureFormatMapping _textureFormatMappings[] = {
-	{ RgDriverTextureFormat(0),				0, 0, 0, 0 },
-	{ RgDriverTextureFormat_RGBA,			4, GL_RGBA8, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8 },
-	{ RgDriverTextureFormat_R,				1, GL_R8, GL_RED, GL_UNSIGNED_BYTE },
-	{ RgDriverTextureFormat_A,				1, GL_ALPHA, GL_ALPHA, GL_UNSIGNED_BYTE },
-	{ RgDriverTextureFormat_Depth,			0, 0, 0, 0 },
-	{ RgDriverTextureFormat_DepthStencil,	0, 0, 0, 0 },
-	{ RgDriverTextureFormat_PVRTC2,			0, 0, 0, 0 },
-	{ RgDriverTextureFormat_PVRTC4,			0, 0, 0, 0 },
-//	{ RgDriverTextureFormat_PVRTC2,			2, GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG, 0, 0 },
-//	{ RgDriverTextureFormat_PVRTC4,			1, GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG, 0, 0 },
-	{ RgDriverTextureFormat_DXT1,			0, 0, 0, 0 },
-	{ RgDriverTextureFormat_DXT5,			0, 0, 0, 0 },
+	{ roRDriverTextureFormat(0),				0, 0, 0, 0 },
+	{ roRDriverTextureFormat_RGBA,			4, GL_RGBA8, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8 },
+	{ roRDriverTextureFormat_R,				1, GL_R8, GL_RED, GL_UNSIGNED_BYTE },
+	{ roRDriverTextureFormat_A,				1, GL_ALPHA, GL_ALPHA, GL_UNSIGNED_BYTE },
+	{ roRDriverTextureFormat_Depth,			0, 0, 0, 0 },
+	{ roRDriverTextureFormat_DepthStencil,	0, 0, 0, 0 },
+	{ roRDriverTextureFormat_PVRTC2,			0, 0, 0, 0 },
+	{ roRDriverTextureFormat_PVRTC4,			0, 0, 0, 0 },
+//	{ roRDriverTextureFormat_PVRTC2,			2, GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG, 0, 0 },
+//	{ roRDriverTextureFormat_PVRTC4,			1, GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG, 0, 0 },
+	{ roRDriverTextureFormat_DXT1,			0, 0, 0, 0 },
+	{ roRDriverTextureFormat_DXT5,			0, 0, 0, 0 },
 };
 
-struct RgDriverTextureImpl : public RgDriverTexture
+struct roRDriverTextureImpl : public roRDriverTexture
 {
 	GLuint glh;
 	GLenum glTarget;	// eg. GL_TEXTURE_2D
 	TextureFormatMapping* formatMapping;
-};	// RgDriverTextureImpl
+};	// roRDriverTextureImpl
 
-static RgDriverTexture* _newTexture()
+static roRDriverTexture* _newTexture()
 {
-	RgDriverTextureImpl* ret = new RgDriverTextureImpl;
+	roRDriverTextureImpl* ret = new roRDriverTextureImpl;
 	memset(ret, 0, sizeof(*ret));
 	return ret;
 }
 
-static void _deleteTexture(RgDriverTexture* self)
+static void _deleteTexture(roRDriverTexture* self)
 {
-	RgDriverTextureImpl* impl = static_cast<RgDriverTextureImpl*>(self);
+	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!impl) return;
 
 	if(impl->glh)
 		glDeleteTextures(1, &impl->glh);
 
-	delete static_cast<RgDriverTextureImpl*>(self);
+	delete static_cast<roRDriverTextureImpl*>(self);
 }
 
-static bool _initTexture(RgDriverTexture* self, unsigned width, unsigned height, RgDriverTextureFormat format)
+static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format)
 {
-	RgDriverTextureImpl* impl = static_cast<RgDriverTextureImpl*>(self);
+	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!impl) return false;
 	if(impl->format || impl->glh) return false;
 
@@ -575,7 +580,7 @@ static bool _initTexture(RgDriverTexture* self, unsigned width, unsigned height,
 	return true;
 }
 
-static unsigned _mipLevelOffset(RgDriverTextureImpl* self, unsigned mipIndex, unsigned& mipWidth, unsigned& mipHeight)
+static unsigned _mipLevelOffset(roRDriverTextureImpl* self, unsigned mipIndex, unsigned& mipWidth, unsigned& mipHeight)
 {
 	unsigned i = 0;
 	unsigned offset = 0;
@@ -586,7 +591,7 @@ static unsigned _mipLevelOffset(RgDriverTextureImpl* self, unsigned mipIndex, un
 	for(unsigned i=0; i<mipIndex; ++i) {
 		unsigned mipSize = mipWidth * mipHeight;
 
-		if(RgDriverTextureFormat_Compressed & self->format)
+		if(roRDriverTextureFormat_Compressed & self->format)
 			mipSize = mipSize >> self->formatMapping->glPixelSize;
 		else
 			mipSize = mipSize * self->formatMapping->glPixelSize;
@@ -599,7 +604,7 @@ static unsigned _mipLevelOffset(RgDriverTextureImpl* self, unsigned mipIndex, un
 	return offset;
 }
 
-static unsigned char* _mipLevelData(RgDriverTextureImpl* self, unsigned mipIndex, unsigned& mipWidth, unsigned& mipHeight, const void* data)
+static unsigned char* _mipLevelData(roRDriverTextureImpl* self, unsigned mipIndex, unsigned& mipWidth, unsigned& mipHeight, const void* data)
 {
 	mipWidth = self->width;
 	mipHeight = self->height;
@@ -610,7 +615,7 @@ static unsigned char* _mipLevelData(RgDriverTextureImpl* self, unsigned mipIndex
 	return (unsigned char*)(data) + _mipLevelOffset(self, mipIndex, mipWidth, mipHeight);
 }
 
-static unsigned _textureSize(RgDriverTextureImpl* self, unsigned mipCount)
+static unsigned _textureSize(roRDriverTextureImpl* self, unsigned mipCount)
 {
 	unsigned ret = 0;
 	unsigned w, h;
@@ -620,10 +625,10 @@ static unsigned _textureSize(RgDriverTextureImpl* self, unsigned mipCount)
 	return ret;
 }
 
-static bool _commitTexture(RgDriverTexture* self, const void* data, unsigned rowPaddingInBytes)
+static bool _commitTexture(roRDriverTexture* self, const void* data, unsigned rowPaddingInBytes)
 {
-	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
-	RgDriverTextureImpl* impl = static_cast<RgDriverTextureImpl*>(self);
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
+	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!ctx || !impl) return false;
 	if(!impl->format) return false;
 
@@ -662,7 +667,7 @@ static bool _commitTexture(RgDriverTexture* self, const void* data, unsigned row
 		unsigned mipw, miph;
 		unsigned char* mipData = _mipLevelData(impl, i, mipw, miph, usePbo ? NULL : data);
 
-		if(impl->format & RgDriverTextureFormat_Compressed) {
+		if(impl->format & roRDriverTextureFormat_Compressed) {
 			unsigned imgSize = (mipw * miph) >> mapping->glPixelSize;
 			glCompressedTexImage2D(
 				impl->glTarget, i, mapping->glInternalFormat, 
@@ -725,7 +730,7 @@ static bool _commitTexture(RgDriverTexture* self, const void* data, unsigned row
 //////////////////////////////////////////////////////////////////////////
 // Shader
 
-static const Array<GLenum, 5> _shaderTypes = {
+static const StaticArray<GLenum, 5> _shaderTypes = {
 	GL_VERTEX_SHADER,
 	GL_FRAGMENT_SHADER,
 #if !defined(RG_GLES)
@@ -735,24 +740,24 @@ static const Array<GLenum, 5> _shaderTypes = {
 #endif
 };
 
-static RgDriverShader* _newShader()
+static roRDriverShader* _newShader()
 {
-	RgDriverShaderImpl* ret = new RgDriverShaderImpl;
+	roRDriverShaderImpl* ret = new roRDriverShaderImpl;
 	memset(ret, 0, sizeof(*ret));
 	return ret;
 }
 
-static void _deleteShader(RgDriverShader* self)
+static void _deleteShader(roRDriverShader* self)
 {
-	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
-	RgDriverShaderImpl* impl = static_cast<RgDriverShaderImpl*>(self);
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
+	roRDriverShaderImpl* impl = static_cast<roRDriverShaderImpl*>(self);
 	if(!ctx || !impl) return;
 
 	// Remove any shader program that use this shader
 	for(unsigned i=0; i<ctx->shaderProgramCache.size();) {
-		RgDriverShaderProgramImpl& program = ctx->shaderProgramCache[i];
+		roRDriverShaderProgramImpl& program = ctx->shaderProgramCache[i];
 
-		RgDriverShaderImpl** cache = rhFind(
+		roRDriverShaderImpl** cache = arrayFind(
 			program.shaders.begin(),
 			program.shaders.end(),
 			impl
@@ -779,12 +784,12 @@ static void _deleteShader(RgDriverShader* self)
 	if(impl->glh)
 		glDeleteShader(impl->glh);
 
-	delete static_cast<RgDriverShaderImpl*>(self);
+	delete static_cast<roRDriverShaderImpl*>(self);
 }
 
-static bool _initShader(RgDriverShader* self, RgDriverShaderType type, const char** sources, unsigned sourceCount)
+static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const char** sources, unsigned sourceCount)
 {
-	RgDriverShaderImpl* impl = static_cast<RgDriverShaderImpl*>(self);
+	roRDriverShaderImpl* impl = static_cast<roRDriverShaderImpl*>(self);
 	if(!impl || sourceCount == 0) return false;
 
 	checkError();
@@ -806,7 +811,7 @@ static bool _initShader(RgDriverShader* self, RgDriverShaderType type, const cha
 			String buf;
 			buf.resize(len);
 			glGetShaderInfoLog(impl->glh, len, NULL, buf.c_str());
-			rhLog("error", "glCompileShader failed: %s\n", buf.c_str());
+			roLog("error", "glCompileShader failed: %s\n", buf.c_str());
 		}
 
 		clearError();
@@ -820,10 +825,10 @@ static bool _initShader(RgDriverShader* self, RgDriverShaderType type, const cha
 
 static ProgramUniform* _findProgramUniform(unsigned nameHash)
 {
-	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return NULL;
 
-	RgDriverShaderProgramImpl* impl = ctx->currentShaderProgram;
+	roRDriverShaderProgramImpl* impl = ctx->currentShaderProgram;
 	if(!impl) return NULL;
 
 	for(unsigned i=0; i<impl->uniforms.size(); ++i) {
@@ -835,10 +840,10 @@ static ProgramUniform* _findProgramUniform(unsigned nameHash)
 
 static ProgramUniformBlock* _findProgramUniformBlock(unsigned nameHash)
 {
-	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return NULL;
 
-	RgDriverShaderProgramImpl* impl = ctx->currentShaderProgram;
+	roRDriverShaderProgramImpl* impl = ctx->currentShaderProgram;
 	if(!impl) return NULL;
 
 	for(unsigned i=0; i<impl->uniformBlocks.size(); ++i) {
@@ -848,9 +853,9 @@ static ProgramUniformBlock* _findProgramUniformBlock(unsigned nameHash)
 	return NULL;
 }
 
-static ProgramAttribute* _findProgramAttribute(RgDriverShaderProgram* self, unsigned nameHash)
+static ProgramAttribute* _findProgramAttribute(roRDriverShaderProgram* self, unsigned nameHash)
 {
-	RgDriverShaderProgramImpl* impl = static_cast<RgDriverShaderProgramImpl*>(self);
+	roRDriverShaderProgramImpl* impl = static_cast<roRDriverShaderProgramImpl*>(self);
 	if(!impl) return NULL;
 
 	for(unsigned i=0; i<impl->attributes.size(); ++i) {
@@ -860,9 +865,9 @@ static ProgramAttribute* _findProgramAttribute(RgDriverShaderProgram* self, unsi
 	return NULL;
 }
 
-static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** shaders, unsigned shaderCount)
+static bool _initShaderProgram(roRDriverShaderProgram* self, roRDriverShader** shaders, unsigned shaderCount)
 {
-	RgDriverShaderProgramImpl* impl = static_cast<RgDriverShaderProgramImpl*>(self);
+	roRDriverShaderProgramImpl* impl = static_cast<roRDriverShaderProgramImpl*>(self);
 	if(!impl || !shaders || shaderCount == 0) return false;
 
 	checkError();
@@ -877,8 +882,8 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 	// Attach shaders
 	for(unsigned i=0; i<shaderCount; ++i) {
 		if(shaders[i]) {
-			glAttachShader(impl->glh, static_cast<RgDriverShaderImpl*>(shaders[i])->glh);
-			impl->shaders.push_back(static_cast<RgDriverShaderImpl*>(shaders[i]));
+			glAttachShader(impl->glh, static_cast<roRDriverShaderImpl*>(shaders[i])->glh);
+			impl->shaders.pushBack(static_cast<roRDriverShaderImpl*>(shaders[i]));
 		}
 	}
 
@@ -896,7 +901,7 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 			String buf;
 			buf.resize(len);
 			glGetProgramInfoLog(impl->glh, len, NULL, buf.c_str());
-			rhLog("error", "glLinkProgram failed: %s\n", buf.c_str());
+			roLog("error", "glLinkProgram failed: %s\n", buf.c_str());
 		}
 
 		clearError();
@@ -912,7 +917,7 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 		glGetProgramiv(impl->glh, GL_ACTIVE_UNIFORMS, &uniformCount);
 
 		if(impl->uniforms.capacity() < (unsigned)uniformCount)
-			rhLog("verbose", "dynamic memory need for PreAllocVector in %s %d\n", __FILE__, __LINE__);
+			roLog("verbose", "dynamic memory need for TinyArray in %s %d\n", __FILE__, __LINE__);
 
 		impl->uniforms.resize(uniformCount);
 
@@ -934,7 +939,7 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 					uniformName[j] = '\0';
 
 			ProgramUniform* uniform = &impl->uniforms[i];
-			uniform->nameHash = StringHash(uniformName, 0);
+			uniform->nameHash = stringHash(uniformName, 0);
 			uniform->location = glGetUniformLocation(impl->glh, uniformName);
 			uniform->arraySize = uniformSize;
 			uniform->type = uniformType;
@@ -978,7 +983,7 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 			glGetActiveUniformBlockiv(impl->glh, i, GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize);
 
 			ProgramUniformBlock* block = &impl->uniformBlocks[i];
-			block->nameHash = StringHash(blockName, 0);
+			block->nameHash = stringHash(blockName, 0);
 			block->index = i;	// NOTE: Differ than the uniform location, using i as index is ok
 
 			glGetActiveUniformBlockiv(impl->glh, i, GL_UNIFORM_BLOCK_DATA_SIZE, &block->blockSizeInBytes);
@@ -992,7 +997,7 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 		glGetProgramiv(impl->glh, GL_ACTIVE_ATTRIBUTES, &attributeCount);
 
 		if(impl->attributes.capacity() < (unsigned)attributeCount)
-			rhLog("verbose", "dynamic memory need for PreAllocVector in %s %d\n", __FILE__, __LINE__);
+			roLog("verbose", "dynamic memory need for TinyArray in %s %d\n", __FILE__, __LINE__);
 
 		impl->attributes.resize(attributeCount);
 
@@ -1013,7 +1018,7 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 
 			ProgramAttribute* attribute = &impl->attributes[i];
 			attribute = &impl->attributes[i];
-			attribute->nameHash = StringHash(attributeName, 0);
+			attribute->nameHash = stringHash(attributeName, 0);
 			attribute->location = glGetAttribLocation(impl->glh, attributeName);
 			// NOTE: From the Opengl documentation, this suppose to be the size of the arrtibute array,
 			// but I just have no idea on how to make attribute as array in the first place
@@ -1029,7 +1034,7 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 				case GL_INT_VEC2:		attribute->elementType = GL_INT;	attribute->elementCount = 2; break;
 				case GL_INT_VEC3:		attribute->elementType = GL_INT;	attribute->elementCount = 3; break;
 				case GL_INT_VEC4:		attribute->elementType = GL_INT;	attribute->elementCount = 4; break;
-				default: RHASSERT(false && "Not supported");
+				default: roAssert(false && "Not supported");
 			}
 		}
 	}
@@ -1039,9 +1044,9 @@ static bool _initShaderProgram(RgDriverShaderProgram* self, RgDriverShader** sha
 	return true;
 }
 
-bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
+bool _bindShaders(roRDriverShader** shaders, unsigned shaderCount)
 {
-	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return false;
 
 	if(!shaders || shaderCount == 0) {
@@ -1052,7 +1057,7 @@ bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 	// Hash the address of the shaders to see if a shader program is already created or not
 	unsigned hash = _hash(shaders, shaderCount * sizeof(*shaders));
 
-	RgDriverShaderProgramImpl* program = NULL;
+	roRDriverShaderProgramImpl* program = NULL;
 	// Linear search in the shader program cache
 	// TODO: Find using hash table
 	for(unsigned i=0; i<ctx->shaderProgramCache.size(); ++i) {
@@ -1080,18 +1085,18 @@ bool _bindShaders(RgDriverShader** shaders, unsigned shaderCount)
 
 // See: http://www.opengl.org/wiki/Uniform_Buffer_Object
 // See: http://arcsynthesis.org/gltut/Positioning/Tut07%20Shared%20Uniforms.html
-bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer, RgDriverShaderInput* input)
+bool _setUniformBuffer(unsigned nameHash, roRDriverBuffer* buffer, roRDriverShaderInput* input)
 {
-	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return false;
 
-	RgDriverShaderProgramImpl* program = ctx->currentShaderProgram;
+	roRDriverShaderProgramImpl* program = ctx->currentShaderProgram;
 	if(!program) return false;
 
-	RgDriverBufferImpl* bufferImpl = static_cast<RgDriverBufferImpl*>(buffer);
+	roRDriverBufferImpl* bufferImpl = static_cast<roRDriverBufferImpl*>(buffer);
 	if(!bufferImpl) return false;
 
-	if(bufferImpl->type != RgDriverBufferType_Uniform)
+	if(bufferImpl->type != roRDriverBufferType_Uniform)
 		return false;
 
 	checkError();
@@ -1106,7 +1111,7 @@ bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer, RgDriverShader
 
 		// Switch to buffer object mode
 		if(bufferImpl->glh == 0)
-			RHVERIFY(_switchBufferMode(bufferImpl));
+			roVerify(_switchBufferMode(bufferImpl));
 
 		glBindBufferBase(GL_UNIFORM_BUFFER, block->index, bufferImpl->glh);
 		glUniformBlockBinding(program->glh, block->index, block->index);
@@ -1116,7 +1121,7 @@ bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer, RgDriverShader
 
 	// Switch to system memory mode
 	if(!bufferImpl->systemBuf)
-		RHVERIFY(_switchBufferMode(bufferImpl));
+		roVerify(_switchBufferMode(bufferImpl));
 
 	if(ProgramUniform* uniform = _findProgramUniform(nameHash)) {
 		char* data = (char*)(bufferImpl->systemBuf) + input->offset;
@@ -1144,7 +1149,7 @@ bool _setUniformBuffer(unsigned nameHash, RgDriverBuffer* buffer, RgDriverShader
 	return true;
 }
 
-bool _setUniformTexture(unsigned nameHash, RgDriverTexture* texture)
+bool _setUniformTexture(unsigned nameHash, roRDriverTexture* texture)
 {
 	ProgramUniform* uniform = _findProgramUniform(nameHash);
 	if(!uniform ) return false;
@@ -1153,8 +1158,8 @@ bool _setUniformTexture(unsigned nameHash, RgDriverTexture* texture)
 
 	if(texture) {
 		glActiveTexture(GL_TEXTURE0 + uniform->texunit);
-		GLenum glTarget = static_cast<RgDriverTextureImpl*>(texture)->glTarget;
-		GLuint glh = static_cast<RgDriverTextureImpl*>(texture)->glh;
+		GLenum glTarget = static_cast<roRDriverTextureImpl*>(texture)->glTarget;
+		GLuint glh = static_cast<roRDriverTextureImpl*>(texture)->glh;
 
 		glBindTexture(glTarget, glh);
 //		glTexParameteri(glTarget, GL_TEXTURE_MAG_FILTER, crGL_SAMPLER_MAG_FILTER[sampler->filter]);
@@ -1170,7 +1175,7 @@ bool _setUniformTexture(unsigned nameHash, RgDriverTexture* texture)
 	return true;
 }
 
-static const Array<GLenum, 8> _elementTypeMappings = {
+static const StaticArray<GLenum, 8> _elementTypeMappings = {
 	GLenum(0),
 	GL_FLOAT,
 	GL_BYTE,
@@ -1181,11 +1186,11 @@ static const Array<GLenum, 8> _elementTypeMappings = {
 	GL_UNSIGNED_INT
 };
 
-bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned* cacheId)
+bool _bindShaderInput(roRDriverShaderInput* inputs, unsigned inputCount, unsigned*)
 {
-	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return false;
-	RgDriverShaderProgramImpl* impl = static_cast<RgDriverShaderProgramImpl*>(ctx->currentShaderProgram);
+	roRDriverShaderProgramImpl* impl = static_cast<roRDriverShaderProgramImpl*>(ctx->currentShaderProgram);
 	if(!impl) return false;
 
 	checkError();
@@ -1194,11 +1199,11 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 	unsigned inputHash = 0;
 	for(unsigned attri=0; attri<inputCount; ++attri)
 	{
-		RgDriverShaderInput* i = &inputs[attri];
-		RgDriverBufferImpl* buffer = static_cast<RgDriverBufferImpl*>(i->buffer);
-		RgDriverShaderImpl* shader = static_cast<RgDriverShaderImpl*>(i->shader);
+		roRDriverShaderInput* i = &inputs[attri];
+		roRDriverBufferImpl* buffer = static_cast<roRDriverBufferImpl*>(i->buffer);
+		roRDriverShaderImpl* shader = static_cast<roRDriverShaderImpl*>(i->shader);
 		if(!i || !i->buffer || !shader) continue;
-		if(buffer->type != RgDriverBufferType_Vertex) continue;	// VAO only consider vertex buffer
+		if(buffer->type != roRDriverBufferType_Vertex) continue;	// VAO only consider vertex buffer
 
 		struct BlockToHash {
 			void* systemBuf;
@@ -1231,7 +1236,7 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 	if(vao == 0) {
 		glGenVertexArrays(1, &vao);
 		VertexArrayObject o = { inputHash, vao, 1.0f };
-		ctx->vaoCache.push_back(o);
+		ctx->vaoCache.pushBack(o);
 	}
 
 	glBindVertexArray(vao);
@@ -1239,25 +1244,25 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 	// Loop for each inputs and do the necessary binding
 	for(unsigned attri=0; attri<inputCount; ++attri)
 	{
-		RgDriverShaderInput* i = &inputs[attri];
+		roRDriverShaderInput* i = &inputs[attri];
 
 		if(!i || !i->buffer)
 			continue;
 
-		RgDriverBufferImpl* buffer = static_cast<RgDriverBufferImpl*>(i->buffer);
+		roRDriverBufferImpl* buffer = static_cast<roRDriverBufferImpl*>(i->buffer);
 
 		// Bind index buffer
-		if(buffer->type == RgDriverBufferType_Index)
+		if(buffer->type == roRDriverBufferType_Index)
 		{
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->glh);
 			ctx->currentIndexBufSysMemPtr = buffer->systemBuf;
 		}
 		// Bind vertex buffer
-		else if((buffer->type == RgDriverBufferType_Vertex) && !vaoCacheFound)
+		else if((buffer->type == roRDriverBufferType_Vertex) && !vaoCacheFound)
 		{
 			// Generate nameHash if necessary
 			if(i->nameHash == 0 && i->name)
-				i->nameHash = StringHash(i->name, 0);
+				i->nameHash = stringHash(i->name, 0);
 
 			// See: http://www.opengl.org/sdk/docs/man/xhtml/glVertexAttribPointer.xml
 			if(ProgramAttribute* a = _findProgramAttribute(ctx->currentShaderProgram, i->nameHash)) {
@@ -1267,16 +1272,16 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 				glVertexAttribPointer(a->location, a->elementCount, a->elementType, false, i->stride, (void*)(ptrdiff_t(buffer->systemBuf) + i->offset));
 			}
 			else {
-				rhLog("error", "attribute not found!\n");
+				roLog("error", "attribute not found!\n");
 				return false;
 			}
 		}
 		// Bind uniforms
-		else if(buffer->type == RgDriverBufferType_Uniform)
+		else if(buffer->type == roRDriverBufferType_Uniform)
 		{
 			// Generate nameHash if necessary
 			if(i->nameHash == 0 && i->name)
-				i->nameHash = StringHash(i->name, 0);
+				i->nameHash = stringHash(i->name, 0);
 
 			if(!_setUniformBuffer(i->nameHash, buffer, i))
 				return false;
@@ -1288,11 +1293,11 @@ bool _bindShaderInput(RgDriverShaderInput* inputs, unsigned inputCount, unsigned
 	return true;
 }
 
-bool _bindShaderInputCached(unsigned cacheId)
+bool _bindShaderInputCached(unsigned)
 {
-	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return false;
-	RgDriverShaderProgramImpl* impl = static_cast<RgDriverShaderProgramImpl*>(ctx->currentShaderProgram);
+	roRDriverShaderProgramImpl* impl = static_cast<roRDriverShaderProgramImpl*>(ctx->currentShaderProgram);
 	if(!impl) return false;
 
 	// TODO: Implement
@@ -1310,12 +1315,12 @@ static void _drawTriangle(unsigned offset, unsigned vertexCount, unsigned flags)
 
 static void _drawTriangleIndexed(unsigned offset, unsigned indexCount, unsigned flags)
 {
-	RgDriverContextImpl* ctx = static_cast<RgDriverContextImpl*>(_getCurrentContext_GL());
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return;
 
 	GLenum mode = GL_TRIANGLES;
 	GLenum indexType = GL_UNSIGNED_SHORT;
-	ptrdiff_t byteOffset = offset * sizeof(rhuint16);
+	ptrdiff_t byteOffset = offset * sizeof(roUint16);
 
 	checkError();
 	if(ctx->currentIndexBufSysMemPtr)
@@ -1328,20 +1333,20 @@ static void _drawTriangleIndexed(unsigned offset, unsigned indexCount, unsigned 
 //////////////////////////////////////////////////////////////////////////
 // Driver
 
-struct RgDriverImpl : public RgDriver
+struct roRDriverImpl : public roRDriver
 {
-};	// RgDriver
+};	// roRDriver
 
-static void _rhDeleteRenderDriver_GL(RgDriver* self)
+static void _rhDeleteRenderDriver_GL(roRDriver* self)
 {
-	delete static_cast<RgDriverImpl*>(self);
+	delete static_cast<roRDriverImpl*>(self);
 }
 
 }	// namespace
 
-RgDriver* _rgNewRenderDriver_GL(const char* options)
+roRDriver* _rgNewRenderDriver_GL(const char*)
 {
-	RgDriverImpl* ret = new RgDriverImpl;
+	roRDriverImpl* ret = new roRDriverImpl;
 	memset(ret, 0, sizeof(*ret));
 	ret->destructor = &_rhDeleteRenderDriver_GL;
 

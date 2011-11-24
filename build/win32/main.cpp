@@ -15,7 +15,7 @@
 
 #include "DropHandler.h"
 
-#include "../../src/render/driver2.h"
+#include "../../roar/render/roRenderDriver.h"
 #include "../../src/rhstring.h"
 
 static const wchar_t* windowClass = L"Rhinoca Launcher";
@@ -204,8 +204,8 @@ int main()
 
 	HWND hWnd = createWindow(NULL, _width, _height, false);
 
-	RgDriver* driver = rgNewRenderDriver("GL", NULL);
-	RgDriverContext* context = driver->newContext(driver);
+	roRDriver* driver = rgNewRenderDriver("GL", NULL);
+	roRDriverContext* context = driver->newContext(driver);
 	driver->initContext(context, hWnd);
 	driver->useContext(context);
 

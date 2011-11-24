@@ -76,7 +76,7 @@ inline const char* roStrStr(const char* a, const char* b)
 }
 
 // Borrowed from http://code.google.com/p/stringencoders/source/browse/trunk/src/modp_ascii.c
-inline char roTolower(char c)
+inline char roToLower(char c)
 {
 	roUint32 eax = c;
 	roUint32 ebx = (0x7f7f7f7fu & eax) + 0x25252525u;
@@ -85,7 +85,7 @@ inline char roTolower(char c)
 	return (char)(eax + ebx);
 }
 
-inline char roToupper(char c)
+inline char roToUpper(char c)
 {
 	roUint32 eax = c;
 	roUint32 ebx = (0x7f7f7f7fu & eax) + 0x05050505u;

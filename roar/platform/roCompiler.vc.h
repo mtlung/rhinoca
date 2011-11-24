@@ -30,8 +30,13 @@ typedef unsigned __int64 roUint64;
 #	define roOS_WIN32 1
 #endif
 
-// The inclusion of <assert.h> of VC was heavy, here we try to avoid that overhead
+// Our own debug macro
 #ifdef _DEBUG
+#	define roDEBUG 1
+#endif
+
+// The inclusion of <assert.h> of VC was heavy, here we try to avoid that overhead
+#if roDEBUG
 #	define __roWIDEN(str) L ## str
 #	define _roWIDEN(str) __roWIDEN(str)
 #	define roAssert(expression) (void)( (!!(expression)) || (_roAssert(_roWIDEN(#expression), _roWIDEN(__FILE__), __LINE__), 0) )
@@ -41,7 +46,7 @@ typedef unsigned __int64 roUint64;
 #endif
 
 // Counting the number of array elements
-#define roCOUNTOF(x) _countof(x)
+#define roCountof(x) _countof(x)
 
 // Source code annotation
 #if !defined(__midl) && defined(_PREFAST_) 
@@ -50,4 +55,8 @@ typedef unsigned __int64 roUint64;
 #	define override virtual
 #endif
 
+// Force inline
+#define roFORCEINLINE __forceinline
+
+#pragma warning(disable : 4100)	// unreferenced formal parameter
 #pragma warning(disable : 4127)	// conditional expression is constant

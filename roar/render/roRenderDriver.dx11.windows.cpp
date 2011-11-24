@@ -1,10 +1,9 @@
 #include "pch.h"
-#include "driver2.h"
+#include "roRenderDriver.h"
 
-#include "../array.h"
-#include "../rhassert.h"
-#include "../rhlog.h"
-#include "../vector.h"
+#include "../base/roArray.h"
+#include "../base/roLog.h"
+#include "../base/roStringHash.h"
 
 #include <dxgi.h>
 #include <d3d11.h>
@@ -16,20 +15,22 @@
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "dxguid.lib" )
 
+using namespace ro;
+
 namespace {
 
-#include "driver2.dx11.inl"
+#include "roRenderDriver.dx11.inl"
 
-struct ContextImpl : public RgDriverContextImpl
+struct ContextImpl : public roRDriverContextImpl
 {
 	HWND hWnd;
 
-	Vector<RgDriverShaderInput> programInputCache;
+	Array<roRDriverShaderInput> programInputCache;
 };	// ContextImpl
 
 }	// namespace
 
-RgDriverContext* _newDriverContext_DX11(RgDriver* driver)
+roRDriverContext* _newDriverContext_DX11(roRDriver* driver)
 {
 	ContextImpl* ret = new ContextImpl;
 
@@ -43,7 +44,7 @@ RgDriverContext* _newDriverContext_DX11(RgDriver* driver)
 
 	ret->currentShaders.assign(NULL);
 
-	RgDriverContextImpl::TextureState texState = { 0 };
+	roRDriverContextImpl::TextureState texState = { 0 };
 	ret->textureStateCache.assign(texState);
 
 	ret->hWnd = NULL;
@@ -53,13 +54,13 @@ RgDriverContext* _newDriverContext_DX11(RgDriver* driver)
 
 static ContextImpl* _currentContext = NULL;
 
-void _deleteDriverContext_DX11(RgDriverContext* self)
+void _deleteDriverContext_DX11(roRDriverContext* self)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	if(!impl) return;
 
 	for(unsigned i=0; i<impl->currentShaders.size(); ++i)
-		RHASSERT(!impl->currentShaders[i] && "Please destroy all shaders before detroy the context");
+		roAssert(!impl->currentShaders[i] && "Please destroy all shaders before detroy the context");
 
 	// Free the sampler state cache
 //	for(unsigned i=0; i<impl->textureStateCache.size(); ++i) {
@@ -78,18 +79,18 @@ void _deleteDriverContext_DX11(RgDriverContext* self)
 	delete static_cast<ContextImpl*>(self);
 }
 
-void _useDriverContext_DX11(RgDriverContext* self)
+void _useDriverContext_DX11(roRDriverContext* self)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	_currentContext = impl;
 }
 
-RgDriverContext* _getCurrentContext_DX11()
+roRDriverContext* _getCurrentContext_DX11()
 {
 	return _currentContext;
 }
 
-bool _initDriverContext_DX11(RgDriverContext* self, void* platformSpecificWindow)
+bool _initDriverContext_DX11(roRDriverContext* self, void* platformSpecificWindow)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	if(!impl) return false;
@@ -145,7 +146,7 @@ bool _initDriverContext_DX11(RgDriverContext* self, void* platformSpecificWindow
 	);
 
 	if(FAILED(hr)) {
-		rhLog("error", "D3D11CreateDeviceAndSwapChain failed\n");
+		roLog("error", "D3D11CreateDeviceAndSwapChain failed\n");
 		return false;
 	}
 
@@ -159,7 +160,7 @@ bool _initDriverContext_DX11(RgDriverContext* self, void* platformSpecificWindow
 	hr = device->CreateRenderTargetView(backBuffer, NULL, &renderTargetView);
 
 	if(FAILED(hr)) {
-		rhLog("error", "CreateRenderTargetView failed\n");
+		roLog("error", "CreateRenderTargetView failed\n");
 		return false;
 	}
 
@@ -183,7 +184,7 @@ bool _initDriverContext_DX11(RgDriverContext* self, void* platformSpecificWindow
 	hr = device->CreateTexture2D(&depthDesc, NULL, &depthStencilTexture);
 
 	if(FAILED(hr)) {
-		rhLog("error", "CreateTexture2D for depth-stencil texture failed\n");
+		roLog("error", "CreateTexture2D for depth-stencil texture failed\n");
 		return false;
 	}
 
@@ -197,7 +198,7 @@ bool _initDriverContext_DX11(RgDriverContext* self, void* platformSpecificWindow
 	hr = device->CreateDepthStencilView(depthStencilTexture, &depthViewDesc, &depthStencilView);
 
 	if(FAILED(hr)) {
-		rhLog("error", "CreateDepthStencilView failed\n");
+		roLog("error", "CreateDepthStencilView failed\n");
 		return false;
 	}
 
@@ -221,7 +222,7 @@ bool _initDriverContext_DX11(RgDriverContext* self, void* platformSpecificWindow
 	immediateContext->RSSetState(rasterizerState);
 
 	if(FAILED(hr)) {
-		rhLog("error", "CreateRasterizerState failed\n");
+		roLog("error", "CreateRasterizerState failed\n");
 		return false;
 	}
 
@@ -240,12 +241,12 @@ bool _initDriverContext_DX11(RgDriverContext* self, void* platformSpecificWindow
 void _driverSwapBuffers_DX11()
 {
 	if(!_currentContext) {
-		RHASSERT(false && "Please call RgDriver->useContext");
+		roAssert(false && "Please call roRDriver->useContext");
 		return;
 	}
 
 	// Clean up not frequently used input layout cache
-	for(unsigned i=0; i<_currentContext->inputLayoutCache.size();) {
+	for(roSize i=0; i<_currentContext->inputLayoutCache.size();) {
 		float& hotness = _currentContext->inputLayoutCache[i].hotness;
 		hotness *= 0.5f;
 
@@ -256,7 +257,7 @@ void _driverSwapBuffers_DX11()
 	}
 
 	// Update and clean up on staging buffer cache
-	for(unsigned i=0; i<_currentContext->stagingBufferCache.size();) {
+	for(roSize i=0; i<_currentContext->stagingBufferCache.size();) {
 		StagingBuffer& staging = _currentContext->stagingBufferCache[i];
 
 		staging.hotness *= staging.mapped ? 1.0f : 0.5f;
@@ -271,7 +272,7 @@ void _driverSwapBuffers_DX11()
 	}
 
 	// Update and clean up on staging texture cache
-	for(unsigned i=0; i<_currentContext->stagingTextureCache.size();) {
+	for(roSize i=0; i<_currentContext->stagingTextureCache.size();) {
 		StagingTexture& staging = _currentContext->stagingTextureCache[i];
 
 		staging.hotness *= 0.5f;
@@ -283,7 +284,7 @@ void _driverSwapBuffers_DX11()
 	}
 
 	int sync = 0;	// use 0 for no vertical sync
-	RHVERIFY(SUCCEEDED(_currentContext->dxSwapChain->Present(sync, 0)));
+	roVerify(SUCCEEDED(_currentContext->dxSwapChain->Present(sync, 0)));
 }
 
 bool _driverChangeResolution_DX11(unsigned width, unsigned height)

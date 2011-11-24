@@ -17,7 +17,8 @@ class StopWatch
 public:
 	StopWatch();
 
-	double get() const;
+	float getFloat() const;
+	double getDouble() const;
 	double getAndReset();
 
 	void reset();

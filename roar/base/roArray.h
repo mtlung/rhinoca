@@ -5,9 +5,14 @@
 #include "roTypeOf.h"
 #include "roUtility.h"
 
+#include <malloc.h>
+
 namespace ro {
 
 /// Generic functions for operate on different kind of array classes
+
+template<class A> inline
+void arrayResize(A& ary, roSize newSize);
 
 template<class A> inline
 void arrayResize(A& ary, roSize newSize, const typename A::T& fill);
@@ -26,6 +31,9 @@ void arrayRemoveBySwap(A& ary, roSize idx);
 
 template<class T> inline
 T* arrayFind(T* begin, roSize count, const T& val);
+
+template<class T> inline
+T* arrayFind(T* begin, T* end, const T& val);
 
 /// Array class with static size.
 /// A replacement for plan old array, the index operator[] has range check in debug mode.
@@ -63,7 +71,7 @@ struct StaticArray
 };	// StaticArray
 
 /// Interface for common dynamic array operations
-template<class T_>
+template<class T_, class Super>
 class IArray
 {
 public:
@@ -89,6 +97,14 @@ public:
 
 	void swap(IArray& rhs)			{ roSwap(_size, rhs._size); roSwap(_capacity, rhs._capacity); roSwap(_data, rhs._data); }
 
+	void resize(roSize newSize)					{ arrayResize(static_cast<Super&>(*this), newSize); }
+	void resize(roSize newSize, const T& fill)	{ arrayResize(static_cast<Super&>(*this), newSize, fill); }
+
+	T& pushBack(const T& val)		{ arrayAppend(static_cast<Super&>(*this), val); return back(); }
+
+	void remove(roSize i)			{ arrayRemove(static_cast<Super&>(*this), i); }
+	void removeBySwap(roSize i)		{ arrayRemoveBySwap(static_cast<Super&>(*this), i); }
+
 // Attributes
 	iterator begin()				{ return _data; }
 	const_iterator begin() const	{ return _data; }
@@ -112,7 +128,7 @@ public:
 
 /// Dynamic array in it's standard form (similar to std::vector)
 template<class T>
-class Array : public IArray<T>
+class Array : public IArray<T, Array<T> >
 {
 public:
 	Array() {}
@@ -133,14 +149,14 @@ public:
 	}
 };	// Array
 
-template<class T>
-class TinyArray : public IArray<T>
+template<class T, roSize PreAllocCount>
+class TinyArray : public IArray<T, TinyArray<T,PreAllocCount> >
 {
 public:
 	TinyArray() {}
-	inline TinyArray(const Array<T>& v);
+//	inline TinyArray(const TinyArray<T>& v);
 
-	inline ~TinyArray() { roArrayResize(*this, 0, T()); free(_data); }
+	inline ~TinyArray() { arrayResize(*this, 0, T()); free(_data); }
 
 	inline TinyArray& operator=(const TinyArray& rhs);
 
@@ -199,7 +215,7 @@ class ConstStrideArray
 public:
 	ConstStrideArray(const T* data, roSize elementCount)
 		: data(data), size(elementCount)
-#ifdef _DEBUG
+#if roDEBUG
 		, cStride(stride_)
 #endif
 	{}
@@ -208,7 +224,7 @@ public:
 	template<class U>
 	ConstStrideArray(const ConstStrideArray<U>& rhs)
 		: data(rhs.data), size(rhs.size)
-#ifdef _DEBUG
+#if roDEBUG
 		, cStride(rhs.stride())
 #endif
 	{}
@@ -228,13 +244,13 @@ public:
 	roBytePtr data;
 	roSize size;	///< Element count.
 
-#ifdef _DEBUG
+#if roDEBUG
 	roSize cStride;	///< For Visual Studio debugger visualization purpose.
 #endif
 };	// ConstStrideArray
 
-#include "roArray.inl"
-
 }	// namespace ro
+
+#include "roArray.inl"
 
 #endif	// __roArray_h__

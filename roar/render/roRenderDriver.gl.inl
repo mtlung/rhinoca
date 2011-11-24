@@ -1,9 +1,9 @@
-struct RgDriverShaderImpl : public RgDriverShader
+struct roRDriverShaderImpl : public roRDriverShader
 {
 	GLuint glh;
-};	// RgDriverShaderImpl
+};	// roRDriverShaderImpl
 
-struct RgDriverShaderProgram
+struct roRDriverShaderProgram
 {
 };
 
@@ -40,37 +40,37 @@ struct VertexArrayObject
 	float hotness;
 };
 
-struct RgDriverShaderProgramImpl : public RgDriverShaderProgram
+struct roRDriverShaderProgramImpl : public roRDriverShaderProgram
 {
-	RgDriverShaderProgramImpl() : hash(0), glh(0) {}
+	roRDriverShaderProgramImpl() : hash(0), glh(0) {}
 	unsigned hash;	/// Base on the shader pointers
 	GLuint glh;
 	unsigned textureCount;
-	PreAllocVector<RgDriverShaderImpl*, 8> shaders;	/// When ever a shader is destroyed, one should also remove it from this list
-	PreAllocVector<ProgramUniform, 8> uniforms;
-	PreAllocVector<ProgramUniformBlock, 8> uniformBlocks;
-	PreAllocVector<ProgramAttribute, 8> attributes;
-};	// RgDriverShaderProgramImpl
+	TinyArray<roRDriverShaderImpl*, 8> shaders;	/// When ever a shader is destroyed, one should also remove it from this list
+	TinyArray<ProgramUniform, 8> uniforms;
+	TinyArray<ProgramUniformBlock, 8> uniformBlocks;
+	TinyArray<ProgramAttribute, 8> attributes;
+};	// roRDriverShaderProgramImpl
 
-struct RgDriverContextImpl : public RgDriverContext
+struct roRDriverContextImpl : public roRDriverContext
 {
 	void* currentBlendStateHash;
 	void* currentDepthStencilStateHash;
 
 	void* currentIndexBufSysMemPtr;
 
-	PreAllocVector<RgDriverShaderProgramImpl, 64> shaderProgramCache;
-	RgDriverShaderProgramImpl* currentShaderProgram;
+	TinyArray<roRDriverShaderProgramImpl, 64> shaderProgramCache;
+	roRDriverShaderProgramImpl* currentShaderProgram;
 
 	// A ring of pixel buffer object
-	PreAllocVector<GLuint, 1> pixelBufferCache;
+	TinyArray<GLuint, 1> pixelBufferCache;
 	unsigned currentPixelBufferIndex;
 
-	PreAllocVector<VertexArrayObject, 16> vaoCache;
+	TinyArray<VertexArrayObject, 16> vaoCache;
 
 	struct TextureState {
 		void* hash;
 		GLuint glh;
 	};
-	Array<TextureState, 64> textureStateCache;
-};	// RgDriverContextImpl
+	StaticArray<TextureState, 64> textureStateCache;
+};	// roRDriverContextImpl

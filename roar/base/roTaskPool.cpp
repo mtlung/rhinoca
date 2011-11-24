@@ -85,7 +85,7 @@ TaskPool::TaskProxy* TaskPool::TaskList::alloc()
 
 void TaskPool::TaskList::free(TaskProxy* id)
 {
-#ifdef _DEBUG
+#if roDEBUG
 	for(TaskProxy* p = freeBegin; p; p = p->nextFree)
 		roAssert(p != id);
 #endif
@@ -405,7 +405,7 @@ void TaskPool::doSomeTask(float timeout)
 		return;
 
 	StopWatch watch;
-	const double beginTime = watch.get();
+	const double beginTime = watch.getDouble();
 	roSize tId = threadId();
 
 	while(p && p != _pendingTasksTail) {
@@ -422,7 +422,7 @@ void TaskPool::doSomeTask(float timeout)
 			p = _pendingTasksHead->nextPending;
 		}
 		else {
-			if(timeout > 0 && watch.get() > beginTime + timeout)
+			if(timeout > 0 && watch.getDouble() > beginTime + timeout)
 				return;
 
 			ScopeUnlock unlock(mutex);

@@ -1,38 +1,41 @@
 #include "pch.h"
-#include "driver2.h"
+#include "roRenderDriver.h"
 
-#include "../array.h"
-#include "../rhassert.h"
-#include "../rhlog.h"
-#include "../vector.h"
+#include "../base/roArray.h"
+#include "../base/roLog.h"
+#include "../base/roTypeCast.h"
+#include <stdio.h>
 
+#include "../platform/roPlatformHeaders.h"
 #include <gl/gl.h>
-#include "gl/glext.h"
+#include "../../src/render/gl/glext.h"
 
 #pragma comment(lib, "OpenGL32")
 #pragma comment(lib, "GLU32")
 
 #define _(DECLAR, NAME) DECLAR NAME = NULL;
-#	include "win32/extensionswin32list.h"
+#	include "platform.win/extensionsList.h"
 #undef _
+
+using namespace ro;
 
 namespace {
 
-#include "driver2.gl.inl"
+#include "roRenderDriver.gl.inl"
 
-struct ContextImpl : public RgDriverContextImpl
+struct ContextImpl : public roRDriverContextImpl
 {
 	HWND hWnd;
 	HDC hDc;
 	HGLRC hRc;
-	Vector<RgDriverShaderInput> programInputCache;
+	Array<roRDriverShaderInput> programInputCache;
 };	// ContextImpl
 
 }	// namespace
 
 static bool _oglFunctionInited = false;
 
-RgDriverContext* _newDriverContext_GL(RgDriver* driver)
+roRDriverContext* _newDriverContext_GL(roRDriver* driver)
 {
 	ContextImpl* ret = new ContextImpl;
 
@@ -49,9 +52,9 @@ RgDriverContext* _newDriverContext_GL(RgDriver* driver)
 	ret->currentShaderProgram = NULL;
 
 	ret->currentPixelBufferIndex = 0;
-	ret->pixelBufferCache.resize(ret->pixelBufferCache.capacity());
+	ret->pixelBufferCache.resize(8);	// FIXME: Just an arbitrary number
 
-	RgDriverContextImpl::TextureState texState = { 0, 0 };
+	roRDriverContextImpl::TextureState texState = { 0, 0 };
 	ret->textureStateCache.assign(texState);
 
 	ret->hWnd = NULL;
@@ -63,25 +66,25 @@ RgDriverContext* _newDriverContext_GL(RgDriver* driver)
 
 static ContextImpl* _currentContext = NULL;
 
-void _deleteDriverContext_GL(RgDriverContext* self)
+void _deleteDriverContext_GL(roRDriverContext* self)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	if(!impl) return;
 
 	// Destroy any shader program
 	glUseProgram(0);
-	for(unsigned i=0; i<impl->shaderProgramCache.size(); ++i) {
+	for(roSize i=0; i<impl->shaderProgramCache.size(); ++i) {
 		glDeleteProgram(impl->shaderProgramCache[i].glh);
 	}
 
 	// Free the sampler state cache
-	for(unsigned i=0; i<impl->textureStateCache.size(); ++i) {
+	for(roSize i=0; i<impl->textureStateCache.size(); ++i) {
 		if(impl->textureStateCache[i].glh != 0)
 			glDeleteSamplers(1, &impl->textureStateCache[i].glh);
 	}
 
 	// Free the pixel buffer cache
-	glDeleteBuffers(impl->pixelBufferCache.size(), &impl->pixelBufferCache[0]);
+	glDeleteBuffers(num_cast<GLsizei>(impl->pixelBufferCache.size()), &impl->pixelBufferCache[0]);
 
 	if(impl == _currentContext) {
 		 wglMakeCurrent(NULL, NULL); 
@@ -93,28 +96,28 @@ void _deleteDriverContext_GL(RgDriverContext* self)
 	delete static_cast<ContextImpl*>(self);
 }
 
-void _useDriverContext_GL(RgDriverContext* self)
+void _useDriverContext_GL(roRDriverContext* self)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	_currentContext = impl;
 }
 
-RgDriverContext* _getCurrentContext_GL()
+roRDriverContext* _getCurrentContext_GL()
 {
 	return _currentContext;
 }
 
 static void initGlFunc()
 {
-	// Initialize opengl functions
+	// Initialize Opengl functions
 	if(!_oglFunctionInited)
 	{
 		#define GET_FUNC_PTR(type, ptr) \
-		if(!(ptr = (type) wglGetProcAddress(#ptr))) \
+		if((ptr = (type) wglGetProcAddress(#ptr)) == NULL) \
 		{	ptr = (type) wglGetProcAddress(#ptr"EXT");	}
 
 		#define _(DECLAR, NAME) GET_FUNC_PTR(DECLAR, NAME);
-		#	include "win32/extensionswin32list.h"
+		#	include "platform.win/extensionsList.h"
 		#undef _
 
 		#undef GET_FUNC_PTR
@@ -123,7 +126,7 @@ static void initGlFunc()
 	}
 }
 
-bool _initDriverContext_GL(RgDriverContext* self, void* platformSpecificWindow)
+bool _initDriverContext_GL(roRDriverContext* self, void* platformSpecificWindow)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	if(!impl) return false;
@@ -170,7 +173,7 @@ bool _initDriverContext_GL(RgDriverContext* self, void* platformSpecificWindow)
 			0
 		};
 
-		if((hRc = wglCreateContextAttribsARB(hDc, 0, attribs)))
+		if((hRc = wglCreateContextAttribsARB(hDc, 0, attribs)) == NULL)
 		{	// Delete the old GL context (GL2x and use the new one)
 			ret = ::wglMakeCurrent(hDc, hRc) == TRUE;
 			wglDeleteContext(impl->hRc);
@@ -181,7 +184,7 @@ bool _initDriverContext_GL(RgDriverContext* self, void* platformSpecificWindow)
 	impl->magjorVersion = v1;
 	impl->minorVersion = v2;
 
-	rhLog("verbose", "Using Opengl version: %u.%u\n", v1, v2);
+	roLog("verbose", "Using Opengl version: %u.%u\n", v1, v2);
 
 	initGlFunc();
 
@@ -191,7 +194,7 @@ bool _initDriverContext_GL(RgDriverContext* self, void* platformSpecificWindow)
 	impl->driver->applyDefaultState(impl);
 
 	// Init pixel buffer cache
-	glGenBuffers(impl->pixelBufferCache.size(), &impl->pixelBufferCache[0]);
+	glGenBuffers(num_cast<GLsizei>(impl->pixelBufferCache.size()), &impl->pixelBufferCache[0]);
 
 	return ret;
 }
@@ -199,13 +202,13 @@ bool _initDriverContext_GL(RgDriverContext* self, void* platformSpecificWindow)
 void _driverSwapBuffers_GL()
 {
 	if(!_currentContext) {
-		RHASSERT(false && "Please call RgDriver->useContext");
+		roAssert(false && "Please call roRDriver->useContext");
 		return;
 	}
 
 	// Clean up not frequently used VAO
 	if(glDeleteVertexArrays)
-	for(unsigned i=0; i<_currentContext->vaoCache.size();) {
+	for(roSize i=0; i<_currentContext->vaoCache.size();) {
 		float& hotness = _currentContext->vaoCache[i].hotness;
 		hotness *= 0.5f;
 
@@ -217,7 +220,7 @@ void _driverSwapBuffers_GL()
 			++i;
 	}
 
-//	RHVERIFY(::SwapBuffers(_currentContext->hDc) == TRUE);
+//	roVerify(::SwapBuffers(_currentContext->hDc) == TRUE);
 	::SwapBuffers(_currentContext->hDc);
 }
 

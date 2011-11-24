@@ -1,15 +1,16 @@
 #include "pch.h"
-#include "../src/render/driver2.h"
-#include "../src/render/rgutility.h"
-#include "../src/rhassert.h"
-#include "../src/rhstring.h"
-#include "../src/timer.h"
+#include "../../roar/render/roRenderDriver.h"
+#include "../../roar/base/roStopWatch.h"
+#include "../../roar/base/roStringHash.h"
+#include "../../src/render/rgutility.h"
 
 #include <math.h>
 
 #define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+
+using namespace ro;
 
 static float randf() {
 	return (float)rand() / RAND_MAX;
@@ -70,7 +71,7 @@ public:
 		wc.hCursor = ::LoadCursor(NULL, IDC_ARROW);
 		wc.hbrBackground = NULL;	// (HBRUSH)(COLOR_WINDOW);
 
-		RHVERIFY(::RegisterClassW(&wc) != 0);
+		roVerify(::RegisterClassW(&wc) != 0);
 
 		// OpenGL requires WS_CLIPCHILDREN and WS_CLIPSIBLINGS, see page 657 of OpenGL SuperBible 4th edition
 		DWORD style = WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
@@ -122,7 +123,7 @@ public:
 				return false;
 		}
 
-		float elasped = timer.getDelta();
+		float elasped = (float)stopWatch.getAndReset();
 		averageFrameDuration = elasped/60 + averageFrameDuration * 59.0f / 60;
 
 		printf("\rFPS: %f, frame duration: %fms", 1.0f/averageFrameDuration, averageFrameDuration*1000);
@@ -138,13 +139,13 @@ public:
 	}
 
 	HWND hWnd;
-	RgDriver* driver;
-	RgDriverContext* context;
-	RgDriverShader* vShader;
-	RgDriverShader* gShader;
-	RgDriverShader* pShader;
+	roRDriver* driver;
+	roRDriverContext* context;
+	roRDriverShader* vShader;
+	roRDriverShader* gShader;
+	roRDriverShader* pShader;
 
-	DeltaTimer timer;
+	StopWatch stopWatch;
 	float averageFrameDuration;
 };
 
@@ -198,55 +199,55 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 	initContext(driverStr[driverIndex]);
 
 	// Init shader
-	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
-	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
 
-	RgDriverShader* shaders[] = { vShader, pShader };
+	roRDriverShader* shaders[] = { vShader, pShader };
 
 	// Create vertex buffer
 	float vertex[][4] = { {-1,1,0,1}, {-1,-1,0,1}, {1,-1,0,1}, {1,1,0,1} };
-	RgDriverBuffer* vbuffer = driver->newBuffer();
-	CHECK(driver->initBuffer(vbuffer, RgDriverBufferType_Vertex, RgDriverDataUsage_Static, vertex, sizeof(vertex)));
+	roRDriverBuffer* vbuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(vbuffer, roRDriverBufferType_Vertex, roRDriverDataUsage_Static, vertex, sizeof(vertex)));
 
 	// Create index buffer
 	rhuint16 index[][3] = { {0, 1, 2}, {0, 2, 3} };
-	RgDriverBuffer* ibuffer = driver->newBuffer();
-	CHECK(driver->initBuffer(ibuffer, RgDriverBufferType_Index, RgDriverDataUsage_Static, index, sizeof(index)));
+	roRDriverBuffer* ibuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ibuffer, roRDriverBufferType_Index, roRDriverDataUsage_Static, index, sizeof(index)));
 
 	// Create uniform buffer
 	float color1[] = { 0, 0, 0, 1 };
-	RgDriverBuffer* ubuffer1 = driver->newBuffer();
-	CHECK(driver->initBuffer(ubuffer1, RgDriverBufferType_Uniform, RgDriverDataUsage_Stream, color1, sizeof(color1)));
+	roRDriverBuffer* ubuffer1 = driver->newBuffer();
+	CHECK(driver->initBuffer(ubuffer1, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, color1, sizeof(color1)));
 
 	float color2[] = { 0, 0, 0, 1,  0, 0, 0, 1 };
-	RgDriverBuffer* ubuffer2 = driver->newBuffer();
-	CHECK(driver->initBuffer(ubuffer2, RgDriverBufferType_Uniform, RgDriverDataUsage_Stream, color2, sizeof(color2)));
+	roRDriverBuffer* ubuffer2 = driver->newBuffer();
+	CHECK(driver->initBuffer(ubuffer2, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, color2, sizeof(color2)));
 
-	RgDriverShaderInput shaderInput[] = {
+	roRDriverShaderInput shaderInput[] = {
 		{ vbuffer, vShader, "position", 0, 0, 0, 0 },
 		{ ibuffer, NULL, NULL, 0, 0, 0, 0 },
 		{ ubuffer1, pShader, "color1", 0, 0, 0, 0 },
 		{ ubuffer2, pShader, "color2", 0, 0, 0, 0 },
 	};
 
-	Timer timer;
+	StopWatch stopWatch;
 
 	while(keepRun()) {
 		driver->clearColor(0, 0.125f, 0.3f, 1);
 
 		// Animate the color
-		color1[0] = (sin(timer.seconds()) + 1) / 2;
-		color2[1] = (cos(timer.seconds()) + 1) / 2;
-		color2[6] = (cos(timer.seconds() * 2) + 1) / 2;
+		color1[0] = (sin(stopWatch.getFloat()) + 1) / 2;
+		color2[1] = (cos(stopWatch.getFloat()) + 1) / 2;
+		color2[6] = (cos(stopWatch.getFloat() * 2) + 1) / 2;
 
 		driver->updateBuffer(ubuffer1, 0, color1, sizeof(color1));
 
-		float* p = (float*)driver->mapBuffer(ubuffer2, RgDriverBufferMapUsage(RgDriverBufferMapUsage_Write));
+		float* p = (float*)driver->mapBuffer(ubuffer2, roRDriverBufferMapUsage(roRDriverBufferMapUsage_Write));
 		memcpy(p, color2, sizeof(color2));
 		driver->unmapBuffer(ubuffer2);
 
-		CHECK(driver->bindShaders(shaders, COUNTOF(shaders)));
-		CHECK(driver->bindShaderInput(shaderInput, COUNTOF(shaderInput), NULL));
+		CHECK(driver->bindShaders(shaders, roCountof(shaders)));
+		CHECK(driver->bindShaderInput(shaderInput, roCountof(shaderInput), NULL));
 
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();
@@ -297,38 +298,38 @@ TEST_FIXTURE(GraphicsDriverTest, textureCommit)
 		"}"
 	};
 
-	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
-	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
 
-	RgDriverShader* shaders[] = { vShader, pShader };
+	roRDriverShader* shaders[] = { vShader, pShader };
 
 	// Init texture
 	const unsigned texDim = 1024;
 	const unsigned char* texData = (const unsigned char*)malloc(sizeof(char) * 4 * texDim * texDim);
 
-	RgDriverTexture* texture = driver->newTexture();
-	CHECK(driver->initTexture(texture, texDim, texDim, RgDriverTextureFormat_RGBA));
+	roRDriverTexture* texture = driver->newTexture();
+	CHECK(driver->initTexture(texture, texDim, texDim, roRDriverTextureFormat_RGBA));
 	CHECK(driver->commitTexture(texture, texData, 0));
 
 	// Set the texture state
-	RgDriverTextureState textureState =  {
+	roRDriverTextureState textureState =  {
 		0,
-		RgDriverTextureFilterMode_MinMagLinear,
-		RgDriverTextureAddressMode_Repeat, RgDriverTextureAddressMode_Repeat
+		roRDriverTextureFilterMode_MinMagLinear,
+		roRDriverTextureAddressMode_Repeat, roRDriverTextureAddressMode_Repeat
 	};
 
 	// Create vertex buffer
 	float vertex[][6] = { {-1,1,0,1, 0,1}, {-1,-1,0,1, 0,0}, {1,-1,0,1, 1,0}, {1,1,0,1, 1,1} };
-	RgDriverBuffer* vbuffer = driver->newBuffer();
-	CHECK(driver->initBuffer(vbuffer, RgDriverBufferType_Vertex, RgDriverDataUsage_Static, vertex, sizeof(vertex)));
+	roRDriverBuffer* vbuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(vbuffer, roRDriverBufferType_Vertex, roRDriverDataUsage_Static, vertex, sizeof(vertex)));
 
 	// Create index buffer
 	rhuint16 index[][3] = { {0, 1, 2}, {0, 2, 3} };
-	RgDriverBuffer* ibuffer = driver->newBuffer();
-	CHECK(driver->initBuffer(ibuffer, RgDriverBufferType_Index, RgDriverDataUsage_Static, index, sizeof(index)));
+	roRDriverBuffer* ibuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ibuffer, roRDriverBufferType_Index, roRDriverDataUsage_Static, index, sizeof(index)));
 
 	// Bind shader input layout
-	RgDriverShaderInput input[] = {
+	roRDriverShaderInput input[] = {
 		{ vbuffer, vShader, "position", 0, 0, sizeof(float)*6, 0 },
 		{ vbuffer, vShader, "texCoord", 0, sizeof(float)*4, sizeof(float)*6, 0 },
 		{ ibuffer, NULL, NULL, 0, 0, 0, 0 },
@@ -346,11 +347,11 @@ TEST_FIXTURE(GraphicsDriverTest, textureCommit)
 		}
 		CHECK(driver->commitTexture(texture, texData, 0));
 
-		CHECK(driver->bindShaders(shaders, COUNTOF(shaders)));
-		CHECK(driver->bindShaderInput(input, COUNTOF(input), NULL));
+		CHECK(driver->bindShaders(shaders, roCountof(shaders)));
+		CHECK(driver->bindShaderInput(input, roCountof(input), NULL));
 
 		driver->setTextureState(&textureState, 1, 0);
-		CHECK(driver->setUniformTexture(StringHash("tex"), texture));
+		CHECK(driver->setUniformTexture(stringHash("tex"), texture));
 
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();
@@ -371,15 +372,15 @@ TEST_FIXTURE(GraphicsDriverTest, _texture)
 		"attribute vec4 vertex;"
 		"varying vec2 texCoord;"
 		"void main(void){texCoord=(vertex+1)/2;gl_Position=vertex;}";
-	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc, 1));
+	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc, 1));
 
 	const char* pShaderSrc =
 		"uniform sampler2D u_tex;"
 		"varying vec2 texCoord;"
 		"void main(void){gl_FragColor=texture2D(u_tex, texCoord);}";
-	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc, 1));
+	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc, 1));
 
-	RgDriverShader* shaders[] = { vShader, pShader };
+	roRDriverShader* shaders[] = { vShader, pShader };
 
 	// Init texture
 	const unsigned char texData[][4] = {
@@ -389,29 +390,29 @@ TEST_FIXTURE(GraphicsDriverTest, _texture)
 		{255,  0,255,255}, {255,255,255,255}, {255,255,  0,  0}, {255,  0,255,  0},		//
 		{255,  0,255,  0}, {255,  0,  0,255}, {255,255,255,255}, {255,255,  0,  0}		// Top row
 	};
-	RgDriverTexture* texture = driver->newTexture();
-	CHECK(driver->initTexture(texture, 4, 4, RgDriverTextureFormat_RGBA));
+	roRDriverTexture* texture = driver->newTexture();
+	CHECK(driver->initTexture(texture, 4, 4, roRDriverTextureFormat_RGBA));
 	CHECK(driver->commitTexture(texture, texData, 0));
 
 	// Set the texture state
-	RgDriverTextureState textureState =  {
+	roRDriverTextureState textureState =  {
 		0,
-		RgDriverTextureFilterMode_MinMagLinear,
-		RgDriverTextureAddressMode_Repeat, RgDriverTextureAddressMode_Repeat
+		roRDriverTextureFilterMode_MinMagLinear,
+		roRDriverTextureAddressMode_Repeat, roRDriverTextureAddressMode_Repeat
 	};
 
 	// Create vertex buffer
 	float vertex[][4] = { {-1,1,0,1}, {-1,-1,0,1}, {1,-1,0,1}, {1,1,0,1} };
-	RgDriverBuffer* vbuffer = driver->newBuffer();
-	CHECK(driver->initBuffer(vbuffer, RgDriverBufferType_Vertex, RgDriverDataUsage_Static, vertex, sizeof(vertex)));
+	roRDriverBuffer* vbuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(vbuffer, roRDriverBufferType_Vertex, roRDriverDataUsage_Static, vertex, sizeof(vertex)));
 
 	// Create index buffer
 	rhuint16 index[][3] = { {0, 1, 2}, {0, 2, 3} };
-	RgDriverBuffer* ibuffer = driver->newBuffer();
-	CHECK(driver->initBuffer(ibuffer, RgDriverBufferType_Index, RgDriverDataUsage_Static, index, sizeof(index)));
+	roRDriverBuffer* ibuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ibuffer, roRDriverBufferType_Index, roRDriverDataUsage_Static, index, sizeof(index)));
 
 	// Bind shader input layout
-	RgDriverShaderInput input[] = {
+	roRDriverShaderInput input[] = {
 		{ vbuffer, vShader,"vertex", 0, 0, 0, 0 },
 		{ ibuffer, NULL, NULL, 0, 0, 0, 0 },
 	};
@@ -419,11 +420,11 @@ TEST_FIXTURE(GraphicsDriverTest, _texture)
 	while(keepRun()) {
 		driver->clearColor(0, 0, 0, 0);
 
-		CHECK(driver->bindShaders(shaders, COUNTOF(shaders)));
-		CHECK(driver->bindShaderInput(input, COUNTOF(input), NULL));
+		CHECK(driver->bindShaders(shaders, roCountof(shaders)));
+		CHECK(driver->bindShaderInput(input, roCountof(input), NULL));
 
 		driver->setTextureState(&textureState, 1, 0);
-		CHECK(driver->setUniformTexture(StringHash("u_tex"), texture));
+		CHECK(driver->setUniformTexture(stringHash("u_tex"), texture));
 
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();
@@ -465,27 +466,27 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 	initContext(driverStr[driverIndex]);
 
 	// Init shader
-	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
-	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
 
-	RgDriverShader* shaders[] = { vShader, pShader };
+	roRDriverShader* shaders[] = { vShader, pShader };
 
 	// Create vertex buffer
 	float vertex[][3] = { {-1,1,0}, {-1,-1,0}, {1,-1,0}, {1,1,0} };
-	RgDriverBuffer* vbuffer = driver->newBuffer();
-	CHECK(driver->initBuffer(vbuffer, RgDriverBufferType_Vertex, RgDriverDataUsage_Static, vertex, sizeof(vertex)));
+	roRDriverBuffer* vbuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(vbuffer, roRDriverBufferType_Vertex, roRDriverDataUsage_Static, vertex, sizeof(vertex)));
 
 	// Create index buffer
 	rhuint16 index[][3] = { {0, 1, 2}, {0, 2, 3} };
-	RgDriverBuffer* ibuffer = driver->newBuffer();
-	CHECK(driver->initBuffer(ibuffer, RgDriverBufferType_Index, RgDriverDataUsage_Static, index, sizeof(index)));
+	roRDriverBuffer* ibuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ibuffer, roRDriverBufferType_Index, roRDriverDataUsage_Static, index, sizeof(index)));
 
 	// Create uniform buffer
-	RgDriverBuffer* ubuffer = driver->newBuffer();
-	CHECK(driver->initBuffer(ubuffer, RgDriverBufferType_Uniform, RgDriverDataUsage_Stream, NULL, sizeof(float)*(16*2+4)));
+	roRDriverBuffer* ubuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ubuffer, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, NULL, sizeof(float)*(16*2+4)));
 
 	// Model view matrix
-	float* modelView = (float*)driver->mapBuffer(ubuffer, RgDriverBufferMapUsage_Write);
+	float* modelView = (float*)driver->mapBuffer(ubuffer, roRDriverBufferMapUsage_Write);
 
 	rgMat44MakeIdentity(modelView);
 	float translate[] =  { 0, 0, -3 };
@@ -503,7 +504,7 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 	driver->unmapBuffer(ubuffer);
 
 	// Bind shader input layout
-	RgDriverShaderInput input[] = {
+	roRDriverShaderInput input[] = {
 		{ vbuffer, vShader, "position", 0, 0, 0, 0 },
 		{ ibuffer, NULL, NULL, 0, 0, 0, 0 },
 		{ ubuffer, vShader, "modelViewMat", 0, 0, 0, 0 },
@@ -514,8 +515,8 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 	while(keepRun()) {
 		driver->clearColor(0, 0, 0, 0);
 
-		CHECK(driver->bindShaders(shaders, COUNTOF(shaders)));
-		CHECK(driver->bindShaderInput(input, COUNTOF(input), NULL));
+		CHECK(driver->bindShaders(shaders, roCountof(shaders)));
+		CHECK(driver->bindShaderInput(input, roCountof(input), NULL));
 
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();
@@ -553,54 +554,54 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 		"float4 main(float4 pos : SV_POSITION) : SV_Target { return _color; }"
 	};
 
-	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
-	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
 
-	RgDriverShader* shaders[] = { vShader, pShader };
+	roRDriverShader* shaders[] = { vShader, pShader };
 
 	// Create vertex buffer
 	float vertex1[][4] = { {-1,1,0,1}, {-1,-0.5f,0,1}, {0.5f,-0.5f,0,1}, {0.5f,1,0,1} };
-	RgDriverBuffer* vbuffer1 = driver->newBuffer();
-	CHECK(driver->initBuffer(vbuffer1, RgDriverBufferType_Vertex, RgDriverDataUsage_Static, vertex1, sizeof(vertex1)));
+	roRDriverBuffer* vbuffer1 = driver->newBuffer();
+	CHECK(driver->initBuffer(vbuffer1, roRDriverBufferType_Vertex, roRDriverDataUsage_Static, vertex1, sizeof(vertex1)));
 
 	float vertex2[][4] = { {-0.5f,0.5f,0,1}, {-0.5f,-1,0,1}, {1,-1,0,1}, {1,0.5f,0,1} };
-	RgDriverBuffer* vbuffer2 = driver->newBuffer();
-	CHECK(driver->initBuffer(vbuffer2, RgDriverBufferType_Vertex, RgDriverDataUsage_Static, vertex2, sizeof(vertex2)));
+	roRDriverBuffer* vbuffer2 = driver->newBuffer();
+	CHECK(driver->initBuffer(vbuffer2, roRDriverBufferType_Vertex, roRDriverDataUsage_Static, vertex2, sizeof(vertex2)));
 
 	// Create index buffer
 	rhuint16 index[][3] = { {0, 1, 2}, {0, 2, 3} };
-	RgDriverBuffer* ibuffer = driver->newBuffer();
-	CHECK(driver->initBuffer(ibuffer, RgDriverBufferType_Index, RgDriverDataUsage_Static, index, sizeof(index)));
+	roRDriverBuffer* ibuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ibuffer, roRDriverBufferType_Index, roRDriverDataUsage_Static, index, sizeof(index)));
 
 	// Create uniform buffer
-	RgDriverBuffer* ubuffer = driver->newBuffer();
-	CHECK(driver->initBuffer(ubuffer, RgDriverBufferType_Uniform, RgDriverDataUsage_Stream, NULL, sizeof(float)*4));
+	roRDriverBuffer* ubuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ubuffer, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, NULL, sizeof(float)*4));
 
 	// Set the blend state
-	RgDriverBlendState blend = {
+	roRDriverBlendState blend = {
 		0, true,
-		RgDriverBlendOp_Add, RgDriverBlendOp_Add,
-		RgDriverBlendValue_SrcAlpha, RgDriverBlendValue_InvSrcAlpha,
-		RgDriverBlendValue_One, RgDriverBlendValue_Zero,
-		RgDriverColorWriteMask_EnableAll
+		roRDriverBlendOp_Add, roRDriverBlendOp_Add,
+		roRDriverBlendValue_SrcAlpha, roRDriverBlendValue_InvSrcAlpha,
+		roRDriverBlendValue_One, roRDriverBlendValue_Zero,
+		roRDriverColorWriteMask_EnableAll
 	};
 
 	while(keepRun())
 	{
 		driver->clearColor(0, 0, 0, 0);
 		driver->setBlendState(&blend);
-		CHECK(driver->bindShaders(shaders, COUNTOF(shaders)));
+		CHECK(driver->bindShaders(shaders, roCountof(shaders)));
 
 		{	// Draw the first quad
 			float color[] = { 1, 1, 0, 0.5f };
 			driver->updateBuffer(ubuffer, 0, color, sizeof(color));
 
-			RgDriverShaderInput input[] = {
+			roRDriverShaderInput input[] = {
 				{ vbuffer1, vShader, "position", 0, 0, 0, 0 },
 				{ ibuffer, NULL, NULL, 0, 0, 0, 0 },
 				{ ubuffer, pShader, "color", 0, 0, 0, 0 },
 			};
-			CHECK(driver->bindShaderInput(input, COUNTOF(input), NULL));
+			CHECK(driver->bindShaderInput(input, roCountof(input), NULL));
 
 			driver->drawTriangleIndexed(0, 6, 0);
 		}
@@ -609,12 +610,12 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 			float color[] = { 1, 0, 0, 0.5f };
 			driver->updateBuffer(ubuffer, 0, color, sizeof(color));
 
-			RgDriverShaderInput input[] = {
+			roRDriverShaderInput input[] = {
 				{ vbuffer2, vShader, "position", 0, 0, 0, 0 },
 				{ ibuffer, NULL, NULL, 0, 0, 0, 0 },
 				{ ubuffer, pShader, "color", 0, 0, 0, 0 },
 			};
-			CHECK(driver->bindShaderInput(input, COUNTOF(input), NULL));
+			CHECK(driver->bindShaderInput(input, roCountof(input), NULL));
 
 			driver->drawTriangleIndexed(0, 6, 0);
 		}
@@ -677,28 +678,28 @@ TEST_FIXTURE(GraphicsDriverTest, GeometryShader)
 	initContext(driverStr[driverIndex]);
 
 	// Init shader
-	CHECK(driver->initShader(vShader, RgDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
-	CHECK(driver->initShader(gShader, RgDriverShaderType_Geometry, &gShaderSrc[driverIndex], 1));
-	CHECK(driver->initShader(pShader, RgDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(gShader, roRDriverShaderType_Geometry, &gShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
 
-	RgDriverShader* shaders[] = { vShader, gShader, pShader };
+	roRDriverShader* shaders[] = { vShader, gShader, pShader };
 
 	// Create vertex buffer
 	float vertex[][3] = { {-1,1,0}, {-1,-1,0}, {1,-1,0}, {1,1,0} };
-	RgDriverBuffer* vbuffer = driver->newBuffer();
-	CHECK(driver->initBuffer(vbuffer, RgDriverBufferType_Vertex, RgDriverDataUsage_Static, vertex, sizeof(vertex)));
+	roRDriverBuffer* vbuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(vbuffer, roRDriverBufferType_Vertex, roRDriverDataUsage_Static, vertex, sizeof(vertex)));
 
 	// Create index buffer
 	rhuint16 index[][3] = { {0, 1, 2}, {0, 2, 3} };
-	RgDriverBuffer* ibuffer = driver->newBuffer();
-	CHECK(driver->initBuffer(ibuffer, RgDriverBufferType_Index, RgDriverDataUsage_Static, index, sizeof(index)));
+	roRDriverBuffer* ibuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ibuffer, roRDriverBufferType_Index, roRDriverDataUsage_Static, index, sizeof(index)));
 
 	// Create uniform buffer
-	RgDriverBuffer* ubuffer = driver->newBuffer();
-	CHECK(driver->initBuffer(ubuffer, RgDriverBufferType_Uniform, RgDriverDataUsage_Stream, NULL, sizeof(float)*(16*2+4)));
+	roRDriverBuffer* ubuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ubuffer, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, NULL, sizeof(float)*(16*2+4)));
 
 	// Model view matrix
-	float* modelView = (float*)driver->mapBuffer(ubuffer, RgDriverBufferMapUsage_Write);
+	float* modelView = (float*)driver->mapBuffer(ubuffer, roRDriverBufferMapUsage_Write);
 
 	rgMat44MakeIdentity(modelView);
 	float translate[] =  { 0, 0, -3 };
@@ -716,7 +717,7 @@ TEST_FIXTURE(GraphicsDriverTest, GeometryShader)
 	driver->unmapBuffer(ubuffer);
 
 	// Bind shader input layout
-	RgDriverShaderInput input[] = {
+	roRDriverShaderInput input[] = {
 		{ vbuffer, vShader, "position", 0, 0, 0, 0 },
 		{ ibuffer, NULL, NULL, 0, 0, 0, 0 },
 		{ ubuffer, vShader, "modelViewMat", 0, 0, 0, 0 },
@@ -727,8 +728,8 @@ TEST_FIXTURE(GraphicsDriverTest, GeometryShader)
 	while(keepRun()) {
 		driver->clearColor(0, 0, 0, 0);
 
-		CHECK(driver->bindShaders(shaders, COUNTOF(shaders)));
-		CHECK(driver->bindShaderInput(input, COUNTOF(input), NULL));
+		CHECK(driver->bindShaders(shaders, roCountof(shaders)));
+		CHECK(driver->bindShaderInput(input, roCountof(input), NULL));
 
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();

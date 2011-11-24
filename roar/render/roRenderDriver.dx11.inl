@@ -19,14 +19,14 @@ template<typename T> struct ComPtr
 
 struct InputParam
 {
-	unsigned nameHash;		// Hash value for the input semantic
+	StringHash nameHash;		// Hash value for the input semantic
 	unsigned elementCount;
 	D3D10_REGISTER_COMPONENT_TYPE type;
 };
 
 struct ConstantBuffer
 {
-	unsigned nameHash;		// Hash value for the constant buffer
+	StringHash nameHash;		// Hash value for the constant buffer
 	unsigned bindPoint;
 };
 
@@ -46,16 +46,16 @@ struct StagingTexture
 	ComPtr<ID3D11Resource> dxTexture;
 };
 
-struct RgDriverShaderImpl : public RgDriverShader
+struct roRDriverShaderImpl : public roRDriverShader
 {
-	RgDriverShaderImpl() : dxShader(NULL), dxShaderBlob(NULL) {}
+	roRDriverShaderImpl() : dxShader(NULL), dxShaderBlob(NULL) {}
 
 	ComPtr<ID3D11DeviceChild> dxShader;
 	ComPtr<ID3D10Blob> dxShaderBlob;
 
-	PreAllocVector<InputParam, 4> inputParams;
-	PreAllocVector<ConstantBuffer, 4> constantBuffers;
-};	// RgDriverShaderImpl
+	TinyArray<InputParam, 4> inputParams;
+	TinyArray<ConstantBuffer, 4> constantBuffers;
+};	// roRDriverShaderImpl
 
 struct InputLayout
 {
@@ -64,14 +64,14 @@ struct InputLayout
 
 	ComPtr<ID3D11InputLayout> layout;
 	ComPtr<ID3D10Blob> shader;
-	PreAllocVector<D3D11_INPUT_ELEMENT_DESC, 4> inputDescs;
+	TinyArray<D3D11_INPUT_ELEMENT_DESC, 4> inputDescs;
 
-	PreAllocVector<ComPtr<ID3D11Buffer>, 4> buffers;
-	PreAllocVector<UINT, 4> strides;
-	PreAllocVector<UINT, 4> offsets;
+	TinyArray<ComPtr<ID3D11Buffer>, 4> buffers;
+	TinyArray<UINT, 4> strides;
+	TinyArray<UINT, 4> offsets;
 };
 
-struct RgDriverContextImpl : public RgDriverContext
+struct roRDriverContextImpl : public roRDriverContext
 {
 	void* currentBlendStateHash;
 	void* currentDepthStencilStateHash;
@@ -83,18 +83,18 @@ struct RgDriverContextImpl : public RgDriverContext
 	ComPtr<ID3D11Texture2D> dxDepthStencilTexture;
 	ComPtr<ID3D11DepthStencilView> dxDepthStencilView;
 
-	typedef Array<RgDriverShaderImpl*, 3> CurrentShaders;
+	typedef StaticArray<roRDriverShaderImpl*, 3> CurrentShaders;
 	CurrentShaders currentShaders;
 
-	PreAllocVector<InputLayout, 16> inputLayoutCache;
+	TinyArray<InputLayout, 16> inputLayoutCache;
 
-	Vector<StagingBuffer> stagingBufferCache;
-	Vector<StagingTexture> stagingTextureCache;
+	Array<StagingBuffer> stagingBufferCache;
+	Array<StagingTexture> stagingTextureCache;
 
-//	Vector<ID3D11DepthStencilState*> depthStencilStateCache;
+//	Array<ID3D11DepthStencilState*> depthStencilStateCache;
 
 	struct TextureState {
 		void* hash;
 	};
-	Array<TextureState, 64> textureStateCache;
-};	// RgDriverContextImpl
+	StaticArray<TextureState, 64> textureStateCache;
+};	// roRDriverContextImpl

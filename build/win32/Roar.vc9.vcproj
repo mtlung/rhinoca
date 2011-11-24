@@ -347,6 +347,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roStringHash.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roStringUtility.cpp"
 				>
 			</File>
@@ -386,6 +390,38 @@
 		<Filter
 			Name="render"
 			>
+			<File
+				RelativePath="..\..\roar\render\roRenderDriver.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\render\roRenderDriver.dx11.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\render\roRenderDriver.dx11.inl"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\render\roRenderDriver.dx11.windows.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\render\roRenderDriver.gl.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\render\roRenderDriver.gl.inl"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\render\roRenderDriver.gl.windows.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\render\roRenderDriver.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="platform"

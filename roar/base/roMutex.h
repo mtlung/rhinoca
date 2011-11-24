@@ -22,7 +22,7 @@ public:
 	void unlock();
 	bool tryLock();
 
-#ifdef _DEBUG
+#if roDEBUG
 	/// For use in debug mode to assert that the mutex is locked.
 	/// \note Do not assert for not locked, since the return value
 	/// itself is not reliable if the mutex is not locked.
@@ -38,7 +38,7 @@ public:
 	char mMutex[8 + 4 * sizeof(void*)];
 #endif
 
-#ifdef _DEBUG
+#if roDEBUG
 protected:
 	bool _locked;
 	char _padding[3];
@@ -58,7 +58,7 @@ public:
 	void unlock();
 	bool tryLock();
 
-#ifdef _DEBUG
+#if roDEBUG
 	/// For use in debug mode to assert that the mutex is locked.
 	/// \note Do not assert for not locked, since the return value
 	/// 	itself is not reliable if the mutex is not locked.
@@ -72,7 +72,7 @@ public:
 	char mMutex[8 + 4 * sizeof(void*)];
 #endif
 
-#ifdef _DEBUG
+#if roDEBUG
 protected:
 	int _lockCount;
 #endif

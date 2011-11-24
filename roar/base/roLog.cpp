@@ -3,9 +3,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-void _defaultLogFunc(const char* type, const char* format, va_list ap)
+static void _defaultLogFunc(const char* type, const char* format, va_list ap)
 {
-	// TODO: These are 2 seperate steps, not good when rhLog is invoked in multiple threads
+	// TODO: These are 2 seperate steps, not good when roLog is invoked in multiple threads
 	printf("%s: ", type);
 	vprintf(format, ap);
 }

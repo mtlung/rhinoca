@@ -18,7 +18,7 @@
 #	define roAssert(x) assert(x)
 #endif
 
-#ifdef _DEBUG
+#if roDEBUG
 #	define roVerify(x) roAssert(x)
 #else
 #	define roVerify(x) (x)
@@ -34,5 +34,13 @@
 #ifndef roPtrDiff
 #	define roPtrDiff ptrdiff_t
 #endif
+
+// Force inline
+#ifndef roFORCEINLINE
+#	define roFORCEINLINE inline
+#endif
+
+// Offset of
+#define roOffsetof(s, m) (roSize)((roPtrDiff)&(((s*)0)->m))
 
 #endif	// __roCompiler_h__

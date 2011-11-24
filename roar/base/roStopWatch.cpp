@@ -163,7 +163,12 @@ StopWatch::StopWatch()
 	reset();
 }
 
-double StopWatch::get() const
+float StopWatch::getFloat() const
+{
+	return (float)getDouble();
+}
+
+double StopWatch::getDouble() const
 {
 	if(_pause) return _pauseAccumulate;
 	_lastGetTime = ticksSinceProgramStatup();
@@ -172,7 +177,7 @@ double StopWatch::get() const
 
 double StopWatch::getAndReset()
 {
-	double d = get();
+	double d = getDouble();
 	resetToLastGet();
 	return d;
 }
@@ -194,7 +199,7 @@ void StopWatch::pause()
 {
 	if(_pause) return;
 	_pause = true;
-	_pauseAccumulate = get();
+	_pauseAccumulate = getDouble();
 }
 
 void StopWatch::resume()
