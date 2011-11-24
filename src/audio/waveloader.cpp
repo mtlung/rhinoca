@@ -6,6 +6,7 @@
 
 namespace Loader {
 
+using namespace ro;
 using namespace Audio;
 
 struct WaveFormatEx

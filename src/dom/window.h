@@ -5,7 +5,7 @@
 #include "../jsbindable.h"
 #include "../linklist.h"
 #include "../map.h"
-#include "../timer.h"
+#include "../../roar/base/roStopWatch.h"
 
 namespace Dom {
 
@@ -85,7 +85,7 @@ public:
 	unsigned width() const;
 	unsigned height() const;
 
-	Timer timer;
+	ro::StopWatch stopWatch;
 
 	/// We use this canvas for rendering stuffs into the window
 	HTMLCanvasElement* virtualCanvas;

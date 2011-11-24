@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "../src/socket.h"
-#include "../src/taskpool.h"
+#include "../roar/base/roTaskPool.h"
+
+using namespace ro;
 
 namespace {
 

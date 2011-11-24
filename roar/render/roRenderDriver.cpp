@@ -48,7 +48,7 @@ void rgDriverApplyDefaultState(roRDriverContext* self)
 			0,
 			false, true,
 			roRDriverDepthCompareFunc_Less,
-			0, -1,
+			0, (unsigned short)-1,
 			{	roRDriverDepthCompareFunc_Always,
 				roRDriverStencilOp_Keep,
 				roRDriverStencilOp_Keep,

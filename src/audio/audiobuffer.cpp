@@ -2,6 +2,8 @@
 #include "audiobuffer.h"
 #include "audioloader.h"
 
+using namespace ro;
+
 namespace Audio {
 
 AudioBuffer::AudioBuffer(const char* uri)

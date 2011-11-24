@@ -33,6 +33,7 @@ private:
 };	// Task
 
 typedef roUint32 TaskId;
+typedef roPtrDiff ThreadId;
 
 class TaskPool
 {
@@ -53,7 +54,7 @@ public:
 	///		= 0 : any thread can run this task
 	///		= threadId : the only thread that can run this task
 	///		= ~threadId : the only thread that can NOT run this task
-	TaskId beginAdd(Task* task, roSize affinity=0);
+	TaskId beginAdd(Task* task, ThreadId affinity=0);
 
 	/// A task is consider completed only if all it's children are completed
 	void addChild(TaskId parent, TaskId child);
@@ -65,7 +66,7 @@ public:
 	void finishAdd(TaskId id);
 
 	/// Add the task, set the properties and finish the add, all in a single function call
-	TaskId addFinalized(Task* task, TaskId parent=0, TaskId dependency=0, int affinity=0);
+	TaskId addFinalized(Task* task, TaskId parent=0, TaskId dependency=0, ThreadId affinity=0);
 
 	/// @note The TaskId may be reused for another task that you
 	/// were NOT waiting for, but that's not the problem since the
@@ -94,25 +95,25 @@ public:
 	/// Callback to invoke when a task finish. It also get triggered
 	/// if the task is already done at the time you invoke addCallback()
 	typedef void (*Callback)(TaskPool* taskPool, void* userData);
-	void addCallback(TaskId id, Callback callback, void* userData, int affinity);
+	void addCallback(TaskId id, Callback callback, void* userData, ThreadId affinity);
 
 	static void sleep(int milliSeconds);
 
 // Attributes
 	/// To get the current thread id, which is use for setting affinity
-	static roSize threadId();
+	static ThreadId threadId();
 
 	roSize taskCount() const { return taskList.count; }
 
-	roSize mainThreadId() const { return _mainThreadId; }
+	ThreadId mainThreadId() const { return _mainThreadId; }
 
 protected:
 	class TaskProxy;
 
 	friend void _run(TaskPool*);
-	void _doTask(TaskProxy* id, roSize threadId);
+	void _doTask(TaskProxy* id, ThreadId threadI);
 
-	void _wait(TaskProxy* id, roSize threadId);
+	void _wait(TaskProxy* id, ThreadId threadId);
 
 	TaskProxy* _findProxyById(TaskId id);
 
@@ -131,7 +132,7 @@ protected:
 	// Remove pending task from the front
 	void _removePendingTask(TaskProxy* p);
 
-	bool _matchAffinity(TaskProxy* p, roSize threadId);
+	bool _matchAffinity(TaskProxy* p, ThreadId threadId);
 
 	bool _hasOutstandingDependency(TaskProxy* p);
 
@@ -160,7 +161,7 @@ protected:
 	roSize _threadCount;
 	roSize* _threadHandles;
 
-	roSize _mainThreadId;
+	ThreadId _mainThreadId;
 
 	mutable Mutex mutex;
 };	// TaskPool

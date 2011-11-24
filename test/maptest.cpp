@@ -1,7 +1,9 @@
 #include "pch.h"
 #include "../src/map.h"
-#include "../src/timer.h"
+#include "../roar/base/roStopWatch.h"
 #include <map>
+
+using namespace ro;
 
 namespace {
 
@@ -28,8 +30,8 @@ TEST_FIXTURE(MapPerformanceTest, podType)
 
 	{	printf("Our map:\n");
 		Map<MyNode> map;
-		Timer timer;
-		float begin = timer.seconds();
+		StopWatch stopWatch;
+		float begin = stopWatch.getFloat();
 		for(unsigned i=0; i<testCount; ++i) {
 			map.insert(*new MyNode(i, i));
 		}
@@ -41,10 +43,10 @@ TEST_FIXTURE(MapPerformanceTest, podType)
 			map.insert(*new MyNode(v, v));
 		}
 
-		printf("Time for insert: %f\n", timer.seconds() - begin);
+		printf("Time for insert: %f\n", stopWatch.getFloat() - begin);
 
-		timer.reset();
-		begin = timer.seconds();
+		stopWatch.reset();
+		begin = stopWatch.getFloat();
 		for(unsigned i=0; i<testCount; ++i) {
 			CHECK(map.find(i));
 		}
@@ -54,17 +56,17 @@ TEST_FIXTURE(MapPerformanceTest, podType)
 			found |= map.find(v) != NULL;
 		}
 		CHECK(found);
-		printf("Time for find: %f\n", timer.seconds() - begin);
+		printf("Time for find: %f\n", stopWatch.getFloat() - begin);
 
-		timer.reset();
+		stopWatch.reset();
 		map.destroyAll();
-		printf("Time for destroyAll: %f\n", timer.seconds() - begin);
+		printf("Time for destroyAll: %f\n", stopWatch.getFloat() - begin);
 	}
 
 	{	printf("std::map:\n");
 		std::multimap<int, int> map;
-		Timer timer;
-		float begin = timer.seconds();
+		StopWatch stopWatch;
+		float begin = stopWatch.getFloat();
 		for(unsigned i=0; i<testCount; ++i) {
 			map.insert(std::make_pair(i, i));
 		}
@@ -75,10 +77,10 @@ TEST_FIXTURE(MapPerformanceTest, podType)
 			int v = rand();
 			map.insert(std::make_pair(v, v));
 		}
-		printf("Time for insert: %f\n", timer.seconds() - begin);
+		printf("Time for insert: %f\n", stopWatch.getFloat() - begin);
 
-		timer.reset();
-		begin = timer.seconds();
+		stopWatch.reset();
+		begin = stopWatch.getFloat();
 		for(unsigned i=0; i<testCount; ++i) {
 			CHECK(map.find(i) != map.end());
 		}
@@ -88,10 +90,10 @@ TEST_FIXTURE(MapPerformanceTest, podType)
 			found |= map.find(v) != map.end();
 		}
 		CHECK(found);
-		printf("Time for find: %f\n", timer.seconds() - begin);
+		printf("Time for find: %f\n", stopWatch.getFloat() - begin);
 
-		timer.reset();
+		stopWatch.reset();
 		map.clear();
-		printf("Time for clear: %f\n", timer.seconds() - begin);
+		printf("Time for clear: %f\n", stopWatch.getFloat() - begin);
 	}
 }

@@ -1,13 +1,13 @@
 #ifndef __AUDIO_AUDIOLOADER_H__
 #define __AUDIO_AUDIOLOADER_H__
 
-#include "../taskpool.h"
 #include "../vector.h"
+#include "../../roar/base/roTaskPool.h"
 
 namespace Loader {
 
 /// 
-class AudioLoader : public Task
+class AudioLoader : public ro::Task
 {
 public:
 	virtual ~AudioLoader() {}
@@ -27,7 +27,7 @@ public:
 		// Call by the audio device when it need some data
 		void request(unsigned begin, unsigned end)
 		{
-			ScopeLock lock(mutex);
+			ro::ScopeLock lock(mutex);
 			RHASSERT(begin < end);
 			RHASSERT(_begin <= _end);
 			// Not contiguous, set seek to true
@@ -40,7 +40,7 @@ public:
 		// Returns whether a seek is needed
 		bool getRequest(unsigned& begin, unsigned& end)
 		{
-			ScopeLock lock(mutex);
+			ro::ScopeLock lock(mutex);
 			begin = _begin;
 			end = _end;
 			return _seek;
@@ -49,7 +49,7 @@ public:
 		// Call by the audio loader after it has loaded some data
 		void commit(unsigned begin, unsigned end)
 		{
-			ScopeLock lock(mutex);
+			ro::ScopeLock lock(mutex);
 			RHASSERT(_seek || begin == _begin && "Audio loader is leaving a gap in the audio data!");
 			RHASSERT(begin < end);
 			RHASSERT(_begin <= _end);
@@ -60,7 +60,7 @@ public:
 		bool _seek;
 		unsigned _begin;/// The next loading position that MUST begin with.
 		unsigned _end;	/// The next loading position that SUGGEST to end with.
-		Mutex mutex;
+		ro::Mutex mutex;
 	};	// RequestQueue
 
 	/// loadDataForRange() may use this queue

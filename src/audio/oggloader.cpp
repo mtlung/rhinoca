@@ -5,6 +5,7 @@
 #include "../rhlog.h"
 #include <string.h>	// for memcpy()
 
+using namespace ro;
 using namespace Audio;
 
 namespace Loader {

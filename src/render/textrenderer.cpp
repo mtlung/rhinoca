@@ -88,7 +88,7 @@ rhuint32 TextRenderer::makeHash(Font* font, unsigned fontPixelHeight, const char
 	cache = new TextLabelCache(hash);
 	impl->cache.insertUnique(*cache);
 
-	unsigned width, height;
+//	unsigned width, height;
 //	font->getBoundingBox(fontPixelHeight, codePointStr, &width, &height);
 
 	while(*codePointStr != 0) {

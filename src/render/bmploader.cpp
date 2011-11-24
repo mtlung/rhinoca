@@ -6,6 +6,7 @@
 // http://www.spacesimulator.net/tut4_3dsloader.html
 // http://www.gamedev.net/reference/articles/article1966.asp
 
+using namespace ro;
 using namespace Render;
 
 namespace Loader {

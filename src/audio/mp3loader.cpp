@@ -8,6 +8,7 @@
 #	pragma comment(lib, "libmpg123")
 #endif
 
+using namespace ro;
 using namespace Audio;
 
 namespace Loader {
@@ -213,7 +214,7 @@ void Mp3Loader::loadData()
 		0 : (unsigned)rhFileSystem.read(stream, buf, _dataChunkSize);
 
 	// Perform MP3 decoding
-	unsigned decodeBytes = 0;
+	size_t decodeBytes = 0;
 	mpgRet = mpg123_decode(mpg, buf, readCount, (rhbyte*)bufferData, bytesToWrite, &decodeBytes);
 
 	if(mpgRet == MPG123_ERR)

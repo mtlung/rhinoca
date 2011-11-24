@@ -988,27 +988,11 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\src\taskpool.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\taskpool.h"
-			>
-		</File>
-		<File
 			RelativePath="..\..\src\textresource.cpp"
 			>
 		</File>
 		<File
 			RelativePath="..\..\src\textresource.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\timer.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\timer.h"
 			>
 		</File>
 		<File

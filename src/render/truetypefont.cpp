@@ -108,6 +108,7 @@ void TrueTypeFont::getMetrics(int* ascent, int* descent, int* lineGap)
 
 namespace Loader {
 
+using namespace ro;
 using namespace Render;
 
 class TrueTypeFontLoader : public Task

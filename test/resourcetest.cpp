@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "../src/resource.h"
 
+using namespace ro;
+
 namespace {
 
 class MyResource : public Resource

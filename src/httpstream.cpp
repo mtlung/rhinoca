@@ -2,10 +2,12 @@
 #include "httpstream.h"
 #include "rhlog.h"
 #include "socket.h"
-#include "taskpool.h"
-#include "timer.h"
+#include "../roar/base/roStopWatch.h"
+#include "../roar/base/roTaskPool.h"
 
 #include <string.h>
+
+using namespace ro;
 
 /// Notes on http 1.0 protocol:
 /// Http 1.0 protocol contains an optional "Content-Length" attribute, but
@@ -30,7 +32,7 @@ struct HttpStream
 
 	char getCmd[256];
 
-	DeltaTimer timer;
+	StopWatch stopWatch;
 };
 
 static void prepareForRead(HttpStream* s, unsigned readSize)
@@ -222,7 +224,7 @@ rhuint64 rhinoca_http_read(void* file, void* buffer, rhuint64 size)
 
 		// Detect timeout for connecting to remote host
 		if(!s->headerReceived) {
-			timeout -= s->timer.getDelta();
+			timeout -= (float)s->stopWatch.getAndReset();
 			if(timeout <= 0)
 				s->httpError = true;
 		}

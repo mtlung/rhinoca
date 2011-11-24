@@ -8,6 +8,7 @@
 #include "../xmlparser.h"
 #include <string.h>	// for strcasecmp
 
+using namespace ro;
 using namespace Audio;
 
 namespace Dom {

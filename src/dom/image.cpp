@@ -8,6 +8,7 @@
 #include "../render/texture.h"
 #include <string.h>	// for strcasecmp()
 
+using namespace ro;
 using namespace Render;
 
 namespace Dom {

@@ -1,7 +1,9 @@
 #include "pch.h"
-#include "../src/common.h"
-#include "../src/taskpool.h"
+#include "../../src/common.h"
+#include "../../roar/base/roTaskPool.h"
 #include <math.h>
+
+using namespace ro;
 
 namespace {
 
@@ -77,7 +79,7 @@ TEST_FIXTURE(TaskPoolTest, singleThreadDependency)
 	}
 
 	{	// Task1 depends on task2
-		int threadId = TaskPool::threadId();
+		ThreadId threadId = TaskPool::threadId();
 		TaskPool taskPool;
 		TaskId t1 = taskPool.beginAdd(new MyTask(0));
 

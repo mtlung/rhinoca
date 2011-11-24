@@ -65,7 +65,7 @@ protected:
 
 	Vector<SubBuffer> subBuffers;
 
-	mutable Mutex mutex;
+	mutable ro::Mutex mutex;
 };	// AudioBuffer
 
 typedef IntrusivePtr<AudioBuffer> AudioBufferPtr;

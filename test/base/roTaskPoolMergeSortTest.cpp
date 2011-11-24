@@ -1,8 +1,10 @@
 #include "pch.h"
-#include "../src/taskpool.h"
-#include "../src/timer.h"
-#include "../src/vector.h"
+#include "../../roar/base/roTaskPool.h"
+#include "../../roar/base/roStopWatch.h"
+#include "../../src/vector.h"
 #include <stdlib.h>
+
+using namespace ro;
 
 static const bool benchmark = false;
 static const rhuint testSize = benchmark ? 10000000 : 1000;
@@ -58,10 +60,10 @@ TEST(TaskPoolSingleThreadMergeSortTest)
 	for(rhuint i=0; i<data.size(); ++i)
 		data[i] = rand() % data.size();
 
-	Timer timer;
-	float begin = timer.seconds();
+	StopWatch stopWatch;
+	float begin = stopWatch.getFloat();
 	mergeSortSingleThread(&data[0], &scratch[0], 0, data.size());
-	float dt =  timer.seconds() - begin;
+	float dt =  stopWatch.getFloat() - begin;
 
 	if(benchmark)
 		printf("Time for SingleThreadMergeSort: %f\n", dt);
@@ -153,10 +155,10 @@ TEST(TaskPoolMultiThreadMergeSortTest)
 	for(rhuint i=0; i<data.size(); ++i)
 		data[i] = rand() % data.size();
 
-	Timer timer;
-	float begin = timer.seconds();
+	StopWatch stopWatch;
+	float begin = stopWatch.getFloat();
 	mergeSortMultiThread(&data[0], &scratch[0], 0, data.size(), taskPool);
-	float dt =  timer.seconds() - begin;
+	float dt =  stopWatch.getFloat() - begin;
 
 	if(benchmark)
 		printf("Time for MultiThreadMergeSort: %f\n", dt);

@@ -19,7 +19,7 @@ public:
 	Task* task;				///< Once complete it will set to NULL
 	bool finalized;			///< Attributes like dependency, affinity, parent cannot be set after the task is finalized
 	bool suspended;			///< If suspended, the task cannot be started
-	roSize affinity;
+	ThreadId affinity;
 	TaskPool* taskPool;
 	TaskProxy* parent;		///< A task is consider completed only if all it's children are completed.
 	TaskProxy* dependency;	///< This task cannot be start until the depending task completes.
@@ -114,7 +114,7 @@ TaskPool::TaskPool()
 
 TaskPool::~TaskPool()
 {
-	roSize tId = threadId();
+	ThreadId tId = threadId();
 	ScopeLock lock(mutex);
 
 	_keepRun = false;
@@ -186,7 +186,7 @@ void TaskPool::init(roSize threadCount)
 	}
 }
 
-TaskId TaskPool::beginAdd(Task* task, roSize affinity)
+TaskId TaskPool::beginAdd(Task* task, ThreadId affinity)
 {
 	ScopeLock lock(mutex);
 
@@ -248,7 +248,7 @@ void TaskPool::finishAdd(TaskId id)
 	}
 }
 
-TaskId TaskPool::addFinalized(Task* task, TaskId parent, TaskId dependency, int affinity)
+TaskId TaskPool::addFinalized(Task* task, TaskId parent, TaskId dependency, ThreadId affinity)
 {
 	ScopeLock lock(mutex);
 
@@ -285,11 +285,11 @@ bool TaskPool::keepRun() const
 	return _keepRun;
 }
 
-roSize TaskPool::threadId()
+ThreadId TaskPool::threadId()
 {
-	roSize id;
+	ThreadId id;
 #ifdef roUSE_PTHREAD
-	id = roSize(::pthread_self());
+	id = ThreadId(::pthread_self());
 #else
 	id = ::GetCurrentThreadId();
 #endif
@@ -299,7 +299,7 @@ roSize TaskPool::threadId()
 // NOTE: Recursive and re-entrant
 void TaskPool::wait(TaskId id)
 {
-	roSize tId = threadId();
+	ThreadId tId = threadId();
 	ScopeLock lock(mutex);
 	if(TaskProxy* p = _findProxyById(id))
 		_wait(p, tId);
@@ -307,7 +307,7 @@ void TaskPool::wait(TaskId id)
 
 void TaskPool::waitAll()
 {
-	roSize tId = threadId();
+	ThreadId tId = threadId();
 	ScopeLock lock(mutex);
 
 	while(_openTasks)
@@ -320,7 +320,7 @@ static const int _debugMaxIndent = 10;
 static const char _debugIndent[_debugMaxIndent+1] = "          ";
 #endif
 
-void TaskPool::_wait(TaskProxy* p, roSize tId)
+void TaskPool::_wait(TaskProxy* p, ThreadId tId)
 {
 	roAssert(mutex.isLocked());
 	if(!p) return;
@@ -406,7 +406,7 @@ void TaskPool::doSomeTask(float timeout)
 
 	StopWatch watch;
 	const double beginTime = watch.getDouble();
-	roSize tId = threadId();
+	ThreadId tId = threadId();
 
 	while(p && p != _pendingTasksTail) {
 		TaskProxy* next = p->nextPending;
@@ -435,7 +435,7 @@ void TaskPool::doSomeTask(float timeout)
 }
 
 // NOTE: Recursive and re-entrant
-void TaskPool::_doTask(TaskProxy* p, roSize tId)
+void TaskPool::_doTask(TaskProxy* p, ThreadId tId)
 {
 	roAssert(mutex.isLocked());
 	
@@ -547,7 +547,7 @@ void TaskPool::_removePendingTask(TaskProxy* p)
 	p->prevPending = p->nextPending = NULL;
 }
 
-bool TaskPool::_matchAffinity(TaskProxy* p, roSize tId)
+bool TaskPool::_matchAffinity(TaskProxy* p, ThreadId tId)
 {
 	if(p->suspended || !p->finalized)
 		return false;
@@ -566,7 +566,7 @@ bool TaskPool::_hasOutstandingDependency(TaskPool::TaskProxy* p)
 }
 
 // NOTE: This function is purely build on top of other public interface of TaskPool ^.^
-void TaskPool::addCallback(TaskId id, Callback callback, void* userData, int affinity)
+void TaskPool::addCallback(TaskId id, Callback callback, void* userData, ThreadId affinity)
 {
 	class CallbackTask : public Task
 	{

@@ -15,6 +15,8 @@
 #include "../context.h"
 #include "../vector.h"
 
+using namespace ro;
+
 extern rhinoca_alertFunc alertFunc;
 extern void* alertFuncUserData;
 
@@ -93,7 +95,7 @@ JSBool setTimeout(JSContext* cx, uintN argc, jsval* vp)
 	}
 
 	cb->interval = 0;
-	cb->setNextInvokeTime(float(self->timer.seconds()) + (float)timeout/1000);
+	cb->setNextInvokeTime(self->stopWatch.getFloat() + (float)timeout/1000);
 
 	self->timerCallbacks.insert(*cb);
 
@@ -120,7 +122,7 @@ JSBool setInterval(JSContext* cx, uintN argc, jsval* vp)
 	}
 
 	cb->interval = (float)interval/1000;
-	cb->setNextInvokeTime(float(self->timer.seconds()) + cb->interval);
+	cb->setNextInvokeTime(self->stopWatch.getFloat() + cb->interval);
 
 	self->timerCallbacks.insert(*cb);
 
@@ -494,7 +496,7 @@ void Window::dispatchEvent(Event* e)
 
 void Window::update()
 {
-	rhuint64 usSince1970 = Timer::microSecondsSince1970();
+	rhuint64 usSince1970 = microSecondsSince1970();
 
 	// Invoke animation request callbacks
 	for(FrameRequestCallback* cb = frameRequestCallbacks.begin(); cb != frameRequestCallbacks.end();)
@@ -507,7 +509,7 @@ void Window::update()
 		bk->removeThis();
 	}
 
-	float now = (float)timer.seconds();
+	float now = stopWatch.getFloat();
 
 	// Invoke timer callbacks
 	while(TimerCallback* cb = timerCallbacks.findMin())

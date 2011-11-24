@@ -3,6 +3,8 @@
 #include "rhlog.h"
 #include "platform.h"
 
+using namespace ro;
+
 TextResource::TextResource(const char* uri)
 	: Resource(uri)
 	, dataWithoutBOM(NULL)

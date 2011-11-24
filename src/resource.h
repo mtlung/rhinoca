@@ -4,7 +4,7 @@
 #include "intrusiveptr.h"
 #include "map.h"
 #include "rhstring.h"
-#include "taskpool.h"
+#include "../roar/base/roTaskPool.h"
 
 class Resource
 	// NOTE: No need to use atomic integer as the refCount if no worker thread
@@ -30,7 +30,7 @@ public:
 	enum State { NotLoaded, Loading, Ready, Loaded, Unloaded, Aborted };
 	State state;	///!< Important: changing of this value must be performed on main thread
 
-	TaskId taskReady, taskLoaded;
+	ro::TaskId taskReady, taskLoaded;
 
 	float hotness;	///!< For tracking resource usage and perform unload when resource is scarce
 
@@ -74,10 +74,10 @@ public:
 
 // Attributes
 	Rhinoca* rhinoca;
-	TaskPool* taskPool;
+	ro::TaskPool* taskPool;
 
 protected:
-	Mutex _mutex;
+	ro::Mutex _mutex;
 
 	struct Tuple { CreateFunc create; LoadFunc load; };
 	Tuple* _factories;

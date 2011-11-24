@@ -43,7 +43,7 @@ public:
 
 	AudioDevice* audioDevice;
 
-	TaskPool taskPool;
+	ro::TaskPool taskPool;
 	ResourceManager resourceManager;
 
 	/// Frame per second, averaged over several frames
@@ -53,7 +53,7 @@ public:
 	float frameTime;
 
 	/// Timer for calculation of FPS etc
-	Timer _timer;
+	ro::StopWatch _stopWatch;
 	float _lastFrameTime;
 
 	/// Parameter to tune how often we perform explicit GC.

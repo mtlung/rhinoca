@@ -336,6 +336,14 @@
 		<Filter
 			Name="base"
 			>
+			<File
+				RelativePath="..\..\test\base\roTaskPoolMergeSortTest.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\test\base\roTaskPoolTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="render"
@@ -415,14 +423,6 @@
 		</File>
 		<File
 			RelativePath="..\..\test\sockettest.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\test\taskpoolmergesorttest.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\test\taskpooltest.cpp"
 			>
 		</File>
 		<File

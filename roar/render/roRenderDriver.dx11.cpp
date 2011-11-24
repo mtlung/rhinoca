@@ -197,7 +197,7 @@ static void _setBlendState(roRDriverBlendState* state)
 	desc.RenderTarget[0].SrcBlendAlpha = _blendValue[state->alphaSrc];
 	desc.RenderTarget[0].DestBlendAlpha = _blendValue[state->alphaDst];
 	desc.RenderTarget[0].BlendOpAlpha = _blendOp[state->alphaOp];
-	desc.RenderTarget[0].RenderTargetWriteMask = _colorWriteMask[state->wirteMask];
+	desc.RenderTarget[0].RenderTargetWriteMask = num_cast<UINT8>(_colorWriteMask[state->wirteMask]);
 
 	ComPtr<ID3D11BlendState> s;
 	HRESULT hr = ctx->dxDevice->CreateBlendState(&desc, &s.ptr);
@@ -209,8 +209,8 @@ static void _setBlendState(roRDriverBlendState* state)
 
 	ctx->dxDeviceContext->OMSetBlendState(
 		s,
-		0,	// The blend factor, which to use with D3D11_BLEND_BLEND_FACTOR, but we didn't support it yet
-		-1	// Bit mask to do with the multi-sample, not used so set all bits to 1
+		0,			// The blend factor, which to use with D3D11_BLEND_BLEND_FACTOR, but we didn't support it yet
+		UINT8(-1)	// Bit mask to do with the multi-sample, not used so set all bits to 1
 	);
 }
 

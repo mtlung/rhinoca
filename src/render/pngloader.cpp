@@ -15,6 +15,7 @@
 // http://www.libpng.org/
 // http://www.libpng.org/pub/png/libpng-1.2.5-manual.html
 
+using namespace ro;
 using namespace Render;
 
 namespace Loader {

@@ -3,6 +3,8 @@
 #include "rhlog.h"
 #include <string.h>
 
+using namespace ro;
+
 Resource::Resource(const char* p)
 	: state(NotLoaded)
 	, taskReady(0), taskLoaded(0)

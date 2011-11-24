@@ -54,7 +54,7 @@ public:
 
 	~BipBuffer();
 
-	typedef void* (*Realloc)(void*, unsigned);
+	typedef void* (*Realloc)(void*, size_t);
 
 	/// Fail if there are outstanding reserved wirte
 	/// May fail if the new size is not large enough to fit committed write data.

@@ -134,7 +134,7 @@ void Rhinoca::update()
 	Render::Driver::useRenderTarget(NULL);
 
 	// FPS calculation
-	float currentTime = _timer.seconds();
+	float currentTime = _stopWatch.getFloat();
 	frameTime = currentTime - _lastFrameTime;
 	fps = (1.0f / frameTime) * 0.1f + fps * 0.9f;
 //	printf("\rfps: %f", fps);

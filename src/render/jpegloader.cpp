@@ -8,6 +8,7 @@
 #	pragma comment(lib, "SmallJpeg")
 #endif
 
+using namespace ro;
 using namespace Render;
 
 namespace Loader {
