@@ -8,13 +8,14 @@ inline roSize roStrLen(const char* str)
 
 inline char* roStrnCpy(char* dst, const char* src, roSize n)
 {
+	char* ret = dst;
 	for(roSize i=0; i<n; ++i) {
 		if(*src == 0) break;
 		*dst = *src;
 		++dst; ++src;
-	}	
+	}
 	*dst = 0;
-	return dst;
+	return ret;
 }
 
 inline int roStrCmp(const char* s1, const char* s2)

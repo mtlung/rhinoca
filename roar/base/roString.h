@@ -1,6 +1,7 @@
 #ifndef __roString_h__
 #define __roString_h__
 
+#include "roUtility.h"
 #include "../platform/roCompiler.h"
 
 namespace ro {
@@ -18,7 +19,7 @@ public:
 	String& operator=(const char* str);
 	String& operator=(const String& str);
 
-// Operations
+// Operations:
 	void resize(roSize size);
 
 	String& append(const char* str, roSize count);
@@ -41,7 +42,7 @@ public:
 
 	void swap(String& rhs);
 
-// Attributes
+// Attributes:
 	roSize size() const { return _length; }
 	bool empty() const { return _length == 0; }
 
@@ -53,11 +54,17 @@ public:
 
 	static const roSize npos = roSize(-1);
 
-protected:
+// Private:
 	char* _cstr;
 	roSize _length;
 };	// String
 
 }	// namespace ro
+
+inline void roSwap(ro::String& lsh, ro::String& rhs)
+{
+	roSwap(lsh._cstr, rhs._cstr);
+	roSwap(lsh._length, rhs._length);
+}
 
 #endif	// __roString_h__

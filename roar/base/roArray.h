@@ -21,6 +21,9 @@ template<class A> inline
 void arrayAppend(A& ary, const typename A::T& val);
 
 template<class A> inline
+void arrayAppendBySwap(A& ary, typename A::T& val);
+
+template<class A> inline
 void arrayInsert(A& ary, roSize idx, const typename A::T& val);
 
 template<class A> inline
@@ -101,6 +104,7 @@ public:
 	void resize(roSize newSize, const T& fill)	{ arrayResize(static_cast<Super&>(*this), newSize, fill); }
 
 	T& pushBack(const T& val)		{ arrayAppend(static_cast<Super&>(*this), val); return back(); }
+	T& pushBackBySwap(const T& val)	{ arrayAppendBySwap(static_cast<Super&>(*this), const_cast<T&>(val)); return back(); }
 
 	void remove(roSize i)			{ arrayRemove(static_cast<Super&>(*this), i); }
 	void removeBySwap(roSize i)		{ arrayRemoveBySwap(static_cast<Super&>(*this), i); }
@@ -134,18 +138,23 @@ public:
 	Array() {}
 	inline Array(const Array<T>& v);
 
-	inline ~Array() { arrayResize(*this, 0, T()); free(_data); }
+	inline ~Array() { arrayResize(*this, 0); free(_data); }
 
 	inline Array& operator=(const Array& rhs);
 
 // Operations
 	inline void insert(roSize idx, const T& val);
 
-	void setCapacity(roSize newSize)
+	void setCapacity(roSize newCapacity)
 	{
-		newSize = roMaxOf2(newSize, size());
-		_data = (T*)realloc(_data, newSize * sizeof(T));	// NOTE: Here we make the assumption that the object is bit-wise movable
-		_capacity = newSize;
+		newCapacity = roMaxOf2(newCapacity, size());
+
+		T* oldPtr = _data;
+		_data = (T*)realloc(_data, newCapacity * sizeof(T));	// NOTE: Here we make the assumption that the object is bit-wise movable
+
+		if(!TypeOf<T>::isPOD() && _data != oldPtr) for(roSize i=0; i<_size; ++i)	// Notify the object that it's memory is moved
+			roOnMemMove(_data[i], &_data[i]);
+		_capacity = newCapacity;
 	}
 };	// Array
 
@@ -156,7 +165,7 @@ public:
 	TinyArray() {}
 //	inline TinyArray(const TinyArray<T>& v);
 
-	inline ~TinyArray() { arrayResize(*this, 0, T()); free(_data); }
+	inline ~TinyArray() { arrayResize(*this, 0); free(_data); }
 
 	inline TinyArray& operator=(const TinyArray& rhs);
 
