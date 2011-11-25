@@ -17,7 +17,7 @@ struct ObjectTable
 		_freeListDeque = _nullIdx;
 	}
 
-// Operations:
+// Operations
 	roUint32 create()
 	{
 		roAssert(_index.size() < TypeOf<roUint16>::valueMax());
@@ -90,10 +90,10 @@ struct ObjectTable
 	T&			iterateAt(roSize idx)		{ return _objects[idx]._object; }
 	const T&	iterateAt(roSize idx) const	{ return _objects[idx]._object; }
 
-// Attributes:
+// Attributes
 	roUint16 size() const { return num_cast<roUint16>(_objects.size()); }
 
-// Private:
+// Private
 	struct _Index {
 		roUint32 id;
 		roUint16 objectIdx;

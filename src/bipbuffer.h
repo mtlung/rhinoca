@@ -60,7 +60,7 @@ public:
 	/// May fail if the new size is not large enough to fit committed write data.
 	bool init(void* buf, unsigned size, Realloc reallocFunc = NULL);
 
-// Operations:
+// Operations
 	/// Fail if you haven't give it a realloc function at the constructor.
 	bool reallocBuffer(unsigned buffersize);
 
@@ -84,7 +84,7 @@ public:
 	/// Make the buffer to it's initial state, while the allocated raw buffer is kept
 	void clear();
 
-// Attributes:
+// Attributes
 	/// Size of the raw buffer.
 	unsigned bufferSize() const { return _bufLen; }
 

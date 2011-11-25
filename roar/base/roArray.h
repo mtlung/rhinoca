@@ -81,6 +81,8 @@ public:
 	typedef T_ T;
 	typedef T* iterator;
 	typedef const T* const_iterator;
+	typedef T& reference;
+	typedef const T& const_reference;
 
 	IArray() : _size(0), _capacity(0), _data(NULL) {}
 
@@ -125,6 +127,7 @@ public:
 	roBytePtr bytePtr()				{ return _data; }
 	const roBytePtr bytePtr() const	{ return _data; }
 
+// Private
 	roSize _size;
 	roSize _capacity;
 	T* _data;
@@ -177,7 +180,28 @@ public:
 		newSize = roMaxOf2(newSize, size());
 		_data = (T*)realloc(_data, newSize * sizeof(T));	// NOTE: Here we make the assumption that the object is bit-wise movable
 		_capacity = newSize;
+
+		// Transit from dynamic to static
+/*		if(newSize <= PreAllocCount && PreAllocCount < _capacity) {
+			memcpy(_buffer, _data, sizeof(T) * _size);
+			rhdelete(_data);
+			_data = (T*)_buffer;
+			_capacity = PreAllocCount;
+		}
+		// Transit from static to dynamic
+		else {
+			_data = (_data == (T*)_buffer) ? NULL : _data;
+			_data = rhrenew(_data, _capacity, newSize);
+
+			if(_capacity == PreAllocCount)
+				memcpy(_data, _buffer, sizeof(T) * _size);
+
+			_capacity = newSize;
+		}*/
 	}
+
+// Private
+	char _buffer[PreAllocCount * sizeof(T)];
 };	// TinyArray
 
 /// An class that wrap around a raw pointer and tread it as an array of type T.

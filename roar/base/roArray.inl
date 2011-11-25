@@ -21,6 +21,11 @@ void roSwap(ro::TinyArray<T,N>& lhs, ro::TinyArray<T,N>& rhs)
 	roSwap(lhs._data, rhs._data);
 }
 
+template<class T, roSize N> inline
+void roOnMemMove(ro::TinyArray<T,N>& obj, void* newMemLocation)
+{
+}
+
 namespace ro {
 
 template<class A>

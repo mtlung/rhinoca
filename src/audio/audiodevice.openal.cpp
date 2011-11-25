@@ -115,14 +115,14 @@ struct AudioSound : public LinkListBase::Node<AudioSound>
 
 	~AudioSound();
 
-// Operations:
+// Operations
 	/// If success, return the index to AudioDevice::_alBuffers
 	int tryLoadNextBuffer();
 
 	void unqueueBuffer();
 	void unqueueAllBuffers();
 
-// Attributes:
+// Attributes
 	struct Active : public LinkListBase::Node<AudioSound::Active>
 	{
 		DECLAR_GET_OUTER_OBJ(AudioSound, activeListNode);
@@ -171,7 +171,7 @@ struct AudioDevice
 		alcDestroyContext(alContext);
 	}
 
-// Operations:
+// Operations
 	void makeContextCurrent()
 	{
 		alcMakeContextCurrent(alContext);
@@ -192,7 +192,7 @@ struct AudioDevice
 
 	void update();
 
-// Attributes:
+// Attributes
 	ALCcontext* alContext;
 
 	LinkList<AudioSound> _soundList;

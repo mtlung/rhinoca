@@ -19,7 +19,7 @@ public:
 	String& operator=(const char* str);
 	String& operator=(const String& str);
 
-// Operations:
+// Operations
 	void resize(roSize size);
 
 	String& append(const char* str, roSize count);
@@ -42,7 +42,7 @@ public:
 
 	void swap(String& rhs);
 
-// Attributes:
+// Attributes
 	roSize size() const { return _length; }
 	bool empty() const { return _length == 0; }
 
@@ -54,7 +54,7 @@ public:
 
 	static const roSize npos = roSize(-1);
 
-// Private:
+// Private
 	char* _cstr;
 	roSize _length;
 };	// String
