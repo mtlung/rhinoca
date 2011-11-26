@@ -6,13 +6,13 @@ namespace ro {
 
 #ifndef roUSE_PTHREAD
 
-Mutex::Mutex(int spinCount)
+Mutex::Mutex(unsigned spinCount)
 {
 	// If you see this static assert, please check the size of the CRITICAL_SECTION
 	roStaticAssert(sizeof(mMutex) == sizeof(CRITICAL_SECTION));
 
 	// Fall back to InitializeCriticalSection if InitializeCriticalSectionAndSpinCount didn't success
-	if(spinCount < 0 || !::InitializeCriticalSectionAndSpinCount((LPCRITICAL_SECTION)&mMutex, spinCount))
+	if(spinCount == 0 || !::InitializeCriticalSectionAndSpinCount((LPCRITICAL_SECTION)&mMutex, spinCount))
 		::InitializeCriticalSection((LPCRITICAL_SECTION)&mMutex);
 
 #if roDEBUG
@@ -59,13 +59,13 @@ bool Mutex::tryLock()
 		return false;
 }
 
-RecursiveMutex::RecursiveMutex(int spinCount)
+RecursiveMutex::RecursiveMutex(unsigned spinCount)
 {
 	// If you see this static assert, please check the size of the CRITICAL_SECTION
 	roStaticAssert(sizeof(mMutex) == sizeof(CRITICAL_SECTION));
 
 	// Fall back to InitializeCriticalSection if InitializeCriticalSectionAndSpinCount didn't success
-	if(spinCount < 0 || !::InitializeCriticalSectionAndSpinCount((LPCRITICAL_SECTION)&mMutex, spinCount))
+	if(spinCount == 0 || !::InitializeCriticalSectionAndSpinCount((LPCRITICAL_SECTION)&mMutex, spinCount))
 		::InitializeCriticalSection((LPCRITICAL_SECTION)&mMutex);
 
 #if roDEBUG

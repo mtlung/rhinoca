@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "resource.h"
-#include "rhlog.h"
+#include "../roar/base/roLog.h"
 #include <string.h>
 
 using namespace ro;
@@ -76,7 +76,7 @@ ResourcePtr ResourceManager::load(const char* uri)
 			r = _factories[i].create(uri, this);
 
 		if(!r) {
-			rhLog("error", "No loader for \"%s\" can be found\n", uri);
+			roLog("error", "No loader for \"%s\" can be found\n", uri);
 			return NULL;
 		}
 		RHVERIFY(_resources.insertUnique(*r));

@@ -4,7 +4,7 @@
 #include "color.h"
 #include "image.h"
 #include "imagedata.h"
-#include "../rhlog.h"
+#include "../../roar/base/roLog.h"
 #include "../mat44.h"
 #include "../vec3.h"
 #include "../render/vg/openvg.h"
@@ -91,7 +91,7 @@ static JSBool setStrokeStyle(JSContext* cx, JSObject* obj, jsid id, JSBool stric
 		if(c.parse(jss.c_str()))
 			self->setStrokeColor((float*)&c);
 		else {
-			rhLog("warn", "Fail to parse \"%s\" as a color\n", jss.c_str());
+			roLog("warn", "Fail to parse \"%s\" as a color\n", jss.c_str());
 			return JS_FALSE;
 		}
 	}
@@ -131,7 +131,7 @@ static JSBool setFillStyle(JSContext* cx, JSObject* obj, jsid id, JSBool strict,
 		if(c.parse(jss.c_str()))
 			self->setFillColor((float*)&c);
 		else {
-			rhLog("warn", "Fail to parse \"%s\" as a color\n", jss.c_str());
+			roLog("warn", "Fail to parse \"%s\" as a color\n", jss.c_str());
 			return JS_FALSE;
 		}
 	}

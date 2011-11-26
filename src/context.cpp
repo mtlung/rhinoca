@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "context.h"
 #include "loader.h"
-#include "rhlog.h"
+#include "../roar/base/roLog.h"
 #include "path.h"
 #include "platform.h"
 #include "rhinoca.h"
@@ -36,7 +36,7 @@
 
 void jsReportError(JSContext* cx, const char* message, JSErrorReport* report)
 {
-	rhLog("js", "JS %s: %s:%u\n%s\n",
+	roLog("js", "JS %s: %s:%u\n%s\n",
 		JSREPORT_IS_WARNING(report->flags) ? "warning" : "error",
 		report->filename ? report->filename : "<no filename>",
 		(unsigned int)report->lineno,
@@ -56,7 +56,7 @@ JSBool jsConsoleLog(JSContext* cx, uintN argc, jsval* vp)
 	JsString jss(cx, JS_ARGV0);
 	if(!jss) return JS_FALSE;
 
-	rhLog("js", "%s\n", jss.c_str());
+	roLog("js", "%s\n", jss.c_str());
 	return JS_TRUE;
 }
 

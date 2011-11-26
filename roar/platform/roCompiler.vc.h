@@ -58,5 +58,10 @@ typedef unsigned __int64 roUint64;
 // Force inline
 #define roFORCEINLINE __forceinline
 
+#ifndef _CRT_SECURE_NO_WARNINGS
+#	define _CRT_SECURE_NO_WARNINGS
+#endif
 #pragma warning(disable : 4100)	// unreferenced formal parameter
 #pragma warning(disable : 4127)	// conditional expression is constant
+#pragma warning(disable : 4514)	// unreferenced inline function has been removed
+#pragma warning(disable : 4668)	// is not defined as a preprocessor macro

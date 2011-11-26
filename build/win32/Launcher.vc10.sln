@@ -7,10 +7,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Rhinoca", "Rhinoca.vc10.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Test.vc10.vcxproj", "{CFD3B3A5-60C1-41CD-8B25-8F5869F24969}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Swf", "Swf.vc10.vcxproj", "{9C4027C0-ECE1-4685-9110-8F5A76119415}"
-	ProjectSection(ProjectDependencies) = postProject
-		{42A4219C-C856-470B-BF52-B20035575D91} = {42A4219C-C856-470B-BF52-B20035575D91}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Roar", "Roar.vc10.vcxproj", "{26651F8F-FC84-4DD1-A716-F3E7B659F28A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,10 +27,10 @@ Global
 		{CFD3B3A5-60C1-41CD-8B25-8F5869F24969}.Debug|Win32.Build.0 = Debug|Win32
 		{CFD3B3A5-60C1-41CD-8B25-8F5869F24969}.Release|Win32.ActiveCfg = Release|Win32
 		{CFD3B3A5-60C1-41CD-8B25-8F5869F24969}.Release|Win32.Build.0 = Release|Win32
-		{9C4027C0-ECE1-4685-9110-8F5A76119415}.Debug|Win32.ActiveCfg = Debug|Win32
-		{9C4027C0-ECE1-4685-9110-8F5A76119415}.Debug|Win32.Build.0 = Debug|Win32
-		{9C4027C0-ECE1-4685-9110-8F5A76119415}.Release|Win32.ActiveCfg = Release|Win32
-		{9C4027C0-ECE1-4685-9110-8F5A76119415}.Release|Win32.Build.0 = Release|Win32
+		{26651F8F-FC84-4DD1-A716-F3E7B659F28A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{26651F8F-FC84-4DD1-A716-F3E7B659F28A}.Debug|Win32.Build.0 = Debug|Win32
+		{26651F8F-FC84-4DD1-A716-F3E7B659F28A}.Release|Win32.ActiveCfg = Release|Win32
+		{26651F8F-FC84-4DD1-A716-F3E7B659F28A}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

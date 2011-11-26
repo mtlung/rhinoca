@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "roString.h"
 #include "roStringUtility.h"
+#include "roTypeCast.h"
 #include "roUtility.h"
 #include <malloc.h>
 #include <string.h>
@@ -122,7 +123,7 @@ String& String::erase(roSize offset, roSize count)
 	if(const roSize newLen = _length - count) {
 		char* a = _cstr + offset;
 		char* b = a + count;
-		memmove(a, b, _cstr + _length - b);
+		memmove(a, b, num_cast<roSize>(_cstr + _length - b));
 		_cstr = (char*)realloc(_length ? _cstr : NULL, newLen + 1);
 		_length = newLen;
 		_cstr[_length] = '\0';
@@ -160,7 +161,7 @@ roSize String::rfind(const char* str, roSize offset) const
 
 	for(char* s = _cstr + l1 - l2; s >= _cstr; --s)
 		if(roStrnCmp(s, str, l2) == 0)
-			return s - _cstr;
+			return num_cast<roSize>(s - _cstr);
 	return npos;
 }
 

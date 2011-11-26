@@ -3,7 +3,7 @@
 #include "assert.h"
 #include "context.h"
 #include "httpstream.h"
-#include "rhlog.h"
+#include "../roar/base/roLog.h"
 #include "socket.h"
 #include "audio/audiodevice.h"
 #include "render/driver.h"
@@ -90,7 +90,7 @@ Rhinoca* currentContext = NULL;
 void rhinoca_openDocument(Rhinoca* rh, const char* uri)
 {
 	if(!rh->openDoucment(uri))
-		rhLog("error", "Fail to load '%s'\n", uri);
+		roLog("error", "Fail to load '%s'\n", uri);
 }
 
 void rhinoca_closeDocument(Rhinoca* rh)
@@ -224,7 +224,7 @@ struct OpenDirContext
 	}
 
 	HANDLE handle;
-	WIN32_FIND_DATA data;
+	WIN32_FIND_DATAW data;
 #endif
 
 	PreAllocVector<char, 128> str;
@@ -290,7 +290,7 @@ static void* default_ioOpenDir(Rhinoca* rh, const char* uri)
 
 		// Skip the ./ and ../
 		while(::wcscmp(c->data.cFileName, L".") == 0 || ::wcscmp(c->data.cFileName, L"..") == 0) {
-			if(!FindNextFile(h, &(c->data))) {
+			if(!FindNextFileW(h, &(c->data))) {
 				c->data.cFileName[0] = L'\0';
 				break;
 			}

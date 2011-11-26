@@ -52,10 +52,10 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)$(ProjectName)d.exe</OutputFile>
@@ -70,7 +70,6 @@
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
@@ -90,10 +89,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\..\test\render\roGraphicsDriverTest.cpp" />
     <ClCompile Include="..\..\test\resourcetest.cpp" />
-    <ClCompile Include="..\..\test\swfparsingtest.cpp" />
-    <ClCompile Include="..\..\test\taskpoolmergesorttest.cpp" />
-    <ClCompile Include="..\..\test\taskpooltest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\test\pch.h" />
@@ -101,6 +98,9 @@
   <ItemGroup>
     <ProjectReference Include="Rhinoca.vc10.vcxproj">
       <Project>{42a4219c-c856-470b-bf52-b20035575d91}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Roar.vc10.vcxproj">
+      <Project>{26651f8f-fc84-4dd1-a716-f3e7b659f28a}</Project>
     </ProjectReference>
     <ProjectReference Include="Swf.vc10.vcxproj">
       <Project>{9c4027c0-ece1-4685-9110-8f5a76119415}</Project>

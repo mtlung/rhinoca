@@ -14,8 +14,8 @@ class Mutex : private NonCopyable
 {
 public:
 	/// Construct a mutex with an optional spin count.
-	/// Use spinCount = -1 to disable spinning.
-	explicit Mutex(int spinCount = 200);
+	/// Use spinCount = 0 to disable spinning.
+	explicit Mutex(unsigned spinCount = 200);
 	~Mutex();
 
 	void lock();
@@ -50,8 +50,8 @@ class RecursiveMutex : private NonCopyable
 {
 public:
 	/// Construct a recursive mutex with an optional spin count.
-	/// Use spinCount = -1 to disable spinning.
-	explicit RecursiveMutex(int spintCount = 200);
+	/// Use spinCount = 0 to disable spinning.
+	explicit RecursiveMutex(unsigned spintCount = 200);
 	~RecursiveMutex();
 
 	void lock();
