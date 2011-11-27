@@ -1,9 +1,11 @@
 #include "pch.h"
 #include "rhstring.h"
 #include "atomic.h"
-#include "mutex.h"
+#include "../roar/base/roMutex.h"
 #include "vector.h"
 #include <string.h>
+
+using namespace ro;
 
 void tolower(char* str)
 {

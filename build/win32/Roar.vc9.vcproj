@@ -315,6 +315,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roMemory.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roMemory.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roMutex.cpp"
 				>
 			</File>

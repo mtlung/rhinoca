@@ -58,6 +58,10 @@ typedef unsigned __int64 roUint64;
 // Force inline
 #define roFORCEINLINE __forceinline
 
+// Printf style compiler check
+#define roPRINTF_FORMAT_PARAM _In_z_ _Printf_format_string_
+#define roPRINTF_ATTRIBUTE(param1, param2)
+
 #ifndef _CRT_SECURE_NO_WARNINGS
 #	define _CRT_SECURE_NO_WARNINGS
 #endif

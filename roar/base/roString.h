@@ -42,6 +42,8 @@ public:
 
 	void swap(String& rhs);
 
+	void sprintf(const char* format, ...);
+
 // Attributes
 	roSize size() const { return _length; }
 	bool empty() const { return _length == 0; }

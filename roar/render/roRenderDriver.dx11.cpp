@@ -397,7 +397,7 @@ static StagingBuffer* _getStagingBuffer(roRDriverContextImpl* ctx, void* initDat
 			0, D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE, 0, 0
 		};
 
-		ret = &arrayIncSize(ctx->stagingBufferCache);
+		ret = &ctx->stagingBufferCache.pushBack();
 		hr = ctx->dxDevice->CreateBuffer(&stagingBufferDesc, NULL, &ret->dxBuffer.ptr);
 		if(FAILED(hr) || !ret->dxBuffer)
 			return NULL;
@@ -633,7 +633,7 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, unsigned ro
 
 		if(!staging) {
 			// Cache miss, create new one
-			staging = &arrayIncSize(ctx->stagingTextureCache);
+			staging = &ctx->stagingTextureCache.pushBack();
 
 			HRESULT hr = ctx->dxDevice->CreateTexture2D(&desc, NULL, (ID3D11Texture2D**)&staging->dxTexture.ptr);
 

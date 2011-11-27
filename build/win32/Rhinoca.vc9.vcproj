@@ -868,14 +868,6 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\src\mutex.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\mutex.h"
-			>
-		</File>
-		<File
 			RelativePath="..\..\src\noncopyable.h"
 			>
 		</File>

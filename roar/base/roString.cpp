@@ -1,13 +1,14 @@
 #include "pch.h"
 #include "roString.h"
 #include "roStringUtility.h"
+#include "roMemory.h"
 #include "roTypeCast.h"
 #include "roUtility.h"
-#include <malloc.h>
 #include <string.h>
 
 namespace ro {
 
+static roDefaultAllocator _allocator;
 static const char* _emptyString = "";
 
 String::String()
@@ -21,7 +22,7 @@ String::String(const char* str)
 	_length = roStrLen(str);
 
 	if(_length) {
-		_cstr = (char*)malloc(_length + 1);
+		_cstr = _allocator.malloc(_length + 1);
 		roVerify(roStrnCpy(_cstr, str, _length) == _cstr);
 		_cstr[_length] = '\0';
 	}
@@ -35,7 +36,7 @@ String::String(const char* str, roSize count)
 	_length = count;
 
 	if(_length) {
-		_cstr = (char*)malloc(_length + 1);
+		_cstr = _allocator.malloc(_length + 1);
 		roVerify(roStrnCpy(_cstr, str, _length) == _cstr);
 		_cstr[_length] = '\0';
 	}
@@ -48,7 +49,7 @@ String::String(const String& str)
 	_length = str._length;
 
 	if(_length) {
-		_cstr = (char*)malloc(_length + 1);
+		_cstr = _allocator.malloc(_length + 1);
 		roVerify(roStrnCpy(_cstr, str._cstr, _length) == _cstr);
 		_cstr[_length] = '\0';
 	}
@@ -59,7 +60,7 @@ String::String(const String& str)
 String::~String()
 {
 	if(_length > 0)
-		free(_cstr);
+		_allocator.free(_cstr);
 }
 
 String& String::operator=(const char* str)
@@ -81,7 +82,7 @@ void String::resize(roSize size)
 	if(size == 0)
 		clear();
 	else {
-		_cstr = (char*)realloc(_length ? _cstr : NULL, size + 1);
+		_cstr = _allocator.realloc(_length ? _cstr : NULL, _length + 1, size + 1);
 		_length = size;
 		_cstr[_length] = '\0';
 	}
@@ -91,7 +92,7 @@ String& String::append(const char* str, roSize count)
 {
 	if(count > 0) {
 		if(str[count - 1] == '\0') --count;	// Don't copy the null terminator, we will explicitly put one
-		_cstr = (char*)realloc(_length ? _cstr : NULL, _length + count + 1);
+		_cstr = _allocator.realloc(_length ? _cstr : NULL, _length + 1, _length + count + 1);
 		memcpy(_cstr + _length, str, count);
 		_length += count;
 		_cstr[_length] = '\0';
@@ -124,7 +125,7 @@ String& String::erase(roSize offset, roSize count)
 		char* a = _cstr + offset;
 		char* b = a + count;
 		memmove(a, b, num_cast<roSize>(_cstr + _length - b));
-		_cstr = (char*)realloc(_length ? _cstr : NULL, newLen + 1);
+		_cstr = _allocator.realloc(_length ? _cstr : NULL, _length + 1, newLen + 1);
 		_length = newLen;
 		_cstr[_length] = '\0';
 	}
@@ -175,7 +176,7 @@ String String::substr(roSize offset, roSize count) const
 String& String::operator+=(const char* str)
 {
 	if(const roSize len = roStrLen(str)) {
-		_cstr = (char*)realloc(_length ? _cstr : NULL, _length + len + 1);
+		_cstr = _allocator.realloc(_length ? _cstr : NULL, _length + 1, _length + len + 1);
 		roVerify(strcat(_cstr, str) == _cstr);
 		_length += len;
 	}
@@ -185,7 +186,7 @@ String& String::operator+=(const char* str)
 String& String::operator+=(const String& str)
 {
 	if(!str.empty()) {
-		_cstr = (char*)realloc(_length ? _cstr : NULL, _length + str._length + 1);
+		_cstr = _allocator.realloc(_length ? _cstr : NULL, _length + 1, _length + str._length + 1);
 		roVerify(strcat(_cstr, str._cstr) == _cstr);
 		_length += str._length;
 	}

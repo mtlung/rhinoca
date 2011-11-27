@@ -2,41 +2,17 @@
 #define __roArray_h__
 
 #include "roBytePtr.h"
+#include "roMemory.h"
 #include "roTypeOf.h"
 #include "roUtility.h"
 
-#include <malloc.h>
-
 namespace ro {
 
-/// Generic functions for operate on different kind of array classes
-
-template<class A> inline
-void arrayResize(A& ary, roSize newSize);
-
-template<class A> inline
-void arrayResize(A& ary, roSize newSize, const typename A::T& fill);
-
-template<class A> inline
-void arrayAppend(A& ary, const typename A::T& val);
-
-template<class A> inline
-void arrayAppendBySwap(A& ary, typename A::T& val);
-
-template<class A> inline
-void arrayInsert(A& ary, roSize idx, const typename A::T& val);
-
-template<class A> inline
-void arrayRemove(A& ary, roSize idx);
-
-template<class A> inline
-void arrayRemoveBySwap(A& ary, roSize idx);
-
-template<class T> inline
-T* arrayFind(T* begin, roSize count, const T& val);
-
-template<class T> inline
+template<class T>
 T* arrayFind(T* begin, T* end, const T& val);
+
+template<class T>
+T* arrayFind(T* begin, roSize count, const T& val);
 
 /// Array class with static size.
 /// A replacement for plan old array, the index operator[] has range check in debug mode.
@@ -44,40 +20,35 @@ template<class T, roSize N_>
 struct StaticArray
 {
 	enum { N = N_ };
-	T data[N];	///< Fixed-size array of elements of type T
+	T data[N];		///< Fixed-size array of elements of type T
 
-	T& operator[](roSize i)				{ roAssert(i < N); return data[i]; }
-	const T& operator[](roSize i) const	{ roAssert(i < N); return data[i]; }
+	T&				operator[](roSize i)		{ roAssert(i < N); return data[i]; }
+	const T&		operator[](roSize i) const	{ roAssert(i < N); return data[i]; }
 
-	T& front()				{ return data[0]; }
-	const T& front() const	{ return data[0]; }
+	T&				front()						{ return data[0]; }
+	const T&		front() const				{ return data[0]; }
 
-	T& back()				{ return data[N-1]; }
-	const T& back() const	{ return data[N-1]; }
+	T&				back()						{ return data[N-1]; }
+	const T&		back() const				{ return data[N-1]; }
 
-	roSize size() const		{ return N; }
-	roSize byteSize() const	{ return sizeof(data); }
+	roSize			size() const				{ return N; }
+	roSize			byteSize() const			{ return sizeof(data); }
 
-	T* typedPtr()					{ return data; }
-	const T* typedPtr() const		{ return data; }
+	T*				typedPtr()					{ return data; }
+	const T*		typedPtr() const			{ return data; }
 
-	roBytePtr bytePtr()				{ return data; }
-	const roBytePtr bytePtr() const	{ return data; }
+	roBytePtr		bytePtr()					{ return data; }
+	const roBytePtr	bytePtr() const				{ return data; }
 
-	/// Assign one value to all elements
-	void assign(const T& value) {
-		for(roSize i=0; i<size(); ++i)
-			data[i] = value;
-	}
+	void			assign(const T& fill);		///< Assign one value to all elements
 
 	roStaticAssert(N_ > 0);
 };	// StaticArray
 
 /// Interface for common dynamic array operations
 template<class T_, class Super>
-class IArray
+struct IArray
 {
-public:
 	typedef T_ T;
 	typedef T* iterator;
 	typedef const T* const_iterator;
@@ -87,45 +58,50 @@ public:
 	IArray() : _size(0), _capacity(0), _data(NULL) {}
 
 // Operations
-	bool isEmpty() const	{ return (_size <= 0); }
+	bool		isEmpty() const					{ return (_size <= 0); }
 
-	T& front()				{ roAssert(_size > 0); return _data[0]; }
-	const T& front() const	{ roAssert(_size > 0); return _data[0]; }
+	T&			front()							{ roAssert(_size > 0); return _data[0]; }
+	const T&	front() const					{ roAssert(_size > 0); return _data[0]; }
 
-	T& back(roSize i=0)				{ roAssert(_size > 0); return _data[_size - i - 1]; }
-	const T& back(roSize i=0) const	{ roAssert(_size > 0); return _data[_size - i - 1]; }
+	T&			back(roSize i=0)				{ roAssert(_size > 0); return _data[_size - i - 1]; }
+	const T&	back(roSize i=0) const			{ roAssert(_size > 0); return _data[_size - i - 1]; }
 
-	T& operator[](roSize idx)				{ roAssert(idx < _size); return _data[idx]; }
-	const T& operator[](roSize idx) const	{ roAssert(idx < _size); return _data[idx]; }
+	T&			operator[](roSize idx)			{ roAssert(idx < _size); return _data[idx]; }
+	const T&	operator[](roSize idx) const	{ roAssert(idx < _size); return _data[idx]; }
 
-	void popBack()					{ roAssert(_size > 0); _size--; _data[_size].~T(); }
+	void		swap(IArray& rhs)				{ roSwap(_size, rhs._size); roSwap(_capacity, rhs._capacity); roSwap(_data, rhs._data); }
 
-	void swap(IArray& rhs)			{ roSwap(_size, rhs._size); roSwap(_capacity, rhs._capacity); roSwap(_data, rhs._data); }
+	void		copy(const Super& src);
 
-	void resize(roSize newSize)					{ arrayResize(static_cast<Super&>(*this), newSize); }
-	void resize(roSize newSize, const T& fill)	{ arrayResize(static_cast<Super&>(*this), newSize, fill); }
+	void		resize(roSize newSize, const T& fill=T());
+	void		clear();
+	void		condense();
 
-	T& pushBack(const T& val)		{ arrayAppend(static_cast<Super&>(*this), val); return back(); }
-	T& pushBackBySwap(const T& val)	{ arrayAppendBySwap(static_cast<Super&>(*this), const_cast<T&>(val)); return back(); }
+	T&			pushBack(const T& val=T());
+	T&			pushBackBySwap(const T& val);
+	T&			insert(roSize idx, const T& val);
 
-	void remove(roSize i)			{ arrayRemove(static_cast<Super&>(*this), i); }
-	void removeBySwap(roSize i)		{ arrayRemoveBySwap(static_cast<Super&>(*this), i); }
+	void		popBack();
+	void		remove(roSize i);
+	void		removeBySwap(roSize i);
+
+	T*			find(const T& val) const;
 
 // Attributes
-	iterator begin()				{ return _data; }
-	const_iterator begin() const	{ return _data; }
+	iterator		begin()				{ return _data; }
+	const_iterator	begin() const		{ return _data; }
 
-	iterator end()					{ return _data + _size; }
-	const_iterator end() const		{ return _data + _size; }
+	iterator		end()				{ return _data + _size; }
+	const_iterator	end() const			{ return _data + _size; }
 
-	roSize size() const				{ return _size; }
-	roSize capacity() const			{ return _capacity; }
+	roSize			size() const		{ return _size; }
+	roSize			capacity() const	{ return _capacity; }
 
-	T* typedPtr()					{ return _data; }
-	const T* typedPtr() const		{ return _data; }
+	T*				typedPtr()			{ return _data; }
+	const T*		typedPtr() const	{ return _data; }
 
-	roBytePtr bytePtr()				{ return _data; }
-	const roBytePtr bytePtr() const	{ return _data; }
+	roBytePtr		bytePtr()			{ return _data; }
+	const roBytePtr	bytePtr() const		{ return _data; }
 
 // Private
 	roSize _size;
@@ -139,66 +115,27 @@ class Array : public IArray<T, Array<T> >
 {
 public:
 	Array() {}
-	inline Array(const Array<T>& v);
-
-	inline ~Array() { arrayResize(*this, 0); free(_data); }
-
-	inline Array& operator=(const Array& rhs);
+	Array(const Array<T>& src)			{ copy(src); }
+	~Array()							{ clear(); roFree(_data); }
+	Array&	operator=(const Array& rhs) { copy(rhs); }
 
 // Operations
-	inline void insert(roSize idx, const T& val);
-
-	void setCapacity(roSize newCapacity)
-	{
-		newCapacity = roMaxOf2(newCapacity, size());
-
-		T* oldPtr = _data;
-		_data = (T*)realloc(_data, newCapacity * sizeof(T));	// NOTE: Here we make the assumption that the object is bit-wise movable
-
-		if(!TypeOf<T>::isPOD() && _data != oldPtr) for(roSize i=0; i<_size; ++i)	// Notify the object that it's memory is moved
-			roOnMemMove(_data[i], &_data[i]);
-		_capacity = newCapacity;
-	}
+	inline void setCapacity(roSize newCapacity);
 };	// Array
 
 template<class T, roSize PreAllocCount>
 class TinyArray : public IArray<T, TinyArray<T,PreAllocCount> >
 {
 public:
-	TinyArray() {}
-//	inline TinyArray(const TinyArray<T>& v);
-
-	inline ~TinyArray() { arrayResize(*this, 0); free(_data); }
-
-	inline TinyArray& operator=(const TinyArray& rhs);
+	TinyArray()										{ _data = (T*)_buffer; _capacity = PreAllocCount; }
+	TinyArray(const TinyArray<T,PreAllocCount>& v)	{ _data = (T*)_buffer; _capacity = PreAllocCount;  copy(v); }
+	~TinyArray()									{ clear(); if(_data != (T*)_buffer) roFree(_data); }
+	TinyArray& operator=(const TinyArray& rhs)		{ copy(rhs); }
 
 // Operations
 	inline void insert(roSize idx, const T& val);
 
-	void setCapacity(roSize newSize)
-	{
-		newSize = roMaxOf2(newSize, size());
-		_data = (T*)realloc(_data, newSize * sizeof(T));	// NOTE: Here we make the assumption that the object is bit-wise movable
-		_capacity = newSize;
-
-		// Transit from dynamic to static
-/*		if(newSize <= PreAllocCount && PreAllocCount < _capacity) {
-			memcpy(_buffer, _data, sizeof(T) * _size);
-			rhdelete(_data);
-			_data = (T*)_buffer;
-			_capacity = PreAllocCount;
-		}
-		// Transit from static to dynamic
-		else {
-			_data = (_data == (T*)_buffer) ? NULL : _data;
-			_data = rhrenew(_data, _capacity, newSize);
-
-			if(_capacity == PreAllocCount)
-				memcpy(_data, _buffer, sizeof(T) * _size);
-
-			_capacity = newSize;
-		}*/
-	}
+	inline void setCapacity(roSize newSize);
 
 // Private
 	char _buffer[PreAllocCount * sizeof(T)];
@@ -223,18 +160,14 @@ public:
 		: data(rhs.data), size(rhs.size), stride(rhs.stride)
 	{}
 
-	T& operator[](roSize i) const
-	{
-		roAssert(i < size);
-		return *(data + i*stride).cast<T>();
-	}
+	T&			operator[](roSize i) const	{ roAssert(i < size); return *(data + i*stride).cast<T>(); }
 
-	T* typedPtr() const			{ return data.cast<T>(); }
-	roBytePtr bytePtr() const	{ return data; }
+	T*			typedPtr() const			{ return data.cast<T>(); }
+	roBytePtr	bytePtr() const				{ return data; }
 
-	roSize byteSize() const		{ return size * stride; }
+	roSize		byteSize() const			{ return size * stride; }
 
-	bool isEmpty() const		{ return !data || size == 0 || stride == 0; }
+	bool		isEmpty() const				{ return !data || size == 0 || stride == 0; }
 
 	roBytePtr data;
 	roSize size;	///< Element count.
@@ -262,17 +195,13 @@ public:
 #endif
 	{}
 
-	T& operator[](roSize i) const
-	{
-		roAssert(i < size);
-		return *(data + i*stride_).cast<T>();
-	}
+	T&			operator[](roSize i) const	{ roAssert(i < size); return *(data + i*stride_).cast<T>(); }
 
-	T* typedPtr() const { return data.cast<T>(); }
-	roBytePtr bytePtr() const { return data; }
+	T*			typedPtr() const			{ return data.cast<T>(); }
+	roBytePtr	bytePtr() const				{ return data; }
 
-	roSize stride() const { return stride_; }
-	roSize byteSize() const { return size * stride_; }
+	roSize		stride() const				{ return stride_; }
+	roSize		byteSize() const			{ return size * stride_; }
 
 	roBytePtr data;
 	roSize size;	///< Element count.

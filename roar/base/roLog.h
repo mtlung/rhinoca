@@ -1,22 +1,14 @@
 #ifndef __roLog_h__
 #define __roLog_h__
 
+#include "../platform/roCompiler.h"
 #include <stdarg.h>
 
-#if _MSC_VER >= 1500
-
-#include <sal.h>
-void roLog(const char* type, _In_z_ _Printf_format_string_ const char* format, ...);
-
-#elif __GNUC__ >= 4
-
-void roLog(const char* type, const char* format, ...) __attribute__((format(printf, 2, 3)));
-
-#else
-
-void roLog(const char* type, const char* format, ...);
-
+#if roCOMPILER_VC
+#	include <sal.h>
 #endif
+
+void roLog(const char* type, roPRINTF_FORMAT_PARAM const char* format, ...) roPRINTF_ATTRIBUTE(2,3);
 
 typedef void (*RoLogFunc)(const char* type, const char* format, va_list ap);
 

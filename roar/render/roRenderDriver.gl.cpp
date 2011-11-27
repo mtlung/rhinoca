@@ -1070,7 +1070,7 @@ bool _bindShaders(roRDriverShader** shaders, unsigned shaderCount)
 	checkError();
 
 	if(!program) {
-		ctx->shaderProgramCache.resize(ctx->shaderProgramCache.size() + 1);
+		ctx->shaderProgramCache.pushBack();
 		program = &ctx->shaderProgramCache.back();
 		_initShaderProgram(program, shaders, shaderCount);
 	}

@@ -14,6 +14,7 @@
     <ClInclude Include="..\..\roar\base\roArray.h" />
     <ClInclude Include="..\..\roar\base\roBytePtr.h" />
     <ClInclude Include="..\..\roar\base\roLog.h" />
+    <ClInclude Include="..\..\roar\base\roMemory.h" />
     <ClInclude Include="..\..\roar\base\roMutex.h" />
     <ClInclude Include="..\..\roar\base\roNonCopyable.h" />
     <ClInclude Include="..\..\roar\base\roObjectTable.h" />
@@ -38,6 +39,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\roar\base\roLog.cpp" />
+    <ClCompile Include="..\..\roar\base\roMemory.cpp" />
     <ClCompile Include="..\..\roar\base\roMutex.cpp" />
     <ClCompile Include="..\..\roar\base\roStopWatch.cpp" />
     <ClCompile Include="..\..\roar\base\roString.cpp" />
