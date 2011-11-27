@@ -1,7 +1,11 @@
 #include "pch.h"
 #include "roString.h"
 #include "roStringUtility.h"
+#include "roArray.h"
+#include "roAtomic.h"
 #include "roMemory.h"
+#include "roMutex.h"
+#include "roStringUtility.h"
 #include "roTypeCast.h"
 #include "roUtility.h"
 #include <string.h>
@@ -66,14 +70,14 @@ String::~String()
 String& String::operator=(const char* str)
 {
 	String tmp(str);
-	this->swap(tmp);
+	roSwap(*this, tmp);
 	return *this;
 }
 
 String& String::operator=(const String& str)
 {
 	String tmp(str);
-	this->swap(tmp);
+	roSwap(*this, tmp);
 	return *this;
 }
 
@@ -185,7 +189,7 @@ String& String::operator+=(const char* str)
 
 String& String::operator+=(const String& str)
 {
-	if(!str.empty()) {
+	if(!str.isEmpty()) {
 		_cstr = _allocator.realloc(_length ? _cstr : NULL, _length + 1, _length + str._length + 1);
 		roVerify(strcat(_cstr, str._cstr) == _cstr);
 		_length += str._length;
@@ -193,10 +197,229 @@ String& String::operator+=(const String& str)
 	return *this;
 }
 
-void String::swap(String& rhs)
+
+// ----------------------------------------------------------------------
+
+struct ConstString::Node
 {
-	roSwap(_cstr, rhs._cstr);
-	roSwap(_length, rhs._length);
+	StringHash hash;
+	StringHash lowerCaseHash;
+	Node* next;
+	AtomicInteger refCount;
+	roSize size;	///< Length of the string
+	const char* stringValue() const { return reinterpret_cast<const char*>(this + 1); }
+};	// Node
+
+struct ConstStringHashTable
+{
+	typedef ConstString::Node Node;
+
+	ConstStringHashTable() : _count(0), _buckets(1,NULL), _nullNode(add(""))
+	{
+		++_nullNode.refCount;
+	}
+
+	~ConstStringHashTable()
+	{
+		remove(_nullNode);
+		roAssert(_count == 0 && "All instance of ConstString should be destroyed before ConstStringHashTable");
+	}
+
+	Node& find(StringHash hash) const
+	{
+		ScopeLock lock(mMutex);
+
+		const roSize index = hash % _buckets.size();
+		for(Node* n = _buckets[index]; n; n = n->next) {
+			if(n->hash != hash)
+				continue;
+			return *n;
+		}
+		return _nullNode;
+	}
+
+	Node& add(const char* str)
+	{
+		if(!str)
+			return _nullNode;
+
+		const StringHash hash = stringHash(str, 0);
+
+		ScopeLock lock(mMutex);
+		const roSize index = hash % _buckets.size();
+
+		// Find any string with the same hash value
+		for(Node* n = _buckets[index]; n; n = n->next) {
+			if(n->hash == hash) {
+				roAssert(strcmp(n->stringValue(), str) == 0 && "String hash collision in ConstString" );
+				return *n;
+			}
+		}
+
+		const roSize length = roStrLen(str) + 1;
+		if(Node* n = _allocator.malloc(sizeof(Node) + length).cast<Node>()) {
+			memcpy((void*)n->stringValue(), str, length);
+			n->hash = hash;
+			n->lowerCaseHash = 0;	// We will assign it lazily
+			n->refCount = 0;
+			n->size = length - 1;
+
+			n->next = _buckets[index];
+			_buckets[index] = n;
+			++_count;
+
+			// Enlarge the bucket if necessary
+			if(_count * 2 > _buckets.size() * 3)
+				resizeBucket(_buckets.size() * 2);
+
+			return *n;
+		}
+		return _nullNode;
+	}
+
+	void remove(Node& node)
+	{
+		if(--node.refCount != 0)
+			return;
+
+		ScopeLock lock(mMutex);
+		const roSize index = node.hash % _buckets.size();
+		Node* last = NULL;
+
+		for(Node* n = _buckets[index]; n; last = n, n = n->next) {
+			if(n->hash == node.hash) {
+				if(last)
+					last->next = n->next;
+				else
+					_buckets[index] = n->next;
+				_allocator.free(n);
+				--_count;
+				return;
+			}
+		}
+		roAssert(false);
+	}
+
+	void resizeBucket(roSize bucketSize)
+	{
+		Array<Node*> newBuckets(bucketSize, NULL);
+
+		roAssert(mMutex.isLocked());
+		for(roSize i=0; i<_buckets.size(); ++i) {
+			for(Node* n = _buckets[i]; n; ) {
+				Node* next = n->next;
+				const roSize index = n->hash % bucketSize;
+				n->next = newBuckets[index];
+				newBuckets[index] = n;
+				n = next;
+			}
+		}
+
+		roSwap(_buckets, newBuckets);
+	}
+
+	mutable Mutex mMutex;
+	roSize _count;	///< The actual number of elements in this table, can be <=> _buckets.size()
+	Array<Node*> _buckets;
+	Node& _nullNode;
+};	// ConstStringHashTable
+
+static ConstStringHashTable& _constStringHashTable()
+{
+	static ConstStringHashTable singleton;
+	return singleton;
 }
 
-}	// namespace
+ConstString::ConstString()
+	: _node(&_constStringHashTable().add(""))
+{
+	++_node->refCount;
+#if roDEBUG
+	_debugStr = c_str();
+#endif
+}
+
+ConstString::ConstString(const char* str)
+	: _node(&_constStringHashTable().add(str))
+{
+	++_node->refCount;
+#if roDEBUG
+	_debugStr = c_str();
+#endif
+}
+
+ConstString::ConstString(StringHash hash)
+	: _node(&_constStringHashTable().find(hash))
+{
+	++_node->refCount;
+#if roDEBUG
+	_debugStr = c_str();
+#endif
+}
+
+ConstString::ConstString(const ConstString& rhs)
+	: _node(rhs._node)
+{
+	++_node->refCount;
+#if roDEBUG
+	_debugStr = c_str();
+#endif
+}
+
+ConstString::~ConstString() {
+	_constStringHashTable().remove(*_node);
+}
+
+ConstString& ConstString::operator=(const char* rhs)
+{
+	ConstString tmp(rhs);
+	return *this = tmp;
+}
+
+ConstString& ConstString::operator=(const ConstString& rhs)
+{
+	_constStringHashTable().remove(*_node);
+	_node = rhs._node;
+	++_node->refCount;
+#if roDEBUG
+	_debugStr = c_str();
+#endif
+	return *this;
+}
+
+ConstString& ConstString::operator=(const StringHash& stringHash)
+{
+	ConstString tmp(stringHash);
+	return *this = tmp;
+}
+
+const char* ConstString::c_str() const {
+	return _node->stringValue();
+}
+
+StringHash ConstString::hash() const {
+	return _node->hash;
+}
+
+StringHash ConstString::lowerCaseHash() const
+{
+	if(_node->lowerCaseHash == 0)
+		_node->lowerCaseHash = stringLowerCaseHash(_node->stringValue(), _node->size);
+
+	return _node->lowerCaseHash;
+}
+
+unsigned ConstString::size() const {
+	return _node->size;
+}
+
+bool ConstString::isEmpty() const {
+	return *_node->stringValue() == '\0';
+}
+
+bool ConstString::operator==(const StringHash& rhs) const	{ return hash() == rhs; }
+bool ConstString::operator==(const ConstString& rhs) const	{ return hash() == rhs.hash(); }
+bool ConstString::operator> (const ConstString& rhs) const	{ return hash() > rhs.hash(); }
+bool ConstString::operator< (const ConstString& rhs) const	{ return hash() < rhs.hash(); }
+
+}	// namespace ro

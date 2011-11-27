@@ -303,6 +303,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roAtomic.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roBytePtr.h"
 				>
 			</File>

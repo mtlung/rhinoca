@@ -14,6 +14,9 @@ T* arrayFind(T* begin, T* end, const T& val);
 template<class T>
 T* arrayFind(T* begin, roSize count, const T& val);
 
+
+// ----------------------------------------------------------------------
+
 /// Array class with static size.
 /// A replacement for plan old array, the index operator[] has range check in debug mode.
 template<class T, roSize N_>
@@ -44,6 +47,9 @@ struct StaticArray
 
 	roStaticAssert(N_ > 0);
 };	// StaticArray
+
+
+// ----------------------------------------------------------------------
 
 /// Interface for common dynamic array operations
 template<class T_, class Super>
@@ -109,12 +115,15 @@ struct IArray
 	T* _data;
 };	// IArray
 
+
+// ----------------------------------------------------------------------
+
 /// Dynamic array in it's standard form (similar to std::vector)
 template<class T>
-class Array : public IArray<T, Array<T> >
+struct Array : public IArray<T, Array<T> >
 {
-public:
 	Array() {}
+	Array(roSize size, const T& val)	{ resize(size, val); }
 	Array(const Array<T>& src)			{ copy(src); }
 	~Array()							{ clear(); roFree(_data); }
 	Array&	operator=(const Array& rhs) { copy(rhs); }
@@ -124,10 +133,10 @@ public:
 };	// Array
 
 template<class T, roSize PreAllocCount>
-class TinyArray : public IArray<T, TinyArray<T,PreAllocCount> >
+struct TinyArray : public IArray<T, TinyArray<T,PreAllocCount> >
 {
-public:
 	TinyArray()										{ _data = (T*)_buffer; _capacity = PreAllocCount; }
+	TinyArray(roSize size, const T& val)			{ resize(size, val); }
 	TinyArray(const TinyArray<T,PreAllocCount>& v)	{ _data = (T*)_buffer; _capacity = PreAllocCount;  copy(v); }
 	~TinyArray()									{ clear(); if(_data != (T*)_buffer) roFree(_data); }
 	TinyArray& operator=(const TinyArray& rhs)		{ copy(rhs); }
@@ -140,6 +149,9 @@ public:
 // Private
 	char _buffer[PreAllocCount * sizeof(T)];
 };	// TinyArray
+
+
+// ----------------------------------------------------------------------
 
 /// An class that wrap around a raw pointer and tread it as an array of type T.
 /// This class also support array stride, making it very useful when working with
@@ -173,6 +185,9 @@ public:
 	roSize size;	///< Element count.
 	roSize stride;
 };	// StrideArray
+
+
+// ----------------------------------------------------------------------
 
 ///	Specialization of StrideArray which give more room for the compiler to do optimization.
 template<class T, roSize stride_=sizeof(T)>

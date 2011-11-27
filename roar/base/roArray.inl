@@ -55,6 +55,9 @@ void StaticArray<T,N>::assign(const T& fill)
 		data[i] = fill;
 }
 
+
+// ----------------------------------------------------------------------
+
 template<class T, class S>
 void IArray<T,S>::copy(const S& src)
 {
@@ -162,6 +165,9 @@ T* IArray<T,S>::find(const T& val) const
 	return arrayFind(begin, end, val);
 }
 
+
+// ----------------------------------------------------------------------
+
 template<class T>
 void Array<T>::setCapacity(roSize newCapacity)
 {
@@ -174,6 +180,9 @@ void Array<T>::setCapacity(roSize newCapacity)
 		roOnMemMove(_data[i], &_data[i]);
 	_capacity = newCapacity;
 }
+
+
+// ----------------------------------------------------------------------
 
 template<class T, roSize PreAllocCount>
 void TinyArray<T,PreAllocCount>::setCapacity(roSize newSize)

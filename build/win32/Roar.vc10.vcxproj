@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\roar\base\roArray.h" />
+    <ClInclude Include="..\..\roar\base\roAtomic.h" />
     <ClInclude Include="..\..\roar\base\roBytePtr.h" />
     <ClInclude Include="..\..\roar\base\roLog.h" />
     <ClInclude Include="..\..\roar\base\roMemory.h" />

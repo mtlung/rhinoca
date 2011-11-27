@@ -78,6 +78,9 @@ protected:
 #endif
 };	// RecursiveMutex
 
+
+// ----------------------------------------------------------------------
+
 /// Common class for some cancel-able classes.
 class Cancelable {
 public:
@@ -89,6 +92,9 @@ public:
 protected:
 	bool mCanceled;
 };	// RecursiveMutex
+
+
+// ----------------------------------------------------------------------
 
 /*! Lock mutex in scope.
 	Example:
