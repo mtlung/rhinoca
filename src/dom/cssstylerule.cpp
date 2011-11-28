@@ -5,6 +5,7 @@
 #include "element.h"
 #include "elementstyle.h"
 #include "../vector.h"
+#include "../../roar/base/roStringHash.h"
 
 using namespace Parsing;
 
@@ -51,7 +52,7 @@ CSSStyleRule::~CSSStyleRule()
 
 struct SingleSelectorState
 {
-	FixString type;
+	ro::ConstString type;
 	const char* val;
 	int len;
 };
@@ -70,10 +71,10 @@ static void selectorParserCallback(ParserResult* result, Parser* parser)
 	state->state.push_back(ss);
 }
 
-static bool hashCompare(const FixString& str1, const char* str2, unsigned len)
+static bool hashCompare(const ro::ConstString& str1, const char* str2, unsigned len)
 {
-	StringLowerCaseHash hash(str2, len);
-	return str1.lowerCaseHashValue() == hash;
+	const ro::StringHash hash = ro::stringLowerCaseHash(str2, len);
+	return str1.lowerCaseHash() == hash;
 }
 
 static bool match(const SingleSelectorState& state, Element* ele)

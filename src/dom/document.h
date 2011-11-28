@@ -44,7 +44,7 @@ public:
 	HTMLBodyElement* body();
 
 	/// See http://www.w3schools.com/jsref/prop_doc_readystate.asp
-	FixString readyState;
+	ro::ConstString readyState;
 
 	LinkList<CSSStyleSheet> styleSheets;
 

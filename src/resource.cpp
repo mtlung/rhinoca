@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "resource.h"
+#include "common.h"
 #include "../roar/base/roLog.h"
 #include <string.h>
 
@@ -17,7 +18,7 @@ Resource::Resource(const char* p)
 Resource::~Resource()
 {}
 
-FixString Resource::uri() const
+ro::ConstString Resource::uri() const
 {
 	return getKey();
 }
@@ -173,5 +174,5 @@ bool uriExtensionMatch(const char* uri, const char* extension)
 	rhuint extLen = strlen(extension);
 
 	if(uriLen < extLen) return false;
-	return strcasecmp(uri + uriLen - extLen, extension) == 0;
+	return roStrCaseCmp(uri + uriLen - extLen, extension) == 0;
 }

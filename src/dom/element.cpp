@@ -6,6 +6,7 @@
 #include "nodelist.h"
 #include "../context.h"
 #include "../path.h"
+#include "../../roar/base/roStringHash.h"
 #include <float.h>
 
 namespace Dom {
@@ -98,7 +99,7 @@ static JSBool getAttribute(JSContext* cx, uintN argc, jsval* vp)
 	// However most browser returns a null and so we follows.
 	// See: https://developer.mozilla.org/en/DOM/element.getAttribute#Notes
 	JSBool found;
-	tolower(jss.c_str());
+	roToLower(jss.c_str());
 	if(!JS_HasProperty(cx, *self, jss.c_str(), &found)) return JS_FALSE;
 
 	if(!found) {
@@ -118,7 +119,7 @@ static JSBool hasAttribute(JSContext* cx, uintN argc, jsval* vp)
 	if(!jss) return JS_FALSE;
 
 	JSBool found;
-	tolower(jss.c_str());
+	roToLower(jss.c_str());
 	if(!JS_HasProperty(cx, *self, jss.c_str(), &found)) return JS_FALSE;
 
 	*vp = BOOLEAN_TO_JSVAL(found);
@@ -144,7 +145,7 @@ static JSBool getElementsByTagName(JSContext* cx, uintN argc, jsval* vp)
 	JsString jss(cx, JS_ARGV0);
 	if(!jss) return JS_FALSE;
 
-	toupper(jss.c_str());
+	roToUpper(jss.c_str());
 	JS_RVAL(cx, vp) = *self->getElementsByTagName(jss.c_str());
 
 	return JS_TRUE;
@@ -193,7 +194,7 @@ void Element::registerClass(JSContext* cx, JSObject* parent)
 
 static Node* getElementsByTagNameFilter_(NodeIterator& iter, void* userData)
 {
-	FixString s((rhuint32)userData);
+	ro::ConstString s((rhuint32)userData);
 	Element* ele = dynamic_cast<Element*>(iter.current());
 	iter.next();
 
@@ -205,7 +206,7 @@ static Node* getElementsByTagNameFilter_(NodeIterator& iter, void* userData)
 
 NodeList* Element::getElementsByTagName(const char* tagName)
 {
-	NodeList* list = new NodeList(this, getElementsByTagNameFilter_, (void*)StringHash(tagName, 0).hash);
+	NodeList* list = new NodeList(this, getElementsByTagNameFilter_, (void*)ro::stringHash(tagName, 0));
 	list->bind(jsContext, NULL);
 	return list;
 }
@@ -244,9 +245,9 @@ ElementStyle* Element::style()
 	return _style;
 }
 
-static const FixString _tagName = "ELEMENT";
+static const ro::ConstString _tagName = "ELEMENT";
 
-const FixString& Element::tagName() const
+const ro::ConstString& Element::tagName() const
 {
 	return _tagName;
 }

@@ -97,7 +97,7 @@ public:
 	static JSClass jsClass;
 
 protected:
-	FixString _src;
+	ro::ConstString _src;
 };	// HTMLImageElement
 
 }	// namespace Dom

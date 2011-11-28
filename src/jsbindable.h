@@ -1,7 +1,8 @@
 #ifndef __JSBINDABLE_H__
 #define __JSBINDABLE_H__
 
-#include "rhstring.h"
+#include "rhassert.h"
+#include "../roar/base/roString.h"
 
 #define XP_WIN
 #include "../thirdParty/SpiderMonkey/jsapi.h"
@@ -39,7 +40,7 @@ public:
 	JSObject* jsObject;
 	int refCount;		/// Governing when the object will be deleted
 	int gcRootCount;	/// Control when the Javascript engine will give up ownership
-	FixString typeName;
+	ro::ConstString typeName;
 
 	static void finalize(JSContext* cx, JSObject* obj);
 
@@ -126,7 +127,7 @@ JSBool JS_GetValue(JSContext *cx, jsval jv, bool& val);
 JSBool JS_GetValue(JSContext *cx, jsval jv, int& val);
 JSBool JS_GetValue(JSContext *cx, jsval jv, unsigned& val);
 JSBool JS_GetValue(JSContext *cx, jsval jv, float& val);
-JSBool JS_GetValue(JSContext *cx, jsval jv, FixString& val);
+JSBool JS_GetValue(JSContext *cx, jsval jv, ro::ConstString& val);
 
 #define JS_ARGV0 (JS_ARGV(cx, vp)[0])
 #define JS_ARGV1 (JS_ARGV(cx, vp)[1])

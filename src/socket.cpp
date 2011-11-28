@@ -107,8 +107,8 @@ IPAddress::IPAddress(rhuint64 ip)
 
 IPAddress::IPAddress(const sockaddr& ip)
 {
-	RHASSERT(AF_INET == ip.sa_family);
-	RHASSERT(sizeof(sockaddr) == sizeof(_sockAddr));
+	roAssert(AF_INET == ip.sa_family);
+	roAssert(sizeof(sockaddr) == sizeof(_sockAddr));
 	nativeAddr() = ip;
 }
 
@@ -149,7 +149,7 @@ IPAddress IPAddress::getLoopBack()
 
 IPAddress IPAddress::getIPv6LoopBack()
 {
-	RHASSERT(false);
+	roAssert(false);
 	return IPAddress(0);
 }
 
@@ -159,7 +159,7 @@ IPAddress IPAddress::getAny() {
 
 IPAddress IPAddress::getIPv6Any()
 {
-	RHASSERT(false);
+	roAssert(false);
 	return IPAddress(0);
 }
 
@@ -313,13 +313,13 @@ ErrorCode BsdSocket::closeApplication()
 BsdSocket::BsdSocket()
 	: lastError(0)
 {
-	RHASSERT(sizeof(socket_t) == sizeof(_fd));
+	roAssert(sizeof(socket_t) == sizeof(_fd));
 	setFd(INVALID_SOCKET);
 }
 
 BsdSocket::~BsdSocket()
 {
-	RHVERIFY(close() == OK);
+	roVerify(close() == OK);
 }
 
 ErrorCode BsdSocket::create(SocketType type)
@@ -437,7 +437,7 @@ int BsdSocket::receiveFrom(void* buf, unsigned len, IPEndPoint& srcEndPoint, int
 	sockaddr& addr = srcEndPoint.address().nativeAddr();
 	socklen_t bufSize = sizeof(addr);
 	int ret = ::recvfrom(fd(), (char*)buf, toInt(len), flags, &addr, &bufSize);
-	RHASSERT(bufSize == sizeof(addr));
+	roAssert(bufSize == sizeof(addr));
 	lastError = ret < 0 ? getLastError() : OK;
 	return ret;
 }

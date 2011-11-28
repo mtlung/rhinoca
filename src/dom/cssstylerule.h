@@ -34,7 +34,7 @@ public:
 
 	CSSStyleSheet* parentStyleSheet();
 
-	String _cssText;
+	ro::String _cssText;
 	const char* _selectorTextBegin;	// Pointer to the memory of _cssText
 	const char* _selectorTextEnd;	//
 	const char* _declsTextBegin;	// Pointer to the memory of _cssText

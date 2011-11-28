@@ -33,7 +33,7 @@ public:
 		BUBBLING_PHASE = 3
 	};
 
-	FixString type;
+	ro::ConstString type;
 	Phase eventPhase;
 	EventTarget* target;
 	EventTarget* currentTarget;
@@ -59,7 +59,7 @@ protected:
 	virtual void* identifier() { return this; }
 	virtual void jsTrace(JSTracer* trc) {}
 
-	FixString _type;
+	ro::ConstString _type;
 	bool _useCapture;
 };	// EventListener
 
@@ -90,8 +90,8 @@ public:
 	ElementAttributeEventListener(JSContext* ctx, const char* eventAttributeName);
 
 protected:
-	override void* identifier() { return (void*)_eventAttributeName.hashValue(); }
-	FixString _eventAttributeName;
+	override void* identifier() { return (void*)_eventAttributeName.hash(); }
+	ro::ConstString _eventAttributeName;
 };	// JsFunctionEventListener
 
 class EventTarget

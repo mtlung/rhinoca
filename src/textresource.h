@@ -12,7 +12,7 @@ public:
 // Operations
 
 // Attributes
-	String data;
+	ro::String data;
 
 	const char* dataWithoutBOM;
 };	// TextResource

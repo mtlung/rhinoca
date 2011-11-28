@@ -2,6 +2,9 @@
 #include "event.h"
 #include "../context.h"
 #include "../vector.h"
+#include "../../roar/base/roStringHash.h"
+
+using namespace ro;
 
 namespace Dom {
 
@@ -180,7 +183,7 @@ void EventTarget::addEventListener(const char* type, EventListener* listener, bo
 
 	// Search for duplication and remove it before inserting new one
 	for(EventListener* l = _eventListeners.begin(); l != _eventListeners.end(); l = l->next()) {
-		if(l->_type == StringHash(type) && l->_useCapture == useCapture && l->identifier() == listener->identifier()) {
+		if(l->_type == stringHash(type, 0) && l->_useCapture == useCapture && l->identifier() == listener->identifier()) {
 			delete l;
 			break;
 		}
@@ -235,7 +238,7 @@ JSBool EventTarget::addEventListenerAsAttribute(JSContext* cx, const char* event
 void EventTarget::removeEventListener(const char* type, void* listenerIdentifier, bool useCapture)
 {
 	for(EventListener* l = _eventListeners.begin(); l != _eventListeners.end(); l = l->next()) {
-		if(l->_type == StringHash(type) && l->_useCapture == useCapture && l->identifier() == listenerIdentifier) {
+		if(l->_type == stringHash(type, 0) && l->_useCapture == useCapture && l->identifier() == listenerIdentifier) {
 			l->destroyThis();
 			return;
 		}
@@ -259,16 +262,16 @@ JSBool EventTarget::removeEventListener(JSContext* cx, jsval type, jsval func, j
 
 JSBool EventTarget::removeEventListenerAsAttribute(JSContext* cx, const char* eventAttributeName)
 {
-	removeEventListener(eventAttributeName + 2, (void*)FixString(eventAttributeName).hashValue(), false);
+	removeEventListener(eventAttributeName + 2, (void*)ro::ConstString(eventAttributeName).hash(), false);
 	return JS_TRUE;
 }
 
 jsval EventTarget::getEventListenerAsAttribute(JSContext* cx, const char* eventAttributeName)
 {
-	void* listenerIdentifier = (void*)FixString(eventAttributeName).hashValue();
+	void* listenerIdentifier = (void*)ro::ConstString(eventAttributeName).hash();
 
 	for(EventListener* l = _eventListeners.begin(); l != _eventListeners.end(); l = l->next()) {
-		if(l->_type == StringHash(eventAttributeName + 2) && !l->_useCapture && l->identifier() == listenerIdentifier) {
+		if(l->_type == stringHash(eventAttributeName + 2, 0) && !l->_useCapture && l->identifier() == listenerIdentifier) {
 			if(JsFunctionEventListener* e = dynamic_cast<JsFunctionEventListener*>(l))
 				return e->getJsVal();
 		}

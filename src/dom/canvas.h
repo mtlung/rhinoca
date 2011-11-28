@@ -52,7 +52,7 @@ public:
 	override void setWidth(unsigned width);
 	override void setHeight(unsigned height);
 
-	override const FixString& tagName() const;
+	override const ro::ConstString& tagName() const;
 
 	static JSClass jsClass;
 

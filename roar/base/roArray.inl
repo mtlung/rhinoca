@@ -110,7 +110,7 @@ template<class T, class S>
 T& IArray<T,S>::pushBackBySwap(const T& val)
 {
 	resize(_size + 1);
-	roSwap(back(), val);
+	roSwap(back(), const_cast<T&>(val));
 	return back();
 }
 

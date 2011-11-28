@@ -27,7 +27,7 @@ public:
 	override Node* cloneNode(bool recursive);
 
 // Attributes
-	override const FixString& tagName() const;
+	override const ro::ConstString& tagName() const;
 
 	static JSClass jsClass;
 

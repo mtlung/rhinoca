@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "../render/texture.h"
+#include "../common.h"
 #include "../rhlog.h"
 #include "../platform.h"
 #include "../../thirdparty/png/png.h"

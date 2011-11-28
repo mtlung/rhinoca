@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "../src/rhinoca.h"
+#include "../src/common.h"
 #include "../src/path.h"
 
 class FileSystemTest

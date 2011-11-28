@@ -960,14 +960,6 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\src\rhstring.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\rhstring.h"
-			>
-		</File>
-		<File
 			RelativePath="..\..\src\socket.cpp"
 			>
 		</File>

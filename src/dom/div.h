@@ -17,7 +17,7 @@ public:
 	static Element* factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser);
 
 // Attributes
-	override const FixString& tagName() const;
+	override const ro::ConstString& tagName() const;
 
 	static JSClass jsClass;
 };	// HTMLDivElement

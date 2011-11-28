@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "jsbindable.h"
 #include "rhinoca.h"
+#include "../roar/base/roStringUtility.h"
 
 #ifdef DEBUG
 #	include <typeinfo>	// For debugging GC problem
@@ -28,7 +29,7 @@ void JsBindable::addGcRoot()
 
 	addReference();	// releaseReference() in JsBindable::releaseGcRoot()
 	RHASSERT(jsContext);
-	if(typeName.empty()) {
+	if(typeName.isEmpty()) {
 #ifdef DEBUG
 		RHVERIFY(JS_AddNamedObjectRoot(jsContext, &jsObject, typeid(*this).name()));
 #else
@@ -148,7 +149,7 @@ JSBool JS_GetValue(JSContext *cx, jsval jv, bool& val)
 		b = JSVAL_TO_BOOLEAN(jv);
 	else if(JSVAL_IS_STRING(jv)) {
 		JsString jss(cx, jv);
-		b = (strcasecmp(jss.c_str(), "false") != 0);
+		b = (roStrCaseCmp(jss.c_str(), "false") != 0);
 	}
 	else if(JS_ValueToBoolean(cx, jv, &b) == JS_FALSE)
 		return JS_FALSE;
@@ -184,7 +185,7 @@ JSBool JS_GetValue(JSContext *cx, jsval jv, float& val)
 	return JS_TRUE;
 }
 
-JSBool JS_GetValue(JSContext *cx, jsval jv, FixString& val)
+JSBool JS_GetValue(JSContext *cx, jsval jv, ro::ConstString& val)
 {
 	JsString jss(cx, jv);
 	if(!jss) return JS_FALSE;

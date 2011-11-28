@@ -16,7 +16,7 @@ public:
 	override void bind(JSContext* cx, JSObject* parent);
 
 // Attributes
-	FixString userAgent;
+	ro::ConstString userAgent;
 
 	static JSClass jsClass;
 };	// Navigator

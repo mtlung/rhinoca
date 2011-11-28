@@ -1,7 +1,7 @@
 #ifndef __PATH_H__
 #define __PATH_H__
 
-#include "rhstring.h"
+#include "../roar/base/roString.h"
 
 /*!	A path class that is similar the one provided in boost.
 	\note Comparison of Path in windows is case in-sensitive.
@@ -10,7 +10,7 @@ class Path
 {
 public:
 	typedef char char_type;
-	typedef String string_type;
+	typedef ro::String string_type;
 
 	Path() {}
 
@@ -33,7 +33,7 @@ public:
 	 */
 	string_type getRootName() const;
 
-	/*! Get the root directory, it will only be empty or with the value '/'.
+	/*! Get the root directory, it will only be isEmpty or with the value '/'.
 		"C:"	->	"/"		\n
 		"C:\"	->	"/"		\n
 		"C:\B"	->	"/"		\n
@@ -45,7 +45,7 @@ public:
 	string_type getRootDirectory() const;
 
 	bool hasRootDirectory() const {
-		return !getRootDirectory().empty();
+		return !getRootDirectory().isEmpty();
 	}
 
 	/*!	Get the leaf path.
@@ -117,7 +117,7 @@ public:
 	int compare(const Path& rhs) const;
 
 	/*!	Get the current path of the running process.
-		\note It will return an empty path if the operation fail.
+		\note It will return an isEmpty path if the operation fail.
 	 */
 	static Path getCurrentPath();
 

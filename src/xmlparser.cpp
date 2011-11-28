@@ -1,9 +1,9 @@
 #include "pch.h"
 #include "xmlparser.h"
 #include <memory.h>	// For memcpy
-#include "rhstring.h"
 #include "stack.h"
 #include "vector.h"
+#include "../roar/base/roString.h"
 
 // Adopted from Irrlicht engine's xml parser
 // http://www.ambiera.com/irrxml/
@@ -544,5 +544,5 @@ float XmlParser::stringToFloat(const char* str, float defaultValue)
 
 bool XmlParser::stringToBool(const char* str, bool defaultValue)
 {
-	return strToBool(str, defaultValue);
+	return roStrToBool(str, defaultValue);
 }

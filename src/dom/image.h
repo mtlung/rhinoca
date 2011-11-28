@@ -42,7 +42,7 @@ public:
 	/// Can be MIN_MAG_LINEAR (default) or MIN_MAG_POINT
 	int filter;
 
-	override const FixString& tagName() const;
+	override const ro::ConstString& tagName() const;
 
 	static JSClass jsClass;
 };	// HTMLImageElement

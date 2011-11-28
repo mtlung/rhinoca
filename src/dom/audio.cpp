@@ -51,7 +51,7 @@ static JSBool setLoop(JSContext* cx, JSObject* obj, jsid id, JSBool strict, jsva
 
 	if(JSVAL_IS_STRING(*vp)) {
 		JsString jss(cx, *vp);
-		self->setLoop(strToBool(jss.c_str(), false));
+		self->setLoop(roStrToBool(jss.c_str(), false));
 		return JS_TRUE;
 	}
 
@@ -108,7 +108,7 @@ void HTMLAudioElement::registerClass(JSContext* cx, JSObject* parent)
 	RHVERIFY(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
 }
 
-static FixString _tagName = "AUDIO";
+static ro::ConstString _tagName = "AUDIO";
 
 Element* HTMLAudioElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
@@ -119,7 +119,7 @@ Element* HTMLAudioElement::factoryCreate(Rhinoca* rh, const char* type, XmlParse
 	return audio;
 }
 
-const FixString& HTMLAudioElement::tagName() const
+const ro::ConstString& HTMLAudioElement::tagName() const
 {
 	return _tagName;
 }

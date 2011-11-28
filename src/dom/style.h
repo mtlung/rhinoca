@@ -34,7 +34,7 @@ public:
 
 	char* source;
 
-	override const FixString& tagName() const;
+	override const ro::ConstString& tagName() const;
 
 	static JSClass jsClass;
 };	// HTMLStyleElement

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "../src/socket.h"
+#include "../src/rhassert.h"
 
 namespace {
 

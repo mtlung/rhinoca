@@ -173,13 +173,13 @@ public:
 	float globalAlpha() const { return _globalAlpha; }
 	void setGlobalAlpha(float alpha);
 
-	FixString font() const { return _font; }
+	ro::ConstString font() const { return _font; }
 	void setFont(const char* font);
 
-	FixString textAlign() const { return _textAlign; }
+	ro::ConstString textAlign() const { return _textAlign; }
 	void setTextAlign(const char* textAlign);
 
-	FixString textBaseLine() const { return _textBaseLine; }
+	ro::ConstString textBaseLine() const { return _textBaseLine; }
 	void setTextBaseLine(const char* textBaseLine);
 
 	struct OpenVG;
@@ -193,9 +193,9 @@ public:
 
 	float _globalAlpha;
 
-	FixString _font;
-	FixString _textAlign;
-	FixString _textBaseLine;
+	ro::ConstString _font;
+	ro::ConstString _textAlign;
+	ro::ConstString _textBaseLine;
 
 	/// In the standard HTML5 canvas, the widht and height of the <IMG> tag is ignored,
 	/// set this to true such that the image will be appear as the size you set it.

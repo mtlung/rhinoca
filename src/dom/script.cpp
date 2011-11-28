@@ -98,14 +98,14 @@ void HTMLScriptElement::registerClass(JSContext* cx, JSObject* parent)
 	RHVERIFY(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
 }
 
-static const FixString _tagName = "SCRIPT";
+static const ro::ConstString _tagName = "SCRIPT";
 
 Element* HTMLScriptElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
 	return strcasecmp(type, _tagName) == 0 ? new HTMLScriptElement(rh) : NULL;
 }
 
-static void appendFileToString(void* file, String& str)
+static void appendFileToString(void* file, ro::String& str)
 {
 	char buf[128];
 	rhuint64 readCount;
@@ -142,7 +142,7 @@ const char* HTMLScriptElement::src() const
 		"";
 }
 
-const FixString& HTMLScriptElement::tagName() const
+const ro::ConstString& HTMLScriptElement::tagName() const
 {
 	return _tagName;
 }

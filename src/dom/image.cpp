@@ -240,7 +240,7 @@ void HTMLImageElement::registerClass(JSContext* cx, JSObject* parent)
 	RHVERIFY(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
 }
 
-static const FixString _tagName = "IMG";
+static const ro::ConstString _tagName = "IMG";
 
 Element* HTMLImageElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
@@ -302,7 +302,7 @@ void HTMLImageElement::setHeight(unsigned h)
 	_height = h;
 }
 
-const FixString& HTMLImageElement::tagName() const
+const ro::ConstString& HTMLImageElement::tagName() const
 {
 	return _tagName;
 }

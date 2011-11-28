@@ -9,6 +9,7 @@
 #include "../path.h"
 
 using namespace Parsing;
+using namespace ro;
 
 namespace Dom {
 
@@ -313,60 +314,60 @@ void ElementStyle::setStyleString(const char* begin, const char* end)
 
 void ElementStyle::setStyleAttribute(const char* name, const char* value)
 {
-	const StringLowerCaseHash hash(name, 0);
+	const StringHash hash = stringLowerCaseHash(name, 0);
 
-	if(hash == StringHash("opacity")) {
+	if(hash == stringHash("opacity")) {
 		sscanf(value, "%f", &opacity);
 	}
-	else if(hash == StringHash("left")) {
+	else if(hash == stringHash("left")) {
 		float v = 0;
 		sscanf(value, "%f", &v);
 		setLeft(v);
 	}
-	else if(hash == StringHash("right")) {
+	else if(hash == stringHash("right")) {
 		float v = 0;
 		sscanf(value, "%f", &v);
 		setRight(v);
 	}
-	else if(hash == StringHash("top")) {
+	else if(hash == stringHash("top")) {
 		float v = 0;
 		sscanf(value, "%f", &v);
 		setTop(v);
 	}
-	else if(hash == StringHash("bottom")) {
+	else if(hash == stringHash("bottom")) {
 		float v = 0;
 		sscanf(value, "%f", &v);
 		setBottom(v);
 	}
-	else if(hash == StringHash("width")) {
+	else if(hash == stringHash("width")) {
 		float v = 0;
 		sscanf(value, "%f", &v);
 		setWidth((unsigned)v);
 	}
-	else if(hash == StringHash("height")) {
+	else if(hash == stringHash("height")) {
 		float v = 0;
 		sscanf(value, "%f", &v);
 		setHeight((unsigned)v);
 	}
-	else if(hash == StringHash("transform")) {
+	else if(hash == stringHash("transform")) {
 		setTransform(value);
 	}
-	else if(hash == StringHash("-moz-transform")) {
+	else if(hash == stringHash("-moz-transform")) {
 		setTransform(value);
 	}
-	else if(hash == StringHash("transform-origin")) {
+	else if(hash == stringHash("transform-origin")) {
 		setTransformOrigin(value);
 	}
-	else if(hash == StringHash("-moz-transform-origin")) {
+	else if(hash == stringHash("-moz-transform-origin")) {
 		setTransformOrigin(value);
 	}
-	else if(hash == StringHash("background-image")) {
+	else if(hash == stringHash("background-image")) {
 		setBackgroundImage(value);
 	}
-	else if(hash == StringHash("backgroundcolor")) {
+	else if(hash == stringHash("backgroundcolor")) {
 		setBackgroundColor(value);
 	}
-	else if(hash == StringHash("background-position")) {
+	else if(hash == stringHash("background-position")) {
 		setBackgroundPosition(value);
 	}
 }
@@ -407,58 +408,58 @@ void ElementStyle::setTransform(const char* transformStr)
 		// appear before transform in the css <style> tag
 		void applyTransform()
 		{
-			const StringLowerCaseHash hash(nameBegin, nameEnd - nameBegin);
+			const StringHash hash = stringLowerCaseHash(nameBegin, nameEnd - nameBegin);
 
 			Mat44 mat;
-			if(hash == StringHash("translate"))
+			if(hash == stringHash("translate"))
 			{
 				if(valueIdx == 1) values[1] = 0;	// If the second param is not provided, assign zero
 				mat = Mat44::makeTranslation(values);
 			}
-			else if(hash == StringHash("translatex"))
+			else if(hash == stringHash("translatex"))
 			{
 				const float val[3] = { values[0], 0, 0 };
 				mat = Mat44::makeTranslation(val);
 			}
-			else if(hash == StringHash("translatey"))
+			else if(hash == stringHash("translatey"))
 			{
 				const float val[3] = { 0, values[0], 0 };
 				mat = Mat44::makeTranslation(val);
 			}
-			else if(hash == StringHash("scale"))
+			else if(hash == stringHash("scale"))
 			{
 				if(valueIdx == 1) values[1] = values[0];	// If the second param is not provided, use the first one
 				const float val[3] = { values[0], values[1], 1 };
 				mat = Mat44::makeScale(val);
 			}
-			else if(hash == StringHash("scalex"))
+			else if(hash == stringHash("scalex"))
 			{
 				const float val[3] = { values[0], 1, 1 };
 				mat = Mat44::makeScale(val);
 			}
-			else if(hash == StringHash("scaley"))
+			else if(hash == stringHash("scaley"))
 			{
 				const float val[3] = { 1, values[0], 1 };
 				mat = Mat44::makeScale(val);
 			}
-			else if(hash == StringHash("rotate"))
+			else if(hash == stringHash("rotate"))
 			{
 				static const float zaxis[3] = { 0, 0, 1 };
 				mat = Mat44::makeAxisRotation(zaxis, values[0]);
 			}
-			else if(hash == StringHash("skew"))
+			else if(hash == stringHash("skew"))
 			{
 				RHASSERT(false && "Not implemented");
 			}
-			else if(hash == StringHash("skewx"))
+			else if(hash == stringHash("skewx"))
 			{
 				RHASSERT(false && "Not implemented");
 			}
-			else if(hash == StringHash("skewy"))
+			else if(hash == stringHash("skewy"))
 			{
 				RHASSERT(false && "Not implemented");
 			}
-			else if(hash == StringHash("matrix"))
+			else if(hash == stringHash("matrix"))
 			{
 				RHASSERT(false && "Not implemented");
 			}
@@ -483,32 +484,32 @@ void ElementStyle::setTransform(const char* transformStr)
 			ParserState* state = reinterpret_cast<ParserState*>(parser->userdata);
 			ElementStyle* style = state->style;
 
-			const StringHash hash(result->type, 0);
+			const StringHash hash = stringHash(result->type, 0);
 
-			if(hash == StringHash("name")) {
+			if(hash == stringHash("name")) {
 				state->nameBegin = result->begin;
 				state->nameEnd = result->end;
 				state->valueIdx = 0;
 				memset(state->values, 0, sizeof(state->values));
 			}
-			else if(hash == StringHash("value")) {
+			else if(hash == stringHash("value")) {
 				char bk = *result->end;
 				*const_cast<char*>(result->end) = '\0';
 				sscanf(result->begin, "%f", &state->values[state->valueIdx]);
 				*const_cast<char*>(result->end) = bk;
 				++state->valueIdx;
 			}
-			else if(hash == StringHash("unit")) {
+			else if(hash == stringHash("unit")) {
 				// Convert deg to rad
 				if(result->end - result->begin > 0 && state->valueIdx == 1 &&
 					strncmp(result->begin, "deg", result->end - result->begin) == 0
 				)
 					state->values[state->valueIdx - 1] *= 3.1415926535897932f / 180;
 			}
-			else if(hash == StringHash("end")) {
+			else if(hash == stringHash("end")) {
 				state->applyTransform();
 			}
-			else if(hash == StringHash("none")) {
+			else if(hash == stringHash("none")) {
 				style->setIdentity();
 			}
 			else
@@ -535,36 +536,36 @@ void ElementStyle::setTransformOrigin(const char* transformOriginStr)
 			ParserState* state = reinterpret_cast<ParserState*>(parser->userdata);
 			ElementStyle* style = state->style;
 
-			const StringHash hash(result->type, 0);
+			const StringHash hash = stringHash(result->type, 0);
 
-			if(hash == StringHash("value")) {
+			if(hash == stringHash("value")) {
 				char bk = *result->end;
 				*const_cast<char*>(result->end) = '\0';
 				sscanf(result->begin, "%f", &state->values[state->valueIdx]);
 				*const_cast<char*>(result->end) = bk;
 				++state->valueIdx;
 			}
-			else if(hash == StringHash("unit")) {
+			else if(hash == stringHash("unit")) {
 				if(strncmp(result->begin, "px", result->end - result->begin) == 0)
 					state->usePercentage[state->valueIdx-1] = false;
 			}
-			else if(hash == StringHash("named")) {
-				const StringHash hash2(result->begin, result->end - result->begin);
+			else if(hash == stringHash("named")) {
+				const StringHash hash2 = stringHash(result->begin, result->end - result->begin);
 
-				if(hash2 == StringHash("center"))
+				if(hash2 == stringHash("center"))
 					state->values[state->valueIdx] = 50;
-				if(hash2 == StringHash("left"))
+				if(hash2 == stringHash("left"))
 					state->values[0] = 0;
-				if(hash2 == StringHash("right"))
+				if(hash2 == stringHash("right"))
 					state->values[0] = 100;
-				if(hash2 == StringHash("top"))
+				if(hash2 == stringHash("top"))
 					state->values[1] = 0;
-				if(hash2 == StringHash("bottom"))
+				if(hash2 == stringHash("bottom"))
 					state->values[1] = 100;
 
 				++state->valueIdx;
 			}
-			else if(hash == StringHash("end")) {
+			else if(hash == stringHash("end")) {
 				style->_origin.x = state->values[0];
 				style->_origin.y = state->values[1];
 				style->_originUsePercentage[0] = state->usePercentage[0];
@@ -613,18 +614,18 @@ bool ElementStyle::setBackgroundPosition(const char* cssBackgroundPosition)
 			ParserState* state = reinterpret_cast<ParserState*>(parser->userdata);
 			ElementStyle* style = state->style;
 
-			const StringHash hash(result->type, 0);
+			const StringHash hash = stringHash(result->type, 0);
 
-			if(hash == StringHash("value")) {
+			if(hash == stringHash("value")) {
 				char bk = *result->end;
 				*const_cast<char*>(result->end) = '\0';
 				sscanf(result->begin, "%f", &state->values[state->valueIdx]);
 				*const_cast<char*>(result->end) = bk;
 				++state->valueIdx;
 			}
-			else if(hash == StringHash("unit")) {
+			else if(hash == stringHash("unit")) {
 			}
-			else if(hash == StringHash("end")) {
+			else if(hash == stringHash("end")) {
 				style->backgroundPositionX = state->values[0];
 				style->backgroundPositionY = state->values[1];
 			}

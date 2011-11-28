@@ -3,14 +3,14 @@
 
 #include "intrusiveptr.h"
 #include "map.h"
-#include "rhstring.h"
+#include "../roar/base/roString.h"
 #include "../roar/base/roTaskPool.h"
 
 class Resource
 	// NOTE: No need to use atomic integer as the refCount if no worker thread
 	// will hold strong reference to Resource
 	: public IntrusiveSharedObject<rhuint>
-	, public MapBase<FixString>::Node<Resource>
+	, public MapBase<ro::ConstString>::Node<Resource>
 	, private Noncopyable
 {
 protected:
@@ -25,7 +25,7 @@ public:
 	virtual void unload() {}
 
 // Attributes
-	FixString uri() const;
+	ro::ConstString uri() const;
 
 	enum State { NotLoaded, Loading, Ready, Loaded, Unloaded, Aborted };
 	State state;	///!< Important: changing of this value must be performed on main thread

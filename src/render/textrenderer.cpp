@@ -2,7 +2,10 @@
 #include "textrenderer.h"
 #include "driver.h"
 #include "../map.h"
-#include "../rhstring.h"
+#include "../../roar/base/roStringHash.h"
+#include "../../roar/base/roStringUtility.h"
+
+using namespace ro;
 
 namespace Render {
 
@@ -64,17 +67,17 @@ rhuint32 TextRenderer::makeHash(Font* font, unsigned fontPixelHeight, const char
 
 	// Determine the string length
 	unsigned strLen = 0;
-	if(!utf8ToUtf32(NULL, strLen, utf8Str, utf8Len == 0 ? unsigned(-1) : utf8Len))
+	if(!roUtf8ToUtf32(NULL, strLen, utf8Str, utf8Len == 0 ? unsigned(-1) : utf8Len))
 		return 0;
 
 	rhuint32* codePointStr = (rhuint32*)rhinoca_malloc(sizeof(int) * strLen);
-	if(!utf8ToUtf32(codePointStr, strLen, utf8Str, utf8Len)) {
+	if(!roUtf8ToUtf32(codePointStr, strLen, utf8Str, utf8Len)) {
 		rhinoca_free(codePointStr);
 		return 0;
 	}
 
-	rhuint32 hash = StringHash(utf8Str, utf8Len).hash;
-	hash = appendHash(hash, font->uri().hashValue());
+	StringHash hash = stringHash(utf8Str, utf8Len);
+	hash = appendHash(hash, font->uri().hash());
 	hash = appendHash(hash, fontPixelHeight);
 
 	// Try to locate any cached value

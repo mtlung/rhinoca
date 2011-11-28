@@ -34,6 +34,8 @@
 #	endif
 #endif
 
+using namespace ro;
+
 void jsReportError(JSContext* cx, const char* message, JSErrorReport* report)
 {
 	roLog("js", "JS %s: %s:%u\n%s\n",
@@ -261,7 +263,7 @@ bool Rhinoca::openDoucment(const char* uri)
 				const char* value = parser.attributeValue(i);
 
 				// Make the attribute name case insensitive
-				tolower(const_cast<char*>(name));
+				roToLower(const_cast<char*>(name));
 
 				jsval v = STRING_TO_JSVAL(JS_NewStringCopyZ(jsContext, value));
 				RHVERIFY(JS_SetProperty(jsContext, *currentNode, name, &v));

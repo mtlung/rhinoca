@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "../src/bipbuffer.h"
-#include "../src/rhstring.h"
+#include "../roar/base/roString.h"
+
+using namespace ro;
 
 class BipBufferTest {};
 
@@ -32,6 +34,12 @@ TEST_FIXTURE(BipBufferTest, init)
 	}
 }
 
+template<class T>
+struct MoveSemantic
+{
+	T& obj;
+};
+
 TEST_FIXTURE(BipBufferTest, basic)
 {
 	// In this test we want to transfer data from src to dest
@@ -43,7 +51,7 @@ TEST_FIXTURE(BipBufferTest, basic)
 
 	const char* srcBegin = src;
 	const char* srcEnd = src + sizeof(src);
-	String dest;
+	ro::String dest;
 
 	// Init
 	BipBuffer buf;

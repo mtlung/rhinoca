@@ -25,6 +25,14 @@ void roToUpper(char* str);
 
 inline void roStrReverse(char* str, roSize len);
 
+bool roStrToBool(const char* str, bool defaultValue);
+
+// ----------------------------------------------------------------------
+
+bool roUtf8ToUtf16(roUint16* dest, roSize& destLen, const char* src, roSize maxSrcLen);
+bool roUtf8ToUtf32(roUint32* dest, roSize& destLen, const char* src, roSize maxSrcLen);
+bool roUtf16ToUtf8(char* dest, roSize& destLen, const roUint16* src, roSize maxSrcLen);
+
 #include "roStringUtility.inl"
 
 #endif	// __roStringUtility_h__

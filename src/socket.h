@@ -2,7 +2,7 @@
 #define __SOCKET_H__
 
 #include "noncopyable.h"
-#include "rhstring.h"
+#include "../roar/base/roString.h"
 
 // Forward declaration of platform dependent type
 struct sockaddr;
@@ -52,7 +52,7 @@ public:
 
 	rhuint64 getInt() const;
 
-	FixString getString() const;
+	ro::ConstString getString() const;
 
 	sockaddr& nativeAddr() const;	//! Function that cast _sockAddr into sockaddr
 
@@ -85,7 +85,7 @@ public:
 	rhuint16 port() const;
 	void setPort(rhuint16 port);
 
-	FixString getString() const;
+	ro::ConstString getString() const;
 
 	bool operator==(const IPEndPoint& rhs) const;
 	bool operator!=(const IPEndPoint& rhs) const;

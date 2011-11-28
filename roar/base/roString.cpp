@@ -129,9 +129,7 @@ String& String::erase(roSize offset, roSize count)
 		char* a = _cstr + offset;
 		char* b = a + count;
 		memmove(a, b, num_cast<roSize>(_cstr + _length - b));
-		_cstr = _allocator.realloc(_length ? _cstr : NULL, _length + 1, newLen + 1);
-		_length = newLen;
-		_cstr[_length] = '\0';
+		resize(newLen);
 	}
 	else
 		clear();
@@ -180,9 +178,8 @@ String String::substr(roSize offset, roSize count) const
 String& String::operator+=(const char* str)
 {
 	if(const roSize len = roStrLen(str)) {
-		_cstr = _allocator.realloc(_length ? _cstr : NULL, _length + 1, _length + len + 1);
+		resize(_length + len);
 		roVerify(strcat(_cstr, str) == _cstr);
-		_length += len;
 	}
 	return *this;
 }
@@ -190,11 +187,26 @@ String& String::operator+=(const char* str)
 String& String::operator+=(const String& str)
 {
 	if(!str.isEmpty()) {
-		_cstr = _allocator.realloc(_length ? _cstr : NULL, _length + 1, _length + str._length + 1);
+		resize(_length + str._length);
 		roVerify(strcat(_cstr, str._cstr) == _cstr);
-		_length += str._length;
 	}
 	return *this;
+}
+
+bool String::fromUtf16(roUint16* src, roSize maxSrcLen)
+{
+	roSize len = 0;
+	if(!roUtf16ToUtf8(NULL, len, src, maxSrcLen))
+		return false;
+
+	if(len == 0)
+		return false;
+
+	resize(len);
+	if(!roUtf16ToUtf8(_cstr, len, src, maxSrcLen))
+		return false;
+
+	return true;
 }
 
 

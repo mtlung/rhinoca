@@ -185,7 +185,7 @@ void HTMLCanvasElement::registerClass(JSContext* cx, JSObject* parent)
 	RHVERIFY(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
 }
 
-static const FixString _tagName = "CANVAS";
+static const ro::ConstString _tagName = "CANVAS";
 
 Element* HTMLCanvasElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
@@ -226,7 +226,7 @@ void HTMLCanvasElement::setHeight(unsigned h)
 	_framebuffer.height = h;
 }
 
-const FixString& HTMLCanvasElement::tagName() const
+const ro::ConstString& HTMLCanvasElement::tagName() const
 {
 	return _tagName;
 }

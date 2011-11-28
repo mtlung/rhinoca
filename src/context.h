@@ -2,7 +2,6 @@
 #define __CONTEXT_H__
 
 #include "resource.h"
-#include "rhstring.h"
 #include "dom/window.h"
 
 extern JSRuntime* jsrt;
@@ -32,8 +31,8 @@ public:
 	JSObject* jsGlobal;
 	JSObject* jsConsole;
 	void* privateData;
-	FixString userAgent;
-	FixString documentUrl;
+	ro::ConstString userAgent;
+	ro::ConstString documentUrl;
 
 	Dom::Window* domWindow;
 

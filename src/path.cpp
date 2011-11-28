@@ -7,10 +7,12 @@
 #	include <unistd.h>	// for getcwd()
 #endif
 
+using namespace ro;
+
 namespace {
 
 typedef Path::string_type string_type;
-typedef Path::string_type::size_type size_type;
+typedef roSize size_type;
 
 static bool IsSlash(Path::char_type c) {
 	return c == '/' || c == '\\';
@@ -29,7 +31,7 @@ static size_type FindNonSlash(const string_type& path, size_type initialOffset=0
 //! Find the offset of the relative path
 static size_type FindRelativePathPos(const string_type& path)
 {
-	if(path.empty())
+	if(path.isEmpty())
 		return string_type::npos;
 
 	size_type pos = path.find(':');
@@ -53,9 +55,9 @@ Path::string_type Path::getRootName() const
 
 Path::string_type Path::getRootDirectory() const
 {
-	if(mStr.empty())
+	if(mStr.isEmpty())
 		return string_type();
-	return (mStr[0] == '/' || !getRootName().empty()) ?	"/" : "";
+	return (mStr[0] == '/' || !getRootName().isEmpty()) ?	"/" : "";
 }
 
 // POSIX & Windows cases:	"", "/", "/foo", "foo", "foo/bar"
@@ -63,7 +65,7 @@ Path::string_type Path::getRootDirectory() const
 //							"prn:", "//share", "//share/", "//share/foo"
 static size_t leafPos(const Path::string_type& str, size_t endPos) // endPos is past-the-end position
 {
-	// return 0 if str itself is leaf (or empty)
+	// return 0 if str itself is leaf (or isEmpty)
 	if(endPos && IsSlash(str[endPos - 1]))
 		return endPos - 1;
 
@@ -81,7 +83,7 @@ static size_t leafPos(const Path::string_type& str, size_t endPos) // endPos is 
 		pos = str.rfind(':', endPos - 2);
 #endif	// _WIN32
 
-	return (pos == Path::string_type::npos	// path itself must be a leaf (or empty)
+	return (pos == Path::string_type::npos	// path itself must be a leaf (or isEmpty)
 #ifdef _WIN32
 		|| (pos == 1 && IsSlash(str[0]))	// or share
 #endif	// _WIN32
@@ -142,7 +144,7 @@ void Path::removeExtension()
 
 Path& Path::normalize()
 {
-	if(mStr.empty())
+	if(mStr.isEmpty())
 		return *this;
 
 	// Unify all '\' into '/'
@@ -191,7 +193,7 @@ Path& Path::normalize()
 	}
 
 	// Remove trailing '.'
-	if(!mStr.empty() && mStr[mStr.size()-1] == '.') {
+	if(!mStr.isEmpty() && mStr[mStr.size()-1] == '.') {
 		if(mStr.size() == 1 || mStr[mStr.size()-2] != '.')	// If not ".."
 			mStr.resize(mStr.size() - 1);
 	}
@@ -208,9 +210,9 @@ Path& Path::operator/=(const Path& rhs)
 {
 	normalize();
 
-	RHASSERT(mStr.empty() || !rhs.hasRootDirectory());
+	RHASSERT(mStr.isEmpty() || !rhs.hasRootDirectory());
 
-	if(!mStr.empty() && mStr[mStr.size()-1] != '/')
+	if(!mStr.isEmpty() && mStr[mStr.size()-1] != '/')
 		mStr += "/";
 	mStr += rhs.mStr;
 	normalize();
@@ -238,7 +240,7 @@ Path Path::getCurrentPath()
 		return Path();
 
 	String astr;
-	if(!utf16ToUtf8(astr, (rhuint16*)&wstr[0], UINT_MAX))
+	if(!astr.fromUtf16((rhuint16*)&wstr[0], wstr.size()))
 		return false;
 
 	Path ret(astr.c_str());

@@ -16,7 +16,7 @@
 #include "DropHandler.h"
 
 #include "../../roar/render/roRenderDriver.h"
-#include "../../src/rhstring.h"
+#include "../../roar/base/roString.h"
 
 static const wchar_t* windowClass = L"Rhinoca Launcher";
 
@@ -69,21 +69,21 @@ static bool setupFbo(unsigned width, unsigned height)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glBindTexture(GL_TEXTURE_2D, 0);
-	RHASSERT(GL_NO_ERROR == glGetError());
+	roAssert(GL_NO_ERROR == glGetError());
 
 	// Generate frame buffer for depth and stencil
 	if(!renderContext.depth) glGenRenderbuffers(1, &renderContext.depth);
 	glBindRenderbuffer(GL_RENDERBUFFER, renderContext.depth);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-	RHASSERT(GL_NO_ERROR == glGetError());
+	roAssert(GL_NO_ERROR == glGetError());
 
 	// Create render target for Rhinoca to draw to
 	if(!renderContext.fbo) glGenFramebuffers(1, &renderContext.fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, renderContext.fbo);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderContext.texture, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderContext.depth);
-	RHASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-	RHASSERT(GL_NO_ERROR == glGetError());
+	roAssert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+	roAssert(GL_NO_ERROR == glGetError());
 
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
@@ -142,7 +142,7 @@ HWND createWindow(HWND existingWindow, int& width, int& height, bool fullScreen)
 	wc.hCursor = ::LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = NULL;	// (HBRUSH)(COLOR_WINDOW);
 
-	RHVERIFY(::RegisterClassW(&wc) != 0);
+	roVerify(::RegisterClassW(&wc) != 0);
 
 	if(existingWindow == 0)
 	{
@@ -244,12 +244,12 @@ int main()
 		}
 
 		if(!_quitWindow) {
-			RHASSERT(GL_NO_ERROR == glGetError());
+			roAssert(GL_NO_ERROR == glGetError());
 
 			glDepthMask(GL_FALSE);
 
 			rhinoca_update(rh);
-			RHASSERT(GL_NO_ERROR == glGetError());
+			roAssert(GL_NO_ERROR == glGetError());
 
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -278,7 +278,7 @@ int main()
 				glVertex3i(0, _height, 0);
 			glEnd();
 
-			RHASSERT(GL_NO_ERROR == glGetError());
+			roAssert(GL_NO_ERROR == glGetError());
 			driver->swapBuffers();
 		} else
 			break;

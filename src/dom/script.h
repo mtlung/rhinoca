@@ -29,7 +29,7 @@ public:
 	void setSrc(const char* uri);
 	const char* src() const;	/// The path of the js file, not the context of the script
 
-	override const FixString& tagName() const;
+	override const ro::ConstString& tagName() const;
 
 	TextResourcePtr _src;
 

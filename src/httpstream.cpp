@@ -4,10 +4,46 @@
 #include "socket.h"
 #include "../roar/base/roStopWatch.h"
 #include "../roar/base/roTaskPool.h"
+#include "../roar/base/roArray.h"
 
 #include <string.h>
 
 using namespace ro;
+
+// Perform character encoding
+// http://www.blooberry.com/indexdot/html/topics/urlencoding.htm
+const char* _encode[] = { "%20", "%22", "%23", "%24", "%25", "%26", "%3C", "%3E" };
+const char _decode[] = " \"#$%&<>";
+
+char* rhinoca_http_encodeUrl(const char* uri)
+{
+	roSize orgLen = strlen(uri);
+	if(orgLen == 0) return NULL;
+
+	char* ret = (char*)rhinoca_malloc(orgLen * 3 + 1);
+	char* buf = ret;
+
+	do {
+		bool converted = false;
+		for(roSize i=0; i <= sizeof(_decode); ++i) {
+			if(*uri == _decode[i]) {
+				for(const char* s = _encode[i]; *s != '\0'; ++s)
+					*(buf++) = *s;
+				converted = true;
+				break;
+			}
+		}
+		if(!converted)
+			*(buf++) = *uri;
+	} while(*(++uri) != '\0');
+
+	return ret;
+}
+
+char* rhinoca_http_decodeUrl(const char* uri)
+{
+	return NULL;
+}
 
 /// Notes on http 1.0 protocol:
 /// Http 1.0 protocol contains an optional "Content-Length" attribute, but
@@ -46,10 +82,7 @@ static void prepareForRead(HttpStream* s, unsigned readSize)
 
 void* rhinoca_http_open(Rhinoca* rh, const char* uri)
 {
-	// Perform character encoding
-	// http://www.blooberry.com/indexdot/html/topics/urlencoding.htm
-	const char* encode[] = { "%20", "%22", "%23", "%24", "%25", "%26", "%3C", "%3E" };
-	uri = replaceCharacterWithStr(uri, " \"#$%&<>", encode);
+	uri = rhinoca_http_encodeUrl(uri);
 
 	// Parse http://host
 	// NOTE: Buffer overflow may occur for sscanf
@@ -91,7 +124,7 @@ void* rhinoca_http_open(Rhinoca* rh, const char* uri)
 	if(!adr.parse(host))
 		goto OnError;
 
-	RHVERIFY(s->socket.create(BsdSocket::TCP) == 0);
+	roVerify(s->socket.create(BsdSocket::TCP) == 0);
 	s->socket.setBlocking(false);
 
 	ret = s->socket.connect(IPEndPoint(adr, 80));
@@ -108,7 +141,7 @@ OnError:
 
 bool rhinoca_http_ready(void* file, rhuint64 size)
 {
-	RHASSERT(file);
+	roAssert(file);
 
     int ret = 0;
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
@@ -188,7 +221,7 @@ bool rhinoca_http_ready(void* file, rhuint64 size)
 	if(s->bufSize >= size)
 		return true;
 
-	RHASSERT(s->headerReceived);
+	roAssert(s->headerReceived);
 
 	prepareForRead(s, (unsigned)size);
 	ret = s->socket.receive(s->buffer + s->bufSize, (unsigned)size - s->bufSize);

@@ -10,6 +10,8 @@
 #include "../context.h"
 #include <string.h>
 
+using namespace ro;
+
 namespace Dom {
 
 JSClass HTMLDocument::jsClass = {
@@ -82,7 +84,7 @@ static JSBool getElementsByTagName(JSContext* cx, uintN argc, jsval* vp)
 
 	JsString jss(cx, JS_ARGV0);
 	if(!jss) return JS_FALSE;
-	toupper(jss.c_str());
+	roToLower(jss.c_str());
 	JS_RVAL(cx, vp) = *self->getElementsByTagName(jss.c_str());
 
 	return JS_TRUE;
@@ -175,10 +177,10 @@ static JSPropertySpec properties[] = {
 };
 
 // Static variables to keep the intern string on life
-static FixString _readyStateUninitialized = "uninitialized";
-static FixString _readyStateLoading = "loading";
-static FixString _readyStateInteractive = "interactive";
-static FixString _readyStateComplete = "complete";
+static ro::ConstString _readyStateUninitialized = "uninitialized";
+static ro::ConstString _readyStateLoading = "loading";
+static ro::ConstString _readyStateInteractive = "interactive";
+static ro::ConstString _readyStateComplete = "complete";
 
 HTMLDocument::HTMLDocument(Rhinoca* rh)
 	: Node(rh)
@@ -217,10 +219,10 @@ TextNode* HTMLDocument::createTextNode(const char* data)
 
 Element* HTMLDocument::getElementById(const char* id)
 {
-	StringHash h(id, 0);
+	StringHash h = stringHash(id, 0);
 	for(NodeIterator i(this); !i.ended(); i.next()) {
 		if(Element* e = dynamic_cast<Element*>(i.current())) {
-			if(e->id.hashValue() == h)
+			if(e->id.hash() == h)
 				return e;
 		}
 	}
@@ -229,7 +231,7 @@ Element* HTMLDocument::getElementById(const char* id)
 
 static Node* getElementsByTagNameFilter(NodeIterator& iter, void* userData)
 {
-	FixString s((rhuint32)userData);
+	ro::ConstString s((rhuint32)userData);
 	Element* ele = dynamic_cast<Element*>(iter.current());
 	iter.next();
 
@@ -241,14 +243,14 @@ static Node* getElementsByTagNameFilter(NodeIterator& iter, void* userData)
 
 NodeList* HTMLDocument::getElementsByTagName(const char* tagName)
 {
-	NodeList* list = new NodeList(this, getElementsByTagNameFilter, (void*)StringHash(tagName, 0).hash);
+	NodeList* list = new NodeList(this, getElementsByTagNameFilter, (void*)stringHash(tagName, 0));
 	list->bind(jsContext, NULL);
 	return list;
 }
 
 Event* HTMLDocument::createEvent(const char* type)
 {
-	StringHash hash(type, 0);
+	StringHash hash = stringHash(type, 0);
 
 	Event* e = NULL;
 

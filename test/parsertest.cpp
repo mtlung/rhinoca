@@ -1,9 +1,11 @@
 #include "pch.h"
 #include "../src/parser.h"
-#include "../src/rhstring.h"
+//#include "../src/rhstring.h"
 #include "../src/dom/cssparser.h"
+#include "../roar/base/roStringHash.h"
 
 using namespace Parsing;
+using namespace ro;
 
 class ParserTest {};
 
@@ -50,7 +52,7 @@ class CSSSelectorParserTest
 public:
 	static void parserCallback(ParserResult* result, Parser* parser)
 	{
-		StringLowerCaseHash typeHash(result->type, 0);
+		StringHash typeHash = stringLowerCaseHash(result->type, 0);
 
 		if(	typeHash == StringHash("selectors") ||
 			typeHash == StringHash("decls") ||

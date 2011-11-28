@@ -233,11 +233,11 @@ struct OpenDirContext
 static bool toUtf16(const char* str, PreAllocVector<rhuint16, 128>& result)
 {
 	unsigned len = 0;
-	if(!str || !utf8ToUtf16(NULL, len, str, UINT_MAX))
+	if(!str || !roUtf8ToUtf16(NULL, len, str, UINT_MAX))
 		return false;
 
 	result.resize(len + 1);
-	if(len == 0 || !utf8ToUtf16(&result[0], len, str, UINT_MAX))
+	if(len == 0 || !roUtf8ToUtf16(&result[0], len, str, UINT_MAX))
 		return false;
 
 	result[len] = 0;
@@ -248,11 +248,11 @@ static bool toUtf16(const char* str, PreAllocVector<rhuint16, 128>& result)
 static bool toUtf8(const rhuint16* str, PreAllocVector<char, 128>& result)
 {
 	unsigned len = 0;
-	if(!str || !utf16ToUtf8(NULL, len, str, UINT_MAX))
+	if(!str || !roUtf16ToUtf8(NULL, len, str, UINT_MAX))
 		return false;
 
 	result.resize(len + 1);
-	if(len == 0 || !utf16ToUtf8(&result[0], len, str, UINT_MAX))
+	if(len == 0 || !roUtf16ToUtf8(&result[0], len, str, UINT_MAX))
 		return false;
 
 	result[len] = 0;

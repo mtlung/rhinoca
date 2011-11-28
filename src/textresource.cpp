@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "textresource.h"
+#include "common.h"
 #include "rhlog.h"
 #include "platform.h"
 
@@ -81,7 +82,7 @@ const char* removeBom(const char* str, unsigned& len)
 void TextLoader::commit(TaskPool* taskPool)
 {
 	if(!aborted) {
-		text->data.swap(data);
+		roSwap(text->data, data);
 		text->state = Resource::Loaded;
 
 		// Remove any BOM

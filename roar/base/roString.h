@@ -42,6 +42,8 @@ struct String
 
 	void		sprintf(const char* format, ...);
 
+	bool		fromUtf16(roUint16* src, roSize maxSrcLen);
+
 // Attributes
 	roSize		size() const	{ return _length; }
 	bool		isEmpty() const	{ return _length == 0; }

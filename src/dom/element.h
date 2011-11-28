@@ -33,8 +33,8 @@ public:
 	override void render(CanvasRenderingContext2D* virtualCanvas);
 
 // Attributes
-	FixString id;
-	FixString className;	/// The CSS class name
+	ro::ConstString id;
+	ro::ConstString className;	/// The CSS class name
 
 	bool visible;
 
@@ -42,7 +42,7 @@ public:
 	float _top, _bottom;
 	int _width, _height;	// NOTE: It's intentional to type _width and _height as signed integer
 
-	virtual const FixString& tagName() const;
+	virtual const ro::ConstString& tagName() const;
 
 	virtual float top() const;
 	virtual float left() const;

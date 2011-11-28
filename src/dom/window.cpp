@@ -378,7 +378,7 @@ static bool isInsideElement(Element* ele, int x, int y)
 		return false;
 
 	// TODO: Temp solution, before we assign the body element with correct width and height
-	bool isBodyTag = ele->tagName() == FixString("BODY");
+	bool isBodyTag = ele->tagName() == ro::ConstString("BODY");
 	bool isInBound = (ele->left() <= x && x <= ele->right()) && (ele->top() <= y && y <= ele->bottom());
 
 	return isBodyTag || isInBound;
@@ -475,7 +475,7 @@ void Window::dispatchEvent(Event* e)
 			if(Element* ele = dynamic_cast<Element*>(targets[i]))
 			{
 				// TODO: Temp solution, before we have the concept of input focus
-				if(ele->tagName() == FixString("BODY")) {
+				if(ele->tagName() == ro::ConstString("BODY")) {
 					e->target = ele;
 					ele->dispatchEvent(e);
 					return;

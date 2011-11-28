@@ -3,7 +3,6 @@
 
 #include "event.h"
 #include "../jsbindable.h"
-#include "../rhstring.h"
 
 namespace Dom {
 
@@ -62,7 +61,7 @@ protected:
 // Attributes
 public:
 	Rhinoca* rhinoca;
-	FixString nodeName;
+	ro::ConstString nodeName;
 
 	HTMLDocument* ownerDocument() const;
 

@@ -64,14 +64,14 @@ void HTMLStyleElement::onParserEndElement()
 	Parsing::css(&parser).once();
 }
 
-static const FixString _tagName = "STYLE";
+static const ro::ConstString _tagName = "STYLE";
 
 Element* HTMLStyleElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
 	return strcasecmp(type, _tagName) == 0 ? new HTMLStyleElement(rh) : NULL;
 }
 
-const FixString& HTMLStyleElement::tagName() const
+const ro::ConstString& HTMLStyleElement::tagName() const
 {
 	return _tagName;
 }

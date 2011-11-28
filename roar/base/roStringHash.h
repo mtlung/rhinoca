@@ -24,11 +24,27 @@ namespace stringHashDetail
 	template<> roFORCEINLINE StringHash sdbm<2>(Str<2>::Type str) { return str[0]; }
 }	// namespace stringHashDetail
 
-roFORCEINLINE StringHash stringHash(const char (&str)[2])  { return stringHashDetail::sdbm<2>(str); }
-roFORCEINLINE StringHash stringHash(const char (&str)[3])  { return stringHashDetail::sdbm<3>(str); }
-roFORCEINLINE StringHash stringHash(const char (&str)[4])  { return stringHashDetail::sdbm<4>(str); }
-roFORCEINLINE StringHash stringHash(const char (&str)[5])  { return stringHashDetail::sdbm<5>(str); }
-roFORCEINLINE StringHash stringHash(const char (&str)[6])  { return stringHashDetail::sdbm<6>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[2])	{ return stringHashDetail::sdbm<2>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[3])	{ return stringHashDetail::sdbm<3>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[4])	{ return stringHashDetail::sdbm<4>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[5])	{ return stringHashDetail::sdbm<5>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[6])	{ return stringHashDetail::sdbm<6>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[7])	{ return stringHashDetail::sdbm<7>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[8])	{ return stringHashDetail::sdbm<8>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[9])	{ return stringHashDetail::sdbm<9>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[10])	{ return stringHashDetail::sdbm<10>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[11])	{ return stringHashDetail::sdbm<11>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[12])	{ return stringHashDetail::sdbm<12>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[13])	{ return stringHashDetail::sdbm<13>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[14])	{ return stringHashDetail::sdbm<14>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[15])	{ return stringHashDetail::sdbm<15>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[16])	{ return stringHashDetail::sdbm<16>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[17])	{ return stringHashDetail::sdbm<17>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[18])	{ return stringHashDetail::sdbm<18>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[19])	{ return stringHashDetail::sdbm<19>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[20])	{ return stringHashDetail::sdbm<20>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[21])	{ return stringHashDetail::sdbm<21>(str); }
+roFORCEINLINE StringHash stringHash(const char (&str)[22])	{ return stringHashDetail::sdbm<22>(str); }
 
 inline StringHash stringHash(const char* str, roSize len)
 {

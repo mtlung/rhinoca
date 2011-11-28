@@ -19,7 +19,7 @@ public:
 	/// The line number where this text node begine in the document
 	unsigned lineNumber;
 
-	String data;
+	ro::String data;
 
 	static JSClass jsClass;
 };	// TextNode

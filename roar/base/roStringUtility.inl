@@ -36,7 +36,7 @@ inline int roStrnCmp(const char* s1, const char* s2, roSize n)
 	return 0;
 }
 
-inline int roStrCaseCmp(const char* s1, const char* s2 )
+inline int roStrCaseCmp(const char* s1, const char* s2)
 {
 	for( ;; ++s1, ++s2 ) {
 		char c1 = roToLower(*s1);

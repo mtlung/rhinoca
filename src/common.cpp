@@ -15,13 +15,13 @@ void rhAssert(const wchar_t* expression, const wchar_t* file, unsigned line)
 #endif
 
 // Reference: http://www.bsdlover.cn/study/UnixTree/V7/usr/src/libc/gen/atof.c.html
-double atof(const char* p, double onErr)
+/*double atof(const char* p, double onErr)
 {
 	if(!p) return onErr;
 
 	char c;
 	double fl, flexp, exp5;
-	double big = 72057594037927936.;  /*2^56*/
+	double big = 72057594037927936.;  // 2^56
 	const int LOGHUGE = 39;	// 10^39 --> Largest power
 	int nd;
 	char eexp, exp, neg, negexp, bexp;
@@ -104,7 +104,7 @@ double atof(const char* p, double onErr)
 	if (neg<0)
 		fl = -fl;
 	return fl;
-}
+}*/
 
 #if defined(_MSC_VER)
 int strcasecmp(const char* s1, const char* s2)
