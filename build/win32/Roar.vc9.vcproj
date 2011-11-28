@@ -396,10 +396,6 @@
 			</File>
 		</Filter>
 		<Filter
-			Name="core"
-			>
-		</Filter>
-		<Filter
 			Name="render"
 			>
 			<File

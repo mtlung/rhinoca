@@ -239,7 +239,7 @@ struct ConstStringHashTable
 
 	Node& find(StringHash hash) const
 	{
-		ScopeLock lock(mMutex);
+		ScopeLock lock(_mutex);
 
 		const roSize index = hash % _buckets.size();
 		for(Node* n = _buckets[index]; n; n = n->next) {
@@ -257,7 +257,7 @@ struct ConstStringHashTable
 
 		const StringHash hash = stringHash(str, 0);
 
-		ScopeLock lock(mMutex);
+		ScopeLock lock(_mutex);
 		const roSize index = hash % _buckets.size();
 
 		// Find any string with the same hash value
@@ -294,7 +294,7 @@ struct ConstStringHashTable
 		if(--node.refCount != 0)
 			return;
 
-		ScopeLock lock(mMutex);
+		ScopeLock lock(_mutex);
 		const roSize index = node.hash % _buckets.size();
 		Node* last = NULL;
 
@@ -316,7 +316,7 @@ struct ConstStringHashTable
 	{
 		Array<Node*> newBuckets(bucketSize, NULL);
 
-		roAssert(mMutex.isLocked());
+		roAssert(_mutex.isLocked());
 		for(roSize i=0; i<_buckets.size(); ++i) {
 			for(Node* n = _buckets[i]; n; ) {
 				Node* next = n->next;
@@ -330,7 +330,7 @@ struct ConstStringHashTable
 		roSwap(_buckets, newBuckets);
 	}
 
-	mutable Mutex mMutex;
+	mutable Mutex _mutex;
 	roSize _count;	///< The actual number of elements in this table, can be <=> _buckets.size()
 	Array<Node*> _buckets;
 	Node& _nullNode;

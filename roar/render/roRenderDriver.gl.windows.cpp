@@ -3,6 +3,7 @@
 
 #include "../base/roArray.h"
 #include "../base/roLog.h"
+#include "../base/roMemory.h"
 #include "../base/roTypeCast.h"
 #include <stdio.h>
 
@@ -18,6 +19,8 @@
 #undef _
 
 using namespace ro;
+
+static roDefaultAllocator _allocator;
 
 namespace {
 
@@ -37,7 +40,7 @@ static bool _oglFunctionInited = false;
 
 roRDriverContext* _newDriverContext_GL(roRDriver* driver)
 {
-	ContextImpl* ret = new ContextImpl;
+	ContextImpl* ret = _allocator.newObj<ContextImpl>();
 
 	ret->driver = driver;
 	ret->width = ret->height = 0;
@@ -93,7 +96,7 @@ void _deleteDriverContext_GL(roRDriverContext* self)
 
 	wglDeleteContext(impl->hRc);
 
-	delete static_cast<ContextImpl*>(self);
+	_allocator.deleteObj(static_cast<ContextImpl*>(self));
 }
 
 void _useDriverContext_GL(roRDriverContext* self)

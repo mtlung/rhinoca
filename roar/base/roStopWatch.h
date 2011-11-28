@@ -12,22 +12,21 @@ double ticksToSeconds();
 roUint64 secondsToTicks(double second);
 
 /// A StopWatch to measure time interval.
-class StopWatch
+struct StopWatch
 {
-public:
 	StopWatch();
 
-	float getFloat() const;
-	double getDouble() const;
-	double getAndReset();
+	float	getFloat() const;
+	double	getDouble() const;
+	double	getAndReset();
 
-	void reset();
-	void resetToLastGet();
+	void	reset();
+	void	resetToLastGet();
 
-	void pause();
-	void resume();
+	void	pause();
+	void	resume();
 
-protected:
+// Private
 	mutable roUint64 _lastGetTime;	///< Record when the last get() is called (to prevent negative delta time)
 	roUint64 _startTime;			///< Record when the StopWatch is created
 	double _pauseAccumulate;

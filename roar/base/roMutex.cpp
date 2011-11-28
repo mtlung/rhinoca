@@ -9,11 +9,11 @@ namespace ro {
 Mutex::Mutex(unsigned spinCount)
 {
 	// If you see this static assert, please check the size of the CRITICAL_SECTION
-	roStaticAssert(sizeof(mMutex) == sizeof(CRITICAL_SECTION));
+	roStaticAssert(sizeof(_mutex) == sizeof(CRITICAL_SECTION));
 
 	// Fall back to InitializeCriticalSection if InitializeCriticalSectionAndSpinCount didn't success
-	if(spinCount == 0 || !::InitializeCriticalSectionAndSpinCount((LPCRITICAL_SECTION)&mMutex, spinCount))
-		::InitializeCriticalSection((LPCRITICAL_SECTION)&mMutex);
+	if(spinCount == 0 || !::InitializeCriticalSectionAndSpinCount((LPCRITICAL_SECTION)&_mutex, spinCount))
+		::InitializeCriticalSection((LPCRITICAL_SECTION)&_mutex);
 
 #if roDEBUG
 	_locked = false;
@@ -25,12 +25,12 @@ Mutex::~Mutex()
 #if roDEBUG
 	roAssert(!_locked && "Delete before unlock");
 #endif
-	::DeleteCriticalSection((LPCRITICAL_SECTION)&mMutex);
+	::DeleteCriticalSection((LPCRITICAL_SECTION)&_mutex);
 }
 
 void Mutex::lock()
 {
-	::EnterCriticalSection((LPCRITICAL_SECTION)&mMutex);
+	::EnterCriticalSection((LPCRITICAL_SECTION)&_mutex);
 #if roDEBUG
 	roAssert(!_locked && "Double lock");
 	_locked = true;
@@ -43,13 +43,13 @@ void Mutex::unlock()
 	roAssert(_locked && "Unlock when not locked");
 	_locked = false;
 #endif
-	::LeaveCriticalSection((LPCRITICAL_SECTION)&mMutex);
+	::LeaveCriticalSection((LPCRITICAL_SECTION)&_mutex);
 }
 
 //! Return true if already locked, otherwise false
 bool Mutex::tryLock()
 {
-	if(::TryEnterCriticalSection((LPCRITICAL_SECTION)&mMutex) > 0) {
+	if(::TryEnterCriticalSection((LPCRITICAL_SECTION)&_mutex) > 0) {
 #if roDEBUG
 		roAssert(!_locked && "Double lock");
 		_locked = true;
@@ -62,11 +62,11 @@ bool Mutex::tryLock()
 RecursiveMutex::RecursiveMutex(unsigned spinCount)
 {
 	// If you see this static assert, please check the size of the CRITICAL_SECTION
-	roStaticAssert(sizeof(mMutex) == sizeof(CRITICAL_SECTION));
+	roStaticAssert(sizeof(_mutex) == sizeof(CRITICAL_SECTION));
 
 	// Fall back to InitializeCriticalSection if InitializeCriticalSectionAndSpinCount didn't success
-	if(spinCount == 0 || !::InitializeCriticalSectionAndSpinCount((LPCRITICAL_SECTION)&mMutex, spinCount))
-		::InitializeCriticalSection((LPCRITICAL_SECTION)&mMutex);
+	if(spinCount == 0 || !::InitializeCriticalSectionAndSpinCount((LPCRITICAL_SECTION)&_mutex, spinCount))
+		::InitializeCriticalSection((LPCRITICAL_SECTION)&_mutex);
 
 #if roDEBUG
 	_lockCount = 0;
@@ -78,12 +78,12 @@ RecursiveMutex::~RecursiveMutex()
 #if roDEBUG
 	roAssert(!isLocked() && "Delete before unlock");
 #endif
-	::DeleteCriticalSection((LPCRITICAL_SECTION)&mMutex);
+	::DeleteCriticalSection((LPCRITICAL_SECTION)&_mutex);
 }
 
 void RecursiveMutex::lock()
 {
-	::EnterCriticalSection((LPCRITICAL_SECTION)&mMutex);
+	::EnterCriticalSection((LPCRITICAL_SECTION)&_mutex);
 #if roDEBUG
 	++_lockCount;
 #endif
@@ -95,17 +95,17 @@ void RecursiveMutex::unlock()
 	roAssert(_lockCount > 0);
 	--_lockCount;
 #endif
-	::LeaveCriticalSection((LPCRITICAL_SECTION)&mMutex);
+	::LeaveCriticalSection((LPCRITICAL_SECTION)&_mutex);
 }
 
 bool RecursiveMutex::tryLock()
 {
 #if roDEBUG
-	bool locked = ::TryEnterCriticalSection((LPCRITICAL_SECTION)&mMutex) > 0;
+	bool locked = ::TryEnterCriticalSection((LPCRITICAL_SECTION)&_mutex) > 0;
 	if(locked) ++_lockCount;
 	return locked;
 #else
-	return ::TryEnterCriticalSection((LPCRITICAL_SECTION)&mMutex) > 0;
+	return ::TryEnterCriticalSection((LPCRITICAL_SECTION)&_mutex) > 0;
 #endif
 }
 
@@ -117,7 +117,7 @@ Mutex::Mutex(int spinCount)
 	_locked = false;
 #endif
 	// TODO: Spin count is not yet supported.
-	::pthread_mutex_init(&mMutex, NULL);
+	::pthread_mutex_init(&_mutex, NULL);
 }
 
 Mutex::~Mutex()
@@ -125,12 +125,12 @@ Mutex::~Mutex()
 #if roDEBUG
 	roAssert(!_locked && "Delete before unlock");
 #endif
-	::pthread_mutex_destroy(&mMutex);
+	::pthread_mutex_destroy(&_mutex);
 }
 
 void Mutex::lock()
 {
-	roVerify(::pthread_mutex_lock(&mMutex) == 0);
+	roVerify(::pthread_mutex_lock(&_mutex) == 0);
 #if roDEBUG
 	roAssert(!_locked && "Double lock");
 	_locked = true;
@@ -143,12 +143,12 @@ void Mutex::unlock()
 	roAssert(_locked && "Unlock when not locked");
 	_locked = false;
 #endif
-	roVerify(::pthread_mutex_unlock(&mMutex) == 0);
+	roVerify(::pthread_mutex_unlock(&_mutex) == 0);
 }
 
 bool Mutex::tryLock()
 {
-	if(!::pthread_mutex_trylock(&mMutex)) {
+	if(!::pthread_mutex_trylock(&_mutex)) {
 #if roDEBUG
 		roAssert(!_locked && "Double lock");
 		_locked = true;
@@ -167,7 +167,7 @@ RecursiveMutex::RecursiveMutex(int spinCount)
 	pthread_mutexattr_t attr;
 	roVerify(::pthread_mutexattr_init(&attr) == 0);
 	roVerify(::pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE) == 0);
-	roVerify(::pthread_mutex_init(&mMutex, &attr) == 0);
+	roVerify(::pthread_mutex_init(&_mutex, &attr) == 0);
 	roVerify(::pthread_mutexattr_destroy(&attr) == 0);
 
 #if roDEBUG
@@ -178,12 +178,12 @@ RecursiveMutex::RecursiveMutex(int spinCount)
 RecursiveMutex::~RecursiveMutex()
 {
 	roAssert(!isLocked() && "Delete before unlock");
-	roVerify(::pthread_mutex_destroy(&mMutex) == 0);
+	roVerify(::pthread_mutex_destroy(&_mutex) == 0);
 }
 
 void RecursiveMutex::lock()
 {
-	::pthread_mutex_lock(&mMutex);
+	::pthread_mutex_lock(&_mutex);
 #if roDEBUG
 	++_lockCount;
 #endif
@@ -195,17 +195,17 @@ void RecursiveMutex::unlock()
 	roAssert(_lockCount > 0);
 	--_lockCount;
 #endif
-	roVerify(::pthread_mutex_unlock(&mMutex) == 0);
+	roVerify(::pthread_mutex_unlock(&_mutex) == 0);
 }
 
 bool RecursiveMutex::tryLock()
 {
 #if roDEBUG
-	bool locked = !::pthread_mutex_trylock(&mMutex);
+	bool locked = !::pthread_mutex_trylock(&_mutex);
 	if(locked) ++_lockCount;
 	return locked;
 #else
-	return !::pthread_mutex_trylock(&mMutex);
+	return !::pthread_mutex_trylock(&_mutex);
 #endif
 }
 

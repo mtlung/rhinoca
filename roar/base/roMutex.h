@@ -10,9 +10,8 @@
 
 namespace ro {
 
-class Mutex : private NonCopyable
+struct Mutex : private NonCopyable
 {
-public:
 	/// Construct a mutex with an optional spin count.
 	/// Use spinCount = 0 to disable spinning.
 	explicit Mutex(unsigned spinCount = 200);
@@ -30,25 +29,23 @@ public:
 #endif
 
 #ifdef roUSE_PTHREAD
-	pthread_mutex_t mMutex;
+	pthread_mutex_t _mutex;
 #else
 	/// A char buffer that pretended to be a CRITICAL_SECTION.
 	/// Using such an approach, we need not to include Windows.h
 	/// The sizeof(CRITICAL_SECTION) is 24 on win32
-	char mMutex[8 + 4 * sizeof(void*)];
+	char _mutex[8 + 4 * sizeof(void*)];
 #endif
 
 #if roDEBUG
-protected:
 	bool _locked;
 	char _padding[3];
 #endif
 };	// Mutex
 
 /// RecursiveMutex
-class RecursiveMutex : private NonCopyable
+struct RecursiveMutex : private NonCopyable
 {
-public:
 	/// Construct a recursive mutex with an optional spin count.
 	/// Use spinCount = 0 to disable spinning.
 	explicit RecursiveMutex(unsigned spintCount = 200);
@@ -67,13 +64,12 @@ public:
 #endif
 
 #ifdef roUSE_PTHREAD
-	pthread_mutex_t mMutex;
+	pthread_mutex_t _mutex;
 #else
-	char mMutex[8 + 4 * sizeof(void*)];
+	char _mutex[8 + 4 * sizeof(void*)];
 #endif
 
 #if roDEBUG
-protected:
 	int _lockCount;
 #endif
 };	// RecursiveMutex
@@ -82,15 +78,14 @@ protected:
 // ----------------------------------------------------------------------
 
 /// Common class for some cancel-able classes.
-class Cancelable {
-public:
-	Cancelable() : mCanceled(false) {}
-	void cancel() { mCanceled = true; }
-	void resume() { mCanceled = false; }
-	bool isCanceled() const { return mCanceled; }
+struct Cancelable
+{
+	Cancelable() : _canceled(false) {}
+	void cancel() { _canceled = true; }
+	void resume() { _canceled = false; }
+	bool isCanceled() const { return _canceled; }
 
-protected:
-	bool mCanceled;
+	bool _canceled;
 };	// RecursiveMutex
 
 
@@ -107,7 +102,7 @@ protected:
 	}	// mutex get unlocked when out of scope
 	\endcode
  */
-class ScopeLock : public Cancelable, private NonCopyable
+struct ScopeLock : public Cancelable, private NonCopyable
 {
 public:
 	explicit ScopeLock(Mutex& m) : Cancelable(), m(&m) { m.lock(); }
@@ -117,42 +112,36 @@ public:
 	Mutex& mutex() { return *m; }
 	void unlockAndCancel() { if(!isCanceled()) m->unlock(); cancel(); }
 
-protected:
 	Mutex* m;
 };	// ScopeLock
 
 /// Unlocking mutex in scope.
-class ScopeUnlock : public Cancelable, private NonCopyable
+struct ScopeUnlock : public Cancelable, private NonCopyable
 {
-public:
 	explicit ScopeUnlock(Mutex& m) : Cancelable(), m(&m) { m.unlock(); }
 	explicit ScopeUnlock(Mutex* m) : Cancelable(), m(m) { if(m) m->unlock(); else cancel(); }
 	~ScopeUnlock() { lockAndCancel(); }
 	Mutex& mutex() { return *m; }
 	void lockAndCancel() { if(!isCanceled()) m->lock(); cancel(); }
 
-protected:
 	Mutex* m;
 };	// ScopeUnlock
 
 /// Unlocking mutex in scope.
 /// \note Make sure the mutex is locked before ScopeUnlockOnly try to unlock it.
-class ScopeUnlockOnly : public Cancelable, private NonCopyable
+struct ScopeUnlockOnly : public Cancelable, private NonCopyable
 {
-public:
 	explicit ScopeUnlockOnly(Mutex& m) : Cancelable(), m(&m) { }
 	explicit ScopeUnlockOnly(Mutex* m) : Cancelable(), m(m) { if(!m) cancel(); }
 	~ScopeUnlockOnly() { if(!isCanceled()) m->unlock(); }
 	Mutex& mutex() { return *m; }
 
-protected:
 	Mutex* m;
 };	// ScopeUnlockOnly
 
 /// Lock recursive mutex in scope.
-class ScopeRecursiveLock : public Cancelable, private NonCopyable
+struct ScopeRecursiveLock : public Cancelable, private NonCopyable
 {
-public:
 	explicit ScopeRecursiveLock(RecursiveMutex& m) : Cancelable(), m(&m) { m.lock(); }
 	explicit ScopeRecursiveLock(RecursiveMutex* m) : Cancelable(), m(m) { if(m) m->lock(); else cancel(); }
 	~ScopeRecursiveLock() { unlockAndCancel(); }
@@ -160,34 +149,29 @@ public:
 	RecursiveMutex& mutex() { return *m; }
 	void unlockAndCancel() { if(!isCanceled()) m->unlock(); cancel(); }
 
-protected:
 	RecursiveMutex* m;
 };	// ScopeRecursiveLock
 
 /// Unlocking recursive mutex in scope.
-class ScopeRecursiveUnlock : public Cancelable, private NonCopyable
+struct ScopeRecursiveUnlock : public Cancelable, private NonCopyable
 {
-public:
 	explicit ScopeRecursiveUnlock(RecursiveMutex& m) : Cancelable(), m(&m) { m.unlock(); }
 	explicit ScopeRecursiveUnlock(RecursiveMutex* m) : Cancelable(), m(m) { if(m) m->unlock(); else cancel(); }
 	~ScopeRecursiveUnlock() { lockAndCancel(); }
 	RecursiveMutex& mutex() { return *m; }
 	void lockAndCancel() { if(!isCanceled()) m->lock(); cancel(); }
 
-protected:
 	RecursiveMutex* m;
 };	// ScopeRecursiveUnlock
 
 /// Unlocking recursive mutex in scope.
-class ScopeRecursiveUnlockOnly : public Cancelable, private NonCopyable
+struct ScopeRecursiveUnlockOnly : public Cancelable, private NonCopyable
 {
-public:
 	explicit ScopeRecursiveUnlockOnly(RecursiveMutex& m) : Cancelable(), m(&m) { }
 	explicit ScopeRecursiveUnlockOnly(RecursiveMutex* m) : Cancelable(), m(m) { if(!m) cancel(); }
 	~ScopeRecursiveUnlockOnly() { if(!isCanceled()) m->unlock(); }
 	RecursiveMutex& mutex() { return *m; }
 
-protected:
 	RecursiveMutex* m;
 };	// ScopeRecursiveUnlockOnly
 

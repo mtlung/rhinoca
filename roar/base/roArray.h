@@ -129,7 +129,7 @@ struct Array : public IArray<T, Array<T> >
 	Array&	operator=(const Array& rhs) { copy(rhs); }
 
 // Operations
-	inline void setCapacity(roSize newCapacity);
+	inline void reserve(roSize newCapacity);
 };	// Array
 
 template<class T, roSize PreAllocCount>
@@ -144,7 +144,7 @@ struct TinyArray : public IArray<T, TinyArray<T,PreAllocCount> >
 // Operations
 	inline void insert(roSize idx, const T& val);
 
-	inline void setCapacity(roSize newSize);
+	inline void reserve(roSize newSize);
 
 // Private
 	char _buffer[PreAllocCount * sizeof(T)];

@@ -35,6 +35,9 @@ private:
 typedef roUint32 TaskId;
 typedef roPtrDiff ThreadId;
 
+
+// ----------------------------------------------------------------------
+
 class TaskPool
 {
 protected:

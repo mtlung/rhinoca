@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "roTaskPool.h"
+#include "roMemory.h"
 #include "roStopWatch.h"
 #include "../platform/roPlatformHeaders.h"
 
@@ -9,6 +10,8 @@
 #define DEBUG_PRINT 0
 
 namespace ro {
+
+static roDefaultAllocator _allocator;
 
 class TaskPool::TaskProxy
 {
@@ -60,7 +63,7 @@ TaskPool::TaskList::~TaskList()
 	while(freeBegin) {
 		TaskProxy* next = freeBegin->nextFree;
 		roAssert(!freeBegin->task);
-		delete freeBegin;
+		_allocator.deleteObj(freeBegin);
 		freeBegin = next;
 	}
 }
@@ -71,7 +74,7 @@ TaskPool::TaskProxy* TaskPool::TaskList::alloc()
 	++idCounter;
 
 	if(!freeBegin)
-		freeBegin = new TaskProxy;
+		freeBegin = _allocator.newObj<TaskProxy>();
 
 	TaskProxy* ret = freeBegin;
 	freeBegin = ret->nextFree;
@@ -105,8 +108,8 @@ TaskPool::TaskPool()
 	, _threadHandles(NULL)
 	, _mainThreadId(TaskPool::threadId())
 {
-	_pendingTasksHead = new TaskProxy();
-	_pendingTasksTail = new TaskProxy();
+	_pendingTasksHead = _allocator.newObj<TaskProxy>();
+	_pendingTasksTail = _allocator.newObj<TaskProxy>();
 
 	_pendingTasksHead->nextPending = _pendingTasksTail;
 	_pendingTasksTail->prevPending = _pendingTasksHead;
@@ -135,10 +138,10 @@ TaskPool::~TaskPool()
 #endif
 	}
 
-	delete[](_threadHandles);
+	_allocator.free(_threadHandles);
 
-	delete _pendingTasksHead;
-	delete _pendingTasksTail;
+	_allocator.deleteObj(_pendingTasksHead);
+	_allocator.deleteObj(_pendingTasksTail);
 }
 
 void TaskPool::sleep(int ms)
@@ -175,7 +178,7 @@ void TaskPool::init(roSize threadCount)
 {
 	roAssert(!_threadHandles);
 	_threadCount = threadCount;
-	_threadHandles = new roSize[threadCount];
+	_threadHandles = _allocator.malloc(threadCount * sizeof(roSize)).cast<roSize>();
 
 	for(roSize i=0; i<_threadCount; ++i) {
 #ifdef roUSE_PTHREAD
@@ -574,13 +577,13 @@ void TaskPool::addCallback(TaskId id, Callback callback, void* userData, ThreadI
 		virtual void run(TaskPool* taskPool)
 		{
 			callback(taskPool, userData);
-			delete this;
+			_allocator.deleteObj(this);
 		}
 		void* userData;
 		TaskPool::Callback callback;
 	};
 
-	CallbackTask* t = new CallbackTask;
+	CallbackTask* t = _allocator.newObj<CallbackTask>();
 	t->callback = callback;
 	t->userData = userData;
 	addFinalized(t, 0, id, affinity);

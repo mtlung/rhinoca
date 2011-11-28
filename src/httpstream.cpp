@@ -6,8 +6,6 @@
 #include "../roar/base/roTaskPool.h"
 #include "../roar/base/roArray.h"
 
-#include <string.h>
-
 using namespace ro;
 
 // Perform character encoding

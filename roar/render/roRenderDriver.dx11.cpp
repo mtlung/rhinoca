@@ -3,6 +3,7 @@
 
 #include "../base/roArray.h"
 #include "../base/roLog.h"
+#include "../base/roMemory.h"
 #include "../base/roString.h"
 #include "../base/roStringHash.h"
 #include "../base/roTypeCast.h"
@@ -10,8 +11,6 @@
 #include <dxgi.h>
 #include <D3Dcompiler.h>
 #include <D3DX11async.h>
-
-using namespace ro;
 
 // DirectX stuffs
 // DX11 tutorial:					http://www.rastertek.com/tutindex.html
@@ -33,7 +32,11 @@ using namespace ro;
 	D3D11_USAGE_STAGING			Read,Write
  */
 
-//////////////////////////////////////////////////////////////////////////
+using namespace ro;
+
+static roDefaultAllocator _allocator;
+
+// ----------------------------------------------------------------------
 // Common stuffs
 
 static unsigned _hash(const void* data, unsigned len)
@@ -65,7 +68,7 @@ static const char* _getShaderTarget(ID3D11Device* d3dDevice, roRDriverShaderType
 	}
 }
 
-//////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------
 // Context management
 
 // These functions are implemented in platform specific src files, eg. driver2.dx11.windows.cpp
@@ -133,7 +136,7 @@ static void _adjustDepthRangeMatrix(float* mat)
 	mat[2 + 3*4] = (mat[2 + 3*4] + mat[3 + 3*4]) * 0.5f;
 }
 
-//////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------
 // State management
 
 static const StaticArray<D3D11_BLEND_OP, 5> _blendOp = {
@@ -296,7 +299,7 @@ static void _setTextureState(roRDriverTextureState* states, unsigned stateCount,
 	if(!ctx || !states || stateCount == 0) return;
 }
 
-//////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------
 // Buffer
 
 struct roRDriverBufferImpl : public roRDriverBuffer
@@ -307,7 +310,7 @@ struct roRDriverBufferImpl : public roRDriverBuffer
 
 static roRDriverBuffer* _newBuffer()
 {
-	roRDriverBufferImpl* ret = new roRDriverBufferImpl;
+	roRDriverBufferImpl* ret = _allocator.newObj<roRDriverBufferImpl>();
 	memset(ret, 0, sizeof(*ret));
 	return ret;
 }
@@ -319,7 +322,7 @@ static void _deleteBuffer(roRDriverBuffer* self)
 
 	roAssert(!impl->isMapped);
 
-	delete static_cast<roRDriverBufferImpl*>(self);
+	_allocator.deleteObj(static_cast<roRDriverBufferImpl*>(self));
 }
 
 static const StaticArray<D3D11_BIND_FLAG, 4> _bufferBindFlag = {
@@ -522,7 +525,7 @@ static void _unmapBuffer(roRDriverBuffer* self)
 	impl->isMapped = false;
 }
 
-//////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------
 // Texture
 
 struct roRDriverTextureImpl : public roRDriverTexture
@@ -534,7 +537,7 @@ struct roRDriverTextureImpl : public roRDriverTexture
 
 static roRDriverTexture* _newTexture()
 {
-	roRDriverTextureImpl* ret = new roRDriverTextureImpl;
+	roRDriverTextureImpl* ret = _allocator.newObj<roRDriverTextureImpl>();
 	memset(ret, 0, sizeof(*ret));
 	return ret;
 }
@@ -544,7 +547,7 @@ static void _deleteTexture(roRDriverTexture* self)
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!impl) return;
 
-	delete static_cast<roRDriverTextureImpl*>(self);
+	_allocator.deleteObj(static_cast<roRDriverTextureImpl*>(self));
 }
 
 static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format)
@@ -706,12 +709,12 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, unsigned ro
 	return true;
 }
 
-//////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------
 // Shader
 
 static roRDriverShader* _newShader()
 {
-	roRDriverShaderImpl* ret = new roRDriverShaderImpl;
+	roRDriverShaderImpl* ret = _allocator.newObj<roRDriverShaderImpl>();
 	return ret;
 }
 
@@ -726,7 +729,7 @@ static void _deleteShader(roRDriverShader* self)
 			ctx->currentShaders[i] = NULL;
 		}
 
-	delete static_cast<roRDriverShaderImpl*>(self);
+	_allocator.deleteObj(static_cast<roRDriverShaderImpl*>(self));
 }
 
 static unsigned _countBits(int v)
@@ -1105,7 +1108,7 @@ bool _setUniformTexture(StringHash nameHash, roRDriverTexture* texture)
 	return true;
 }
 
-//////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------
 // Making draw call
 
 static void _drawTriangle(unsigned offset, unsigned vertexCount, unsigned flags)
@@ -1122,7 +1125,7 @@ static void _drawTriangleIndexed(unsigned offset, unsigned indexCount, unsigned 
 	ctx->dxDeviceContext->DrawIndexed(indexCount, offset, 0);
 }
 
-//////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------
 // Driver
 
 struct roRDriverImpl : public roRDriver
@@ -1131,14 +1134,14 @@ struct roRDriverImpl : public roRDriver
 
 static void _rhDeleteRenderDriver_DX11(roRDriver* self)
 {
-	delete static_cast<roRDriverImpl*>(self);
+	_allocator.deleteObj(static_cast<roRDriverImpl*>(self));
 }
 
 //}	// namespace
 
 roRDriver* _rgNewRenderDriver_DX11(const char* options)
 {
-	roRDriverImpl* ret = new roRDriverImpl;
+	roRDriverImpl* ret = _allocator.newObj<roRDriverImpl>();
 	memset(ret, 0, sizeof(*ret));
 	ret->destructor = &_rhDeleteRenderDriver_DX11;
 

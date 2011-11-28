@@ -3,6 +3,7 @@
 
 #include "../base/roArray.h"
 #include "../base/roLog.h"
+#include "../base/roMemory.h"
 #include "../base/roString.h"
 #include "../base/roStringHash.h"
 
@@ -10,10 +11,6 @@
 #include <gl/gl.h>
 #include "../../src/render/gl/glext.h"
 #include "platform.win/extensionsfwd.h"
-
-#include <malloc.h>
-
-using namespace ro;
 
 // OpenGL stuffs
 // Instancing:				http://sol.gfxile.net/instancing.html
@@ -23,7 +20,11 @@ using namespace ro;
 // Geometry shader examples:http://renderingwonders.wordpress.com/tag/geometry-shader/
 // Opengl on Mac:			http://developer.apple.com/library/mac/#documentation/GraphicsImaging/Conceptual/OpenGL-MacProgGuide/opengl_intro/opengl_intro.html
 
-//////////////////////////////////////////////////////////////////////////
+using namespace ro;
+
+static roDefaultAllocator _allocator;
+
+// ----------------------------------------------------------------------
 // Common stuffs
 
 //#define RG_GLES 1
@@ -45,7 +46,7 @@ static unsigned _hash(const void* data, unsigned len)
 	return h;
 }
 
-//////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------
 // Context management
 
 // These functions are implemented in platform specific src files, eg. driver2.gl.windows.cpp
@@ -98,7 +99,7 @@ static void _adjustDepthRangeMatrix(float* mat44)
 	(void)mat44;
 }
 
-//////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------
 // State management
 
 static const StaticArray<GLenum, 5> _blendOp = {
@@ -319,7 +320,7 @@ static void _setTextureState(roRDriverTextureState* states, unsigned stateCount,
 	}
 }
 
-//////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------
 // Buffer
 
 // See: http://www.opengl.org/wiki/Buffer_Object
@@ -350,7 +351,7 @@ struct roRDriverBufferImpl : public roRDriverBuffer
 
 static roRDriverBuffer* _newBuffer()
 {
-	roRDriverBufferImpl* ret = new roRDriverBufferImpl;
+	roRDriverBufferImpl* ret = _allocator.newObj<roRDriverBufferImpl>();
 	memset(ret, 0, sizeof(*ret));
 	return ret;
 }
@@ -364,8 +365,8 @@ static void _deleteBuffer(roRDriverBuffer* self)
 		glDeleteBuffers(1, &impl->glh);
 
 	roAssert(!impl->isMapped);
-	free(impl->systemBuf);
-	delete static_cast<roRDriverBufferImpl*>(self);
+	_allocator.free(impl->systemBuf);
+	_allocator.deleteObj(static_cast<roRDriverBufferImpl*>(self));
 }
 
 static const StaticArray<GLenum, 4> _bufferUsage = {
@@ -384,7 +385,7 @@ static bool _initBufferSpecificLocation(roRDriverBufferImpl* impl, roRDriverBuff
 	checkError();
 
 	if(systemMemory) {
-		impl->systemBuf = malloc(sizeInBytes);
+		impl->systemBuf = _allocator.malloc(sizeInBytes);
 		if(initData)
  			memcpy(impl->systemBuf, initData, sizeInBytes);
 
@@ -403,7 +404,7 @@ static bool _initBufferSpecificLocation(roRDriverBufferImpl* impl, roRDriverBuff
 		glBufferData(t, sizeInBytes, initData, _bufferUsage[usage]);
 		roAssert(impl->glh);
 
-		free(impl->systemBuf);
+		_allocator.free(impl->systemBuf);
 	}
 
 	checkError();
@@ -513,7 +514,7 @@ static bool _switchBufferMode(roRDriverBufferImpl* impl)
 	return false;
 }
 
-//////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------
 // Texture
 
 typedef struct TextureFormatMapping
@@ -549,7 +550,7 @@ struct roRDriverTextureImpl : public roRDriverTexture
 
 static roRDriverTexture* _newTexture()
 {
-	roRDriverTextureImpl* ret = new roRDriverTextureImpl;
+	roRDriverTextureImpl* ret = _allocator.newObj<roRDriverTextureImpl>();
 	memset(ret, 0, sizeof(*ret));
 	return ret;
 }
@@ -562,7 +563,7 @@ static void _deleteTexture(roRDriverTexture* self)
 	if(impl->glh)
 		glDeleteTextures(1, &impl->glh);
 
-	delete static_cast<roRDriverTextureImpl*>(self);
+	_allocator.deleteObj(static_cast<roRDriverTextureImpl*>(self));
 }
 
 static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format)
@@ -727,7 +728,7 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, unsigned ro
 	return true;
 }
 
-//////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------
 // Shader
 
 static const StaticArray<GLenum, 5> _shaderTypes = {
@@ -742,7 +743,7 @@ static const StaticArray<GLenum, 5> _shaderTypes = {
 
 static roRDriverShader* _newShader()
 {
-	roRDriverShaderImpl* ret = new roRDriverShaderImpl;
+	roRDriverShaderImpl* ret = _allocator.newObj<roRDriverShaderImpl>();
 	memset(ret, 0, sizeof(*ret));
 	return ret;
 }
@@ -784,7 +785,7 @@ static void _deleteShader(roRDriverShader* self)
 	if(impl->glh)
 		glDeleteShader(impl->glh);
 
-	delete static_cast<roRDriverShaderImpl*>(self);
+	_allocator.deleteObj(static_cast<roRDriverShaderImpl*>(self));
 }
 
 static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const char** sources, unsigned sourceCount)
@@ -1304,7 +1305,7 @@ bool _bindShaderInputCached(unsigned)
 	return false;
 }
 
-//////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------
 // Making draw call
 
 static void _drawTriangle(unsigned offset, unsigned vertexCount, unsigned flags)
@@ -1330,7 +1331,7 @@ static void _drawTriangleIndexed(unsigned offset, unsigned indexCount, unsigned 
 	checkError();
 }
 
-//////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------
 // Driver
 
 struct roRDriverImpl : public roRDriver
@@ -1339,14 +1340,14 @@ struct roRDriverImpl : public roRDriver
 
 static void _rhDeleteRenderDriver_GL(roRDriver* self)
 {
-	delete static_cast<roRDriverImpl*>(self);
+	_allocator.deleteObj(static_cast<roRDriverImpl*>(self));
 }
 
 }	// namespace
 
 roRDriver* _rgNewRenderDriver_GL(const char*)
 {
-	roRDriverImpl* ret = new roRDriverImpl;
+	roRDriverImpl* ret = _allocator.newObj<roRDriverImpl>();
 	memset(ret, 0, sizeof(*ret));
 	ret->destructor = &_rhDeleteRenderDriver_GL;
 

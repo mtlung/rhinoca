@@ -1,10 +1,3 @@
-#ifndef _NEW_
-// Define our own placement new and delete operator such that we need not to include <new>
-//#include <new>
-inline void* operator new(size_t, void* where) { return where; }
-inline void operator delete(void*, void*) {}
-#endif	// _NEW_
-
 template<class T> inline
 void roSwap(ro::Array<T>& lhs, ro::Array<T>& rhs)
 {
@@ -71,7 +64,7 @@ template<class T, class S>
 void IArray<T,S>::resize(roSize newSize, const T& fill)
 {
 	if(newSize > _capacity)
-		static_cast<S&>(*this).setCapacity(roMaxOf2(newSize, _size*3/2));	// Extend the size by 1.5x
+		static_cast<S&>(*this).reserve(roMaxOf2(newSize, _size*3/2));	// Extend the size by 1.5x
 	if(newSize > _size) {
 		while(_size < newSize) {
 			new ((void *)&_data[_size]) T(fill);
@@ -96,7 +89,7 @@ void IArray<T,S>::clear()
 template<class T, class S>
 void IArray<T,S>::condense()
 {
-	static_cast<S&>(*this).setCapacity(_size);
+	static_cast<S&>(*this).reserve(_size);
 }
 
 template<class T, class S>
@@ -169,7 +162,7 @@ T* IArray<T,S>::find(const T& val) const
 // ----------------------------------------------------------------------
 
 template<class T>
-void Array<T>::setCapacity(roSize newCapacity)
+void Array<T>::reserve(roSize newCapacity)
 {
 	newCapacity = roMaxOf2(newCapacity, size());
 
@@ -185,7 +178,7 @@ void Array<T>::setCapacity(roSize newCapacity)
 // ----------------------------------------------------------------------
 
 template<class T, roSize PreAllocCount>
-void TinyArray<T,PreAllocCount>::setCapacity(roSize newSize)
+void TinyArray<T,PreAllocCount>::reserve(roSize newSize)
 {
 	newSize = roMaxOf2(newSize, size());
 	bool moved = false;

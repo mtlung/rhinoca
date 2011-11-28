@@ -3,6 +3,7 @@
 
 #include "../base/roArray.h"
 #include "../base/roLog.h"
+#include "../base/roMemory.h"
 #include "../base/roStringHash.h"
 
 #include <dxgi.h>
@@ -16,6 +17,8 @@
 #pragma comment(lib, "dxguid.lib" )
 
 using namespace ro;
+
+static roDefaultAllocator _allocator;
 
 namespace {
 
@@ -32,7 +35,7 @@ struct ContextImpl : public roRDriverContextImpl
 
 roRDriverContext* _newDriverContext_DX11(roRDriver* driver)
 {
-	ContextImpl* ret = new ContextImpl;
+	ContextImpl* ret = _allocator.newObj<ContextImpl>();
 
 	ret->driver = driver;
 	ret->width = ret->height = 0;
@@ -76,7 +79,7 @@ void _deleteDriverContext_DX11(roRDriverContext* self)
 	// Change back to windowed mode before releasing swap chain
 	impl->dxSwapChain->SetFullscreenState(false, NULL);
 
-	delete static_cast<ContextImpl*>(self);
+	_allocator.deleteObj(static_cast<ContextImpl*>(self));
 }
 
 void _useDriverContext_DX11(roRDriverContext* self)

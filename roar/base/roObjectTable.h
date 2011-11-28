@@ -11,80 +11,12 @@ namespace ro {
 template<class T>
 struct ObjectTable
 {
-	ObjectTable()
-	{
-		_freeListEnque = _nullIdx;
-		_freeListDeque = _nullIdx;
-	}
+	ObjectTable();
 
 // Operations
-	roUint32 create()
-	{
-		roAssert(_index.size() < TypeOf<roUint16>::valueMax());
-
-		// Not enough entry in the index list, enlarge it
-		if(_freeListDeque >= _index.size()) {
-			_freeListDeque = num_cast<roUint16>(_index.size());
-			_Index idx = { _index.size(), _nullIdx, _nullIdx };
-			arrayIncSize(_index, idx);
-		}
-
-		// We are taking away the last entry in the free list, so invalidate _freeListEnque
-		if(_freeListEnque == _freeListDeque)
-			_freeListEnque = _nullIdx;
-
-		// Setup entry in the index array
-		_Index& i = _index[_freeListDeque];
-		i.id += _countInc;	// Overflow here is rarely a problem
-
-		i.objectIdx = num_cast<roUint16>(_objects.size());
-
-		_freeListDeque = i.next;
-		i.next = _nullIdx;
-
-		// Setup entry in the object array
-		arrayIncSize(_objects, _Object());	// NOTE: Unnecessary copying
-		_objects.back().id = i.id;
-
-		return i.id;
-	}
-
-	T* lookup(roUint32 id)
-	{
-		const roUint32 indexIdx = id & _indexMask;
-		if(indexIdx >= _index.size()) return NULL;
-
-		const _Index& i = _index[indexIdx];
-		if((i.id & _countMask) != (id & _countMask)) return NULL;
-		if(i.objectIdx >= _objects.size()) return NULL;
-
-		return &_objects[i.objectIdx]._object;
-	}
-
-	void destroy(roUint32 id)
-	{
-		const roUint16 indexIdx = id & _indexMask;
-		if(indexIdx >= _index.size()) return;
-
-		_Index& i = _index[indexIdx];
-		if((i.id & _countMask) != (id & _countMask)) return;
-		if(i.objectIdx >= _objects.size()) return;
-
-		// Removing the entry by swapping trick
-		_index[_objects.back().id & _indexMask].objectIdx = i.objectIdx;
-		arrayRemoveBySwap(_objects, i.objectIdx);
-
-		// For safety, invalidate the object index in the index list
-		i.objectIdx = _nullIdx;
-
-		// Adjust the free list
-		if(_freeListDeque == _nullIdx)
-			_freeListDeque = indexIdx;
-		else
-			_index[_freeListEnque].next = indexIdx;
-
-		_freeListEnque = indexIdx;
-	}
+	roUint32	create();
+	T*			lookup(roUint32 id);
+	void		destroy(roUint32 id);
 
 	// For iterating all the objects, the order is non-deterministic
 	T&			iterateAt(roSize idx)		{ return _objects[idx]._object; }
@@ -116,6 +48,84 @@ struct ObjectTable
 	Array<_Index> _index;
 	Array<_Object> _objects;
 };	// ObjectTable
+
+
+template<class T>
+ObjectTable<T>::ObjectTable()
+{
+	_freeListEnque = _nullIdx;
+	_freeListDeque = _nullIdx;
+}
+
+template<class T>
+roUint32 ObjectTable<T>::create()
+{
+	roAssert(_index.size() < TypeOf<roUint16>::valueMax());
+
+	// Not enough entry in the index list, enlarge it
+	if(_freeListDeque >= _index.size()) {
+		_freeListDeque = num_cast<roUint16>(_index.size());
+		_Index idx = { _index.size(), _nullIdx, _nullIdx };
+		_index.pushBack(idx);
+	}
+
+	// We are taking away the last entry in the free list, so invalidate _freeListEnque
+	if(_freeListEnque == _freeListDeque)
+		_freeListEnque = _nullIdx;
+
+	// Setup entry in the index array
+	_Index& i = _index[_freeListDeque];
+	i.id += _countInc;	// Overflow here is rarely a problem
+
+	i.objectIdx = num_cast<roUint16>(_objects.size());
+
+	_freeListDeque = i.next;
+	i.next = _nullIdx;
+
+	// Setup entry in the object array
+	_objects.pushBack(_Object()).id = i.id;
+
+	return i.id;
+}
+
+template<class T>
+T* ObjectTable<T>::lookup(roUint32 id)
+{
+	const roUint32 indexIdx = id & _indexMask;
+	if(indexIdx >= _index.size()) return NULL;
+
+	const _Index& i = _index[indexIdx];
+	if((i.id & _countMask) != (id & _countMask)) return NULL;
+	if(i.objectIdx >= _objects.size()) return NULL;
+
+	return &_objects[i.objectIdx]._object;
+}
+
+template<class T>
+void ObjectTable<T>::destroy(roUint32 id)
+{
+	const roUint16 indexIdx = id & _indexMask;
+	if(indexIdx >= _index.size()) return;
+
+	_Index& i = _index[indexIdx];
+	if((i.id & _countMask) != (id & _countMask)) return;
+	if(i.objectIdx >= _objects.size()) return;
+
+	// Removing the entry by swapping trick
+	_index[_objects.back().id & _indexMask].objectIdx = i.objectIdx;
+	_objects.removeBySwap(i.objectIdx);
+
+	// For safety, invalidate the object index in the index list
+	i.objectIdx = _nullIdx;
+
+	// Adjust the free list
+	if(_freeListDeque == _nullIdx)
+		_freeListDeque = indexIdx;
+	else
+		_index[_freeListEnque].next = indexIdx;
+
+	_freeListEnque = indexIdx;
+}
 
 }	// namespace ro
 
