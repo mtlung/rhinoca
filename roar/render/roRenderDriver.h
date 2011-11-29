@@ -38,7 +38,7 @@ typedef enum roRDriverDataUsage
 typedef enum roRDriverBufferMapUsage
 {
 	roRDriverBufferMapUsage_Read	= 1 << 0,
-	roRDriverBufferMapUsage_Write= 1 << 1,
+	roRDriverBufferMapUsage_Write	= 1 << 1,
 } roRDriverBufferMapUsage;
 
 typedef struct roRDriverBuffer

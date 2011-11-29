@@ -29,5 +29,5 @@ roBytePtr roDefaultAllocator::realloc(void* originalPtr, roSize originalSize, ro
 
 void roDefaultAllocator::free(void* ptr)
 {
-	return ::free(ptr);
+	::free(ptr);
 }

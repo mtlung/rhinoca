@@ -23,10 +23,19 @@ struct roBytePtr
 	void operator+=(roSize v)	{ ptr += v; }
 	void operator-=(roSize v)	{ ptr -= v; }
 
-	friend roBytePtr operator+(roBytePtr lhs, roSize rhs)		{ return lhs.ptr + rhs; }
-	friend roBytePtr operator+(roSize lhs, roBytePtr rhs)		{ return lhs + rhs.ptr; }
-	friend roBytePtr operator+(roBytePtr lhs, roPtrDiff rhs)	{ return lhs.ptr + rhs; }
-	friend roBytePtr operator+(roPtrDiff lhs, roBytePtr rhs)	{ return lhs + rhs.ptr; }
+	friend roBytePtr	operator+(roBytePtr lhs, roSize rhs)	{ return lhs.ptr + rhs; }
+	friend roBytePtr	operator+(roSize lhs, roBytePtr rhs)	{ return lhs + rhs.ptr; }
+	friend roBytePtr	operator+(roBytePtr lhs, roPtrDiff rhs)	{ return lhs.ptr + rhs; }
+	friend roBytePtr	operator+(roPtrDiff lhs, roBytePtr rhs)	{ return lhs + rhs.ptr; }
+
+	friend roPtrDiff	operator-(roBytePtr lhs, roBytePtr rhs) { return lhs.ptr - rhs.ptr; }
+
+	friend bool			operator< (roBytePtr lhs, roBytePtr rhs) { return lhs.ptr <  rhs.ptr; }
+	friend bool			operator> (roBytePtr lhs, roBytePtr rhs) { return lhs.ptr >  rhs.ptr; }
+	friend bool			operator==(roBytePtr lhs, roBytePtr rhs) { return lhs.ptr == rhs.ptr; }
+	friend bool			operator!=(roBytePtr lhs, roBytePtr rhs) { return lhs.ptr != rhs.ptr; }
+	friend bool			operator<=(roBytePtr lhs, roBytePtr rhs) { return lhs.ptr <= rhs.ptr; }
+	friend bool			operator>=(roBytePtr lhs, roBytePtr rhs) { return lhs.ptr >= rhs.ptr; }
 
 	char* ptr;
 };	// roBytePtr

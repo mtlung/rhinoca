@@ -35,7 +35,7 @@ struct roDefaultAllocator
 	T* newObj(const P1&p1,const P2&p2,const P3&p3,const P4&p4,const P5&p5,const P6&p6)	{ return new( malloc(sizeof(T)) ) T(p1,p2,p3,p4,p5,p6); }
 
 	template<class T>
-	void deleteObj(T* ptr) { ptr->~T(); free(ptr); }
+	void deleteObj(T* ptr) { if(ptr) { ptr->~T(); free(ptr); } }
 };
 
 #endif	// __roMemory_h__

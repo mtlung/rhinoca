@@ -178,19 +178,17 @@ String String::substr(roSize offset, roSize count) const
 String& String::operator+=(const char* str)
 {
 	if(const roSize len = roStrLen(str)) {
+		const roSize oldLen = _length;
 		resize(_length + len);
-		roVerify(strcat(_cstr, str) == _cstr);
+		for(roSize i=0; i<len; ++i)
+			_cstr[oldLen + i] = str[i];
 	}
 	return *this;
 }
 
 String& String::operator+=(const String& str)
 {
-	if(!str.isEmpty()) {
-		resize(_length + str._length);
-		roVerify(strcat(_cstr, str._cstr) == _cstr);
-	}
-	return *this;
+	return *this += str.c_str();
 }
 
 bool String::fromUtf16(roUint16* src, roSize maxSrcLen)
@@ -263,7 +261,7 @@ struct ConstStringHashTable
 		// Find any string with the same hash value
 		for(Node* n = _buckets[index]; n; n = n->next) {
 			if(n->hash == hash) {
-				roAssert(strcmp(n->stringValue(), str) == 0 && "String hash collision in ConstString" );
+				roAssert(roStrCmp(n->stringValue(), str) == 0 && "String hash collision in ConstString" );
 				return *n;
 			}
 		}

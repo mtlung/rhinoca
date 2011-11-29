@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "roLog.h"
-#include <stdarg.h>
 #include <stdio.h>
 
 static void _defaultLogFunc(const char* type, const char* format, va_list ap)
