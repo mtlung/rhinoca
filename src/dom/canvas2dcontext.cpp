@@ -995,14 +995,14 @@ void CanvasRenderingContext2D::drawImage(
 
 void CanvasRenderingContext2D::save()
 {
-	stateStack.push_back(currentState);
+	stateStack.pushBack(currentState);
 }
 
 void CanvasRenderingContext2D::restore()
 {
-	if(stateStack.empty()) return;	// Be more forgiving
-	currentState = stateStack.top();
-	stateStack.pop_back();
+	if(stateStack.isEmpty()) return;	// Be more forgiving
+	currentState = stateStack.back();
+	stateStack.popBack();
 }
 
 void CanvasRenderingContext2D::scale(float x, float y)

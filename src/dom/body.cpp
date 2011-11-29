@@ -2,7 +2,7 @@
 #include "body.h"
 #include "document.h"
 #include "../context.h"
-#include <string.h>
+#include "../../roar/base/roStringUtility.h"
 
 namespace Dom {
 
@@ -64,7 +64,7 @@ static const ro::ConstString _tagName = "BODY";
 
 Element* HTMLBodyElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
-	return strcasecmp(type, _tagName) == 0 ? new HTMLBodyElement(rh) : NULL;
+	return roStrCaseCmp(type, _tagName) == 0 ? new HTMLBodyElement(rh) : NULL;
 }
 
 const ro::ConstString& HTMLBodyElement::tagName() const

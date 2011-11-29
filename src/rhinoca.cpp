@@ -12,6 +12,8 @@
 #include <string.h>
 #include <sys/stat.h>
 
+using namespace ro;
+
 // Context
 JSRuntime* jsrt = NULL;
 void* driverContext = NULL;
@@ -227,10 +229,10 @@ struct OpenDirContext
 	WIN32_FIND_DATAW data;
 #endif
 
-	PreAllocVector<char, 128> str;
+	TinyArray<char, 128> str;
 };	// OpenDirContext
 
-static bool toUtf16(const char* str, PreAllocVector<rhuint16, 128>& result)
+static bool toUtf16(const char* str, TinyArray<rhuint16, 128>& result)
 {
 	unsigned len = 0;
 	if(!str || !roUtf8ToUtf16(NULL, len, str, UINT_MAX))
@@ -245,7 +247,7 @@ static bool toUtf16(const char* str, PreAllocVector<rhuint16, 128>& result)
 	return true;
 }
 
-static bool toUtf8(const rhuint16* str, PreAllocVector<char, 128>& result)
+static bool toUtf8(const rhuint16* str, TinyArray<char, 128>& result)
 {
 	unsigned len = 0;
 	if(!str || !roUtf16ToUtf8(NULL, len, str, UINT_MAX))
@@ -271,7 +273,7 @@ static void* default_ioOpenDir(Rhinoca* rh, const char* uri)
 	}
 #ifdef RHINOCA_VC
 	else {
-		PreAllocVector<rhuint16, 128> buffer;
+		TinyArray<rhuint16, 128> buffer;
 		if(!toUtf16(uri, buffer)) {
 			delete fs;
 			return NULL;
@@ -282,9 +284,9 @@ static void* default_ioOpenDir(Rhinoca* rh, const char* uri)
 		// Add wild-card at the end of the path
 		buffer.resize(buffer.size() - 1);	// Remove the null terminator first
 		if(buffer.back() != L'/' && buffer.back() != L'\\')
-			buffer.push_back(L'/');
-		buffer.push_back(L'*');
-		buffer.push_back(L'\0');
+			buffer.pushBack(L'/');
+		buffer.pushBack(L'*');
+		buffer.pushBack(L'\0');
 
 		HANDLE h = ::FindFirstFileW((wchar_t*)&buffer[0], &(c->data));
 

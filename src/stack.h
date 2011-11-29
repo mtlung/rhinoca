@@ -1,7 +1,7 @@
 #ifndef __STACK_H__
 #define __STACK_H__
 
-#include "vector.h"
+#include "../roar/base/roArray.h"
 
 template<typename T> class Stack
 {
@@ -9,16 +9,16 @@ public:
 	Stack() {}
 
 // Operations
-	void push(const T& val) { _vector.push_back(val); }
+	void push(const T& val) { _vector.pushBack(val); }
 
-	void pop() { _vector.pop_back(); }
+	void pop() { _vector.popBack(); }
 
-	void swap(Stack& rhs) { _vector.swap(rhs); }
+	void swap(Stack& rhs) { roSwap(_vector, rhs); }
 
 // Attributes
 	rhuint size() const { return _vector.size(); }
 
-	bool empty() const { return _vector.empty(); }
+	bool empty() const { return _vector.isEmpty(); }
 
 	T& top() { return _vector.back(); }
 	const T& top() const { return _vector.back(); }
@@ -26,7 +26,7 @@ public:
 	T& back() const { return _vector.back(); }
 
 protected:
-	Vector<T> _vector;
+	ro::Array<T> _vector;
 };	// Stack
 
 #endif	// __STACK_H__

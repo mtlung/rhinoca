@@ -14,7 +14,7 @@ public:
 	override void run(TaskPool* taskPool)
 	{
 		float val =0.1f;
-		for(int i=0; i<10000; ++i)
+		for(roSize i=0; i<10000; ++i)
 			val = sinf(val);
 
 		(void)val;
@@ -79,7 +79,6 @@ TEST_FIXTURE(TaskPoolTest, singleThreadDependency)
 	}
 
 	{	// Task1 depends on task2
-		ThreadId threadId = TaskPool::threadId();
 		TaskPool taskPool;
 		TaskId t1 = taskPool.beginAdd(new MyTask(0));
 
@@ -89,7 +88,7 @@ TEST_FIXTURE(TaskPoolTest, singleThreadDependency)
 		taskPool.dependsOn(t1, t2);
 		taskPool.finishAdd(t1);
 
-		for(int i=0; i<10; ++i)
+		for(roSize i=0; i<10; ++i)
 			taskPool.addFinalized(new MyTask(i+2), 0, 0, 0);
 
 		while(taskPool.taskCount())
@@ -157,7 +156,7 @@ TEST_FIXTURE(TaskPoolTest, dependencyDeadLock)
 	taskPool.init(3);
 	DummyTask tasks[1000];
 
-	for(unsigned i=0; i<COUNTOF(tasks); ++i)
+	for(roSize i=0; i<COUNTOF(tasks); ++i)
 	{
 		tasks[i].thisId = 0;
 		tasks[i].parent = 0;
@@ -170,7 +169,7 @@ TEST_FIXTURE(TaskPoolTest, dependencyDeadLock)
 		taskPool.addChild(tasks[i].parent, tasks[i].thisId);
 	}
 
-	for(unsigned i=0; i<COUNTOF(tasks); ++i) {
+	for(roSize i=0; i<COUNTOF(tasks); ++i) {
 		taskPool.finishAdd(tasks[i].thisId);
 	}
 

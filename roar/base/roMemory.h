@@ -7,6 +7,7 @@
 // Define our own placement new and delete operator such that we need not to include <new>
 inline void* operator new(size_t, void* where) { return where; }
 inline void operator delete(void*, void*) {}
+#define _NEW_
 #endif	// _NEW_
 
 roBytePtr	roMalloc(roSize size);

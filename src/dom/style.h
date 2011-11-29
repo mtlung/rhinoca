@@ -2,7 +2,7 @@
 #define __DOM_STYLE_H__
 
 #include "element.h"
-#include "../vector.h"
+#include "../../roar/base/roArray.h"
 
 namespace Dom {
 
@@ -21,16 +21,16 @@ public:
 
 // Attributes
 	struct String { const char* begin, *end; };
-	struct Selector { Vector<String> tokens; };
+	struct Selector { ro::Array<String> tokens; };
 	struct PropertyDecl { String name, value; };
 
 	struct Rule
 	{
-		Vector<Selector> selectors;	/// List of selectors that use this declarations
-		Vector<PropertyDecl> declarations;
+		ro::Array<Selector> selectors;	/// List of selectors that use this declarations
+		ro::Array<PropertyDecl> declarations;
 	};
 
-	Vector<Rule> rules;
+	ro::Array<Rule> rules;
 
 	char* source;
 

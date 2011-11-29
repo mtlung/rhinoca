@@ -13,7 +13,6 @@
 #include "windowscreen.h"
 #include "../common.h"
 #include "../context.h"
-#include "../vector.h"
 
 using namespace ro;
 
@@ -389,12 +388,12 @@ void Window::dispatchEvent(Event* e)
 	RHASSERT(e->jsObject);
 
 	// Get a list of traversed node first
-	PreAllocVector<EventTarget*, 64> targets;
+	TinyArray<EventTarget*, 64> targets;
 
-	targets.push_back(this);
+	targets.pushBack(this);
 	for(Dom::NodeIterator itr(document); !itr.ended(); itr.next())
 		if(itr->hasListener())
-			targets.push_back(itr.current());
+			targets.pushBack(itr.current());
 
 	// Handling of mouse events
 	// TODO: Generate 'secondary' events like mouse clicked (down and up in the same position)
@@ -450,7 +449,7 @@ void Window::dispatchEvent(Event* e)
 			touch->targetTouches.clear();
 			for(unsigned k=0; k<touches.size(); ++k)
 				if(touches[k].target == touchData.target)
-					touch->targetTouches.push_back(touches[k]);
+					touch->targetTouches.pushBack(touches[k]);
 
 			e->target = touchData.target;
 			e->target->dispatchEvent(e);

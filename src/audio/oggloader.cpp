@@ -2,8 +2,8 @@
 #include "audiobuffer.h"
 #include "audioloader.h"
 #include "stb_vorbis.h"
+#include "../common.h"
 #include "../rhlog.h"
-#include <string.h>	// for memcpy()
 
 using namespace ro;
 using namespace Audio;

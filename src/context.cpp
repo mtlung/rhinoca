@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "context.h"
+#include "common.h"
 #include "loader.h"
 #include "../roar/base/roLog.h"
 #include "path.h"
@@ -18,7 +19,6 @@
 #include "dom/registerfactories.h"
 #include "render/driver.h"
 #include "render/texture.h"
-#include <string.h>	// for strlen() and strcasecmp()
 
 #ifdef RHINOCA_IOS
 #	include "context_ios.h"

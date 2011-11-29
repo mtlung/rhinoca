@@ -112,7 +112,7 @@ static ro::ConstString _tagName = "AUDIO";
 
 Element* HTMLAudioElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
-	HTMLAudioElement* audio = strcasecmp(type, _tagName) == 0 ?
+	HTMLAudioElement* audio = roStrCaseCmp(type, _tagName) == 0 ?
 		new HTMLAudioElement(rh, rh->audioDevice, &rh->resourceManager) : NULL;
 	if(!audio) return NULL;
 

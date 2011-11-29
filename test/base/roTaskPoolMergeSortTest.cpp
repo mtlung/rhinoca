@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "../../roar/base/roTaskPool.h"
 #include "../../roar/base/roStopWatch.h"
-#include "../../src/vector.h"
+#include "../../roar/base/roArray.h"
 #include <stdlib.h>
 
 using namespace ro;
@@ -56,7 +56,7 @@ static void mergeSortSingleThread(int* data, int* scratch, int begin, int end)
 
 TEST(TaskPoolSingleThreadMergeSortTest)
 {
-	Vector<int> data(testSize), scratch(testSize);
+	Array<int> data(testSize), scratch(testSize);
 	for(rhuint i=0; i<data.size(); ++i)
 		data[i] = rand() % data.size();
 
@@ -151,7 +151,7 @@ TEST(TaskPoolMultiThreadMergeSortTest)
 	TaskPool taskPool;
 	taskPool.init(3);
 
-	Vector<int> data(testSize), scratch(testSize);
+	Array<int> data(testSize), scratch(testSize);
 	for(rhuint i=0; i<data.size(); ++i)
 		data[i] = rand() % data.size();
 

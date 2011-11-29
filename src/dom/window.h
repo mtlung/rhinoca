@@ -5,6 +5,7 @@
 #include "../jsbindable.h"
 #include "../linklist.h"
 #include "../map.h"
+#include "../../roar/base/roArray.h"
 #include "../../roar/base/roStopWatch.h"
 
 namespace Dom {
@@ -92,7 +93,7 @@ public:
 
 	Event* currentEvent;	/// Carry the Event object when a event is risen
 
-	Vector<TouchData> touches;	/// Book keeping for all touch points
+	ro::Array<TouchData> touches;	/// Book keeping for all touch points
 
 	typedef Map<TimerCallback> TimerCallbacks;
 	TimerCallbacks timerCallbacks;

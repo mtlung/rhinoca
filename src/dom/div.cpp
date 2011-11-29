@@ -2,7 +2,6 @@
 #include "div.h"
 #include "document.h"
 #include "../context.h"
-#include <string.h>
 
 namespace Dom {
 
@@ -37,7 +36,7 @@ static const ro::ConstString _tagName = "DIV";
 
 Element* HTMLDivElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
-	return strcasecmp(type, _tagName) == 0 ? new HTMLDivElement(rh) : NULL;
+	return roStrCaseCmp(type, _tagName) == 0 ? new HTMLDivElement(rh) : NULL;
 }
 
 const ro::ConstString& HTMLDivElement::tagName() const

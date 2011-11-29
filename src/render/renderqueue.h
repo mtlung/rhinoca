@@ -2,7 +2,7 @@
 #define __RENDER_RENDERQUEUE_H__
 
 #include "../rhinoca.h"
-#include "../vector.h"
+#include "../../roar/base/roArray.h"
 
 namespace Render {
 
@@ -53,7 +53,7 @@ public:
 	void render();
 
 	///
-	Vector<RenderItem> renderItems;
+	ro::Array<RenderItem> renderItems;
 };
 
 }	// Render

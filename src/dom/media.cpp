@@ -4,7 +4,6 @@
 #include "../context.h"
 #include "../path.h"
 #include "../xmlparser.h"
-#include <string.h>	// for strcasecmp
 
 namespace Dom {
 
@@ -108,9 +107,9 @@ static JSBool canPlayType(JSContext* cx, uintN argc, jsval* vp)
 	JsString jss(cx, JS_ARGV0);
 	if(!jss) return JS_FALSE;
 
-	if( strcasecmp(jss.c_str(), "audio/mpeg") == 0 ||
-		strcasecmp(jss.c_str(), "audio/ogg") == 0 ||
-		strcasecmp(jss.c_str(), "audio/x-wav") == 0)
+	if( roStrCaseCmp(jss.c_str(), "audio/mpeg") == 0 ||
+		roStrCaseCmp(jss.c_str(), "audio/ogg") == 0 ||
+		roStrCaseCmp(jss.c_str(), "audio/x-wav") == 0)
 	{
 		JS_RVAL(cx, vp) = STRING_TO_JSVAL(JS_InternString(cx, "probably"));
 	}

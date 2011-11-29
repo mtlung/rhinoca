@@ -1,8 +1,9 @@
 #include "pch.h"
 #include "xmlparser.h"
+#include "common.h"
 #include <memory.h>	// For memcpy
 #include "stack.h"
-#include "vector.h"
+#include "../roar/base/roArray.h"
 #include "../roar/base/roString.h"
 
 // Adopted from Irrlicht engine's xml parser
@@ -75,7 +76,7 @@ class XmlParser::Impl
 		const char* value;
 	};	// Attribute
 
-	typedef Vector<Attribute> Attributes;
+	typedef ro::Array<Attribute> Attributes;
 
 public:
 	Impl() : mIsEmptyElement(false)
@@ -296,7 +297,7 @@ public:
 					Attribute attr;
 					attr.name = createString(attributeNameBegin, attributeNameEnd);
 					attr.value = escapeString(attributeValueBegin, attributeValueEnd);
-					mAttributes.push_back(attr);
+					mAttributes.pushBack(attr);
 				}
 				else
 				{
@@ -395,7 +396,7 @@ public:
 			return NULL;
 
 		for(Attributes::const_iterator i=mAttributes.begin(); i!=mAttributes.end(); ++i)
-			if(strcasecmp(name, i->name) == 0)
+			if(roStrCaseCmp(name, i->name) == 0)
 				return i->value;
 		return NULL;
 	}
@@ -465,12 +466,12 @@ size_t XmlParser::attributeCount() const
 
 const char* XmlParser::attributeName(size_t idx) const
 {
-	return idx < mImpl.mAttributes.size() ? mImpl.mAttributes.at(idx).name : NULL;
+	return idx < mImpl.mAttributes.size() ? mImpl.mAttributes[idx].name : NULL;
 }
 
 const char* XmlParser::attributeValue(size_t idx) const
 {
-	return idx < mImpl.mAttributes.size() ? mImpl.mAttributes.at(idx).value : NULL;
+	return idx < mImpl.mAttributes.size() ? mImpl.mAttributes[idx].value : NULL;
 }
 
 const char* XmlParser::attributeValue(const char* name) const

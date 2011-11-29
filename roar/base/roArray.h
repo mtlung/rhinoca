@@ -123,10 +123,11 @@ template<class T>
 struct Array : public IArray<T, Array<T> >
 {
 	Array() {}
+	Array(roSize size)					{ resize(size); }
 	Array(roSize size, const T& val)	{ resize(size, val); }
 	Array(const Array<T>& src)			{ copy(src); }
 	~Array()							{ clear(); roFree(_data); }
-	Array&	operator=(const Array& rhs) { copy(rhs); }
+	Array&	operator=(const Array& rhs) { copy(rhs); return *this; }
 
 // Operations
 	inline void reserve(roSize newCapacity);
@@ -136,6 +137,7 @@ template<class T, roSize PreAllocCount>
 struct TinyArray : public IArray<T, TinyArray<T,PreAllocCount> >
 {
 	TinyArray()										{ _data = (T*)_buffer; _capacity = PreAllocCount; }
+	TinyArray(roSize size)							{ resize(size); }
 	TinyArray(roSize size, const T& val)			{ resize(size, val); }
 	TinyArray(const TinyArray<T,PreAllocCount>& v)	{ _data = (T*)_buffer; _capacity = PreAllocCount;  copy(v); }
 	~TinyArray()									{ clear(); if(_data != (T*)_buffer) roFree(_data); }

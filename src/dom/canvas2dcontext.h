@@ -3,7 +3,7 @@
 
 #include "canvas.h"
 #include "../mat44.h"
-#include "../vector.h"
+#include "../../roar/base/roArray.h"
 
 namespace Dom {
 
@@ -189,7 +189,7 @@ public:
 		Mat44 transform;
 	};
 	State currentState;
-	Vector<State> stateStack;
+	ro::Array<State> stateStack;
 
 	float _globalAlpha;
 

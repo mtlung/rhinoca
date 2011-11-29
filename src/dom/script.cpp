@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "script.h"
 #include "textnode.h"
+#include "../common.h"
 #include "../context.h"
 #include "../path.h"
 #include "../textresource.h"
@@ -102,7 +103,7 @@ static const ro::ConstString _tagName = "SCRIPT";
 
 Element* HTMLScriptElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
-	return strcasecmp(type, _tagName) == 0 ? new HTMLScriptElement(rh) : NULL;
+	return roStrCaseCmp(type, _tagName) == 0 ? new HTMLScriptElement(rh) : NULL;
 }
 
 static void appendFileToString(void* file, ro::String& str)

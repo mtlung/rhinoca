@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "truetypefont.h"
+#include "../common.h"
 #include "../rhlog.h"
-#include "../vector.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #define STBTT_malloc(x,u) rhinoca_malloc(x)

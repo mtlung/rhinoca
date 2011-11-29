@@ -2,7 +2,7 @@
 #define __DOM_TOUCHEVENT_H__
 
 #include "event.h"
-#include "../vector.h"
+#include "../../roar/base/roArray.h"
 
 namespace Dom {
 
@@ -39,7 +39,7 @@ public:
 	override void bind(JSContext* cx, JSObject* parent);
 
 // Attributes
-	Vector<TouchData> touches;
+	ro::Array<TouchData> touches;
 
 	static JSClass jsClass;
 };	// TouchList
@@ -54,9 +54,9 @@ public:
 	override void bind(JSContext* cx, JSObject* parent);
 
 // Attributes
-	Vector<TouchData> touches;
-	Vector<TouchData> targetTouches;
-	Vector<TouchData> changedTouches;
+	ro::Array<TouchData> touches;
+	ro::Array<TouchData> targetTouches;
+	ro::Array<TouchData> changedTouches;
 
 	static JSClass jsClass;
 };	// TouchEvent

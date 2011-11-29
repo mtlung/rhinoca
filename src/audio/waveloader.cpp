@@ -1,8 +1,8 @@
 #include "pch.h"
 #include "audiobuffer.h"
 #include "audioloader.h"
+#include "../common.h"
 #include "../rhlog.h"
-#include <string.h>
 
 namespace Loader {
 

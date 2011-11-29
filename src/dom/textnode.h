@@ -2,7 +2,6 @@
 #define __DOM_TEXTNODE_H__
 
 #include "element.h"
-#include "../vector.h"
 
 namespace Dom {
 
@@ -16,7 +15,7 @@ public:
 	override void bind(JSContext* cx, JSObject* parent);
 
 // Attributes
-	/// The line number where this text node begine in the document
+	/// The line number where this text node begin in the document
 	unsigned lineNumber;
 
 	ro::String data;

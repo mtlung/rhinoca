@@ -66,7 +66,7 @@ void* AudioBuffer::getWritePointerForRange(unsigned begin, unsigned& end, unsign
 	SubBuffer b = { begin, end, bytesToWrite, 999.0f, false, p };
 
 	RHASSERT(p);
-	subBuffers.push_back(b);
+	subBuffers.pushBack(b);
 
 	return p;
 }

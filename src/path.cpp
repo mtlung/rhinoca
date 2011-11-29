@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "path.h"
-#include "vector.h"
-#include <string.h>	// for strcasecmp()
+#include "../roar/base/roArray.h"
 
 #ifndef _MSC_VER
 #	include <unistd.h>	// for getcwd()
@@ -210,7 +209,7 @@ Path& Path::operator/=(const Path& rhs)
 {
 	normalize();
 
-	RHASSERT(mStr.isEmpty() || !rhs.hasRootDirectory());
+	roAssert(mStr.isEmpty() || !rhs.hasRootDirectory());
 
 	if(!mStr.isEmpty() && mStr[mStr.size()-1] != '/')
 		mStr += "/";
@@ -222,7 +221,7 @@ Path& Path::operator/=(const Path& rhs)
 
 int Path::compare(const Path& rhs) const
 {
-	return strcasecmp(c_str(), rhs.c_str());
+	return roStrCaseCmp(c_str(), rhs.c_str());
 }
 
 Path Path::getCurrentPath()
@@ -235,7 +234,7 @@ Path Path::getCurrentPath()
 	if((sz = ::GetCurrentDirectoryW(0, dummy)) == 0)
 		return Path();
 
-	PreAllocVector<wchar_t, 256> wstr(sz);
+	TinyArray<wchar_t, 256> wstr(sz);
 	if(::GetCurrentDirectoryW(sz, &wstr[0]) == 0)
 		return Path();
 

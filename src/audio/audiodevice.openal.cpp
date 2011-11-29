@@ -1,10 +1,10 @@
 #include "pch.h"
 #include "audiodevice.h"
-#include "../array.h"
+#include "../common.h"
 #include "../linklist.h"
 #include "../rhlog.h"
 #include "../resource.h"
-#include "../vector.h"
+#include "../../roar/base/roArray.h"
 
 #if defined(RHINOCA_APPLE)
 #	include <OpenAL/al.h>
@@ -28,6 +28,7 @@
 #endif
 
 using namespace Audio;
+using namespace ro;
 
 // Apple suggest to use it's OpenAL extension to avoid extra buffer memory copy
 // http://developer.apple.com/library/ios/#technotes/tn2199/_index.html
@@ -153,7 +154,7 @@ struct AudioSound : public LinkListBase::Node<AudioSound>
 	};
 
 	static const unsigned MAX_AL_BUFFERS = 4;
-	Array<BufferIndex, MAX_AL_BUFFERS> alBufferIndice;
+	StaticArray<BufferIndex, MAX_AL_BUFFERS> alBufferIndice;
 };	// AudioSound
 
 struct AudioDevice
@@ -199,7 +200,7 @@ struct AudioDevice
 	LinkList<AudioSound::Active> _activeSoundList;
 
 	static const unsigned MAX_AL_BUFFERS = AudioSound::MAX_AL_BUFFERS * 16;
-	Array<AlBuffer, MAX_AL_BUFFERS> _alBuffers;
+	StaticArray<AlBuffer, MAX_AL_BUFFERS> _alBuffers;
 };	// AudioDevice
 
 AudioSound::~AudioSound()

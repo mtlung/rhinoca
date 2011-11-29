@@ -6,7 +6,7 @@
 #include "../resource.h"
 #include "../xmlparser.h"
 #include "../render/texture.h"
-#include <string.h>	// for strcasecmp()
+#include "../../roar/base/roStringUtility.h"
 
 using namespace ro;
 using namespace Render;
@@ -168,7 +168,7 @@ static JSBool setFilter(JSContext* cx, JSObject* obj, jsid id, JSBool strict, js
 	JsString jss(cx, *vp);
 	if(!jss) return JS_FALSE;
 
-	if(strcasecmp(jss.c_str(), "nearest") == 0)
+	if(roStrCaseCmp(jss.c_str(), "nearest") == 0)
 		self->filter = Driver::SamplerState::MIN_MAG_POINT;
 	else
 		self->filter = Driver::SamplerState::MIN_MAG_LINEAR;
@@ -244,7 +244,7 @@ static const ro::ConstString _tagName = "IMG";
 
 Element* HTMLImageElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
-	HTMLImageElement* img = strcasecmp(type, "IMG") == 0 ? new HTMLImageElement(rh) : NULL;
+	HTMLImageElement* img = roStrCaseCmp(type, "IMG") == 0 ? new HTMLImageElement(rh) : NULL;
 	return img;
 }
 

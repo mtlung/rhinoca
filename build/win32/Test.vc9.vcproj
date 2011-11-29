@@ -337,6 +337,10 @@
 			Name="base"
 			>
 			<File
+				RelativePath="..\..\test\base\roArrayTest.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\test\base\roTaskPoolMergeSortTest.cpp"
 				>
 			</File>
@@ -423,10 +427,6 @@
 		</File>
 		<File
 			RelativePath="..\..\test\sockettest.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\test\vectortest.cpp"
 			>
 		</File>
 	</Files>

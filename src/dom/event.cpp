@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "event.h"
 #include "../context.h"
-#include "../vector.h"
 #include "../../roar/base/roStringHash.h"
 
 using namespace ro;
@@ -311,11 +310,11 @@ JSBool EventTarget::dispatchEvent(Event* ev, JSObject* self)
 {
 	// Build the event propagation list
 	// See http://docstore.mik.ua/orelly/webprog/dhtml/ch06_05.htm
-	PreAllocVector<EventTarget*, 64> list(1, this);
+	TinyArray<EventTarget*, 64> list(1, this);
 
 	for(EventTarget* t = this->eventTargetTraverseUp(); t; t = t->eventTargetTraverseUp()) {
 		if(!t->_eventListeners.isEmpty())
-			list.push_back(t);
+			list.pushBack(t);
 	}
 
 	// Add reference to all EventTarget before doing any callback 

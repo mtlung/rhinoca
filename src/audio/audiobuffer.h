@@ -2,7 +2,7 @@
 #define __AUDIO_AUDIOBUFFER_H__
 
 #include "../resource.h"
-#include "../vector.h"
+#include "../../roar/base/roArray.h"
 
 namespace Audio {
 
@@ -63,7 +63,7 @@ protected:
 		rhbyte* data;
 	};
 
-	Vector<SubBuffer> subBuffers;
+	ro::Array<SubBuffer> subBuffers;
 
 	mutable ro::Mutex mutex;
 };	// AudioBuffer

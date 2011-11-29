@@ -4,7 +4,7 @@
 #include "cssparser.h"
 #include "element.h"
 #include "elementstyle.h"
-#include "../vector.h"
+#include "../../roar/base/roArray.h"
 #include "../../roar/base/roStringHash.h"
 
 using namespace Parsing;
@@ -59,7 +59,7 @@ struct SingleSelectorState
 
 struct SelectionBuffer
 {
-	Vector<SingleSelectorState> state;
+	ro::Array<SingleSelectorState> state;
 };
 
 static void selectorParserCallback(ParserResult* result, Parser* parser)
@@ -68,7 +68,7 @@ static void selectorParserCallback(ParserResult* result, Parser* parser)
 
 	SingleSelectorState ss = { result->type, result->begin, result->end - result->begin };
 
-	state->state.push_back(ss);
+	state->state.pushBack(ss);
 }
 
 static bool hashCompare(const ro::ConstString& str1, const char* str2, unsigned len)

@@ -1,7 +1,6 @@
 #ifndef __AUDIO_AUDIOLOADER_H__
 #define __AUDIO_AUDIOLOADER_H__
 
-#include "../vector.h"
 #include "../../roar/base/roTaskPool.h"
 
 namespace Loader {

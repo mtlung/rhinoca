@@ -3,7 +3,6 @@
 
 #include "element.h"
 #include "../textresource.h"
-#include "../vector.h"
 
 namespace Dom {
 

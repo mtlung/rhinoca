@@ -68,7 +68,7 @@ static const ro::ConstString _tagName = "STYLE";
 
 Element* HTMLStyleElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
-	return strcasecmp(type, _tagName) == 0 ? new HTMLStyleElement(rh) : NULL;
+	return roStrCaseCmp(type, _tagName) == 0 ? new HTMLStyleElement(rh) : NULL;
 }
 
 const ro::ConstString& HTMLStyleElement::tagName() const

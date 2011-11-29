@@ -103,7 +103,7 @@ static JSBool identifiedTouch(JSContext* cx, uintN argc, jsval* vp)
 	if(!JS_ValueToInt32(cx, JS_ARGV0, &identifier)) return JS_FALSE;
 
 	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
-	Vector<TouchData>& touches = rh->domWindow->touches;
+	ro::Array<TouchData>& touches = rh->domWindow->touches;
 
 	// Scan touch with the same identifier
 	int32 index = rh->domWindow->findTouchIndexByIdentifier(identifier);
@@ -228,7 +228,7 @@ static JSBool getTouches(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 	list->bind(cx, *self);
 
 	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
-	Vector<TouchData>& _touches = rh->domWindow->touches;
+	ro::Array<TouchData>& _touches = rh->domWindow->touches;
 
 	switch(JSID_TO_INT(id)) {
 	case touches:
