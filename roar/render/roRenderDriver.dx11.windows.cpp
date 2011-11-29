@@ -29,7 +29,7 @@ struct ContextImpl : public roRDriverContextImpl
 	HWND hWnd;
 
 	Array<roRDriverShaderInput> programInputCache;
-};	// ContextImpl
+};
 
 }	// namespace
 

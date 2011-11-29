@@ -50,6 +50,8 @@ struct ObjectTable
 };	// ObjectTable
 
 
+// ----------------------------------------------------------------------
+
 template<class T>
 ObjectTable<T>::ObjectTable()
 {

@@ -1,7 +1,7 @@
 struct roRDriverShaderImpl : public roRDriverShader
 {
 	GLuint glh;
-};	// roRDriverShaderImpl
+};
 
 struct roRDriverShaderProgram
 {
@@ -50,7 +50,7 @@ struct roRDriverShaderProgramImpl : public roRDriverShaderProgram
 	TinyArray<ProgramUniform, 8> uniforms;
 	TinyArray<ProgramUniformBlock, 8> uniformBlocks;
 	TinyArray<ProgramAttribute, 8> attributes;
-};	// roRDriverShaderProgramImpl
+};
 
 struct roRDriverContextImpl : public roRDriverContext
 {
@@ -73,4 +73,4 @@ struct roRDriverContextImpl : public roRDriverContext
 		GLuint glh;
 	};
 	StaticArray<TextureState, 64> textureStateCache;
-};	// roRDriverContextImpl
+};

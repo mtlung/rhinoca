@@ -776,14 +776,6 @@
 			</File>
 		</Filter>
 		<File
-			RelativePath="..\..\src\array.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\atomic.h"
-			>
-		</File>
-		<File
 			RelativePath="..\..\src\bipbuffer.cpp"
 			>
 		</File>
@@ -981,10 +973,6 @@
 		</File>
 		<File
 			RelativePath="..\..\src\vec3.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\vector.h"
 			>
 		</File>
 		<File

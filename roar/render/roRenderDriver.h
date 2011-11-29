@@ -76,7 +76,7 @@ typedef enum roRDriverShaderType
 {
 	roRDriverShaderType_Vertex	= 0,
 	roRDriverShaderType_Pixel	= 1,
-	roRDriverShaderType_Geometry	= 2,
+	roRDriverShaderType_Geometry= 2,
 } roRDriverShaderType;
 
 typedef struct roRDriverShader
@@ -139,7 +139,7 @@ typedef struct roRDriverBlendState
 
 typedef enum roRDriverCompareFunc
 {
-	roRDriverDepthCompareFunc_Never = 0,	/// Never pass, 
+	roRDriverDepthCompareFunc_Never = 0,/// Never pass, 
 	roRDriverDepthCompareFunc_Less,		/// Pass if src depth < dst depth, pass if (ref & mask) < (stencil & mask)
 	roRDriverDepthCompareFunc_Equal,
 	roRDriverDepthCompareFunc_LEqual,
@@ -201,7 +201,7 @@ typedef struct roRDriverTextureState
 	roRDriverTextureFilterMode filter;
 	roRDriverTextureAddressMode u, v;
 	unsigned maxAnisotropy;
-} roRDriverTextureState;	// roRDriverTextureState
+} roRDriverTextureState;
 
 // Default states:
 // CCW -> front face

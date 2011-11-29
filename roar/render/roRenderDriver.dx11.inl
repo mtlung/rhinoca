@@ -55,7 +55,7 @@ struct roRDriverShaderImpl : public roRDriverShader
 
 	TinyArray<InputParam, 4> inputParams;
 	TinyArray<ConstantBuffer, 4> constantBuffers;
-};	// roRDriverShaderImpl
+};
 
 struct InputLayout
 {
@@ -97,4 +97,4 @@ struct roRDriverContextImpl : public roRDriverContext
 		void* hash;
 	};
 	StaticArray<TextureState, 64> textureStateCache;
-};	// roRDriverContextImpl
+};

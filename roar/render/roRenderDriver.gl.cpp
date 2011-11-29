@@ -527,16 +527,16 @@ typedef struct TextureFormatMapping
 } TextureFormatMapping;
 
 TextureFormatMapping _textureFormatMappings[] = {
-	{ roRDriverTextureFormat(0),				0, 0, 0, 0 },
+	{ roRDriverTextureFormat(0),			0, 0, 0, 0 },
 	{ roRDriverTextureFormat_RGBA,			4, GL_RGBA8, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8 },
 	{ roRDriverTextureFormat_R,				1, GL_R8, GL_RED, GL_UNSIGNED_BYTE },
 	{ roRDriverTextureFormat_A,				1, GL_ALPHA, GL_ALPHA, GL_UNSIGNED_BYTE },
 	{ roRDriverTextureFormat_Depth,			0, 0, 0, 0 },
 	{ roRDriverTextureFormat_DepthStencil,	0, 0, 0, 0 },
-	{ roRDriverTextureFormat_PVRTC2,			0, 0, 0, 0 },
-	{ roRDriverTextureFormat_PVRTC4,			0, 0, 0, 0 },
-//	{ roRDriverTextureFormat_PVRTC2,			2, GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG, 0, 0 },
-//	{ roRDriverTextureFormat_PVRTC4,			1, GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG, 0, 0 },
+	{ roRDriverTextureFormat_PVRTC2,		0, 0, 0, 0 },
+	{ roRDriverTextureFormat_PVRTC4,		0, 0, 0, 0 },
+//	{ roRDriverTextureFormat_PVRTC2,		2, GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG, 0, 0 },
+//	{ roRDriverTextureFormat_PVRTC4,		1, GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG, 0, 0 },
 	{ roRDriverTextureFormat_DXT1,			0, 0, 0, 0 },
 	{ roRDriverTextureFormat_DXT5,			0, 0, 0, 0 },
 };

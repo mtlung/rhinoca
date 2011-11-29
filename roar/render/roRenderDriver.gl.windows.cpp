@@ -32,7 +32,7 @@ struct ContextImpl : public roRDriverContextImpl
 	HDC hDc;
 	HGLRC hRc;
 	Array<roRDriverShaderInput> programInputCache;
-};	// ContextImpl
+};
 
 }	// namespace
 

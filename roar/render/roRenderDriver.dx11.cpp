@@ -306,7 +306,7 @@ struct roRDriverBufferImpl : public roRDriverBuffer
 {
 	ComPtr<ID3D11Buffer> dxBuffer;
 	StagingBuffer* dxStaging;
-};	// roRDriverBufferImpl
+};
 
 static roRDriverBuffer* _newBuffer()
 {
@@ -572,14 +572,14 @@ typedef struct TextureFormatMapping
 } TextureFormatMapping;
 
 TextureFormatMapping _textureFormatMappings[] = {
-	{ roRDriverTextureFormat(0),				0,	DXGI_FORMAT(0) },
+	{ roRDriverTextureFormat(0),			0,	DXGI_FORMAT(0) },
 	{ roRDriverTextureFormat_RGBA,			4,	DXGI_FORMAT_R8G8B8A8_UNORM },
 	{ roRDriverTextureFormat_R,				1,	DXGI_FORMAT_R16_UINT },
 	{ roRDriverTextureFormat_A,				0,	DXGI_FORMAT(0) },
 	{ roRDriverTextureFormat_Depth,			0,	DXGI_FORMAT(0) },
 	{ roRDriverTextureFormat_DepthStencil,	0,	DXGI_FORMAT(0) },
-	{ roRDriverTextureFormat_PVRTC2,			0,	DXGI_FORMAT(0) },
-	{ roRDriverTextureFormat_PVRTC4,			0,	DXGI_FORMAT(0) },
+	{ roRDriverTextureFormat_PVRTC2,		0,	DXGI_FORMAT(0) },
+	{ roRDriverTextureFormat_PVRTC4,		0,	DXGI_FORMAT(0) },
 	{ roRDriverTextureFormat_DXT1,			0,	DXGI_FORMAT_BC1_UNORM },
 	{ roRDriverTextureFormat_DXT5,			0,	DXGI_FORMAT_BC3_UNORM },
 };
