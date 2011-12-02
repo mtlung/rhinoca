@@ -1,6 +1,12 @@
 #ifndef __roUtility_h__
 #define __roUtility_h__
 
+#include "../platform/roCompiler.h"
+
+void roMemcpy(void* dst, const void* src, roSize size);
+
+void roZeroMemory(void* dst, roSize size);
+
 /// The generic version of swap
 template<typename T> inline
 void roSwap(T& lhs, T& rhs) { T tmp(lhs); lhs = rhs; rhs = tmp; }
