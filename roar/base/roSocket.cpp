@@ -1,8 +1,12 @@
 #include "pch.h"
-#include "socket.h"
+#include "roSocket.h"
+#include "roString.h"
+#include "roUtility.h"
+#include "roTypeCast.h"
+#include <stdio.h>
 #include <fcntl.h>
 
-#if defined(RHINOCA_WINDOWS)				// Native Windows
+#if roOS_WIN				// Native Windows
 #	undef FD_SETSIZE
 #	define FD_SETSIZE 10240
 #	include <winsock2.h>
@@ -30,7 +34,7 @@
 #	define SD_BOTH		0x02
 #endif
 
-#if defined(RHINOCA_WINDOWS)
+#if roOS_WIN
 //	typedef int			socklen_t;
 //	typedef UINT_PTR	SOCKET;
 //	typedef UINT_PTR	socket_t;
@@ -41,7 +45,7 @@
 #endif	// OK
 
 // Unify the error code used in Linux and win32
-#if defined(RHINOCA_WINDOWS)
+#if roOS_WIN
 #	define OK			S_OK
 #else
 #	define OK			0
@@ -53,9 +57,11 @@
 #	define MSG_NOSIGNAL 0x2000	// http://lists.apple.com/archives/macnetworkprog/2002/Dec/msg00091.html
 #endif
 
+namespace ro {
+
 static int getLastError()
 {
-#if defined(RHINOCA_WINDOWS)
+#if roOS_WIN
 	return WSAGetLastError();
 #else
 //	if(errno != 0)
@@ -70,227 +76,143 @@ static int toInt(unsigned s) {
 
 typedef BsdSocket::ErrorCode ErrorCode;
 
-namespace {
-
-struct BigInt
+SockAddr::SockAddr()
 {
-	union {
-		rhuint64 m64;
-		unsigned int mInt[2];
-		unsigned short mShort[4];
-		unsigned char mChar[8];
-	};
-};	// BigInt
-
-}	// namespace
-
-IPAddress::IPAddress()
-{
-	*this = getLoopBack();
+	roZeroMemory(_sockAddr, sizeof(_sockAddr));
+	asSockAddr().sa_family = AF_INET;
+	setIp(ipLoopBack());
 }
 
-IPAddress::IPAddress(rhuint64 ip)
+SockAddr::SockAddr(const sockaddr& addr)
 {
-	// Clear the sockaddr
-	::memset(_sockAddr, 0, sizeof(sockaddr));
-
-	// TODO: Initialize _address->sa_family with AF_INET6 when we support IPv6
-	nativeAddr().sa_family = AF_INET;
-	BigInt& bi = reinterpret_cast<BigInt&>(ip);
-
-	// Correct the byte order first
-	bi.mShort[0] = htons(bi.mShort[0]);
-	bi.mShort[1] = htons(bi.mShort[1]);
-
-	::memcpy(&nativeAddr().sa_data[2], &bi, 4);
+	asSockAddr() = addr;
 }
 
-IPAddress::IPAddress(const sockaddr& ip)
+SockAddr::SockAddr(roUint32 ip, roUint16 port)
 {
-	roAssert(AF_INET == ip.sa_family);
-	roAssert(sizeof(sockaddr) == sizeof(_sockAddr));
-	nativeAddr() = ip;
+	roZeroMemory(_sockAddr, sizeof(_sockAddr));
+	asSockAddr().sa_family = AF_INET;
+	setIp(ip);
+	setPort(port);
 }
 
-bool IPAddress::parse(const char* ipOrHostName)
+sockaddr& SockAddr::asSockAddr() const
 {
-	if(ipOrHostName == NULL || ipOrHostName[0] == 0)
+	return (sockaddr&)_sockAddr;
+}
+
+bool SockAddr::parse(const char* ip, roUint16 port)
+{
+	if(ip == NULL || ip[0] == 0)
 		return false;
 
 	struct addrinfo hints;
 	struct addrinfo* res = NULL;
 
-	::memset(&hints, 0, sizeof(addrinfo));
+	roZeroMemory(&hints, sizeof(addrinfo));
 	hints.ai_family = AF_INET;
 
-	int myerrno = ::getaddrinfo(ipOrHostName, NULL, &hints, &res);
+	int myerrno = ::getaddrinfo(ip, NULL, &hints, &res);
 	if (myerrno != 0) {
 		errno = myerrno;
 		return false;
 	}
 
-	::memcpy(&nativeAddr().sa_data[2], &res->ai_addr->sa_data[2], 4);
-	freeaddrinfo(res);
+	roMemcpy(&asSockAddr().sa_data[2], &res->ai_addr->sa_data[2], 4);
+	::freeaddrinfo(res);
 
 	return true;
 }
 
-IPAddress IPAddress::getLoopBack()
+bool SockAddr::parse(const char* addressAndPort)
 {
-#ifdef RHINOCA_WINDOWS
-	// 98048 will be encoded into 127.0.0.1
-	return IPAddress(98048);
-#else
-	IPAddress tmp(0);
-	RHVERIFY(tmp.parse("localhost"));
-	return tmp;
-#endif
+	String buf(addressAndPort);
+
+	int port;
+	if(sscanf(addressAndPort, "%[^:]:%d", buf.c_str(), &port) != 2)
+		return false;
+
+	if(!roCastAssert(port, roUint16()))
+		return false;
+
+	parse(buf.c_str(), num_cast<roUint16>(port));
+	return false;
 }
 
-IPAddress IPAddress::getIPv6LoopBack()
+roUint16 SockAddr::port() const
 {
-	roAssert(false);
-	return IPAddress(0);
+	return ::ntohs(*(roUint16*)asSockAddr().sa_data);
 }
 
-IPAddress IPAddress::getAny() {
-	return IPAddress(0);
+void SockAddr::setPort(roUint16 port)
+{
+	*(roUint16*)(asSockAddr().sa_data) = ::htons(port);
 }
 
-IPAddress IPAddress::getIPv6Any()
+roUint32 SockAddr::ip() const
 {
-	roAssert(false);
-	return IPAddress(0);
+	return ::ntohl(*(roUint32*)(asSockAddr().sa_data + sizeof(roUint16)));
 }
 
-rhuint64 IPAddress::getInt() const
+void SockAddr::setIp(roUint32 ip)
 {
-	rhuint64 ip = 0;
-	BigInt& bi = reinterpret_cast<BigInt&>(ip);
-	::memcpy(&bi, &nativeAddr().sa_data[2], 4);
-
-	// Correct the byte order
-	bi.mShort[0] = ntohs(bi.mShort[0]);
-	bi.mShort[1] = ntohs(bi.mShort[1]);
-
-	return ip;
+	*(roUint32*)(asSockAddr().sa_data + sizeof(roUint16)) = ::htonl(ip);
 }
 
-/*std::string IPAddress::getString() const {
-	std::ostringstream os;
-
-	const sockaddr& addr = nativeAddr();
-	// Note that the cast from uint8_t to unsigned is necessary
-	os	<< unsigned(uint8_t(addr.sa_data[2])) << '.'
-		<< unsigned(uint8_t(addr.sa_data[3])) << '.'
-		<< unsigned(uint8_t(addr.sa_data[4])) << '.'
-		<< unsigned(uint8_t(addr.sa_data[5]));
-
-	return os.str();
-}*/
-
-sockaddr& IPAddress::nativeAddr() const
+void SockAddr::asString(String& str) const
 {
-	return const_cast<sockaddr&>(
-		reinterpret_cast<const sockaddr&>(_sockAddr)
+	str.sprintf("%u.%u.%u%u:%u",
+		(roUint8)asSockAddr().sa_data[2],
+		(roUint8)asSockAddr().sa_data[3],
+		(roUint8)asSockAddr().sa_data[4],
+		(roUint8)asSockAddr().sa_data[5],
+		port()
 	);
 }
 
-bool IPAddress::operator==(const IPAddress& rhs) const {
-	return getInt() == rhs.getInt();;
+bool SockAddr::operator==(const SockAddr& rhs) const
+{
+	return ip() == rhs.ip() && port() == rhs.port();
 }
 
-bool IPAddress::operator!=(const IPAddress& rhs) const {
+bool SockAddr::operator!=(const SockAddr& rhs) const
+{
 	return !(*this == rhs);
 }
 
-bool IPAddress::operator<(const IPAddress& rhs) const {
-	return getInt() < rhs.getInt();;
-}
-
-IPEndPoint::IPEndPoint(const sockaddr& addr)
-	: _address(addr)
+bool SockAddr::operator<(const SockAddr& rhs) const
 {
-}
-
-IPEndPoint::IPEndPoint(const IPAddress& address, rhuint16 port)
-	: _address(address)
-{
-	setPort(port);
-}
-
-bool IPEndPoint::parse(const char* addressAndPort)
-{
-	char address[64];
-	char port[64];
-
-	address[0] = '\0';
-	port[0] = '\0';
-
-	if(strlen(addressAndPort) >= sizeof(address)) return false;
-
-	if(sscanf(addressAndPort, "%[^:]:%s", &address[0], &port[0]) == 2) {
-		if(!_address.parse(address))
-			return false;
-
-		int portNum;
-		if(sscanf(port, "%d", &portNum) != 1) return false;
-
-		setPort(rhuint16(portNum));
+	if(ip() < rhs.ip())
 		return true;
-	}
-
-	return _address.parse(address);
-}
-
-IPAddress& IPEndPoint::address() {
-	return _address;
-}
-
-const IPAddress& IPEndPoint::address() const {
-	return _address;
-}
-
-void IPEndPoint::setAddress(const IPAddress& address) {
-	rhuint16 p = port();
-	_address = address;
-	setPort(p);
-}
-
-rhuint16 IPEndPoint::port() const {
-	return rhuint16( ntohs(*(unsigned short*)(_address.nativeAddr().sa_data)) );
-}
-
-void IPEndPoint::setPort(rhuint16 port) {
-	*(unsigned short*)(_address.nativeAddr().sa_data) = htons((unsigned short)port);
-}
-
-/*std::string IPEndPoint::getString() const {
-	std::stringstream ss;
-	ss << _address.getString() << ":" << port();
-	return ss.str();
-}*/
-
-bool IPEndPoint::operator==(const IPEndPoint& rhs) const {
-	return _address == rhs._address && port() == rhs.port();
-}
-
-bool IPEndPoint::operator!=(const IPEndPoint& rhs) const {
-	return !(*this == rhs);
-}
-
-bool IPEndPoint::operator<(const IPEndPoint& rhs) const
-{
-	if(_address < rhs._address)
-		return true;
-	if(_address == rhs._address)
+	if(ip() == rhs.ip())
 		return port() < rhs.port();
 	return false;
 }
 
+roUint32 SockAddr::ipLoopBack()
+{
+	static roUint32 ret = 0;
+
+	if(roOS_WIN)
+		ret = 2130706433;
+
+	if(ret == 0) {
+		SockAddr addr;
+		roVerify(addr.parse("localhost", 0));
+		ret = addr.ip();
+	}
+
+	return ret;
+}
+
+roUint32 SockAddr::ipAny()
+{
+	return 0;
+}
+
 ErrorCode BsdSocket::initApplication()
 {
-#if defined(RHINOCA_WINDOWS)
+#if roOS_WIN
 	WSADATA	wsad;
 
 	// Note that we cannot use GetLastError to determine the error code
@@ -303,7 +225,7 @@ ErrorCode BsdSocket::initApplication()
 
 ErrorCode BsdSocket::closeApplication()
 {
-#if defined(RHINOCA_WINDOWS)
+#if roOS_WIN
 	return ::WSACleanup();
 #else
 	return OK;
@@ -313,7 +235,7 @@ ErrorCode BsdSocket::closeApplication()
 BsdSocket::BsdSocket()
 	: lastError(0)
 {
-	roAssert(sizeof(socket_t) == sizeof(_fd));
+	roStaticAssert(sizeof(socket_t) == sizeof(_fd));
 	setFd(INVALID_SOCKET);
 }
 
@@ -336,12 +258,12 @@ ErrorCode BsdSocket::create(SocketType type)
 	default: return lastError = getLastError();
 	}
 
-#ifndef RHINOCA_WINDOWS
+#if !roOS_WIN
 	{	// Disable SIGPIPE: http://unix.derkeiler.com/Mailing-Lists/FreeBSD/net/2007-03/msg00007.html
 		// More reference: http://beej.us/guide/bgnet/output/html/multipage/sendman.html
 		// http://discuss.joelonsoftware.com/default.asp?design.4.575720.7
 		int b = 1;
-		RHVERIFY(setsockopt(fd(), SOL_SOCKET, SO_NOSIGPIPE, &b, sizeof(b)) == 0);
+		roVerify(setsockopt(fd(), SOL_SOCKET, SO_NOSIGPIPE, &b, sizeof(b)) == 0);
 	}
 #endif
 
@@ -350,7 +272,7 @@ ErrorCode BsdSocket::create(SocketType type)
 
 ErrorCode BsdSocket::setBlocking(bool block)
 {
-#if defined(RHINOCA_WINDOWS)
+#if roOS_WIN
 	unsigned long a = block ? 0 : 1;
 	return lastError =
 		ioctlsocket(fd(), FIONBIO, &a) == OK ?
@@ -362,9 +284,9 @@ ErrorCode BsdSocket::setBlocking(bool block)
 #endif
 }
 
-ErrorCode BsdSocket::bind(const IPEndPoint& endPoint)
+ErrorCode BsdSocket::bind(const SockAddr& endPoint)
 {
-	sockaddr addr = endPoint.address().nativeAddr();
+	sockaddr addr = endPoint.asSockAddr();
 	return lastError =
 		::bind(fd(), &addr, sizeof(addr)) == OK ?
 		OK : getLastError();
@@ -391,9 +313,9 @@ ErrorCode BsdSocket::accept(BsdSocket& socket) const
 	return lastError = OK;
 }
 
-ErrorCode BsdSocket::connect(const IPEndPoint& endPoint)
+ErrorCode BsdSocket::connect(const SockAddr& endPoint)
 {
-	sockaddr addr = endPoint.address().nativeAddr();
+	sockaddr addr = endPoint.asSockAddr();
 	return lastError =
 		::connect(fd(), &addr, sizeof(addr)) == OK ?
 		OK : getLastError();
@@ -424,17 +346,17 @@ int BsdSocket::receive(void* buf, unsigned len, int flags)
 	return ret;
 }
 
-int BsdSocket::sendTo(const void* data, unsigned len, const IPEndPoint& destEndPoint, int flags)
+int BsdSocket::sendTo(const void* data, unsigned len, const SockAddr& destEndPoint, int flags)
 {
-	sockaddr addr = destEndPoint.address().nativeAddr();
+	sockaddr addr = destEndPoint.asSockAddr();
 	int ret = ::sendto(fd(), (const char*)data, toInt(len), flags, &addr, sizeof(addr));
 	lastError = ret < 0 ? getLastError() : OK;
 	return ret;
 }
 
-int BsdSocket::receiveFrom(void* buf, unsigned len, IPEndPoint& srcEndPoint, int flags)
+int BsdSocket::receiveFrom(void* buf, unsigned len, SockAddr& srcEndPoint, int flags)
 {
-	sockaddr& addr = srcEndPoint.address().nativeAddr();
+	sockaddr& addr = srcEndPoint.asSockAddr();
 	socklen_t bufSize = sizeof(addr);
 	int ret = ::recvfrom(fd(), (char*)buf, toInt(len), flags, &addr, &bufSize);
 	roAssert(bufSize == sizeof(addr));
@@ -483,7 +405,7 @@ ErrorCode BsdSocket::close()
 	if(fd() == INVALID_SOCKET)
 		return lastError = OK;
 
-#if defined(RHINOCA_WINDOWS)
+#if roOS_WIN
 	if(::closesocket(fd()) == OK)
 		return lastError = OK;
 #else
@@ -498,14 +420,14 @@ ErrorCode BsdSocket::close()
 #endif
 }
 
-IPEndPoint BsdSocket::remoteEndPoint() const
+SockAddr BsdSocket::remoteEndPoint() const
 {
 	sockaddr addr;
 	::memset(&addr, 0, sizeof(addr));
 	socklen_t len = sizeof(addr);
 	if(::getpeername(fd(), &addr, &len) == OK)
-		return IPEndPoint(addr);
-	return IPEndPoint(addr);
+		return SockAddr(addr);
+	return SockAddr(addr);
 }
 
 bool BsdSocket::inProgress(int code)
@@ -520,3 +442,5 @@ const socket_t& BsdSocket::fd() const {
 void BsdSocket::setFd(const socket_t& f) {
 	*reinterpret_cast<socket_t*>(_fd) = f;
 }
+
+}	// namespace ro

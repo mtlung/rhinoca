@@ -31,8 +31,8 @@
 #	define roSize size_t
 #endif
 
-#ifndef roPtrDiff
-#	define roPtrDiff ptrdiff_t
+#ifndef roPtrInt
+#	define roPtrInt ptrdiff_t
 #endif
 
 // Force inline
@@ -41,6 +41,6 @@
 #endif
 
 // Offset of
-#define roOffsetof(s, m) (roSize)((roPtrDiff)&(((s*)0)->m))
+#define roOffsetof(s, m) (roSize)((roPtrInt)&(((s*)0)->m))
 
 #endif	// __roCompiler_h__

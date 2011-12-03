@@ -4,7 +4,7 @@
 #include "context.h"
 #include "httpstream.h"
 #include "../roar/base/roLog.h"
-#include "socket.h"
+#include "../roar/base/roSocket.h"
 #include "audio/audiodevice.h"
 #include "render/driver.h"
 #include "render/vg/openvg.h"

@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "httpstream.h"
 #include "rhlog.h"
-#include "socket.h"
+#include "../roar/base/roSocket.h"
 #include "../roar/base/roStopWatch.h"
 #include "../roar/base/roTaskPool.h"
 #include "../roar/base/roArray.h"
@@ -102,7 +102,7 @@ void* rhinoca_http_open(Rhinoca* rh, const char* uri)
 		"\r\n";
 
     int ret = 0;
-	IPAddress adr;
+	SockAddr adr;
 	HttpStream* s = new HttpStream;
 
 	if(uriLen > sizeof(s->getCmd) - sizeof(getFmt)) goto OnError;
@@ -119,13 +119,13 @@ void* rhinoca_http_open(Rhinoca* rh, const char* uri)
 	s->userReadCount = 0;
 
 	// NOTE: Currently this host resolving operation is blocking
-	if(!adr.parse(host))
+	if(!adr.parse(host, 80))
 		goto OnError;
 
 	roVerify(s->socket.create(BsdSocket::TCP) == 0);
 	s->socket.setBlocking(false);
 
-	ret = s->socket.connect(IPEndPoint(adr, 80));
+	ret = s->socket.connect(adr);
 	if(ret != 0 && !BsdSocket::inProgress(s->socket.lastError))
 		goto OnError;
 

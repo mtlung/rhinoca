@@ -33,7 +33,7 @@ private:
 };	// Task
 
 typedef roUint32 TaskId;
-typedef roPtrDiff ThreadId;
+typedef roPtrInt ThreadId;
 
 
 // ----------------------------------------------------------------------

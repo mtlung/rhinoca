@@ -8,6 +8,8 @@
 #include "roStringUtility.h"
 #include "roTypeCast.h"
 #include "roUtility.h"
+#include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 
 namespace ro {
@@ -189,6 +191,19 @@ String& String::operator+=(const char* str)
 String& String::operator+=(const String& str)
 {
 	return *this += str.c_str();
+}
+
+void String::sprintf(const char* format, ...)
+{
+	if(!format) return;
+
+	va_list vl;
+	va_start(vl, format);
+
+	roSize size = vsprintf(NULL, format, vl);
+	resize(size);
+
+	vsprintf(_cstr, format, vl);
 }
 
 bool String::fromUtf16(roUint16* src, roSize maxSrcLen)

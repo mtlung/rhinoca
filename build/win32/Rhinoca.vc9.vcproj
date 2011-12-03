@@ -952,14 +952,6 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\src\socket.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\socket.h"
-			>
-		</File>
-		<File
 			RelativePath="..\..\src\stack.h"
 			>
 		</File>

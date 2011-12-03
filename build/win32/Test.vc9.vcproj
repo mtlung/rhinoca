@@ -341,6 +341,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\test\base\roSockAddrTest.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\test\base\roSocketTest.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\test\base\roTaskPoolMergeSortTest.cpp"
 				>
 			</File>
@@ -363,10 +371,6 @@
 		</File>
 		<File
 			RelativePath="..\..\test\filesystemtest.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\test\ipendpointtest.cpp"
 			>
 		</File>
 		<File
@@ -423,10 +427,6 @@
 		</File>
 		<File
 			RelativePath="..\..\test\resourcetest.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\test\sockettest.cpp"
 			>
 		</File>
 	</Files>

@@ -343,6 +343,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roSocket.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roSocket.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roStopWatch.cpp"
 				>
 			</File>
@@ -388,6 +396,10 @@
 			</File>
 			<File
 				RelativePath="..\..\roar\base\roTypeOf.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roUtility.cpp"
 				>
 			</File>
 			<File

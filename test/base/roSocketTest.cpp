@@ -1,7 +1,6 @@
 #include "pch.h"
-#include "../src/socket.h"
-#include "../src/rhassert.h"
-#include "../roar/base/roTaskPool.h"
+#include "../../roar/base/roSocket.h"
+#include "../../roar/base/roTaskPool.h"
 
 using namespace ro;
 
@@ -11,22 +10,22 @@ class BsdSocketTestFixture
 {
 protected:
 	BsdSocketTestFixture()
-		: mLocalEndPoint(IPAddress::getLoopBack(), 1234)
-		, mAnyEndPoint(IPAddress::getAny(), 1234)
+		: mLocalAddr(SockAddr::ipLoopBack(), 1234)
+		, mAnyAddr(SockAddr::ipAny(), 1234)
 	{
-		RHVERIFY(BsdSocket::initApplication() == 0);
+		roVerify(BsdSocket::initApplication() == 0);
 	}
 
 	~BsdSocketTestFixture()
 	{
-		RHVERIFY(BsdSocket::closeApplication() == 0);
+		roVerify(BsdSocket::closeApplication() == 0);
 	}
 
 	// Quickly create a listening socket
 	BsdSocket::ErrorCode listenOn(BsdSocket& s)
 	{
 		if(s.create(BsdSocket::TCP) != 0) return s.lastError;
-		if(s.bind(mAnyEndPoint) != 0) return s.lastError;
+		if(s.bind(mAnyAddr) != 0) return s.lastError;
 		return s.listen();
 	}
 
@@ -39,7 +38,7 @@ protected:
 		if(!BsdSocket::inProgress(listener.accept(acceptor))) return listener.lastError;
 
 		if(connector.create(BsdSocket::TCP) != 0) return listener.lastError;
-		while(BsdSocket::inProgress(connector.connect(mLocalEndPoint))) {}
+		while(BsdSocket::inProgress(connector.connect(mLocalAddr))) {}
 		if(connector.setBlocking(false) != 0) return listener.lastError;
 
 		while(BsdSocket::inProgress(listener.accept(acceptor))) {}
@@ -47,40 +46,43 @@ protected:
 	}
 
 //	Thread mThread;
-	IPEndPoint mLocalEndPoint;
-	IPEndPoint mAnyEndPoint;
+	SockAddr mLocalAddr;
+	SockAddr mAnyAddr;
 };	// BsdSocketTestFixture
 
 struct SimpleConnector : public Task
 {
-	SimpleConnector(const IPEndPoint& ep) : endPoint(ep) {}
+	SimpleConnector(const SockAddr& ep) : endPoint(ep) {}
 
 	override void run(TaskPool* taskPool) throw() {
 		BsdSocket s;
-		RHVERIFY(0 == s.create(BsdSocket::TCP));
+		roVerify(0 == s.create(BsdSocket::TCP));
 		bool connected = false;
 		while(taskPool->keepRun()) {
 			connected = s.connect(endPoint) == 0;
 
 			if(connected) {
 				const char msg[] = "Hello world!";
-				RHVERIFY(sizeof(msg) == s.send(msg, sizeof(msg)));
+				roVerify(sizeof(msg) == s.send(msg, sizeof(msg)));
 				break;
 			}
 		}
 	}
 
-	IPEndPoint endPoint;
+	SockAddr endPoint;
 };	// SimpleConnector
 
 }	// namespace
 
 TEST_FIXTURE(BsdSocketTestFixture, BlockingAcceptAndConnect)
 {
+	SockAddr a;
+	a.parse("localhost:2");
+	a.ip();
 	BsdSocket s1;
 	CHECK_EQUAL(0, listenOn(s1));
 
-	SimpleConnector connector(mLocalEndPoint);
+	SimpleConnector connector(mLocalAddr);
 	TaskPool taskPool;
 	taskPool.init(1);
 	TaskId task = taskPool.addFinalized(&connector, 0, 0, ~taskPool.mainThreadId());
@@ -101,7 +103,7 @@ TEST_FIXTURE(BsdSocketTestFixture, NonBlockingAccept)
 	CHECK(BsdSocket::inProgress(s1.accept(s2)));
 	CHECK(BsdSocket::inProgress(s1.lastError));
 
-	SimpleConnector connector(mLocalEndPoint);
+	SimpleConnector connector(mLocalAddr);
 	TaskPool taskPool;
 	taskPool.init(1);
 	TaskId task = taskPool.addFinalized(&connector, 0, 0, ~taskPool.mainThreadId());
@@ -116,7 +118,7 @@ TEST_FIXTURE(BsdSocketTestFixture, TCPBlockingSendBlockingRecv)
 	BsdSocket s1;
 	CHECK_EQUAL(0, listenOn(s1));
 
-	SimpleConnector connector(mLocalEndPoint);
+	SimpleConnector connector(mLocalAddr);
 	TaskPool taskPool;
 	taskPool.init(1);
 	TaskId task = taskPool.addFinalized(&connector);
@@ -163,17 +165,17 @@ TEST_FIXTURE(BsdSocketTestFixture, Udp)
 {
 	BsdSocket s;
 	CHECK_EQUAL(0, s.create(BsdSocket::UDP));
-	CHECK_EQUAL(0, s.bind(mAnyEndPoint));
+	CHECK_EQUAL(0, s.bind(mAnyAddr));
 
 	BsdSocket s2;
-	const IPEndPoint connectorEndPoint(IPAddress::getLoopBack(), 4321);	// Explicit end point for verification test
+	const SockAddr connectorAddr(SockAddr::ipLoopBack(), 4321);	// Explicit end point for verification test
 	CHECK_EQUAL(0, s2.create(BsdSocket::UDP));
-	CHECK_EQUAL(0, s2.bind(connectorEndPoint));
+	CHECK_EQUAL(0, s2.bind(connectorAddr));
 	const char msg[] = "Hello world!";
-	CHECK_EQUAL(int(sizeof(msg)), s2.sendTo(msg, sizeof(msg), mLocalEndPoint));
+	CHECK_EQUAL(int(sizeof(msg)), s2.sendTo(msg, sizeof(msg), mLocalAddr));
 
 	char buf[64];
-	IPEndPoint srcEndpoint(IPAddress::getAny(), 0);
-	CHECK_EQUAL(int(sizeof(msg)), s.receiveFrom(buf, sizeof(buf), srcEndpoint));
-	CHECK(srcEndpoint == connectorEndPoint);
+	SockAddr srcAddr(SockAddr::ipAny(), 0);
+	CHECK_EQUAL(int(sizeof(msg)), s.receiveFrom(buf, sizeof(buf), srcAddr));
+	CHECK(srcAddr == connectorAddr);
 }
