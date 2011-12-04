@@ -122,7 +122,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\resource.cpp" />
     <ClCompile Include="..\..\src\rhinoca.cpp" />
-    <ClCompile Include="..\..\src\rhstring.cpp" />
     <ClCompile Include="..\..\src\xmlparser.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -159,7 +158,6 @@
     <ClInclude Include="..\..\src\render\shivavg\shPath.h" />
     <ClInclude Include="..\..\src\render\shivavg\shVectors.h" />
     <ClInclude Include="..\..\src\render\vg\vgu.h" />
-    <ClInclude Include="..\..\src\atomic.h" />
     <ClInclude Include="..\..\src\common.h" />
     <ClInclude Include="..\..\src\context.h" />
     <ClInclude Include="..\..\src\context_win.h" />
@@ -172,7 +170,6 @@
     <ClInclude Include="..\..\src\platform.h" />
     <ClInclude Include="..\..\src\resource.h" />
     <ClInclude Include="..\..\src\rhinoca.h" />
-    <ClInclude Include="..\..\src\rhstring.h" />
     <ClInclude Include="..\..\src\vec3.h" />
     <ClInclude Include="..\..\src\vector.h" />
     <ClInclude Include="..\..\src\xmlparser.h" />

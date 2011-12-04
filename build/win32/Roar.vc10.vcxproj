@@ -14,11 +14,13 @@
     <ClInclude Include="..\..\roar\base\roArray.h" />
     <ClInclude Include="..\..\roar\base\roAtomic.h" />
     <ClInclude Include="..\..\roar\base\roBytePtr.h" />
+    <ClInclude Include="..\..\roar\base\roFileSystem.h" />
     <ClInclude Include="..\..\roar\base\roLog.h" />
     <ClInclude Include="..\..\roar\base\roMemory.h" />
     <ClInclude Include="..\..\roar\base\roMutex.h" />
     <ClInclude Include="..\..\roar\base\roNonCopyable.h" />
     <ClInclude Include="..\..\roar\base\roObjectTable.h" />
+    <ClInclude Include="..\..\roar\base\roSocket.h" />
     <ClInclude Include="..\..\roar\base\roStopWatch.h" />
     <ClInclude Include="..\..\roar\base\roString.h" />
     <ClInclude Include="..\..\roar\base\roStringHash.h" />
@@ -39,13 +41,16 @@
     <ClInclude Include="..\..\roar\render\roRenderDriver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\roar\base\roFileSystem.cpp" />
     <ClCompile Include="..\..\roar\base\roLog.cpp" />
     <ClCompile Include="..\..\roar\base\roMemory.cpp" />
     <ClCompile Include="..\..\roar\base\roMutex.cpp" />
+    <ClCompile Include="..\..\roar\base\roSocket.cpp" />
     <ClCompile Include="..\..\roar\base\roStopWatch.cpp" />
     <ClCompile Include="..\..\roar\base\roString.cpp" />
     <ClCompile Include="..\..\roar\base\roStringUtility.cpp" />
     <ClCompile Include="..\..\roar\base\roTaskPool.cpp" />
+    <ClCompile Include="..\..\roar\base\roUtility.cpp" />
     <ClCompile Include="..\..\roar\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

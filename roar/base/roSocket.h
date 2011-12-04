@@ -53,7 +53,7 @@ struct SockAddr
 
 	bool operator==(const SockAddr& rhs) const;
 	bool operator!=(const SockAddr& rhs) const;
-	bool operator<(const SockAddr& rhs) const;
+	bool operator< (const SockAddr& rhs) const;
 
 	static roUint32 ipLoopBack();
 	static roUint32 ipAny();
@@ -61,6 +61,9 @@ struct SockAddr
 // Private
 	roUint8 _sockAddr[16];
 };	// SockAddr
+
+
+// ----------------------------------------------------------------------
 
 /// Cross-platform BSD socket class
 /// Reference:
@@ -90,77 +93,62 @@ struct BsdSocket : NonCopyable
 	~BsdSocket();
 
 // Operations
-	ErrorCode create(SocketType type);
+	ErrorCode	create		(SocketType type);
 
-	ErrorCode setBlocking(bool block);
+	ErrorCode	setBlocking	(bool block);
 
-	ErrorCode bind(const SockAddr& endPoint);
+	ErrorCode	bind		(const SockAddr& endPoint);
 
 	///	Places the socket in a listening state
 	///	\param backlog Specifies the number of incoming connections that can be queued for acceptance
-	ErrorCode listen(unsigned backlog=5);
+	ErrorCode	listen		(unsigned backlog=5);
 
 	///	Creates a new Socket for a newly created connection.
 	///	Accept extracts the first connection on the queue of pending connections on this socket.
 	///	It then returns a the newly connected socket that will handle the actual connection.
-	ErrorCode accept(BsdSocket& socket) const;
+	ErrorCode	accept		(BsdSocket& socket) const;
 
 	/// Establishes a connection to a remote host.
-	ErrorCode connect(const SockAddr& endPoint);
+	ErrorCode	connect		(const SockAddr& endPoint);
 
-	///	Returns -1 for any error
-	int send(const void* data, unsigned len, int flags=0);
-
-	///	Returns -1 for any error
-	int receive(void* buf, unsigned len, int flags=0);
-
-	///	Returns -1 for any error
-	int sendTo(const void* data, unsigned len, const SockAddr& destEndPoint, int flags=0);
-
-	///	Returns -1 for any error
-	int receiveFrom(void* buf, unsigned len, SockAddr& srcEndPoint, int flags=0);
+	int			send		(const void* data, roSize len, int flags=0);								///< Returns -1 for any error
+	int			receive		(void* buf, roSize len, int flags=0);										///< Returns -1 for any error
+	int			sendTo		(const void* data, roSize len, const SockAddr& destEndPoint, int flags=0);	///< Returns -1 for any error
+	int			receiveFrom	(void* buf, roSize len, SockAddr& srcEndPoint, int flags=0);				///< Returns -1 for any error
 
 	///	To assure that all data is sent and received on a connected socket before it is closed,
 	///	an application should use shutDownXXX() to close connection before calling close().
 	///	Reference: See MSDN on ::shutdown
 
-	///	Do nothing if fd() is invalid.
-	ErrorCode shutDownRead();
+	ErrorCode	shutDownRead		();
+	ErrorCode	shutDownWrite		();
+	ErrorCode	shutDownReadWrite	();
 
-	///	Do nothing if fd() is invalid.
-	ErrorCode shutDownWrite();
-
-	///	Do nothing if fd() is invalid.
-	ErrorCode shutDownReadWrite();
-
-	/// Close the socket
-	void requestClose();
-
-	///	Do nothing if fd() is invalid.
-	ErrorCode close();
+	void		requestClose		();
+	ErrorCode	close				();
 
 // Attributes
 	/// Whether the socket is bound to a specific local port.
-	bool IsBound() const;
+	bool		IsBound				() const;
 
 	///	Gets an SockAddr that contains the local IP address and port number to which your socket is bounded
 	///	Throw if the socket is not bounded
-	SockAddr boundEndPoint() const;
+	SockAddr	boundEndPoint		() const;
 
 	///	If you are using a connection-oriented protocol, it gets an SockAddr that contains
 	///	the remote IP address and port number to which your socket is connected to.
 	///	note/ GetRemoteEndPoint is implemented using ::getpeername
 	///	Throw if the socket is not connected
-	SockAddr remoteEndPoint() const;
+	SockAddr	remoteEndPoint		() const;
 
 	mutable ErrorCode lastError;
 
 	///	Check to see if there is system error.
 	///	\return true if there is system error. Otherwise false.
-	bool IsError();
+	bool		IsError				();
 
 	///	Check the error code whether it indicating a socket operations is in progress.
-	static bool inProgress(int code);
+	static bool	inProgress			(int code);
 
 	const socket_t& fd() const;
 	void setFd(const socket_t& f);
