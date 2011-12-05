@@ -8,6 +8,7 @@
 namespace ro {
 
 ///	A light weight replacement for std::string
+/// Assume using UTF-8 encoding
 struct String
 {
 	String();
@@ -39,6 +40,7 @@ struct String
 
 	void		sprintf		(const char* format, ...);
 	bool		fromUtf16	(roUint16* src, roSize maxSrcLen);
+	bool		toUtf16		(roUint16* dst, roSize& dstLen);
 
 // Attributes
 	roSize		size		() const	{ return _length; }

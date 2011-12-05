@@ -374,10 +374,6 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\test\filesystemtest.cpp"
-			>
-		</File>
-		<File
 			RelativePath="..\..\test\main.cpp"
 			>
 		</File>

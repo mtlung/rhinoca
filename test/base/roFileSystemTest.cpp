@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "../../roar/base/roFileSystem.h"
+#include "../../roar/base/roStringUtility.h"
 
 using namespace ro;
 
@@ -31,4 +32,22 @@ TEST_FIXTURE(FileSystemTest, rawFS_getBuffer)
 	rawFileSystemUntakeBuffer(file, buf2);
 
 	rawFileSystemCloseFile(file);
+}
+
+TEST_FIXTURE(FileSystemTest, rawFS_directoryListing)
+{
+	void* dir = rawFileSystemOpenDir("./");
+
+	while(dir) {
+		const char* name = rawFileSystemDirName(dir);
+
+		CHECK(roStrLen(name) > 0);
+
+		if(!rawFileSystemNextDir(dir))
+			break;
+	}
+
+	rawFileSystemCloseDir(dir);
+
+	CHECK(true);
 }

@@ -115,7 +115,10 @@ String& String::assign(const char* str, roSize count)
 
 void String::clear()
 {
-	erase(0);
+	if(_length > 0)
+		_allocator.free(_cstr);
+	_cstr = const_cast<char*>(_emptyString);
+	_length = 0;
 }
 
 String& String::erase(roSize offset, roSize count)
@@ -220,6 +223,11 @@ bool String::fromUtf16(roUint16* src, roSize maxSrcLen)
 		return false;
 
 	return true;
+}
+
+bool String::toUtf16(roUint16* dst, roSize& dstLen)
+{
+	return roUtf8ToUtf16(dst, dstLen, c_str(), roSize(-1));
 }
 
 

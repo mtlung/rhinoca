@@ -47,6 +47,10 @@ void		rawFileSystemCloseFile		(void* file);
 roBytePtr	rawFileSystemGetBuffer		(void* file, roUint64 requestSize, roUint64& readableSize);
 void		rawFileSystemTakeBuffer		(void* file);
 void		rawFileSystemUntakeBuffer	(void* file, roBytePtr buf);
+void*		rawFileSystemOpenDir		(const char* uri);
+bool		rawFileSystemNextDir		(void* dir);
+const char*	rawFileSystemDirName		(void* dir);
+void		rawFileSystemCloseDir		(void* dir);
 
 }	// namespace ro
 

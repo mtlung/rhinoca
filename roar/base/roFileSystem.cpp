@@ -2,7 +2,11 @@
 #include "roFileSystem.h"
 #include "roArray.h"
 #include "roMemory.h"
+#include "roString.h"
+#include "roStringUtility.h"
 #include "roTypeCast.h"
+#include "../platform/roOS.h"
+#include "../platform/roPlatformHeaders.h"
 #include <stdio.h>
 #include <sys/stat.h>
 
@@ -89,5 +93,120 @@ void rawFileSystemUntakeBuffer(void* file, roBytePtr buf)
 {
 	_allocator.free(buf);
 }
+
+
+// ----------------------------------------------------------------------
+
+#if roOS_WIN
+
+struct OpenDirContext
+{
+	~OpenDirContext() {
+		if(handle != INVALID_HANDLE_VALUE)
+			::FindClose(handle);
+	}
+
+	HANDLE handle;
+	WIN32_FIND_DATAW data;
+
+	String str;
+};	// OpenDirContext
+
+void* rawFileSystemOpenDir(const char* uri)
+{
+	if(roStrLen(uri) == 0) return NULL;
+
+	Array<wchar_t> buf;
+	{	// Convert the source uri to utf 16
+		roSize len = 0;
+		if(!roUtf8ToUtf16(NULL, len, uri, roSize(-1)))
+			return NULL;
+
+		buf.resize(len);
+		roStaticAssert(sizeof(wchar_t) == sizeof(roUint16));
+		if(len == 0 || !roUtf8ToUtf16((roUint16*)&buf[0], len, uri, roSize(-1)))
+			return NULL;
+	}
+
+	OpenDirContext* dirCtx = _allocator.newObj<OpenDirContext>();
+
+	// Add wild-card at the end of the path
+	if(buf.back() != L'/' && buf.back() != L'\\')
+		buf.pushBack(L'/');
+	buf.pushBack(L'*');
+	buf.pushBack(L'\0');
+
+	HANDLE h = ::FindFirstFileW(&buf[0], &(dirCtx->data));
+
+	// Skip the ./ and ../
+	while(::wcscmp(dirCtx->data.cFileName, L".") == 0 || ::wcscmp(dirCtx->data.cFileName, L"..") == 0) {
+		if(!FindNextFileW(h, &(dirCtx->data))) {
+			dirCtx->data.cFileName[0] = L'\0';
+			break;
+		}
+	}
+
+	if(h != INVALID_HANDLE_VALUE)
+		dirCtx->handle = h;
+	else {
+		_allocator.deleteObj(dirCtx);
+		dirCtx = NULL;
+	}
+
+	return dirCtx;
+}
+
+bool rawFileSystemNextDir(void* dir)
+{
+	OpenDirContext* dirCtx = reinterpret_cast<OpenDirContext*>(dir);
+	if(!dirCtx) return false;
+
+	if(!::FindNextFileW(dirCtx->handle, &(dirCtx->data))) {
+		dirCtx->str.clear();
+		return false;
+	}
+
+	return true;
+}
+
+const char* rawFileSystemDirName(void* dir)
+{
+	OpenDirContext* dirCtx = reinterpret_cast<OpenDirContext*>(dir);
+	if(!dirCtx) return false;
+
+	if(!dirCtx->str.fromUtf16((roUint16*)dirCtx->data.cFileName, roSize(-1)))
+		dirCtx->str.clear();
+
+	return dirCtx->str.c_str();
+}
+
+void rawFileSystemCloseDir(void* dir)
+{
+	OpenDirContext* dirCtx = reinterpret_cast<OpenDirContext*>(dir);
+	_allocator.deleteObj(dirCtx);
+}
+
+#else
+
+void* rawFileSystemOpenDir(const char* uri)
+{
+	return NULL;
+}
+
+bool rawFileSystemNextDir(void* dir)
+{
+	return false;
+}
+
+const char* rawFileSystemDirName(void* dir)
+{
+	return NULL;
+}
+
+void rawFileSystemCloseDir(void* dir)
+{
+}
+
+#endif
 
 }	// namespace ro
