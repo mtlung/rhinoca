@@ -422,6 +422,10 @@ const char* ConstString::c_str() const {
 	return _node->stringValue();
 }
 
+ConstString::operator const char*() const {
+	return c_str();
+}
+
 StringHash ConstString::hash() const {
 	return _node->hash;
 }

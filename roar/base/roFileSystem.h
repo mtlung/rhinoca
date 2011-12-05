@@ -21,9 +21,9 @@ struct FileSystem
 	int			(*seek)			(void* file, roUint64 offset, SeekOrigin origin);	///< Returns 1 for success, 0 for fail, -1 not supported.
 	void		(*closeFile)	(void* file);
 
-	roBytePtr	(*getBuffer)	(void* file, roUint64 requestSize, roUint64& readableSize);
-	roUint64	(*takeBuffer)	(void* file);	///< Take over the ownership of the buffer returned by last getBuffer()
-	void		(*untakeBuffer)	(void* file, roBytePtr buf);
+	roBytePtr	(*getBuffer)	(void* file, roUint64 requestSize, roUint64& readableSize);	///< Always return non-null, but readableSize may be zero.
+	void		(*takeBuffer)	(void* file);					///< Take over the ownership of the buffer returned by last getBuffer()
+	void		(*untakeBuffer)	(void* file, roBytePtr buf);	///< Give the buffer returned by getBuffer() back to FileSystem to handle.
 
 // Directory operations
 	void*		(*openDir)		(const char* uri);
@@ -38,12 +38,15 @@ void		setDefaultFileSystem(FileSystem* fs);
 
 // ----------------------------------------------------------------------
 
-void*		rawFileSystemOpenFile			(const char* uri);
-bool		rawFileSystemReadReady			(void* file, roUint64 size);
-roUint64	rawFileSystemRead				(void* file, void* buffer, roUint64 size);
-roUint64	rawFileSystemSize				(void* file);
-int			rawFileSystemSizeSeek			(void* file, roUint64 offset, FileSystem::SeekOrigin origin);
-void		rawFileSystemSizeSeekCloseFile	(void* file);
+void*		rawFileSystemOpenFile		(const char* uri);
+bool		rawFileSystemReadReady		(void* file, roUint64 size);
+roUint64	rawFileSystemRead			(void* file, void* buffer, roUint64 size);
+roUint64	rawFileSystemSize			(void* file);
+int			rawFileSystemSeek			(void* file, roUint64 offset, FileSystem::SeekOrigin origin);
+void		rawFileSystemCloseFile		(void* file);
+roBytePtr	rawFileSystemGetBuffer		(void* file, roUint64 requestSize, roUint64& readableSize);
+void		rawFileSystemTakeBuffer		(void* file);
+void		rawFileSystemUntakeBuffer	(void* file, roBytePtr buf);
 
 }	// namespace ro
 

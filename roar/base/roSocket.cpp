@@ -70,11 +70,6 @@ static int getLastError()
 #endif
 }
 
-static int _toInt(roSize s)
-{
-	return s > (unsigned)ro::TypeOf<int>::valueMax() ? ro::TypeOf<int>::valueMax() : (int)s;
-}
-
 typedef BsdSocket::ErrorCode ErrorCode;
 
 SockAddr::SockAddr()
@@ -122,6 +117,8 @@ bool SockAddr::parse(const char* ip, roUint16 port)
 	roMemcpy(&asSockAddr().sa_data[2], &res->ai_addr->sa_data[2], 4);
 	::freeaddrinfo(res);
 
+	setPort(port);
+
 	return true;
 }
 
@@ -137,7 +134,7 @@ bool SockAddr::parse(const char* addressAndPort)
 		return false;
 
 	parse(buf.c_str(), num_cast<roUint16>(port));
-	return false;
+	return true;
 }
 
 roUint16 SockAddr::port() const
@@ -328,7 +325,7 @@ int BsdSocket::send(const void* data, roSize len, int flags)
 	roSize sent = 0;
 	const char* p = (const char*)data;
 	while(remain > 0) {
-		int ret = ::send(fd(), p, _toInt(remain), flags);
+		int ret = ::send(fd(), p, clamp_cast<int>(remain), flags);
 		if(ret < 0) {
 			lastError = getLastError();
 			return ret;
@@ -342,7 +339,7 @@ int BsdSocket::send(const void* data, roSize len, int flags)
 
 int BsdSocket::receive(void* buf, roSize len, int flags)
 {
-	int ret = ::recv(fd(), (char*)buf, _toInt(len), flags);
+	int ret = ::recv(fd(), (char*)buf, clamp_cast<int>(len), flags);
 	lastError = ret < 0 ? getLastError() : OK;
 	return ret;
 }
@@ -350,7 +347,7 @@ int BsdSocket::receive(void* buf, roSize len, int flags)
 int BsdSocket::sendTo(const void* data, roSize len, const SockAddr& destEndPoint, int flags)
 {
 	sockaddr addr = destEndPoint.asSockAddr();
-	int ret = ::sendto(fd(), (const char*)data, _toInt(len), flags, &addr, sizeof(addr));
+	int ret = ::sendto(fd(), (const char*)data, clamp_cast<int>(len), flags, &addr, sizeof(addr));
 	lastError = ret < 0 ? getLastError() : OK;
 	return ret;
 }
@@ -359,7 +356,7 @@ int BsdSocket::receiveFrom(void* buf, roSize len, SockAddr& srcEndPoint, int fla
 {
 	sockaddr& addr = srcEndPoint.asSockAddr();
 	socklen_t bufSize = sizeof(addr);
-	int ret = ::recvfrom(fd(), (char*)buf, _toInt(len), flags, &addr, &bufSize);
+	int ret = ::recvfrom(fd(), (char*)buf, clamp_cast<int>(len), flags, &addr, &bufSize);
 	roAssert(bufSize == sizeof(addr));
 	lastError = ret < 0 ? getLastError() : OK;
 	return ret;

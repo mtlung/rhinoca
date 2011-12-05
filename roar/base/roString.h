@@ -20,39 +20,35 @@ struct String
 	String& operator=(const String& str);
 
 // Operations
-	void		resize(roSize size);
+	void		resize		(roSize size);
+	String&		append		(const char* str, roSize count);
+	String&		assign		(const char* str, roSize count);
 
-	String&		append(const char* str, roSize count);
+	void		clear		();
+	String&		erase		(roSize offset, roSize count=npos);
 
-	String&		assign(const char* str, roSize count);
+	roSize		find		(char c, roSize offset=0) const;
+	roSize		find		(const char* str, roSize offset=0) const;
+	roSize		rfind		(char c, roSize offset=0) const;
+	roSize		rfind		(const char* str, roSize offset=0) const;
 
-	void		clear();
-	String&		erase(roSize offset, roSize count=npos);
+	String		substr		(roSize offset=0, roSize count=npos) const;
 
-	roSize		find(char c, roSize offset=0) const;
-	roSize		find(const char* str, roSize offset=0) const;
+	String&		operator+=	(const char* str);
+	String&		operator+=	(const String& str);
 
-	roSize		rfind(char c, roSize offset=0) const;
-	roSize		rfind(const char* str, roSize offset=0) const;
-
-	String		substr(roSize offset=0, roSize count=npos) const;
-
-	String&		operator+=(const char* str);
-	String&		operator+=(const String& str);
-
-	void		sprintf(const char* format, ...);
-
-	bool		fromUtf16(roUint16* src, roSize maxSrcLen);
+	void		sprintf		(const char* format, ...);
+	bool		fromUtf16	(roUint16* src, roSize maxSrcLen);
 
 // Attributes
-	roSize		size() const	{ return _length; }
-	bool		isEmpty() const	{ return _length == 0; }
+	roSize		size		() const	{ return _length; }
+	bool		isEmpty		() const	{ return _length == 0; }
 
-	char*		c_str()			{ return _cstr; }
-	const char*	c_str() const	{ return _cstr; }
+	char*		c_str		()			{ return _cstr; }
+	const char*	c_str		() const	{ return _cstr; }
 
-	char& operator[](roSize index) { roAssert(index < _length); return _cstr[index]; }
-	char operator[](roSize index) const { roAssert(index < _length); return _cstr[index]; }
+	char& operator[]		(roSize index) { roAssert(index < _length); return _cstr[index]; }
+	char operator[]			(roSize index) const { roAssert(index < _length); return _cstr[index]; }
 
 	static const roSize npos = roSize(-1);
 
@@ -98,15 +94,14 @@ struct ConstString
 	ConstString& operator=(const ConstString& rhs);
 	ConstString& operator=(const StringHash& stringHash);
 
-	const			char* c_str() const;
-	operator		const char*() const { return c_str(); }
+	const char*		c_str			() const;
+	operator		const char*		() const;
 
-	StringHash		hash() const;
-	StringHash		lowerCaseHash() const;
+	StringHash		hash			() const;
+	StringHash		lowerCaseHash	() const;
 
-	unsigned		size() const;
-
-	bool			isEmpty() const;
+	unsigned		size			() const;
+	bool			isEmpty			() const;
 
 	bool operator==(const StringHash& stringHash) const;
 	bool operator==(const ConstString& rhs) const;
