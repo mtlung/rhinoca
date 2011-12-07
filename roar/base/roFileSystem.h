@@ -21,7 +21,7 @@ struct FileSystem
 	int			(*seek)			(void* file, roUint64 offset, SeekOrigin origin);	///< Returns 1 for success, 0 for fail, -1 not supported.
 	void		(*closeFile)	(void* file);
 
-	roBytePtr	(*getBuffer)	(void* file, roUint64 requestSize, roUint64& readableSize);	///< Always return non-null, but readableSize may be zero.
+	roBytePtr	(*getBuffer)	(void* file, roUint64 requestSize, roUint64& readableSize);	///< If fail, readableSize will be zero but may/maynot return NULL.
 	void		(*takeBuffer)	(void* file);					///< Take over the ownership of the buffer returned by last getBuffer()
 	void		(*untakeBuffer)	(void* file, roBytePtr buf);	///< Give the buffer returned by getBuffer() back to FileSystem to handle.
 

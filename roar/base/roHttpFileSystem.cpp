@@ -68,19 +68,38 @@ struct HttpStream
 	roSize bufCapacity;
 	roSize expectedTotalSize;	///< Rely on Content-Length, 
 	roSize userReadCount;		///< Amount of bytes consumed by httpFileSystemRead()
+	roSize lastReadSize;		///< Size of readable returned by httpFileSystemGetBuffer()
 
 	String getCmd;
 
 	StopWatch stopWatch;
 };
 
-static void prepareForRead(HttpStream* s, roSize readSize)
+static bool prepareForRead(HttpStream* s, roSize readSize)
 {
 	int reserveForNull = 1;
-	if(s->bufCapacity <= s->bufSize + readSize + reserveForNull) {
-		s->buffer = _allocator.realloc(s->buffer, s->bufCapacity, s->bufSize + readSize + reserveForNull);
+
+	// Move data remains in s->buffer to the front
+	if(s->lastReadSize > 0) {
+		roMemmov(s->buffer, s->buffer + s->lastReadSize, s->bufSize - s->lastReadSize);
+		s->bufSize -= s->lastReadSize;
+		s->lastReadSize = 0;
+	}
+
+	// Detect integer overflow
+	if(TypeOf<roSize>::valueMax() - s->bufSize - reserveForNull < readSize)
+		return false;
+
+	// Enlarge the buffer if necessary
+	if(s->bufCapacity < s->bufSize + readSize + reserveForNull) {
+		// TODO: realloc perform copy for the whole buffer while it's not necessary here.
+		roBytePtr p = _allocator.realloc(s->buffer, s->bufCapacity, s->bufSize + readSize + reserveForNull);
+		if(!p) return false;
+		s->buffer = p;
 		s->bufCapacity = s->bufSize + readSize + reserveForNull;
 	}
+
+	return true;
 }
 
 void* httpFileSystemOpenFile(const char* uri)
@@ -122,6 +141,7 @@ void* httpFileSystemOpenFile(const char* uri)
 	s->expectedTotalSize = 0;
 
 	s->userReadCount = 0;
+	s->lastReadSize = 0;
 
 	// NOTE: Currently this host resolving operation is blocking
 	if(!adr.parse(host.begin(), 80))
@@ -166,7 +186,8 @@ bool httpFileSystemReadReady(void* file, roUint64 size)
 	}
 
 	if(!s->headerReceived) {
-		prepareForRead(s, headerBufSize);
+		if(!prepareForRead(s, headerBufSize))
+			goto OnError;
 
 		ret = s->socket.receive(s->buffer + s->bufSize, headerBufSize);
 		if(ret < 0 && BsdSocket::inProgress(s->socket.lastError))
@@ -226,7 +247,8 @@ bool httpFileSystemReadReady(void* file, roUint64 size)
 
 	roAssert(s->headerReceived);
 
-	prepareForRead(s, _size);
+	if(!prepareForRead(s, _size - s->bufSize))
+		goto OnError;
 	ret = s->socket.receive(s->buffer + s->bufSize, _size - s->bufSize);
 	if(ret < 0 && BsdSocket::inProgress(s->socket.lastError))
 		return false;
@@ -248,21 +270,32 @@ OnError:
 	return true;
 }
 
-static void _blockTillSomethingRead(HttpStream* s, roSize size)
+static bool _blockTillReadable(HttpStream* s, roSize size)
 {
-	float timeout = 3;
+	if(size == 0) return true;
+	if(!prepareForRead(s, size)) {
+		s->httpError = true;
+		return false;
+	}
+
+	float timeout = 300000;
 	while(!s->headerReceived || s->bufSize < size) {
 		if(httpFileSystemReadReady(s, size))
 			break;
-		TaskPool::sleep(0);
+
+		TaskPool::sleep(0);	// TODO: Do something usefull here instead of sleep
+		if(s->headerReceived)
+			continue;
 
 		// Detect timeout for connecting to remote host
-		if(!s->headerReceived) {
-			timeout -= (float)s->stopWatch.getAndReset();
-			if(timeout <= 0)
-				s->httpError = true;
+		timeout -= (float)s->stopWatch.getAndReset();
+		if(timeout <= 0) {
+			s->httpError = true;
+			return false;
 		}
 	}
+
+	return true;
 }
 
 roUint64 httpFileSystemRead(void* file, void* buffer, roUint64 size)
@@ -270,31 +303,30 @@ roUint64 httpFileSystemRead(void* file, void* buffer, roUint64 size)
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
 	roSize _size = clamp_cast<roSize>(size);
 
-	_blockTillSomethingRead(s, _size);
+	if(!s || _size == 0) return 0;
+	if(s->httpError) return 0;
+	if(!_blockTillReadable(s, _size)) return 0;
 
 	if(!s->headerReceived) return 0;
 	if(s->userReadCount >= s->expectedTotalSize) return 0;
 
-	roSize dataToMove = s->bufSize < _size ? s->bufSize : _size;
+	roSize bytesToRead = roMinOf2(s->bufSize, _size);
 
 	// Copy s->buffer to destination
-	roMemcpy(buffer, s->buffer, dataToMove);
+	roMemcpy(buffer, s->buffer, bytesToRead);
 
-	// Move data in s->buffer to the front
-	roMemmov(s->buffer, s->buffer + dataToMove, s->bufSize - dataToMove);
-
-	s->bufSize -= dataToMove;
-	s->userReadCount += dataToMove;
+	s->userReadCount += bytesToRead;
+	s->lastReadSize = bytesToRead;
 
 //	printf("read: %u\n", s->userReadCount);
 
-	return dataToMove;
+	return bytesToRead;
 }
 
 roUint64 httpFileSystemSize(void* file)
 {
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
-	_blockTillSomethingRead(s, 1);
+	if(!s || s->httpError || !_blockTillReadable(s, 1)) return 0;
 	return s->expectedTotalSize;
 }
 
@@ -302,6 +334,45 @@ void httpFileSystemCloseFile(void* file)
 {
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
 	_allocator.deleteObj(s);
+}
+
+roBytePtr httpFileSystemGetBuffer(void* file, roUint64 requestSize, roUint64& readableSize)
+{
+	HttpStream* s = reinterpret_cast<HttpStream*>(file);
+	if(!s || s->httpError || requestSize == 0) { readableSize = 0; return NULL; }
+	roSize bytesToRead = clamp_cast<roSize>(requestSize);
+
+	if(!_blockTillReadable(s, bytesToRead))
+		bytesToRead = 0;
+
+	readableSize = bytesToRead = roMinOf2(s->bufSize, bytesToRead);
+	s->userReadCount += bytesToRead;
+	s->lastReadSize = bytesToRead;
+
+	return bytesToRead > 0 ? s->buffer : NULL;
+}
+
+void httpFileSystemTakeBuffer(void* file)
+{
+	HttpStream* s = reinterpret_cast<HttpStream*>(file);
+	if(!s || s->httpError || s->lastReadSize == 0) return;
+
+	roBytePtr newBuf = _allocator.malloc(s->bufCapacity);
+	s->buffer = newBuf;
+
+	if(!newBuf) {
+		s->httpError = true;
+		return;
+	}
+
+	roMemcpy(newBuf, s->buffer + s->lastReadSize, s->bufSize - s->lastReadSize);
+	s->bufSize -= s->lastReadSize;
+	s->lastReadSize = 0;
+}
+
+void httpFileSystemUntakeBuffer(void* file, roBytePtr buf)
+{
+	_allocator.free(buf);
 }
 
 }	// namespace ro

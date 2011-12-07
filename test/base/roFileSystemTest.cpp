@@ -53,7 +53,7 @@ TEST_FIXTURE(FileSystemTest, rawFS_directoryListing)
 	CHECK(true);
 }
 
-TEST_FIXTURE(FileSystemTest, httpFS)
+TEST_FIXTURE(FileSystemTest, httpFS_read)
 {
 	return;	// Enable when needed
 
@@ -62,9 +62,32 @@ TEST_FIXTURE(FileSystemTest, httpFS)
 	roUint64 size = httpFileSystemSize(file);
 	CHECK(size > 0);
 
-	char buf[1024];
+	char buf[128];
 	roUint64 readCount = httpFileSystemRead(file, buf, sizeof(buf));
 	CHECK(readCount > 0);
 
+	readCount = httpFileSystemRead(file, buf, sizeof(buf));
+	readCount = httpFileSystemRead(file, buf, sizeof(buf));
+
+	httpFileSystemCloseFile(file);
+}
+
+TEST_FIXTURE(FileSystemTest, httpFS_getBuffer)
+{
+	return;	// Enable when needed
+
+	void* file = httpFileSystemOpenFile("http://www.cplusplus.com/");
+
+	roUint64 readCount;
+	roBytePtr p1 = httpFileSystemGetBuffer(file, httpFileSystemSize(file) / 2, readCount);
+
+	httpFileSystemTakeBuffer(file);
+
+	roBytePtr p2 = httpFileSystemGetBuffer(file, httpFileSystemSize(file) / 2, readCount);
+
+	char buf[1024];
+	readCount = httpFileSystemRead(file, buf, sizeof(buf));
+
+	httpFileSystemUntakeBuffer(file, p1);
 	httpFileSystemCloseFile(file);
 }
