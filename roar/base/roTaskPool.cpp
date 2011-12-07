@@ -11,7 +11,7 @@
 
 namespace ro {
 
-static roDefaultAllocator _allocator;
+static DefaultAllocator _allocator;
 
 class TaskPool::TaskProxy
 {
@@ -74,7 +74,7 @@ TaskPool::TaskProxy* TaskPool::TaskList::alloc()
 	++idCounter;
 
 	if(!freeBegin)
-		freeBegin = _allocator.newObj<TaskProxy>();
+		freeBegin = _allocator.newObj<TaskProxy>().unref();
 
 	TaskProxy* ret = freeBegin;
 	freeBegin = ret->nextFree;
@@ -108,8 +108,8 @@ TaskPool::TaskPool()
 	, _threadHandles(NULL)
 	, _mainThreadId(TaskPool::threadId())
 {
-	_pendingTasksHead = _allocator.newObj<TaskProxy>();
-	_pendingTasksTail = _allocator.newObj<TaskProxy>();
+	_pendingTasksHead = _allocator.newObj<TaskProxy>().unref();
+	_pendingTasksTail = _allocator.newObj<TaskProxy>().unref();
 
 	_pendingTasksHead->nextPending = _pendingTasksTail;
 	_pendingTasksTail->prevPending = _pendingTasksHead;
@@ -583,7 +583,7 @@ void TaskPool::addCallback(TaskId id, Callback callback, void* userData, ThreadI
 		TaskPool::Callback callback;
 	};
 
-	CallbackTask* t = _allocator.newObj<CallbackTask>();
+	CallbackTask* t = _allocator.newObj<CallbackTask>().unref();
 	t->callback = callback;
 	t->userData = userData;
 	addFinalized(t, 0, id, affinity);

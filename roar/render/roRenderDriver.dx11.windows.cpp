@@ -18,7 +18,7 @@
 
 using namespace ro;
 
-static roDefaultAllocator _allocator;
+static DefaultAllocator _allocator;
 
 namespace {
 
@@ -35,7 +35,7 @@ struct ContextImpl : public roRDriverContextImpl
 
 roRDriverContext* _newDriverContext_DX11(roRDriver* driver)
 {
-	ContextImpl* ret = _allocator.newObj<ContextImpl>();
+	ContextImpl* ret = _allocator.newObj<ContextImpl>().unref();
 
 	ret->driver = driver;
 	ret->width = ret->height = 0;

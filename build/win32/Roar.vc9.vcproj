@@ -319,6 +319,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roHttpFileSystem.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roHttpFileSystem.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roLog.cpp"
 				>
 			</File>

@@ -86,6 +86,7 @@ struct IArray
 	T&			pushBack(const T& val=T());
 	T&			pushBackBySwap(const T& val);
 	T&			insert(roSize idx, const T& val);
+	T&			insert(roSize idx, const T* srcBegin, const T* srcEnd);
 
 	void		popBack();
 	void		remove(roSize i);

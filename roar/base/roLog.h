@@ -9,6 +9,7 @@
 #endif
 
 void roLog(const char* type, roPRINTF_FORMAT_PARAM const char* format, ...) roPRINTF_ATTRIBUTE(2,3);
+void roLogIf(bool shouldLog, const char* type, roPRINTF_FORMAT_PARAM const char* format, ...) roPRINTF_ATTRIBUTE(3,4);
 
 typedef void (*RoLogFunc)(const char* type, const char* format, va_list ap);
 

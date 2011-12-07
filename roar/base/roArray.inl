@@ -119,6 +119,21 @@ T& IArray<T,S>::insert(roSize idx, const T& val)
 }
 
 template<class T, class S>
+T& IArray<T,S>::insert(roSize idx, const T* srcBegin, const T* srcEnd)
+{
+	roAssert(srcBegin <= srcEnd);
+	resize(_size + (srcEnd - srcBegin));
+	for(roSize i = _size - 1; i > idx; --i) {
+		_data[i] = _data[i - 1];
+	}
+
+	for(const T* src = srcBegin, *dst = _data + idx; src != srcEnd; ++src, ++dst)
+		*dst = *src;
+
+	return _data[idx];
+}
+
+template<class T, class S>
 void IArray<T,S>::popBack()
 {
 	if(_size > 0)

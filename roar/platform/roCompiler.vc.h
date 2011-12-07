@@ -69,3 +69,4 @@ typedef unsigned __int64 roUint64;
 #pragma warning(disable : 4127)	// conditional expression is constant
 #pragma warning(disable : 4514)	// unreferenced inline function has been removed
 #pragma warning(disable : 4668)	// is not defined as a preprocessor macro
+#pragma warning(disable : 4702)	// unreachable code

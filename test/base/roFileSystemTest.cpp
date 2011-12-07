@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "../../roar/base/roFileSystem.h"
+#include "../../roar/base/roHttpFileSystem.h"
 #include "../../roar/base/roStringUtility.h"
 
 using namespace ro;
@@ -50,4 +51,20 @@ TEST_FIXTURE(FileSystemTest, rawFS_directoryListing)
 	rawFileSystemCloseDir(dir);
 
 	CHECK(true);
+}
+
+TEST_FIXTURE(FileSystemTest, httpFS)
+{
+	return;	// Enable when needed
+
+	void* file = httpFileSystemOpenFile("http://www.google.com/");
+
+	roUint64 size = httpFileSystemSize(file);
+	CHECK(size > 0);
+
+	char buf[1024];
+	roUint64 readCount = httpFileSystemRead(file, buf, sizeof(buf));
+	CHECK(readCount > 0);
+
+	httpFileSystemCloseFile(file);
 }

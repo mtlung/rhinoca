@@ -12,7 +12,7 @@
 
 namespace ro {
 
-static roDefaultAllocator _allocator;
+static DefaultAllocator _allocator;
 
 FileSystem*	defaultFileSystem();
 void setDefaultFileSystem(FileSystem* fs);
@@ -28,7 +28,7 @@ void* rawFileSystemOpenFile(const char* uri)
 	if(!uri) return NULL;
 	_RawFile ret = { fopen(uri, "rb"), NULL, 0 };
 	if(!ret.file) return NULL;
-	return _allocator.newObj<_RawFile>(ret);
+	return _allocator.newObj<_RawFile>(ret).unref();
 }
 
 bool rawFileSystemReadReady(void* file, roUint64 size)
@@ -128,7 +128,7 @@ void* rawFileSystemOpenDir(const char* uri)
 			return NULL;
 	}
 
-	OpenDirContext* dirCtx = _allocator.newObj<OpenDirContext>();
+	AutoPtr<OpenDirContext> dirCtx = _allocator.newObj<OpenDirContext>();
 
 	// Add wild-card at the end of the path
 	if(buf.back() != L'/' && buf.back() != L'\\')
@@ -148,12 +148,10 @@ void* rawFileSystemOpenDir(const char* uri)
 
 	if(h != INVALID_HANDLE_VALUE)
 		dirCtx->handle = h;
-	else {
-		_allocator.deleteObj(dirCtx);
-		dirCtx = NULL;
-	}
+	else
+		dirCtx.deleteObject();
 
-	return dirCtx;
+	return dirCtx.unref();
 }
 
 bool rawFileSystemNextDir(void* dir)

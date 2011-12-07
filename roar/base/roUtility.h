@@ -4,6 +4,7 @@
 #include "../platform/roCompiler.h"
 
 void roMemcpy(void* dst, const void* src, roSize size);
+void roMemmov(void* dst, const void* src, roSize size);
 
 void roZeroMemory(void* dst, roSize size);
 

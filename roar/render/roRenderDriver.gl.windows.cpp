@@ -20,7 +20,7 @@
 
 using namespace ro;
 
-static roDefaultAllocator _allocator;
+static DefaultAllocator _allocator;
 
 namespace {
 
@@ -40,7 +40,7 @@ static bool _oglFunctionInited = false;
 
 roRDriverContext* _newDriverContext_GL(roRDriver* driver)
 {
-	ContextImpl* ret = _allocator.newObj<ContextImpl>();
+	ContextImpl* ret = _allocator.newObj<ContextImpl>().unref();
 
 	ret->driver = driver;
 	ret->width = ret->height = 0;

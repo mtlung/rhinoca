@@ -17,17 +17,21 @@ void roFree(void* ptr)
 	::free(ptr);
 }
 
-roBytePtr roDefaultAllocator::malloc(roSize size)
+namespace ro {
+
+roBytePtr DefaultAllocator::malloc(roSize size)
 {
 	return ::malloc(size);
 }
 
-roBytePtr roDefaultAllocator::realloc(void* originalPtr, roSize originalSize, roSize newSize)
+roBytePtr DefaultAllocator::realloc(void* originalPtr, roSize originalSize, roSize newSize)
 {
 	return ::realloc(originalPtr, newSize);
 }
 
-void roDefaultAllocator::free(void* ptr)
+void DefaultAllocator::free(void* ptr)
 {
 	::free(ptr);
 }
+
+}	// namespace ro

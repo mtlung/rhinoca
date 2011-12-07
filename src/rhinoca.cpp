@@ -2,7 +2,7 @@
 #include "rhinoca.h"
 #include "assert.h"
 #include "context.h"
-#include "httpstream.h"
+#include "../roar/base/roHttpFileSystem.h"
 #include "../roar/base/roLog.h"
 #include "../roar/base/roSocket.h"
 #include "audio/audiodevice.h"
@@ -132,7 +132,7 @@ static void* default_ioOpenFile(Rhinoca* rh, const char* uri)
 	CompoundFS* fs = new CompoundFS;
 	if(strstr(uri, "http://") == uri) {
 		fs->type = CompoundFS::Http;
-		fs->handle = rhinoca_http_open(rh, uri);
+		fs->handle = httpFileSystemOpenFile(uri);
 	}
 	else {
 #if defined(RHINOCA_IOS)
@@ -160,7 +160,7 @@ static bool default_ioReadReady(void* file, rhuint64 size)
 	CompoundFS* fs = reinterpret_cast<CompoundFS*>(file);
 
 	if(fs->type == CompoundFS::Http)
-		return rhinoca_http_ready(fs->handle, size);
+		return httpFileSystemReadReady(fs->handle, size);
 
 	return true;
 }
@@ -170,7 +170,7 @@ static rhuint64 default_ioRead(void* file, void* buffer, rhuint64 size)
 	CompoundFS* fs = reinterpret_cast<CompoundFS*>(file);
 
 	if(fs->type == CompoundFS::Http)
-		return rhinoca_http_read(fs->handle, buffer, size);
+		return httpFileSystemRead(fs->handle, buffer, size);
 
 	FILE* f = reinterpret_cast<FILE*>(fs->handle);
 	return (rhuint64)fread(buffer, 1, (size_t)size, f);
@@ -208,7 +208,7 @@ static void default_ioCloseFile(void* file)
 	CompoundFS* fs = reinterpret_cast<CompoundFS*>(file);
 
 	if(fs->type == CompoundFS::Http)
-		rhinoca_http_close(fs->handle);
+		httpFileSystemCloseFile(fs->handle);
 	else {
 		FILE* f = reinterpret_cast<FILE*>(fs->handle);
 		fclose(f);

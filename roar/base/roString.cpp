@@ -14,7 +14,7 @@
 
 namespace ro {
 
-static roDefaultAllocator _allocator;
+static DefaultAllocator _allocator;
 static const char* _emptyString = "";
 
 String::String()
@@ -87,11 +87,16 @@ void String::resize(roSize size)
 {
 	if(size == 0)
 		clear();
-	else {
+	else if(size != _length) {
 		_cstr = _allocator.realloc(_length ? _cstr : NULL, _length + 1, size + 1);
 		_length = size;
 		_cstr[_length] = '\0';
 	}
+}
+
+void String::condense()
+{
+	resize(roStrLen(_cstr));
 }
 
 String& String::append(const char* str, roSize count)
@@ -203,7 +208,7 @@ void String::sprintf(const char* format, ...)
 	va_list vl;
 	va_start(vl, format);
 
-	roSize size = vsprintf(NULL, format, vl);
+	roSize size = vsnprintf(NULL, 0, format, vl);
 	resize(size);
 
 	vsprintf(_cstr, format, vl);
@@ -446,7 +451,7 @@ StringHash ConstString::lowerCaseHash() const
 	return _node->lowerCaseHash;
 }
 
-unsigned ConstString::size() const {
+roSize ConstString::size() const {
 	return _node->size;
 }
 

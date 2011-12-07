@@ -22,6 +22,7 @@ struct String
 
 // Operations
 	void		resize		(roSize size);
+	void		condense	();
 	String&		append		(const char* str, roSize count);
 	String&		assign		(const char* str, roSize count);
 
@@ -102,7 +103,7 @@ struct ConstString
 	StringHash		hash			() const;
 	StringHash		lowerCaseHash	() const;
 
-	unsigned		size			() const;
+	roSize			size			() const;
 	bool			isEmpty			() const;
 
 	bool operator==(const StringHash& stringHash) const;

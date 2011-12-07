@@ -34,7 +34,7 @@
 
 using namespace ro;
 
-static roDefaultAllocator _allocator;
+static DefaultAllocator _allocator;
 
 // ----------------------------------------------------------------------
 // Common stuffs
@@ -310,7 +310,7 @@ struct roRDriverBufferImpl : public roRDriverBuffer
 
 static roRDriverBuffer* _newBuffer()
 {
-	roRDriverBufferImpl* ret = _allocator.newObj<roRDriverBufferImpl>();
+	roRDriverBufferImpl* ret = _allocator.newObj<roRDriverBufferImpl>().unref();
 	memset(ret, 0, sizeof(*ret));
 	return ret;
 }
@@ -537,7 +537,7 @@ struct roRDriverTextureImpl : public roRDriverTexture
 
 static roRDriverTexture* _newTexture()
 {
-	roRDriverTextureImpl* ret = _allocator.newObj<roRDriverTextureImpl>();
+	roRDriverTextureImpl* ret = _allocator.newObj<roRDriverTextureImpl>().unref();
 	memset(ret, 0, sizeof(*ret));
 	return ret;
 }
@@ -714,7 +714,7 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, unsigned ro
 
 static roRDriverShader* _newShader()
 {
-	roRDriverShaderImpl* ret = _allocator.newObj<roRDriverShaderImpl>();
+	roRDriverShaderImpl* ret = _allocator.newObj<roRDriverShaderImpl>().unref();
 	return ret;
 }
 
@@ -1141,7 +1141,7 @@ static void _rhDeleteRenderDriver_DX11(roRDriver* self)
 
 roRDriver* _rgNewRenderDriver_DX11(const char* options)
 {
-	roRDriverImpl* ret = _allocator.newObj<roRDriverImpl>();
+	roRDriverImpl* ret = _allocator.newObj<roRDriverImpl>().unref();
 	memset(ret, 0, sizeof(*ret));
 	ret->destructor = &_rhDeleteRenderDriver_DX11;
 

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "roSocket.h"
+#include "roAtomic.h"
 #include "roString.h"
 #include "roUtility.h"
 #include "roTypeCast.h"
@@ -97,6 +98,12 @@ sockaddr& SockAddr::asSockAddr() const
 	return (sockaddr&)_sockAddr;
 }
 
+struct _NetworkStarter
+{
+	_NetworkStarter() { BsdSocket::initApplication(); }
+	~_NetworkStarter() { BsdSocket::closeApplication(); }
+};
+
 bool SockAddr::parse(const char* ip, roUint16 port)
 {
 	if(ip == NULL || ip[0] == 0)
@@ -107,6 +114,8 @@ bool SockAddr::parse(const char* ip, roUint16 port)
 
 	roZeroMemory(&hints, sizeof(addrinfo));
 	hints.ai_family = AF_INET;
+
+	static _NetworkStarter _networkStarter;
 
 	int myerrno = ::getaddrinfo(ip, NULL, &hints, &res);
 	if (myerrno != 0) {
@@ -208,8 +217,13 @@ roUint32 SockAddr::ipAny()
 	return 0;
 }
 
+static AtomicInteger _initCount = 0;
+
 ErrorCode BsdSocket::initApplication()
 {
+	if(++_initCount > 1)
+		return OK;
+
 #if roOS_WIN
 	WSADATA	wsad;
 
@@ -223,6 +237,9 @@ ErrorCode BsdSocket::initApplication()
 
 ErrorCode BsdSocket::closeApplication()
 {
+	if(--_initCount > 0)
+		return OK;
+
 #if roOS_WIN
 	return ::WSACleanup();
 #else

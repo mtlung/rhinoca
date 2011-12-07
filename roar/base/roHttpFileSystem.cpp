@@ -1,25 +1,33 @@
 #include "pch.h"
-#include "httpstream.h"
-#include "rhlog.h"
-#include "../roar/base/roSocket.h"
-#include "../roar/base/roStopWatch.h"
-#include "../roar/base/roTaskPool.h"
-#include "../roar/base/roArray.h"
+#include "roHttpFileSystem.h"
+#include "roLog.h"
+#include "roArray.h"
+#include "roSocket.h"
+#include "roStopWatch.h"
+#include "roString.h"
+#include "roStringUtility.h"
+#include "roTaskPool.h"
+#include "roTypeCast.h"
+#include "../platform/roPlatformHeaders.h"
+#include <stdio.h>
 
-using namespace ro;
+namespace ro {
+
+static DefaultAllocator _allocator;
 
 // Perform character encoding
 // http://www.blooberry.com/indexdot/html/topics/urlencoding.htm
-const char* _encode[] = { "%20", "%22", "%23", "%24", "%25", "%26", "%3C", "%3E" };
-const char _decode[] = " \"#$%&<>";
+static const char* _encode[] = { "%20", "%22", "%23", "%24", "%25", "%26", "%3C", "%3E" };
+static const char _decode[] = " \"#$%&<>";
 
-char* rhinoca_http_encodeUrl(const char* uri)
+static String _encodeUrl(const char* uri)
 {
-	roSize orgLen = strlen(uri);
+	roSize orgLen = roStrLen(uri);
 	if(orgLen == 0) return NULL;
 
-	char* ret = (char*)rhinoca_malloc(orgLen * 3 + 1);
-	char* buf = ret;
+	String ret;
+	ret.resize(orgLen * 3 + 1);
+	char* buf = ret.c_str();
 
 	do {
 		bool converted = false;
@@ -35,12 +43,9 @@ char* rhinoca_http_encodeUrl(const char* uri)
 			*(buf++) = *uri;
 	} while(*(++uri) != '\0');
 
+	*buf = '\0';
+	ret.condense();
 	return ret;
-}
-
-char* rhinoca_http_decodeUrl(const char* uri)
-{
-	return NULL;
 }
 
 /// Notes on http 1.0 protocol:
@@ -53,60 +58,60 @@ char* rhinoca_http_decodeUrl(const char* uri)
 /// http://curl.haxx.se/libcurl/competitors.html
 struct HttpStream
 {
-	~HttpStream() { rhinoca_free(buffer); }
+	~HttpStream() { _allocator.free(buffer); }
 	BsdSocket socket;
 	char* buffer;
 	bool headerSent;
 	bool headerReceived;
 	bool httpError;
-	unsigned bufSize;
-	unsigned bufCapacity;
-	unsigned expectedTotalSize;	/// Rely on Content-Length, 
-	unsigned userReadCount;	/// Amount of bytes consumed by rhinoca_http_read()
+	roSize bufSize;
+	roSize bufCapacity;
+	roSize expectedTotalSize;	///< Rely on Content-Length, 
+	roSize userReadCount;		///< Amount of bytes consumed by httpFileSystemRead()
 
-	char getCmd[256];
+	String getCmd;
 
 	StopWatch stopWatch;
 };
 
-static void prepareForRead(HttpStream* s, unsigned readSize)
+static void prepareForRead(HttpStream* s, roSize readSize)
 {
 	int reserveForNull = 1;
 	if(s->bufCapacity <= s->bufSize + readSize + reserveForNull) {
-		s->buffer = (char*)rhinoca_realloc(s->buffer, s->bufCapacity, s->bufSize + readSize + reserveForNull);
+		s->buffer = _allocator.realloc(s->buffer, s->bufCapacity, s->bufSize + readSize + reserveForNull);
 		s->bufCapacity = s->bufSize + readSize + reserveForNull;
 	}
 }
 
-void* rhinoca_http_open(Rhinoca* rh, const char* uri)
+void* httpFileSystemOpenFile(const char* uri)
 {
-	uri = rhinoca_http_encodeUrl(uri);
+	String _uri = _encodeUrl(uri);
 
 	// Parse http://host
-	// NOTE: Buffer overflow may occur for sscanf
-	char host[128] = "";
-	char path[512] = "";
-	sscanf(uri, "http://%[^/]%s", host, path);
+	Array<char> host;
+	Array<char> path;
+	host.resize(_uri.size(), 0);
+	path.resize(_uri.size(), 0);
+	if(sscanf(_uri.c_str(), "http://%[^/]%s", host.begin(), path.begin()) < 1)
+		return NULL;
 
-	unsigned uriLen = strlen(uri);
-	rhinoca_free((void*)uri);
-	uri = NULL;
+	host.condense();
+	path.condense();
 
 	if(path[0] == '\0')
-		strcpy(path, "/");
+		path.insert(0, '/');
 
 	const char getFmt[] =
 		"GET %s HTTP/1.0\r\n"
 		"Host: %s\r\n"	// Required for http 1.1
-		"User-Agent: Rhinoca\r\n"
+		"User-Agent: The Roar Engine\r\n"
 		"\r\n";
 
     int ret = 0;
 	SockAddr adr;
-	HttpStream* s = new HttpStream;
+	AutoPtr<HttpStream> s = _allocator.newObj<HttpStream>();
 
-	if(uriLen > sizeof(s->getCmd) - sizeof(getFmt)) goto OnError;
-	if(sprintf(s->getCmd, getFmt, path, host) < 0) goto OnError;
+	s->getCmd.sprintf(getFmt, path.begin(), host.begin());
 
 	s->buffer = NULL;
 	s->headerSent = false;
@@ -119,7 +124,7 @@ void* rhinoca_http_open(Rhinoca* rh, const char* uri)
 	s->userReadCount = 0;
 
 	// NOTE: Currently this host resolving operation is blocking
-	if(!adr.parse(host, 80))
+	if(!adr.parse(host.begin(), 80))
 		goto OnError;
 
 	roVerify(s->socket.create(BsdSocket::TCP) == 0);
@@ -129,28 +134,28 @@ void* rhinoca_http_open(Rhinoca* rh, const char* uri)
 	if(ret != 0 && !BsdSocket::inProgress(s->socket.lastError))
 		goto OnError;
 
-	return s;
+	return s.unref();
 
 OnError:
-	rhLog("error", "Connection to %s failed\n", host);
-	delete s;
+	roLog("error", "Connection to %s failed\n", host);
 	return NULL;
 }
 
-bool rhinoca_http_ready(void* file, rhuint64 size)
+bool httpFileSystemReadReady(void* file, roUint64 size)
 {
 	roAssert(file);
+	roSize _size = clamp_cast<roSize>(size);
 
     int ret = 0;
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
 
-	static const unsigned headerBufSize = 128;
+	static const roSize headerBufSize = 128;
 
 	if(s->httpError)
 		goto OnError;
 
 	if(!s->headerSent) {
-		ret = s->socket.send(s->getCmd, strlen(s->getCmd));
+		ret = s->socket.send(s->getCmd.c_str(), s->getCmd.size());
 		if(ret < 0 && s->socket.lastError == ENOTCONN)
 			return false;
 
@@ -175,13 +180,13 @@ bool rhinoca_http_ready(void* file, rhuint64 size)
 		s->buffer[s->bufSize] = '\0';
 
 		// Check if header complete
-		static const char headerSeperator[] = "\r\n\r\n";
+		static const char headerTerminator[] = "\r\n\r\n";
 
-		char* messageContent = strstr(s->buffer, headerSeperator);
+		char* messageContent = roStrStr(s->buffer, headerTerminator);
 		if(!messageContent)
 			return false;
 
-		messageContent += (sizeof(headerSeperator) - 1);	// -1 for the null terminator
+		messageContent += (sizeof(headerTerminator) - 1);	// -1 for the null terminator
 
 		// Nullify the separator between header and body
 		messageContent[-1] = '\0';
@@ -195,34 +200,34 @@ bool rhinoca_http_ready(void* file, rhuint64 size)
 			serverRetCode == 200)	// Ok
 		{
 			// Get the content length
-			if(const char* p = strstr(s->buffer, "Content-Length:")) {
+			if(const char* p = roStrStr(s->buffer, "Content-Length:")) {
 				if(sscanf(p, "Content-Length:%u", &s->expectedTotalSize) != 1)
 					goto OnError;
 			}
 			else
-				s->expectedTotalSize = unsigned(-1);
+				s->expectedTotalSize = roSize(-1);
 
-			unsigned bodySize = s->bufSize - (messageContent - s->buffer);
+			roSize bodySize = s->bufSize - (messageContent - s->buffer);
 			// Move the received (if any) body content to the beginning of our buffer
-			memmove(s->buffer, messageContent, bodySize);
+			roMemmov(s->buffer, messageContent, bodySize);
 			s->bufSize = bodySize;
 
 			s->headerReceived = true;
 		}
 		else
 		{
-			rhLog("error", "Http stream receive server error code '%d'\n", serverRetCode);
+			roLog("error", "Http stream receive server error code '%d'\n", serverRetCode);
 			goto OnError;
 		}
 	}
 
-	if(s->bufSize >= size)
+	if(s->bufSize >= _size)
 		return true;
 
 	roAssert(s->headerReceived);
 
-	prepareForRead(s, (unsigned)size);
-	ret = s->socket.receive(s->buffer + s->bufSize, (unsigned)size - s->bufSize);
+	prepareForRead(s, _size);
+	ret = s->socket.receive(s->buffer + s->bufSize, _size - s->bufSize);
 	if(ret < 0 && BsdSocket::inProgress(s->socket.lastError))
 		return false;
 	if(ret < 0)
@@ -232,24 +237,22 @@ bool rhinoca_http_ready(void* file, rhuint64 size)
 
 	s->bufSize += ret;
 
-	return s->bufSize >= size;
+	return s->bufSize >= _size;
 
 OnEof:
 	return true;
 
 OnError:
-	rhLog("error", "read failed\n");
+	roLog("error", "read failed\n");
 	s->httpError = true;
 	return true;
 }
 
-rhuint64 rhinoca_http_read(void* file, void* buffer, rhuint64 size)
+static void _blockTillSomethingRead(HttpStream* s, roSize size)
 {
-	HttpStream* s = reinterpret_cast<HttpStream*>(file);
-
 	float timeout = 3;
 	while(!s->headerReceived || s->bufSize < size) {
-		if(rhinoca_http_ready(file, size))
+		if(httpFileSystemReadReady(s, size))
 			break;
 		TaskPool::sleep(0);
 
@@ -260,17 +263,25 @@ rhuint64 rhinoca_http_read(void* file, void* buffer, rhuint64 size)
 				s->httpError = true;
 		}
 	}
+}
+
+roUint64 httpFileSystemRead(void* file, void* buffer, roUint64 size)
+{
+	HttpStream* s = reinterpret_cast<HttpStream*>(file);
+	roSize _size = clamp_cast<roSize>(size);
+
+	_blockTillSomethingRead(s, _size);
 
 	if(!s->headerReceived) return 0;
 	if(s->userReadCount >= s->expectedTotalSize) return 0;
 
-	unsigned dataToMove = s->bufSize < (unsigned)size ? s->bufSize : (unsigned)size;
+	roSize dataToMove = s->bufSize < _size ? s->bufSize : _size;
 
 	// Copy s->buffer to destination
-	memcpy(buffer, s->buffer, dataToMove);
+	roMemcpy(buffer, s->buffer, dataToMove);
 
 	// Move data in s->buffer to the front
-	memmove(s->buffer, s->buffer + dataToMove, s->bufSize - dataToMove);
+	roMemmov(s->buffer, s->buffer + dataToMove, s->bufSize - dataToMove);
 
 	s->bufSize -= dataToMove;
 	s->userReadCount += dataToMove;
@@ -280,8 +291,17 @@ rhuint64 rhinoca_http_read(void* file, void* buffer, rhuint64 size)
 	return dataToMove;
 }
 
-void rhinoca_http_close(void* file)
+roUint64 httpFileSystemSize(void* file)
 {
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
-	delete s;
+	_blockTillSomethingRead(s, 1);
+	return s->expectedTotalSize;
 }
+
+void httpFileSystemCloseFile(void* file)
+{
+	HttpStream* s = reinterpret_cast<HttpStream*>(file);
+	_allocator.deleteObj(s);
+}
+
+}	// namespace ro

@@ -232,6 +232,7 @@ int main()
 	rhinoca_openDocument(rh, "../../demo/impactjs/biolab/biolab-ios.html");
 //	rhinoca_openDocument(rh, "../../test/htmlTest/cssTest/bg.html");
 //	rhinoca_openDocument(rh, "../../test.html");
+//	rhinoca_openDocument(rh, "http://playbiolab.com/");
 
 	while(true) {
 		MSG message;
