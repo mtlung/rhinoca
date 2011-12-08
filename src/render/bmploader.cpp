@@ -3,6 +3,7 @@
 #include "../common.h"
 #include "../rhlog.h"
 #include "../platform.h"
+#include "../../roar/base/roFileSystem.h"
 
 // http://www.spacesimulator.net/tut4_3dsloader.html
 // http://www.gamedev.net/reference/articles/article1966.asp
@@ -31,7 +32,7 @@ public:
 
 	~BmpLoader()
 	{
-		if(stream) rhFileSystem.closeFile(stream);
+		if(stream) fileSystem.closeFile(stream);
 		rhinoca_free(pixelData);
 	}
 
@@ -88,9 +89,7 @@ void BmpLoader::commit(TaskPool* taskPool)
 
 void BmpLoader::loadHeader()
 {
-	Rhinoca* rh = manager->rhinoca;
-
-	if(!stream) stream = rhFileSystem.openFile(rh, texture->uri());
+	if(!stream) stream = fileSystem.openFile(texture->uri());
 	if(!stream) {
 		rhLog("error", "BmpLoader: Fail to open file '%s'\n", texture->uri().c_str());
 		goto Abort;
@@ -102,11 +101,11 @@ void BmpLoader::loadHeader()
 	memset(&fileHeader, 0, sizeof(fileHeader));
 
 	// If data not ready, give up in this round and do it again in next schedule
-	if(!rhFileSystem.readReady(stream, sizeof(fileHeader) + sizeof(infoHeader)))
+	if(!fileSystem.readReady(stream, sizeof(fileHeader) + sizeof(infoHeader)))
 		return reSchedule();
 
 	// Read the file header
-	rhFileSystem.read(stream, &fileHeader, sizeof(fileHeader));
+	fileSystem.read(stream, &fileHeader, sizeof(fileHeader));
 
 	// Check against the magic 2 bytes.
 	// The value of 'BM' in integer is 19778 (assuming little endian)
@@ -115,7 +114,7 @@ void BmpLoader::loadHeader()
 		goto Abort;
 	}
 
-	rhFileSystem.read(stream, &infoHeader, sizeof(infoHeader));
+	fileSystem.read(stream, &infoHeader, sizeof(infoHeader));
 	width = infoHeader.biWidth;
 
 	pixelDataFormat = Driver::BGR;
@@ -158,7 +157,7 @@ void BmpLoader::loadPixelData()
 	pixelDataSize = rowByte * height;
 
 	// If data not ready, give up in this round and do it again in next schedule
-	if(!rhFileSystem.readReady(stream, pixelDataSize))
+	if(!fileSystem.readReady(stream, pixelDataSize))
 		return reSchedule();
 
 	pixelData = (char*)rhinoca_malloc(pixelDataSize);
@@ -175,7 +174,7 @@ void BmpLoader::loadPixelData()
 		const rhuint invertedH = flipVertical ? height - 1 - h : h;
 
 		char* p = pixelData + (invertedH * rowByte);
-		if(rhFileSystem.read(stream, p, rowByte) != rowByte) {
+		if(fileSystem.read(stream, p, rowByte) != rowByte) {
 			rhLog("warn", "BitmapLoader: End of file, bitmap data incomplete\n");
 			goto Abort;
 		}

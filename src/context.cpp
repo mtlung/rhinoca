@@ -2,7 +2,6 @@
 #include "context.h"
 #include "common.h"
 #include "loader.h"
-#include "../roar/base/roLog.h"
 #include "path.h"
 #include "platform.h"
 #include "rhinoca.h"
@@ -19,6 +18,8 @@
 #include "dom/registerfactories.h"
 #include "render/driver.h"
 #include "render/texture.h"
+#include "../roar/base/roFileSystem.h"
+#include "../roar/base/roLog.h"
 
 #ifdef RHINOCA_IOS
 #	include "context_ios.h"
@@ -190,7 +191,7 @@ static void appendFileToString(void* file, String& str)
 {
 	char buf[128];
 	rhuint64 readCount;
-	while((readCount = rhFileSystem.read(file, buf, sizeof(buf))))
+	while((readCount = fileSystem.read(file, buf, sizeof(buf))))
 		str.append(buf, (size_t)readCount);
 }
 
@@ -211,10 +212,10 @@ bool Rhinoca::openDoucment(const char* uri)
 	String html;
 
 	{	// Reads the html file into memory
-		void* file = rhFileSystem.openFile(this, uri);
+		void* file = fileSystem.openFile(uri);
 		if(!file) return false;
 		appendFileToString(file, html);
-		rhFileSystem.closeFile(file);
+		fileSystem.closeFile(file);
 	}
 
 	Dom::ElementFactory& factory = Dom::ElementFactory::singleton();

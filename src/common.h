@@ -24,9 +24,6 @@ inline T* rhrenew(const T* ptr, rhuint oldCount, rhuint newCount) {
 	return reinterpret_cast<T*>(rhinoca_realloc((void*)ptr, oldCount * sizeof(T), newCount * sizeof(T)));
 }
 
-// IO
-extern RhFileSystem rhFileSystem;
-
 double atof(const char* str, double onErr);
 
 #if defined(_MSC_VER)

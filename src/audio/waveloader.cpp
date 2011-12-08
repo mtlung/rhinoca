@@ -3,6 +3,7 @@
 #include "audioloader.h"
 #include "../common.h"
 #include "../rhlog.h"
+#include "../../roar/base/roFileSystem.h"
 
 namespace Loader {
 
@@ -54,7 +55,7 @@ public:
 
 	~WaveLoader()
 	{
-		if(stream) rhFileSystem.closeFile(stream);
+		if(stream) fileSystem.closeFile(stream);
 	}
 
 	void loadDataForRange(unsigned begin, unsigned end);
@@ -90,7 +91,7 @@ void WaveLoader::loadHeader()
 {
 	Rhinoca* rh = manager->rhinoca;
 
-	if(!stream) stream = rhFileSystem.openFile(rh, buffer->uri());
+	if(!stream) stream = fileSystem.openFile(buffer->uri());
 	if(!stream) {
 		rhLog("error", "WaveLoader: Fail to open file '%s'\n", buffer->uri().c_str());
 		goto Abort;
@@ -100,11 +101,11 @@ void WaveLoader::loadHeader()
 		char chunkId[5] = {0};
 		rhint32 chunkSize;
 
-		if(!rhFileSystem.readReady(stream, sizeof(chunkId) + sizeof(chunkSize) + sizeof(WaveFormatExtensible)))
+		if(!fileSystem.readReady(stream, sizeof(chunkId) + sizeof(chunkSize) + sizeof(WaveFormatExtensible)))
 			return reSchedule();
 
-		if(	rhFileSystem.read(stream, chunkId, 4) != 4 ||
-			rhFileSystem.read(stream, &chunkSize, sizeof(rhint32)) != sizeof(rhint32))
+		if(	fileSystem.read(stream, chunkId, 4) != 4 ||
+			fileSystem.read(stream, &chunkSize, sizeof(rhint32)) != sizeof(rhint32))
 		{
 			rhLog("error", "WaveLoader: End of file, fail to load header\n");
 			goto Abort;
@@ -113,11 +114,11 @@ void WaveLoader::loadHeader()
 		if(strcasecmp(chunkId, "RIFF") == 0)
 		{
 			char format[5] = {0};
-			RHVERIFY(rhFileSystem.read(stream, format, 4) == 4);
+			RHVERIFY(fileSystem.read(stream, format, 4) == 4);
 		}
 		else if(strcasecmp(chunkId, "FMT ") == 0)
 		{
-			RHVERIFY(rhFileSystem.read(stream, &format, chunkSize) == chunkSize);
+			RHVERIFY(fileSystem.read(stream, &format, chunkSize) == chunkSize);
 		}
 		else if(strcasecmp(chunkId, "DATA") == 0)
 		{
@@ -138,7 +139,7 @@ void WaveLoader::loadHeader()
 			break;
 		}
 		else
-			RHVERIFY(rhFileSystem.seek(stream, chunkSize, SEEK_CUR));
+			RHVERIFY(fileSystem.seek(stream, chunkSize, FileSystem::SeekOrigin_Current));
 	}
 
 	buffer->scratch = this;
@@ -156,7 +157,7 @@ void WaveLoader::loadData()
 	if(buffer->state == Resource::Aborted) goto Abort;
 	if(!stream) goto Abort;
 
-	if(!rhFileSystem.readReady(stream, dataChunkSize))
+	if(!fileSystem.readReady(stream, dataChunkSize))
 		return reSchedule();
 
 	{	unsigned end = dataChunkSize / format.format.blockAlign;
@@ -165,7 +166,7 @@ void WaveLoader::loadData()
 
 		RHASSERT(bytesToWrite == dataChunkSize);
 
-		if(rhFileSystem.read(stream, bufferData, dataChunkSize) != dataChunkSize)
+		if(fileSystem.read(stream, bufferData, dataChunkSize) != dataChunkSize)
 		{
 			rhLog("error", "WaveLoader: End of file, only partial load of audio data\n");
 			goto Abort;

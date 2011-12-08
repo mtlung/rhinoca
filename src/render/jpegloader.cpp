@@ -3,6 +3,7 @@
 #include "../common.h"
 #include "../rhlog.h"
 #include "../platform.h"
+#include "../../roar/base/roFileSystem.h"
 #include "../../thirdparty/SmallJpeg/jpegdecoder.h"
 
 #ifdef RHINOCA_VC
@@ -21,7 +22,7 @@ public:
 
 	int read(uchar* Pbuf, int max_bytes_to_read, bool* Peof_flag)
 	{
-		int readCount = (int)rhFileSystem.read(file, (char*)Pbuf, max_bytes_to_read);
+		int readCount = (int)fileSystem.read(file, (char*)Pbuf, max_bytes_to_read);
 		*Peof_flag = (readCount == 0);
 
 		return readCount;
@@ -82,12 +83,11 @@ void JpegLoader::run(TaskPool* taskPool)
 void JpegLoader::load(TaskPool* taskPool)
 {
 	texture->scratch = this;
-	Rhinoca* rh = manager->rhinoca;
 
 	void* f = NULL;
 
 	if(texture->state == Resource::Aborted) goto Abort;
-	f = rhFileSystem.openFile(rh, texture->uri());
+	f = fileSystem.openFile(texture->uri());
 	if(!f) {
 		rhLog("error", "JpegLoader: Fail to open file '%s'\n", texture->uri().c_str());
 		goto Abort;
@@ -146,11 +146,11 @@ void JpegLoader::load(TaskPool* taskPool)
 			goto Abort;
 	}
 
-	rhFileSystem.closeFile(f);
+	fileSystem.closeFile(f);
 	return;
 
 Abort:
-	if(f) rhFileSystem.closeFile(f);
+	if(f) fileSystem.closeFile(f);
 	texture->state = Resource::Aborted;
 }
 

@@ -3,6 +3,7 @@
 #include "audioloader.h"
 #include "../common.h"
 #include "../rhlog.h"
+#include "../../roar/base/roFileSystem.h"
 #include "../../thirdParty/libmpg/mpg123.h"
 
 #ifdef RHINOCA_VC
@@ -53,7 +54,7 @@ public:
 
 	~Mp3Loader()
 	{
-		if(stream) rhFileSystem.closeFile(stream);
+		if(stream) fileSystem.closeFile(stream);
 		if(mpg) mpg123_delete(mpg);
 	}
 
@@ -98,20 +99,18 @@ static const unsigned _dataChunkSize = 1024 * 16;
 
 void Mp3Loader::loadHeader()
 {
-	Rhinoca* rh = manager->rhinoca;
-
-	if(!stream) stream = rhFileSystem.openFile(rh, buffer->uri());
+	if(!stream) stream = fileSystem.openFile(buffer->uri());
 	if(!stream) {
 		rhLog("error", "Mp3Loader: Fail to open file '%s'\n", buffer->uri().c_str());
 		goto Abort;
 	}
 
-	if(!rhFileSystem.readReady(stream, _dataChunkSize))
+	if(!fileSystem.readReady(stream, _dataChunkSize))
 		return reSchedule();
 
 	// Load header
 	rhbyte buf[_dataChunkSize];
-	unsigned readCount = (unsigned)rhFileSystem.read(stream, buf, _dataChunkSize);
+	unsigned readCount = (unsigned)fileSystem.read(stream, buf, _dataChunkSize);
 
 	int ret = mpg123_decode(mpg, buf, readCount, NULL, 0, NULL);
 
@@ -130,7 +129,7 @@ void Mp3Loader::loadHeader()
 		format.blockAlignment = channels * sizeof(rhuint16);
 
 		// Mpg123 needs to know the file in order to estimate the audio length
-		mpg123_set_filesize(mpg, (off_t)rhFileSystem.size(stream));
+		mpg123_set_filesize(mpg, (off_t)fileSystem.size(stream));
 
 		// NOTE: This is just an estimation, for accurate result we need to call mpg123_scan()
 		// but it need mpg to be opened in a seekable mode.
@@ -155,7 +154,7 @@ void Mp3Loader::loadData()
 	if(buffer->state == Resource::Aborted) goto Abort;
 	if(!stream) goto Abort;
 
-	if(!rhFileSystem.readReady(stream, _dataChunkSize))
+	if(!fileSystem.readReady(stream, _dataChunkSize))
 		return reSchedule();
 
 	unsigned audioBufBegin, audioBufEnd;
@@ -172,11 +171,11 @@ void Mp3Loader::loadData()
 
 		bool failed = false;
 
-		if(int fileSize = (int)rhFileSystem.size(stream))
+		if(int fileSize = (int)fileSystem.size(stream))
 			if(fileSeekPos >= fileSize)
 				failed = true;
 
-		if(!failed && !rhFileSystem.seek(stream, fileSeekPos, SEEK_SET))
+		if(!failed && !fileSystem.seek(stream, fileSeekPos, FileSystem::SeekOrigin_Begin))
 			failed = true;
 
 		if(failed) {
@@ -190,7 +189,7 @@ void Mp3Loader::loadData()
 		audioBufBegin = resultingOffset;
 
 		// Check for IO ready state once again
-		if(!rhFileSystem.readReady(stream, _dataChunkSize))
+		if(!fileSystem.readReady(stream, _dataChunkSize))
 			return reSchedule();
 	}
 
@@ -212,7 +211,7 @@ void Mp3Loader::loadData()
 	rhbyte buf[_dataChunkSize];
 	unsigned readCount =
 		mpgRet != MPG123_NEED_MORE && mpgInternalSize > _dataChunkSize ?
-		0 : (unsigned)rhFileSystem.read(stream, buf, _dataChunkSize);
+		0 : (unsigned)fileSystem.read(stream, buf, _dataChunkSize);
 
 	// Perform MP3 decoding
 	size_t decodeBytes = 0;

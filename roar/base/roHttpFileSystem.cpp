@@ -157,7 +157,7 @@ void* httpFileSystemOpenFile(const char* uri)
 	return s.unref();
 
 OnError:
-	roLog("error", "Connection to %s failed\n", host);
+	roLog("error", "Connection to %s failed\n", host.begin());
 	return NULL;
 }
 

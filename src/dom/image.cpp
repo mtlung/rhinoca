@@ -203,6 +203,9 @@ static JSBool construct(JSContext* cx, uintN argc, jsval* vp)
 	HTMLImageElement* img = new HTMLImageElement(rh);
 	img->bind(cx, NULL);
 
+	if(argc > 0)
+		JS_SetProperty(cx, img->jsObject, "src", &JS_ARGV0);
+
 	JS_RVAL(cx, vp) = *img;
 
 	return JS_TRUE;

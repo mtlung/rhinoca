@@ -108,27 +108,6 @@ RHINOCA_API void rhinoca_closeDocument(Rhinoca* rh);
 RHINOCA_API void rhinoca_update(Rhinoca* rh);
 RHINOCA_API void rhinoca_processEvent(Rhinoca* rh, RhinocaEvent ev);
 
-// IO functions
-typedef struct RhFileSystem
-{
-// File operations:
-	void* (*openFile)(Rhinoca* rh, const char* uri);
-	bool (*readReady)(void* file, rhuint64 size);
-	rhuint64 (*read)(void* file, void* buffer, rhuint64 size);
-	rhint64 (*size)(void* file);		/// Returns -1 if the file size is unknown.
-	int (*seek)(void* file, rhuint64 offset, int origin);		/// Returns 1 for success, 0 for fail, -1 not supported. Origin: SEEK_SET, SEEK_CUR, SEEK_END.
-	void (*closeFile)(void* file);
-
-// Directory operations:
-	void* (*openDir)(Rhinoca* rh, const char* uri);
-	bool (*nextDir)(void* dir);
-	const char* (*dirName)(void* dir);	/// The string returned is managed by the directory context, no need to free by user.
-	void (*closeDir)(void* dir);
-} RhFileSystem;
-
-RHINOCA_API RhFileSystem* rhinoca_getFileSystem();
-RHINOCA_API void rhinoca_setFileSystem(RhFileSystem fs);
-
 // Memory allocation
 RHINOCA_API void* rhinoca_malloc(rhuint size);
 RHINOCA_API void rhinoca_free(void* ptr);

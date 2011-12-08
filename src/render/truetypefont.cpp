@@ -2,6 +2,7 @@
 #include "truetypefont.h"
 #include "../common.h"
 #include "../rhlog.h"
+#include "../../roar/base/roFileSystem.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #define STBTT_malloc(x,u) rhinoca_malloc(x)
@@ -123,7 +124,7 @@ public:
 
 	~TrueTypeFontLoader()
 	{
-		if(stream) rhFileSystem.closeFile(stream);
+		if(stream) fileSystem.closeFile(stream);
 		delete impl;
 	}
 
@@ -151,22 +152,20 @@ void TrueTypeFontLoader::run(TaskPool* taskPool)
 
 void TrueTypeFontLoader::load()
 {
-	Rhinoca* rh = manager->rhinoca;
-
 	unsigned size = 0;
 	const unsigned bufIncSize = 8 * 1024;
 	unsigned bufSize = bufIncSize;
 	rhbyte* buf = (rhbyte*)rhinoca_malloc(bufSize);
 	rhbyte* p = buf;
 
-	if(!stream) stream = rhFileSystem.openFile(rh, font->uri());
+	if(!stream) stream = fileSystem.openFile(font->uri());
 	if(!stream) {
 		rhLog("error", "TrueTypeFontLoader: Fail to open file '%s'\n", font->uri().c_str());
 		goto Abort;
 	}
 
 	// TODO: It would be much more efficient if we can know the file size in advance
-	while(unsigned read = (unsigned)rhFileSystem.read(stream, p, bufIncSize)) {
+	while(unsigned read = (unsigned)fileSystem.read(stream, p, bufIncSize)) {
 		buf = (rhbyte*)rhinoca_realloc(buf, bufSize, bufSize + read);
 		size += read;
 		bufSize += read;

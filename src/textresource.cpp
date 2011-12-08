@@ -3,6 +3,7 @@
 #include "common.h"
 #include "rhlog.h"
 #include "platform.h"
+#include "../roar/base/roFileSystem.h"
 
 using namespace ro;
 
@@ -34,7 +35,7 @@ public:
 
 	~TextLoader()
 	{
-		if(stream) rhFileSystem.closeFile(stream);
+		if(stream) fileSystem.closeFile(stream);
 	}
 
 	override void run(TaskPool* taskPool);
@@ -97,9 +98,7 @@ void TextLoader::commit(TaskPool* taskPool)
 
 void TextLoader::load(TaskPool* taskPool)
 {
-	Rhinoca* rh = manager->rhinoca;
-
-	if(!stream) stream = rhFileSystem.openFile(rh, text->uri());
+	if(!stream) stream = fileSystem.openFile(text->uri());
 	if(!stream) {
 		rhLog("error", "TextLoader: Fail to open file '%s'\n", text->uri().c_str());
 		goto Abort;
@@ -109,11 +108,11 @@ void TextLoader::load(TaskPool* taskPool)
 	char buf[1024];
 
 	// If data not ready, give up in this round and do it again in next schedule
-	if(!rhFileSystem.readReady(stream, sizeof(buf) * loopCount))
+	if(!fileSystem.readReady(stream, sizeof(buf) * loopCount))
 		return reSchedule();
 
 	for(unsigned i=0; i<loopCount; ++i) {
-		rhuint64 readCount = rhFileSystem.read(stream, buf, sizeof(buf));
+		rhuint64 readCount = fileSystem.read(stream, buf, sizeof(buf));
 
 		if(readCount > 0) {
 			data.append(buf, (size_t)readCount);

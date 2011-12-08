@@ -5,6 +5,7 @@
 #include "../context.h"
 #include "../path.h"
 #include "../textresource.h"
+#include "../../roar/base/roFileSystem.h"
 
 namespace Dom {
 
@@ -110,7 +111,7 @@ static void appendFileToString(void* file, ro::String& str)
 {
 	char buf[128];
 	rhuint64 readCount;
-	while((readCount = rhFileSystem.read(file, buf, sizeof(buf))))
+	while((readCount = ro::fileSystem.read(file, buf, sizeof(buf))))
 		str.append(buf, (size_t)readCount);
 }
 

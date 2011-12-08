@@ -4,6 +4,7 @@
 #include "../rhlog.h"
 #include "../platform.h"
 #include "../../thirdparty/png/png.h"
+#include "../../roar/base/roFileSystem.h"
 
 #ifdef RHINOCA_VC
 #	pragma comment(lib, "png")
@@ -159,7 +160,7 @@ PngLoader::PngLoader(Texture* t, ResourceManager* mgr)
 
 PngLoader::~PngLoader()
 {
-	if(stream) rhFileSystem.closeFile(stream);
+	if(stream) fileSystem.closeFile(stream);
 
 	rhinoca_free(pixelData);
 	// libpng will handle for null input pointers
@@ -176,10 +177,8 @@ void PngLoader::run(TaskPool* taskPool)
 
 void PngLoader::load(TaskPool* taskPool)
 {
-	Rhinoca* rh = manager->rhinoca;
-
 	if(texture->state == Resource::Aborted) goto Abort;
-	if(!stream) stream = rhFileSystem.openFile(rh, texture->uri());
+	if(!stream) stream = fileSystem.openFile(texture->uri());
 	if(!stream) {
 		rhLog("error", "PngLoader: Fail to open file '%s'\n", texture->uri().c_str());
 		goto Abort;
@@ -193,13 +192,13 @@ void PngLoader::load(TaskPool* taskPool)
 		goto Abort;
 
 	do {
-		if(!rhFileSystem.readReady(stream, sizeof(buff))) {
+		if(!fileSystem.readReady(stream, sizeof(buff))) {
 			// Re-schedule the load operation
 			reSchedule();
 			return;
 		}
 
-		readCount = (unsigned)rhFileSystem.read(stream, buff, sizeof(buff));
+		readCount = (unsigned)fileSystem.read(stream, buff, sizeof(buff));
 		png_process_data(png_ptr, info_ptr, (png_bytep)buff, readCount);
 
 		if(_aborted) goto Abort;

@@ -74,6 +74,9 @@ static JSBool construct(JSContext* cx, uintN argc, jsval* vp)
 	HTMLAudioElement* audio = new HTMLAudioElement(rh, rh->audioDevice, &rh->resourceManager);
 	audio->bind(cx, NULL);
 
+	if(argc > 0)
+		JS_SetProperty(cx, audio->jsObject, "src", &JS_ARGV0);
+
 	JS_RVAL(cx, vp) = *audio;
 	return JS_TRUE;
 }
