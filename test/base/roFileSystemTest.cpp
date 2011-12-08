@@ -1,11 +1,20 @@
 #include "pch.h"
-#include "../../roar/base/roFileSystem.h"
+#include "../../roar/base/roRawFileSystem.h"
 #include "../../roar/base/roHttpFileSystem.h"
 #include "../../roar/base/roStringUtility.h"
 
 using namespace ro;
 
 struct FileSystemTest {};
+
+TEST_FIXTURE(FileSystemTest, defaultFS)
+{
+	FileSystem& fs = *defaultFileSystem();
+	void* file = fs.openFile("Test.vc9.vcproj");
+	CHECK(file);
+
+	fs.closeFile(file);
+}
 
 TEST_FIXTURE(FileSystemTest, rawFS_getBuffer)
 {

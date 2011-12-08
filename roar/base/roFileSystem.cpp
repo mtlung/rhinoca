@@ -1,210 +1,184 @@
 #include "pch.h"
 #include "roFileSystem.h"
-#include "roArray.h"
+#include "roHttpFileSystem.h"
+#include "roRawFileSystem.h"
 #include "roMemory.h"
-#include "roString.h"
 #include "roStringUtility.h"
-#include "roTypeCast.h"
-#include "../platform/roOS.h"
-#include "../platform/roPlatformHeaders.h"
-#include <stdio.h>
-#include <sys/stat.h>
 
 namespace ro {
 
 static DefaultAllocator _allocator;
 
-FileSystem*	defaultFileSystem();
-void setDefaultFileSystem(FileSystem* fs);
-
-struct _RawFile {
-	FILE* file;
-	roBytePtr buf;
-	roSize bufSize;
+static FileSystem _rawFS = {
+	rawFileSystemOpenFile,
+	rawFileSystemReadReady,
+	rawFileSystemRead,
+	rawFileSystemSize,
+	rawFileSystemSeek,
+	rawFileSystemCloseFile,
+	rawFileSystemGetBuffer,
+	rawFileSystemTakeBuffer,
+	rawFileSystemUntakeBuffer,
+	rawFileSystemOpenDir,
+	rawFileSystemNextDir,
+	rawFileSystemDirName,
+	rawFileSystemCloseDir
 };
 
-void* rawFileSystemOpenFile(const char* uri)
+static FileSystem _httpFS = {
+	httpFileSystemOpenFile,
+	httpFileSystemReadReady,
+	httpFileSystemRead,
+	httpFileSystemSize,
+	httpFileSystemSeek,
+	httpFileSystemCloseFile,
+	httpFileSystemGetBuffer,
+	httpFileSystemTakeBuffer,
+	httpFileSystemUntakeBuffer,
+	httpFileSystemOpenDir,
+	httpFileSystemNextDir,
+	httpFileSystemDirName,
+	httpFileSystemCloseDir
+};
+
+struct _CompoundFSContext
 {
-	if(!uri) return NULL;
-	_RawFile ret = { fopen(uri, "rb"), NULL, 0 };
-	if(!ret.file) return NULL;
-	return _allocator.newObj<_RawFile>(ret).unref();
+	void* impl;
+	FileSystem* fsImpl;
+};
+
+void* _compoundFSOpenFile(const char* uri)
+{
+	if(!uri || uri[0] == '\0')
+		return NULL;
+
+	_CompoundFSContext ctx = { NULL, NULL };
+
+	if(roStrStr(uri, "http://") == uri)
+		ctx.fsImpl = &_httpFS;
+	else
+		ctx.fsImpl = &_rawFS;
+
+	ctx.impl = ctx.fsImpl->openFile(uri);
+
+	return ctx.impl ? _allocator.newObj<_CompoundFSContext>(ctx).unref() : NULL;
 }
 
-bool rawFileSystemReadReady(void* file, roUint64 size)
+bool _compoundFSReadReady(void* file, roUint64 size)
 {
-	roAssert(file); if(!file) return false;
-	return true;
+	_CompoundFSContext* c = (_CompoundFSContext*)file;
+	return c->fsImpl->readReady(c->impl, size);
 }
 
-roUint64 rawFileSystemRead(void* file, void* buffer, roUint64 size)
+roUint64 _compoundFSRead(void* file, void* buffer, roUint64 size)
 {
-	_RawFile* impl = (_RawFile*)(file);
-	roAssert(impl); if(!impl) return 0;
-	return num_cast<roUint64>(fread(buffer, 1, clamp_cast<size_t>(size), impl->file));
+	_CompoundFSContext* c = (_CompoundFSContext*)file;
+	return c->fsImpl->read(c->impl, buffer, size);
 }
 
-roUint64 rawFileSystemSize(void* file)
+roUint64 _compoundFSSize(void* file)
 {
-	_RawFile* impl = (_RawFile*)(file);
-	roAssert(impl); if(!impl) return 0;
-	struct stat st;
-	if(fstat(fileno(impl->file), &st) != 0)
-		return roUint64(-1);
-	return st.st_size;
+	_CompoundFSContext* c = (_CompoundFSContext*)file;
+	return c->fsImpl->size(c->impl);
 }
 
-int rawFileSystemSeek(void* file, roUint64 offset, FileSystem::SeekOrigin origin)
+int _compoundFSSeek(void* file, roUint64 offset, FileSystem::SeekOrigin origin)
 {
-	_RawFile* impl = (_RawFile*)(file);
-	roAssert(impl); if(!impl) return 0;
-	return fseek(impl->file, num_cast<long>(offset), origin) == 0 ? 1 : 0;
+	_CompoundFSContext* c = (_CompoundFSContext*)file;
+	return c->fsImpl->seek(c->impl, offset, origin);
 }
 
-void rawFileSystemCloseFile(void* file)
+void _compoundFSCloseFile(void* file)
 {
-	_RawFile* impl = (_RawFile*)(file);
-	roAssert(impl); if(!impl) return;
-	fclose(impl->file);
-	_allocator.free(impl->buf);
-	_allocator.deleteObj(impl);
+	_CompoundFSContext* c = (_CompoundFSContext*)file;
+	return c->fsImpl->closeFile(c->impl);
 }
 
-roBytePtr rawFileSystemGetBuffer(void* file, roUint64 requestSize, roUint64& readableSize)
+roBytePtr _compoundFSGetBuffer(void* file, roUint64 requestSize, roUint64& readableSize)
 {
-	_RawFile* impl = (_RawFile*)(file);
-	if(!impl) { readableSize = 0; return NULL; }
-	const roSize rqSize = clamp_cast<roSize>(requestSize);
-	impl->buf = _allocator.realloc(impl->buf, impl->bufSize, rqSize);
-	impl->bufSize = rqSize;
-	readableSize = rawFileSystemRead(file, impl->buf, rqSize);
-	return impl->buf;
+	_CompoundFSContext* c = (_CompoundFSContext*)file;
+	return c->fsImpl->getBuffer(c->impl, requestSize, readableSize);
 }
 
-void rawFileSystemTakeBuffer(void* file)
+void _compoundFSTakeBuffer(void* file)
 {
-	_RawFile* impl = (_RawFile*)(file);
-	if(!impl) return;
-	impl->buf = NULL;
-	impl->bufSize = 0;
+	_CompoundFSContext* c = (_CompoundFSContext*)file;
+	return c->fsImpl->takeBuffer(c->impl);
 }
 
-void rawFileSystemUntakeBuffer(void* file, roBytePtr buf)
+void _compoundFSUntakeBuffer(void* file, roBytePtr buf)
 {
-	_allocator.free(buf);
+	_CompoundFSContext* c = (_CompoundFSContext*)file;
+	return c->fsImpl->untakeBuffer(c->impl, buf);
 }
 
 
 // ----------------------------------------------------------------------
 
-#if roOS_WIN
-
-struct OpenDirContext
+void* _compoundFSOpenDir(const char* uri)
 {
-	~OpenDirContext() {
-		if(handle != INVALID_HANDLE_VALUE)
-			::FindClose(handle);
-	}
+	if(!uri || uri[0] == '\0')
+		return NULL;
 
-	HANDLE handle;
-	WIN32_FIND_DATAW data;
+	_CompoundFSContext ctx = { NULL, NULL };
 
-	String str;
-};	// OpenDirContext
-
-void* rawFileSystemOpenDir(const char* uri)
-{
-	if(roStrLen(uri) == 0) return NULL;
-
-	Array<wchar_t> buf;
-	{	// Convert the source uri to utf 16
-		roSize len = 0;
-		if(!roUtf8ToUtf16(NULL, len, uri, roSize(-1)))
-			return NULL;
-
-		buf.resize(len);
-		roStaticAssert(sizeof(wchar_t) == sizeof(roUint16));
-		if(len == 0 || !roUtf8ToUtf16((roUint16*)&buf[0], len, uri, roSize(-1)))
-			return NULL;
-	}
-
-	AutoPtr<OpenDirContext> dirCtx = _allocator.newObj<OpenDirContext>();
-
-	// Add wild-card at the end of the path
-	if(buf.back() != L'/' && buf.back() != L'\\')
-		buf.pushBack(L'/');
-	buf.pushBack(L'*');
-	buf.pushBack(L'\0');
-
-	HANDLE h = ::FindFirstFileW(&buf[0], &(dirCtx->data));
-
-	// Skip the ./ and ../
-	while(::wcscmp(dirCtx->data.cFileName, L".") == 0 || ::wcscmp(dirCtx->data.cFileName, L"..") == 0) {
-		if(!FindNextFileW(h, &(dirCtx->data))) {
-			dirCtx->data.cFileName[0] = L'\0';
-			break;
-		}
-	}
-
-	if(h != INVALID_HANDLE_VALUE)
-		dirCtx->handle = h;
+	if(roStrStr(uri, "http://") == uri)
+		ctx.fsImpl = &_httpFS;
 	else
-		dirCtx.deleteObject();
+		ctx.fsImpl = &_rawFS;
 
-	return dirCtx.unref();
+	ctx.impl = ctx.fsImpl->openDir(uri);
+
+	return ctx.impl ? _allocator.newObj<_CompoundFSContext>(ctx).unref() : NULL;
 }
 
-bool rawFileSystemNextDir(void* dir)
+bool _compoundFSNextDir(void* dir)
 {
-	OpenDirContext* dirCtx = reinterpret_cast<OpenDirContext*>(dir);
-	if(!dirCtx) return false;
-
-	if(!::FindNextFileW(dirCtx->handle, &(dirCtx->data))) {
-		dirCtx->str.clear();
-		return false;
-	}
-
-	return true;
+	_CompoundFSContext* c = (_CompoundFSContext*)dir;
+	return c->fsImpl->nextDir(c->impl);
 }
 
-const char* rawFileSystemDirName(void* dir)
+const char* _compoundFSDirName(void* dir)
 {
-	OpenDirContext* dirCtx = reinterpret_cast<OpenDirContext*>(dir);
-	if(!dirCtx) return false;
-
-	if(!dirCtx->str.fromUtf16((roUint16*)dirCtx->data.cFileName, roSize(-1)))
-		dirCtx->str.clear();
-
-	return dirCtx->str.c_str();
+	_CompoundFSContext* c = (_CompoundFSContext*)dir;
+	return c->fsImpl->dirName(c->impl);
 }
 
-void rawFileSystemCloseDir(void* dir)
+void _compoundFSCloseDir(void* dir)
 {
-	OpenDirContext* dirCtx = reinterpret_cast<OpenDirContext*>(dir);
-	_allocator.deleteObj(dirCtx);
+	_CompoundFSContext* c = (_CompoundFSContext*)dir;
+	c->fsImpl->closeDir(c->impl);
 }
 
-#else
 
-void* rawFileSystemOpenDir(const char* uri)
+// ----------------------------------------------------------------------
+
+static FileSystem _compoundFS = {
+	_compoundFSOpenFile,
+	_compoundFSReadReady,
+	_compoundFSRead,
+	_compoundFSSize,
+	_compoundFSSeek,
+	_compoundFSCloseFile,
+	_compoundFSGetBuffer,
+	_compoundFSTakeBuffer,
+	_compoundFSUntakeBuffer,
+	_compoundFSOpenDir,
+	_compoundFSNextDir,
+	_compoundFSDirName,
+	_compoundFSCloseDir
+};
+
+static FileSystem* _defaultFS = &_compoundFS;
+
+FileSystem* defaultFileSystem()
 {
-	return NULL;
+	return _defaultFS;
 }
 
-bool rawFileSystemNextDir(void* dir)
+void setDefaultFileSystem(FileSystem* fs)
 {
-	return false;
+	_defaultFS = fs;
 }
-
-const char* rawFileSystemDirName(void* dir)
-{
-	return NULL;
-}
-
-void rawFileSystemCloseDir(void* dir)
-{
-}
-
-#endif
 
 }	// namespace ro

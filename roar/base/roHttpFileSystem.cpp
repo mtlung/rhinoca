@@ -330,6 +330,11 @@ roUint64 httpFileSystemSize(void* file)
 	return s->expectedTotalSize;
 }
 
+int httpFileSystemSeek(void* file, roUint64 offset, FileSystem::SeekOrigin origin)
+{
+	return -1;
+}
+
 void httpFileSystemCloseFile(void* file)
 {
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
@@ -373,6 +378,28 @@ void httpFileSystemTakeBuffer(void* file)
 void httpFileSystemUntakeBuffer(void* file, roBytePtr buf)
 {
 	_allocator.free(buf);
+}
+
+void* httpFileSystemOpenDir(const char* uri)
+{
+	roAssert(false);
+	return NULL;
+}
+
+bool httpFileSystemNextDir(void* dir)
+{
+	roAssert(false);
+	return false;
+}
+
+const char* httpFileSystemDirName(void* dir)
+{
+	roAssert(false);
+	return "";
+}
+
+void httpFileSystemCloseDir(void* dir)
+{
 }
 
 }	// namespace ro
