@@ -19,6 +19,8 @@ bool		httpFileSystemNextDir		(void* dir);
 const char*	httpFileSystemDirName		(void* dir);
 void		httpFileSystemCloseDir		(void* dir);
 
+extern FileSystem httpFileSystem;
+
 }	// namespace ro
 
 #endif	// __roHttpFileSystem_h__

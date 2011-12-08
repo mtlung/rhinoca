@@ -19,6 +19,8 @@ bool		rawFileSystemNextDir		(void* dir);
 const char*	rawFileSystemDirName		(void* dir);
 void		rawFileSystemCloseDir		(void* dir);
 
+extern FileSystem rawFileSystem;
+
 }	// namespace ro
 
 #endif	// __roRawFileSystem_h__

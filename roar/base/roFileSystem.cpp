@@ -9,38 +9,6 @@ namespace ro {
 
 static DefaultAllocator _allocator;
 
-static FileSystem _rawFS = {
-	rawFileSystemOpenFile,
-	rawFileSystemReadReady,
-	rawFileSystemRead,
-	rawFileSystemSize,
-	rawFileSystemSeek,
-	rawFileSystemCloseFile,
-	rawFileSystemGetBuffer,
-	rawFileSystemTakeBuffer,
-	rawFileSystemUntakeBuffer,
-	rawFileSystemOpenDir,
-	rawFileSystemNextDir,
-	rawFileSystemDirName,
-	rawFileSystemCloseDir
-};
-
-static FileSystem _httpFS = {
-	httpFileSystemOpenFile,
-	httpFileSystemReadReady,
-	httpFileSystemRead,
-	httpFileSystemSize,
-	httpFileSystemSeek,
-	httpFileSystemCloseFile,
-	httpFileSystemGetBuffer,
-	httpFileSystemTakeBuffer,
-	httpFileSystemUntakeBuffer,
-	httpFileSystemOpenDir,
-	httpFileSystemNextDir,
-	httpFileSystemDirName,
-	httpFileSystemCloseDir
-};
-
 struct _CompoundFSContext
 {
 	void* impl;
@@ -55,9 +23,9 @@ void* _compoundFSOpenFile(const char* uri)
 	_CompoundFSContext ctx = { NULL, NULL };
 
 	if(roStrStr(uri, "http://") == uri)
-		ctx.fsImpl = &_httpFS;
+		ctx.fsImpl = &httpFileSystem;
 	else
-		ctx.fsImpl = &_rawFS;
+		ctx.fsImpl = &rawFileSystem;
 
 	ctx.impl = ctx.fsImpl->openFile(uri);
 
@@ -91,7 +59,8 @@ int _compoundFSSeek(void* file, roUint64 offset, FileSystem::SeekOrigin origin)
 void _compoundFSCloseFile(void* file)
 {
 	_CompoundFSContext* c = (_CompoundFSContext*)file;
-	return c->fsImpl->closeFile(c->impl);
+	c->fsImpl->closeFile(c->impl);
+	_allocator.deleteObj(c);
 }
 
 roBytePtr _compoundFSGetBuffer(void* file, roUint64 requestSize, roUint64& readableSize)
@@ -123,9 +92,9 @@ void* _compoundFSOpenDir(const char* uri)
 	_CompoundFSContext ctx = { NULL, NULL };
 
 	if(roStrStr(uri, "http://") == uri)
-		ctx.fsImpl = &_httpFS;
+		ctx.fsImpl = &httpFileSystem;
 	else
-		ctx.fsImpl = &_rawFS;
+		ctx.fsImpl = &rawFileSystem;
 
 	ctx.impl = ctx.fsImpl->openDir(uri);
 
@@ -148,6 +117,7 @@ void _compoundFSCloseDir(void* dir)
 {
 	_CompoundFSContext* c = (_CompoundFSContext*)dir;
 	c->fsImpl->closeDir(c->impl);
+	_allocator.deleteObj(c);
 }
 
 
@@ -169,16 +139,6 @@ static FileSystem _compoundFS = {
 	_compoundFSCloseDir
 };
 
-static FileSystem* _defaultFS = &_compoundFS;
-
-FileSystem* defaultFileSystem()
-{
-	return _defaultFS;
-}
-
-void setDefaultFileSystem(FileSystem* fs)
-{
-	_defaultFS = fs;
-}
+FileSystem fileSystem = _compoundFS;
 
 }	// namespace ro

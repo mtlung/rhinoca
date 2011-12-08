@@ -33,8 +33,16 @@ inline bool roCastAssert(roUint32 from, roUint8)	{ return from <= ro::TypeOf<roU
 inline bool roCastAssert(roUint32 from, roInt16)	{ return from <= (roUint32)ro::TypeOf<roInt16>::valueMax(); }
 inline bool roCastAssert(roUint32 from, roInt8)		{ return from <= (roUint32)ro::TypeOf<roInt8>::valueMax(); }
 
-inline bool roCastAssert(roUint16 from, roUint8)	{ return from <= ro::TypeOf<roUint8>::valueMax();}
-inline bool roCastAssert(roUint16 from, roInt8)		{ return from <= (roUint16)ro::TypeOf<roInt8>::valueMax();}
+inline bool roCastAssert(roUint16 from, roUint8)	{ return from <= ro::TypeOf<roUint8>::valueMax(); }
+inline bool roCastAssert(roUint16 from, roInt8)		{ return from <= (roUint16)ro::TypeOf<roInt8>::valueMax(); }
+
+
+inline bool roCastAssert(roInt32 from, roUint64)	{ return from >= 0; }
+inline bool roCastAssert(roInt32 from, roUint32)	{ return from >= 0; }
+
+inline bool roCastAssert(roInt16 from, roUint64)	{ return from >= 0; }
+inline bool roCastAssert(roInt16 from, roUint32)	{ return from >= 0; }
+inline bool roCastAssert(roInt16 from, roUint16)	{ return from >= 0; }
 
 template<class From, class To>
 inline bool roCastAssert(From from, To)				{ return true; }

@@ -8,9 +8,9 @@ namespace ro {
 struct FileSystem
 {
 	enum SeekOrigin {
-		SeekOrigin_Begin = 0,
-		SeekOrigin_Current = 1,
-		SeekOrigin_End = 2
+		SeekOrigin_Begin	= 0,
+		SeekOrigin_Current	= 1,
+		SeekOrigin_End		= 2
 	};
 
 // File read operations
@@ -21,7 +21,7 @@ struct FileSystem
 	int			(*seek)			(void* file, roUint64 offset, SeekOrigin origin);	///< Returns 1 for success, 0 for fail, -1 not supported.
 	void		(*closeFile)	(void* file);
 
-	roBytePtr	(*getBuffer)	(void* file, roUint64 requestSize, roUint64& readableSize);	///< If fail, readableSize will be zero but may/maynot return NULL.
+	roBytePtr	(*getBuffer)	(void* file, roUint64 requestSize, roUint64& readableSize);	///< If fail, readableSize will be zero but may/may-not return NULL.
 	void		(*takeBuffer)	(void* file);					///< Take over the ownership of the buffer returned by last getBuffer()
 	void		(*untakeBuffer)	(void* file, roBytePtr buf);	///< Give the buffer returned by getBuffer() back to FileSystem to handle.
 
@@ -32,8 +32,7 @@ struct FileSystem
 	void		(*closeDir)		(void* dir);
 };
 
-FileSystem*	defaultFileSystem();
-void		setDefaultFileSystem(FileSystem* fs);
+extern FileSystem fileSystem;
 
 }	// namespace ro
 

@@ -48,7 +48,7 @@ roUint64 rawFileSystemSize(void* file)
 	struct stat st;
 	if(fstat(fileno(impl->file), &st) != 0)
 		return roUint64(-1);
-	return st.st_size;
+	return num_cast<roUint64>(st.st_size);
 }
 
 int rawFileSystemSeek(void* file, roUint64 offset, FileSystem::SeekOrigin origin)
@@ -203,5 +203,24 @@ void rawFileSystemCloseDir(void* dir)
 }
 
 #endif
+
+
+// ----------------------------------------------------------------------
+
+FileSystem rawFileSystem = {
+	rawFileSystemOpenFile,
+	rawFileSystemReadReady,
+	rawFileSystemRead,
+	rawFileSystemSize,
+	rawFileSystemSeek,
+	rawFileSystemCloseFile,
+	rawFileSystemGetBuffer,
+	rawFileSystemTakeBuffer,
+	rawFileSystemUntakeBuffer,
+	rawFileSystemOpenDir,
+	rawFileSystemNextDir,
+	rawFileSystemDirName,
+	rawFileSystemCloseDir
+};
 
 }	// namespace ro

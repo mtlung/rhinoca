@@ -9,11 +9,13 @@ struct FileSystemTest {};
 
 TEST_FIXTURE(FileSystemTest, defaultFS)
 {
-	FileSystem& fs = *defaultFileSystem();
-	void* file = fs.openFile("Test.vc9.vcproj");
+	void* file = fileSystem.openFile("Test.vc9.vcproj");
 	CHECK(file);
 
-	fs.closeFile(file);
+	roUint64 size = fileSystem.size(file);
+	CHECK(size > 0);
+
+	fileSystem.closeFile(file);
 }
 
 TEST_FIXTURE(FileSystemTest, rawFS_getBuffer)

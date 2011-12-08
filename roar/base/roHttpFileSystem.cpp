@@ -402,4 +402,23 @@ void httpFileSystemCloseDir(void* dir)
 {
 }
 
+
+// ----------------------------------------------------------------------
+
+FileSystem httpFileSystem = {
+	httpFileSystemOpenFile,
+	httpFileSystemReadReady,
+	httpFileSystemRead,
+	httpFileSystemSize,
+	httpFileSystemSeek,
+	httpFileSystemCloseFile,
+	httpFileSystemGetBuffer,
+	httpFileSystemTakeBuffer,
+	httpFileSystemUntakeBuffer,
+	httpFileSystemOpenDir,
+	httpFileSystemNextDir,
+	httpFileSystemDirName,
+	httpFileSystemCloseDir
+};
+
 }	// namespace ro
