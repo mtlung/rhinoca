@@ -367,6 +367,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roSharedPtr.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roSocket.cpp"
 				>
 			</File>

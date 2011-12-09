@@ -29,7 +29,7 @@ public:
 	unsigned virtualWidth, virtualHeight;
 };	// Texture
 
-typedef IntrusivePtr<Texture> TexturePtr;
+typedef ro::SharedPtr<Texture> TexturePtr;
 
 }	// namespace Render
 

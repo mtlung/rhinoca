@@ -2,7 +2,7 @@
 #define __COMMON_H__
 
 #include "rhinoca.h"
-//#include "intrusiveptr.h"
+//#include "SharedPtr.h"
 #include <stdlib.h>	// For _countof
 
 // Memory allocation

@@ -43,7 +43,7 @@ ResourceManager::~ResourceManager()
 
 	for(Resource* r=_resources.findMin(); r;) {
 		Resource* next = r->next();
-		intrusivePtrRelease(r);
+		sharedPtrRelease(r);
 		r = next;
 	}
 
@@ -84,7 +84,7 @@ ResourcePtr ResourceManager::load(const char* uri)
 
 		// We will keep the resource alive such that the time for a Resource destruction
 		// is deterministic: always inside ResourceManager::collectUnused()
-		intrusivePtrAddRef(r);
+		sharedPtrAddRef(r);
 	}
 
 	// Perform load if not loaded
@@ -113,7 +113,7 @@ Resource* ResourceManager::forget(const char* uri)
 
 	if(Resource* r = _resources.find(uri)) {
 		r->removeThis();
-		intrusivePtrRelease(r);
+		sharedPtrRelease(r);
 		return r;
 	}
 
@@ -139,7 +139,7 @@ void ResourceManager::collectInfrequentlyUsed()
 	{
 		if(r->refCount() == 1 && r->state != Resource::Loading) {
 			Resource* next = r->next();
-			intrusivePtrRelease(r);
+			sharedPtrRelease(r);
 			r = next;
 			continue;
 		}

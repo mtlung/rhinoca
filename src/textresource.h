@@ -17,6 +17,6 @@ public:
 	const char* dataWithoutBOM;
 };	// TextResource
 
-typedef IntrusivePtr<TextResource> TextResourcePtr;
+typedef ro::SharedPtr<TextResource> TextResourcePtr;
 
 #endif	// __TEXTRESOURCE_H__

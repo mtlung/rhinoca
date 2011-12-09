@@ -2,11 +2,11 @@
 #define __DOM_IMAGE_H__
 
 #include "element.h"
-#include "../intrusiveptr.h"
+#include "../../roar/base/roSharedPtr.h"
 
 namespace Render {
 
-typedef IntrusivePtr<class Texture> TexturePtr;
+typedef ro::SharedPtr<class Texture> TexturePtr;
 
 }	// namespace Render
 

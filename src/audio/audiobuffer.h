@@ -68,7 +68,7 @@ protected:
 	mutable ro::Mutex mutex;
 };	// AudioBuffer
 
-typedef IntrusivePtr<AudioBuffer> AudioBufferPtr;
+typedef ro::SharedPtr<AudioBuffer> AudioBufferPtr;
 
 }	// namespace
 

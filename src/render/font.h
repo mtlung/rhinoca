@@ -53,7 +53,7 @@ public:
 	GlyphCache glyphCache;
 };	// Font
 
-typedef IntrusivePtr<Font> FontPtr;
+typedef ro::SharedPtr<Font> FontPtr;
 
 }	// namespace Render
 

@@ -1,15 +1,15 @@
 #ifndef __RESOURCE_H__
 #define __RESOURCE_H__
 
-#include "intrusiveptr.h"
 #include "map.h"
+#include "../roar/base/roSharedPtr.h"
 #include "../roar/base/roString.h"
 #include "../roar/base/roTaskPool.h"
 
 class Resource
 	// NOTE: No need to use atomic integer as the refCount if no worker thread
 	// will hold strong reference to Resource
-	: public IntrusiveSharedObject<rhuint>
+	: public ro::SharedObject<rhuint>
 	, public MapBase<ro::ConstString>::Node<Resource>
 	, private Noncopyable
 {
@@ -39,7 +39,7 @@ public:
 	unsigned refCount() const;
 };	// Resource
 
-typedef IntrusivePtr<Resource> ResourcePtr;
+typedef ro::SharedPtr<Resource> ResourcePtr;
 
 class ResourceManager
 {
@@ -53,7 +53,7 @@ public:
 	ResourcePtr load(const char* uri);
 
 	template<class T>
-	IntrusivePtr<T> loadAs(const char* uri) { return dynamic_cast<T*>(load(uri).get()); }
+	ro::SharedPtr<T> loadAs(const char* uri) { return dynamic_cast<T*>(load(uri).get()); }
 
 	/// Remove the resource from the management of the ResourceManager
 	Resource* forget(const char* uri);

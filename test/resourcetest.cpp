@@ -12,7 +12,7 @@ public:
 	int dummyData;
 };
 
-typedef IntrusivePtr<MyResource> MyResourcePtr;
+typedef SharedPtr<MyResource> MyResourcePtr;
 
 Resource* create(const char* uri, ResourceManager* mgr)
 {
