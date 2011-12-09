@@ -89,8 +89,7 @@ void WaveLoader::run(TaskPool* taskPool)
 
 void WaveLoader::loadHeader()
 {
-	Rhinoca* rh = manager->rhinoca;
-
+	if(buffer->state == Resource::Aborted) goto Abort;
 	if(!stream) stream = fileSystem.openFile(buffer->uri());
 	if(!stream) {
 		rhLog("error", "WaveLoader: Fail to open file '%s'\n", buffer->uri().c_str());

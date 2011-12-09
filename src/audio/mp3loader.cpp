@@ -99,6 +99,7 @@ static const unsigned _dataChunkSize = 1024 * 16;
 
 void Mp3Loader::loadHeader()
 {
+	if(buffer->state == Resource::Aborted) goto Abort;
 	if(!stream) stream = fileSystem.openFile(buffer->uri());
 	if(!stream) {
 		rhLog("error", "Mp3Loader: Fail to open file '%s'\n", buffer->uri().c_str());

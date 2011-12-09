@@ -98,6 +98,7 @@ void TextLoader::commit(TaskPool* taskPool)
 
 void TextLoader::load(TaskPool* taskPool)
 {
+	if(text->state == Resource::Aborted) goto Abort;
 	if(!stream) stream = fileSystem.openFile(text->uri());
 	if(!stream) {
 		rhLog("error", "TextLoader: Fail to open file '%s'\n", text->uri().c_str());

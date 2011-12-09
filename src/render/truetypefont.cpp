@@ -158,6 +158,7 @@ void TrueTypeFontLoader::load()
 	rhbyte* buf = (rhbyte*)rhinoca_malloc(bufSize);
 	rhbyte* p = buf;
 
+	if(font->state == Resource::Aborted) goto Abort;
 	if(!stream) stream = fileSystem.openFile(font->uri());
 	if(!stream) {
 		rhLog("error", "TrueTypeFontLoader: Fail to open file '%s'\n", font->uri().c_str());
