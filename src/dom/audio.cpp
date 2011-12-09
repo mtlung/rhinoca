@@ -6,7 +6,7 @@
 #include "../path.h"
 #include "../resource.h"
 #include "../xmlparser.h"
-#include <string.h>	// for strcasecmp
+#include <string.h>	// for roStrCaseCmp
 
 using namespace ro;
 using namespace Audio;

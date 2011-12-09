@@ -540,10 +540,10 @@ void XmlParser::popAttributes()
 
 float XmlParser::stringToFloat(const char* str, float defaultValue)
 {
-	return (float)atof(str, defaultValue);
+	return str ? roStrToFloat(str, defaultValue) : defaultValue;
 }
 
 bool XmlParser::stringToBool(const char* str, bool defaultValue)
 {
-	return roStrToBool(str, defaultValue);
+	return str ? roStrToBool(str, defaultValue) : defaultValue;
 }

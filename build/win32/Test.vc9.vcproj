@@ -353,6 +353,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\test\base\roStringUtilityTest.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\test\base\roTaskPoolMergeSortTest.cpp"
 				>
 			</File>

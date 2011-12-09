@@ -24,11 +24,8 @@ inline T* rhrenew(const T* ptr, rhuint oldCount, rhuint newCount) {
 	return reinterpret_cast<T*>(rhinoca_realloc((void*)ptr, oldCount * sizeof(T), newCount * sizeof(T)));
 }
 
-double atof(const char* str, double onErr);
-
 #if defined(_MSC_VER)
 #define FORCE_INLINE __forceinline
-int strcasecmp(const char* s1, const char* s2);
 #define strdup _strdup	// Workaround for the "strdup - free" bug on VC++
 #else
 #define FORCE_INLINE inline

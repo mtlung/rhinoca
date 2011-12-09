@@ -4,6 +4,7 @@
 #include "../../rhassert.h"
 #include "../../common.h"
 #include "../../Vec3.h"
+#include "../../../roar/base/roStringUtility.h"
 
 #include <gl/gl.h>
 #include "../gl/glext.h"
@@ -295,9 +296,9 @@ void Driver::forceApplyCurrent()
 // Capability
 void* Driver::getCapability(const char* cap)
 {
-	if(strcasecmp(cap, "npot") == 0)
+	if(roStrCaseCmp(cap, "npot") == 0)
 		return (void*)1;
-	if(strcasecmp(cap, "maxtexsize") == 0)
+	if(roStrCaseCmp(cap, "maxtexsize") == 0)
 		return (void*)_context->maxTextureSize;
 	return NULL;
 }

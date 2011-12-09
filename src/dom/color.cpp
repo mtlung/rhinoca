@@ -1,8 +1,7 @@
 #include "pch.h"
 #include "color.h"
 #include "../common.h"
-#include <ctype.h>	// for tolower(char)
-#include <string.h>	// for strcasecmp
+#include "../../roar/base/roStringUtility.h"
 
 namespace Dom {
 
@@ -35,7 +34,7 @@ bool Color::parse(const char* str)
 		// Skip white space
 		if(*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') { ++p; continue; }
 
-		buf[len] = (char)tolower(*p);
+		buf[len] = (char)roToLower(*p);
 		++len;
 		if(len == COUNTOF(buf)) return false;
 		++p;
@@ -133,7 +132,7 @@ bool Color::parse(const char* str)
 	};
 
 	for(unsigned i=0; i<COUNTOF(namedColors); ++i)
-		if(strcasecmp(buf, namedColors[i].name) == 0) {
+		if(roStrCaseCmp(buf, namedColors[i].name) == 0) {
 			*this = namedColors[i].color;
 			return true;
 		}

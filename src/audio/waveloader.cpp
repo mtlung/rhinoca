@@ -110,16 +110,16 @@ void WaveLoader::loadHeader()
 			goto Abort;
 		}
 
-		if(strcasecmp(chunkId, "RIFF") == 0)
+		if(roStrCaseCmp(chunkId, "RIFF") == 0)
 		{
 			char format[5] = {0};
 			RHVERIFY(fileSystem.read(stream, format, 4) == 4);
 		}
-		else if(strcasecmp(chunkId, "FMT ") == 0)
+		else if(roStrCaseCmp(chunkId, "FMT ") == 0)
 		{
 			RHVERIFY(fileSystem.read(stream, &format, chunkSize) == chunkSize);
 		}
-		else if(strcasecmp(chunkId, "DATA") == 0)
+		else if(roStrCaseCmp(chunkId, "DATA") == 0)
 		{
 			dataChunkSize = chunkSize;
 

@@ -28,7 +28,7 @@ static JSBool JS_ValueToCssDimension(JSContext *cx, jsval v, float& val)
 		char buf[32];
 		ret = (sscanf(jss.c_str(), "%f%s", &val, buf) == 2) ? JS_TRUE : JS_FALSE;
 
-		if(strcasecmp(buf, "px") != 0)
+		if(roStrCaseCmp(buf, "px") != 0)
 			rhLog("warn", "%s", "Only 'px' is supported for CSS dimension unit\n");
 	}
 

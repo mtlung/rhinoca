@@ -156,7 +156,7 @@ void HTMLCanvasElement::createContext(const char* ctxName)
 {
 	if(context) return;
 
-	if(strcasecmp(ctxName, "2d") == 0) {
+	if(roStrCaseCmp(ctxName, "2d") == 0) {
 		context = new CanvasRenderingContext2D(this);
 		context->addReference();	// releaseReference() in ~HTMLCanvasElement()
 	}
@@ -189,7 +189,7 @@ static const ro::ConstString _tagName = "CANVAS";
 
 Element* HTMLCanvasElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
-	if(strcasecmp(type, _tagName) != 0) return NULL;
+	if(roStrCaseCmp(type, _tagName) != 0) return NULL;
 
 	/// The default size of a canvas is 300 x 150 as described by the standard
 	float w = 300, h = 150;

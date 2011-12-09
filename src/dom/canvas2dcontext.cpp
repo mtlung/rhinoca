@@ -9,7 +9,7 @@
 #include "../vec3.h"
 #include "../render/vg/openvg.h"
 #include "../render/vg/vgu.h"
-#include <string.h>	// For strcasecmp
+#include <string.h>	// For roStrCaseCmp
 
 using namespace Render;
 
@@ -1272,7 +1272,7 @@ void CanvasRenderingContext2D::setLineCap(const char* cap)
 	};
 
 	for(unsigned i=0; i<COUNTOF(caps); ++i)
-		if(strcasecmp(cap, caps[i].name) == 0)
+		if(roStrCaseCmp(cap, caps[i].name) == 0)
 			vgSeti(VG_STROKE_CAP_STYLE,  caps[i].style);
 }
 
@@ -1290,7 +1290,7 @@ void CanvasRenderingContext2D::setLineJoin(const char* join)
 	};
 
 	for(unsigned i=0; i<COUNTOF(joins); ++i)
-		if(strcasecmp(join, joins[i].name) == 0)
+		if(roStrCaseCmp(join, joins[i].name) == 0)
 			vgSeti(VG_STROKE_JOIN_STYLE, joins[i].style);
 }
 

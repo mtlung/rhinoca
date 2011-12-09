@@ -4,6 +4,7 @@
 #include "roUtility.h"
 #include <ctype.h>
 #include <math.h>
+#include <stdio.h>
 
 char* roStrStr(char* a, const char* b)
 {
@@ -60,108 +61,179 @@ void roStrReverse(char *str, roSize len)
 		roSwap(str[i], str[len-1-i]);
 }
 
-// Reference: http://www.bsdlover.cn/study/UnixTree/V7/usr/src/libc/gen/atof.c.html
-double atof(const char* p, double onErr)
+
+// ----------------------------------------------------------------------
+
+template<class A, class B>
+bool _castAssign(A a, B& b)
 {
-	if(!p) return onErr;
-
-	char c;
-	double fl, flexp, exp5;
-	double big = 72057594037927936.;  /*2^56*/
-	const int LOGHUGE = 39;	// 10^39 --> Largest power
-	int nd;
-	char eexp, exp, neg, negexp, bexp;
-
-	neg = 1;
-	while((c = *p++) == ' ')
-		;
-	if(c == '-')
-		neg = -1;
-	else if(c == '+')
-		;
-	else
-		--p;
-
-	exp = 0;
-	fl = 0;
-	nd = 0;
-	while((c = *p++), isdigit(c)) {
-		if(fl < big)
-			fl = 10*fl + (c - '0');
-		else
-			++exp;
-		++nd;
-	}
-
-	if(c == '.') {
-		while((c = *p++), isdigit(c)) {
-			if(fl < big) {
-				fl = 10*fl + (c - '0');
-				--exp;
-			}
-			++nd;
-		}
-	}
-
-	negexp = 1;
-	eexp = 0;
-	if((c == 'E') || (c == 'e')) {
-		if ((c = *p++) == '+')
-			;
-		else if(c == '-')
-			negexp = -1;
-		else
-			--p;
-
-		while((c = *p++), isdigit(c)) {
-			eexp = 10 * eexp + (c - '0');
-		}
-		if (negexp<0)
-			eexp = -eexp;
-		exp += eexp;
-	}
-
-	negexp = 1;
-	if (exp < 0) {
-		negexp = -1;
-		exp = -exp;
-	}
-
-	if((nd + exp * negexp) < -LOGHUGE) {
-		fl = 0;
-		exp = 0;
-	}
-	flexp = 1;
-	exp5 = 5;
-	bexp = exp;
-	for(;;) {
-		if(exp & 01)
-			flexp *= exp5;
-		exp >>= 1;
-		if(exp == 0)
-			break;
-		exp5 *= exp5;
-	}
-	if(negexp < 0)
-		fl /= flexp;
-	else
-		fl *= flexp;
-	fl = ldexp(fl, negexp * bexp);
-	if(neg < 0)
-		fl = -fl;
-	return fl;
+	if(!roCastAssert(a, b)) return false;
+	b = B(a);
+	return true;
 }
 
-bool roStrToBool(const char* str, bool defaultValue)
+template<class T>
+static bool _parseNumber(const char* p, T& ret)
 {
-	if(!str)
-		return defaultValue;
-	else if(roStrCaseCmp(str, "true") == 0)
-		return true;
-	else if(roStrCaseCmp(str, "false") == 0)
+	// Skip white spaces
+	static const char _whiteSpace[] = " \t\r\n";
+	while(roStrChr(_whiteSpace, *p)) { ++p; }
+
+	const bool neg = (*p) == '-';
+
+	if(neg && ro::TypeOf<T>::isUnsigned())
 		return false;
 
-	return atof(str, defaultValue) > 0 ? true : false;
+	if(neg) ++p;
+	while(roStrChr(_whiteSpace, *p)) { ++p; }
+
+	// Skip leading zeros
+	bool hasLeadingZeros = false;
+	while(*p == '0') { hasLeadingZeros = true; ++p; }
+
+	static const T preOverMax = ro::TypeOf<T>::valueMax() / 10;
+	static const char preOverMax2 = char(ro::TypeOf<T>::valueMax() % 10) + '0';
+	static const T preUnderMin = -(roInt64)(ro::TypeOf<T>::valueMin() / 10);
+	static const char preUnderMin2 = '0' - char(ro::TypeOf<T>::valueMin() % 10);
+
+	T i = 0;
+
+	// Ensure there is really some numbers in the string
+	if(*p >= '1' && *p <= '9')
+		i = *(p++) - '0';
+	else {
+		ret = i;
+		return hasLeadingZeros;
+	}
+
+	if(ro::TypeOf<T>::isUnsigned() || !neg)
+	{
+		while(*p >= '0' && *p <= '9') {
+			if(i >= preOverMax) {
+				if(i != preOverMax || *p > preOverMax2)
+					return false;
+			}
+			i = i * 10 + (*p - '0');
+			++p;
+		}
+	}
+	else
+	{
+		while(*p >= '0' && *p <= '9') {
+			if(i >= preUnderMin) {
+				if(i != preUnderMin || *p > preUnderMin2)
+					return false;
+			}
+			i = i * 10 + (*p - '0');
+			++p;
+		}
+	}
+
+	ret = i;
+	return true;
+}
+
+bool roStrTo(const char* str, bool& ret)
+{
+	if(roStrCaseCmp(str, "true") == 0) {
+		ret = true;
+		return true;
+	}
+	else if(roStrCaseCmp(str, "false") == 0) {
+		ret = false;
+		return true;
+	}
+
+	roUint8 tmp;
+	if(!roStrTo(str, tmp))
+		return false;
+
+	ret = (tmp == 1);
+	return true;
+}
+
+bool roStrTo(const char* str, float& ret) {
+	return sscanf(str, "%f", &ret) == 1;
+}
+
+bool roStrTo(const char* str, double& ret) {
+	return sscanf(str, "%lf", &ret) == 1;
+}
+
+bool roStrTo(const char* str, roInt8& ret) {
+	int tmp; return roStrTo(str, tmp) && _castAssign(tmp, ret);
+}
+
+bool roStrTo(const char* str, roInt16& ret) {
+	int tmp; return roStrTo(str, tmp) && _castAssign(tmp, ret);
+}
+
+bool roStrTo(const char* str, roInt32& ret) {
+	return _parseNumber(str, ret);
+}
+
+bool roStrTo(const char* str, roInt64& ret) {
+	return _parseNumber(str, ret);
+}
+
+bool roStrTo(const char* str, roUint8& ret) {
+	unsigned tmp; return roStrTo(str, tmp) && _castAssign(tmp, ret);
+}
+
+bool roStrTo(const char* str, roUint16& ret) {
+	unsigned tmp; return roStrTo(str, tmp) && _castAssign(tmp, ret);
+}
+
+bool roStrTo(const char* str, roUint32& ret) {
+	return _parseNumber(str, ret);
+}
+
+bool roStrTo(const char* str, roUint64& ret) {
+	return _parseNumber(str, ret);
+}
+
+bool roStrToBool(const char* str, bool defaultValue) {
+	bool ret; return roStrTo(str, ret) ? ret : defaultValue;
+}
+
+float roStrToFloat(const char* str, float defaultValue) {
+	float ret; return roStrTo(str, ret) ? ret : defaultValue;
+}
+
+double roStrToDouble(const char* str, double defaultValue) {
+	double ret; return roStrTo(str, ret) ? ret : defaultValue;
+}
+
+roInt8 roStrToInt8(const char* str, roInt8 defaultValue) {
+	roInt8 ret; return roStrTo(str, ret) ? ret : defaultValue;
+}
+
+roInt16 roStrToInt16(const char* str, roInt16 defaultValue) {
+	roInt16 ret; return roStrTo(str, ret) ? ret : defaultValue;
+}
+
+roInt32 roStrToInt32(const char* str, roInt32 defaultValue) {
+	roInt32 ret; return roStrTo(str, ret) ? ret : defaultValue;
+}
+
+roInt64 roStrToInt64(const char* str, roInt64 defaultValue) {
+	roInt64 ret; return roStrTo(str, ret) ? ret : defaultValue;
+}
+
+roUint8 roStrToUint8(const char* str, roUint8 defaultValue) {
+	roUint8 ret; return roStrTo(str, ret) ? ret : defaultValue;
+}
+
+roUint16 roStrToUint16(const char* str, roUint16 defaultValue) {
+	roUint16 ret; return roStrTo(str, ret) ? ret : defaultValue;
+}
+
+roUint32 roStrToUint32(const char* str, roUint32 defaultValue) {
+	roUint32 ret; return roStrTo(str, ret) ? ret : defaultValue;
+}
+
+roUint64 roStrToUint64(const char* str, roUint64 defaultValue) {
+	roUint64 ret; return roStrTo(str, ret) ? ret : defaultValue;
 }
 
 
