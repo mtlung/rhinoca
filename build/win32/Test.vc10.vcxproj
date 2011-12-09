@@ -84,6 +84,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\test\base\roArrayTest.cpp" />
+    <ClCompile Include="..\..\test\base\roFileSystemTest.cpp" />
+    <ClCompile Include="..\..\test\base\roSockAddrTest.cpp" />
+    <ClCompile Include="..\..\test\base\roSocketTest.cpp" />
+    <ClCompile Include="..\..\test\base\roStringUtilityTest.cpp" />
+    <ClCompile Include="..\..\test\base\roTaskPoolMergeSortTest.cpp" />
+    <ClCompile Include="..\..\test\base\roTaskPoolTest.cpp" />
     <ClCompile Include="..\..\test\main.cpp" />
     <ClCompile Include="..\..\test\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

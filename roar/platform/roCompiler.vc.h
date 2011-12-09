@@ -65,6 +65,12 @@ typedef unsigned __int64 roUint64;
 #ifndef _CRT_SECURE_NO_WARNINGS
 #	define _CRT_SECURE_NO_WARNINGS
 #endif
+#ifndef _CRT_SECURE_NO_DEPRECATE
+#	define _CRT_SECURE_NO_DEPRECATE
+#endif
+#ifndef _CRT_NONSTDC_NO_DEPRECATE
+#	define _CRT_NONSTDC_NO_DEPRECATE
+#endif
 #pragma warning(disable : 4100)	// unreferenced formal parameter
 #pragma warning(disable : 4127)	// conditional expression is constant
 #pragma warning(disable : 4514)	// unreferenced inline function has been removed

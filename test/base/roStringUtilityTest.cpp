@@ -2,9 +2,9 @@
 #include "../../roar/base/roStringUtility.h"
 #include "../../roar/base/roTypeOf.h"
 
-struct FileSystemTest_ {};
+struct StringUtilityTest {};
 
-TEST_FIXTURE(FileSystemTest_, integer32)
+TEST_FIXTURE(StringUtilityTest, integer32)
 {
 	const roInt32 max32 = ro::TypeOf<roInt32>::valueMax();
 	const roInt32 min32 = ro::TypeOf<roInt32>::valueMin();
@@ -28,7 +28,7 @@ TEST_FIXTURE(FileSystemTest_, integer32)
 	CHECK_EQUAL(0u,		roStrToUint32(" 4294967296", 0));
 }
 
-TEST_FIXTURE(FileSystemTest_, integer64)
+TEST_FIXTURE(StringUtilityTest, integer64)
 {
 	const roInt64 max64 = ro::TypeOf<roInt64>::valueMax();
 	const roInt64 min64 = ro::TypeOf<roInt64>::valueMin();

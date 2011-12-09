@@ -278,7 +278,7 @@ static bool _blockTillReadable(HttpStream* s, roSize size)
 		return false;
 	}
 
-	float timeout = 300000;
+	float timeout = 5;
 	while(!s->headerReceived || s->bufSize < size) {
 		if(httpFileSystemReadReady(s, size))
 			break;

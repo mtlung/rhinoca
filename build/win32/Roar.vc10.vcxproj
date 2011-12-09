@@ -15,11 +15,14 @@
     <ClInclude Include="..\..\roar\base\roAtomic.h" />
     <ClInclude Include="..\..\roar\base\roBytePtr.h" />
     <ClInclude Include="..\..\roar\base\roFileSystem.h" />
+    <ClInclude Include="..\..\roar\base\roHttpFileSystem.h" />
     <ClInclude Include="..\..\roar\base\roLog.h" />
     <ClInclude Include="..\..\roar\base\roMemory.h" />
     <ClInclude Include="..\..\roar\base\roMutex.h" />
     <ClInclude Include="..\..\roar\base\roNonCopyable.h" />
     <ClInclude Include="..\..\roar\base\roObjectTable.h" />
+    <ClInclude Include="..\..\roar\base\roRawFileSystem.h" />
+    <ClInclude Include="..\..\roar\base\roSharedPtr.h" />
     <ClInclude Include="..\..\roar\base\roSocket.h" />
     <ClInclude Include="..\..\roar\base\roStopWatch.h" />
     <ClInclude Include="..\..\roar\base\roString.h" />
@@ -42,9 +45,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\roar\base\roFileSystem.cpp" />
+    <ClCompile Include="..\..\roar\base\roHttpFileSystem.cpp" />
     <ClCompile Include="..\..\roar\base\roLog.cpp" />
     <ClCompile Include="..\..\roar\base\roMemory.cpp" />
     <ClCompile Include="..\..\roar\base\roMutex.cpp" />
+    <ClCompile Include="..\..\roar\base\roRawFileSystem.cpp" />
     <ClCompile Include="..\..\roar\base\roSocket.cpp" />
     <ClCompile Include="..\..\roar\base\roStopWatch.cpp" />
     <ClCompile Include="..\..\roar\base\roString.cpp" />
