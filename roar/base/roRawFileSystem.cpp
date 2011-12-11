@@ -7,12 +7,60 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
+
 namespace ro {
 
 static DefaultAllocator _allocator;
 
 FileSystem*	defaultFileSystem();
 void setDefaultFileSystem(FileSystem* fs);
+
+#ifndef roOS_WIN
+
+void * rawFileSystemOpenFile(const char* uri)
+{
+	return NULL;
+}
+
+bool rawFileSystemReadReady(void* file, roUint64 size)
+{
+	return false;
+}
+
+roUint64 rawFileSystemRead(void* file, void* buffer, roUint64 size)
+{
+	return 0;
+}
+
+roUint64 rawFileSystemSize(void* file)
+{
+	return 0;
+}
+
+int	rawFileSystemSeek(void* file, roUint64 offset, FileSystem::SeekOrigin origin)
+{
+	return 0;
+}
+
+void rawFileSystemCloseFile(void* file)
+{
+
+}
+
+roBytePtr rawFileSystemGetBuffer(void* file, roUint64 requestSize, roUint64& readableSize)
+{
+	return NULL;
+}
+
+void rawFileSystemTakeBuffer(void* file)
+{
+}
+
+void rawFileSystemUntakeBuffer(void* file, roBytePtr buf)
+{
+}
+
+#else
 
 struct _RawFile {
 	FILE* file;
@@ -90,6 +138,8 @@ void rawFileSystemUntakeBuffer(void* file, roBytePtr buf)
 {
 	_allocator.free(buf);
 }
+
+#endif
 
 
 // ----------------------------------------------------------------------

@@ -12,9 +12,11 @@ int main()
 	CppTestHarness::TestRunner runner;
 	runner.ShowTestName(true);
 
-//	ret = runner.RunTest("GraphicsDriverTest::textureCommit");
+	//ret = runner.RunTest("GraphicsDriverTest::textureCommit");
 //	ret = runner.RunTest("ObjectTableTest::basic");
-	ret = runner.RunAllTests();
+//	ret = runner.RunAllTests();
+
+	ret = runner.RunTest("SpriteTest::uniformBuffer");
 
 	return int(ret);
 }
