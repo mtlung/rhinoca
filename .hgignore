@@ -26,3 +26,4 @@ build/win32/tmp
 build/ios/Launcher/build
 build/ios/Rhinoca/build
 syntax: glob
+test/main.cpp
