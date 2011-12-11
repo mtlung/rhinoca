@@ -1,7 +1,8 @@
 #ifndef __RESOURCE_H__
 #define __RESOURCE_H__
 
-#include "map.h"
+#include "rhassert.h"
+#include "../roar/base/roMap.h"
 #include "../roar/base/roSharedPtr.h"
 #include "../roar/base/roString.h"
 #include "../roar/base/roTaskPool.h"
@@ -10,8 +11,8 @@ class Resource
 	// NOTE: No need to use atomic integer as the refCount if no worker thread
 	// will hold strong reference to Resource
 	: public ro::SharedObject<rhuint>
-	, public MapBase<ro::ConstString>::Node<Resource>
-	, private Noncopyable
+	, public ro::MapNode<ro::ConstString, Resource>
+	, private ro::NonCopyable
 {
 protected:
 	explicit Resource(const char* uri);
@@ -84,7 +85,7 @@ protected:
 	int _factoryCount;
 	int _factoryBufCount;
 
-	typedef Map<Resource> Resources;
+	typedef ro::Map<Resource> Resources;
 	Resources _resources;
 };	// ResourceManager
 

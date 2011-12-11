@@ -51,7 +51,7 @@
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="pch.h"
 				WarningLevel="4"
-				DebugInformationFormat="4"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -345,6 +345,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\test\base\roMapTest.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\test\base\roSockAddrTest.cpp"
 				>
 			</File>
@@ -379,10 +383,6 @@
 		</File>
 		<File
 			RelativePath="..\..\test\main.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\test\maptest.cpp"
 			>
 		</File>
 		<File

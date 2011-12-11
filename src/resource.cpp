@@ -20,7 +20,7 @@ Resource::~Resource()
 
 ro::ConstString Resource::uri() const
 {
-	return getKey();
+	return key();
 }
 
 unsigned Resource::refCount() const
@@ -62,7 +62,7 @@ void ResourceManager::abortAllLoader()
 	}
 
 	for(Resource* r=_resources.findMin(); r; r=r->next())
-		taskPool->wait(r->taskLoaded);
+		taskPool->wait(r->taskLoaded);	// TODO: This still cause problem because of suspended jobs
 }
 
 ResourcePtr ResourceManager::load(const char* uri)

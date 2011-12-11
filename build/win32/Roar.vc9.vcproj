@@ -288,7 +288,7 @@
 	</References>
 	<Files>
 		<Filter
-			Name="audio"
+			Name="math"
 			>
 		</Filter>
 		<Filter
@@ -335,6 +335,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roMap.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roMap.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roMemory.cpp"
 				>
 			</File>
@@ -364,6 +372,10 @@
 			</File>
 			<File
 				RelativePath="..\..\roar\base\roRawFileSystem.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roResource.h"
 				>
 			</File>
 			<File

@@ -17,6 +17,7 @@
     <ClInclude Include="..\..\roar\base\roFileSystem.h" />
     <ClInclude Include="..\..\roar\base\roHttpFileSystem.h" />
     <ClInclude Include="..\..\roar\base\roLog.h" />
+    <ClInclude Include="..\..\roar\base\roMap.h" />
     <ClInclude Include="..\..\roar\base\roMemory.h" />
     <ClInclude Include="..\..\roar\base\roMutex.h" />
     <ClInclude Include="..\..\roar\base\roNonCopyable.h" />
@@ -47,6 +48,7 @@
     <ClCompile Include="..\..\roar\base\roFileSystem.cpp" />
     <ClCompile Include="..\..\roar\base\roHttpFileSystem.cpp" />
     <ClCompile Include="..\..\roar\base\roLog.cpp" />
+    <ClCompile Include="..\..\roar\base\roMap.cpp" />
     <ClCompile Include="..\..\roar\base\roMemory.cpp" />
     <ClCompile Include="..\..\roar\base\roMutex.cpp" />
     <ClCompile Include="..\..\roar\base\roRawFileSystem.cpp" />

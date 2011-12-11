@@ -6,7 +6,7 @@
 
 namespace Render {
 
-class Framebuffer : private Noncopyable
+class Framebuffer : private ro::NonCopyable
 {
 public:
 	Framebuffer();

@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "textrenderer.h"
 #include "driver.h"
-#include "../map.h"
 #include "../../roar/base/roStringHash.h"
 #include "../../roar/base/roStringUtility.h"
 
@@ -9,10 +8,10 @@ using namespace ro;
 
 namespace Render {
 
-class TextLabelCache : public MapBase<rhuint32>::Node<TextLabelCache>
+class TextLabelCache : public ro::MapNode<rhuint32, TextLabelCache>
 {
 public:
-	typedef MapBase<rhuint32>::Node<TextLabelCache> Super;
+	typedef ro::MapNode<rhuint32, TextLabelCache> Super;
 	TextLabelCache(rhuint32 key) : Super(key), refCount(0) {}
 
 	unsigned refCount;
@@ -21,7 +20,7 @@ public:
 class TextRenderer::Impl
 {
 public:
-	Map<TextLabelCache> cache;
+	ro::Map<TextLabelCache> cache;
 };
 
 TextRenderer::TextRenderer()

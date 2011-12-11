@@ -112,7 +112,6 @@
     <ClCompile Include="..\..\src\common.cpp" />
     <ClCompile Include="..\..\src\context.cpp" />
     <ClCompile Include="..\..\src\jsbindable.cpp" />
-    <ClCompile Include="..\..\src\map.cpp" />
     <ClCompile Include="..\..\src\mat44.cpp" />
     <ClCompile Include="..\..\src\memory.cpp" />
     <ClCompile Include="..\..\src\path.cpp" />
@@ -162,7 +161,6 @@
     <ClInclude Include="..\..\src\context.h" />
     <ClInclude Include="..\..\src\context_win.h" />
     <ClInclude Include="..\..\src\jsbindable.h" />
-    <ClInclude Include="..\..\src\map.h" />
     <ClInclude Include="..\..\src\mat44.h" />
     <ClInclude Include="..\..\src\path.h" />
     <ClInclude Include="..\..\src\pch.h" />

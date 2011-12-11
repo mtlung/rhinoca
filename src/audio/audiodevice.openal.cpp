@@ -308,7 +308,7 @@ void audioSound_destroy(AudioSound* sound)
 const char* audioSound_getUri(AudioSound* sound)
 {
 	if(!sound->audioBuffer) return "";
-	return sound->audioBuffer->getKey().c_str();
+	return sound->audioBuffer->key().c_str();
 }
 
 AudioSound* AudioDevice::createSound(const char* uri, ResourceManager* resourceMgr)

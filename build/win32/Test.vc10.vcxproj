@@ -88,6 +88,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\test\base\roArrayTest.cpp" />
     <ClCompile Include="..\..\test\base\roFileSystemTest.cpp" />
+    <ClCompile Include="..\..\test\base\roMapTest.cpp" />
     <ClCompile Include="..\..\test\base\roSockAddrTest.cpp" />
     <ClCompile Include="..\..\test\base\roSocketTest.cpp" />
     <ClCompile Include="..\..\test\base\roStringUtilityTest.cpp" />

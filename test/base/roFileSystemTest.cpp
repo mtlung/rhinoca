@@ -3,6 +3,9 @@
 #include "../../roar/base/roHttpFileSystem.h"
 #include "../../roar/base/roStringUtility.h"
 
+#include "../../roar/base/roMap.h"
+#include "../../roar/base/roString.h"
+
 using namespace ro;
 
 struct FileSystemTest {};
@@ -16,6 +19,22 @@ TEST_FIXTURE(FileSystemTest, defaultFS)
 	CHECK(size > 0);
 
 	fileSystem.closeFile(file);
+
+	struct FooNode : public MapNode<int, FooNode> {
+		typedef MapNode<int, FooNode> Super;
+		FooNode(int key, const String& val)
+			: Super(key), mVal(val)
+		{}
+		String mVal;
+	};	// FooNode
+
+	Map<FooNode> map;
+	map.insert(*(new FooNode(1, "1")));
+	for(FooNode* n = map.findMin(); n != NULL; n = n->next()) {}
+
+	FooNode* m = map.find(1);
+	m->setKey(1);
+	m->destroyThis();
 }
 
 TEST_FIXTURE(FileSystemTest, rawFS_getBuffer)

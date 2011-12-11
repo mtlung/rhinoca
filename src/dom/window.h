@@ -4,8 +4,8 @@
 #include "touchevent.h"
 #include "../jsbindable.h"
 #include "../linklist.h"
-#include "../map.h"
 #include "../../roar/base/roArray.h"
+#include "../../roar/base/roMap.h"
 #include "../../roar/base/roStopWatch.h"
 
 namespace Dom {
@@ -14,10 +14,10 @@ class Event;
 class HTMLDocument;
 class HTMLCanvasElement;
 
-class TimerCallback : public JsBindable, public MapBase<float>::Node<TimerCallback>
+class TimerCallback : public JsBindable, public ro::MapNode<float, TimerCallback>
 {
 public:
-	typedef MapBase<float>::Node<TimerCallback> super;
+	typedef ro::MapNode<float, TimerCallback> super;
 
 	TimerCallback();
 	~TimerCallback();
@@ -26,7 +26,7 @@ public:
 
 	void removeThis();
 
-	float nextInvokeTime() const { return getKey(); }
+	float nextInvokeTime() const { return key(); }
 	void setNextInvokeTime(float val) { setKey(val); }
 	bool operator<(const TimerCallback& rhs) const { return nextInvokeTime() < rhs.nextInvokeTime(); }
 
@@ -95,7 +95,7 @@ public:
 
 	ro::Array<TouchData> touches;	/// Book keeping for all touch points
 
-	typedef Map<TimerCallback> TimerCallbacks;
+	typedef ro::Map<TimerCallback> TimerCallbacks;
 	TimerCallbacks timerCallbacks;
 
 	typedef LinkList<FrameRequestCallback> FrameRequestCallbacks;

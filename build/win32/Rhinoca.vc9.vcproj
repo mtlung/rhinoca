@@ -832,14 +832,6 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\src\map.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\map.h"
-			>
-		</File>
-		<File
 			RelativePath="..\..\src\mat44.cpp"
 			>
 		</File>

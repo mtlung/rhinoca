@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "../src/map.h"
-#include "../roar/base/roStopWatch.h"
+#include "../../roar/base/roMap.h"
+#include "../../roar/base/roStopWatch.h"
 #include <map>
 
 using namespace ro;
@@ -12,9 +12,9 @@ static const unsigned testCount = 99999;
 
 class MapPerformanceTest {};
 
-struct MyNode : public MapBase<int>::Node<MyNode>
+struct MyNode : public MapNode<int, MyNode>
 {
-	typedef MapBase<int>::Node<MyNode> Super;
+	typedef MapNode<int, MyNode> Super;
 	MyNode(int key, int val)
 		: Super(key), val(val)
 	{}

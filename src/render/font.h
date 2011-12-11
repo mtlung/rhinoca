@@ -2,7 +2,6 @@
 #define __RENDER_FONT_H__
 
 #include "texture.h"
-#include "../map.h"
 #include "../resource.h"
 
 namespace Render {
@@ -11,9 +10,9 @@ namespace Render {
 class GlyphCache
 {
 public:
-	struct Glyph : public MapBase<int>::Node<Glyph>
+	struct Glyph : public ro::MapNode<int, Glyph>
 	{
-		typedef MapBase<int>::Node<Glyph> Super;
+		typedef ro::MapNode<int, Glyph> Super;
 		Glyph() : Super(0), texture(NULL), width(0), height(0) {}
 		TexturePtr texture;
 		int width, height;
@@ -21,7 +20,7 @@ public:
 	};
 
 	Glyph ascii[256];	/// Use plan array to store ascii glyph, fast!
-	Map<Glyph> glyphs;	/// For glyphs other than ascii
+	ro::Map<Glyph> glyphs;	/// For glyphs other than ascii
 };	// GlyphCache
 
 /// An abstract font hold implementation/platform specific data for
