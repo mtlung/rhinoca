@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\test\main.cpp" />
+    <ClCompile Include="..\..\test\pch.cpp" />
+    <ClCompile Include="..\..\test\resourcetest.cpp" />
+    <ClCompile Include="..\..\test\render\roGraphicsDriverTest.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roSockAddrTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roSocketTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roStringUtilityTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roTaskPoolMergeSortTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roTaskPoolTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roArrayTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roFileSystemTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roMapTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\render\roSpriteTest.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\test\pch.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="render">
+      <UniqueIdentifier>{4a425500-30d1-425b-b8e9-825105d429d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base">
+      <UniqueIdentifier>{771f50eb-8b76-4ab7-b390-45e9e132504d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

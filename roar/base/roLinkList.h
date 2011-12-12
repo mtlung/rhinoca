@@ -71,7 +71,7 @@ struct LinkList : public _LinkList
 	Node*		getAt(roSize i)	{ return (Node*)_LinkList::getAt(i); }
 
 	roSize		size() const	{ return _count; }
-	bool		isEmpty() const	{ return _count > 0; }
+	bool		isEmpty() const	{ return _count == 0; }
 
 	Node&		front()			{ roAssert(_count > 0); return (Node&)(*_head->_next); }
 	const Node&	front() const	{ roAssert(_count > 0); return (Node&)(*_head->_next); }

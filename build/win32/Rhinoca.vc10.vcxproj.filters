@@ -1,0 +1,401 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\src\common.cpp" />
+    <ClCompile Include="..\..\src\context.cpp" />
+    <ClCompile Include="..\..\src\jsbindable.cpp" />
+    <ClCompile Include="..\..\src\mat44.cpp" />
+    <ClCompile Include="..\..\src\memory.cpp" />
+    <ClCompile Include="..\..\src\path.cpp" />
+    <ClCompile Include="..\..\src\pch.cpp" />
+    <ClCompile Include="..\..\src\resource.cpp" />
+    <ClCompile Include="..\..\src\rhinoca.cpp" />
+    <ClCompile Include="..\..\src\xmlparser.cpp" />
+    <ClCompile Include="..\..\src\render\rgutility.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\audio\audiobuffer.cpp">
+      <Filter>audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\audio\audiodevice.openal.cpp">
+      <Filter>audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\audio\mp3loader.cpp">
+      <Filter>audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\audio\oggloader.cpp">
+      <Filter>audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\audio\stb_vorbis.cpp">
+      <Filter>audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\audio\waveloader.cpp">
+      <Filter>audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\body.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\canvas.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\canvas2dcontext.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\canvasgradient.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\element.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\document.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\div.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\image.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\audio.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\color.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\cssstyledeclaration.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\cssstylerule.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\cssstylesheet.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\cssparser.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\elementstyle.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\event.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\imagedata.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\keyevent.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\media.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\mouseevent.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\node.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\navigator.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\nodelist.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\registerfactories.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\script.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\style.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\textnode.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\touchevent.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\window.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\windowlocation.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\windowscreen.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\driver.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\win32\driverwin32.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\bmploader.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\font.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\framebuffer.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\jpegloader.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\pngloader.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\renderqueue.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\texture.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\textrenderer.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\truetypefont.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\shivavg\shVgu.cpp">
+      <Filter>render\shivavg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\shivavg\shArrays.cpp">
+      <Filter>render\shivavg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\shivavg\shContext.cpp">
+      <Filter>render\shivavg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\shivavg\shExtensions.cpp">
+      <Filter>render\shivavg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\shivavg\shGeometry.cpp">
+      <Filter>render\shivavg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\shivavg\shImage.cpp">
+      <Filter>render\shivavg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\shivavg\shPaint.cpp">
+      <Filter>render\shivavg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\shivavg\shParams.cpp">
+      <Filter>render\shivavg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\shivavg\shPath.cpp">
+      <Filter>render\shivavg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\shivavg\shPipeline.cpp">
+      <Filter>render\shivavg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\render\shivavg\shVectors.cpp">
+      <Filter>render\shivavg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\loader.cpp" />
+    <ClCompile Include="..\..\src\parser.cpp" />
+    <ClCompile Include="..\..\src\rhlog.cpp" />
+    <ClCompile Include="..\..\src\textresource.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\render\vg\openvg.h" />
+    <ClInclude Include="..\..\src\common.h" />
+    <ClInclude Include="..\..\src\context.h" />
+    <ClInclude Include="..\..\src\context_win.h" />
+    <ClInclude Include="..\..\src\jsbindable.h" />
+    <ClInclude Include="..\..\src\mat44.h" />
+    <ClInclude Include="..\..\src\path.h" />
+    <ClInclude Include="..\..\src\pch.h" />
+    <ClInclude Include="..\..\src\platform.h" />
+    <ClInclude Include="..\..\src\resource.h" />
+    <ClInclude Include="..\..\src\rhinoca.h" />
+    <ClInclude Include="..\..\src\vec3.h" />
+    <ClInclude Include="..\..\src\vector.h" />
+    <ClInclude Include="..\..\src\xmlparser.h" />
+    <ClInclude Include="..\..\src\render\rgutility.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\audio\audiobuffer.h">
+      <Filter>audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\audio\audiodevice.h">
+      <Filter>audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\audio\audioloader.h">
+      <Filter>audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\audio\stb_vorbis.h">
+      <Filter>audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\canvasgradient.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\body.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\canvas.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\canvas2dcontext.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\element.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\document.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\div.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\image.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\audio.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\color.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\cssstyledeclaration.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\cssstylerule.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\cssstylesheet.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\cssparser.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\elementstyle.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\event.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\imagedata.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\keyevent.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\media.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\mouseevent.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\node.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\navigator.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\nodelist.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\registerfactories.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\script.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\style.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\textnode.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\touchevent.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\window.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\windowlocation.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\windowscreen.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\render\driver.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\render\driverdetail.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\render\font.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\render\framebuffer.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\render\renderqueue.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\render\texture.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\render\render.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\render\textrenderer.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\render\truetypefont.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\render\shivavg\shArrayBase.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\render\shivavg\shArrays.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\render\shivavg\shContext.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\render\shivavg\shDefs.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\render\shivavg\shExtensions.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\render\shivavg\shGeometry.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\render\shivavg\shImage.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\render\shivavg\shPaint.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\render\shivavg\shPath.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\render\shivavg\shVectors.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\loader.h" />
+    <ClInclude Include="..\..\src\parser.h" />
+    <ClInclude Include="..\..\src\rhlog.h" />
+    <ClInclude Include="..\..\src\render\vg\vgu.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\textresource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="render">
+      <UniqueIdentifier>{fb3f7f37-c98a-419d-81cc-e39d7182aa6e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="audio">
+      <UniqueIdentifier>{0755f0f0-6db7-4b4a-bb02-9b0b2d4258ad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dom">
+      <UniqueIdentifier>{d55d46e7-9c6c-43fb-b22e-69199e01ec85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="render\shivavg">
+      <UniqueIdentifier>{46d902e2-b5de-4678-9352-91ca63338c16}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
