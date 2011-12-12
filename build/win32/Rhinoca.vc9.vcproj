@@ -804,23 +804,11 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\src\intrusiveptr.h"
-			>
-		</File>
-		<File
 			RelativePath="..\..\src\jsbindable.cpp"
 			>
 		</File>
 		<File
 			RelativePath="..\..\src\jsbindable.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\linklist.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\linklist.h"
 			>
 		</File>
 		<File

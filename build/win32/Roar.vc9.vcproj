@@ -327,6 +327,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roLinkList.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roLinkList.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roLog.cpp"
 				>
 			</File>

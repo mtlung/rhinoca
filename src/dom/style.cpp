@@ -47,7 +47,7 @@ static void parserCallback(ParserResult* result, Parser* parser)
 
 	char bk = *result->end;
 	*const_cast<char*>(result->end) = '\0';
-	style->insertRule(result->begin, style->rules.elementCount());
+	style->insertRule(result->begin, style->rules.size());
 	*const_cast<char*>(result->end) = bk;
 }
 

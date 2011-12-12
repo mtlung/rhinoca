@@ -27,9 +27,9 @@ unsigned CSSStyleSheet::insertRule(const char* ruleString, unsigned index)
 
 	rule->setCssText(ruleString);
 
-	if(index >= rules.elementCount()) {
+	if(index >= rules.size()) {
 		rules.pushBack(*rule);
-		return rules.elementCount() - 1;
+		return rules.size() - 1;
 	}
 	else {
 		rules.insertAfter(*rules.getAt(index), *rule);

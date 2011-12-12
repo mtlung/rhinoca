@@ -299,7 +299,7 @@ bool Rhinoca::openDoucment(const char* uri)
 	}
 
 	// Perform selector match and assign style to matching elements
-	LinkList<Dom::CSSStyleSheet>& styleSheets = document->styleSheets;
+	ro::LinkList<Dom::CSSStyleSheet>& styleSheets = document->styleSheets;
 	for(Dom::CSSStyleSheet* s = styleSheets.begin(); s != styleSheets.end(); s = s->next())
 	{
 		for(Dom::CSSStyleRule* r = s->rules.begin(); r != s->rules.end(); r = r->next())

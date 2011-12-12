@@ -2,7 +2,7 @@
 #define __DOM_CSSSTYLERULE_H__
 
 #include "cssstyledeclaration.h"
-#include "../linklist.h"
+#include "../../roar/base/roLinkList.h"
 
 namespace Dom {
 
@@ -10,7 +10,7 @@ class CSSStyleSheet;
 class Element;
 
 /// http://www.w3.org/TR/DOM-Level-2-Style/css.html#CSS-CSSStyleRule
-class CSSStyleRule : public JsBindable, public LinkListBase::Node<CSSStyleRule>
+class CSSStyleRule : public JsBindable, public ro::ListNode<CSSStyleRule>
 {
 public:
 	explicit CSSStyleRule();

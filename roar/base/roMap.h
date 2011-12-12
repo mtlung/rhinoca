@@ -57,6 +57,7 @@ struct MapNode : public _TreeNode
 	explicit MapNode(const Key& key) : _key(key) {}
 
 	bool			isInMap() const	{ return _tree != NULL; }
+	Map<T>*			getMap() const	{ return static_cast<Map<T>*>(_tree); }
 	T*				next() const	{ return _tree ? (T*)(_tree->walkR((_TreeNode&)*this)) : NULL; }
 	T*				prev() const	{ return _tree ? (T*)(_tree->walkL((_TreeNode&)*this)) : NULL; }
 
@@ -103,6 +104,7 @@ struct Map : public _AvlTree
 	typedef typename Node::Key Key;
 	typedef typename Node::Comparator Comparator;
 
+	roSize		size				() const		{ return _count; }
 	Node*		find				(Key key)		{ return _find<true, 0>(key); }
 	const Node*	find				(Key key) const	{ return _find<true, 0>(key); }
 

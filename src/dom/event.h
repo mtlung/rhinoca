@@ -2,7 +2,7 @@
 #define __DOM_EVENT_H__
 
 #include "../jsbindable.h"
-#include "../linklist.h"
+#include "../../roar/base/roLinkList.h"
 
 // Documentation for DOM event model:
 // http://www.w3.org/TR/DOM-Level-2-Events/events.html
@@ -47,7 +47,7 @@ protected:
 	bool _stopPropagation;
 };	// Event
 
-class EventListener : public LinkListBase::Node<EventListener>
+class EventListener : public ro::ListNode<EventListener>
 {
 public:
 	virtual void handleEvent(Event* evt, JSObject* self) = 0;
@@ -138,7 +138,7 @@ public:
 	bool hasListener() const { return !_eventListeners.isEmpty(); }
 
 protected:
-	typedef LinkList<EventListener> EventListeners;
+	typedef ro::LinkList<EventListener> EventListeners;
 	EventListeners _eventListeners;
 };	// EventTarget
 

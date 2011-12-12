@@ -46,7 +46,7 @@ public:
 	/// See http://www.w3schools.com/jsref/prop_doc_readystate.asp
 	ro::ConstString readyState;
 
-	LinkList<CSSStyleSheet> styleSheets;
+	ro::LinkList<CSSStyleSheet> styleSheets;
 
 	static JSClass jsClass;
 };	// HTMLDocument

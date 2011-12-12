@@ -1,10 +1,10 @@
 #include "pch.h"
 #include "audiodevice.h"
 #include "../common.h"
-#include "../linklist.h"
 #include "../rhlog.h"
 #include "../resource.h"
 #include "../../roar/base/roArray.h"
+#include "../../roar/base/roLinkList.h"
 
 #if defined(RHINOCA_APPLE)
 #	include <OpenAL/al.h>
@@ -101,7 +101,7 @@ struct AlBuffer
 	AudioBufferPtr srcData;
 };	// AlBuffer
 
-struct AudioSound : public LinkListBase::Node<AudioSound>
+struct AudioSound : public ro::ListNode<AudioSound>
 {
 	explicit AudioSound(AudioDevice* d)
 		: device(d)
@@ -124,7 +124,7 @@ struct AudioSound : public LinkListBase::Node<AudioSound>
 	void unqueueAllBuffers();
 
 // Attributes
-	struct Active : public LinkListBase::Node<AudioSound::Active>
+	struct Active : public ro::ListNode<AudioSound::Active>
 	{
 		DECLAR_GET_OUTER_OBJ(AudioSound, activeListNode);
 		void destroyThis() {

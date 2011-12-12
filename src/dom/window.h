@@ -3,7 +3,6 @@
 
 #include "touchevent.h"
 #include "../jsbindable.h"
-#include "../linklist.h"
 #include "../../roar/base/roArray.h"
 #include "../../roar/base/roMap.h"
 #include "../../roar/base/roStopWatch.h"
@@ -38,10 +37,10 @@ public:
 };	// TimerCallback
 
 // http://webstuff.nfshost.com/anim-timing/Overview.html
-class FrameRequestCallback : public JsBindable, public LinkListBase::Node<FrameRequestCallback>
+class FrameRequestCallback : public JsBindable, public ro::ListNode<FrameRequestCallback>
 {
 public:
-	typedef LinkListBase::Node<FrameRequestCallback> super;
+	typedef ro::ListNode<FrameRequestCallback> super;
 
 	FrameRequestCallback();
 	~FrameRequestCallback();
@@ -98,7 +97,7 @@ public:
 	typedef ro::Map<TimerCallback> TimerCallbacks;
 	TimerCallbacks timerCallbacks;
 
-	typedef LinkList<FrameRequestCallback> FrameRequestCallbacks;
+	typedef ro::LinkList<FrameRequestCallback> FrameRequestCallbacks;
 	FrameRequestCallbacks frameRequestCallbacks;
 
 	static JSClass jsClass;

@@ -169,7 +169,7 @@ void CSSStyleRule::bind(JSContext* cx, JSObject* parent)
 CSSStyleSheet* CSSStyleRule::parentStyleSheet()
 {
 	// Get CSSStyleSheet base on CSSStyleSheet::rules
-	LinkListBase* list = getList();
+	ro::_LinkList* list = getList();
 	return (CSSStyleSheet*)
 	((intptr_t(list) + 1) - intptr_t(&((CSSStyleSheet*)1)->rules));
 }
