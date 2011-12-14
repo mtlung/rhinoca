@@ -2,7 +2,7 @@
 #define __RENDER_FONT_H__
 
 #include "texture.h"
-#include "../resource.h"
+#include "../../roar/base/roResource.h"
 
 namespace Render {
 
@@ -25,7 +25,7 @@ public:
 
 /// An abstract font hold implementation/platform specific data for
 /// rasterizing font glyphs to memory.
-class Font : public Resource
+class Font : public ro::Resource
 {
 protected:
 	explicit Font(const char* uri) : Resource(uri) {}

@@ -87,7 +87,6 @@ Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 	JS_SetErrorReporter(jsContext, jsReportError);
 
 	taskPool.init(2);
-	resourceManager.rhinoca = this;
 	resourceManager.taskPool = &taskPool;
 	Loader::registerLoaders(&resourceManager);
 
@@ -118,7 +117,7 @@ void Rhinoca::update()
 	if(domWindow)
 		domWindow->update();
 
-	resourceManager.update();
+	resourceManager.tick();
 	resourceManager.collectInfrequentlyUsed();
 
 	audiodevice_update(audioDevice);

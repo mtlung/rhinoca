@@ -383,6 +383,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roResource.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roResource.h"
 				>
 			</File>

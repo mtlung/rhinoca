@@ -349,6 +349,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\test\base\roResourceTest.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\test\base\roSockAddrTest.cpp"
 				>
 			</File>
@@ -427,10 +431,6 @@
 		</File>
 		<File
 			RelativePath="..\..\test\pch.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\test\resourcetest.cpp"
 			>
 		</File>
 	</Files>

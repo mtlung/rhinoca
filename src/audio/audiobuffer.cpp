@@ -65,7 +65,7 @@ void* AudioBuffer::getWritePointerForRange(unsigned begin, unsigned& end, unsign
 	rhbyte* p = (rhbyte*)rhinoca_malloc(bytesToWrite);
 	SubBuffer b = { begin, end, bytesToWrite, 999.0f, false, p };
 
-	RHASSERT(p);
+	roAssert(p);
 	subBuffers.pushBack(b);
 
 	return p;
@@ -75,7 +75,7 @@ void AudioBuffer::commitWriteForRange(unsigned begin, unsigned end)
 {
 	ScopeLock lock(mutex);
 
-	RHASSERT(begin <= end);
+	roAssert(begin <= end);
 
 	for(unsigned i=0; i<subBuffers.size(); ++i) {
 		SubBuffer& b = subBuffers[i];
@@ -96,7 +96,7 @@ void AudioBuffer::commitWriteForRange(unsigned begin, unsigned end)
 		}
 	}
 
-	RHASSERT(false);
+	roAssert(false);
 }
 
 void* AudioBuffer::getReadPointerForRange(unsigned begin, unsigned end, unsigned& readableSamples, unsigned& readableBytes, Format& _format)

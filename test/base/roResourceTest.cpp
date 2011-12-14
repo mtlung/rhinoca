@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "../src/resource.h"
+#include "../../roar/base/roResource.h"
 
 using namespace ro;
 
@@ -69,6 +69,6 @@ TEST(ResourceTest)
 
 	MyResourcePtr r = mgr.loadAs<MyResource>("dummy");
 
-	mgr.update();
+	mgr.tick();
 	taskPool.doSomeTask();
 }

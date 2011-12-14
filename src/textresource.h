@@ -1,10 +1,10 @@
 #ifndef __TEXTRESOURCE_H__
 #define __TEXTRESOURCE_H__
 
-#include "resource.h"
+#include "../roar/base/roResource.h"
 
 /// A text based resource
-class TextResource : public Resource
+class TextResource : public ro::Resource
 {
 public:
 	explicit TextResource(const char* uri);

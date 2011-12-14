@@ -123,7 +123,7 @@ void HTMLScriptElement::setSrc(const char* uri)
 	Path path;
 	fixRelativePath(uri, rhinoca->documentUrl.c_str(), path);
 
-	ResourceManager& mgr = rhinoca->resourceManager;
+	ro::ResourceManager& mgr = rhinoca->resourceManager;
 	_src = mgr.loadAs<TextResource>(path.c_str());
 
 	mgr.taskPool->wait(_src->taskLoaded);

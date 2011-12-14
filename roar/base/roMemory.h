@@ -51,6 +51,8 @@ struct DefaultAllocator
 	roBytePtr realloc(void* originalPtr, roSize originalSize, roSize newSize);
 	void free(void* ptr);
 
+	template<class T> T* typedRealloc(T* originalPtr, roSize originalCount, roSize newCount)	{ return realloc(originalPtr, originalCount * sizeof(T), newCount * sizeof(T)).cast<T>(); }
+
 	template<class T>
 	AutoPtr<T> newObj()																			{ return AutoPtr<T>(new( malloc(sizeof(T)) ) T(), *this); }
 	template<class T,class P1>

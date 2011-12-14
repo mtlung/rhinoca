@@ -34,7 +34,7 @@ struct RingBuffer
 
 	void commitWrite(unsigned written)
 	{
-		RHASSERT(writePos + written <= endPos);
+		roAssert(writePos + written <= endPos);
 		writePos += written;
 	}
 
@@ -46,7 +46,7 @@ struct RingBuffer
 
 	void commitRead(unsigned read)
 	{
-		RHASSERT(readPos + read <= writePos);
+		roAssert(readPos + read <= writePos);
 		readPos += read;
 	}
 
@@ -248,7 +248,7 @@ void OggLoader::loadData()
 
 			// Reserve a large enough buffer for 1 second audio
 			bufferData = buffer->getWritePointerForRange(audioBufBegin, audioBufEnd, bytesToWrite);
-			RHASSERT(bufferData && bytesToWrite);
+			roAssert(bufferData && bytesToWrite);
 
 			// Read from ring buffer and put to vorbis
 			float** outputs = NULL;
@@ -274,7 +274,7 @@ void OggLoader::loadData()
 				}
 
 				// By default stb_vorbis load data as float, we need to convert to uint16 before submitting to audio device
-				RHASSERT(sampleCount < proximateBufDuration && "This is our assumption so stb_vorbis_channels_short_interleaved() will not overflow bufferData");
+				roAssert(sampleCount < proximateBufDuration && "This is our assumption so stb_vorbis_channels_short_interleaved() will not overflow bufferData");
 				stb_vorbis_channels_short_interleaved(numChannels, (short*)bufferData, vorbisInfo.channels, outputs, 0, sampleCount);
 
 				if(byteUsed == 0) {
@@ -295,7 +295,7 @@ void OggLoader::loadData()
 
 				// NOTE: Seems there is a bug in reporting the sample offset at the last packet
 				// there I added the condition (readCount == 0) to by-pass the bug
-				RHASSERT(readCount == 0 || stb_vorbis_get_sample_offset(vorbis) == currentSamplePos);
+				roAssert(readCount == 0 || stb_vorbis_get_sample_offset(vorbis) == currentSamplePos);
 			}
 
 			if(audioBufBegin != currentSamplePos)

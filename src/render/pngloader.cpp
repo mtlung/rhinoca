@@ -67,8 +67,6 @@ static void info_callback(png_structp png_ptr, png_infop)
 
 void PngLoader::onPngInfoReady()
 {
-	Rhinoca* rh = manager->rhinoca;
-
 	// Query the info structure.
 	int bit_depth, color_type, interlace_method;
 	png_get_IHDR(png_ptr, info_ptr,
@@ -109,7 +107,7 @@ void PngLoader::onPngInfoReady()
 	png_read_update_info(png_ptr, info_ptr);
 	rowBytes = info_ptr->rowbytes;
 
-	RHASSERT(!pixelData);
+	roAssert(!pixelData);
 	pixelDataSize = rowBytes * height;
 	pixelData = (char*)rhinoca_malloc(pixelDataSize);
 }
@@ -118,7 +116,7 @@ void PngLoader::onPngInfoReady()
 static void row_callback(png_structp png_ptr, png_bytep new_row, png_uint_32 row_num, int pass)
 {
 	PngLoader* impl = reinterpret_cast<PngLoader*>(png_get_progressive_ptr(png_ptr));
-	RHASSERT(impl->pixelData);
+	roAssert(impl->pixelData);
 
 	// Have libpng either combine the new row data with the existing row data
 	// from previous passes (if interlaced) or else just copy the new row
@@ -149,10 +147,10 @@ PngLoader::PngLoader(Texture* t, ResourceManager* mgr)
 	, _loadFinished(false)
 {
 	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	RHASSERT(png_ptr);
+	roAssert(png_ptr);
 
 	info_ptr = png_create_info_struct(png_ptr);
-	RHASSERT(info_ptr);
+	roAssert(info_ptr);
 
 	// Setup the callback that will be called during the data processing.
 	png_set_progressive_read_fn(png_ptr, (void*)this, info_callback, row_callback, end_callback);
@@ -215,7 +213,7 @@ Abort:
 
 void PngLoader::commit(TaskPool* taskPool)
 {
-	RHASSERT(texture->scratch == this);
+	roAssert(texture->scratch == this);
 	texture->scratch = NULL;
 
 	if(texture->create(width, height, Driver::ANY, pixelData, pixelDataSize, pixelDataFormat))

@@ -1,10 +1,10 @@
 #include "pch.h"
 #include "loader.h"
-#include "resource.h"
+#include "../roar/base/roResource.h"
 
 namespace Loader {
 
-void registerLoaders(ResourceManager* mgr)
+void registerLoaders(ro::ResourceManager* mgr)
 {
 #ifdef RHINOCA_IOS
 	mgr->addFactory(createImage, loadImage);

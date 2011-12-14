@@ -5,14 +5,17 @@
 
 struct AudioSound;
 struct AudioDevice;
-class ResourceManager;
+
+namespace ro {
+struct ResourceManager;
+}	// namespace ro
 
 namespace Dom {
 
 class HTMLAudioElement : public HTMLMediaElement
 {
 public:
-	HTMLAudioElement(Rhinoca* rh, AudioDevice* device, ResourceManager* mgr);
+	HTMLAudioElement(Rhinoca* rh, AudioDevice* device, ro::ResourceManager* mgr);
 	~HTMLAudioElement();
 
 // Operations
@@ -42,7 +45,7 @@ public:
 
 	AudioSound* _sound;
 	AudioDevice* _device;
-	ResourceManager* _resourceManager;
+	ro::ResourceManager* _resourceManager;
 };	// HTMLAudioElement
 
 }	// namespace Dom

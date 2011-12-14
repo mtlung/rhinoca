@@ -50,7 +50,7 @@ void Framebuffer::createTexture(unsigned w, unsigned h)
 	if(w > maxTexSize) w = maxTexSize;
 	if(h > maxTexSize) h = maxTexSize;
 
-	RHVERIFY(texture->create(w, h, Render::Driver::ANY, NULL, 0, Render::Driver::RGBA));
+	roVerify(texture->create(w, h, Render::Driver::ANY, NULL, 0, Render::Driver::RGBA));
 	texture->virtualWidth = width;
 	texture->virtualHeight = height;
 

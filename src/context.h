@@ -1,8 +1,8 @@
 #ifndef __CONTEXT_H__
 #define __CONTEXT_H__
 
-#include "resource.h"
 #include "dom/window.h"
+#include "../roar/base/roResource.h"
 
 extern JSRuntime* jsrt;
 
@@ -43,7 +43,7 @@ public:
 	AudioDevice* audioDevice;
 
 	ro::TaskPool taskPool;
-	ResourceManager resourceManager;
+	ro::ResourceManager resourceManager;
 
 	/// Frame per second, averaged over several frames
 	float fps;

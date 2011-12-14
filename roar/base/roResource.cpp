@@ -1,10 +1,11 @@
 #include "pch.h"
-#include "resource.h"
-#include "common.h"
-#include "../roar/base/roLog.h"
-#include <string.h>
+#include "roResource.h"
+#include "roLog.h"
+#include "roMemory.h"
 
-using namespace ro;
+namespace ro {
+
+static DefaultAllocator _allocator;
 
 Resource::Resource(const char* p)
 	: state(NotLoaded)
@@ -18,7 +19,7 @@ Resource::Resource(const char* p)
 Resource::~Resource()
 {}
 
-ro::ConstString Resource::uri() const
+ConstString Resource::uri() const
 {
 	return key();
 }
@@ -29,8 +30,7 @@ unsigned Resource::refCount() const
 }
 
 ResourceManager::ResourceManager()
-	: rhinoca(NULL)
-	, taskPool(NULL)
+	: taskPool(NULL)
 	, _factories(NULL)
 	, _factoryCount(0)
 	, _factoryBufCount(0)
@@ -47,7 +47,7 @@ ResourceManager::~ResourceManager()
 		r = next;
 	}
 
-	rhdelete(_factories);
+	_allocator.free(_factories);
 }
 
 void ResourceManager::abortAllLoader()
@@ -73,14 +73,14 @@ ResourcePtr ResourceManager::load(const char* uri)
 
 	// Create the resource if the uri not found in resource list
 	if(!r) {
-		for(int i=0; !r && i<_factoryCount; ++i)
+		for(roSize i=0; !r && i<_factoryCount; ++i)
 			r = _factories[i].create(uri, this);
 
 		if(!r) {
 			roLog("error", "No loader for \"%s\" can be found\n", uri);
 			return NULL;
 		}
-		RHVERIFY(_resources.insertUnique(*r));
+		roVerify(_resources.insertUnique(*r));
 
 		// We will keep the resource alive such that the time for a Resource destruction
 		// is deterministic: always inside ResourceManager::collectUnused()
@@ -94,14 +94,14 @@ ResourcePtr ResourceManager::load(const char* uri)
 		lock.unlockAndCancel();
 
 		bool loadInvoked = false;
-		for(int i=0; i<_factoryCount; ++i) {
+		for(roSize i=0; i<_factoryCount; ++i) {
 			if(_factories[i].load(r, this)) {
 				loadInvoked = true;
 				r->hotness = 1000;	// Give a relative hot value right after the resource is loaded
 				break;
 			}
 		}
-		RHASSERT(loadInvoked);
+		roAssert(loadInvoked);
 	}
 
 	return r;
@@ -120,13 +120,12 @@ Resource* ResourceManager::forget(const char* uri)
 	return NULL;
 }
 
-void ResourceManager::update()
+void ResourceManager::tick()
 {
 	ScopeLock lock(_mutex);
 
 	// Every resource will get cooler on every update
 	for(Resource* r = _resources.findMin(); r != NULL; r = r->next()) {
-		// TODO: Will this cause denormailization penalty?
 		r->hotness *= 0.5f;
 	}
 }
@@ -161,7 +160,7 @@ void ResourceManager::addFactory(CreateFunc createFunc, LoadFunc loadFunc)
 	if(_factoryBufCount < _factoryCount) {
 		int oldBufCount = _factoryBufCount;
 		_factoryBufCount = (_factoryBufCount == 0) ? 2 : _factoryBufCount * 2;
-		_factories = rhrenew(_factories, oldBufCount, _factoryBufCount);
+		_factories = _allocator.typedRealloc(_factories, oldBufCount, _factoryBufCount);
 	}
 
 	_factories[_factoryCount-1].create = createFunc;
@@ -170,9 +169,11 @@ void ResourceManager::addFactory(CreateFunc createFunc, LoadFunc loadFunc)
 
 bool uriExtensionMatch(const char* uri, const char* extension)
 {
-	rhuint uriLen = strlen(uri);
-	rhuint extLen = strlen(extension);
+	roSize uriLen = roStrLen(uri);
+	roSize extLen = roStrLen(extension);
 
 	if(uriLen < extLen) return false;
 	return roStrCaseCmp(uri + uriLen - extLen, extension) == 0;
 }
+
+}	// namespace ro

@@ -40,14 +40,14 @@ public:
 		, mpgRet(MPG123_OK)
 	{
 		mpg = mpg123_new(NULL, NULL);
-		RHASSERT(mpg);
+		roAssert(mpg);
 //		mpg123_param(mpg, MPG123_VERBOSE, 4, 0);
-		RHVERIFY(mpg123_param(mpg, MPG123_FLAGS, MPG123_FUZZY | MPG123_SEEKBUFFER | MPG123_GAPLESS, 0) == MPG123_OK);
+		roVerify(mpg123_param(mpg, MPG123_FLAGS, MPG123_FUZZY | MPG123_SEEKBUFFER | MPG123_GAPLESS, 0) == MPG123_OK);
 
 		// Let the seek index auto-grow and contain an entry for every frame
-		RHVERIFY(mpg123_param(mpg, MPG123_INDEX_SIZE, -1, 0) == MPG123_OK);
+		roVerify(mpg123_param(mpg, MPG123_INDEX_SIZE, -1, 0) == MPG123_OK);
 
-		RHVERIFY(mpg123_open_feed(mpg) == MPG123_OK);
+		roVerify(mpg123_open_feed(mpg) == MPG123_OK);
 
 		memset(&format, 0, sizeof(format));
 	}
@@ -121,8 +121,8 @@ void Mp3Loader::loadHeader()
 	if(ret == MPG123_NEW_FORMAT) {
 		long rate;
 		int channels, encoding;
-		RHVERIFY(mpg123_getformat(mpg, &rate, &channels, &encoding) == MPG123_OK);
-		RHASSERT(encoding == MPG123_ENC_SIGNED_16);
+		roVerify(mpg123_getformat(mpg, &rate, &channels, &encoding) == MPG123_OK);
+		roAssert(encoding == MPG123_ENC_SIGNED_16);
 
 		format.channels = channels;
 		format.samplesPerSecond = rate;
@@ -143,7 +143,7 @@ void Mp3Loader::loadHeader()
 		return;
 	}
 
-	RHASSERT(false);
+	roAssert(false);
 
 Abort:
 	buffer->state = Resource::Aborted;
@@ -182,7 +182,7 @@ void Mp3Loader::loadData()
 		if(failed) {
 			// TODO: We need some way to report any failure of the seek operation to the audio device
 			// Roll back the seek position
-			RHVERIFY(mpg123_feedseek(mpg, backupCurPos, SEEK_SET, &fileSeekPos) == backupCurPos);
+			roVerify(mpg123_feedseek(mpg, backupCurPos, SEEK_SET, &fileSeekPos) == backupCurPos);
 			requestQueue.request(backupCurPos, backupCurPos + format.samplesPerSecond);
 			return reSchedule(true);
 		}
@@ -200,7 +200,7 @@ void Mp3Loader::loadData()
 
 	unsigned bytesToWrite = 0;
 	void* bufferData = buffer->getWritePointerForRange(audioBufBegin, audioBufEnd, bytesToWrite);
-	RHASSERT(bufferData && bytesToWrite);
+	roAssert(bufferData && bytesToWrite);
 
 	// Query the size of the mpg123's internal buffer, 
 	// if it's large enough, we need not to perform read from the stream
@@ -226,7 +226,7 @@ void Mp3Loader::loadData()
 
 	if(decodeBytes > 0) {
 		currentSamplePos = mpg123_tell(mpg);
-		RHASSERT(currentSamplePos <= audioBufEnd);
+		roAssert(currentSamplePos <= audioBufEnd);
 		buffer->commitWriteForRange(audioBufBegin, currentSamplePos);
 		requestQueue.commit(audioBufBegin, currentSamplePos);
 //		printf("mp3 commit %s: %d, %d\n", buffer->uri().c_str(), audioBufBegin, currentSamplePos);

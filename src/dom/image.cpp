@@ -3,7 +3,6 @@
 #include "document.h"
 #include "../context.h"
 #include "../path.h"
-#include "../resource.h"
 #include "../xmlparser.h"
 #include "../render/texture.h"
 #include "../../roar/base/roStringUtility.h"

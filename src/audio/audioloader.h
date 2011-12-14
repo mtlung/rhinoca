@@ -27,8 +27,8 @@ public:
 		void request(unsigned begin, unsigned end)
 		{
 			ro::ScopeLock lock(mutex);
-			RHASSERT(begin < end);
-			RHASSERT(_begin <= _end);
+			roAssert(begin < end);
+			roAssert(_begin <= _end);
 			// Not contiguous, set seek to true
 			if((_seek = (begin < _begin || begin > _end)))
 				_begin = begin;
@@ -49,9 +49,9 @@ public:
 		void commit(unsigned begin, unsigned end)
 		{
 			ro::ScopeLock lock(mutex);
-			RHASSERT(_seek || begin == _begin && "Audio loader is leaving a gap in the audio data!");
-			RHASSERT(begin < end);
-			RHASSERT(_begin <= _end);
+			roAssert(_seek || begin == _begin && "Audio loader is leaving a gap in the audio data!");
+			roAssert(begin < end);
+			roAssert(_begin <= _end);
 			_begin = end;
 			_end = _end < _begin ? _begin : _end;
 		}

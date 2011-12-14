@@ -1,18 +1,19 @@
-#ifndef __RESOURCE_H__
-#define __RESOURCE_H__
+#ifndef __roResource_h__
+#define __roResource_h__
 
-#include "rhassert.h"
-#include "../roar/base/roMap.h"
-#include "../roar/base/roSharedPtr.h"
-#include "../roar/base/roString.h"
-#include "../roar/base/roTaskPool.h"
+#include "roMap.h"
+#include "roSharedPtr.h"
+#include "roString.h"
+#include "roTaskPool.h"
+
+namespace ro {
 
 class Resource
 	// NOTE: No need to use atomic integer as the refCount if no worker thread
 	// will hold strong reference to Resource
-	: public ro::SharedObject<rhuint>
-	, public ro::MapNode<ro::ConstString, Resource>
-	, private ro::NonCopyable
+	: public SharedObject<unsigned>
+	, public MapNode<ConstString, Resource>
+	, private NonCopyable
 {
 protected:
 	explicit Resource(const char* uri);
@@ -26,12 +27,12 @@ public:
 	virtual void unload() {}
 
 // Attributes
-	ro::ConstString uri() const;
+	ConstString uri() const;
 
 	enum State { NotLoaded, Loading, Ready, Loaded, Unloaded, Aborted };
 	State state;	///!< Important: changing of this value must be performed on main thread
 
-	ro::TaskId taskReady, taskLoaded;
+	TaskId taskReady, taskLoaded;
 
 	float hotness;	///!< For tracking resource usage and perform unload when resource is scarce
 
@@ -40,11 +41,10 @@ public:
 	unsigned refCount() const;
 };	// Resource
 
-typedef ro::SharedPtr<Resource> ResourcePtr;
+typedef SharedPtr<Resource> ResourcePtr;
 
-class ResourceManager
+struct ResourceManager
 {
-public:
 	ResourceManager();
 	~ResourceManager();
 
@@ -54,13 +54,13 @@ public:
 	ResourcePtr load(const char* uri);
 
 	template<class T>
-	ro::SharedPtr<T> loadAs(const char* uri) { return dynamic_cast<T*>(load(uri).get()); }
+	SharedPtr<T> loadAs(const char* uri) { return dynamic_cast<T*>(load(uri).get()); }
 
 	/// Remove the resource from the management of the ResourceManager
 	Resource* forget(const char* uri);
 
-	// Call this on every frame
-	void update();
+	/// Call this on every frame
+	void tick();
 
 	/// Check for infrequently used resource and unload them
 	void collectInfrequentlyUsed();
@@ -74,21 +74,22 @@ public:
 	void addFactory(CreateFunc createFunc, LoadFunc loadFunc);
 
 // Attributes
-	Rhinoca* rhinoca;
-	ro::TaskPool* taskPool;
+	TaskPool* taskPool;
 
-protected:
-	ro::Mutex _mutex;
+// Private
+	Mutex _mutex;
 
 	struct Tuple { CreateFunc create; LoadFunc load; };
 	Tuple* _factories;
-	int _factoryCount;
-	int _factoryBufCount;
+	roSize _factoryCount;
+	roSize _factoryBufCount;
 
-	typedef ro::Map<Resource> Resources;
+	typedef Map<Resource> Resources;
 	Resources _resources;
 };	// ResourceManager
 
 extern bool uriExtensionMatch(const char* uri, const char* extension);
 
-#endif	// __RESOURCE_H__
+}	// namespace ro
+
+#endif	// __roResource_h__

@@ -2,11 +2,11 @@
 #define __RENDER_TEXTURE_H__
 
 #include "driver.h"
-#include "../resource.h"
+#include "../../roar/base/roResource.h"
 
 namespace Render {
 
-class Texture : public Resource
+class Texture : public ro::Resource
 {
 public:
 	explicit Texture(const char* uri);

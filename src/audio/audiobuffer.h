@@ -1,14 +1,14 @@
 #ifndef __AUDIO_AUDIOBUFFER_H__
 #define __AUDIO_AUDIOBUFFER_H__
 
-#include "../resource.h"
 #include "../../roar/base/roArray.h"
+#include "../../roar/base/roResource.h"
 
 namespace Audio {
 
 /// Basically this class store chunks of audio data,
 /// All the functions can be invoked in multi-thread environment.
-class AudioBuffer : public Resource
+class AudioBuffer : public ro::Resource
 {
 public:
 	explicit AudioBuffer(const char* uri);

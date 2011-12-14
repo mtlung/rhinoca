@@ -2,7 +2,6 @@
 #include "audiodevice.h"
 #include "../common.h"
 #include "../rhlog.h"
-#include "../resource.h"
 #include "../../roar/base/roArray.h"
 #include "../../roar/base/roLinkList.h"
 
@@ -91,7 +90,7 @@ struct AlBuffer
 
 	~AlBuffer()
 	{
-		RHASSERT(referenceCount == 0);
+		roAssert(referenceCount == 0);
 	}
 
 	bool dataReady;
@@ -328,7 +327,7 @@ AudioSound* AudioDevice::createSound(const char* uri, ResourceManager* resourceM
 
 int AudioDevice::allocateAlBufferFor(AudioBuffer* src, unsigned begin, unsigned end)
 {
-	RHASSERT(src);
+	roAssert(src);
 
 	for(unsigned i=0; i<MAX_AL_BUFFERS; ++i) {
 		AlBuffer& b = _alBuffers[i];
@@ -398,7 +397,7 @@ void AudioDevice::update()
 			continue;
 		}
 
-		RHASSERT(sound.audioBuffer);
+		roAssert(sound.audioBuffer);
 		sound.audioBuffer->hotness++;
 
 		// Request the number of OpenAL Buffers have been processed (played) on the Source
@@ -524,7 +523,7 @@ void audiodevice_init()
 	if(_initCount > 0)
 		return;
 
-	RHASSERT(!_alcDevice);
+	roAssert(!_alcDevice);
 	_alcDevice = alcOpenDevice(NULL);
 
 	if(!_alcDevice)

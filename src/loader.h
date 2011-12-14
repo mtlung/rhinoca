@@ -3,8 +3,12 @@
 
 #include "rhinoca.h"
 
+namespace ro {
+
 class Resource;
-class ResourceManager;
+struct ResourceManager;
+
+}	// namespace ro
 
 namespace Loader {
 
@@ -18,33 +22,33 @@ bool loadNSAudio(Resource* resource, ResourceManager* mgr);
 
 #else
 
-Resource* createBmp(const char* uri, ResourceManager* mgr);
-bool loadBmp(Resource* resource, ResourceManager* mgr);
+ro::Resource* createBmp(const char* uri, ro::ResourceManager* mgr);
+bool loadBmp(ro::Resource* resource, ro::ResourceManager* mgr);
 
-Resource* createPng(const char* uri, ResourceManager* mgr);
-bool loadPng(Resource* resource, ResourceManager* mgr);
+ro::Resource* createPng(const char* uri, ro::ResourceManager* mgr);
+bool loadPng(ro::Resource* resource, ro::ResourceManager* mgr);
 
-Resource* createJpeg(const char* uri, ResourceManager* mgr);
-bool loadJpeg(Resource* resource, ResourceManager* mgr);
+ro::Resource* createJpeg(const char* uri, ro::ResourceManager* mgr);
+bool loadJpeg(ro::Resource* resource, ro::ResourceManager* mgr);
 
-Resource* createMp3(const char* uri, ResourceManager* mgr);
-bool loadMp3(Resource* resource, ResourceManager* mgr);
+ro::Resource* createMp3(const char* uri, ro::ResourceManager* mgr);
+bool loadMp3(ro::Resource* resource, ro::ResourceManager* mgr);
 
 #endif
 
-Resource* createText(const char* uri, ResourceManager* mgr);
-bool loadText(Resource* resource, ResourceManager* mgr);
+ro::Resource* createText(const char* uri, ro::ResourceManager* mgr);
+bool loadText(ro::Resource* resource, ro::ResourceManager* mgr);
 
-Resource* createTrueTypeFont(const char* uri, ResourceManager* mgr);
-bool loadTrueTypeFont(Resource* resource, ResourceManager* mgr);
+ro::Resource* createTrueTypeFont(const char* uri, ro::ResourceManager* mgr);
+bool loadTrueTypeFont(ro::Resource* resource, ro::ResourceManager* mgr);
 
-Resource* createOgg(const char* uri, ResourceManager* mgr);
-bool loadOgg(Resource* resource, ResourceManager* mgr);
+ro::Resource* createOgg(const char* uri, ro::ResourceManager* mgr);
+bool loadOgg(ro::Resource* resource, ro::ResourceManager* mgr);
 
-Resource* createWave(const char* uri, ResourceManager* mgr);
-bool loadWave(Resource* resource, ResourceManager* mgr);
+ro::Resource* createWave(const char* uri, ro::ResourceManager* mgr);
+bool loadWave(ro::Resource* resource, ro::ResourceManager* mgr);
 
-void registerLoaders(ResourceManager* mgr);
+void registerLoaders(ro::ResourceManager* mgr);
 
 }	// namespace Loader
 
