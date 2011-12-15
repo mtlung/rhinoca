@@ -1,8 +1,6 @@
 #include "pch.h"
 #include "roGraphicsTestBase.win.h"
 #include "../../roar/render/roTexture.h"
-#include "../../roar/base/roStringHash.h"
-#include "../../src/render/rgutility.h"
 
 using namespace ro;
 
@@ -74,7 +72,7 @@ TEST_FIXTURE(TextureLoaderTest, load)
 	roRDriverShader* shaders[] = { vShader, pShader };
 
 	// Init texture
-	TexturePtr texture = resourceManager.loadAs<Texture>("EdSplash.bmp");
+	TexturePtr texture = resourceManager.loadAs<Texture>("gogo1.bmp");
 
 	// Set the texture state
 	roRDriverTextureState textureState =  {
@@ -114,7 +112,8 @@ TEST_FIXTURE(TextureLoaderTest, load)
 	}
 
 	texture = NULL;
-	resourceManager.collectInfrequentlyUsed();
+	resourceManager.shutdown();
+
 	driver->deleteBuffer(vbuffer);
 	driver->deleteBuffer(ibuffer);
 }

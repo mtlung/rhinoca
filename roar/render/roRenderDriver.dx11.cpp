@@ -39,11 +39,11 @@ static DefaultAllocator _allocator;
 // ----------------------------------------------------------------------
 // Common stuffs
 
-static unsigned _hash(const void* data, unsigned len)
+static unsigned _hash(const void* data, roSize len)
 {
 	unsigned h = 0;
 	const char* data_ = reinterpret_cast<const char*>(data);
-	for(unsigned i=0; i<len; ++i)
+	for(roSize i=0; i<len; ++i)
 		h = data_[i] + (h << 6) + (h << 16) - h;
 	return h;
 }
@@ -647,10 +647,7 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, unsigned ro
 		}
 
 		// Copy the source pixel data to the staging texture
-		const unsigned rowSizeInBytes = impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes;
-
-		if(rowPaddingInBytes == 0)
-			rowPaddingInBytes = rowSizeInBytes;
+		const unsigned rowSizeInBytes = impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes + rowPaddingInBytes;
 
 		D3D11_MAPPED_SUBRESOURCE mapped = {0};
 		HRESULT hr = ctx->dxDeviceContext->Map(
@@ -674,6 +671,8 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, unsigned ro
 			return false;
 		}
 
+		roAssert(mapped.RowPitch > impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes);
+
 		// If we come to here it means that we have a ready to use staging texture
 		staging->hash = hash;
 		staging->hotness = 1.0f;
@@ -681,7 +680,7 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, unsigned ro
 		// Copy the source data row by row
 		char* pSrc = (char*)data;
 		char* pDst = (char*)mapped.pData;
-		for(unsigned r=0; r<impl->height; ++r, pSrc +=rowPaddingInBytes, pDst += rowSizeInBytes)
+		for(unsigned r=0; r<impl->height; ++r, pSrc +=rowSizeInBytes, pDst += mapped.RowPitch)
 			memcpy(pDst, pSrc, rowSizeInBytes);
 
 		ctx->dxDeviceContext->Unmap(staging->dxTexture, 0);

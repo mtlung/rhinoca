@@ -37,11 +37,11 @@ static DefaultAllocator _allocator;
 
 #define clearError() { glGetError(); }
 
-static unsigned _hash(const void* data, unsigned len)
+static unsigned _hash(const void* data, roSize len)
 {
 	unsigned h = 0;
 	const char* data_ = reinterpret_cast<const char*>(data);
-	for(unsigned i=0; i<len; ++i)
+	for(roSize i=0; i<len; ++i)
 		h = data_[i] + (h << 6) + (h << 16) - h;
 	return h;
 }

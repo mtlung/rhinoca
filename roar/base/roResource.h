@@ -66,6 +66,8 @@ struct ResourceManager
 	/// Abort all loading operation, allow a faster shut down of the engine
 	void abortAllLoader();
 
+	void shutdown();
+
 // Factories
 	typedef Resource* (*CreateFunc)(const char* uri, ResourceManager* mgr);
 	typedef bool (*LoadFunc)(Resource* resource, ResourceManager* mgr);

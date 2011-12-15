@@ -39,30 +39,8 @@ ResourceManager::ResourceManager()
 
 ResourceManager::~ResourceManager()
 {
-	abortAllLoader();
-
-	for(Resource* r=_resources.findMin(); r;) {
-		Resource* next = r->next();
-		sharedPtrRelease(r);
-		r = next;
-	}
-
+	shutdown();
 	_allocator.free(_factories);
-}
-
-void ResourceManager::abortAllLoader()
-{
-	// NOTE: Separate into 2 passes can make sure all loading task are set to abort
-	for(Resource* r=_resources.findMin(); r; r=r->next()) {
-		if(r->state == Resource::Loading)
-			r->state = Resource::Aborted;
-		// Perform resume for every task in the first pass,
-		// prevent blocking task with inter-task dependency
-		taskPool->resume(r->taskLoaded);
-	}
-
-	for(Resource* r=_resources.findMin(); r; r=r->next())
-		taskPool->wait(r->taskLoaded);	// TODO: This still cause problem because of suspended jobs
 }
 
 ResourcePtr ResourceManager::load(const char* uri)
@@ -150,6 +128,32 @@ void ResourceManager::collectInfrequentlyUsed()
 		}
 
 		r = r->next();
+	}
+}
+
+void ResourceManager::abortAllLoader()
+{
+	// NOTE: Separate into 2 passes can make sure all loading task are set to abort
+	for(Resource* r=_resources.findMin(); r; r=r->next()) {
+		if(r->state == Resource::Loading)
+			r->state = Resource::Aborted;
+		// Perform resume for every task in the first pass,
+		// prevent blocking task with inter-task dependency
+		taskPool->resume(r->taskLoaded);
+	}
+
+	for(Resource* r=_resources.findMin(); r; r=r->next())
+		taskPool->wait(r->taskLoaded);	// TODO: This still cause problem because of suspended jobs
+}
+
+void ResourceManager::shutdown()
+{
+	abortAllLoader();
+
+	for(Resource* r=_resources.findMin(); r;) {
+		Resource* next = r->next();
+		sharedPtrRelease(r);
+		r = next;
 	}
 }
 

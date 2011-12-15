@@ -60,7 +60,7 @@ protected:
 
 void BmpLoader::run(TaskPool* taskPool)
 {
-	if(!readyToCommit)
+	if(!readyToCommit && !aborted)
 		load(taskPool);
 	else
 		commit(taskPool);
@@ -137,6 +137,8 @@ void BmpLoader::loadHeader()
 		flipVertical = false;
 	}
 
+	flipVertical = false;	// TODO: Fix me
+
 	headerLoaded = true;
 	loadPixelData();
 	return;
@@ -167,7 +169,7 @@ void BmpLoader::loadPixelData()
 
 	// Memory usage for one row of image
 	const roSize rowByte = width * (sizeof(char) * 3);
-	const roSize rowPadding = (rowByte + 4) % 4;
+	const roSize rowPadding = 4 - ((rowByte + 4) % 4);
 
 	roAssert(!pixelData);
 	pixelDataSize = rowByte * height;

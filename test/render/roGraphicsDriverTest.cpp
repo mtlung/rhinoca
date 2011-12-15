@@ -1,7 +1,5 @@
 #include "pch.h"
 #include "roGraphicsTestBase.win.h"
-#include "../../roar/render/roTexture.h"
-#include "../../roar/base/roStringHash.h"
 #include "../../src/render/rgutility.h"
 
 #include <math.h>
