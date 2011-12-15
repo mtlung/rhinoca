@@ -274,9 +274,11 @@ typedef struct roRDriver
 	void (*destructor)(roRDriver* self);
 } roRDriver;
 
-roRDriver* rgNewRenderDriver(const char* driverType, const char* options);
+roRDriver* roNewRenderDriver(const char* driverType, const char* options);
 
-void rgDeleteRenderDriver(roRDriver* self);
+void roDeleteRenderDriver(roRDriver* self);
+
+extern roRDriverContext* roRDriverCurrentContext;
 
 #ifdef __cplusplus
 }

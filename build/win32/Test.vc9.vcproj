@@ -380,6 +380,18 @@
 				RelativePath="..\..\test\render\roGraphicsDriverTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\..\test\render\roGraphicsTestBase.win.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\test\render\roGraphicsTestBase.win.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\test\render\roTextureLoaderTest.cpp"
+				>
+			</File>
 		</Filter>
 		<File
 			RelativePath="..\..\test\bipbuffertest.cpp"

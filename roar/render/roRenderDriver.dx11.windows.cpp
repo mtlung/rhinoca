@@ -74,6 +74,7 @@ void _deleteDriverContext_DX11(roRDriverContext* self)
 	if(impl == _currentContext) {
 		 wglMakeCurrent(NULL, NULL); 
 		_currentContext = NULL;
+		roRDriverCurrentContext = NULL;
 	}
 
 	// Change back to windowed mode before releasing swap chain
@@ -86,6 +87,7 @@ void _useDriverContext_DX11(roRDriverContext* self)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	_currentContext = impl;
+	roRDriverCurrentContext = impl;
 }
 
 roRDriverContext* _getCurrentContext_DX11()

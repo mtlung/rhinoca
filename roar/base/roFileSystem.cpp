@@ -141,4 +141,13 @@ static FileSystem _compoundFS = {
 
 FileSystem fileSystem = _compoundFS;
 
+bool uriExtensionMatch(const char* uri, const char* extension)
+{
+	roSize uriLen = roStrLen(uri);
+	roSize extLen = roStrLen(extension);
+
+	if(uriLen < extLen) return false;
+	return roStrCaseCmp(uri + uriLen - extLen, extension) == 0;
+}
+
 }	// namespace ro

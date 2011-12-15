@@ -167,13 +167,4 @@ void ResourceManager::addFactory(CreateFunc createFunc, LoadFunc loadFunc)
 	_factories[_factoryCount-1].load = loadFunc;
 }
 
-bool uriExtensionMatch(const char* uri, const char* extension)
-{
-	roSize uriLen = roStrLen(uri);
-	roSize extLen = roStrLen(extension);
-
-	if(uriLen < extLen) return false;
-	return roStrCaseCmp(uri + uriLen - extLen, extension) == 0;
-}
-
 }	// namespace ro

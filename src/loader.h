@@ -5,7 +5,7 @@
 
 namespace ro {
 
-class Resource;
+struct Resource;
 struct ResourceManager;
 
 }	// namespace ro

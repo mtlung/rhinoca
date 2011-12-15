@@ -4,19 +4,21 @@
 
 using namespace ro;
 
-extern roRDriver* _rgNewRenderDriver_GL(const char* options);
-extern roRDriver* _rgNewRenderDriver_DX11(const char* options);
+extern roRDriver* _roNewRenderDriver_GL(const char* options);
+extern roRDriver* _roNewRenderDriver_DX11(const char* options);
 
-roRDriver* rgNewRenderDriver(const char* driverType, const char* options)
+roRDriverContext* roRDriverCurrentContext = NULL;
+
+roRDriver* roNewRenderDriver(const char* driverType, const char* options)
 {
 	if(stringLowerCaseHash(driverType, 0) == stringHash("gl"))
-		return _rgNewRenderDriver_GL(options);
+		return _roNewRenderDriver_GL(options);
 	if(stringLowerCaseHash(driverType, 0) == stringHash("dx11"))
-		return _rgNewRenderDriver_DX11(options);
+		return _roNewRenderDriver_DX11(options);
 	return NULL;
 }
 
-void rgDeleteRenderDriver(roRDriver* self)
+void roDeleteRenderDriver(roRDriver* self)
 {
 	if(!self) return;
 	(self->destructor)(self);

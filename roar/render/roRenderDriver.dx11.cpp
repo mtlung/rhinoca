@@ -267,8 +267,8 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 	desc.DepthFunc = _comparisonFuncs[state->depthFunc];
 
 	desc.StencilEnable = state->enableStencil;
-	desc.StencilReadMask = num_cast<UINT8>(state->stencilMask);
-	desc.StencilWriteMask = num_cast<UINT8>(state->stencilMask);
+	desc.StencilReadMask =(UINT8)(state->stencilMask);
+	desc.StencilWriteMask = (UINT8)(state->stencilMask);
 
 	// Stencil operations if pixel is front-facing.
 	desc.FrontFace.StencilFailOp = _stencilOps[state->front.failOp];
@@ -1139,7 +1139,7 @@ static void _rhDeleteRenderDriver_DX11(roRDriver* self)
 
 //}	// namespace
 
-roRDriver* _rgNewRenderDriver_DX11(const char* options)
+roRDriver* _roNewRenderDriver_DX11(const char* options)
 {
 	roRDriverImpl* ret = _allocator.newObj<roRDriverImpl>().unref();
 	memset(ret, 0, sizeof(*ret));

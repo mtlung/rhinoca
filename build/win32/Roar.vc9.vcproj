@@ -463,6 +463,10 @@
 			Name="render"
 			>
 			<File
+				RelativePath="..\..\roar\render\roBmpLoader.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\render\roRenderDriver.cpp"
 				>
 			</File>
@@ -492,6 +496,14 @@
 			</File>
 			<File
 				RelativePath="..\..\roar\render\roRenderDriver.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\render\roTexture.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\render\roTexture.h"
 				>
 			</File>
 		</Filter>

@@ -92,6 +92,7 @@ void _deleteDriverContext_GL(roRDriverContext* self)
 	if(impl == _currentContext) {
 		 wglMakeCurrent(NULL, NULL); 
 		_currentContext = NULL;
+		roRDriverCurrentContext = NULL;
 	}
 
 	wglDeleteContext(impl->hRc);
@@ -103,6 +104,7 @@ void _useDriverContext_GL(roRDriverContext* self)
 {
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	_currentContext = impl;
+	roRDriverCurrentContext = impl;
 }
 
 roRDriverContext* _getCurrentContext_GL()

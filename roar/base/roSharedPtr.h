@@ -29,7 +29,7 @@ struct SharedPtr
 
 	template<class U>
 	SharedPtr& operator=(const SharedPtr<U>& rhs)	{ this_type(rhs).swap(*this); return *this; }
-	SharedPtr& operator=(const SharedPtr& rhs)	{ this_type(rhs).swap(*this); return *this; }
+	SharedPtr& operator=(const SharedPtr& rhs)		{ this_type(rhs).swap(*this); return *this; }
 	SharedPtr& operator=(T* rhs)					{ this_type(rhs).swap(*this); return *this; }
 
 	T*	get() const			{ return _ptr; }

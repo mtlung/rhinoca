@@ -204,7 +204,7 @@ int main()
 
 	HWND hWnd = createWindow(NULL, _width, _height, false);
 
-	roRDriver* driver = rgNewRenderDriver("GL", NULL);
+	roRDriver* driver = roNewRenderDriver("GL", NULL);
 	roRDriverContext* context = driver->newContext(driver);
 	driver->initContext(context, hWnd);
 	driver->useContext(context);
@@ -301,7 +301,7 @@ int main()
 	OleUninitialize();
 
 	driver->deleteContext(context);
-	rgDeleteRenderDriver(driver);
+	roDeleteRenderDriver(driver);
 
 	return 0;
 }

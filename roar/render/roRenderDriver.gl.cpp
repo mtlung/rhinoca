@@ -1345,7 +1345,7 @@ static void _rhDeleteRenderDriver_GL(roRDriver* self)
 
 }	// namespace
 
-roRDriver* _rgNewRenderDriver_GL(const char*)
+roRDriver* _roNewRenderDriver_GL(const char*)
 {
 	roRDriverImpl* ret = _allocator.newObj<roRDriverImpl>().unref();
 	memset(ret, 0, sizeof(*ret));
