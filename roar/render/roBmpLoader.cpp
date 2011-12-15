@@ -149,15 +149,10 @@ static void _bgrToRgba(roBytePtr src, roBytePtr dst, unsigned width, unsigned he
 {
 	for(unsigned h=0; h<height; ++h) for(unsigned w=0; w<width; ++w)
 	{
-		dst[0] = roUint8(-1);
-		dst[1] = src[0];
-		dst[2] = src[1];
-		dst[3] = src[2];
-
-/*		dst[0] = src[2];
+		dst[0] = src[2];
 		dst[1] = src[1];
 		dst[2] = src[0];
-		dst[3] = roUint8(-1);*/
+		dst[3] = roUint8(-1);
 
 		src += 3;
 		dst += 4;
