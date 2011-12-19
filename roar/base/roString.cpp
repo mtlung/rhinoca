@@ -83,15 +83,18 @@ String& String::operator=(const String& str)
 	return *this;
 }
 
-void String::resize(roSize size)
+Status String::resize(roSize size)
 {
 	if(size == 0)
 		clear();
 	else if(size != _length) {
-		_cstr = _allocator.realloc(_length ? _cstr : NULL, _length + 1, size + 1);
+		char* newPtr = _allocator.realloc(_length ? _cstr : NULL, _length + 1, size + 1);
+		if(!newPtr) return Status::not_enough_memory;
 		_length = size;
+		_cstr = newPtr;
 		_cstr[_length] = '\0';
 	}
+	return Status::ok;
 }
 
 void String::condense()

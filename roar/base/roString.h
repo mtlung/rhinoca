@@ -1,8 +1,9 @@
 #ifndef __roString_h__
 #define __roString_h__
 
-#include "roUtility.h"
+#include "roStatus.h"
 #include "roStringHash.h"
+#include "roUtility.h"
 #include "../platform/roCompiler.h"
 
 namespace ro {
@@ -21,7 +22,7 @@ struct String
 	String& operator=(const String& str);
 
 // Operations
-	void		resize		(roSize size);
+	Status		resize		(roSize size);
 	void		condense	();
 	String&		append		(const char* str, roSize count);
 	String&		assign		(const char* str, roSize count);
