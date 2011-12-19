@@ -3,6 +3,7 @@
 
 #include "roBytePtr.h"
 #include "roMemory.h"
+#include "roStatus.h"
 #include "roTypeOf.h"
 #include "roUtility.h"
 
@@ -77,9 +78,9 @@ struct IArray
 
 	void		swap(IArray& rhs)				{ roSwap(_size, rhs._size); roSwap(_capacity, rhs._capacity); roSwap(_data, rhs._data); }
 
-	void		copy(const Super& src);
+	Status		copy(const Super& src);
 
-	void		resize(roSize newSize, const T& fill=T());
+	Status		resize(roSize newSize, const T& fill=T());
 	void		clear();
 	void		condense();
 
@@ -131,7 +132,7 @@ struct Array : public IArray<T, Array<T> >
 	Array&	operator=(const Array& rhs) { copy(rhs); return *this; }
 
 // Operations
-	inline void reserve(roSize newCapacity);
+	Status reserve(roSize newCapacity);
 };	// Array
 
 template<class T, roSize PreAllocCount>
@@ -145,9 +146,9 @@ struct TinyArray : public IArray<T, TinyArray<T,PreAllocCount> >
 	TinyArray& operator=(const TinyArray& rhs)		{ copy(rhs); }
 
 // Operations
-	inline void insert(roSize idx, const T& val);
+	void insert(roSize idx, const T& val);
 
-	inline void reserve(roSize newSize);
+	Status reserve(roSize newSize);
 
 // Private
 	char _buffer[PreAllocCount * sizeof(T)];

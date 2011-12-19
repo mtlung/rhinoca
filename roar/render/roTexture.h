@@ -1,7 +1,6 @@
 #ifndef __render_roTexture_h__
 #define __render_roTexture_h__
 
-//#include "roRenderDriver.h"
 #include "../base/roResource.h"
 
 struct roRDriverTexture;

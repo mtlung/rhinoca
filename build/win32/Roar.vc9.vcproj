@@ -403,6 +403,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roStatus.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roStatusEnum.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roStopWatch.cpp"
 				>
 			</File>

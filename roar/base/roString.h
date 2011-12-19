@@ -39,7 +39,8 @@ struct String
 	String&		operator+=	(const char* str);
 	String&		operator+=	(const String& str);
 
-	void		sprintf		(const char* format, ...);
+	void		format		(const char* format, ...);
+	void		appendFormat(const char* format, ...);
 	bool		fromUtf16	(roUint16* src, roSize maxSrcLen);
 	bool		toUtf16		(roUint16* dst, roSize& dstLen);
 

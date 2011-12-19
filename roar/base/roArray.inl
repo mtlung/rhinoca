@@ -52,19 +52,24 @@ void StaticArray<T,N>::assign(const T& fill)
 // ----------------------------------------------------------------------
 
 template<class T, class S>
-void IArray<T,S>::copy(const S& src)
+Status IArray<T,S>::copy(const S& src)
 {
-	resize(src._size);
+	Status st = resize(src._size);
+	if(!st) return st;
 	for(roSize i = 0; i < src._size; ++i) {
 		_data[i] = src._data[i];
 	}
+	return Status::ok;
 }
 
 template<class T, class S>
-void IArray<T,S>::resize(roSize newSize, const T& fill)
+Status IArray<T,S>::resize(roSize newSize, const T& fill)
 {
-	if(newSize > _capacity)
-		static_cast<S&>(*this).reserve(roMaxOf2(newSize, _size*3/2));	// Extend the size by 1.5x
+	if(newSize > _capacity) {
+		Status st = static_cast<S&>(*this).reserve(roMaxOf2(newSize, _size*3/2));	// Extend the size by 1.5x
+		if(!st) return st;
+	}
+
 	if(newSize > _size) {
 		while(_size < newSize) {
 			new ((void *)&_data[_size]) T(fill);
@@ -78,6 +83,8 @@ void IArray<T,S>::resize(roSize newSize, const T& fill)
 		}
 		_size = newSize;
 	}
+
+	return Status::ok;
 }
 
 template<class T, class S>
@@ -177,23 +184,25 @@ T* IArray<T,S>::find(const T& val) const
 // ----------------------------------------------------------------------
 
 template<class T>
-void Array<T>::reserve(roSize newCapacity)
+Status Array<T>::reserve(roSize newCapacity)
 {
 	newCapacity = roMaxOf2(newCapacity, size());
 
-	T* oldPtr = _data;
-	_data = roRealloc(_data, newCapacity * sizeof(T), newCapacity * sizeof(T)).cast<T>();
+	T* newPtr = roRealloc(_data, newCapacity * sizeof(T), newCapacity * sizeof(T)).cast<T>();
+	if(!newPtr) return Status::not_enough_memory;
 
-	if(!TypeOf<T>::isPOD() && _data != oldPtr) for(roSize i=0; i<_size; ++i)	// Notify the object that it's memory is moved
+	if(!TypeOf<T>::isPOD() && _data != _data) for(roSize i=0; i<_size; ++i)	// Notify the object that it's memory is moved
 		roOnMemMove(_data[i], &_data[i]);
+	_data = newPtr;
 	_capacity = newCapacity;
+	return Status::ok;
 }
 
 
 // ----------------------------------------------------------------------
 
 template<class T, roSize PreAllocCount>
-void TinyArray<T,PreAllocCount>::reserve(roSize newSize)
+Status TinyArray<T,PreAllocCount>::reserve(roSize newSize)
 {
 	newSize = roMaxOf2(newSize, size());
 	bool moved = false;
@@ -209,7 +218,8 @@ void TinyArray<T,PreAllocCount>::reserve(roSize newSize)
 	// Transit from static to dynamic
 	else {
 		T* oldPtr = (_data == (T*)_buffer) ? NULL : _data;
-		_data = roRealloc(oldPtr, _capacity, newSize * sizeof(T)).cast<T>();
+		T* newPtr = roRealloc(oldPtr, _capacity, newSize * sizeof(T)).cast<T>();
+		if(!newPtr) return Status::not_enough_memory;
 
 		moved = _data != oldPtr;
 
@@ -218,11 +228,14 @@ void TinyArray<T,PreAllocCount>::reserve(roSize newSize)
 			moved = true;
 		}
 
+		_data = newPtr;
 		_capacity = newSize;
 	}
 
 	if(!TypeOf<T>::isPOD() && moved) for(roSize i=0; i<_size; ++i)	// Notify the object that it's memory is moved
 		roOnMemMove(_data[i], &_data[i]);
+
+	return Status::ok;
 }
 
 }	// namespace ro

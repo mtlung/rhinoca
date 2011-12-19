@@ -130,7 +130,7 @@ void* httpFileSystemOpenFile(const char* uri)
 	SockAddr adr;
 	AutoPtr<HttpStream> s = _allocator.newObj<HttpStream>();
 
-	s->getCmd.sprintf(getFmt, path.begin(), host.begin());
+	s->getCmd.format(getFmt, path.begin(), host.begin());
 
 	s->buffer = NULL;
 	s->headerSent = false;

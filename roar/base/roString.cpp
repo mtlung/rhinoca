@@ -201,7 +201,7 @@ String& String::operator+=(const String& str)
 	return *this += str.c_str();
 }
 
-void String::sprintf(const char* format, ...)
+void String::format(const char* format, ...)
 {
 	if(!format) return;
 
@@ -212,6 +212,20 @@ void String::sprintf(const char* format, ...)
 	resize(size);
 
 	vsprintf(_cstr, format, vl);
+}
+
+void String::appendFormat(const char* format, ...)
+{
+	if(!format) return;
+
+	va_list vl;
+	va_start(vl, format);
+
+	roSize oldSize = _length;
+	roSize size = vsnprintf(NULL, 0, format, vl);
+	resize(_length + size);
+
+	vsprintf(_cstr + oldSize, format, vl);
 }
 
 bool String::fromUtf16(roUint16* src, roSize maxSrcLen)
@@ -252,8 +266,9 @@ struct ConstStringHashTable
 {
 	typedef ConstString::Node Node;
 
-	ConstStringHashTable() : _count(0), _buckets(1,NULL), _nullNode(add(""))
+	ConstStringHashTable() : _count(0), _nullNode(add(""))
 	{
+		_buckets.resize(1, NULL);
 		++_nullNode.refCount;
 	}
 
@@ -340,7 +355,8 @@ struct ConstStringHashTable
 
 	void resizeBucket(roSize bucketSize)
 	{
-		Array<Node*> newBuckets(bucketSize, NULL);
+		Array<Node*> newBuckets;
+		newBuckets.resize(bucketSize, NULL);
 
 		roAssert(_mutex.isLocked());
 		for(roSize i=0; i<_buckets.size(); ++i) {
