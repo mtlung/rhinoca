@@ -266,9 +266,8 @@ struct ConstStringHashTable
 {
 	typedef ConstString::Node Node;
 
-	ConstStringHashTable() : _count(0), _nullNode(add(""))
+	ConstStringHashTable() : _count(0), _buckets(1, NULL), _nullNode(add(""))
 	{
-		_buckets.resize(1, NULL);
 		++_nullNode.refCount;
 	}
 

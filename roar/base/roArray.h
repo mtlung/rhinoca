@@ -81,6 +81,7 @@ struct IArray
 	Status		copy(const Super& src);
 
 	Status		resize(roSize newSize, const T& fill=T());
+	Status		incSize(roSize size, const T& fill=T());
 	void		clear();
 	void		condense();
 
@@ -153,6 +154,8 @@ struct TinyArray : public IArray<T, TinyArray<T,PreAllocCount> >
 // Private
 	char _buffer[PreAllocCount * sizeof(T)];
 };	// TinyArray
+
+typedef Array<roUint8> ByteArray;
 
 
 // ----------------------------------------------------------------------

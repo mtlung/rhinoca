@@ -353,6 +353,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\test\base\roSerializerTest.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\test\base\roSockAddrTest.cpp"
 				>
 			</File>

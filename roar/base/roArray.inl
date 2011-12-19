@@ -88,6 +88,12 @@ Status IArray<T,S>::resize(roSize newSize, const T& fill)
 }
 
 template<class T, class S>
+Status IArray<T,S>::incSize(roSize newSize, const T& fill)
+{
+	return resize(_size + newSize, fill);
+}
+
+template<class T, class S>
 void IArray<T,S>::clear()
 {
 	resize(0);

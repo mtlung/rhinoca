@@ -391,6 +391,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roSerializer.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roSharedPtr.h"
 				>
 			</File>
