@@ -307,6 +307,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roByteOrder.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roBytePtr.h"
 				>
 			</File>

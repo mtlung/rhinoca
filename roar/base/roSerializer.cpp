@@ -18,7 +18,7 @@ void Serializer::setBuf(ByteArray* buf)
 
 Status Serializer::ioRaw(roBytePtr p, roSize size)
 {
-	Status st = checkRemain(size); if(!st) return st;
+	Status st = _checkRemain(size); if(!st) return st;
 	roMemcpy(_w, p, size);
 	_advance(size);
 	return Status::ok;
@@ -48,14 +48,14 @@ Status serializeIoVary(Serializer& s, roUint32& v)
 {
 	Status st;
 	if(v < (1<<(7*1))) {
-		st = s.checkRemain(1); if(!st) return st;
+		st = s._checkRemain(1); if(!st) return st;
 		s._w[0] = (roUint8) (v >> (7*0));
 		s._advance(1);
 		return st;
 	}
 
 	if(v < (1<<(7*2))) {
-		st = s.checkRemain(2); if(!st) return st;
+		st = s._checkRemain(2); if(!st) return st;
 		s._w[0] = (roUint8) (v >> (7*0) | 0x80);
 		s._w[1] = (roUint8) (v >> (7*1));
 		s._advance(2);
@@ -63,7 +63,7 @@ Status serializeIoVary(Serializer& s, roUint32& v)
 	}
 
 	if(v < (1<<(7*3))) {
-		st = s.checkRemain(3); if(!st) return st;
+		st = s._checkRemain(3); if(!st) return st;
 		s._w[0] = (roUint8) (v >> (7*0) | 0x80);
 		s._w[1] = (roUint8) (v >> (7*1) | 0x80);
 		s._w[2] = (roUint8) (v >> (7*2));
@@ -72,7 +72,7 @@ Status serializeIoVary(Serializer& s, roUint32& v)
 	}
 
 	if(v < (1<<(7*4))) {
-		st = s.checkRemain(4); if(!st) return st;
+		st = s._checkRemain(4); if(!st) return st;
 		s._w[0] = (roUint8) (v >> (7*0) | 0x80);
 		s._w[1] = (roUint8) (v >> (7*1) | 0x80);
 		s._w[2] = (roUint8) (v >> (7*2) | 0x80);
@@ -82,7 +82,7 @@ Status serializeIoVary(Serializer& s, roUint32& v)
 	}
 
 	else {
-		st = s.checkRemain(5); if(!st) return st;
+		st = s._checkRemain(5); if(!st) return st;
 		s._w[0] = (roUint8) (v >> (7*0) | 0x80);
 		s._w[1] = (roUint8) (v >> (7*1) | 0x80);
 		s._w[2] = (roUint8) (v >> (7*2) | 0x80);
@@ -103,7 +103,7 @@ Status serializeIoVary(Deserializer& s, roUint32& v)
 	v = 0;
 	for(;;)
 	{
-		st = s.checkRemain(1); if(!st) return st;
+		st = s._checkRemain(1); if(!st) return st;
 		t = *s._r;
 		v |= (roUint32)(t & 0x7F) << bit;
 		s._advance(1);
@@ -141,6 +141,23 @@ Status serializeIo(Deserializer& s, String& v)
 	st = s.ioVary(n);			if(!st) return st;
 	st = v.resize(n);			if(!st) return st;
 	st = s.ioRaw(v.c_str(), n);	if(!st) return st;
+	return Status::ok;
+}
+
+Status serializeIo(Serializer& s, ConstString& v)
+{
+	roSize n = v.size();
+	Status st;
+	st = s.ioVary(n);			if(!st) return st;
+	st = s.ioRaw(v.c_str(), n);	if(!st) return st;
+	return Status::ok;
+}
+
+Status serializeIo(Deserializer& s, ConstString& v)
+{
+	String tmp;
+	Status st = serializeIo(s, tmp); if(!st) return st;
+	v = tmp.c_str();
 	return Status::ok;
 }
 

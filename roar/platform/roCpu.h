@@ -21,7 +21,7 @@
 
 #if roCPU_PowerPC
 #	define roCPU_LP32			1
-#	define roCPU_BIG_ENDIAN	1
+#	define roCPU_BIG_ENDIAN		1
 #	define roCPU_SUPPORT_MEMORY_MISALIGNED	64	
 #endif
 
