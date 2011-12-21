@@ -487,6 +487,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\render\roCanvas.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\render\roCanvas.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\render\roRenderDriver.cpp"
 				>
 			</File>
