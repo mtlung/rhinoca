@@ -14,6 +14,9 @@ typedef struct roRDriverContext
 	roRDriver* driver;
 	unsigned width, height;
 	unsigned magjorVersion, minorVersion;
+	unsigned frameCount;
+	float lastFrameDuration;
+	float lastSwapTime;
 } roRDriverContext;
 
 typedef struct roRDriverTarget
@@ -223,20 +226,15 @@ typedef struct roRDriver
 
 	void (*adjustDepthRangeMatrix)(float* inoutMat44);
 
+// Render target
+	void (*setDefaultFrameBuffer)(void* platformSpecificFrameBufferHandle);
+	bool (*setRenderTargets)(roRDriverTexture** textures, unsigned targetCount, bool useDepthStencil);
+
 // State management
 	void (*applyDefaultState)(roRDriverContext* self);
 	void (*setBlendState)(roRDriverBlendState* blendState);
 	void (*setDepthStencilState)(roRDriverDepthStencilState* depthStencilState);
 	void (*setTextureState)(roRDriverTextureState* textureStates, unsigned stateCount, unsigned startingTextureUnit);
-
-// Render target
-/*	roRDriverTarget* (*newRenderTarget)(
-		void** textureHandle,
-		void** depthHandle, void** stencilHandle,
-		unsigned width, unsigned height
-	);
-
-	void (*deleteRenderTarget)(roRDriverTarget* self);*/
 
 // Buffer
 	roRDriverBuffer* (*newBuffer)();

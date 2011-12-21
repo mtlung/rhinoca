@@ -91,15 +91,13 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 		{ ubuffer2, pShader, "color2", 0, 0, 0, 0 },
 	};
 
-	StopWatch stopWatch;
-
 	while(keepRun()) {
 		driver->clearColor(0, 0.125f, 0.3f, 1);
 
 		// Animate the color
-		color1[0] = (sin(stopWatch.getFloat()) + 1) / 2;
-		color2[1] = (cos(stopWatch.getFloat()) + 1) / 2;
-		color2[6] = (cos(stopWatch.getFloat() * 2) + 1) / 2;
+		color1[0] = (sin(context->lastSwapTime) + 1) / 2;
+		color2[1] = (cos(context->lastSwapTime) + 1) / 2;
+		color2[6] = (cos(context->lastSwapTime * 2) + 1) / 2;
 
 		driver->updateBuffer(ubuffer1, 0, color1, sizeof(color1));
 

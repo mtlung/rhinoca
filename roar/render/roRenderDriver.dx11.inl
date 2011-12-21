@@ -35,14 +35,14 @@ struct StagingBuffer
 	unsigned size:29;
 	unsigned mapped:1;
 	unsigned busyFrame:2;	// How many frame till the staging buffer becomes available again
-	float hotness;
+	float lastUsedTime;
 	ComPtr<ID3D11Buffer> dxBuffer;
 };
 
 struct StagingTexture
 {
 	unsigned hash;
-	float hotness;
+	float lastUsedTime;
 	ComPtr<ID3D11Resource> dxTexture;
 };
 
@@ -60,7 +60,7 @@ struct roRDriverShaderImpl : public roRDriverShader
 struct InputLayout
 {
 	unsigned hash;
-	float hotness;
+	float lastUsedTime;
 
 	ComPtr<ID3D11InputLayout> layout;
 	ComPtr<ID3D10Blob> shader;

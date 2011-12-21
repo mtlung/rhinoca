@@ -37,8 +37,24 @@ struct VertexArrayObject
 {
 	unsigned hash;
 	GLuint glh;
-	float hotness;
+	float lastUsedTime;
 };
+
+typedef struct TextureFormatMapping
+{
+	roRDriverTextureFormat format;
+	unsigned glPixelSize;
+	GLint glInternalFormat;	// eg. GL_RGBA8
+	GLenum glFormat;		// eg. GL_RGBA
+	GLenum glType;			// eg. GL_UNSIGNED_BYTE
+} TextureFormatMapping;
+
+struct roRDriverTextureImpl : public roRDriverTexture
+{
+	GLuint glh;
+	GLenum glTarget;	// eg. GL_TEXTURE_2D
+	TextureFormatMapping* formatMapping;
+};	// roRDriverTextureImpl
 
 struct roRDriverShaderProgramImpl : public roRDriverShaderProgram
 {
@@ -50,6 +66,24 @@ struct roRDriverShaderProgramImpl : public roRDriverShaderProgram
 	TinyArray<ProgramUniform, 8> uniforms;
 	TinyArray<ProgramUniformBlock, 8> uniformBlocks;
 	TinyArray<ProgramAttribute, 8> attributes;
+};
+
+struct RenderTarget
+{
+	unsigned hash;
+	GLuint glh;
+	float lastUsedTime;
+};
+
+struct DepthStencilBuffer
+{
+	GLuint depthHandle;
+	GLuint stencilHandle;
+	GLuint depthStencilHandle;
+	unsigned width;
+	unsigned height;
+	unsigned refCount;
+	float lastUsedTime;
 };
 
 struct roRDriverContextImpl : public roRDriverContext
@@ -66,11 +100,14 @@ struct roRDriverContextImpl : public roRDriverContext
 	TinyArray<GLuint, 1> pixelBufferCache;
 	unsigned currentPixelBufferIndex;
 
-	TinyArray<VertexArrayObject, 16> vaoCache;
+	Array<VertexArrayObject> vaoCache;
 
 	struct TextureState {
 		void* hash;
 		GLuint glh;
 	};
 	StaticArray<TextureState, 64> textureStateCache;
+
+	Array<RenderTarget> renderTargetCache;
+	Array<DepthStencilBuffer> depthStencilBufferCache;
 };

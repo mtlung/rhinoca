@@ -4,6 +4,7 @@
 #include "../base/roArray.h"
 #include "../base/roLog.h"
 #include "../base/roMemory.h"
+#include "../base/roStopWatch.h"
 #include "../base/roStringHash.h"
 
 #include <dxgi.h>
@@ -27,7 +28,7 @@ namespace {
 struct ContextImpl : public roRDriverContextImpl
 {
 	HWND hWnd;
-
+	StopWatch stopWatch;
 	Array<roRDriverShaderInput> programInputCache;
 };
 
@@ -41,6 +42,9 @@ roRDriverContext* _newDriverContext_DX11(roRDriver* driver)
 	ret->width = ret->height = 0;
 	ret->magjorVersion = 0;
 	ret->minorVersion = 0;
+	ret->frameCount = 0;
+	ret->lastFrameDuration = 0;
+	ret->lastSwapTime = 0;
 
 	ret->currentBlendStateHash = 0;
 	ret->currentDepthStencilStateHash = 0;
@@ -250,12 +254,13 @@ void _driverSwapBuffers_DX11()
 		return;
 	}
 
+	static const float removalTimeOut = 5;
+
 	// Clean up not frequently used input layout cache
 	for(roSize i=0; i<_currentContext->inputLayoutCache.size();) {
-		float& hotness = _currentContext->inputLayoutCache[i].hotness;
-		hotness *= 0.5f;
+		float lastUsedTime = _currentContext->inputLayoutCache[i].lastUsedTime;
 
-		if(hotness < 0.0001f)
+		if(lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
 			_currentContext->inputLayoutCache.remove(i);
 		else
 			++i;
@@ -265,12 +270,10 @@ void _driverSwapBuffers_DX11()
 	for(roSize i=0; i<_currentContext->stagingBufferCache.size();) {
 		StagingBuffer& staging = _currentContext->stagingBufferCache[i];
 
-		staging.hotness *= staging.mapped ? 1.0f : 0.5f;
-
 		if(staging.busyFrame > 0)
 			staging.busyFrame--;
 
-		if(staging.hotness < 0.0001f)
+		if(!staging.mapped && staging.lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
 			_currentContext->stagingBufferCache.remove(i);
 		else
 			++i;
@@ -280,9 +283,7 @@ void _driverSwapBuffers_DX11()
 	for(roSize i=0; i<_currentContext->stagingTextureCache.size();) {
 		StagingTexture& staging = _currentContext->stagingTextureCache[i];
 
-		staging.hotness *= 0.5f;
-
-		if(staging.hotness < 0.0001f)
+		if(staging.lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
 			_currentContext->stagingTextureCache.remove(i);
 		else
 			++i;
@@ -290,6 +291,12 @@ void _driverSwapBuffers_DX11()
 
 	int sync = 0;	// use 0 for no vertical sync
 	roVerify(SUCCEEDED(_currentContext->dxSwapChain->Present(sync, 0)));
+
+	// Update statistics
+	++_currentContext->frameCount;
+	float lastSwapTime = _currentContext->lastSwapTime;
+	_currentContext->lastSwapTime = _currentContext->stopWatch.getFloat();
+	_currentContext->lastFrameDuration = _currentContext->lastSwapTime - lastSwapTime;
 }
 
 bool _driverChangeResolution_DX11(unsigned width, unsigned height)

@@ -409,7 +409,7 @@ static StagingBuffer* _getStagingBuffer(roRDriverContextImpl* ctx, void* initDat
 	static const unsigned FrameCountForAnyBufferLockFinished = 2;
 	ret->size = size;
 	ret->mapped = false;
-	ret->hotness = 1.0f;
+	ret->lastUsedTime = ctx->lastSwapTime;
 	ret->busyFrame = FrameCountForAnyBufferLockFinished;
 
 	if(initData) {
@@ -671,11 +671,11 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, unsigned ro
 			return false;
 		}
 
-		roAssert(mapped.RowPitch > impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes);
+		roAssert(mapped.RowPitch >= impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes);
 
 		// If we come to here it means that we have a ready to use staging texture
 		staging->hash = hash;
-		staging->hotness = 1.0f;
+		staging->lastUsedTime = ctx->lastSwapTime;
 
 		// Copy the source data row by row
 		char* pSrc = (char*)data;
@@ -973,7 +973,7 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, unsigned inputCount, unsigne
 	{
 		if(inputHash == ctx->inputLayoutCache[i].hash) {
 			inputLayout = &ctx->inputLayoutCache[i];
-			ctx->inputLayoutCache[i].hotness += 1.0f;
+			ctx->inputLayoutCache[i].lastUsedTime = ctx->lastSwapTime;
 			inputLayoutCacheFound = true;
 			break;
 		}
@@ -982,7 +982,7 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, unsigned inputCount, unsigne
 	if(!inputLayout) {
 		InputLayout tmp;
 		tmp.hash = inputHash;
-		tmp.hotness = 1.0f;
+		tmp.lastUsedTime = ctx->lastSwapTime;
 		ctx->inputLayoutCache.pushBack(tmp);
 		inputLayout = &ctx->inputLayoutCache.back();
 	}

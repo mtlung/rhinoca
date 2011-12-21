@@ -99,6 +99,73 @@ static void _adjustDepthRangeMatrix(float* mat44)
 	(void)mat44;
 }
 
+static bool _setRenderTargets(roRDriverTexture** textures, unsigned targetCount, bool useDepthStencil)
+{
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
+	if(!ctx) false;
+
+	if(!textures || targetCount == 0) {
+	}
+
+	// Make hash value
+	unsigned hash = _hash(textures, sizeof(*textures) * targetCount);
+
+	// Find render target cache
+	for(unsigned i=0; i<ctx->renderTargetCache.size(); ++i) {
+		if(ctx->renderTargetCache[i].hash == hash) {
+			ctx->renderTargetCache[i].lastUsedTime = ctx->lastSwapTime;
+			glBindFramebuffer(GL_FRAMEBUFFER, ctx->renderTargetCache[i].glh);
+			checkError();
+			return true;
+		}
+	}
+
+	// Check the dimension of the render targets
+	unsigned width = unsigned(-1);
+	unsigned height = unsigned(-1);
+	for(unsigned i=0; i<targetCount; ++i) {
+		unsigned w = textures[i] ? textures[i]->width : ctx->width;
+		unsigned h = textures[i] ? textures[i]->height : ctx->height;
+		if(width == unsigned(-1)) width = w;
+		if(height == unsigned(-1)) height = h;
+		if(width != w || height != h) {
+			roLog("error", "roRDriver setRenderTargets not all targets having the same dimension\n");
+			return false;
+		}
+	}
+
+	// Create depth and stencil as requested
+	if(useDepthStencil) {
+		// Search for existing depth and stencil buffers
+	}
+
+	// Create the FBO
+	RenderTarget renderTarget = { hash, 0, ctx->lastSwapTime };
+	glGenFramebuffers(1, &renderTarget.glh);
+	glBindFramebuffer(GL_FRAMEBUFFER, renderTarget.glh);
+
+	for(unsigned i=0; i<targetCount; ++i) {
+		roRDriverTextureImpl* tex = static_cast<roRDriverTextureImpl*>(textures[i]);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, tex->glh, 0);
+	}
+
+	ctx->renderTargetCache.pushBack(renderTarget);
+
+#if roDEBUG
+	// See http://www.khronos.org/opengles/sdk/docs/man/xhtml/glCheckFramebufferStatus.xml
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	roAssert(status != GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT);
+	roAssert(status != GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT);
+	roAssert(status != GL_FRAMEBUFFER_UNSUPPORTED);
+	roAssert(status == GL_FRAMEBUFFER_COMPLETE);
+	roAssert(GL_NO_ERROR == glGetError());
+#endif
+
+	checkError();
+
+	return true;
+}
+
 // ----------------------------------------------------------------------
 // State management
 
@@ -517,15 +584,6 @@ static bool _switchBufferMode(roRDriverBufferImpl* impl)
 // ----------------------------------------------------------------------
 // Texture
 
-typedef struct TextureFormatMapping
-{
-	roRDriverTextureFormat format;
-	unsigned glPixelSize;
-	GLint glInternalFormat;	// eg. GL_RGBA8
-	GLenum glFormat;		// eg. GL_RGBA
-	GLenum glType;			// eg. GL_UNSIGNED_BYTE
-} TextureFormatMapping;
-
 TextureFormatMapping _textureFormatMappings[] = {
 	{ roRDriverTextureFormat(0),			0, 0, 0, 0 },
 	{ roRDriverTextureFormat_RGBA,			4, GL_RGBA8, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV },	// NOTE: Endianness
@@ -540,13 +598,6 @@ TextureFormatMapping _textureFormatMappings[] = {
 	{ roRDriverTextureFormat_DXT1,			0, 0, 0, 0 },
 	{ roRDriverTextureFormat_DXT5,			0, 0, 0, 0 },
 };
-
-struct roRDriverTextureImpl : public roRDriverTexture
-{
-	GLuint glh;
-	GLenum glTarget;	// eg. GL_TEXTURE_2D
-	TextureFormatMapping* formatMapping;
-};	// roRDriverTextureImpl
 
 static roRDriverTexture* _newTexture()
 {
@@ -1228,7 +1279,7 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, unsigned inputCount, unsigne
 	{
 		if(inputHash == ctx->vaoCache[i].hash) {
 			vao = ctx->vaoCache[i].glh;
-			ctx->vaoCache[i].hotness += 1.0f;
+			ctx->vaoCache[i].lastUsedTime = ctx->lastSwapTime;
 			vaoCacheFound = true;
 			break;
 		}
@@ -1365,6 +1416,7 @@ roRDriver* _roNewRenderDriver_GL(const char*)
 	ret->clearStencil = _clearStencil;
 
 	ret->adjustDepthRangeMatrix = _adjustDepthRangeMatrix;
+	ret->setRenderTargets = _setRenderTargets;
 
 	ret->applyDefaultState = rgDriverApplyDefaultState;
 	ret->setBlendState = _setBlendState;

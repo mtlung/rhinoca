@@ -111,8 +111,8 @@ bool GraphicsTestBase::keepRun()
 	taskPool.doSomeTask(1.0f / 100.0f);
 	resourceManager.tick();
 
-	float elasped = (float)stopWatch.getAndReset();
-	averageFrameDuration = elasped/60 + averageFrameDuration * 59.0f / 60;
+	if(context)
+		averageFrameDuration = context->lastFrameDuration/60 + averageFrameDuration * 59.0f / 60;
 
 	printf("\rFPS: %f, frame duration: %fms", 1.0f/averageFrameDuration, averageFrameDuration*1000);
 

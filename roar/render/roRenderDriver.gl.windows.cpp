@@ -4,6 +4,7 @@
 #include "../base/roArray.h"
 #include "../base/roLog.h"
 #include "../base/roMemory.h"
+#include "../base/roStopWatch.h"
 #include "../base/roTypeCast.h"
 #include <stdio.h>
 
@@ -31,6 +32,7 @@ struct ContextImpl : public roRDriverContextImpl
 	HWND hWnd;
 	HDC hDc;
 	HGLRC hRc;
+	StopWatch stopWatch;
 	Array<roRDriverShaderInput> programInputCache;
 };
 
@@ -46,6 +48,9 @@ roRDriverContext* _newDriverContext_GL(roRDriver* driver)
 	ret->width = ret->height = 0;
 	ret->magjorVersion = 2;
 	ret->minorVersion = 2;
+	ret->frameCount = 0;
+	ret->lastFrameDuration = 0;
+	ret->lastSwapTime = 0;
 
 	ret->currentBlendStateHash = 0;
 	ret->currentDepthStencilStateHash = 0;
@@ -211,13 +216,14 @@ void _driverSwapBuffers_GL()
 		return;
 	}
 
-	// Clean up not frequently used VAO
+	static const float removalTimeOut = 5;
+
+	// Clean up not frequently used input VAO
 	if(glDeleteVertexArrays)
 	for(roSize i=0; i<_currentContext->vaoCache.size();) {
-		float& hotness = _currentContext->vaoCache[i].hotness;
-		hotness *= 0.5f;
+		float lastUsedTime = _currentContext->vaoCache[i].lastUsedTime;
 
-		if(hotness < 0.0001f) {
+		if(lastUsedTime < _currentContext->lastSwapTime - removalTimeOut) {
 			glDeleteVertexArrays(1, &_currentContext->vaoCache[i].glh);
 			_currentContext->vaoCache.remove(i);
 		}
@@ -225,8 +231,38 @@ void _driverSwapBuffers_GL()
 			++i;
 	}
 
-//	roVerify(::SwapBuffers(_currentContext->hDc) == TRUE);
+	// Clean up not frequently used render target cache
+	for(roSize i=0; i<_currentContext->renderTargetCache.size();) {
+		float lastUsedTime = _currentContext->renderTargetCache[i].lastUsedTime;
+
+		if(lastUsedTime < _currentContext->lastSwapTime - removalTimeOut) {
+			glDeleteFramebuffers(1, &_currentContext->renderTargetCache[i].glh);
+			_currentContext->renderTargetCache.remove(i);
+		}
+		else
+			++i;
+	}
+
+	// Clean up not frequently used depth stencil cache
+	for(roSize i=0; i<_currentContext->depthStencilBufferCache.size();) {
+		DepthStencilBuffer& cache = _currentContext->depthStencilBufferCache[i];
+
+		if(cache.refCount == 0 && cache.lastUsedTime < _currentContext->lastSwapTime - removalTimeOut) {
+			glDeleteRenderbuffers(3, &cache.depthHandle);
+			_currentContext->depthStencilBufferCache.remove(i);
+		}
+		else
+			++i;
+	}
+
+	// Perform the swap
 	::SwapBuffers(_currentContext->hDc);
+
+	// Update statistics
+	++_currentContext->frameCount;
+	float lastSwapTime = _currentContext->lastSwapTime;
+	_currentContext->lastSwapTime = _currentContext->stopWatch.getFloat();
+	_currentContext->lastFrameDuration = _currentContext->lastSwapTime - lastSwapTime;
 }
 
 bool _driverChangeResolution_GL(unsigned width, unsigned height)

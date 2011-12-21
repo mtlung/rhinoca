@@ -1,6 +1,5 @@
 #include "../../roar/render/roRenderDriver.h"
 #include "../../roar/base/roResource.h"
-#include "../../roar/base/roStopWatch.h"
 #include "../../roar/platform/roPlatformHeaders.h"
 
 struct GraphicsTestBase
@@ -25,7 +24,6 @@ struct GraphicsTestBase
 	roRDriverShader* gShader;
 	roRDriverShader* pShader;
 
-	ro::StopWatch stopWatch;
 	float averageFrameDuration;
 
 	ro::TaskPool taskPool;
