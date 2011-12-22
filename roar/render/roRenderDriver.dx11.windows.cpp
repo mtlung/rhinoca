@@ -99,74 +99,18 @@ roRDriverContext* _getCurrentContext_DX11()
 	return _currentContext;
 }
 
-bool _initDriverContext_DX11(roRDriverContext* self, void* platformSpecificWindow)
+static bool _initRenderTarget(ContextImpl* impl, const DXGI_SWAP_CHAIN_DESC& swapChainDesc)
 {
-	ContextImpl* impl = static_cast<ContextImpl*>(self);
-	if(!impl) return false;
-
-	HWND hWnd = impl->hWnd = reinterpret_cast<HWND>(platformSpecificWindow);
-
-	WINDOWINFO info;
-	::GetWindowInfo(hWnd, &info);
-	impl->width = info.rcClient.right - info.rcClient.left;
-	impl->height = info.rcClient.bottom - info.rcClient.top;
-
-	HRESULT hr;
-
-	// Reference on device, context and swap chain:
-	// http://msdn.microsoft.com/en-us/library/bb205075(VS.85).aspx
-
-	// Create device and swap chain
-	DXGI_SWAP_CHAIN_DESC swapChainDesc;
-	ZeroMemory(&swapChainDesc, sizeof(swapChainDesc));
-	swapChainDesc.BufferCount = 1;
-	swapChainDesc.BufferDesc.Width = impl->width;
-	swapChainDesc.BufferDesc.Height = impl->height;
-	swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	swapChainDesc.BufferDesc.RefreshRate.Numerator = 60;
-	swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
-	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swapChainDesc.OutputWindow = hWnd;
-	swapChainDesc.SampleDesc.Count = 1;
-	swapChainDesc.SampleDesc.Quality = 0;
-	swapChainDesc.Windowed = TRUE;
-	swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-	swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-	swapChainDesc.Flags = 0;
-
-	IDXGISwapChain* swapChain = NULL;
-	ID3D11Device* device = NULL;
-	D3D_FEATURE_LEVEL featureLevel;
-	ID3D11DeviceContext* immediateContext = NULL;
-
-	hr = D3D11CreateDeviceAndSwapChain(
-		NULL,		// Which graphics adaptor to use, default is the first one returned by IDXGIFactory1::EnumAdapters
-		D3D_DRIVER_TYPE_HARDWARE,
-		NULL,		// Software rasterizer
-		D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_PREVENT_INTERNAL_THREADING_OPTIMIZATIONS,
-		NULL, 0,	// Feature level
-		D3D11_SDK_VERSION,
-		&swapChainDesc,
-		&swapChain,
-		&device,
-		&featureLevel,
-		&immediateContext
-	);
-
-	if(FAILED(hr)) {
-		roLog("error", "D3D11CreateDeviceAndSwapChain failed\n");
-		return false;
-	}
-
-	swapChain->SetFullscreenState((BOOL)false, NULL);
+	ID3D11Device* device = impl->dxDevice;
+	ID3D11DeviceContext* immediateContext = impl->dxDeviceContext;
+	IDXGISwapChain* swapChain = impl->dxSwapChain;
 
 	// Create render target
 	ComPtr<ID3D11Resource> backBuffer;
 	swapChain->GetBuffer(0, __uuidof(backBuffer), reinterpret_cast<void**>(&backBuffer.ptr));
 
 	ID3D11RenderTargetView* renderTargetView = NULL;
-	hr = device->CreateRenderTargetView(backBuffer, NULL, &renderTargetView);
+	HRESULT hr = device->CreateRenderTargetView(backBuffer, NULL, &renderTargetView);
 
 	if(FAILED(hr)) {
 		roLog("error", "CreateRenderTargetView failed\n");
@@ -213,6 +157,75 @@ bool _initDriverContext_DX11(roRDriverContext* self, void* platformSpecificWindo
 
 	immediateContext->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
 
+	impl->dxRenderTargetView = renderTargetView;
+	impl->dxDepthStencilTexture = depthStencilTexture;
+	impl->dxDepthStencilView = depthStencilView;
+
+	return true;
+}
+
+bool _initDriverContext_DX11(roRDriverContext* self, void* platformSpecificWindow)
+{
+	ContextImpl* impl = static_cast<ContextImpl*>(self);
+	if(!impl) return false;
+
+	HWND hWnd = impl->hWnd = reinterpret_cast<HWND>(platformSpecificWindow);
+
+	WINDOWINFO info;
+	::GetWindowInfo(hWnd, &info);
+	impl->width = info.rcClient.right - info.rcClient.left;
+	impl->height = info.rcClient.bottom - info.rcClient.top;
+
+	HRESULT hr;
+
+	// Reference on device, context and swap chain:
+	// http://msdn.microsoft.com/en-us/library/bb205075(VS.85).aspx
+
+	// Create device and swap chain
+	DXGI_SWAP_CHAIN_DESC swapChainDesc;
+	ZeroMemory(&swapChainDesc, sizeof(swapChainDesc));
+	swapChainDesc.BufferCount = 1;
+	swapChainDesc.BufferDesc.Width = impl->width;
+	swapChainDesc.BufferDesc.Height = impl->height;
+	swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	swapChainDesc.BufferDesc.RefreshRate.Numerator = 60;
+	swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
+	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	swapChainDesc.OutputWindow = hWnd;
+	swapChainDesc.SampleDesc.Count = 1;
+	swapChainDesc.SampleDesc.Quality = 0;
+	swapChainDesc.Windowed = TRUE;
+	swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+	swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+	swapChainDesc.Flags = 0;
+
+	ID3D11Device* device = NULL;
+	IDXGISwapChain* swapChain = NULL;
+	D3D_FEATURE_LEVEL featureLevel;
+	ID3D11DeviceContext* immediateContext = NULL;
+
+	hr = D3D11CreateDeviceAndSwapChain(
+		NULL,		// Which graphics adaptor to use, default is the first one returned by IDXGIFactory1::EnumAdapters
+		D3D_DRIVER_TYPE_HARDWARE,
+		NULL,		// Software rasterizer
+		D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_PREVENT_INTERNAL_THREADING_OPTIMIZATIONS,
+		NULL, 0,	// Feature level
+		D3D11_SDK_VERSION,
+		&swapChainDesc,
+		&swapChain,
+		&device,
+		&featureLevel,
+		&immediateContext
+	);
+
+	if(FAILED(hr)) {
+		roLog("error", "D3D11CreateDeviceAndSwapChain failed\n");
+		return false;
+	}
+
+	swapChain->SetFullscreenState((BOOL)false, NULL);
+
 	// Create rasterizer state
 	D3D11_RASTERIZER_DESC rasterDesc;
 	rasterDesc.AntialiasedLineEnable = false;
@@ -238,9 +251,10 @@ bool _initDriverContext_DX11(roRDriverContext* self, void* platformSpecificWindo
 	impl->dxSwapChain = swapChain;
 	impl->dxDevice = device;
 	impl->dxDeviceContext = immediateContext;
-	impl->dxRenderTargetView = renderTargetView;
-	impl->dxDepthStencilTexture = depthStencilTexture;
-	impl->dxDepthStencilView = depthStencilView;
+
+	// Create render target
+	if(!_initRenderTarget(impl, swapChainDesc))
+		return false;
 
 	impl->driver->applyDefaultState(impl);
 
@@ -318,5 +332,24 @@ bool _driverChangeResolution_DX11(unsigned width, unsigned height)
 	_currentContext->width = width;
 	_currentContext->height = height;
 
-	return true;
+	// Dealing with window resizing:
+	// http://www.breaktrycatch.com/getting-started-with-directx-11/
+	// http://msdn.microsoft.com/en-us/library/windows/desktop/ee417025%28v=vs.85%29.aspx
+
+	// Release all render target and view first
+	_currentContext->dxDeviceContext->OMSetRenderTargets(0, NULL, NULL);
+	_currentContext->dxRenderTargetView = (ID3D11RenderTargetView*)NULL;
+
+	DXGI_SWAP_CHAIN_DESC swapChainDesc;
+	_currentContext->dxSwapChain->GetDesc(&swapChainDesc);
+	swapChainDesc.BufferDesc.Width = width;
+	swapChainDesc.BufferDesc.Height = height;
+
+	HRESULT hr = _currentContext->dxSwapChain->ResizeBuffers(
+		swapChainDesc.BufferCount, width, height, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags);
+
+	if(!_initRenderTarget(_currentContext, swapChainDesc))
+		return false;
+
+	return SUCCEEDED(hr);
 }

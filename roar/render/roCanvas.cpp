@@ -36,13 +36,17 @@ void Canvas::init(roRDriverContext* context)
 		"in vec4 position;"
 		"in vec2 texCoord;"
 		"out varying vec2 _texCoord;"
-		"void main(void) { gl_Position=position; _texCoord = texCoord; }",
+		"void main(void) {"
+		"	position.y = -position.y; texCoord.y = 1-texCoord.y;"	// Flip y axis
+		"	gl_Position = position;  _texCoord = texCoord;"
+		"}",
 
 		// HLSL
 		"struct VertexInputType { float4 pos : POSITION; float2 texCoord : TEXCOORD0; };"
 		"struct PixelInputType { float4 pos : SV_POSITION; float2 texCoord : TEXCOORD0; };"
 		"PixelInputType main(VertexInputType input) {"
 		"	PixelInputType output; output.pos = input.pos; output.texCoord = input.texCoord;"
+		"	output.pos.y = -output.pos.y; output.texCoord.y = 1-output.texCoord.y;"	// Flip y axis
 		"	return output;"
 		"}"
 	};
@@ -161,8 +165,8 @@ void Canvas::drawImage(
 	// Calculate the destination positions in homogeneous coordinate
 	dx1 = invcw * dx1 - 1;
 	dx2 = invcw * dx2 - 1;
-	dy1 = invch * (ch - dy1) - 1;
-	dy2 = invch * (ch - dy2) - 1;
+	dy1 = invch * dy1 - 1;
+	dy2 = invch * dy2 - 1;
 
 	float vertex[][6] = {
 		{dx1, dy1, z, 1,	sx1,sy1},
