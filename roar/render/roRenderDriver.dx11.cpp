@@ -1129,6 +1129,7 @@ static void _drawTriangleIndexed(unsigned offset, unsigned indexCount, unsigned 
 
 struct roRDriverImpl : public roRDriver
 {
+	String _driverName;
 };	// roRDriver
 
 static void _rhDeleteRenderDriver_DX11(roRDriver* self)
@@ -1138,11 +1139,13 @@ static void _rhDeleteRenderDriver_DX11(roRDriver* self)
 
 //}	// namespace
 
-roRDriver* _roNewRenderDriver_DX11(const char* options)
+roRDriver* _roNewRenderDriver_DX11(const char* driverStr, const char*)
 {
 	roRDriverImpl* ret = _allocator.newObj<roRDriverImpl>().unref();
 	memset(ret, 0, sizeof(*ret));
 	ret->destructor = &_rhDeleteRenderDriver_DX11;
+	ret->_driverName = driverStr;
+	ret->driverName = ret->_driverName.c_str();
 
 	// Setup the function pointers
 	ret->newContext = _newDriverContext_DX11;

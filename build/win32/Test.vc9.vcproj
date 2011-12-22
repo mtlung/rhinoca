@@ -381,6 +381,10 @@
 			Name="render"
 			>
 			<File
+				RelativePath="..\..\test\render\roCanvasTest.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\test\render\roGraphicsDriverTest.cpp"
 				>
 			</File>

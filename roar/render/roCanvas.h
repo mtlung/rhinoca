@@ -2,10 +2,11 @@
 #define __render_roCanvas_h__
 
 #include "roRenderDriver.h"
+#include "../base/roArray.h"
 
 namespace ro {
 
-/// HTML 5 compitable canvas
+/// HTML 5 compatible canvas
 struct Canvas
 {
 	Canvas();
@@ -33,9 +34,14 @@ struct Canvas
 	);
 
 // Private
+	roRDriver* _driver;
 	roRDriverContext* _context;
+	roRDriverBuffer* _vBuffer;
+	roRDriverBuffer* _iBuffer;
 	roRDriverShader* _vShader;
 	roRDriverShader* _pShader;
+	roRDriverTextureState _textureState;
+	StaticArray<roRDriverShaderInput, 3> _inputLayout;
 };	// Canvas
 
 }	// namespace ro

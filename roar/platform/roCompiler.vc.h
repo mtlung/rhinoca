@@ -46,7 +46,7 @@ typedef unsigned __int64 roUint64;
 #endif
 
 // Counting the number of array elements
-#define roCountof(x) _countof(x)
+#define roCountof(x) (sizeof(x) / sizeof(x[0]))
 
 // Source code annotation
 #if !defined(__midl) && defined(_PREFAST_) 
