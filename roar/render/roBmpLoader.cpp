@@ -175,7 +175,7 @@ void BmpLoader::loadPixelData()
 	pixelDataSize = rowByte * height;
 
 	// If data not ready, give up in this round and do it again in next schedule
-	if(!fileSystem.readReady(stream, pixelDataSize))
+	if(!fileSystem.readReady(stream, pixelDataSize + rowPadding * height))
 		return reSchedule();
 
 	pixelData = roMalloc(pixelDataSize);
@@ -200,6 +200,7 @@ void BmpLoader::loadPixelData()
 			goto Abort;
 		}
 
+		// Consume any row padding
 		roVerify(fileSystem.read(stream, paddingBuf, rowPadding) == rowPadding);
 	}
 

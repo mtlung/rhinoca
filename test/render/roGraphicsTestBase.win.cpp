@@ -5,6 +5,7 @@ GraphicsTestBase::GraphicsTestBase()
 	: hWnd(0), driver(NULL), context(NULL), averageFrameDuration(0)
 {
 	resourceManager.taskPool = &taskPool;
+	taskPool.init(1);
 }
 
 GraphicsTestBase::~GraphicsTestBase()
