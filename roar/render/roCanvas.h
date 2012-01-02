@@ -2,6 +2,7 @@
 #define __render_roCanvas_h__
 
 #include "roRenderDriver.h"
+#include "roTexture.h"
 #include "../base/roArray.h"
 
 namespace ro {
@@ -14,7 +15,11 @@ struct Canvas
 
 // Operations
 	void init(roRDriverContext* context);
+	bool initTargetTexture(unsigned width, unsigned height);
 	void destroy();
+
+	void beginDraw();
+	void endDraw();
 
 // Draw image
 	void drawImage(
@@ -33,6 +38,8 @@ struct Canvas
 		float dstx, float dsty, float dstw, float dsth
 	);
 
+	TexturePtr targetTexture;
+
 // Private
 	roRDriver* _driver;
 	roRDriverContext* _context;
@@ -42,6 +49,9 @@ struct Canvas
 	roRDriverShader* _pShader;
 	roRDriverTextureState _textureState;
 	StaticArray<roRDriverShaderInput, 3> _inputLayout;
+
+	float _targetWidth;
+	float _targetHeight;
 };	// Canvas
 
 }	// namespace ro

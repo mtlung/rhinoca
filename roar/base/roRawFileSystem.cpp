@@ -151,7 +151,7 @@ void rawFileSystemCloseFile(void* file)
 {
 	_RawFile* impl = (_RawFile*)(file);
 	roAssert(impl); if(!impl) return;
-	CloseHandle(impl->file);
+	roVerify(CloseHandle(impl->file));
 	_allocator.free(impl->buf);
 	_allocator.deleteObj(impl);
 }

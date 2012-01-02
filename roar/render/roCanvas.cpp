@@ -37,7 +37,7 @@ void Canvas::init(roRDriverContext* context)
 		"in vec2 texCoord;"
 		"out varying vec2 _texCoord;"
 		"void main(void) {"
-		"	position.y = -position.y; texCoord.y = 1-texCoord.y;"	// Flip y axis
+		"	position.y = -position.y; texCoord.y = 1-texCoord.y;\n"	// Flip y axis
 		"	gl_Position = position;  _texCoord = texCoord;"
 		"}",
 
@@ -46,7 +46,7 @@ void Canvas::init(roRDriverContext* context)
 		"struct PixelInputType { float4 pos : SV_POSITION; float2 texCoord : TEXCOORD0; };"
 		"PixelInputType main(VertexInputType input) {"
 		"	PixelInputType output; output.pos = input.pos; output.texCoord = input.texCoord;"
-		"	output.pos.y = -output.pos.y; output.texCoord.y = 1-output.texCoord.y;"	// Flip y axis
+		"	output.pos.y = -output.pos.y; output.texCoord.y = 1-output.texCoord.y;\n"	// Flip y axis
 		"	return output;"
 		"}"
 	};
@@ -81,7 +81,7 @@ void Canvas::init(roRDriverContext* context)
 	roVerify(_driver->initBuffer(_iBuffer, roRDriverBufferType_Index, roRDriverDataUsage_Static, index, sizeof(index)));
 
 	// Bind shader input layout
-	static const roRDriverShaderInput input[] = {
+	const roRDriverShaderInput input[] = {
 		{ _vBuffer, _vShader, "position", 0, 0, sizeof(float)*6, 0 },
 		{ _vBuffer, _vShader, "texCoord", 0, sizeof(float)*4, sizeof(float)*6, 0 },
 		{ _iBuffer, NULL, NULL, 0, 0, 0, 0 },
@@ -99,6 +99,17 @@ void Canvas::init(roRDriverContext* context)
 	_textureState = textureState;
 }
 
+bool Canvas::initTargetTexture(unsigned width, unsigned height)
+{
+	targetTexture = new Texture("");
+	targetTexture->handle = _driver->newTexture();
+	if(!_driver->initTexture(targetTexture->handle, width, height, roRDriverTextureFormat_RGBA))
+		return false;
+	if(!_driver->commitTexture(targetTexture->handle, NULL, 0))
+		return false;
+	return true;
+}
+
 void Canvas::destroy()
 {
 	if(!_context || !_driver) return;
@@ -110,6 +121,25 @@ void Canvas::destroy()
 	_context = NULL;
 	_vBuffer = _iBuffer = NULL;
 	_vShader = _pShader = NULL;
+}
+
+void Canvas::beginDraw()
+{
+	if(!targetTexture || !targetTexture->handle) {
+		_driver->setRenderTargets(NULL, 0, false);
+		_targetWidth = (float)_context->width;
+		_targetHeight = (float)_context->height;
+	}
+	else {
+		_driver->setRenderTargets(&targetTexture->handle, 1, false);
+		_targetWidth = (float)targetTexture->handle->width;
+		_targetHeight = (float)targetTexture->handle->height;
+	}
+	_driver->setViewport(0, 0, (unsigned)_targetWidth, (unsigned)_targetHeight, 0, 1);
+}
+
+void Canvas::endDraw()
+{
 }
 
 void Canvas::drawImage(
@@ -146,8 +176,8 @@ void Canvas::drawImage(
 
 	const float z = 0;
 
-	float cw = (float)_context->width;
-	float ch = (float)_context->height;
+	float cw = _targetWidth;
+	float ch = _targetHeight;
 	float invcw = 2.0f / cw;
 	float invch = 2.0f / ch;
 

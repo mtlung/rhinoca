@@ -105,6 +105,9 @@ static bool _setRenderTargets(roRDriverTexture** textures, unsigned targetCount,
 	if(!ctx) false;
 
 	if(!textures || targetCount == 0) {
+		// Bind default framebuffer
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		return true;
 	}
 
 	// Make hash value
