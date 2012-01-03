@@ -215,7 +215,7 @@ Status TinyArray<T,PreAllocCount>::reserve(roSize newSize)
 
 	// Transit from dynamic to static
 	if(newSize <= PreAllocCount && PreAllocCount < _capacity) {
-		memcpy(_buffer, _data, sizeof(T) * _size);
+		roMemcpy(_buffer, _data, sizeof(T) * _size);
 		roFree(_data);
 		_data = (T*)_buffer;
 		_capacity = PreAllocCount;
@@ -230,7 +230,7 @@ Status TinyArray<T,PreAllocCount>::reserve(roSize newSize)
 		moved = _data != oldPtr;
 
 		if(_capacity == PreAllocCount) {
-			memcpy(_data, _buffer, sizeof(T) * _size);
+			roMemcpy(newPtr, _buffer, sizeof(T) * _size);
 			moved = true;
 		}
 
