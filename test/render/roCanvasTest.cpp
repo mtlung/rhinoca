@@ -22,7 +22,7 @@ struct CanvasTest : public GraphicsTestBase
 	Canvas canvas;
 };
 
-static const unsigned driverIndex = 0;
+static const unsigned driverIndex = 1;
 
 static const char* driverStr[] = 
 {
@@ -37,7 +37,7 @@ TEST_FIXTURE(CanvasTest, drawImage)
 	canvas.init(context);
 
 	// Init texture
-	TexturePtr texture = resourceManager.loadAs<Texture>("gogo1.bmp");
+	TexturePtr texture = resourceManager.loadAs<Texture>("EdSplash.bmp");
 
 	while(keepRun()) {
 		driver->clearColor(0, 0, 0, 0);
@@ -53,28 +53,28 @@ TEST_FIXTURE(CanvasTest, drawImage)
 
 TEST_FIXTURE(CanvasTest, drawToCanvas)
 {
-	createWindow(400, 400);
+	createWindow(200, 200);
 	initContext(driverStr[driverIndex]);
 	canvas.init(context);
 
 	// Initialize our canvas which use it's own texture as render target
 	Canvas auxCanvas;
 	auxCanvas.init(context);
-	auxCanvas.initTargetTexture(400, 400);
+	auxCanvas.initTargetTexture(200, 200);
 
 	// Init texture
-	TexturePtr texture = resourceManager.loadAs<Texture>("gogo1.bmp");
+	TexturePtr texture = resourceManager.loadAs<Texture>("EdSplash.bmp");
 
 	while(keepRun()) {
 		driver->clearColor(0, 0, 0, 0);
 
 		// Draw to auxCanvas
 		auxCanvas.beginDraw();
-		driver->clearColor(1, 0, 0, 0);
+		driver->clearColor(0.1f, 0.1f, 0.1f, 0);
 		auxCanvas.drawImage(texture->handle, 10, 50, 200, 200);
 		auxCanvas.endDraw();
 
-		// Draw to the main canvas
+		// Draw auxCanvas to the main canvas
 		canvas.beginDraw();
 		canvas.drawImage(auxCanvas.targetTexture->handle, 0, 0);
 		canvas.endDraw();

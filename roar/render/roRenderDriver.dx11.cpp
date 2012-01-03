@@ -108,7 +108,18 @@ static void _clearColor(float r, float g, float b, float a)
 	if(!ctx || !ctx->dxDeviceContext) return;
 
 	float color[4] = { r, g, b, a };
-	ctx->dxDeviceContext->ClearRenderTargetView(ctx->dxRenderTargetView, color);
+
+	if(ctx->currentRenderTargetViewHash == 0)
+		ctx->dxDeviceContext->ClearRenderTargetView(ctx->dxRenderTargetView, color);
+	else {
+		// Find render target cache
+		for(unsigned i=0; i<ctx->renderTargetCache.size(); ++i) {
+			if(ctx->renderTargetCache[i].hash != ctx->currentRenderTargetViewHash)
+				continue;
+			for(unsigned j=0; j<ctx->renderTargetCache[i].rtViews.size(); ++j)
+				ctx->dxDeviceContext->ClearRenderTargetView(ctx->renderTargetCache[i].rtViews[j], color);
+		}
+	}
 }
 
 static void _clearDepth(float z)
@@ -116,7 +127,16 @@ static void _clearDepth(float z)
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx || !ctx->dxDeviceContext) return;
 
-	ctx->dxDeviceContext->ClearDepthStencilView(ctx->dxDepthStencilView, D3D11_CLEAR_DEPTH, z, 0);
+	if(ctx->currentRenderTargetViewHash == 0)
+		ctx->dxDeviceContext->ClearDepthStencilView(ctx->dxDepthStencilView, D3D11_CLEAR_DEPTH, z, 0);
+	else {
+		// Find render target cache
+		for(unsigned i=0; i<ctx->renderTargetCache.size(); ++i) {
+			if(ctx->renderTargetCache[i].hash != ctx->currentRenderTargetViewHash)
+				continue;
+			ctx->dxDeviceContext->ClearDepthStencilView(ctx->renderTargetCache[i].depthStencilView, D3D11_CLEAR_DEPTH, z, 0);
+		}
+	}
 }
 
 static void _clearStencil(unsigned char s)
@@ -124,7 +144,16 @@ static void _clearStencil(unsigned char s)
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx || !ctx->dxDeviceContext) return;
 
-	ctx->dxDeviceContext->ClearDepthStencilView(ctx->dxDepthStencilView, D3D11_CLEAR_STENCIL, 1, s);
+	if(ctx->currentRenderTargetViewHash == 0)
+		ctx->dxDeviceContext->ClearDepthStencilView(ctx->dxDepthStencilView, D3D11_CLEAR_STENCIL, 1, s);
+	else {
+		// Find render target cache
+		for(unsigned i=0; i<ctx->renderTargetCache.size(); ++i) {
+			if(ctx->renderTargetCache[i].hash != ctx->currentRenderTargetViewHash)
+				continue;
+			ctx->dxDeviceContext->ClearDepthStencilView(ctx->renderTargetCache[i].depthStencilView, D3D11_CLEAR_STENCIL, 1, s);
+		}
+	}
 }
 
 static void _adjustDepthRangeMatrix(float* mat)
@@ -134,6 +163,86 @@ static void _adjustDepthRangeMatrix(float* mat)
 	mat[2 + 1*4] = (mat[2 + 1*4] + mat[3 + 1*4]) * 0.5f;
 	mat[2 + 2*4] = (mat[2 + 2*4] + mat[3 + 2*4]) * 0.5f;
 	mat[2 + 3*4] = (mat[2 + 3*4] + mat[3 + 3*4]) * 0.5f;
+}
+
+static bool _setRenderTargets(roRDriverTexture** textures, unsigned targetCount, bool useDepthStencil)
+{
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
+	if(!ctx) false;
+
+	if(targetCount > D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT)
+		return false;
+
+	if(!textures || targetCount == 0) {
+		ctx->currentRenderTargetViewHash = 0;
+		// Bind default frame buffer
+		ctx->dxDeviceContext->OMSetRenderTargets(1, &ctx->dxRenderTargetView.ptr, ctx->dxDepthStencilView);
+		return true;
+	}
+
+	// Make hash value
+	unsigned hash = _hash(textures, sizeof(*textures) * targetCount);
+	ctx->currentRenderTargetViewHash = hash;
+
+	// Find render target cache
+	for(unsigned i=0; i<ctx->renderTargetCache.size(); ++i) {
+		if(ctx->renderTargetCache[i].hash != hash)
+			continue;
+
+		ctx->renderTargetCache[i].lastUsedTime = ctx->lastSwapTime;
+		ctx->dxDeviceContext->OMSetRenderTargets(
+			targetCount,
+			&ctx->renderTargetCache[i].rtViews.typedPtr()->ptr,
+			ctx->renderTargetCache[i].depthStencilView.ptr
+		);
+		return true;
+	}
+
+	// Check the dimension of the render targets
+	unsigned width = unsigned(-1);
+	unsigned height = unsigned(-1);
+	for(unsigned i=0; i<targetCount; ++i) {
+		unsigned w = textures[i] ? textures[i]->width : ctx->width;
+		unsigned h = textures[i] ? textures[i]->height : ctx->height;
+		if(width == unsigned(-1)) width = w;
+		if(height == unsigned(-1)) height = h;
+		if(width != w || height != h) {
+			roLog("error", "roRDriver setRenderTargets not all targets having the same dimension\n");
+			return false;
+		}
+	}
+
+	// Create depth and stencil as requested
+	if(useDepthStencil) {
+		// Search for existing depth and stencil buffers
+	}
+
+	// Create render target view for the texture
+	RenderTarget renderTarget;
+	renderTarget.hash = hash;
+	renderTarget.lastUsedTime = ctx->lastSwapTime;
+
+	for(unsigned i=0; i<targetCount; ++i) {
+		roRDriverTextureImpl* tex = static_cast<roRDriverTextureImpl*>(textures[i]);
+		ID3D11RenderTargetView* renderTargetView = NULL;
+		HRESULT hr = ctx->dxDevice->CreateRenderTargetView(tex->dxTexture, NULL, &renderTargetView);
+
+		renderTarget.rtViews.pushBack(ComPtr<ID3D11RenderTargetView>(renderTargetView));
+
+		if(FAILED(hr)) {
+			roLog("error", "CreateRenderTargetView failed\n");
+			return false;
+		}
+	}
+
+	ctx->renderTargetCache.pushBack(renderTarget);
+	ctx->dxDeviceContext->OMSetRenderTargets(
+		targetCount,
+		&renderTarget.rtViews.typedPtr()->ptr,
+		renderTarget.depthStencilView.ptr
+	);
+
+	return true;
 }
 
 // ----------------------------------------------------------------------
@@ -528,13 +637,6 @@ static void _unmapBuffer(roRDriverBuffer* self)
 // ----------------------------------------------------------------------
 // Texture
 
-struct roRDriverTextureImpl : public roRDriverTexture
-{
-	ComPtr<ID3D11Resource> dxTexture;	// May store a 1d, 2d or 3d texture
-	ComPtr<ID3D11ShaderResourceView> dxView;
-	D3D11_RESOURCE_DIMENSION dxDimension;
-};	// roRDriverTextureImpl
-
 static roRDriverTexture* _newTexture()
 {
 	roRDriverTextureImpl* ret = _allocator.newObj<roRDriverTextureImpl>().unref();
@@ -550,7 +652,7 @@ static void _deleteTexture(roRDriverTexture* self)
 	_allocator.deleteObj(static_cast<roRDriverTextureImpl*>(self));
 }
 
-static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format)
+static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format, roRDriverTextureFlag flags)
 {
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!impl) return false;
@@ -559,6 +661,7 @@ static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height
 	impl->width = width;
 	impl->height = height;
 	impl->format = format;
+	impl->flags = flags;
 	impl->dxDimension = D3D11_RESOURCE_DIMENSION_TEXTURE2D;
 
 	return true;
@@ -600,7 +703,7 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, unsigned ro
 		_textureFormatMappings[impl->format].dxFormat,
 		{ 1, 0 },	// DXGI_SAMPLE_DESC: 1 sample, quality level 0
 		D3D11_USAGE_DEFAULT,
-		D3D11_BIND_SHADER_RESOURCE,
+		D3D11_BIND_SHADER_RESOURCE | ((impl->flags | roRDriverTextureFlag_RenderTarget) ? D3D11_BIND_RENDER_TARGET : 0),
 		0,			// CPUAccessFlags
 		0			// MiscFlags 
 	};
@@ -1161,6 +1264,7 @@ roRDriver* _roNewRenderDriver_DX11(const char* driverStr, const char*)
 	ret->clearStencil = _clearStencil;
 
 	ret->adjustDepthRangeMatrix = _adjustDepthRangeMatrix;
+	ret->setRenderTargets = _setRenderTargets;
 
 	ret->applyDefaultState = rgDriverApplyDefaultState;
 	ret->setBlendState = _setBlendState;

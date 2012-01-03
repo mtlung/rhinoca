@@ -68,11 +68,18 @@ typedef enum roRDriverTextureFormat
 	roRDriverTextureFormat_DXT5		= 0x00010004,	/// DirectX's DXT5 compression
 } roRDriverTextureFormat;
 
+typedef enum roRDriverTextureFlag
+{
+	roRDriverTextureFlag_None = 0,
+	roRDriverTextureFlag_RenderTarget,
+} roRDriverTextureFlag;
+
 typedef struct roRDriverTexture
 {
 	unsigned width;
 	unsigned height;
 	roRDriverTextureFormat format;
+	roRDriverTextureFlag flags;
 } roRDriverTexture;
 
 typedef enum roRDriverShaderType
@@ -247,7 +254,7 @@ typedef struct roRDriver
 // Texture
 	roRDriverTexture* (*newTexture)();
 	void (*deleteTexture)(roRDriverTexture* self);
-	bool (*initTexture)(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format);	// Can be invoked in loader thread
+	bool (*initTexture)(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format, roRDriverTextureFlag flags);	// Can be invoked in loader thread
 	bool (*commitTexture)(roRDriverTexture* self, const void* data, unsigned rowPaddingInBytes);	// Can only be invoked in render thread
 
 // Shader

@@ -51,6 +51,8 @@ roRDriverContext* _newDriverContext_DX11(roRDriver* driver)
 
 	ret->currentShaders.assign(NULL);
 
+	ret->currentRenderTargetViewHash = 0;
+
 	roRDriverContextImpl::TextureState texState = { 0 };
 	ret->textureStateCache.assign(texState);
 
@@ -293,12 +295,22 @@ void _driverSwapBuffers_DX11()
 			++i;
 	}
 
-	// Update and clean up on staging texture cache
+	// Clean up on staging texture cache
 	for(roSize i=0; i<_currentContext->stagingTextureCache.size();) {
 		StagingTexture& staging = _currentContext->stagingTextureCache[i];
 
 		if(staging.lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
 			_currentContext->stagingTextureCache.remove(i);
+		else
+			++i;
+	}
+
+	// Clean up on render target cache
+	for(roSize i=0; i<_currentContext->renderTargetCache.size();) {
+		RenderTarget& rt = _currentContext->renderTargetCache[i];
+
+		if(rt.lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
+			_currentContext->renderTargetCache.remove(i);
 		else
 			++i;
 	}

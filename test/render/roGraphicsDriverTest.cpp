@@ -167,7 +167,7 @@ TEST_FIXTURE(GraphicsDriverTest, textureCommit)
 	const unsigned char* texData = (const unsigned char*)malloc(sizeof(char) * 4 * texDim * texDim);
 
 	roRDriverTexture* texture = driver->newTexture();
-	CHECK(driver->initTexture(texture, texDim, texDim, roRDriverTextureFormat_RGBA));
+	CHECK(driver->initTexture(texture, texDim, texDim, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_None));
 	CHECK(driver->commitTexture(texture, texData, 0));
 
 	// Set the texture state

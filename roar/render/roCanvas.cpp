@@ -103,7 +103,7 @@ bool Canvas::initTargetTexture(unsigned width, unsigned height)
 {
 	targetTexture = new Texture("");
 	targetTexture->handle = _driver->newTexture();
-	if(!_driver->initTexture(targetTexture->handle, width, height, roRDriverTextureFormat_RGBA))
+	if(!_driver->initTexture(targetTexture->handle, width, height, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_RenderTarget))
 		return false;
 	if(!_driver->commitTexture(targetTexture->handle, NULL, 0))
 		return false;
@@ -126,12 +126,12 @@ void Canvas::destroy()
 void Canvas::beginDraw()
 {
 	if(!targetTexture || !targetTexture->handle) {
-		_driver->setRenderTargets(NULL, 0, false);
+		roVerify(_driver->setRenderTargets(NULL, 0, false));
 		_targetWidth = (float)_context->width;
 		_targetHeight = (float)_context->height;
 	}
 	else {
-		_driver->setRenderTargets(&targetTexture->handle, 1, false);
+		roVerify(_driver->setRenderTargets(&targetTexture->handle, 1, false));
 		_targetWidth = (float)targetTexture->handle->width;
 		_targetHeight = (float)targetTexture->handle->height;
 	}

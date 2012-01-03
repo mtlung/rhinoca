@@ -105,7 +105,7 @@ static bool _setRenderTargets(roRDriverTexture** textures, unsigned targetCount,
 	if(!ctx) false;
 
 	if(!textures || targetCount == 0) {
-		// Bind default framebuffer
+		// Bind default frame buffer
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		return true;
 	}
@@ -620,7 +620,7 @@ static void _deleteTexture(roRDriverTexture* self)
 	_allocator.deleteObj(static_cast<roRDriverTextureImpl*>(self));
 }
 
-static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format)
+static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format, roRDriverTextureFlag flags)
 {
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!impl) return false;
@@ -629,6 +629,7 @@ static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height
 	impl->width = width;
 	impl->height = height;
 	impl->format = format;
+	impl->flags = flags;
 	impl->glTarget = GL_TEXTURE_2D;
 	impl->formatMapping = &(_textureFormatMappings[format]);
 

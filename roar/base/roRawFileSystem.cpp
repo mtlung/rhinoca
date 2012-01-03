@@ -53,13 +53,13 @@ bool rawFileSystemReadReady(void* file, roUint64 size)
 
 CheckProgress:
 	if(impl->readInProgress) {
-		DWORD transferred;
+		DWORD transferred = 0;
 		if(!GetOverlappedResult(impl->file, &impl->overlap, &transferred, false)) {
 			if(GetLastError() == ERROR_IO_PENDING)
 				return false;
 
 			// If error occurred
-			impl->readable = 0;
+			impl->readable = transferred;
 			return true;
 		}
 
