@@ -24,6 +24,8 @@
 #	define roVerify(x) (x)
 #endif
 
+#define roIgnoreRet(x) (x)
+
 #define roStaticAssert(x) typedef char __static_assert_t[(x)]
 
 // Types for 32/64 bits compatibility

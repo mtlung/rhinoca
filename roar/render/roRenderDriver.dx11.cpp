@@ -703,7 +703,7 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, unsigned ro
 		_textureFormatMappings[impl->format].dxFormat,
 		{ 1, 0 },	// DXGI_SAMPLE_DESC: 1 sample, quality level 0
 		D3D11_USAGE_DEFAULT,
-		D3D11_BIND_SHADER_RESOURCE | ((impl->flags | roRDriverTextureFlag_RenderTarget) ? D3D11_BIND_RENDER_TARGET : 0),
+		D3D11_BIND_SHADER_RESOURCE | ((impl->flags & roRDriverTextureFlag_RenderTarget) > 0 ? D3D11_BIND_RENDER_TARGET : 0),
 		0,			// CPUAccessFlags
 		0			// MiscFlags 
 	};
@@ -1155,8 +1155,8 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, unsigned inputCount, unsigne
 			if(input->nameHash == 0 && input->name)
 				input->nameHash = stringHash(input->name, 0);
 
-			if(!_setUniformBuffer(input->nameHash, buffer, input))
-				return false;
+			// NOTE: Shader compiler may optimize away the uniform
+			roIgnoreRet(_setUniformBuffer(input->nameHash, buffer, input));
 		}
 		// Bind index buffer
 		else if(buffer->type == roRDriverBufferType_Index)

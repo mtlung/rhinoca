@@ -33,20 +33,22 @@ void Canvas::init(roRDriverContext* context)
 	static const char* vShaderSrc[] = 
 	{
 		// GLSL
+		"uniform constants { bool isRtTexture; };"
 		"in vec4 position;"
 		"in vec2 texCoord;"
 		"out varying vec2 _texCoord;"
 		"void main(void) {"
-		"	position.y = -position.y; texCoord.y = 1-texCoord.y;\n"	// Flip y axis
+		"	position.y = -position.y; if(isRtTexture) texCoord.y = 1-texCoord.y;\n"	// Flip y axis
 		"	gl_Position = position;  _texCoord = texCoord;"
 		"}",
 
 		// HLSL
+		"cbuffer constants { bool isRtTexture; }"
 		"struct VertexInputType { float4 pos : POSITION; float2 texCoord : TEXCOORD0; };"
 		"struct PixelInputType { float4 pos : SV_POSITION; float2 texCoord : TEXCOORD0; };"
 		"PixelInputType main(VertexInputType input) {"
 		"	PixelInputType output; output.pos = input.pos; output.texCoord = input.texCoord;"
-		"	output.pos.y = -output.pos.y; output.texCoord.y = 1-output.texCoord.y;\n"	// Flip y axis
+		"	output.pos.y = -output.pos.y;"	// Flip y axis
 		"	return output;"
 		"}"
 	};
@@ -80,11 +82,17 @@ void Canvas::init(roRDriverContext* context)
 	_iBuffer = _driver->newBuffer();
 	roVerify(_driver->initBuffer(_iBuffer, roRDriverBufferType_Index, roRDriverDataUsage_Static, index, sizeof(index)));
 
+	// Create uniform buffer
+	bool isRtTexture[16] = {false};	// Most of the time we use a block of 16 bytes
+	_uBuffer = _driver->newBuffer();
+	roVerify(_driver->initBuffer(_uBuffer, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, isRtTexture, sizeof(isRtTexture)));
+
 	// Bind shader input layout
 	const roRDriverShaderInput input[] = {
 		{ _vBuffer, _vShader, "position", 0, 0, sizeof(float)*6, 0 },
 		{ _vBuffer, _vShader, "texCoord", 0, sizeof(float)*4, sizeof(float)*6, 0 },
 		{ _iBuffer, NULL, NULL, 0, 0, 0, 0 },
+		{ _uBuffer, _vShader, "constants", 0, 0, 0, 0 },
 	};
 	roAssert(roCountof(input) == _inputLayout.size());
 	for(roSize i=0; i<roCountof(input); ++i)
@@ -206,6 +214,11 @@ void Canvas::drawImage(
 	};
 	roVerify(_driver->updateBuffer(_vBuffer, 0, vertex, sizeof(vertex)));
 
+	if(texture->flags & roRDriverTextureFlag_RenderTarget) {
+		roUint32 isRtTexture[4] = {1,1,1,1};
+		_driver->updateBuffer(_uBuffer, 0, isRtTexture, sizeof(isRtTexture));
+	}
+
 	roRDriverShader* shaders[] = { _vShader, _pShader };
 	roVerify(_driver->bindShaders(shaders, roCountof(shaders)));
 	roVerify(_driver->bindShaderInput(_inputLayout.typedPtr(), _inputLayout.size(), NULL));
@@ -214,6 +227,11 @@ void Canvas::drawImage(
 	roVerify(_driver->setUniformTexture(stringHash("tex"), texture));
 
 	_driver->drawTriangleIndexed(0, 6, 0);
+
+	if(texture->flags & roRDriverTextureFlag_RenderTarget) {
+		roUint32 isRtTexture[4] = {0,0,0,0};
+		_driver->updateBuffer(_uBuffer, 0, isRtTexture, sizeof(isRtTexture));
+	}
 }
 
 }	// namespace ro

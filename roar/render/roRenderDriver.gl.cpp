@@ -1339,8 +1339,8 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, unsigned inputCount, unsigne
 			if(i->nameHash == 0 && i->name)
 				i->nameHash = stringHash(i->name, 0);
 
-			if(!_setUniformBuffer(i->nameHash, buffer, i))
-				return false;
+			// NOTE: Shader compiler may optimize away the uniform
+			roIgnoreRet(_setUniformBuffer(i->nameHash, buffer, i));
 		}
 	}
 

@@ -137,8 +137,6 @@ void BmpLoader::loadHeader()
 		flipVertical = false;
 	}
 
-	flipVertical = false;	// TODO: Fix me
-
 	headerLoaded = true;
 	loadPixelData();
 	return;
