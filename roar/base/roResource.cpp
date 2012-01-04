@@ -162,7 +162,7 @@ void ResourceManager::addFactory(CreateFunc createFunc, LoadFunc loadFunc)
 	++_factoryCount;
 
 	if(_factoryBufCount < _factoryCount) {
-		int oldBufCount = _factoryBufCount;
+		roSize oldBufCount = _factoryBufCount;
 		_factoryBufCount = (_factoryBufCount == 0) ? 2 : _factoryBufCount * 2;
 		_factories = _allocator.typedRealloc(_factories, oldBufCount, _factoryBufCount);
 	}

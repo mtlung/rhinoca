@@ -165,7 +165,7 @@ static void _adjustDepthRangeMatrix(float* mat)
 	mat[2 + 3*4] = (mat[2 + 3*4] + mat[3 + 3*4]) * 0.5f;
 }
 
-static bool _setRenderTargets(roRDriverTexture** textures, unsigned targetCount, bool useDepthStencil)
+static bool _setRenderTargets(roRDriverTexture** textures, roSize targetCount, bool useDepthStencil)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx) false;
@@ -191,7 +191,7 @@ static bool _setRenderTargets(roRDriverTexture** textures, unsigned targetCount,
 
 		ctx->renderTargetCache[i].lastUsedTime = ctx->lastSwapTime;
 		ctx->dxDeviceContext->OMSetRenderTargets(
-			targetCount,
+			num_cast<UINT>(targetCount),
 			&ctx->renderTargetCache[i].rtViews.typedPtr()->ptr,
 			ctx->renderTargetCache[i].depthStencilView.ptr
 		);
@@ -237,7 +237,7 @@ static bool _setRenderTargets(roRDriverTexture** textures, unsigned targetCount,
 
 	ctx->renderTargetCache.pushBack(renderTarget);
 	ctx->dxDeviceContext->OMSetRenderTargets(
-		targetCount,
+		num_cast<UINT>(targetCount),
 		&renderTarget.rtViews.typedPtr()->ptr,
 		renderTarget.depthStencilView.ptr
 	);
@@ -402,7 +402,7 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 	ctx->dxDeviceContext->OMSetDepthStencilState(s, state->stencilRefValue);
 }
 
-static void _setTextureState(roRDriverTextureState* states, unsigned stateCount, unsigned startingTextureUnit)
+static void _setTextureState(roRDriverTextureState* states, roSize stateCount, unsigned startingTextureUnit)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx || !states || stateCount == 0) return;
@@ -448,7 +448,7 @@ static const StaticArray<D3D11_USAGE, 4> _bufferUsage = {
 	D3D11_USAGE_DEFAULT
 };
 
-static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriverDataUsage usage, void* initData, unsigned sizeInBytes)
+static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriverDataUsage usage, void* initData, roSize sizeInBytes)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
@@ -463,7 +463,7 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 	D3D11_BUFFER_DESC desc;
 	ZeroMemory(&desc, sizeof(desc));
 	desc.Usage = _bufferUsage[usage];
-	desc.ByteWidth = sizeInBytes;
+	desc.ByteWidth = num_cast<UINT>(sizeInBytes);
 	desc.BindFlags = flag;
 	desc.CPUAccessFlags = 
 		(usage == roRDriverDataUsage_Static || desc.Usage == D3D11_USAGE_DEFAULT)
@@ -487,7 +487,7 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 	return true;
 }
 
-static StagingBuffer* _getStagingBuffer(roRDriverContextImpl* ctx, void* initData, unsigned size)
+static StagingBuffer* _getStagingBuffer(roRDriverContextImpl* ctx, void* initData, roSize size)
 {
 	roAssert(ctx);
 
@@ -505,7 +505,7 @@ static StagingBuffer* _getStagingBuffer(roRDriverContextImpl* ctx, void* initDat
 	if(!ret) {
 		// Cache miss, create new one
 		D3D11_BUFFER_DESC stagingBufferDesc = {
-			size, D3D11_USAGE_STAGING,
+			num_cast<UINT>(size), D3D11_USAGE_STAGING,
 			0, D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE, 0, 0
 		};
 
@@ -543,7 +543,7 @@ static StagingBuffer* _getStagingBuffer(roRDriverContextImpl* ctx, void* initDat
 	return ret;
 }
 
-static bool _updateBuffer(roRDriverBuffer* self, unsigned offsetInBytes, void* data, unsigned sizeInBytes)
+static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, void* data, roSize sizeInBytes)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
@@ -556,7 +556,7 @@ static bool _updateBuffer(roRDriverBuffer* self, unsigned offsetInBytes, void* d
 
 	// Use staging buffer to do the update
 	if(StagingBuffer* staging = _getStagingBuffer(ctx, data, sizeInBytes)) {
-		ctx->dxDeviceContext->CopySubresourceRegion(impl->dxBuffer.ptr, 0, offsetInBytes, 0, 0, staging->dxBuffer, 0, NULL);
+		ctx->dxDeviceContext->CopySubresourceRegion(impl->dxBuffer.ptr, 0, num_cast<UINT>(offsetInBytes), 0, 0, staging->dxBuffer, 0, NULL);
 		return true;
 	}
 
@@ -687,7 +687,7 @@ TextureFormatMapping _textureFormatMappings[] = {
 	{ roRDriverTextureFormat_DXT5,			0,	DXGI_FORMAT_BC3_UNORM },
 };
 
-static bool _commitTexture(roRDriverTexture* self, const void* data, unsigned rowPaddingInBytes)
+static bool _commitTexture(roRDriverTexture* self, const void* data, roSize rowPaddingInBytes)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
@@ -750,7 +750,7 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, unsigned ro
 		}
 
 		// Copy the source pixel data to the staging texture
-		const unsigned rowSizeInBytes = impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes + rowPaddingInBytes;
+		const roSize rowSizeInBytes = impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes + rowPaddingInBytes;
 
 		D3D11_MAPPED_SUBRESOURCE mapped = {0};
 		HRESULT hr = ctx->dxDeviceContext->Map(
@@ -842,7 +842,7 @@ static unsigned _countBits(int v)
 	return c;
 }
 
-static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const char** sources, unsigned sourceCount)
+static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const char** sources, roSize sourceCount)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	roRDriverShaderImpl* impl = static_cast<roRDriverShaderImpl*>(self);
@@ -932,7 +932,7 @@ static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const c
 }
 
 // If shaders == NULL || shaderCount == 0, this function will unbind all shaders
-bool _bindShaders(roRDriverShader** shaders, unsigned shaderCount)
+bool _bindShaders(roRDriverShader** shaders, roSize shaderCount)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx) return false;
@@ -1015,7 +1015,7 @@ bool _setUniformBuffer(unsigned nameHash, roRDriverBuffer* buffer, roRDriverShad
 	if(input->offset > 0) {
 		tmpBuf = static_cast<roRDriverBufferImpl*>(_newBuffer());
 		_initBuffer(tmpBuf, roRDriverBufferType_Uniform, roRDriverDataUsage_Dynamic, NULL, bufferImpl->sizeInBytes - input->offset);
-		D3D11_BOX srcBox = { input->offset, 0, 0, bufferImpl->sizeInBytes, 1, 1 };
+		D3D11_BOX srcBox = { input->offset, 0, 0, num_cast<UINT>(bufferImpl->sizeInBytes), 1, 1 };
 		ctx->dxDeviceContext->CopySubresourceRegion(tmpBuf->dxBuffer, 0, 0, 0, 0, bufferImpl->dxBuffer, 0, &srcBox);
 	}
 
@@ -1042,7 +1042,7 @@ static const StaticArray<DXGI_FORMAT, 20> _inputFormatMapping = {
 	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_R32_FLOAT,	DXGI_FORMAT_R32G32_FLOAT,	DXGI_FORMAT_R32G32B32_FLOAT,DXGI_FORMAT_R32G32B32A32_FLOAT,	// D3D10_REGISTER_COMPONENT_FLOAT32
 };
 
-bool _bindShaderInput(roRDriverShaderInput* inputs, unsigned inputCount, unsigned*)
+bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx || !inputs || inputCount == 0) return false;
@@ -1213,18 +1213,18 @@ bool _setUniformTexture(StringHash nameHash, roRDriverTexture* texture)
 // ----------------------------------------------------------------------
 // Making draw call
 
-static void _drawTriangle(unsigned offset, unsigned vertexCount, unsigned flags)
+static void _drawTriangle(roSize offset, roSize vertexCount, unsigned flags)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx) return;
 }
 
-static void _drawTriangleIndexed(unsigned offset, unsigned indexCount, unsigned flags)
+static void _drawTriangleIndexed(roSize offset, roSize indexCount, unsigned flags)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx) return;
 	ctx->dxDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	ctx->dxDeviceContext->DrawIndexed(indexCount, offset, 0);
+	ctx->dxDeviceContext->DrawIndexed(num_cast<UINT>(indexCount), num_cast<UINT>(offset), 0);
 }
 
 // ----------------------------------------------------------------------

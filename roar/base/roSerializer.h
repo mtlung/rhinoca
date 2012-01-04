@@ -129,7 +129,9 @@ template<class S> inline Status serializeIo(S& s, float&		v) { return serializeP
 template<class S> inline Status serializeIo(S& s, double&		v) { return serializePrimitive(s, v); }
 
 Status serializeIoVary(Serializer& s, roUint32& v);
+Status serializeIoVary(Serializer& s, roUint64& v);
 Status serializeIoVary(Deserializer& s, roUint32& v);
+Status serializeIoVary(Deserializer& s, roUint64& v);
 
 
 // ----------------------------------------------------------------------

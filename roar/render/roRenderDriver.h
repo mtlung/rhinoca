@@ -50,7 +50,7 @@ typedef struct roRDriverBuffer
 	roRDriverDataUsage usage : 8;
 	unsigned isMapped : 8;
 	roRDriverBufferMapUsage mapUsage : 8;
-	unsigned sizeInBytes;
+	roSize sizeInBytes;
 } roRDriverBuffer;
 
 typedef enum roRDriverTextureFormat
@@ -235,19 +235,19 @@ typedef struct roRDriver
 
 // Render target
 	void (*setDefaultFrameBuffer)(void* platformSpecificFrameBufferHandle);
-	bool (*setRenderTargets)(roRDriverTexture** textures, unsigned targetCount, bool useDepthStencil);
+	bool (*setRenderTargets)(roRDriverTexture** textures, roSize targetCount, bool useDepthStencil);
 
 // State management
 	void (*applyDefaultState)(roRDriverContext* self);
 	void (*setBlendState)(roRDriverBlendState* blendState);
 	void (*setDepthStencilState)(roRDriverDepthStencilState* depthStencilState);
-	void (*setTextureState)(roRDriverTextureState* textureStates, unsigned stateCount, unsigned startingTextureUnit);
+	void (*setTextureState)(roRDriverTextureState* textureStates, roSize stateCount, unsigned startingTextureUnit);
 
 // Buffer
 	roRDriverBuffer* (*newBuffer)();
 	void (*deleteBuffer)(roRDriverBuffer* self);
-	bool (*initBuffer)(roRDriverBuffer* self, roRDriverBufferType type, roRDriverDataUsage usage, void* initData, unsigned sizeInBytes);
-	bool (*updateBuffer)(roRDriverBuffer* self, unsigned offsetInBytes, void* data, unsigned sizeInBytes);
+	bool (*initBuffer)(roRDriverBuffer* self, roRDriverBufferType type, roRDriverDataUsage usage, void* initData, roSize sizeInBytes);
+	bool (*updateBuffer)(roRDriverBuffer* self, roSize offsetInBytes, void* data, roSize sizeInBytes);
 	void* (*mapBuffer)(roRDriverBuffer* self, roRDriverBufferMapUsage usage);
 	void (*unmapBuffer)(roRDriverBuffer* self);
 
@@ -255,22 +255,22 @@ typedef struct roRDriver
 	roRDriverTexture* (*newTexture)();
 	void (*deleteTexture)(roRDriverTexture* self);
 	bool (*initTexture)(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format, roRDriverTextureFlag flags);	// Can be invoked in loader thread
-	bool (*commitTexture)(roRDriverTexture* self, const void* data, unsigned rowPaddingInBytes);	// Can only be invoked in render thread
+	bool (*commitTexture)(roRDriverTexture* self, const void* data, roSize rowPaddingInBytes);	// Can only be invoked in render thread
 
 // Shader
 	roRDriverShader* (*newShader)();
 	void (*deleteShader)(roRDriverShader* self);
-	bool (*initShader)(roRDriverShader* self, roRDriverShaderType type, const char** sources, unsigned sourceCount);
+	bool (*initShader)(roRDriverShader* self, roRDriverShaderType type, const char** sources, roSize sourceCount);
 
-	bool (*bindShaders)(roRDriverShader** shaders, unsigned shaderCount);
+	bool (*bindShaders)(roRDriverShader** shaders, roSize shaderCount);
 	bool (*setUniformTexture)(unsigned nameHash, roRDriverTexture* texture);
 
-	bool (*bindShaderInput)(roRDriverShaderInput* inputs, unsigned inputCount, unsigned* cacheId);	// Give NULL to cacheId if you don't want to create a cache for it
+	bool (*bindShaderInput)(roRDriverShaderInput* inputs, roSize inputCount, unsigned* cacheId);	// Give NULL to cacheId if you don't want to create a cache for it
 	bool (*bindShaderInputCached)(unsigned cacheId);
 
 // Making draw call
-	void (*drawTriangle)(unsigned offset, unsigned vertexCount, unsigned flags);
-	void (*drawTriangleIndexed)(unsigned offset, unsigned indexCount, unsigned flags);
+	void (*drawTriangle)(roSize offset, roSize vertexCount, unsigned flags);
+	void (*drawTriangleIndexed)(roSize offset, roSize indexCount, unsigned flags);
 
 // Driver version
 	const char* driverName;

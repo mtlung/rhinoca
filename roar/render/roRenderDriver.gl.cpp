@@ -6,6 +6,7 @@
 #include "../base/roMemory.h"
 #include "../base/roString.h"
 #include "../base/roStringHash.h"
+#include "../base/roTypeCast.h"
 
 #include "../platform/roPlatformHeaders.h"
 #include <gl/gl.h>
@@ -99,7 +100,7 @@ static void _adjustDepthRangeMatrix(float* mat44)
 	(void)mat44;
 }
 
-static bool _setRenderTargets(roRDriverTexture** textures, unsigned targetCount, bool useDepthStencil)
+static bool _setRenderTargets(roRDriverTexture** textures, roSize targetCount, bool useDepthStencil)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) false;
@@ -336,7 +337,7 @@ static const StaticArray<GLenum, 4> _textureAddressMode = { GL_REPEAT, GL_CLAMP_
 
 // For OpenGl sampler object, see: http://www.geeks3d.com/20110908/opengl-3-3-sampler-objects-control-your-texture-units/
 // and http://www.opengl.org/registry/specs/ARB/sampler_objects.txt
-static void _setTextureState(roRDriverTextureState* states, unsigned stateCount, unsigned startingTextureUnit)
+static void _setTextureState(roRDriverTextureState* states, roSize stateCount, unsigned startingTextureUnit)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx || !states || stateCount == 0) return;
@@ -446,7 +447,7 @@ static const StaticArray<GLenum, 4> _bufferUsage = {
 	GL_DYNAMIC_DRAW
 };
 
-static bool _initBufferSpecificLocation(roRDriverBufferImpl* impl, roRDriverBufferType type, roRDriverDataUsage usage, void* initData, unsigned sizeInBytes, bool systemMemory)
+static bool _initBufferSpecificLocation(roRDriverBufferImpl* impl, roRDriverBufferType type, roRDriverDataUsage usage, void* initData, roSize sizeInBytes, bool systemMemory)
 {
 	impl->type = type;
 	impl->sizeInBytes = sizeInBytes;
@@ -482,7 +483,7 @@ static bool _initBufferSpecificLocation(roRDriverBufferImpl* impl, roRDriverBuff
 	return true;
 }
 
-static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriverDataUsage usage, void* initData, unsigned sizeInBytes)
+static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriverDataUsage usage, void* initData, roSize sizeInBytes)
 {
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl) return false;
@@ -491,7 +492,7 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 	return _initBufferSpecificLocation(impl, type, usage, initData, sizeInBytes, false);
 }
 
-static bool _updateBuffer(roRDriverBuffer* self, unsigned offsetInBytes, void* data, unsigned sizeInBytes)
+static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, void* data, roSize sizeInBytes)
 {
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl) return false;
@@ -681,7 +682,7 @@ static unsigned _textureSize(roRDriverTextureImpl* self, unsigned mipCount)
 	return ret;
 }
 
-static bool _commitTexture(roRDriverTexture* self, const void* data, unsigned rowPaddingInBytes)
+static bool _commitTexture(roRDriverTexture* self, const void* data, roSize rowPaddingInBytes)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
@@ -843,7 +844,7 @@ static void _deleteShader(roRDriverShader* self)
 	_allocator.deleteObj(static_cast<roRDriverShaderImpl*>(self));
 }
 
-static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const char** sources, unsigned sourceCount)
+static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const char** sources, roSize sourceCount)
 {
 	roRDriverShaderImpl* impl = static_cast<roRDriverShaderImpl*>(self);
 	if(!impl || sourceCount == 0) return false;
@@ -853,7 +854,7 @@ static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const c
 	self->type = type;
 	impl->glh = glCreateShader(_shaderTypes[type]);
 
-	glShaderSource(impl->glh, sourceCount, sources, NULL);
+	glShaderSource(impl->glh, num_cast<GLsizei>(sourceCount), sources, NULL);
 	glCompileShader(impl->glh);
 
 	// Check compilation status
@@ -921,7 +922,7 @@ static ProgramAttribute* _findProgramAttribute(roRDriverShaderProgram* self, uns
 	return NULL;
 }
 
-static bool _initShaderProgram(roRDriverShaderProgram* self, roRDriverShader** shaders, unsigned shaderCount)
+static bool _initShaderProgram(roRDriverShaderProgram* self, roRDriverShader** shaders, roSize shaderCount)
 {
 	roRDriverShaderProgramImpl* impl = static_cast<roRDriverShaderProgramImpl*>(self);
 	if(!impl || !shaders || shaderCount == 0) return false;
@@ -1100,7 +1101,7 @@ static bool _initShaderProgram(roRDriverShaderProgram* self, roRDriverShader** s
 	return true;
 }
 
-bool _bindShaders(roRDriverShader** shaders, unsigned shaderCount)
+bool _bindShaders(roRDriverShader** shaders, roSize shaderCount)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return false;
@@ -1242,7 +1243,7 @@ static const StaticArray<GLenum, 8> _elementTypeMappings = {
 	GL_UNSIGNED_INT
 };
 
-bool _bindShaderInput(roRDriverShaderInput* inputs, unsigned inputCount, unsigned*)
+bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return false;
@@ -1363,13 +1364,13 @@ bool _bindShaderInputCached(unsigned)
 // ----------------------------------------------------------------------
 // Making draw call
 
-static void _drawTriangle(unsigned offset, unsigned vertexCount, unsigned flags)
+static void _drawTriangle(roSize offset, roSize vertexCount, unsigned flags)
 {
 	GLenum mode = GL_TRIANGLES;
-	glDrawArrays(mode, offset, vertexCount);
+	glDrawArrays(mode, num_cast<GLsizei>(offset), num_cast<GLsizei>(vertexCount));
 }
 
-static void _drawTriangleIndexed(unsigned offset, unsigned indexCount, unsigned flags)
+static void _drawTriangleIndexed(roSize offset, roSize indexCount, unsigned flags)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return;
@@ -1382,7 +1383,7 @@ static void _drawTriangleIndexed(unsigned offset, unsigned indexCount, unsigned 
 	if(ctx->currentIndexBufSysMemPtr)
 		byteOffset += ptrdiff_t(ctx->currentIndexBufSysMemPtr);
 
-	glDrawElements(mode, indexCount, indexType, (void*)byteOffset);
+	glDrawElements(mode, num_cast<GLsizei>(indexCount), indexType, (void*)byteOffset);
 	checkError();
 }
 
