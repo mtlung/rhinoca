@@ -197,7 +197,7 @@ public:
 	ro::ConstString _textAlign;
 	ro::ConstString _textBaseLine;
 
-	/// In the standard HTML5 canvas, the widht and height of the <IMG> tag is ignored,
+	/// In the standard HTML5 canvas, the width and height of the <IMG> tag is ignored,
 	/// set this to true such that the image will be appear as the size you set it.
 	bool useImgDimension;
 
