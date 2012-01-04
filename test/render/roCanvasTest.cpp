@@ -66,11 +66,14 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 	TexturePtr texture = resourceManager.loadAs<Texture>("EdSplash.bmp");
 
 	while(keepRun()) {
-		driver->clearColor(0, 0, 0, 0);
+		driver->clearColor(0, 0, 0, 1);
 
 		// Draw to auxCanvas
 		auxCanvas.beginDraw();
-		driver->clearColor(0.1f, 0.1f, 0.1f, 0);
+		driver->clearColor(0.1f, 0.1f, 0.1f, 1);
+		auxCanvas.setGlobalAlpha(1);
+		auxCanvas.drawImage(texture->handle, 0, 0, 100, 100);
+		auxCanvas.setGlobalAlpha(0.6f);
 		auxCanvas.drawImage(texture->handle, 10, 50, 100, 100);
 		auxCanvas.endDraw();
 

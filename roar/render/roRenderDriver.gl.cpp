@@ -202,17 +202,15 @@ static void _setBlendState(roRDriverBlendState* state)
 
 	// Generate the hash value if not yet
 	if(state->hash == 0) {
-		state->hash = (void*)_hash(
-			&state->enable,
-			sizeof(roRDriverBlendState) - offsetof(roRDriverBlendState, roRDriverBlendState::enable)
-		);
-		ctx->currentBlendStateHash = state->hash;
+		state->hash = (void*)_hash(state, sizeof(*state));
 	}
 	else if(state->hash == ctx->currentBlendStateHash)
 		return;
 	else {
 		// TODO: Make use of the hash value, if OpenGL support state block
 	}
+
+	ctx->currentBlendStateHash = state->hash;
 
 	glColorMask(
 		(state->wirteMask & roRDriverColorWriteMask_EnableRed) > 0,
@@ -280,13 +278,14 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 			&state->enableDepth,
 			sizeof(roRDriverDepthStencilState) - offsetof(roRDriverDepthStencilState, roRDriverDepthStencilState::enableDepth)
 		);
-		ctx->currentDepthStencilStateHash = state->hash;
 	}
 	else if(state->hash == ctx->currentDepthStencilStateHash)
 		return;
 	else {
 		// TODO: Make use of the hash value, if OpenGL support state block
 	}
+
+	ctx->currentDepthStencilStateHash = state->hash;
 
 	if(!state->enableDepth) {
 		glDisable(GL_DEPTH_TEST);
@@ -1350,17 +1349,6 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 	return true;
 }
 
-bool _bindShaderInputCached(unsigned)
-{
-	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
-	if(!ctx) return false;
-	roRDriverShaderProgramImpl* impl = static_cast<roRDriverShaderProgramImpl*>(ctx->currentShaderProgram);
-	if(!impl) return false;
-
-	// TODO: Implement
-	return false;
-}
-
 // ----------------------------------------------------------------------
 // Making draw call
 
@@ -1451,7 +1439,6 @@ roRDriver* _roNewRenderDriver_GL(const char* driverStr, const char*)
 	ret->setUniformTexture = _setUniformTexture;
 
 	ret->bindShaderInput = _bindShaderInput;
-	ret->bindShaderInputCached = _bindShaderInputCached;
 
 	ret->drawTriangle = _drawTriangle;
 	ret->drawTriangleIndexed = _drawTriangleIndexed;

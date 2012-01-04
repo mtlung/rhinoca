@@ -265,8 +265,7 @@ typedef struct roRDriver
 	bool (*bindShaders)(roRDriverShader** shaders, roSize shaderCount);
 	bool (*setUniformTexture)(unsigned nameHash, roRDriverTexture* texture);
 
-	bool (*bindShaderInput)(roRDriverShaderInput* inputs, roSize inputCount, unsigned* cacheId);	// Give NULL to cacheId if you don't want to create a cache for it
-	bool (*bindShaderInputCached)(unsigned cacheId);
+	bool (*bindShaderInput)(roRDriverShaderInput* inputs, roSize inputCount, unsigned* cacheId);	// Get the cacheId for the first call, and it speed up on later calls
 
 // Making draw call
 	void (*drawTriangle)(roSize offset, roSize vertexCount, unsigned flags);

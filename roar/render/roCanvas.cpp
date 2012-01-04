@@ -5,8 +5,11 @@
 namespace ro {
 
 Canvas::Canvas()
-	: _context(NULL)
+	: _driver(NULL), _context(NULL)
+	, _vBuffer(NULL), _iBuffer(NULL), _uBuffer(NULL)
 	, _vShader(NULL), _pShader(NULL)
+	, _targetWidth(0), _targetHeight(0)
+	, _globalAlpha(1)
 {}
 
 Canvas::~Canvas()
@@ -33,7 +36,7 @@ void Canvas::init(roRDriverContext* context)
 	static const char* vShaderSrc[] = 
 	{
 		// GLSL
-		"uniform constants { bool isRtTexture; };"
+		"uniform constants { float alpha; bool isRtTexture; };"
 		"in vec4 position;"
 		"in vec2 texCoord;"
 		"out varying vec2 _texCoord;"
@@ -43,7 +46,7 @@ void Canvas::init(roRDriverContext* context)
 		"}",
 
 		// HLSL
-		"cbuffer constants { bool isRtTexture; }"
+		"cbuffer constants { float alpha; bool isRtTexture; }"
 		"struct VertexInputType { float4 pos : POSITION; float2 texCoord : TEXCOORD0; };"
 		"struct PixelInputType { float4 pos : SV_POSITION; float2 texCoord : TEXCOORD0; };"
 		"PixelInputType main(VertexInputType input) {"
@@ -56,16 +59,20 @@ void Canvas::init(roRDriverContext* context)
 	static const char* pShaderSrc[] = 
 	{
 		// GLSL
+		"uniform constants { float alpha; bool isRtTexture; };"
 		"uniform sampler2D tex;"
 		"in vec2 _texCoord;"
-		"void main(void) { gl_FragColor = texture2D(tex, _texCoord); }",
+		"void main(void) { gl_FragColor = texture2D(tex, _texCoord); gl_FragColor.a *= alpha; }",
 
 		// HLSL
+		"cbuffer constants { float alpha; bool isRtTexture; }"
 		"Texture2D tex;"
 		"SamplerState sampleType;"
 		"struct PixelInputType { float4 pos : SV_POSITION; float2 texCoord : TEXCOORD0; };"
 		"float4 main(PixelInputType input):SV_Target {"
-		"	return tex.Sample(sampleType, input.texCoord);"
+		"	float4 ret = tex.Sample(sampleType, input.texCoord);"
+		"	ret.a *= alpha;"
+		"	return ret;"
 		"}"
 	};
 
@@ -83,7 +90,7 @@ void Canvas::init(roRDriverContext* context)
 	roVerify(_driver->initBuffer(_iBuffer, roRDriverBufferType_Index, roRDriverDataUsage_Static, index, sizeof(index)));
 
 	// Create uniform buffer
-	bool isRtTexture[16] = {false};	// Most of the time we use a block of 16 bytes
+	bool isRtTexture[16] = {0};	// Most of the time we use a block of 16 bytes
 	_uBuffer = _driver->newBuffer();
 	roVerify(_driver->initBuffer(_uBuffer, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, isRtTexture, sizeof(isRtTexture)));
 
@@ -180,7 +187,7 @@ void Canvas::drawImage(
 	float dstx, float dsty, float dstw, float dsth
 )
 {
-	if(!texture || !texture->width || !texture->height) return;
+	if(!texture || !texture->width || !texture->height || _globalAlpha <= 0) return;
 
 	const float z = 0;
 
@@ -214,11 +221,9 @@ void Canvas::drawImage(
 	};
 	roVerify(_driver->updateBuffer(_vBuffer, 0, vertex, sizeof(vertex)));
 
-	// Special cross-API treatment for sampling render target texture
-	if(texture->flags & roRDriverTextureFlag_RenderTarget) {
-		roUint32 isRtTexture[4] = {1,1,1,1};
-		roVerify(_driver->updateBuffer(_uBuffer, 0, isRtTexture, sizeof(isRtTexture)));
-	}
+	struct Constants { float alpha; bool isRtTexture[4]; };
+	Constants constants = { _globalAlpha, { texture->flags & roRDriverTextureFlag_RenderTarget } };
+	roVerify(_driver->updateBuffer(_uBuffer, 0, &constants, sizeof(constants)));
 
 	roRDriverShader* shaders[] = { _vShader, _pShader };
 	roVerify(_driver->bindShaders(shaders, roCountof(shaders)));
@@ -227,13 +232,41 @@ void Canvas::drawImage(
 	_driver->setTextureState(&_textureState, 1, 0);
 	roVerify(_driver->setUniformTexture(stringHash("tex"), texture));
 
-	_driver->drawTriangleIndexed(0, 6, 0);
+	// Blend state
+	static roRDriverBlendState hasBlend = {
+		0, true,
+		roRDriverBlendOp_Add, roRDriverBlendOp_Add,
+		roRDriverBlendValue_SrcAlpha, roRDriverBlendValue_InvSrcAlpha,
+		roRDriverBlendValue_One, roRDriverBlendValue_Zero,
+		roRDriverColorWriteMask_EnableAll
+	};
+	static roRDriverBlendState noBlend = {
+		0, false,
+		roRDriverBlendOp_Add, roRDriverBlendOp_Add,
+		roRDriverBlendValue_SrcAlpha, roRDriverBlendValue_InvSrcAlpha,
+		roRDriverBlendValue_One, roRDriverBlendValue_Zero,
+		roRDriverColorWriteMask_EnableAll
+	};
+	_driver->setBlendState(_globalAlpha == 1 ? &noBlend : &hasBlend);
 
-	// Special cross-API treatment for sampling render target texture
-	if(texture->flags & roRDriverTextureFlag_RenderTarget) {
-		roUint32 isRtTexture[4] = {0,0,0,0};
-		roVerify(_driver->updateBuffer(_uBuffer, 0, isRtTexture, sizeof(isRtTexture)));
-	}
+	_driver->drawTriangleIndexed(0, 6, 0);
+}
+
+unsigned Canvas::width() const {
+	return (unsigned)_targetWidth;
+}
+
+unsigned Canvas::height() const {
+	return (unsigned)_targetHeight;
+}
+
+float Canvas::globalAlpha() const {
+	return _globalAlpha;
+}
+
+void Canvas::setGlobalAlpha(float alpha)
+{
+	_globalAlpha = alpha;
 }
 
 }	// namespace ro

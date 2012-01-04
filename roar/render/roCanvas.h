@@ -40,6 +40,13 @@ struct Canvas
 
 	TexturePtr targetTexture;
 
+// Attributes
+	unsigned width() const;
+	unsigned height() const;
+
+	float globalAlpha() const;
+	void setGlobalAlpha(float alpha);
+
 // Private
 	roRDriver* _driver;
 	roRDriverContext* _context;
@@ -53,6 +60,9 @@ struct Canvas
 
 	float _targetWidth;
 	float _targetHeight;
+
+	float _globalAlpha;
+
 };	// Canvas
 
 }	// namespace ro

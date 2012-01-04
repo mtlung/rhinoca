@@ -285,17 +285,15 @@ static void _setBlendState(roRDriverBlendState* state)
 
 	// Generate the hash value if not yet
 	if(state->hash == 0) {
-		state->hash = (void*)_hash(
-			&state->enable,
-			sizeof(roRDriverBlendState) - roOffsetof(roRDriverBlendState, roRDriverBlendState::enable)
-		);
-		ctx->currentBlendStateHash = state->hash;
+		state->hash = (void*)_hash(state, sizeof(*state));
 	}
 	else if(state->hash == ctx->currentBlendStateHash)
 		return;
 	else {
 		// TODO: Make use of the hash value
 	}
+
+	ctx->currentBlendStateHash = state->hash;
 
 	D3D11_BLEND_DESC desc;
 	ZeroMemory(&desc, sizeof(desc));
@@ -359,13 +357,14 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 			&state->enableDepth,
 			sizeof(roRDriverDepthStencilState) - roOffsetof(roRDriverDepthStencilState, roRDriverDepthStencilState::enableDepth)
 		);
-		ctx->currentDepthStencilStateHash = state->hash;
 	}
 	else if(state->hash == ctx->currentDepthStencilStateHash)
 		return;
 	else {
 		// TODO: Make use of the hash value
 	}
+
+	ctx->currentDepthStencilStateHash = state->hash;
 
 	D3D11_DEPTH_STENCIL_DESC desc;
 	ZeroMemory(&desc, sizeof(desc));
