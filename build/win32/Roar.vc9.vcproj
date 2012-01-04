@@ -290,6 +290,22 @@
 		<Filter
 			Name="math"
 			>
+			<File
+				RelativePath="..\..\roar\math\roMath.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\math\roVector.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\math\roVector.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\math\roVector.inl"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="base"

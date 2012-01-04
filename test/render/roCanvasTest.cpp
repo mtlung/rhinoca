@@ -22,7 +22,7 @@ struct CanvasTest : public GraphicsTestBase
 	Canvas canvas;
 };
 
-static const unsigned driverIndex = 1;
+static const unsigned driverIndex = 0;
 
 static const char* driverStr[] = 
 {
@@ -71,7 +71,7 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 		// Draw to auxCanvas
 		auxCanvas.beginDraw();
 		driver->clearColor(0.1f, 0.1f, 0.1f, 0);
-		auxCanvas.drawImage(texture->handle, 10, 50, 200, 200);
+		auxCanvas.drawImage(texture->handle, 10, 50, 100, 100);
 		auxCanvas.endDraw();
 
 		// Draw auxCanvas to the main canvas

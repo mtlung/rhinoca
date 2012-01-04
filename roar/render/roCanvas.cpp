@@ -214,9 +214,10 @@ void Canvas::drawImage(
 	};
 	roVerify(_driver->updateBuffer(_vBuffer, 0, vertex, sizeof(vertex)));
 
+	// Special cross-API treatment for sampling render target texture
 	if(texture->flags & roRDriverTextureFlag_RenderTarget) {
 		roUint32 isRtTexture[4] = {1,1,1,1};
-		_driver->updateBuffer(_uBuffer, 0, isRtTexture, sizeof(isRtTexture));
+		roVerify(_driver->updateBuffer(_uBuffer, 0, isRtTexture, sizeof(isRtTexture)));
 	}
 
 	roRDriverShader* shaders[] = { _vShader, _pShader };
@@ -228,9 +229,10 @@ void Canvas::drawImage(
 
 	_driver->drawTriangleIndexed(0, 6, 0);
 
+	// Special cross-API treatment for sampling render target texture
 	if(texture->flags & roRDriverTextureFlag_RenderTarget) {
 		roUint32 isRtTexture[4] = {0,0,0,0};
-		_driver->updateBuffer(_uBuffer, 0, isRtTexture, sizeof(isRtTexture));
+		roVerify(_driver->updateBuffer(_uBuffer, 0, isRtTexture, sizeof(isRtTexture)));
 	}
 }
 

@@ -18,6 +18,6 @@ struct Texture : public ro::Resource
 
 typedef ro::SharedPtr<Texture> TexturePtr;
 
-}	// namespace Render
+}	// namespace ro
 
 #endif	// __render_roTexture_h__
