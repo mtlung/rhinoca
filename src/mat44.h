@@ -32,7 +32,7 @@ public:
 	};
 
 public:
-	/// For performance reasons, default consturctor will not do anything,
+	/// For performance reasons, default constructor will not do anything,
 	/// so user must aware of it and do proper initialization afterwards if needed.
 	inline Mat44() {}
 

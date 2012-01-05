@@ -35,6 +35,9 @@ typedef unsigned __int64 roUint64;
 #	define roDEBUG 1
 #endif
 
+// SIMD
+#define roCPU_SSE 1
+
 // The inclusion of <assert.h> of VC was heavy, here we try to avoid that overhead
 #if roDEBUG
 #	define __roWIDEN(str) L ## str

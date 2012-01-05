@@ -157,10 +157,7 @@ void Canvas::endDraw()
 {
 }
 
-void Canvas::drawImage(
-	roRDriverTexture* texture,
-	float dstx, float dsty
-)
+void Canvas::drawImage(roRDriverTexture* texture, float dstx, float dsty)
 {
 	drawImage(
 		texture,
@@ -169,10 +166,7 @@ void Canvas::drawImage(
 	);
 }
 
-void Canvas::drawImage(
-	roRDriverTexture* texture,
-	float dstx, float dsty, float dstw, float dsth
-)
+void Canvas::drawImage(roRDriverTexture* texture, float dstx, float dsty, float dstw, float dsth)
 {
 	drawImage(
 		texture,
@@ -181,11 +175,7 @@ void Canvas::drawImage(
 	);
 }
 
-void Canvas::drawImage(
-	roRDriverTexture* texture,
-	float srcx, float srcy, float srcw, float srch,
-	float dstx, float dsty, float dstw, float dsth
-)
+void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float srcw, float srch, float dstx, float dsty, float dstw, float dsth)
 {
 	if(!texture || !texture->width || !texture->height || _globalAlpha <= 0) return;
 

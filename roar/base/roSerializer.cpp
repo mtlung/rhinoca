@@ -97,123 +97,24 @@ Status serializeIoVary(Serializer& s, roUint32& v)
 
 Status serializeIoVary(Serializer& s, roUint64& v)
 {
+	// Unlike the 32-bit version, we use a loop here to save code size
 	Status st;
-	if(v < (1ULL<<(7*1))) {
-		st = s._checkRemain(1); if(!st) return st;
-		s._w[0] = (roUint8) (v >> (7*0));
-		s._advance(1);
-		return st;
+	roSize i;
+	for(i=0; i<roSize((sizeof(v) * 8)/(7-1)); ++i) {
+		if(v >= (1ULL<<(7*(i+1)))) {
+			st = s._checkRemain(1); if(!st) return st;
+			s._w[i] = (roUint8) (v >> (7*i) | 0x80);
+			s._advance(1);
+		}
+		else
+			break;
 	}
 
-	if(v < (1ULL<<(7*2))) {
-		st = s._checkRemain(2); if(!st) return st;
-		s._w[0] = (roUint8) (v >> (7*0) | 0x80);
-		s._w[1] = (roUint8) (v >> (7*1));
-		s._advance(2);
-		return st;
-	}
+	st = s._checkRemain(1); if(!st) return st;
+	s._w[i] = (roUint8) (v >> (7*i));
+	s._advance(1);
 
-	if(v < (1ULL<<(7*3))) {
-		st = s._checkRemain(3); if(!st) return st;
-		s._w[0] = (roUint8) (v >> (7*0) | 0x80);
-		s._w[1] = (roUint8) (v >> (7*1) | 0x80);
-		s._w[2] = (roUint8) (v >> (7*2));
-		s._advance(3);
-		return st;
-	}
-
-	if(v < (1ULL<<(7*4))) {
-		st = s._checkRemain(4); if(!st) return st;
-		s._w[0] = (roUint8) (v >> (7*0) | 0x80);
-		s._w[1] = (roUint8) (v >> (7*1) | 0x80);
-		s._w[2] = (roUint8) (v >> (7*2) | 0x80);
-		s._w[3] = (roUint8) (v >> (7*3));
-		s._advance(4);
-		return st;
-	}
-
-	if(v < (1ULL<<(7*5))) {
-		st = s._checkRemain(5); if(!st) return st;
-		s._w[0] = (roUint8) (v >> (7*0) | 0x80);
-		s._w[1] = (roUint8) (v >> (7*1) | 0x80);
-		s._w[2] = (roUint8) (v >> (7*2) | 0x80);
-		s._w[3] = (roUint8) (v >> (7*3) | 0x80);
-		s._w[4] = (roUint8) (v >> (7*4));
-		s._advance(5);
-		return st;
-	}
-
-	if(v < (1ULL<<(7*6))) {
-		st = s._checkRemain(6); if(!st) return st;
-		s._w[0] = (roUint8) (v >> (7*0) | 0x80);
-		s._w[1] = (roUint8) (v >> (7*1) | 0x80);
-		s._w[2] = (roUint8) (v >> (7*2) | 0x80);
-		s._w[3] = (roUint8) (v >> (7*3) | 0x80);
-		s._w[4] = (roUint8) (v >> (7*4) | 0x80);
-		s._w[5] = (roUint8) (v >> (7*5));
-		s._advance(6);
-		return st;
-	}
-
-	if(v < (1ULL<<(7*7))) {
-		st = s._checkRemain(7); if(!st) return st;
-		s._w[0] = (roUint8) (v >> (7*0) | 0x80);
-		s._w[1] = (roUint8) (v >> (7*1) | 0x80);
-		s._w[2] = (roUint8) (v >> (7*2) | 0x80);
-		s._w[3] = (roUint8) (v >> (7*3) | 0x80);
-		s._w[4] = (roUint8) (v >> (7*4) | 0x80);
-		s._w[5] = (roUint8) (v >> (7*5) | 0x80);
-		s._w[6] = (roUint8) (v >> (7*6));
-		s._advance(7);
-		return st;
-	}
-
-	if(v < (1ULL<<(7*8))) {
-		st = s._checkRemain(8); if(!st) return st;
-		s._w[0] = (roUint8) (v >> (7*0) | 0x80);
-		s._w[1] = (roUint8) (v >> (7*1) | 0x80);
-		s._w[2] = (roUint8) (v >> (7*2) | 0x80);
-		s._w[3] = (roUint8) (v >> (7*3) | 0x80);
-		s._w[4] = (roUint8) (v >> (7*4) | 0x80);
-		s._w[5] = (roUint8) (v >> (7*5) | 0x80);
-		s._w[6] = (roUint8) (v >> (7*6) | 0x80);
-		s._w[7] = (roUint8) (v >> (7*7));
-		s._advance(8);
-		return st;
-	}
-
-	if(v < (1ULL<<(7*9))) {
-		st = s._checkRemain(9); if(!st) return st;
-		s._w[0] = (roUint8) (v >> (7*0) | 0x80);
-		s._w[1] = (roUint8) (v >> (7*1) | 0x80);
-		s._w[2] = (roUint8) (v >> (7*2) | 0x80);
-		s._w[3] = (roUint8) (v >> (7*3) | 0x80);
-		s._w[4] = (roUint8) (v >> (7*4) | 0x80);
-		s._w[5] = (roUint8) (v >> (7*5) | 0x80);
-		s._w[6] = (roUint8) (v >> (7*6) | 0x80);
-		s._w[7] = (roUint8) (v >> (7*7) | 0x80);
-		s._w[8] = (roUint8) (v >> (7*8));
-		s._advance(9);
-		return st;
-	}
-
-	else {
-		st = s._checkRemain(10); if(!st) return st;
-		s._w[0] = (roUint8) (v >> (7*0) | 0x80);
-		s._w[1] = (roUint8) (v >> (7*1) | 0x80);
-		s._w[2] = (roUint8) (v >> (7*2) | 0x80);
-		s._w[3] = (roUint8) (v >> (7*3) | 0x80);
-		s._w[4] = (roUint8) (v >> (7*4) | 0x80);
-		s._w[5] = (roUint8) (v >> (7*5) | 0x80);
-		s._w[6] = (roUint8) (v >> (7*6) | 0x80);
-		s._w[7] = (roUint8) (v >> (7*7) | 0x80);
-		s._w[8] = (roUint8) (v >> (7*8) | 0x80);
-		s._w[9] = (roUint8) (v >> (7*9));
-		s._advance(10);
-		return st;
-	}
-
-	return Status::assertion;
+	return st;
 }
 
 Status serializeIoVary(Deserializer& s, roUint32& v)

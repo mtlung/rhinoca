@@ -295,6 +295,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\math\roMatrix.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\math\roMatrix.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\math\roMatrix.inl"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\math\roVector.cpp"
 				>
 			</File>
