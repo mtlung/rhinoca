@@ -2,7 +2,7 @@
 #include "driver.h"
 #include "driverdetail.h"
 #include "../rhassert.h"
-#include "../mat44.h"
+#include "../../roar/math/roMatrix.h"
 #include <memory>
 
 namespace Render {
@@ -79,7 +79,7 @@ bool Driver::isPowerOfTwo(unsigned x)
 
 void Driver::ortho(float left, float right, float bottom, float top, float zNear, float zFar)
 {
-	Mat44 m = Mat44::identity;
+	ro::Mat4 m(ro::mat4Identity);
 
 	m.m00 = 2.0f / (right - left);
 	m.m03 = -(right + left) / (right - left);

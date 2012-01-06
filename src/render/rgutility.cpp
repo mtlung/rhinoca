@@ -1,15 +1,17 @@
 #include "pch.h"
 #include "rgutility.h"
-#include "../mat44.h"
+#include "../../roar/math/roMatrix.h"
 #include <math.h>
 #include <string.h>	// for memset
+
+using namespace ro;
 
 static const float PI = 3.14159265358979f;
 
 void rgMat44MakeIdentity(float outMat[16])
 {
-	Mat44& out = *reinterpret_cast<Mat44*>(outMat);
-	out = Mat44::identity;
+	Mat4& out = *reinterpret_cast<Mat4*>(outMat);
+	out.identity();
 }
 
 // See http://graphics.ucsd.edu/courses/cse167_f05/CSE167_04.ppt
@@ -18,15 +20,15 @@ void rgMat44MakePrespective(float outMat[16], float fovyDeg, float acpectWidthOv
 	float f = 1.0f / tanf((fovyDeg * PI / 180) * 0.5f);
 	float nf = 1.0f / (znear - zfar);
 
-	Mat44& out = *reinterpret_cast<Mat44*>(outMat);
+	Mat4& out = *reinterpret_cast<Mat4*>(outMat);
 
-	memset(outMat, 0, sizeof(Mat44));
+	memset(outMat, 0, sizeof(Mat4));
 
 	out.m00 = f / acpectWidthOverHeight;	// One over width
 	out.m11 = f;							// One over height
 	out.m22 = (zfar + znear) * nf;
 	out.m23 = (2 * zfar * znear) * nf;
-	out.m32 = -1;							// Prespective division
+	out.m32 = -1;							// Perspective division
 }
 
 void rgMat44MulVec4(const float mat[16], const float in[4], float out[4])
@@ -37,7 +39,7 @@ void rgMat44MulVec4(const float mat[16], const float in[4], float out[4])
 	const float z = in[2];
 	const float w = in[3];
 
-	const Mat44& m = *reinterpret_cast<const Mat44*>(mat);
+	const Mat4& m = *reinterpret_cast<const Mat4*>(mat);
 
 	out[0] = m.m00 * x + m.m01 * y + m.m02 * z + m.m03 * w;
 	out[1] = m.m10 * x + m.m11 * y + m.m12 * z + m.m13 * w;
@@ -47,7 +49,7 @@ void rgMat44MulVec4(const float mat[16], const float in[4], float out[4])
 
 void rgMat44TranslateBy(float outMat[16], const float xyz[3])
 {
-	Mat44& out = *reinterpret_cast<Mat44*>(outMat);
+	Mat4& out = *reinterpret_cast<Mat4*>(outMat);
 	out.m03 += xyz[0];
 	out.m13 += xyz[1];
 	out.m23 += xyz[2];
@@ -62,7 +64,7 @@ static void swap(float& a, float& b)
 
 void rgMat44Transpose(float mat[16])
 {
-	Mat44& out = *reinterpret_cast<Mat44*>(mat);
+	Mat4& out = *reinterpret_cast<Mat4*>(mat);
 	swap(out.m01, out.m10);
 	swap(out.m02, out.m20);
 	swap(out.m03, out.m30);

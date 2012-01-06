@@ -820,14 +820,6 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\src\mat44.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\mat44.h"
-			>
-		</File>
-		<File
 			RelativePath="..\..\src\memory.cpp"
 			>
 		</File>
@@ -925,10 +917,6 @@
 		</File>
 		<File
 			RelativePath="..\..\src\textresource.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\vec3.h"
 			>
 		</File>
 		<File

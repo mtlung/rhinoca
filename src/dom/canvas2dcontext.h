@@ -2,8 +2,8 @@
 #define __DOM_CANVAS2DCONTEXT_H__
 
 #include "canvas.h"
-#include "../mat44.h"
 #include "../../roar/base/roArray.h"
+#include "../../roar/math/roMatrix.h"
 
 namespace Dom {
 
@@ -186,7 +186,7 @@ public:
 	OpenVG* openvg;
 
 	struct State {
-		Mat44 transform;
+		ro::Mat4 transform;
 	};
 	State currentState;
 	ro::Array<State> stateStack;

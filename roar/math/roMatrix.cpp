@@ -9,6 +9,86 @@
 
 namespace ro {
 
+const Mat4 mat4Identity(
+	1, 0, 0, 0,
+	0, 1, 0, 0,
+	0, 0, 1, 0,
+	0, 0, 0, 1
+);
+
+Mat4 makeScaleMat4(const float scale[3])
+{
+	Mat4 ret(mat4Identity);
+	ret.m00 = scale[0];
+	ret.m11 = scale[1];
+	ret.m22 = scale[2];
+	return ret;
+}
+
+Mat4 makeAxisRotationMat4(const float _axis[3], float angle)
+{
+	// Reference: OgreMatrix3.cpp
+	float c, s;
+	c = cosf(angle);
+	s = sinf(angle);
+
+	const Vec3& axis = *reinterpret_cast<const Vec3*>(_axis);
+	const float oneMinusCos = 1 - c;
+	const float x2 = axis.x * axis.x;
+	const float y2 = axis.y * axis.y;
+	const float z2 = axis.z * axis.z;
+	const float xym = axis.x * axis.y * oneMinusCos;
+	const float xzm = axis.x * axis.z * oneMinusCos;
+	const float yzm = axis.y * axis.z * oneMinusCos;
+	const float xSin = axis.x * s;
+	const float ySin = axis.y * s;
+	const float zSin = axis.z * s;
+
+	Mat4 ret(mat4Identity);
+	ret.m00 = x2 * oneMinusCos + c;
+	ret.m01 = xym - zSin;
+	ret.m02 = xzm + ySin;
+	ret.m10 = xym + zSin;
+	ret.m11 = y2 * oneMinusCos + c;
+	ret.m12 = yzm - xSin;
+	ret.m20 = xzm - ySin;
+	ret.m21 = yzm + xSin;
+	ret.m22 = z2 * oneMinusCos + c;
+	return ret;
+}
+
+Mat4 makeTranslationMat4(const float translation[3])
+{
+	Mat4 ret(mat4Identity);
+	ret.m03 = translation[0];
+	ret.m13 = translation[1];
+	ret.m23 = translation[2];
+	return ret;
+}
+
+void mat4MulVec3(const float m[4][4], const float src[3], float dst[3])
+{
+	float x = src[0];
+	float y = src[1];
+	float z = src[2];
+
+	float s = m[0][3] * x + m[1][3] * y + m[2][3] * z + m[3][3];
+	if(s == 0.0f) {
+		dst[0] = dst[1] = dst[2] = 0;
+	}
+	else if(s == 1.0f) {
+		dst[0] = m[0][0] * x + m[1][0] * y + m[2][0] * z + m[3][0];
+		dst[1] = m[0][1] * x + m[1][1] * y + m[2][1] * z + m[3][1];
+		dst[2] = m[0][2] * x + m[1][2] * y + m[2][2] * z + m[3][2];
+	}
+	else {
+		float invS = 1.0f / s;
+		dst[0] = (m[0][0] * x + m[1][0] * y + m[2][0] * z + m[3][0]) * invS;
+		dst[1] = (m[0][1] * x + m[1][1] * y + m[2][1] * z + m[3][1]) * invS;
+		dst[2] = (m[0][2] * x + m[1][2] * y + m[2][2] * z + m[3][2]) * invS;
+	}
+}
+
 void mat4MulVec4(const float m[4][4], const float src[4], float dst[4])
 {
 #if roCPU_SSE
@@ -81,7 +161,48 @@ void mat4MulMat4(const float lhs[4][4], const float rhs[4][4], float dst[4][4])
 		_mm_storeu_ps(dst[i], x3);
 	}
 #else
+	const float* m1Ptr = reinterpret_cast<const float*>(lhs);
+	const float* m2Ptr = reinterpret_cast<const float*>(rhs);
+	float* dstPtr = reinterpret_cast<float*>(dst);
+
+	for(int i=0; i<4; ++i) {
+		for(int j=0; j<4; ++j) {
+			*dstPtr
+			= m1Ptr[0 * 4 + j] * m2Ptr[0]
+			+ m1Ptr[1 * 4 + j] * m2Ptr[1]
+			+ m1Ptr[2 * 4 + j] * m2Ptr[2]
+			+ m1Ptr[3 * 4 + j] * m2Ptr[3];
+			++dstPtr;
+		}
+		m2Ptr += 4;
+	}
 #endif
+}
+
+Mat4 Mat4::transpose() const
+{
+	Mat4 transpose;
+
+	for(roSize i=0; i<4; ++i) {
+		for(roSize j=0; j<4; ++j) {
+			transpose[ i ][ j ] = mat[ j ][ i ];
+		}
+	}
+	return transpose;
+}
+
+Mat4& Mat4::transposeSelf()
+{
+	float	temp;
+
+	for(roSize i=0; i<4; ++i) {
+		for(roSize j=0; j<4; ++j) {
+			temp = mat[i][j];
+			mat[i][j] = mat[j][i];
+			mat[j][i] = temp;
+		}
+	}
+	return *this;
 }
 
 }	// namespace ro

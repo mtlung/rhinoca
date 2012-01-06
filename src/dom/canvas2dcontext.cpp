@@ -5,13 +5,12 @@
 #include "image.h"
 #include "imagedata.h"
 #include "../../roar/base/roLog.h"
-#include "../mat44.h"
-#include "../vec3.h"
 #include "../render/vg/openvg.h"
 #include "../render/vg/vgu.h"
 #include <string.h>	// For roStrCaseCmp
 
 using namespace Render;
+using namespace ro;
 
 namespace Dom {
 
@@ -796,7 +795,7 @@ CanvasRenderingContext2D::CanvasRenderingContext2D(HTMLCanvasElement* c)
 	, _globalAlpha(1)
 	, useImgDimension(false)
 {
-	currentState.transform = Mat44::identity;
+	currentState.transform.identity();
 
 	openvg = new OpenVG;
 
@@ -871,7 +870,7 @@ void CanvasRenderingContext2D::clearRect(float x, float y, float w, float h)
 		Driver::ortho(0, w_, 0, h_, 10, -10);
 	}
 
-	Driver::setViewMatrix(Mat44::identity.data);
+	Driver::setViewMatrix(mat4Identity.data);
 
 	Driver::drawQuad(
 		x + 0, y + 0,
@@ -945,7 +944,7 @@ void CanvasRenderingContext2D::drawImage(
 
 	Driver::setViewport(0, 0, w, h);
 	Driver::ortho(0, w, 0, h, 10, -10);
-	Driver::setViewMatrix(Mat44::identity.data);
+	Driver::setViewMatrix(mat4Identity.data);
 
 	// Delta UV per pixel
 	float tw = 1.0f / texture->width;
@@ -969,15 +968,15 @@ void CanvasRenderingContext2D::drawImage(
 	float dx1 = dstx, dx2 = dstx + dstw;
 	float dy1 = dsty, dy2 = dsty + dsth;
 
-	Vec3 dp1(dx1, dy1, 1);
-	Vec3 dp2(dx2, dy1, 1);
-	Vec3 dp3(dx2, dy2, 1);
-	Vec3 dp4(dx1, dy2, 1);
+	ro::Vec3 dp1(dx1, dy1, 1);
+	ro::Vec3 dp2(dx2, dy1, 1);
+	ro::Vec3 dp3(dx2, dy2, 1);
+	ro::Vec3 dp4(dx1, dy2, 1);
 
-	currentState.transform.transformPoint(dp1.data);
-	currentState.transform.transformPoint(dp2.data);
-	currentState.transform.transformPoint(dp3.data);
-	currentState.transform.transformPoint(dp4.data);
+	dp1 = currentState.transform * dp1;
+	dp2 = currentState.transform * dp2;
+	dp3 = currentState.transform * dp3;
+	dp4 = currentState.transform * dp4;
 
 	Driver::drawQuad(
 		dp1.x, dp1.y,
@@ -1008,27 +1007,27 @@ void CanvasRenderingContext2D::restore()
 void CanvasRenderingContext2D::scale(float x, float y)
 {
 	float v[3] = { x, y, 1 };
-	Mat44 m = Mat44::makeScale(v);
+	Mat4 m = makeScaleMat4(v);
 	currentState.transform *= m;
 }
 
 void CanvasRenderingContext2D::rotate(float angle)
 {
 	float axis[3] = { 0, 0, 1 };
-	Mat44 m = Mat44::makeAxisRotation(axis, angle);
+	Mat4 m = makeAxisRotationMat4(axis, angle);
 	currentState.transform *= m;
 }
 
 void CanvasRenderingContext2D::translate(float x, float y)
 {
 	float v[3] = { x, y, 0 };
-	Mat44 m = Mat44::makeTranslation(v);
+	Mat4 m = makeTranslationMat4(v);
 	currentState.transform *= m;
 }
 
 void CanvasRenderingContext2D::transform(float m11, float m12, float m21, float m22, float dx, float dy)
 {
-	Mat44 m = Mat44::identity;
+	Mat4 m(mat4Identity);
 	m.m11 = m11;	m.m12 = m12;
 	m.m21 = m21;	m.m22 = m22;
 	m.m03 = dx;		m.m13 = dy;
@@ -1037,17 +1036,17 @@ void CanvasRenderingContext2D::transform(float m11, float m12, float m21, float 
 
 void CanvasRenderingContext2D::transform(float mat44[16])
 {
-	currentState.transform *= *reinterpret_cast<Mat44*>(mat44);
+	currentState.transform *= *reinterpret_cast<Mat4*>(mat44);
 }
 
 void CanvasRenderingContext2D::setIdentity()
 {
-	currentState.transform = Mat44::identity;
+	currentState.transform.identity();
 }
 
 void CanvasRenderingContext2D::setTransform(float m11, float m12, float m21, float m22, float dx, float dy)
 {
-	Mat44 m = Mat44::identity;
+	Mat4 m(mat4Identity);
 	m.m11 = m11;	m.m12 = m12;
 	m.m21 = m21;	m.m22 = m22;
 	m.m03 = dx;		m.m13 = dy;
@@ -1140,7 +1139,7 @@ void CanvasRenderingContext2D::stroke()
 	Driver::setSamplerState(0, noTexture);
 	vgResizeSurfaceSH(this->width(), this->height());
 
-	const Mat44& m = currentState.transform;
+	const Mat4& m = currentState.transform;
 	float mat33[] = {
 		m.m00, m.m10, m.m20,
 		m.m01, m.m11, m.m21,
@@ -1160,7 +1159,7 @@ void CanvasRenderingContext2D::strokeRect(float x, float y, float w, float h)
 	Driver::setSamplerState(0, noTexture);
 	vgResizeSurfaceSH(this->width(), this->height());
 
-	const Mat44& m = currentState.transform;
+	const Mat4& m = currentState.transform;
 	float mat33[] = {
 		m.m00, m.m10, m.m20,
 		m.m01, m.m11, m.m21,
@@ -1177,7 +1176,7 @@ void CanvasRenderingContext2D::fill()
 	Driver::setSamplerState(0, noTexture);
 	vgResizeSurfaceSH(this->width(), this->height());
 
-	const Mat44& m = currentState.transform;
+	const Mat4& m = currentState.transform;
 	float mat33[] = {
 		m.m00, m.m10, m.m20,
 		m.m01, m.m11, m.m21,
@@ -1197,7 +1196,7 @@ void CanvasRenderingContext2D::fillRect(float x, float y, float w, float h)
 	Driver::setSamplerState(0, noTexture);
 	vgResizeSurfaceSH(this->width(), this->height());
 
-	const Mat44& m = currentState.transform;
+	const Mat4& m = currentState.transform;
 	float mat33[] = {
 		m.m00, m.m10, m.m20,
 		m.m01, m.m11, m.m21,

@@ -5,7 +5,12 @@ namespace ro {
 
 struct Vec2
 {
-	float		x, y;
+	union {
+		struct { float
+			x, y;
+		};
+		float data[2];
+	};
 
 	Vec2		();
 	Vec2		(const float* p2f);
@@ -47,7 +52,6 @@ struct Vec2
 	void		snap();					// Snap to closest integer value
 	void		snapInt();				// Snap towards integer (floor)
 
-	float*		toFloatPtr() const;
 	const char*	toString(int precision = 2) const;
 
 	void		lerp(const Vec2& v1, const Vec2& v2, float l);
@@ -58,7 +62,12 @@ struct Vec2
 
 struct Vec3
 {
-	float		x, y, z;
+	union {
+		struct { float
+			x, y, z;
+		};
+		float data[3];
+	};
 
 	Vec3		();
 	Vec3		(const float* p3f);
@@ -112,7 +121,6 @@ struct Vec3
 //	Mat3		toMat3() const;			// vector should be normalized
 	const Vec2&	toVec2() const;
 	Vec2&		toVec2();
-	float*		toFloatPtr() const;
 	const char*	toString(int precision = 2) const;
 
 	void		normalVectors(Vec3& left, Vec3& down) const;	// vector should be normalized
@@ -131,7 +139,12 @@ struct Vec3
 
 struct Vec4
 {
-	float		x, y, z, w;
+	union {
+		struct { float
+			x, y, z, w;
+		};
+		float data[4];
+	};
 
 	Vec4		();
 	Vec4		(const float* p4f);
@@ -169,7 +182,6 @@ struct Vec4
 	float		normalize();			// Returns length
 	float		normalizeFast();		// Returns length
 
-	float*		toFloatPtr() const;
 	const char*	toString(int precision = 2) const;
 
 	void		lerp(const Vec4& v1, const Vec4& v2, float l);

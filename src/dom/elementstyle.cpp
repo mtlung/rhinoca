@@ -212,8 +212,8 @@ ElementStyle::ElementStyle(Element* ele)
 	: element(ele)
 	, opacity(1)
 	, _origin(50, 50, 0)
-	, _localToWorld(Mat44::identity)
-	, _localTransformation(Mat44::identity)
+	, _localToWorld(mat4Identity)
+	, _localTransformation(mat4Identity)
 	, backgroundPositionX(0), backgroundPositionY(0)
 	, backgroundColor(0, 0, 0, 0)
 {
@@ -236,7 +236,7 @@ void ElementStyle::updateTransformation()
 		Element* ele = dynamic_cast<Element*>(parent);
 
 		if(ele) if(ElementStyle* s = ele->_style) {
-			s->_localToWorld.mul(localTransformation(), _localToWorld);
+			_localToWorld = s->_localToWorld * localTransformation();
 			break;
 		}
 		parent = static_cast<Node*>(parent->parentNode);
@@ -390,7 +390,7 @@ void ElementStyle::setHeight(unsigned val) { element->setHeight(val); }
 
 void ElementStyle::setIdentity()
 {
-	_localTransformation = Mat44::identity;
+	_localTransformation.identity();
 }
 
 void ElementStyle::setTransform(const char* transformStr)
@@ -410,42 +410,42 @@ void ElementStyle::setTransform(const char* transformStr)
 		{
 			const StringHash hash = stringLowerCaseHash(nameBegin, nameEnd - nameBegin);
 
-			Mat44 mat;
+			Mat4 mat;
 			if(hash == stringHash("translate"))
 			{
 				if(valueIdx == 1) values[1] = 0;	// If the second param is not provided, assign zero
-				mat = Mat44::makeTranslation(values);
+				mat = makeTranslationMat4(values);
 			}
 			else if(hash == stringHash("translatex"))
 			{
 				const float val[3] = { values[0], 0, 0 };
-				mat = Mat44::makeTranslation(val);
+				mat = makeTranslationMat4(val);
 			}
 			else if(hash == stringHash("translatey"))
 			{
 				const float val[3] = { 0, values[0], 0 };
-				mat = Mat44::makeTranslation(val);
+				mat = makeTranslationMat4(val);
 			}
 			else if(hash == stringHash("scale"))
 			{
 				if(valueIdx == 1) values[1] = values[0];	// If the second param is not provided, use the first one
 				const float val[3] = { values[0], values[1], 1 };
-				mat = Mat44::makeScale(val);
+				mat = makeScaleMat4(val);
 			}
 			else if(hash == stringHash("scalex"))
 			{
 				const float val[3] = { values[0], 1, 1 };
-				mat = Mat44::makeScale(val);
+				mat = makeScaleMat4(val);
 			}
 			else if(hash == stringHash("scaley"))
 			{
 				const float val[3] = { 1, values[0], 1 };
-				mat = Mat44::makeScale(val);
+				mat = makeScaleMat4(val);
 			}
 			else if(hash == stringHash("rotate"))
 			{
 				static const float zaxis[3] = { 0, 0, 1 };
-				mat = Mat44::makeAxisRotation(zaxis, values[0]);
+				mat = makeAxisRotationMat4(zaxis, values[0]);
 			}
 			else if(hash == stringHash("skew"))
 			{
@@ -474,9 +474,9 @@ void ElementStyle::setTransform(const char* transformStr)
 
 			style->_localTransformation =
 				style->_localTransformation *
-				Mat44::makeTranslation(origin.data) *
+				makeTranslationMat4(origin.data) *
 				mat *
-				Mat44::makeTranslation(negOrigin);
+				makeTranslationMat4(negOrigin);
 		}
 
 		static void callback(ParserResult* result, Parser* parser)
@@ -590,12 +590,12 @@ Vec3 ElementStyle::origin() const
 	);
 }
 
-const Mat44& ElementStyle::localTransformation() const
+const Mat4& ElementStyle::localTransformation() const
 {
 	return _localTransformation;
 }
 
-Mat44 ElementStyle::worldTransformation() const
+Mat4 ElementStyle::worldTransformation() const
 {
 	// TODO: Implementation
 	return localTransformation();

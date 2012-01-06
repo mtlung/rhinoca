@@ -6,21 +6,21 @@
 
 namespace ro {
 
-static const float matrixEpsilon;
+static float matrixEpsilon;
 
 /// Column major
 struct Mat4
 {
 	union {
 		// Individual elements
-		struct _1 { float
+		struct { float
 			m00, m10, m20, m30,
 			m01, m11, m21, m31,
 			m02, m12, m22, m32,
 			m03, m13, m23, m33;
 		};
 		// Columns of Vec4
-		struct _2 { float
+		struct { float
 			c0[4], c1[4], c2[4], c3[4];
 		};
 		// As a 1 dimension array
@@ -31,7 +31,14 @@ struct Mat4
 
 	Mat4();
 //	explicit Mat4(const Mat3& rotation, const Vec3& translation);
+	Mat4(const Mat4& a);
 	explicit Mat4(const float* p16f);
+	Mat4(
+		float xx, float xy, float xz, float xw,
+		float yx, float yy, float yz, float yw,
+		float zx, float zy, float zz, float zw,
+		float wx, float wy, float wz, float ww);
+
 	void		copyFrom(const float* p16f);
 	void		copyTo(float* p16f) const;
 
@@ -79,11 +86,16 @@ struct Mat4
 	bool		inverseFastSelf();		// Returns false if determinant is zero
 	Mat4		transposeMultiply(const Mat4& b) const;
 
-	float*		toFloatPtr() const;
-	float*		toFloatPtr();
 	const char*	toString(int precision = 2) const;
 };	// Mat4
 
+extern const Mat4 mat4Identity;
+
+Mat4 makeScaleMat4(const float scale[3]);
+Mat4 makeAxisRotationMat4(const float axis[3], float angle);
+Mat4 makeTranslationMat4(const float translation[3]);
+
+void mat4MulVec3(const float m[4][4], const float src[3], float dst[3]);
 void mat4MulVec4(const float m[4][4], const float src[4], float dst[4]);
 void mat4MulMat4(const float lhs[4][4], const float rhs[4][4], float dst[4][4]);
 

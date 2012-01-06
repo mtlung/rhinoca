@@ -4,8 +4,7 @@
 #include "color.h"
 #include "../jsbindable.h"
 #include "../render/texture.h"
-#include "../mat44.h"
-#include "../vec3.h"
+#include "../../roar/math/roMatrix.h"
 
 namespace Dom {
 
@@ -68,19 +67,19 @@ public:
 // Transform
 	// http://www.w3.org/TR/css3-2d-transforms/
 	// TODO: May move these transform into a transform component
-	Vec3 origin() const;			/// Always in unit of pixel
-	const Mat44& localTransformation() const;
-	Mat44 worldTransformation() const;
+	ro::Vec3 origin() const;		/// Always in unit of pixel
+	const ro::Mat4& localTransformation() const;
+	ro::Mat4 worldTransformation() const;
 
 	void setIdentity();
 	void setTransform(const char* transformStr);
 	void setTransformOrigin(const char* transformOriginStr);
 
-	Vec3 _origin;					/// Transformation orgiin, the unit can be pixel or percentage
+	ro::Vec3 _origin;				/// Transformation origin, the unit can be pixel or percentage
 	bool _originUsePercentage[4];	/// Indicate if _origin is in unit of percentage
 
-	mutable Mat44 _localToWorld;
-	mutable Mat44 _localTransformation;
+	mutable ro::Mat4 _localToWorld;
+	mutable ro::Mat4 _localTransformation;
 
 // Background
 	float backgroundPositionX;

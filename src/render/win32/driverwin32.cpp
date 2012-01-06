@@ -3,7 +3,6 @@
 #include "../driverdetail.h"
 #include "../../rhassert.h"
 #include "../../common.h"
-#include "../../Vec3.h"
 #include "../../../roar/base/roStringUtility.h"
 
 #include <gl/gl.h>

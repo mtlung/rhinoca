@@ -176,10 +176,6 @@ inline Vec2& Vec2::operator*=(float a) {
 	return *this;
 }
 
-inline float *Vec2::toFloatPtr() const {
-	return (float*)&x;
-}
-
 
 // ----------------------------------------------------------------------
 
@@ -395,10 +391,6 @@ inline Vec2 &Vec3::toVec2(void) {
 	return *reinterpret_cast<Vec2*>(this);
 }
 
-inline float* Vec3::toFloatPtr(void) const {
-	return (float*)&x;
-}
-
 
 // ----------------------------------------------------------------------
 
@@ -595,10 +587,6 @@ inline float Vec4::normalize(void) {
 	y *= invLength;
 	z *= invLength;
 	return invLength * sqrLength;
-}
-
-inline float* Vec4::toFloatPtr(void) const {
-	return (float*)&x;
 }
 
 }	// namespace ro
