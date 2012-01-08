@@ -58,8 +58,7 @@ CheckProgress:
 			if(GetLastError() == ERROR_IO_PENDING)
 				return false;
 
-			// If error occurred
-			impl->readable = transferred;
+			// If EOF or error occurred
 			return true;
 		}
 
@@ -72,8 +71,10 @@ CheckProgress:
 
 	DWORD bytesToRead = clamp_cast<unsigned int>(size);
 	roSize bufSize = roMaxOf2(impl->readable + (roSize)bytesToRead, (roSize)1024);
-	impl->buf = _allocator.realloc(impl->buf, impl->bufSize, bufSize);
-	impl->bufSize = bufSize;
+	if(bufSize > impl->bufSize) {
+		impl->buf = _allocator.realloc(impl->buf, impl->bufSize, bufSize);
+		impl->bufSize = bufSize;
+	}
 
 	if(::ReadFile(impl->file, impl->buf + impl->readable, bytesToRead, NULL, &impl->overlap)) {
 		impl->readInProgress = true;
