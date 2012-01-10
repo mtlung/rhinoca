@@ -53,6 +53,7 @@ roRDriverContext* _newDriverContext_GL(roRDriver* driver)
 	ret->lastSwapTime = 0;
 
 	ret->currentBlendStateHash = 0;
+	ret->currentRasterizerStateHash = 0;
 	ret->currentDepthStencilStateHash = 0;
 
 	ret->currentIndexBufSysMemPtr = NULL;

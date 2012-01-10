@@ -47,6 +47,7 @@ roRDriverContext* _newDriverContext_DX11(roRDriver* driver)
 	ret->lastSwapTime = 0;
 
 	ret->currentBlendStateHash = 0;
+	ret->currentRasterizerStateHash = 0;
 	ret->currentDepthStencilStateHash = 0;
 
 	ret->currentShaders.assign(NULL);

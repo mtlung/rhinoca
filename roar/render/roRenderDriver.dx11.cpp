@@ -102,6 +102,19 @@ static void _setViewport(unsigned x, unsigned y, unsigned width, unsigned height
 	ctx->dxDeviceContext->RSSetViewports(1, &viewport);
 }
 
+static void _setScissorRect(unsigned x, unsigned y, unsigned width, unsigned height)
+{
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
+	if(!ctx || !ctx->dxDeviceContext) return;
+
+	D3D10_RECT rect = {
+		x, y,
+		x + width, y + height
+	};
+
+	ctx->dxDeviceContext->RSSetScissorRects(1, &rect);
+}
+
 static void _clearColor(float r, float g, float b, float a)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
@@ -284,10 +297,10 @@ static void _setBlendState(roRDriverBlendState* state)
 	if(!state || !ctx) return;
 
 	// Generate the hash value if not yet
-	if(state->hash == 0) {
+	if(state->hash == 0)
 		state->hash = (void*)_hash(state, sizeof(*state));
-	}
-	else if(state->hash == ctx->currentBlendStateHash)
+
+	if(state->hash == ctx->currentBlendStateHash)
 		return;
 	else {
 		// TODO: Make use of the hash value
@@ -324,6 +337,47 @@ static void _setBlendState(roRDriverBlendState* state)
 	);
 }
 
+static void _setRasterizerState(roRDriverRasterizerState* state)
+{
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
+	if(!state || !ctx) return;
+
+	// Generate the hash value if not yet
+	if(state->hash == 0)
+		state->hash = (void*)_hash(state, sizeof(*state));
+
+	if(state->hash == ctx->currentRasterizerStateHash)
+		return;
+	else {
+		// TODO: Make use of the hash value
+	}
+
+	ctx->currentRasterizerStateHash = state->hash;
+
+	D3D11_RASTERIZER_DESC desc = {
+		D3D11_FILL_SOLID,		// Fill mode
+		D3D11_CULL_BACK,		// Cull mode
+		true,					// Is front counter clockwise	// NOTE: This is differ from DX11 initial value, which is false
+		0,						// Depth bias
+		0,						// SlopeScaledDepthBias
+		0,						// DepthBiasClamp
+		true,					// DepthClipEnable
+		state->scissorEnable,	// ScissorEnable
+		false,					// MultisampleEnable
+		false					// AntialiasedLineEnable
+	};
+
+	ComPtr<ID3D11RasterizerState> s;
+	HRESULT hr = ctx->dxDevice->CreateRasterizerState(&desc, &s.ptr);
+
+	if(FAILED(hr)) {
+		roLog("error", "CreateRasterizerState failed\n");
+		return;
+	}
+
+	ctx->dxDeviceContext->RSSetState(s);
+}
+
 static const StaticArray<D3D11_COMPARISON_FUNC, 8> _comparisonFuncs = {
 	D3D11_COMPARISON_NEVER,
 	D3D11_COMPARISON_LESS,
@@ -358,7 +412,8 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 			sizeof(roRDriverDepthStencilState) - roOffsetof(roRDriverDepthStencilState, roRDriverDepthStencilState::enableDepth)
 		);
 	}
-	else if(state->hash == ctx->currentDepthStencilStateHash)
+
+	if(state->hash == ctx->currentDepthStencilStateHash)
 		return;
 	else {
 		// TODO: Make use of the hash value
@@ -1258,6 +1313,7 @@ roRDriver* _roNewRenderDriver_DX11(const char* driverStr, const char*)
 	ret->swapBuffers = _driverSwapBuffers_DX11;
 	ret->changeResolution = _driverChangeResolution_DX11;
 	ret->setViewport = _setViewport;
+	ret->setScissorRect = _setScissorRect;
 	ret->clearColor = _clearColor;
 	ret->clearDepth = _clearDepth;
 	ret->clearStencil = _clearStencil;
@@ -1267,6 +1323,7 @@ roRDriver* _roNewRenderDriver_DX11(const char* driverStr, const char*)
 
 	ret->applyDefaultState = rgDriverApplyDefaultState;
 	ret->setBlendState = _setBlendState;
+	ret->setRasterizerState = _setRasterizerState;
 	ret->setDepthStencilState = _setDepthStencilState;
 	ret->setTextureState = _setTextureState;
 

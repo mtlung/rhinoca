@@ -147,6 +147,12 @@ typedef struct roRDriverBlendState
 	roRDriverColorWriteMask wirteMask;
 } roRDriverBlendState;
 
+typedef struct roRDriverRasterizerState
+{
+	void* hash;		/// Set it to 0 when ever the state is changed
+	bool scissorEnable;
+} roRDriverRasterizerState;
+
 typedef enum roRDriverCompareFunc
 {
 	roRDriverDepthCompareFunc_Never = 0,/// Never pass, 
@@ -227,6 +233,7 @@ typedef struct roRDriver
 	void (*swapBuffers)();
 	bool (*changeResolution)(unsigned width, unsigned height);
 	void (*setViewport)(unsigned x, unsigned y, unsigned width, unsigned height, float zmin, float zmax);
+	void (*setScissorRect)(unsigned x, unsigned y, unsigned width, unsigned height);
 	void (*clearColor)(float r, float g, float b, float a);
 	void (*clearDepth)(float z);
 	void (*clearStencil)(unsigned char s);
@@ -240,6 +247,7 @@ typedef struct roRDriver
 // State management
 	void (*applyDefaultState)(roRDriverContext* self);
 	void (*setBlendState)(roRDriverBlendState* blendState);
+	void (*setRasterizerState)(roRDriverRasterizerState* rasterizerState);
 	void (*setDepthStencilState)(roRDriverDepthStencilState* depthStencilState);
 	void (*setTextureState)(roRDriverTextureState* textureStates, roSize stateCount, unsigned startingTextureUnit);
 

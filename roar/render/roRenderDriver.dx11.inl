@@ -89,6 +89,7 @@ struct RenderTarget
 struct roRDriverContextImpl : public roRDriverContext
 {
 	void* currentBlendStateHash;
+	void* currentRasterizerStateHash;
 	void* currentDepthStencilStateHash;
 
 	ComPtr<ID3D11Device> dxDevice;

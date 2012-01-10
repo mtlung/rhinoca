@@ -70,8 +70,15 @@ static void _setViewport(unsigned x, unsigned y, unsigned width, unsigned height
 {
 	glEnable(GL_SCISSOR_TEST);
 	glViewport((GLint)x, (GLint)y, (GLsizei)width, (GLsizei)height);
-	glScissor((GLint)x, (GLint)y, (GLsizei)width, (GLsizei)height);
 	glDepthRange(zmin, zmax);
+}
+
+static void _setScissorRect(unsigned x, unsigned y, unsigned width, unsigned height)
+{
+	// Get the current viewport first, to make y-axis pointing down
+	GLint viewPort[4];
+	glGetIntegerv(GL_VIEWPORT, viewPort);
+	glScissor(x, viewPort[2] - height - y, width, height);
 }
 
 static void _clearColor(float r, float g, float b, float a)
@@ -201,10 +208,10 @@ static void _setBlendState(roRDriverBlendState* state)
 	if(!state || !ctx) return;
 
 	// Generate the hash value if not yet
-	if(state->hash == 0) {
+	if(state->hash == 0)
 		state->hash = (void*)_hash(state, sizeof(*state));
-	}
-	else if(state->hash == ctx->currentBlendStateHash)
+
+	if(state->hash == ctx->currentBlendStateHash)
 		return;
 	else {
 		// TODO: Make use of the hash value, if OpenGL support state block
@@ -245,6 +252,29 @@ static void _setBlendState(roRDriverBlendState* state)
 	);
 }
 
+static void _setRasterizerState(roRDriverRasterizerState* state)
+{
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
+	if(!state || !ctx) return;
+
+	// Generate the hash value if not yet
+	if(state->hash == 0)
+		state->hash = (void*)_hash(state, sizeof(*state));
+
+	if(state->hash == ctx->currentRasterizerStateHash)
+		return;
+	else {
+		// TODO: Make use of the hash value, if OpenGL support state block
+	}
+
+	ctx->currentRasterizerStateHash = state->hash;
+
+	if(state->scissorEnable)
+		glEnable(GL_SCISSOR_TEST);
+	else
+		glDisable(GL_SCISSOR_TEST);
+}
+
 static const StaticArray<GLenum, 8> _compareFunc = {
 	GL_NEVER,
 	GL_LESS,
@@ -279,7 +309,8 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 			sizeof(roRDriverDepthStencilState) - offsetof(roRDriverDepthStencilState, roRDriverDepthStencilState::enableDepth)
 		);
 	}
-	else if(state->hash == ctx->currentDepthStencilStateHash)
+
+	if(state->hash == ctx->currentDepthStencilStateHash)
 		return;
 	else {
 		// TODO: Make use of the hash value, if OpenGL support state block
@@ -1407,6 +1438,7 @@ roRDriver* _roNewRenderDriver_GL(const char* driverStr, const char*)
 	ret->swapBuffers = _driverSwapBuffers_GL;
 	ret->changeResolution = _driverChangeResolution_GL;
 	ret->setViewport = _setViewport;
+	ret->setScissorRect = _setScissorRect;
 	ret->clearColor = _clearColor;
 	ret->clearDepth = _clearDepth;
 	ret->clearStencil = _clearStencil;
@@ -1416,6 +1448,7 @@ roRDriver* _roNewRenderDriver_GL(const char* driverStr, const char*)
 
 	ret->applyDefaultState = rgDriverApplyDefaultState;
 	ret->setBlendState = _setBlendState;
+	ret->setRasterizerState = _setRasterizerState;
 	ret->setDepthStencilState = _setDepthStencilState;
 	ret->setTextureState = _setTextureState;
 
