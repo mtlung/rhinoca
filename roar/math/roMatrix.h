@@ -91,14 +91,15 @@ struct Mat4
 
 extern const Mat4 mat4Identity;
 
-Mat4 makeScaleMat4(const float scale[3]);
-Mat4 makeAxisRotationMat4(const float axis[3], float angle);
-Mat4 makeTranslationMat4(const float translation[3]);
-
 void mat4MulVec3(const float m[4][4], const float src[3], float dst[3]);
 void mat4MulVec4(const float m[4][4], const float src[4], float dst[4]);
 void mat4MulMat4(const float lhs[4][4], const float rhs[4][4], float dst[4][4]);
 
+Mat4 makeScaleMat4(const float scale[3]);
+Mat4 makeAxisRotationMat4(const float axis[3], float angle);
+Mat4 makeTranslationMat4(const float translation[3]);
+Mat4 makeOrthoMat4(float left, float right, float bottom, float top, float zNear, float zFar);
+Mat4 makePrespectiveMat4(float fovyDeg, float acpectWidthOverHeight, float zNera, float zFar);
 
 // ----------------------------------------------------------------------
 

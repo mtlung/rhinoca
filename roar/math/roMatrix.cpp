@@ -193,7 +193,7 @@ Mat4 Mat4::transpose() const
 
 Mat4& Mat4::transposeSelf()
 {
-	float	temp;
+	float temp;
 
 	for(roSize i=0; i<4; ++i) {
 		for(roSize j=0; j<4; ++j) {
@@ -203,6 +203,38 @@ Mat4& Mat4::transposeSelf()
 		}
 	}
 	return *this;
+}
+
+Mat4 makeOrthoMat4(float left, float right, float bottom, float top, float zNear, float zFar)
+{
+	Mat4 m(mat4Identity);
+
+	m.m00 = 2.0f / (right - left);
+	m.m03 = -(right + left) / (right - left);
+	m.m11 = 2.0f / (top - bottom);
+	m.m13 = -(top + bottom) / (top - bottom);
+	m.m22 = -2.0f / (zFar - zNear);
+	m.m23 = -(zFar + zNear) / (zFar - zNear);
+
+	return m;
+}
+
+// See http://graphics.ucsd.edu/courses/cse167_f05/CSE167_04.ppt
+Mat4 makePrespectiveMat4(float fovyDeg, float acpectWidthOverHeight, float zNear, float zFar)
+{
+	float f = 1.0f / tanf(roDeg2Rad(fovyDeg) * 0.5f);
+	float nf = 1.0f / (zNear - zFar);
+
+	Mat4 m;
+	m.zero();
+
+	m.m00 = f / acpectWidthOverHeight;	// One over width
+	m.m11 = f;							// One over height
+	m.m22 = (zFar + zNear) * nf;
+	m.m23 = (2 * zFar * zNear) * nf;
+	m.m32 = -1;							// Perspective division
+
+	return m;
 }
 
 }	// namespace ro
