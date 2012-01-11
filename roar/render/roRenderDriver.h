@@ -219,6 +219,15 @@ typedef struct roRDriverTextureState
 	unsigned maxAnisotropy;
 } roRDriverTextureState;
 
+typedef enum roRDriverPrimitiveType
+{
+	roRDriverPrimitiveType_PointList = 0,
+	roRDriverPrimitiveType_Linelist,
+	roRDriverPrimitiveType_LineStrip,
+	roRDriverPrimitiveType_TriangleList,
+	roRDriverPrimitiveType_TriangleStrip
+} roRDriverPrimitiveType;
+
 // Default states:
 // CCW -> front face
 typedef struct roRDriver
@@ -278,6 +287,8 @@ typedef struct roRDriver
 // Making draw call
 	void (*drawTriangle)(roSize offset, roSize vertexCount, unsigned flags);
 	void (*drawTriangleIndexed)(roSize offset, roSize indexCount, unsigned flags);
+	void (*drawPrimitive)(roRDriverPrimitiveType type, roSize offset, roSize vertexCount, unsigned flags);
+	void (*drawPrimitiveIndexed)(roRDriverPrimitiveType type, roSize offset, roSize indexCount, unsigned flags);
 
 // Driver version
 	const char* driverName;

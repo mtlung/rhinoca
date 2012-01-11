@@ -1383,18 +1383,26 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 // ----------------------------------------------------------------------
 // Making draw call
 
-static void _drawTriangle(roSize offset, roSize vertexCount, unsigned flags)
+static const StaticArray<GLenum, 5> _primitiveTypeMappings = {
+	GL_POINTS,
+	GL_LINES,
+	GL_LINE_STRIP,
+	GL_TRIANGLES,
+	GL_TRIANGLE_STRIP
+};
+
+static void _drawPrimitive(roRDriverPrimitiveType type, roSize offset, roSize vertexCount, unsigned flags)
 {
-	GLenum mode = GL_TRIANGLES;
+	GLenum mode = _primitiveTypeMappings[type];
 	glDrawArrays(mode, num_cast<GLsizei>(offset), num_cast<GLsizei>(vertexCount));
 }
 
-static void _drawTriangleIndexed(roSize offset, roSize indexCount, unsigned flags)
+static void _drawPrimitiveIndexed(roRDriverPrimitiveType type, roSize offset, roSize indexCount, unsigned flags)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return;
 
-	GLenum mode = GL_TRIANGLES;
+	GLenum mode = _primitiveTypeMappings[type];
 	GLenum indexType = GL_UNSIGNED_SHORT;
 	ptrdiff_t byteOffset = offset * sizeof(roUint16);
 
@@ -1405,6 +1413,17 @@ static void _drawTriangleIndexed(roSize offset, roSize indexCount, unsigned flag
 	glDrawElements(mode, num_cast<GLsizei>(indexCount), indexType, (void*)byteOffset);
 	checkError();
 }
+
+static void _drawTriangle(roSize offset, roSize vertexCount, unsigned flags)
+{
+	_drawPrimitive(roRDriverPrimitiveType_TriangleList, offset, vertexCount, flags);
+}
+
+static void _drawTriangleIndexed(roSize offset, roSize indexCount, unsigned flags)
+{
+	_drawPrimitiveIndexed(roRDriverPrimitiveType_TriangleList, offset, indexCount, flags);
+}
+
 
 // ----------------------------------------------------------------------
 // Driver
@@ -1475,6 +1494,8 @@ roRDriver* _roNewRenderDriver_GL(const char* driverStr, const char*)
 
 	ret->drawTriangle = _drawTriangle;
 	ret->drawTriangleIndexed = _drawTriangleIndexed;
+	ret->drawPrimitive = _drawPrimitive;
+	ret->drawPrimitiveIndexed = _drawPrimitiveIndexed;
 
 	return ret;
 }

@@ -1267,18 +1267,38 @@ bool _setUniformTexture(StringHash nameHash, roRDriverTexture* texture)
 // ----------------------------------------------------------------------
 // Making draw call
 
-static void _drawTriangle(roSize offset, roSize vertexCount, unsigned flags)
+static const StaticArray<D3D11_PRIMITIVE_TOPOLOGY, 5> _primitiveTypeMappings = {
+	D3D11_PRIMITIVE_TOPOLOGY_POINTLIST,
+	D3D11_PRIMITIVE_TOPOLOGY_LINELIST,
+	D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP,
+	D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
+	D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP
+};
+
+static void _drawPrimitive(roRDriverPrimitiveType type, roSize offset, roSize vertexCount, unsigned flags)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx) return;
+	ctx->dxDeviceContext->IASetPrimitiveTopology(_primitiveTypeMappings[type]);
+	ctx->dxDeviceContext->Draw(num_cast<UINT>(vertexCount), num_cast<UINT>(offset));
+}
+
+static void _drawPrimitiveIndexed(roRDriverPrimitiveType type, roSize offset, roSize indexCount, unsigned flags)
+{
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
+	if(!ctx) return;
+	ctx->dxDeviceContext->IASetPrimitiveTopology(_primitiveTypeMappings[type]);
+	ctx->dxDeviceContext->DrawIndexed(num_cast<UINT>(indexCount), num_cast<UINT>(offset), 0);
+}
+
+static void _drawTriangle(roSize offset, roSize vertexCount, unsigned flags)
+{
+	_drawPrimitive(roRDriverPrimitiveType_TriangleList, offset, vertexCount, flags);
 }
 
 static void _drawTriangleIndexed(roSize offset, roSize indexCount, unsigned flags)
 {
-	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
-	if(!ctx) return;
-	ctx->dxDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	ctx->dxDeviceContext->DrawIndexed(num_cast<UINT>(indexCount), num_cast<UINT>(offset), 0);
+	_drawPrimitiveIndexed(roRDriverPrimitiveType_TriangleList, offset, indexCount, flags);
 }
 
 // ----------------------------------------------------------------------
