@@ -19,21 +19,32 @@ static const float roM_MS2SEC		= 0.001f;					// Milliseconds to seconds multipli
 static const float roINFINITY		= 1e30f;					// Huge number which should be larger than any valid number used
 static const float roFLT_EPSILON	= 1.192092896e-07f;			// Smallest positive number such that 1.0+FLT_EPSILON != 1.0
 
-float roFAbs(float x);
-float roSqrt(float x);
-float roInvSqrt(float x);
-float roInvSqrtFast(float x);
-float roFloor(float x);
+float roFAbs				(float x);
+float roSqrt				(float x);
+float roInvSqrt				(float x);
+float roInvSqrtFast			(float x);
 
-float roDeg2Rad(float x);
-float roRad2Deg(float x);
+float roDeg2Rad				(float x);
+float roRad2Deg				(float x);
 
-float roSin(float x);
-float roCos(float x);
-float roTan(float x);
+float roSin					(float x);
+float roCos					(float x);
+float roTan					(float x);
 
-bool roIsPowerOfTwo(unsigned x);
-unsigned roNextPowerOfTwo(unsigned x);
+float roFloor				(float x);
+float roCeil				(float x);
+float roFrac				(float x);
+float roRound				(float x);	// < 0.5 floor, > 0.5 ceil
+float roClamp				(float x, float min, float max);
+
+bool roIsPowerOfTwo			(unsigned x);
+unsigned roNextPowerOfTwo	(unsigned x);
+
+// A bunch of interpolation functions
+// http://sol.gfxile.net/interpolation/index.html
+template<class T> T roStepLinear(const T& v1, const T& v2, float t);
+template<class T> T roStepSmooth(const T& v1, const T& v2, float t);
+template<class T> T roStepRunAvg(const T& oldVal, const T& newVal, unsigned avgOverFrame);
 
 
 // ----------------------------------------------------------------------
@@ -42,7 +53,6 @@ inline float roFAbs(float x) { return ::fabsf(x); }
 inline float roSqrt(float x) { return ::sqrtf(x); }
 inline float roInvSqrt(float x) { return 1.0f / ::sqrtf(x); }
 inline float roInvSqrtFast(float x) { return 1.0f / ::sqrtf(x); }
-inline float roFloor(float x) { return floorf(x); }
 
 inline float roDeg2Rad(float x) { return x * roM_DEG2RAD; }
 inline float roRad2Deg(float x) { return x * roM_RAD2DEG; }
@@ -50,6 +60,28 @@ inline float roRad2Deg(float x) { return x * roM_RAD2DEG; }
 inline float roSin(float x) { return ::sinf(x); }
 inline float roCos(float x) { return ::cosf(x); }
 inline float roTan(float x) { return ::tanf(x); }
+
+inline float roFloor(float x) { return ::floorf(x); }
+inline float roCeil(float x) { return ::ceilf(x); }
+inline float roFrac(float x) { return x - roFloor(x); }
+inline float roRound(float x) { return ::floorf(x + 0.5f); }
+
+template<class T>
+inline T roStepLinear(const T& v1, const T& v2, float t) { return v1 + (v2 - v1) * t; }
+
+template<class T>
+inline T roStepSmooth(const T& v1, const T& v2, float t)
+{
+	t = t * t * (3 - 2 * t);
+	return roStepLinear(v1, v2, t);
+}
+
+template<class T>
+inline T roStepRunAvg(const T& oldVal, const T& newVal, unsigned avgOverFrame)
+{
+	roAssert(avgOverFrame > 0);
+	return ((oldVal * (avgOverFrame - 1)) + newVal) / avgOverFrame;
+}
 
 inline bool roIsPowerOfTwo(unsigned x) { return x == roNextPowerOfTwo(x); }
 

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "roGraphicsTestBase.win.h"
+#include "../../roar/math/roMath.h"
 
 GraphicsTestBase::GraphicsTestBase()
 	: hWnd(0), driver(NULL), context(NULL), averageFrameDuration(0)
@@ -113,7 +114,7 @@ bool GraphicsTestBase::keepRun()
 	resourceManager.tick();
 
 	if(context)
-		averageFrameDuration = context->lastFrameDuration/60 + averageFrameDuration * 59.0f / 60;
+		averageFrameDuration = roStepRunAvg(averageFrameDuration, context->lastFrameDuration, 60);
 
 	printf("\rFPS: %f, frame duration: %fms", 1.0f/averageFrameDuration, averageFrameDuration*1000);
 

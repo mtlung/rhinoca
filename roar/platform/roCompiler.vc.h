@@ -45,7 +45,7 @@ typedef unsigned __int64 roUint64;
 #	define roAssert(expression) (void)( (!!(expression)) || (_roAssert(_roWIDEN(#expression), _roWIDEN(__FILE__), __LINE__), 0) )
 	void _roAssert(const wchar_t* expression, const wchar_t* file, unsigned line);
 #else
-#	define roAssert(expression) ((void)0)
+#	define roAssert(expression) {((void)0)}
 #endif
 
 // Counting the number of array elements

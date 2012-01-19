@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "roGraphicsTestBase.win.h"
-#include "../../src/render/rgutility.h"
+#include "../../roar/math/roMatrix.h"
 
 #include <math.h>
 
@@ -345,20 +345,19 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 	CHECK(driver->initBuffer(ubuffer, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, NULL, sizeof(float)*(16*2+4)));
 
 	// Model view matrix
-	float* modelView = (float*)driver->mapBuffer(ubuffer, roRDriverBufferMapUsage_Write);
+	Mat4* modelView = (Mat4*)driver->mapBuffer(ubuffer, roRDriverBufferMapUsage_Write);
 
-	rgMat44MakeIdentity(modelView);
 	float translate[] =  { 0, 0, -3 };
-	rgMat44TranslateBy(modelView, translate);
+	*modelView = makeTranslationMat4(translate);
 
 	// Projection matrix
-	float* prespective = modelView + 16;
-	rgMat44MakePrespective(prespective, 90, 1, 2, 10);
-	driver->adjustDepthRangeMatrix(prespective);
+	Mat4* prespective = modelView + 1;
+	*prespective = makePrespectiveMat4(90, 1, 2, 10);
+	driver->adjustDepthRangeMatrix(prespective->data);
 
 	// Color
 	float color[] = { 1, 1, 0, 1 };
-	memcpy(prespective + 16, color, sizeof(color));
+	memcpy(prespective + 1, color, sizeof(color));
 
 	driver->unmapBuffer(ubuffer);
 
@@ -558,20 +557,19 @@ TEST_FIXTURE(GraphicsDriverTest, GeometryShader)
 	CHECK(driver->initBuffer(ubuffer, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, NULL, sizeof(float)*(16*2+4)));
 
 	// Model view matrix
-	float* modelView = (float*)driver->mapBuffer(ubuffer, roRDriverBufferMapUsage_Write);
+	Mat4* modelView = (Mat4*)driver->mapBuffer(ubuffer, roRDriverBufferMapUsage_Write);
 
-	rgMat44MakeIdentity(modelView);
 	float translate[] =  { 0, 0, -3 };
-	rgMat44TranslateBy(modelView, translate);
+	*modelView = makeTranslationMat4(translate);
 
 	// Projection matrix
-	float* prespective = modelView + 16;
-	rgMat44MakePrespective(prespective, 90, 1, 2, 10);
-	driver->adjustDepthRangeMatrix(prespective);
+	Mat4* prespective = modelView + 1;
+	*prespective = makePrespectiveMat4(90, 1, 2, 10);
+	driver->adjustDepthRangeMatrix(prespective->data);
 
 	// Color
 	float color[] = { 1, 1, 0, 1 };
-	memcpy(prespective + 16, color, sizeof(color));
+	memcpy(prespective + 1, color, sizeof(color));
 
 	driver->unmapBuffer(ubuffer);
 
