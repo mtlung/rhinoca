@@ -225,7 +225,8 @@ typedef enum roRDriverPrimitiveType
 	roRDriverPrimitiveType_Linelist,
 	roRDriverPrimitiveType_LineStrip,
 	roRDriverPrimitiveType_TriangleList,
-	roRDriverPrimitiveType_TriangleStrip
+	roRDriverPrimitiveType_TriangleStrip,
+	roRDriverPrimitiveType_TriangleFan
 } roRDriverPrimitiveType;
 
 // Default states:

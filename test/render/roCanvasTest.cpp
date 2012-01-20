@@ -53,7 +53,7 @@ TEST_FIXTURE(CanvasTest, drawImage)
 
 TEST_FIXTURE(CanvasTest, drawToCanvas)
 {
-	createWindow(200, 200);
+	createWindow(400, 400);
 	initContext(driverStr[driverIndex]);
 	canvas.init(context);
 
@@ -70,11 +70,27 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 
 		// Draw to auxCanvas
 		auxCanvas.beginDraw();
-		driver->clearColor(0.1f, 0.1f, 0.1f, 1);
-		auxCanvas.setGlobalAlpha(1);
+		driver->clearColor(0.0f, 0.0f, 0.0f, 1);
+//		auxCanvas.setGlobalAlpha(0.1f);
 		auxCanvas.drawImage(texture->handle, 0, 0, 100, 100);
-		auxCanvas.setGlobalAlpha(0.6f);
+//		auxCanvas.setGlobalAlpha(0.1f);
 		auxCanvas.drawImage(texture->handle, 10, 50, 100, 100);
+
+		float white[] = { 1, 0.8f, 1, 0.2f};
+		auxCanvas.setFillColor(white);
+		auxCanvas.setGlobalAlpha(0.2f);
+		auxCanvas.beginPath();
+		auxCanvas.moveTo(25,25);
+		auxCanvas.lineTo(105,25);
+		auxCanvas.lineTo(25,105);
+		auxCanvas.fill();
+
+		auxCanvas.beginPath();
+		auxCanvas.moveTo(125,125);
+		auxCanvas.lineTo(125,45);
+		auxCanvas.lineTo(45,125);
+		auxCanvas.closePath();
+		auxCanvas.stroke();
 		auxCanvas.endDraw();
 
 		// Draw auxCanvas to the main canvas

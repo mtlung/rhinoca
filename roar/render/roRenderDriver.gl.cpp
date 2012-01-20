@@ -155,9 +155,24 @@ static bool _setRenderTargets(roRDriverTexture** textures, roSize targetCount, b
 	glGenFramebuffers(1, &renderTarget.glh);
 	glBindFramebuffer(GL_FRAMEBUFFER, renderTarget.glh);
 
+	bool hasDepthAttachment = false;
+
 	for(unsigned i=0; i<targetCount; ++i) {
 		roRDriverTextureImpl* tex = static_cast<roRDriverTextureImpl*>(textures[i]);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, tex->glh, 0);
+
+		if(tex->format == roRDriverTextureFormat_DepthStencil) {
+			if(hasDepthAttachment) {
+				roAssert(false);
+				roLog("warn", "roRDriver setRenderTargets detected multiple depth textures were specified, only the first one will be used\n");
+			}
+			else
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, tex->glh, 0);
+
+			checkError();
+			hasDepthAttachment = true;
+		}
+		else
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, tex->glh, 0);
 	}
 
 	ctx->renderTargetCache.pushBack(renderTarget);
@@ -519,6 +534,9 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 	if(!impl) return false;
 
 	roAssert(!impl->glh && !impl->systemBuf);
+	if(impl->glh || impl->systemBuf)
+		return false;
+
 	return _initBufferSpecificLocation(impl, type, usage, initData, sizeInBytes, false);
 }
 
@@ -529,16 +547,24 @@ static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, void* dat
 
 	if(!data) return false;
 	if(impl->isMapped) return false;
-	if(offsetInBytes + sizeInBytes > self->sizeInBytes) return false;
+	if(offsetInBytes != 0 && offsetInBytes + sizeInBytes > self->sizeInBytes) return false;
 	if(impl->usage == roRDriverDataUsage_Static) return false;
 
- 	if(impl->systemBuf)
+	if(impl->systemBuf) {
+		if(sizeInBytes > self->sizeInBytes) {
+			_allocator.realloc(impl->systemBuf, self->sizeInBytes, sizeInBytes);
+			self->sizeInBytes = sizeInBytes;
+		}
  		memcpy(((char*)impl->systemBuf) + offsetInBytes, data, sizeInBytes);
+	}
  	else {
 		checkError();
 		GLenum t = _bufferTarget[self->type];
 		glBindBuffer(t, impl->glh);
-		glBufferSubData(t, offsetInBytes, sizeInBytes, data);
+		if(sizeInBytes > self->sizeInBytes)
+			glBufferData(t, sizeInBytes, data, _bufferUsage[impl->usage]);
+		else
+			glBufferSubData(t, offsetInBytes, sizeInBytes, data);
 		checkError();
 	}
 
@@ -611,6 +637,8 @@ static bool _switchBufferMode(roRDriverBufferImpl* impl)
 	else if(impl->systemBuf) {
 		return _initBufferSpecificLocation(impl, impl->type, impl->usage, impl->systemBuf, impl->sizeInBytes, false);
 	}
+	else
+		roAssert(false);
 
 	return false;
 }
@@ -624,7 +652,7 @@ TextureFormatMapping _textureFormatMappings[] = {
 	{ roRDriverTextureFormat_R,				1, GL_R8, GL_RED, GL_UNSIGNED_BYTE },
 	{ roRDriverTextureFormat_A,				1, GL_ALPHA, GL_ALPHA, GL_UNSIGNED_BYTE },
 	{ roRDriverTextureFormat_Depth,			0, 0, 0, 0 },
-	{ roRDriverTextureFormat_DepthStencil,	0, 0, 0, 0 },
+	{ roRDriverTextureFormat_DepthStencil,	4, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8 },
 	{ roRDriverTextureFormat_PVRTC2,		0, 0, 0, 0 },
 	{ roRDriverTextureFormat_PVRTC4,		0, 0, 0, 0 },
 //	{ roRDriverTextureFormat_PVRTC2,		2, GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG, 0, 0 },
@@ -1196,7 +1224,7 @@ bool _setUniformBuffer(unsigned nameHash, roRDriverBuffer* buffer, roRDriverShad
 		if(int(bufferImpl->sizeInBytes) < block->blockSizeInBytes)
 			return false;
 
-		// Switch to buffer object mode
+		// Switch to buffer object mode, required by gl uniform block
 		if(bufferImpl->glh == 0)
 			roVerify(_switchBufferMode(bufferImpl));
 
@@ -1315,7 +1343,10 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 		if(inputHash == ctx->vaoCache[i].hash) {
 			vao = ctx->vaoCache[i].glh;
 			ctx->vaoCache[i].lastUsedTime = ctx->lastSwapTime;
-			vaoCacheFound = true;
+			// FIXME: If the OGL buffer has been destroy and recreated (with the same handle id), the hash number
+			// is still the same but make drawing using VAO crash. One solution was to make a vertex buffer pool
+			// so no OGL buffer ID can be reused even driver->deleteBuffer() was called.
+//			vaoCacheFound = true;
 			break;
 		}
 	}
@@ -1359,7 +1390,7 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 				glVertexAttribPointer(a->location, a->elementCount, a->elementType, false, i->stride, (void*)(ptrdiff_t(buffer->systemBuf) + i->offset));
 			}
 			else {
-				roLog("error", "attribute not found!\n");
+				roLog("error", "attribute '%s' not found!\n", i->name ? i->name : "");
 				return false;
 			}
 		}
@@ -1383,12 +1414,13 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 // ----------------------------------------------------------------------
 // Making draw call
 
-static const StaticArray<GLenum, 5> _primitiveTypeMappings = {
+static const StaticArray<GLenum, 6> _primitiveTypeMappings = {
 	GL_POINTS,
 	GL_LINES,
 	GL_LINE_STRIP,
 	GL_TRIANGLES,
-	GL_TRIANGLE_STRIP
+	GL_TRIANGLE_STRIP,
+	GL_TRIANGLE_FAN
 };
 
 static void _drawPrimitive(roRDriverPrimitiveType type, roSize offset, roSize vertexCount, unsigned flags)
