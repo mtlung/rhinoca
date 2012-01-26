@@ -1,21 +1,32 @@
 #include "pch.h"
 #include "roCanvas.h"
+#include "shivavg/openvg.h"
+#include "shivavg/vgu.h"
 #include "../base/roStringHash.h"
 
 namespace ro {
 
 Canvas::Canvas()
 	: _driver(NULL), _context(NULL)
-	, _vBuffer(NULL), _iBuffer(NULL), _uBuffer(NULL)
+	, _vBuffer(NULL), _uBuffer(NULL)
 	, _vShader(NULL), _pShader(NULL)
 	, _targetWidth(0), _targetHeight(0)
-	, _globalAlpha(1)
-{}
+{
+}
 
 Canvas::~Canvas()
 {
 	destroy();
 }
+
+struct Canvas::OpenVG
+{
+	VGPath path;			/// The path for generic use
+	bool pathEmpty;
+	VGPath pathSimpleShape;	/// The path allocated for simple shape usage
+	VGPaint strokePaint;
+	VGPaint fillPaint;
+};
 
 void Canvas::init(roRDriverContext* context)
 {
@@ -84,11 +95,6 @@ void Canvas::init(roRDriverContext* context)
 	_vBuffer = _driver->newBuffer();
 	roVerify(_driver->initBuffer(_vBuffer, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, vertex, sizeof(vertex)));
 
-	// Create index buffer
-	roUint16 index[][3] = { {0, 1, 2}, {0, 2, 3} };
-	_iBuffer = _driver->newBuffer();
-	roVerify(_driver->initBuffer(_iBuffer, roRDriverBufferType_Index, roRDriverDataUsage_Static, index, sizeof(index)));
-
 	// Create uniform buffer
 	bool isRtTexture[16] = {0};	// Most of the time we use a block of 16 bytes
 	_uBuffer = _driver->newBuffer();
@@ -98,7 +104,6 @@ void Canvas::init(roRDriverContext* context)
 	const roRDriverShaderInput input[] = {
 		{ _vBuffer, _vShader, "position", 0, 0, sizeof(float)*6, 0 },
 		{ _vBuffer, _vShader, "texCoord", 0, sizeof(float)*4, sizeof(float)*6, 0 },
-		{ _iBuffer, NULL, NULL, 0, 0, 0, 0 },
 		{ _uBuffer, _vShader, "constants", 0, 0, 0, 0 },
 	};
 	roAssert(roCountof(input) == _inputLayout.size());
@@ -112,6 +117,34 @@ void Canvas::init(roRDriverContext* context)
 		roRDriverTextureAddressMode_Repeat, roRDriverTextureAddressMode_Repeat
 	};
 	_textureState = textureState;
+
+	// Init _openvg
+	_openvg = new OpenVG;
+
+	roVerify(vgCreateContextSH(1, 1, context));
+
+	_openvg->path = vgCreatePath(
+		VG_PATH_FORMAT_STANDARD, VG_PATH_DATATYPE_F,
+		1, 0, 0, 0, VG_PATH_CAPABILITY_ALL
+	);
+
+	_openvg->pathSimpleShape = vgCreatePath(
+		VG_PATH_FORMAT_STANDARD, VG_PATH_DATATYPE_F,
+		1, 0, 0, 0, VG_PATH_CAPABILITY_ALL
+	);
+
+	_openvg->strokePaint = vgCreatePaint();
+	_openvg->fillPaint = vgCreatePaint();
+
+	// Setup initial drawing states
+	static const float black[4] = { 0, 0, 0, 1 };
+	setLineCap("butt");
+	setLineJoin("round");
+	setLineWidth(1);
+	setGlobalAlpha(1);
+	setStrokeColor(black);
+	setFillColor(black);
+	setIdentity();
 }
 
 bool Canvas::initTargetTexture(unsigned width, unsigned height)
@@ -122,6 +155,14 @@ bool Canvas::initTargetTexture(unsigned width, unsigned height)
 		return false;
 	if(!_driver->commitTexture(targetTexture->handle, NULL, 0))
 		return false;
+
+	depthStencilTexture = new Texture("");
+	depthStencilTexture->handle = _driver->newTexture();
+	if(!_driver->initTexture(depthStencilTexture->handle, width, height, roRDriverTextureFormat_DepthStencil, roRDriverTextureFlag_None))
+		return false;
+	if(!_driver->commitTexture(depthStencilTexture->handle, NULL, 0))
+		return false;
+
 	return true;
 }
 
@@ -129,13 +170,22 @@ void Canvas::destroy()
 {
 	if(!_context || !_driver) return;
 	_driver->deleteBuffer(_vBuffer);
-	_driver->deleteBuffer(_iBuffer);
+	_driver->deleteBuffer(_uBuffer);
 	_driver->deleteShader(_vShader);
 	_driver->deleteShader(_pShader);
 	_driver = NULL;
 	_context = NULL;
-	_vBuffer = _iBuffer = NULL;
+	_vBuffer = _uBuffer = NULL;
 	_vShader = _pShader = NULL;
+
+	vgDestroyPath(_openvg->path);
+	vgDestroyPath(_openvg->pathSimpleShape);
+	vgDestroyPaint(_openvg->strokePaint);
+	vgDestroyPaint(_openvg->fillPaint);
+
+	delete _openvg;
+
+	vgDestroyContextSH();
 }
 
 void Canvas::beginDraw()
@@ -146,16 +196,53 @@ void Canvas::beginDraw()
 		_targetHeight = (float)_context->height;
 	}
 	else {
-		roVerify(_driver->setRenderTargets(&targetTexture->handle, 1, false));
+		roRDriverTexture* tex[] = { targetTexture->handle, depthStencilTexture->handle };
+		roVerify(_driver->setRenderTargets(tex, roCountof(tex), false));
 		_targetWidth = (float)targetTexture->handle->width;
 		_targetHeight = (float)targetTexture->handle->height;
 	}
-	_driver->setViewport(0, 0, (unsigned)_targetWidth, (unsigned)_targetHeight, 0, 1);
+
+	vgResizeSurfaceSH((VGint)_targetWidth, (VGint)_targetHeight);
+	_orthoMat = makeOrthoMat4(0, _targetWidth, 0, _targetHeight, 0, 1);
+
+	vgSeti(VG_FILL_RULE, VG_NON_ZERO);
+	vgSetPaint(_openvg->strokePaint, VG_STROKE_PATH);
+	vgSetPaint(_openvg->fillPaint, VG_FILL_PATH);
+
+	restore();
 }
 
 void Canvas::endDraw()
 {
 }
+
+
+// ----------------------------------------------------------------------
+
+void Canvas::save()
+{
+	_stateStack.pushBack(_currentState);
+}
+
+void Canvas::restore()
+{
+	if(!_stateStack.isEmpty()) {	// Be more forgiving
+		_currentState = _stateStack.back();
+		_stateStack.popBack();
+	}
+
+	setGlobalAlpha(_currentState.globalAlpha);
+	setLineWidth(_currentState.lineWidth);
+
+	vgSeti(VG_STROKE_CAP_STYLE,  _currentState.lineCap);
+	vgSeti(VG_STROKE_JOIN_STYLE, _currentState.lineJoin);
+
+	setStrokeColor(_currentState.strokeColor);
+	setFillColor(_currentState.fillColor);
+}
+
+
+// ----------------------------------------------------------------------
 
 void Canvas::drawImage(roRDriverTexture* texture, float dstx, float dsty)
 {
@@ -177,14 +264,9 @@ void Canvas::drawImage(roRDriverTexture* texture, float dstx, float dsty, float 
 
 void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float srcw, float srch, float dstx, float dsty, float dstw, float dsth)
 {
-	if(!texture || !texture->width || !texture->height || _globalAlpha <= 0) return;
+	if(!texture || !texture->width || !texture->height || _currentState.globalAlpha <= 0) return;
 
 	const float z = 0;
-
-	float cw = _targetWidth;
-	float ch = _targetHeight;
-	float invcw = 2.0f / cw;
-	float invch = 2.0f / ch;
 
 	float sx1 = srcx, sx2 = srcx + srcw;
 	float sy1 = srcy, sy2 = srcy + srch;
@@ -197,22 +279,23 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 	sx1 *= invw; sx2 *= invw;
 	sy1 *= invh; sy2 *= invh;
 
-	// Calculate the destination positions in homogeneous coordinate
-	dx1 = invcw * dx1 - 1;
-	dx2 = invcw * dx2 - 1;
-	dy1 = invch * dy1 - 1;
-	dy2 = invch * dy2 - 1;
-
-	float vertex[][6] = {
+	float vertex[][6] = {	// Vertex are arranged in a 'z' order, in order to use TriangleStrip as primitive
 		{dx1, dy1, z, 1,	sx1,sy1},
 		{dx1, dy2, z, 1,	sx1,sy2},
+		{dx2, dy1, z, 1,	sx2,sy1},
 		{dx2, dy2, z, 1,	sx2,sy2},
-		{dx2, dy1, z, 1,	sx2,sy1}
 	};
+
+	// Transform the vertex using the current transform
+	for(roSize i=0; i<4; ++i) {
+		mat4MulVec3(_currentState.transform.mat, vertex[i], vertex[i]);
+		mat4MulVec3(_orthoMat.mat, vertex[i], vertex[i]);
+	}
+
 	roVerify(_driver->updateBuffer(_vBuffer, 0, vertex, sizeof(vertex)));
 
 	struct Constants { float alpha; bool isRtTexture[4]; };
-	Constants constants = { _globalAlpha, { texture->flags & roRDriverTextureFlag_RenderTarget } };
+	Constants constants = { _currentState.globalAlpha, { texture->flags & roRDriverTextureFlag_RenderTarget } };
 	roVerify(_driver->updateBuffer(_uBuffer, 0, &constants, sizeof(constants)));
 
 	roRDriverShader* shaders[] = { _vShader, _pShader };
@@ -237,10 +320,265 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 		roRDriverBlendValue_One, roRDriverBlendValue_Zero,
 		roRDriverColorWriteMask_EnableAll
 	};
-	_driver->setBlendState(_globalAlpha == 1 ? &noBlend : &hasBlend);
+	_driver->setBlendState(_currentState.globalAlpha == 1 ? &noBlend : &hasBlend);
 
-	_driver->drawTriangleIndexed(0, 6, 0);
+	_driver->drawPrimitive(roRDriverPrimitiveType_TriangleStrip, 0, 4, 0);
 }
+
+
+// ----------------------------------------------------------------------
+
+void Canvas::scale(float x, float y)
+{
+	float v[3] = { x, y, 1 };
+	Mat4 m = makeScaleMat4(v);
+	_currentState.transform *= m;
+}
+
+void Canvas::rotate(float clockwiseRadian)
+{
+	float axis[3] = { 0, 0, 1 };
+	Mat4 m = makeAxisRotationMat4(axis, clockwiseRadian);
+	_currentState.transform *= m;
+}
+
+void Canvas::translate(float x, float y)
+{
+	float v[3] = { x, y, 0 };
+	Mat4 m = makeTranslationMat4(v);
+	_currentState.transform *= m;
+}
+
+void Canvas::transform(float m11, float m12, float m21, float m22, float dx, float dy)
+{
+	Mat4 m(mat4Identity);
+	m.m11 = m11;	m.m12 = m12;
+	m.m21 = m21;	m.m22 = m22;
+	m.m03 = dx;		m.m13 = dy;
+	_currentState.transform *= m;
+}
+
+void Canvas::transform(float mat44[16])
+{
+	_currentState.transform *= *reinterpret_cast<Mat4*>(mat44);
+}
+
+void Canvas::setTransform(float m11, float m12, float m21, float m22, float dx, float dy)
+{
+	Mat4 m(mat4Identity);
+	m.m11 = m11;	m.m12 = m12;
+	m.m21 = m21;	m.m22 = m22;
+	m.m03 = dx;		m.m13 = dy;
+	_currentState.transform = m;
+}
+
+void Canvas::setIdentity()
+{
+	_currentState.transform.identity();
+}
+
+void Canvas::setTransform(float mat44[16])
+{
+	_currentState.transform.copyFrom(mat44);
+}
+
+
+// ----------------------------------------------------------------------
+
+void Canvas::beginPath()
+{
+	vgClearPath(_openvg->path, VG_PATH_CAPABILITY_ALL);
+	_openvg->pathEmpty = true;
+}
+
+void Canvas::closePath()
+{
+	VGubyte seg = VG_CLOSE_PATH;
+	VGfloat data[] = { 0, 0 };
+	vgAppendPathData(_openvg->path, 1, &seg, data);
+}
+
+void Canvas::moveTo(float x, float y)
+{
+	VGubyte seg = VG_MOVE_TO;
+	VGfloat data[] = { x, y };
+	vgAppendPathData(_openvg->path, 1, &seg, data);
+
+	_openvg->pathEmpty = false;
+}
+
+void Canvas::lineTo(float x, float y)
+{
+	VGubyte seg = _openvg->pathEmpty ? VG_MOVE_TO : VG_LINE_TO_ABS;
+	VGfloat data[] = { x, y };
+	vgAppendPathData(_openvg->path, 1, &seg, data);
+
+	_openvg->pathEmpty = false;
+}
+
+void Canvas::quadraticCurveTo(float cpx, float cpy, float x, float y)
+{
+	VGubyte seg = VG_QUAD_TO;
+	VGfloat data[] = { cpx, cpy, x, y };
+	vgAppendPathData(_openvg->path, 1, &seg, data);
+
+	_openvg->pathEmpty = false;
+}
+
+void Canvas::bezierCurveTo(float cp1x, float cp1y, float cp2x, float cp2y, float x, float y)
+{
+	VGubyte seg = VG_CUBIC_TO;
+	VGfloat data[] = { cp1x, cp1y, cp2x, cp2y, x, y };
+	vgAppendPathData(_openvg->path, 1, &seg, data);
+
+	_openvg->pathEmpty = false;
+}
+
+void Canvas::arcTo(float x1, float y1, float x2, float y2, float radius)
+{
+	// TODO: To be implement
+}
+
+void Canvas::arc(float x, float y, float radius, float startAngle, float endAngle, bool anticlockwise)
+{
+	startAngle = startAngle * 360 / (2 * 3.14159f);
+	endAngle = endAngle * 360 / (2 * 3.14159f);
+	radius *= 2;
+	vguArc(_openvg->path, x,y, radius,radius, startAngle, (anticlockwise ? -1 : 1) * (endAngle-startAngle), VGU_ARC_OPEN);
+}
+
+void Canvas::rect(float x, float y, float w, float h)
+{
+	vguRect(_openvg->path, x, y, w, h);
+	moveTo(x, y);
+}
+
+
+// ----------------------------------------------------------------------
+
+void Canvas::stroke()
+{
+	const Mat4& m = _currentState.transform;
+	float mat33[] = {
+		m.m00, m.m10, m.m20,
+		m.m01, m.m11, m.m21,
+		m.m03, m.m13, m.m33,
+	};
+
+	vgLoadMatrix(mat33);
+	vgDrawPath(_openvg->path, VG_STROKE_PATH);
+}
+
+void Canvas::strokeRect(float x, float y, float w, float h)
+{
+	vgClearPath(_openvg->pathSimpleShape, VG_PATH_CAPABILITY_ALL);
+	vguRect(_openvg->pathSimpleShape, x, y, w, h);
+
+	const Mat4& m = _currentState.transform;
+	float mat33[] = {
+		m.m00, m.m10, m.m20,
+		m.m01, m.m11, m.m21,
+		m.m03, m.m13, m.m33,
+	};
+
+	vgLoadMatrix(mat33);
+	vgDrawPath(_openvg->pathSimpleShape, VG_STROKE_PATH);
+}
+
+void Canvas::getStrokeColor(float* rgba)
+{
+	vgGetParameterfv(_openvg->strokePaint, VG_PAINT_COLOR, 4, rgba);
+}
+
+void Canvas::setStrokeColor(const float* rgba)
+{
+	float color[4];
+	roMemcpy(color, rgba, sizeof(color));
+	color[3] *= _currentState.globalAlpha;
+
+	vgSetParameterfv(_openvg->strokePaint, VG_PAINT_COLOR, 4, color);
+	roMemcpy(_currentState.strokeColor, rgba, sizeof(_currentState.strokeColor));
+}
+
+void Canvas::setLineCap(const char* cap)
+{
+	struct Cap {
+		const char* name;
+		VGCapStyle style;
+	};
+
+	static const Cap caps[] = {
+		{ "butt",	VG_CAP_BUTT },
+		{ "round",	VG_CAP_ROUND },
+		{ "square",	VG_CAP_SQUARE },
+	};
+
+	for(roSize i=0; i<roCountof(caps); ++i)
+		if(roStrCaseCmp(cap, caps[i].name) == 0) {
+			_currentState.lineCap = caps[i].style;
+			vgSeti(VG_STROKE_CAP_STYLE,  caps[i].style);
+		}
+}
+
+void Canvas::setLineJoin(const char* join)
+{
+	struct Join {
+		const char* name;
+		VGJoinStyle style;
+	};
+
+	static const Join joins[] = {
+		{ "miter",	VG_JOIN_MITER },
+		{ "round",	VG_JOIN_ROUND },
+		{ "bevel",	VG_JOIN_BEVEL },
+	};
+
+	for(roSize i=0; i<roCountof(joins); ++i)
+		if(roStrCaseCmp(join, joins[i].name) == 0) {
+			_currentState.lineJoin = joins[i].style;
+			vgSeti(VG_STROKE_JOIN_STYLE, joins[i].style);
+		}
+}
+
+void Canvas::setLineWidth(float width)
+{
+	vgSetf(VG_STROKE_LINE_WIDTH, width);
+	_currentState.lineWidth = width;
+}
+
+
+// ----------------------------------------------------------------------
+
+void Canvas::fill()
+{
+	const Mat4& m = _currentState.transform;
+	float mat33[] = {
+		m.m00, m.m10, m.m20,
+		m.m01, m.m11, m.m21,
+		m.m03, m.m13, m.m33,
+	};
+
+	vgLoadMatrix(mat33);
+	vgDrawPath(_openvg->path, VG_FILL_PATH);
+}
+
+void Canvas::getFillColor(float* rgba)
+{
+	vgGetParameterfv(_openvg->fillPaint, VG_PAINT_COLOR, 4, rgba);
+}
+
+void Canvas::setFillColor(const float* rgba)
+{
+	float color[4];
+	roMemcpy(color, rgba, sizeof(color));
+	color[3] *= _currentState.globalAlpha;
+
+	vgSetParameterfv(_openvg->fillPaint, VG_PAINT_COLOR, 4, color);
+	roMemcpy(_currentState.fillColor, rgba, sizeof(_currentState.fillColor));
+}
+
+
+// ----------------------------------------------------------------------
 
 unsigned Canvas::width() const {
 	return (unsigned)_targetWidth;
@@ -251,12 +589,24 @@ unsigned Canvas::height() const {
 }
 
 float Canvas::globalAlpha() const {
-	return _globalAlpha;
+	return _currentState.globalAlpha;
 }
 
 void Canvas::setGlobalAlpha(float alpha)
 {
-	_globalAlpha = alpha;
+	float sc[4];
+	roMemcpy(sc, _currentState.strokeColor, sizeof(sc));
+
+	float fc[4];
+	roMemcpy(fc, _currentState.fillColor, sizeof(fc));
+
+	sc[3] *= alpha;
+	fc[3] *= alpha;
+
+	vgSetParameterfv(_openvg->strokePaint, VG_PAINT_COLOR, 4, sc);
+	vgSetParameterfv(_openvg->fillPaint, VG_PAINT_COLOR, 4, fc);
+
+	_currentState.globalAlpha = alpha;
 }
 
 }	// namespace ro

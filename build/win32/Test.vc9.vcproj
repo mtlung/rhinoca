@@ -324,10 +324,6 @@
 	</Configurations>
 	<References>
 		<ProjectReference
-			ReferencedProjectIdentifier="{42A4219C-C856-470B-BF52-B20035575D91}"
-			RelativePathToProject=".\Rhinoca.vc9.vcproj"
-		/>
-		<ProjectReference
 			ReferencedProjectIdentifier="{D57F2059-AD79-4738-987D-9B22C7FEE309}"
 			RelativePathToProject=".\Roar.vc9.vcproj"
 		/>
@@ -402,15 +398,7 @@
 			</File>
 		</Filter>
 		<File
-			RelativePath="..\..\test\bipbuffertest.cpp"
-			>
-		</File>
-		<File
 			RelativePath="..\..\test\main.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\test\parsertest.cpp"
 			>
 		</File>
 		<File
