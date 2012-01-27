@@ -216,6 +216,14 @@ void Canvas::endDraw()
 {
 }
 
+void Canvas::clearRect(float x, float y, float w, float h)
+{
+	const float black[4] = { 0, 0, 0, 0 };
+	vgSetParameterfv(_openvg->fillPaint, VG_PAINT_COLOR, 4, black);
+	fillRect(x, y, w, h);
+	vgSetParameterfv(_openvg->fillPaint, VG_PAINT_COLOR, 4, _currentState.fillColor);
+}
+
 
 // ----------------------------------------------------------------------
 
@@ -500,6 +508,12 @@ void Canvas::setStrokeColor(const float* rgba)
 	roMemcpy(_currentState.strokeColor, rgba, sizeof(_currentState.strokeColor));
 }
 
+void Canvas::setStrokeColor(float r, float g, float b, float a)
+{
+	float color[4] = { r, g, b, a };
+	setStrokeColor(color);
+}
+
 void Canvas::setLineCap(const char* cap)
 {
 	struct Cap {
@@ -562,6 +576,22 @@ void Canvas::fill()
 	vgDrawPath(_openvg->path, VG_FILL_PATH);
 }
 
+void Canvas::fillRect(float x, float y, float w, float h)
+{
+	vgClearPath(_openvg->pathSimpleShape, VG_PATH_CAPABILITY_ALL);
+	vguRect(_openvg->pathSimpleShape, x, y, w, h);
+
+	const Mat4& m = _currentState.transform;
+	float mat33[] = {
+		m.m00, m.m10, m.m20,
+		m.m01, m.m11, m.m21,
+		m.m03, m.m13, m.m33,
+	};
+
+	vgLoadMatrix(mat33);
+	vgDrawPath(_openvg->pathSimpleShape, VG_FILL_PATH);
+}
+
 void Canvas::getFillColor(float* rgba)
 {
 	vgGetParameterfv(_openvg->fillPaint, VG_PAINT_COLOR, 4, rgba);
@@ -575,6 +605,12 @@ void Canvas::setFillColor(const float* rgba)
 
 	vgSetParameterfv(_openvg->fillPaint, VG_PAINT_COLOR, 4, color);
 	roMemcpy(_currentState.fillColor, rgba, sizeof(_currentState.fillColor));
+}
+
+void Canvas::setFillColor(float r, float g, float b, float a)
+{
+	float color[4] = { r, g, b, a };
+	setFillColor(color);
 }
 
 

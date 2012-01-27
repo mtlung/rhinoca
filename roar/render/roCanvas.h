@@ -22,6 +22,8 @@ struct Canvas
 	void beginDraw			();
 	void endDraw			();
 
+	void clearRect			(float x, float y, float w, float h);	/// Clear the rect to transparent black
+
 // States
 	void save				();	/// Pushes the current state onto the stack.
 	void restore			();	/// Pops the top state on the stack, restoring the context to that state.
@@ -58,6 +60,7 @@ struct Canvas
 	void strokeRect			(float x, float y, float w, float h);
 	void getStrokeColor		(float* rgba);
 	void setStrokeColor		(const float* rgba);
+	void setStrokeColor		(float r, float g, float b, float a);
 //	void setStrokeGradient	(CanvasGradient* gradient);
 	void setLineCap			(const char* cap);	/// Valid values are 'butt', 'round' and 'square'
 	void setLineJoin		(const char* join);	/// Valid values are 'round', 'bevel' and 'miter'
@@ -68,6 +71,7 @@ struct Canvas
 	void fillRect			(float x, float y, float w, float h);
 	void getFillColor		(float* rgba);
 	void setFillColor		(const float* rgba);
+	void setFillColor		(float r, float g, float b, float a);
 //	void setFillGradient	(CanvasGradient* gradient);
 
 	void clip();								/// Further constrains the clipping region to the given path.

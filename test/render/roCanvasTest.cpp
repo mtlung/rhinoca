@@ -51,50 +51,188 @@ TEST_FIXTURE(CanvasTest, drawImage)
 	resourceManager.shutdown();
 }
 
+static void testLineWidth(Canvas& c)
+{
+	for(float i=0; i<10; ++i) {
+		c.setLineWidth(1+i);
+		c.beginPath();
+		c.moveTo(5+i*14,5);
+		c.lineTo(5+i*14,140);
+		c.stroke();
+	}
+}
+
+static void testStrokeStyle(Canvas& c)
+{
+	for(float i=0; i<6; ++i) for (float j=0; j<6; ++j) {
+		c.setStrokeColor(0, (255-42.5f*i)/255, (255-42.5f*j)/255, 1);
+		c.beginPath();
+		c.arc(12.5f+j*25,12.5f+i*25,10,0,roTWO_PI,true);
+		c.stroke();
+	}
+}
+
+static void testLineCap(Canvas& c)
+{
+	const char* lineCap[] = { "butt", "round", "square" };
+
+	// Draw guides
+	c.setStrokeColor(0, 153.0f/255, 1, 1);
+	c.beginPath();
+	c.moveTo(10,10);
+	c.lineTo(140,10);
+	c.moveTo(10,140);
+	c.lineTo(140,140);
+	c.stroke();
+
+	// Draw lines
+	c.setStrokeColor(1, 1, 1, 1);
+	for(float i=0;i<roCountof(lineCap);++i) {
+		c.setLineWidth(15);
+		c.setLineCap(lineCap[int(i)]);
+		c.beginPath();
+		c.moveTo(25+i*50,10);
+		c.lineTo(25+i*50,140);
+		c.stroke();
+	}		
+}
+
+static void testLineJoin(Canvas& c)
+{
+	const char* lineJoin[] = { "round", "bevel", "miter" };
+	c.setLineWidth(10);
+	for(float i=0;i<roCountof(lineJoin);++i) {
+		c.setLineJoin(lineJoin[int(i)]);
+		c.beginPath();
+		c.moveTo(-5,5+i*40);
+		c.lineTo(35,45+i*40);
+		c.lineTo(75,5+i*40);
+		c.lineTo(115,45+i*40);
+		c.lineTo(155,5+i*40);
+		c.stroke();
+	}
+}
+
+static void testFillStyle(Canvas& c)
+{
+	for(float i=0;i<6;++i) for(float j=0;j<6;++j) {
+		c.setFillColor((255-42.5f*i)/255, (255-42.5f*j)/255, 0, 1);
+		c.fillRect(j*25,i*25,25,25);
+	}
+}
+
+static void testRgba(Canvas& c)
+{
+	// Draw background
+	c.setFillColor(1,221.0f/255,0,1);
+	c.fillRect(0,0,150,37.5);
+	c.setFillColor(102.0f/255,204.0f/255,0,1);
+	c.fillRect(0,37.5,150,37.5);
+	c.setFillColor(0,153.0f/255,1,1);
+	c.fillRect(0,75,150,37.5);
+	c.setFillColor(1,51.0f/255,0,1);
+	c.fillRect(0,112.5,150,37.5);
+
+	// Draw semi transparent rectangles
+	for(float i=0;i<10;++i) {
+		c.setFillColor(1,1,1,(i+1)/10);
+		for(float j=0;j<4;++j) {
+			c.fillRect(5+i*14,5+j*37.5f,14,27.5f);
+		}
+	}
+}
+
+static void testGlobalAlpha(Canvas& c)
+{
+	// Draw background
+	c.setFillColor(1,221.0f/255,0,1);
+	c.fillRect(0,0,75,75);
+	c.setFillColor(102.0f/255,204.0f/255,0,1);
+	c.fillRect(75,0,75,75);
+	c.setFillColor(0,153.0f/255,1,1);
+	c.fillRect(0,75,75,75);
+	c.setFillColor(1,51.0f/255,0,1);
+	c.fillRect(75,75,75,75);
+	c.setFillColor(1,1,1,1);
+
+	// Set transparency value
+	c.setGlobalAlpha(0.2f);
+
+	// Draw semi transparent circles
+	for(float i=0;i<7;++i){
+		c.beginPath();
+		c.arc(75,75,10+10*i,0,roTWO_PI,true);
+		c.fill();
+	}
+
+	c.setGlobalAlpha(1);
+	c.setFillColor(0, 0, 0, 1);
+}
+
 TEST_FIXTURE(CanvasTest, drawToCanvas)
 {
-	createWindow(400, 400);
+	createWindow(800, 400);
 	initContext(driverStr[driverIndex]);
 	canvas.init(context);
 
 	// Initialize our canvas which use it's own texture as render target
 	Canvas auxCanvas;
 	auxCanvas.init(context);
-	auxCanvas.initTargetTexture(200, 200);
+	auxCanvas.initTargetTexture(800, 400);
 
 	// Init texture
 	TexturePtr texture = resourceManager.loadAs<Texture>("EdSplash.bmp");
 
-	while(keepRun()) {
-		driver->clearColor(0, 0, 0, 1);
-
+	while(keepRun())
+	{
 		// Draw to auxCanvas
 		auxCanvas.beginDraw();
-		driver->clearColor(0.0f, 0.0f, 0.0f, 1);
-//		auxCanvas.setGlobalAlpha(0.1f);
-		auxCanvas.drawImage(texture->handle, 0, 0, 100, 100);
-//		auxCanvas.setGlobalAlpha(0.1f);
-		auxCanvas.drawImage(texture->handle, 10, 50, 100, 100);
+		driver->clearColor(0, 0, 0, 0);
+		auxCanvas.save();
 
-		float white[] = { 1, 0.8f, 1, 0.2f};
-		auxCanvas.setFillColor(white);
-		auxCanvas.setGlobalAlpha(0.2f);
-		auxCanvas.beginPath();
-		auxCanvas.moveTo(25,25);
-		auxCanvas.lineTo(105,25);
-		auxCanvas.lineTo(25,105);
-		auxCanvas.fill();
+		auxCanvas.setFillColor(1, 1, 1, 1);
+		auxCanvas.setStrokeColor(1, 1, 1, 1);
 
-		auxCanvas.beginPath();
-		auxCanvas.moveTo(125,125);
-		auxCanvas.lineTo(125,45);
-		auxCanvas.lineTo(45,125);
-		auxCanvas.closePath();
-		auxCanvas.stroke();
+		auxCanvas.translate(10, 10);
+		auxCanvas.setLineWidth(1);
+		testLineWidth(auxCanvas);
+
+		auxCanvas.setLineWidth(1);
+		auxCanvas.translate(180, 10);
+		testStrokeStyle(auxCanvas);
+
+		auxCanvas.setLineWidth(1);
+		auxCanvas.translate(180, 10);
+		testLineCap(auxCanvas);
+
+		auxCanvas.setLineWidth(1);
+		auxCanvas.translate(180, 0);
+		testLineJoin(auxCanvas);
+
+		auxCanvas.translate(-180 * 3, 180);
+		testFillStyle(auxCanvas);
+
+		auxCanvas.translate(180, 0);
+		testRgba(auxCanvas);
+
+		auxCanvas.translate(180, 0);
+		testGlobalAlpha(auxCanvas);
+
+		auxCanvas.restore();
 		auxCanvas.endDraw();
+
+//		auxCanvas.drawImage(texture->handle, 0, 0, 100, 100);
+//		auxCanvas.save();
+//		auxCanvas.scale(2, 1);
+//		auxCanvas.translate(50, 0);
+//		auxCanvas.rotate(roDeg2Rad(20));
+//		auxCanvas.drawImage(texture->handle, 10, 50, 100, 100);
+//		auxCanvas.restore();
 
 		// Draw auxCanvas to the main canvas
 		canvas.beginDraw();
+		driver->clearColor(0, 0, 0, 0);
+		canvas.setGlobalAlpha(0.2f);
 		canvas.drawImage(auxCanvas.targetTexture->handle, 0, 0);
 		canvas.endDraw();
 
