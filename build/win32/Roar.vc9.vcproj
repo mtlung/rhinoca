@@ -291,6 +291,10 @@
 			Name="math"
 			>
 			<File
+				RelativePath="..\..\roar\math\roMath.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\math\roMath.h"
 				>
 			</File>

@@ -30,6 +30,7 @@ float roRad2Deg				(float x);
 float roSin					(float x);
 float roCos					(float x);
 float roTan					(float x);
+void roSinCos				(float x, float& s, float& c);
 
 float roFloor				(float x);
 float roCeil				(float x);

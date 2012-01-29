@@ -86,7 +86,7 @@ static void testLineCap(Canvas& c)
 	c.stroke();
 
 	// Draw lines
-	c.setStrokeColor(1, 1, 1, 1);
+	c.setStrokeColor(0, 0, 0, 1);
 	for(float i=0;i<roCountof(lineCap);++i) {
 		c.setLineWidth(15);
 		c.setLineCap(lineCap[int(i)]);
@@ -187,11 +187,14 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 	{
 		// Draw to auxCanvas
 		auxCanvas.beginDraw();
-		driver->clearColor(0, 0, 0, 0);
+//		driver->clearColor(1, 0, 0, 0);
 		auxCanvas.save();
 
 		auxCanvas.setFillColor(1, 1, 1, 1);
-		auxCanvas.setStrokeColor(1, 1, 1, 1);
+		auxCanvas.fillRect(0, 0, 800, 400);
+
+		auxCanvas.setFillColor(0, 0, 0, 1);
+		auxCanvas.setStrokeColor(0, 0, 0, 1);
 
 		auxCanvas.translate(10, 10);
 		auxCanvas.setLineWidth(1);
@@ -231,8 +234,8 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 
 		// Draw auxCanvas to the main canvas
 		canvas.beginDraw();
-		driver->clearColor(0, 0, 0, 0);
-		canvas.setGlobalAlpha(0.2f);
+		driver->clearColor(1, 1, 1, 1);
+//		canvas.setGlobalAlpha(0.2f);
 		canvas.drawImage(auxCanvas.targetTexture->handle, 0, 0);
 		canvas.endDraw();
 

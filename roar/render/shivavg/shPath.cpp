@@ -1011,7 +1011,7 @@ static void shTransformSegment(SHPath *p, VGPathSegment segment,
 
       rx = data[2]; ry = data[3];
       a = SH_DEG2RAD(data[4]);
-      cosa = SH_COS(a); sina = SH_SIN(a);
+	  roSinCos(a, sina, cosa);
 
       // Center parametrization of the elliptical arc.
       SETMAT(u, rx * cosa, -ry * sina, 0,

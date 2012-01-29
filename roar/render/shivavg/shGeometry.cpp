@@ -174,8 +174,7 @@ static void shSubrecurseArc(SHPath *p, SHArc *arc,
 
     // Middle angle and its cos/sin
     am = (a->a1 + a->a2)/2;
-    cosa = SH_COS(am);
-    sina = SH_SIN(am);
+	roSinCos(am, sina, cosa);
 
     // New point
     SET2V(uux, (*ux)); MUL2(uux, cosa);
@@ -438,8 +437,7 @@ static void shStrokeJoinRound(SHPath *p, SHVector2 *c,
 
     /* Rotate perpendicular vector around and
        find next offset point from center */
-    cosa = SH_COS(-a);
-    sina = SH_SIN(-a);
+	roSinCos(-a, sina, cosa);
     SET2(p2, tstart->x*cosa - tstart->y*sina,
          tstart->x*sina + tstart->y*cosa);
     ADD2V(p2, (*c));
@@ -474,8 +472,7 @@ static void shStrokeCapRound(SHPath *p, SHVector2 *c, SHVector2 *t, SHint start)
     /* Rotate perpendicular vector around and
        find next offset point from center */
     ang = (SHfloat)a * PI / steps;
-    cosa = SH_COS(-ang);
-    sina = SH_SIN(-ang);
+	roSinCos(-ang, sina, cosa);
     SET2(p2, tt.x*cosa - tt.y*sina,
          tt.x*sina + tt.y*cosa);
     ADD2V(p2, (*c));

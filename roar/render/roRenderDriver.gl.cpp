@@ -458,14 +458,16 @@ static const StaticArray<GLenum, 4> _bufferMapUsage = {
 };
 #endif
 
-struct roRDriverBufferImpl : public roRDriverBuffer
-{
-	GLuint glh;
-	void* systemBuf;
-};	// roRDriverBufferImpl
-
 static roRDriverBuffer* _newBuffer()
 {
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
+
+	if(!ctx->bufferCache.isEmpty()) {
+		roRDriverBufferImpl* ret = ctx->bufferCache.back();
+		ctx->bufferCache.popBack();
+		return ret;
+	}
+
 	roRDriverBufferImpl* ret = _allocator.newObj<roRDriverBufferImpl>().unref();
 	memset(ret, 0, sizeof(*ret));
 	return ret;
@@ -476,12 +478,11 @@ static void _deleteBuffer(roRDriverBuffer* self)
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl) return;
 
-	if(impl->glh)
-		glDeleteBuffers(1, &impl->glh);
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
+	ctx->bufferCache.pushBack(impl);
 
-	roAssert(!impl->isMapped);
-	_allocator.free(impl->systemBuf);
-	_allocator.deleteObj(static_cast<roRDriverBufferImpl*>(self));
+	impl->inited = false;
+	return;
 }
 
 static const StaticArray<GLenum, 4> _bufferUsage = {
@@ -493,14 +494,10 @@ static const StaticArray<GLenum, 4> _bufferUsage = {
 
 static bool _initBufferSpecificLocation(roRDriverBufferImpl* impl, roRDriverBufferType type, roRDriverDataUsage usage, void* initData, roSize sizeInBytes, bool systemMemory)
 {
-	impl->type = type;
-	impl->sizeInBytes = sizeInBytes;
-	impl->usage = usage;
-
 	checkError();
 
 	if(systemMemory) {
-		impl->systemBuf = _allocator.malloc(sizeInBytes);
+		impl->systemBuf = _allocator.realloc(impl->systemBuf, impl->sizeInBytes, sizeInBytes);
 		if(initData)
  			memcpy(impl->systemBuf, initData, sizeInBytes);
 
@@ -512,7 +509,9 @@ static bool _initBufferSpecificLocation(roRDriverBufferImpl* impl, roRDriverBuff
  	}
  	else
 	{
-		glGenBuffers(1, &impl->glh);
+		if(!impl->glh)
+			glGenBuffers(1, &impl->glh);
+
 		GLenum t = _bufferTarget[type];
 		roAssert("Invalid roRDriverBufferType" && t != 0);
 		glBindBuffer(t, impl->glh);
@@ -524,6 +523,11 @@ static bool _initBufferSpecificLocation(roRDriverBufferImpl* impl, roRDriverBuff
 
 	checkError();
 
+	impl->type = type;
+	impl->sizeInBytes = sizeInBytes;
+	impl->usage = usage;
+	impl->inited = true;
+
 	return true;
 }
 
@@ -532,8 +536,8 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl) return false;
 
-	roAssert(!impl->glh && !impl->systemBuf);
-	if(impl->glh || impl->systemBuf)
+	roAssert(!impl->inited);
+	if(impl->inited)
 		return false;
 
 	return _initBufferSpecificLocation(impl, type, usage, initData, sizeInBytes, false);
@@ -1345,7 +1349,7 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 			// FIXME: If the OGL buffer has been destroy and recreated (with the same handle id), the hash number
 			// is still the same but make drawing using VAO crash. One solution was to make a vertex buffer pool
 			// so no OGL buffer ID can be reused even driver->deleteBuffer() was called.
-//			vaoCacheFound = true;
+			vaoCacheFound = true;
 			break;
 		}
 	}

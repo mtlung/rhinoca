@@ -712,8 +712,8 @@ int shDrawRadialGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
 	{
 		// Distance from focus to circle border
 		// at current angle (gradient space)
-		float ax = SH_COS(a);
-		float ay = SH_SIN(a);
+		float ax, ay;
+		roSinCos(a, ay, ax);
 		float A = ax*ax + ay*ay;
 		float B = 2 * (fcx*ax + fcy*ay);
 		float D = B*B - 4*A*C;

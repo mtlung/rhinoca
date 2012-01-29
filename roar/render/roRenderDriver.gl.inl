@@ -33,6 +33,13 @@ struct ProgramAttribute
 	GLint elementCount;		// 1, 2, 3 or 4
 };
 
+struct roRDriverBufferImpl : public roRDriverBuffer
+{
+	GLuint glh;
+	void* systemBuf;
+	bool inited;			// For directx compitibility reason, we disallow calling initBuffer() multiple times on the same buffer object
+};	// roRDriverBufferImpl
+
 struct VertexArrayObject
 {
 	unsigned hash;
@@ -100,6 +107,8 @@ struct roRDriverContextImpl : public roRDriverContext
 	// A ring of pixel buffer object
 	TinyArray<GLuint, 1> pixelBufferCache;
 	unsigned currentPixelBufferIndex;
+
+	Array<roRDriverBufferImpl*> bufferCache;	// We would like to minimize the create/delete of buffer objects
 
 	Array<VertexArrayObject> vaoCache;
 

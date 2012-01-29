@@ -95,6 +95,18 @@ void _deleteDriverContext_GL(roRDriverContext* self)
 	// Free the pixel buffer cache
 	glDeleteBuffers(num_cast<GLsizei>(impl->pixelBufferCache.size()), &impl->pixelBufferCache[0]);
 
+	// Free buffer object cache
+	while(!impl->bufferCache.isEmpty()) {
+		roRDriverBufferImpl* b = impl->bufferCache.back();
+		impl->bufferCache.popBack();
+		if(b->glh)
+			glDeleteBuffers(1, &b->glh);
+
+		roAssert(!b->isMapped);
+		_allocator.free(b->systemBuf);
+		_allocator.deleteObj(b);
+	}
+
 	if(impl == _currentContext) {
 		 wglMakeCurrent(NULL, NULL); 
 		_currentContext = NULL;
@@ -243,6 +255,8 @@ void _driverSwapBuffers_GL()
 		else
 			++i;
 	}
+
+	// TODO: Release buffer object's memory once a while
 
 	// Clean up not frequently used depth stencil cache
 	for(roSize i=0; i<_currentContext->depthStencilBufferCache.size();) {

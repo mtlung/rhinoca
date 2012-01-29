@@ -235,14 +235,16 @@ SHMatrix3x3 shear, temp;\
   SETMATMAT(mat, temp); }
 
 #define ROTATEMATL(mat, a) { \
-SHfloat cosa=SH_COS(a), sina=SH_SIN(a); \
+SHfloat cosa, sina; \
+roSinCos(a, sina, cosa); \
   SHMatrix3x3 rot, temp; \
   SETMAT(rot, cosa,-sina,0, sina,cosa,0, 0,0,1); \
   MULMATMAT(rot, mat, temp); \
   SETMATMAT(mat, temp); }
 
 #define ROTATEMATR(mat, a) { \
-SHfloat cosa=SH_COS(a), sina=SH_SIN(a); \
+SHfloat cosa, sina; \
+roSinCos(a, sina, cosa); \
   SHMatrix3x3 rot, temp; \
   SETMAT(rot, cosa,-sina,0, sina,cosa,0, 0,0,1); \
   MULMATMAT(mat, rot, temp); \
