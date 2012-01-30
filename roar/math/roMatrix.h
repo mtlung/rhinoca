@@ -42,8 +42,8 @@ struct Mat4
 	void		copyFrom(const float* p16f);
 	void		copyTo(float* p16f) const;
 
-	const Vec4& operator[](int index) const;
-	Vec4& 		operator[](int index);
+	const Vec4& operator[](roSize index) const;
+	Vec4& 		operator[](roSize index);
 	Mat4		operator*(float a) const;
 	Vec4		operator*(const Vec4& vec) const;
 	Vec3		operator*(const Vec3& vec) const;

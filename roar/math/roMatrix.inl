@@ -32,12 +32,12 @@ inline void Mat4::copyTo(float* p16f) const {
 }
 
 
-inline const Vec4& Mat4::operator[](int index) const {
+inline const Vec4& Mat4::operator[](roSize index) const {
 	roAssert(index >= 0 && index < 4);
 	return reinterpret_cast<const Vec4&>(mat[index]);
 }
 
-inline Vec4& Mat4::operator[](int index) {
+inline Vec4& Mat4::operator[](roSize index) {
 	roAssert(index >= 0 && index < 4);
 	return reinterpret_cast<Vec4&>(mat[index]);
 }

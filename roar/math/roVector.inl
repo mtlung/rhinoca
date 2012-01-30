@@ -58,11 +58,11 @@ inline bool Vec2::operator!=(const Vec2& a) const {
 	return !compare(a);
 }
 
-inline float Vec2::operator[](int index) const {
+inline float Vec2::operator[](roSize index) const {
 	return (&x)[index];
 }
 
-inline float& Vec2::operator[](int index) {
+inline float& Vec2::operator[](roSize index) {
 	return (&x)[index];
 }
 
@@ -194,11 +194,11 @@ inline Vec3::Vec3(float x, float y, float z) {
 	this->z = z;
 }
 
-inline float Vec3::operator[](int index) const {
+inline float Vec3::operator[](roSize index) const {
 	return (&x)[index];
 }
 
-inline float &Vec3::operator[](int index) {
+inline float &Vec3::operator[](roSize index) {
 	return (&x)[index];
 }
 
@@ -411,11 +411,11 @@ inline Vec4::Vec4(float x, float y, float z, float w) {
 	this->w = w;
 }
 
-inline float Vec4::operator[](int index) const {
+inline float Vec4::operator[](roSize index) const {
 	return (&x)[index];
 }
 
-inline float &Vec4::operator[](int index) {
+inline float &Vec4::operator[](roSize index) {
 	return (&x)[index];
 }
 

@@ -185,7 +185,7 @@ Mat4 Mat4::transpose() const
 
 	for(roSize i=0; i<4; ++i) {
 		for(roSize j=0; j<4; ++j) {
-			transpose[ i ][ j ] = mat[ j ][ i ];
+			transpose[i][j] = mat[j][i];
 		}
 	}
 	return transpose;

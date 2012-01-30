@@ -1,6 +1,8 @@
 #ifndef __math_roVector_h__
 #define __math_roVector_h__
 
+#include "../platform/roCompiler.h"
+
 namespace ro {
 
 struct Vec2
@@ -21,8 +23,8 @@ struct Vec2
 	void		copyFrom(const float* p2f);
 	void		copyTo(float* p2f) const;
 
-	float		operator[](int index) const;
-	float&		operator[](int index);
+	float		operator[](roSize index) const;
+	float&		operator[](roSize index);
 	Vec2		operator-() const;
 	float		operator*(const Vec2& a) const;
 	Vec2		operator*(float a) const;
@@ -78,8 +80,8 @@ struct Vec3
 	void		copyFrom(const float* p3f);
 	void		copyTo(float* p3f) const;
 
-	float		operator[](int index) const;
-	float&		operator[](int index);
+	float		operator[](roSize index) const;
+	float&		operator[](roSize index);
 	Vec3		operator-() const;
 	float		operator*(const Vec3& a) const;
 	Vec3		operator*(float a) const;
@@ -155,8 +157,8 @@ struct Vec4
 	void		copyFrom(const float* p4f);
 	void		copyTo(float* p4f) const;
 
-	float		operator[](int index) const;
-	float&		operator[](int index);
+	float		operator[](roSize index) const;
+	float&		operator[](roSize index);
 	Vec4		operator-() const;
 	float		operator*(const Vec4& a) const;
 	Vec4		operator*(float a) const;
