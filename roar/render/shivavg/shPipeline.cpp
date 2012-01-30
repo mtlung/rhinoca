@@ -30,6 +30,7 @@
 #include "shPaint.h"
 
 #include "../roRenderDriver.h"
+#include "../../base/roStringHash.h"
 
 // Replacement for texture coordinate generation using texture matrix
 // http://www.fernlightning.com/doku.php?id=randd:opengles
@@ -218,9 +219,9 @@ void updateBlendingStateGL(VGContext *c, int alphaIsOne)
 static void shDrawStroke(VGContext* c, SHPath *p)
 {
 	roRDriverBuffer* vBuf = c->driver->newBuffer();
-	c->inputLayout[0].buffer = vBuf;
+	c->colorOnlyVertexLayout[0].buffer = vBuf;
 	roVerify(c->driver->initBuffer(vBuf, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, p->stroke.items, p->stroke.size * sizeof(SHVector2)));
-	roVerify(c->driver->bindShaderInput(c->inputLayout, roCountof(c->inputLayout), NULL));
+	roVerify(c->driver->bindShaderInput(c->colorOnlyVertexLayout, roCountof(c->colorOnlyVertexLayout), NULL));
 	c->driver->drawTriangle(0, p->stroke.size, 0);
 	c->driver->deleteBuffer(vBuf);
 }
@@ -236,9 +237,9 @@ static void shDrawVertices(VGContext* c, SHPath *p, roRDriverPrimitiveType primi
 	int size = 0;
 
 	roRDriverBuffer* vBuf = c->driver->newBuffer();
-	c->shVertexLayout[0].buffer = vBuf;
+	c->colorOnlyVertexLayout[0].buffer = vBuf;
 	roVerify(c->driver->initBuffer(vBuf, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, p->vertices.items, p->vertices.size * sizeof(SHVertex)));
-	roVerify(c->driver->bindShaderInput(c->shVertexLayout, roCountof(c->shVertexLayout), NULL));
+	roVerify(c->driver->bindShaderInput(c->colorOnlyVertexLayout, roCountof(c->colorOnlyVertexLayout), NULL));
 
 	// We separate vertex arrays by contours to properly handle the fill modes
 	while (start < p->vertices.size) {
@@ -335,9 +336,9 @@ static void shDrawPaintMesh(VGContext *c, SHVector2 *min, SHVector2 *max,
 			pmin.x, pmin.y, pmax.x, pmin.y,
 			pmin.x, pmax.y, pmax.x, pmax.y,
 		};
+		roVerify(c->driver->setUniformTexture(ro::stringHash("texGrad"), c->whiteTexture));
 		setColor(c, &p->color.r);
 		shDrawQuad(c, corners);
-//		setColor(c, whiteColor);
 		} break;
 	}
 }
@@ -422,7 +423,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
 		VG_RETURN(VG_NO_RETVAL);
 	}
 
-	if ( context->strokeLineWidth > 1.0f)
+	if (context->strokeLineWidth > 1.0f || stroke->type != VG_PAINT_TYPE_COLOR)
 	{
 		// Generate stroke triangles in path space
 		shVector2ArrayClear(&p->stroke);
@@ -452,7 +453,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
 	}
 	else
 	{
-		// Simulate thin stroke by alpha
+		// Simulate thin stroke (without pattern) by alpha
 		SHColor c = stroke->color;
 		if (context->strokeLineWidth < 1.0f)
 			c.a *= context->strokeLineWidth;

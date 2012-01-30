@@ -390,8 +390,8 @@ int shSetGradientTexGLState(SHPaint *p, unsigned texUnit)
 	};
 
 	context->driver->setTextureState(&state, 1, texUnit);
-	context->driver->setUniformTexture(texUniform[texUnit], p->texture);
-	context->driver->updateBuffer(context->uBuffer, roOffsetof(UniformBuffer, UniformBuffer::color), whiteColor, sizeof(SHColor));
+	roVerify(context->driver->setUniformTexture(texUniform[texUnit], p->texture));
+	roVerify(context->driver->updateBuffer(context->uBuffer, roOffsetof(UniformBuffer, UniformBuffer::color), whiteColor, sizeof(SHColor)));
 
 	return 1;
 }
@@ -704,8 +704,8 @@ int shDrawRadialGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
 	const unsigned vertexSize = 6 * 2 * 2;
 	roRDriverBuffer* vBuf = context->driver->newBuffer();
 	roVerify(context->driver->initBuffer(vBuf, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, NULL, (numsteps-1)*sizeof(float)*vertexSize));
-	context->inputLayout[0].buffer = vBuf;
-	roVerify(context->driver->bindShaderInput(context->inputLayout, roCountof(context->inputLayout), NULL));
+	context->tex1VertexLayout[0].buffer = vBuf;
+	roVerify(context->driver->bindShaderInput(context->tex1VertexLayout, roCountof(context->tex1VertexLayout), NULL));
 
 	// Walk the steps and draw gradient mesh 
 	for (i=0, a=startA; i<numsteps; ++i, a+=step)
@@ -736,10 +736,12 @@ int shDrawRadialGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
 		// Draw quad
 		if (i!=0) {
 			float vertex[vertexSize] = {
-				min1.x,min1.y,			max1.x,max1.y,			min2.x,min2.y,
-				max1.x,max1.y,			max2.x,max2.y,			min2.x,min2.y,
-				minOffset,minOffset,	minOffset,minOffset,	maxOffset,maxOffset,
-				minOffset,minOffset,	maxOffset,maxOffset,	maxOffset,maxOffset,
+				min1.x,min1.y,	minOffset,minOffset,
+				max1.x,max1.y,	minOffset,minOffset,
+				min2.x,min2.y,	maxOffset,maxOffset,
+				max1.x,max1.y,	minOffset,minOffset,
+				max2.x,max2.y,	maxOffset,maxOffset,
+				min2.x,min2.y,	maxOffset,maxOffset
 			};
 			// TODO: Use mapBuffer may be faster
 			context->driver->updateBuffer(vBuf, (i-1) * sizeof(vertex), vertex, sizeof(vertex));

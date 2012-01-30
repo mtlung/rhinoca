@@ -84,8 +84,7 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 		"uniform sampler2D texGrad;"
 		"in vec2 _uv;"
 		"void main(void) {"
-		"	gl_FragColor = 0.01 * texture2D(texGrad, _uv);"
-		"	gl_FragColor += color;"
+		"	gl_FragColor = color * texture2D(texGrad, _uv);"
 		"}",
 	};
 
@@ -113,31 +112,34 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 	d->updateBuffer(c->uBuffer, roOffsetof(UniformBuffer, UniformBuffer::projMat), (float*)mat4Identity.data, sizeof(c->projMat));
 
 	// Bind shader input layout
-	{
+	{	// For use with primitive of 1 texture coordinate channel
+		// {posx, posy, u, v}, {posx, posy, u, v}, ...
 		const roRDriverShaderInput input[] = {
-			{ c->vBuffer, c->vShader, "position", 0, 0, sizeof(float)*2, 0 },
-			{ c->vBuffer, c->vShader, "uv", 0, 0, sizeof(float)*2, 0 },	// We don't care about uv, so just use the position as uv
+			{ c->vBuffer, c->vShader, "position", 0, 0, sizeof(float)*2, sizeof(float)*2*2 },
+			{ c->vBuffer, c->vShader, "uv", 0, sizeof(float)*2, sizeof(float)*2, sizeof(float)*2*2 },
 			{ c->uBuffer, c->vShader, "constants", 0, 0, 0, 0 },
 			{ c->uBuffer, c->pShader, "constants", 0, 0, 0, 0 },
 		};
-		roAssert(roCountof(input) == roCountof(c->inputLayout));
+		roAssert(roCountof(input) == roCountof(c->tex1VertexLayout));
 		for(roSize i=0; i<roCountof(input); ++i)
-			c->inputLayout[i] = input[i];
+			c->tex1VertexLayout[i] = input[i];
 	}
 
-	{
+	{	// For use with primitive without any texture
+		// {posx, posy}, {posx, posy}, ...
 		const roRDriverShaderInput input[] = {
 			{ c->vBuffer, c->vShader, "position", 0, 0, sizeof(SHVertex), 0 },
 			{ c->vBuffer, c->vShader, "uv", 0, 0, sizeof(SHVertex), 0 },	// We don't care about uv, so just use the position as uv
 			{ c->uBuffer, c->vShader, "constants", 0, 0, 0, 0 },
 			{ c->uBuffer, c->pShader, "constants", 0, 0, 0, 0 },
 		};
-		roAssert(roCountof(input) == roCountof(c->shVertexLayout));
+		roAssert(roCountof(input) == roCountof(c->colorOnlyVertexLayout));
 		for(roSize i=0; i<roCountof(input); ++i)
-			c->shVertexLayout[i] = input[i];
+			c->colorOnlyVertexLayout[i] = input[i];
 	}
 
-	{
+	{	// For use with single quad of 1 texture coordinate channel
+		// {posx, posy}, {posx, posy}, ... {u, v}, {u, v}, ...
 		const roRDriverShaderInput input[] = {
 			{ c->quadBuffer, c->vShader, "position", 0, 0, sizeof(float)*2, 0 },
 			{ c->quadBuffer, c->vShader, "uv", 0, sizeof(float)*4*2, sizeof(float)*2, 0 },

@@ -169,6 +169,74 @@ static void testGlobalAlpha(Canvas& c)
 	c.setFillColor(0, 0, 0, 1);
 }
 
+static void testLinearGradient(Canvas& c)
+{
+	// Create gradients
+	void* lingrad = c.createLinearGradient(0,0,0,150);
+	c.addGradientColorStop(lingrad, 0, 0,171.0f/255,235.0f/255,1);
+	c.addGradientColorStop(lingrad, 0.5f, 1,1,1,1);
+	c.addGradientColorStop(lingrad, 0.5f, 102.0f/255,204.0f/255,0,1);
+	c.addGradientColorStop(lingrad, 1, 1,1,1,1);
+
+	void* lingrad2 = c.createLinearGradient(0,50,0,95);
+	c.addGradientColorStop(lingrad2, 0.5f, 0,0,0,1);
+	c.addGradientColorStop(lingrad2, 1, 0,0,0,0);
+
+	// Assign gradients to fill and stroke styles
+	c.setFillGradient(lingrad);
+	c.setStrokeGradient(lingrad2);
+
+	c.setLineWidth(4);
+
+	// Draw shapes
+	c.fillRect(10,10,130,130);
+	c.strokeRect(50,50,50,50);
+
+	// Cleanup
+	c.destroyGradient(lingrad);
+	c.destroyGradient(lingrad2);
+}
+
+static void testRadialGradient(Canvas& c)
+{
+	// Create gradients
+	void* radgrad = c.createRadialGradient(45,45,10,52,50,30);
+	c.addGradientColorStop(radgrad, 0, 167.0f/255,211.0f/255,12.0f/255,1);
+	c.addGradientColorStop(radgrad, 0.9f, 1.0f/255,159.0f/255,98.0f/255,1);
+	c.addGradientColorStop(radgrad, 1, 1.0f/255,159.0f/255,98.0f/255,0);
+
+	void* radgrad2 = c.createRadialGradient(105,105,20,112,120,50);
+	c.addGradientColorStop(radgrad2, 0, 1,95.0f/255,152.0f/255,1);
+	c.addGradientColorStop(radgrad2, 0.75f, 1,1.0f/255,136.0f/255,1);
+	c.addGradientColorStop(radgrad2, 1, 1,1.0f/255,136.0f/255,0);
+
+	void* radgrad3 = c.createRadialGradient(95,15,15,102,20,40);
+	c.addGradientColorStop(radgrad3, 0, 0,201.0f/255,1,1);
+	c.addGradientColorStop(radgrad3, 0.8f, 0,181.0f/255,226.0f/255,1);
+	c.addGradientColorStop(radgrad3, 1, 0,201.0f/255,1,0);
+
+	void* radgrad4 = c.createRadialGradient(0,150,50,0,140,90);
+	c.addGradientColorStop(radgrad4, 0, 244.0f/255,242.0f/255,1.0f/255,1);
+	c.addGradientColorStop(radgrad4, 0.8f, 228.0f/255,199.0f/255,0,1);
+	c.addGradientColorStop(radgrad4, 1, 228.0f/255,199.0f/255,0,0);
+
+	// Draw shapes
+	c.setFillGradient(radgrad4);
+	c.fillRect(0,0,150,150);
+	c.setFillGradient(radgrad3);
+	c.fillRect(0,0,150,150);
+	c.setFillGradient(radgrad2);
+	c.fillRect(0,0,150,150);
+	c.setFillGradient(radgrad);
+	c.fillRect(0,0,150,150);
+
+	// Cleanup
+	c.destroyGradient(radgrad);
+	c.destroyGradient(radgrad2);
+	c.destroyGradient(radgrad3);
+	c.destroyGradient(radgrad4);
+}
+
 TEST_FIXTURE(CanvasTest, drawToCanvas)
 {
 	createWindow(800, 400);
@@ -187,11 +255,9 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 	{
 		// Draw to auxCanvas
 		auxCanvas.beginDraw();
-//		driver->clearColor(1, 0, 0, 0);
 		auxCanvas.save();
 
-		auxCanvas.setFillColor(1, 1, 1, 1);
-		auxCanvas.fillRect(0, 0, 800, 400);
+		auxCanvas.clearRect(0, 0, 800, 400);
 
 		auxCanvas.setFillColor(0, 0, 0, 1);
 		auxCanvas.setStrokeColor(0, 0, 0, 1);
@@ -221,21 +287,21 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 		auxCanvas.translate(180, 0);
 		testGlobalAlpha(auxCanvas);
 
+		auxCanvas.translate(180, 0);
+		testLinearGradient(auxCanvas);
+
+		auxCanvas.translate(180, 0);
+		testRadialGradient(auxCanvas);
+
 		auxCanvas.restore();
 		auxCanvas.endDraw();
 
 //		auxCanvas.drawImage(texture->handle, 0, 0, 100, 100);
-//		auxCanvas.save();
-//		auxCanvas.scale(2, 1);
-//		auxCanvas.translate(50, 0);
-//		auxCanvas.rotate(roDeg2Rad(20));
-//		auxCanvas.drawImage(texture->handle, 10, 50, 100, 100);
-//		auxCanvas.restore();
 
 		// Draw auxCanvas to the main canvas
 		canvas.beginDraw();
-		driver->clearColor(1, 1, 1, 1);
-//		canvas.setGlobalAlpha(0.2f);
+		driver->clearColor(0.1f, 0.1f, 0.1f, 1);
+		canvas.setGlobalAlpha(0.02f);
 		canvas.drawImage(auxCanvas.targetTexture->handle, 0, 0);
 		canvas.endDraw();
 

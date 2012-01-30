@@ -3,8 +3,11 @@
 #include "shivavg/openvg.h"
 #include "shivavg/vgu.h"
 #include "../base/roStringHash.h"
+#include "../base/roTypeCast.h"
 
 namespace ro {
+
+static DefaultAllocator _allocator;
 
 Canvas::Canvas()
 	: _driver(NULL), _context(NULL)
@@ -220,8 +223,14 @@ void Canvas::clearRect(float x, float y, float w, float h)
 {
 	const float black[4] = { 0, 0, 0, 0 };
 	vgSetParameterfv(_openvg->fillPaint, VG_PAINT_COLOR, 4, black);
+
+	int orgBlendMode = vgGeti(VG_BLEND_MODE);
+	vgSeti(VG_BLEND_MODE, VG_BLEND_SRC);
+
 	fillRect(x, y, w, h);
+
 	vgSetParameterfv(_openvg->fillPaint, VG_PAINT_COLOR, 4, _currentState.fillColor);
+	vgSeti(VG_BLEND_MODE, orgBlendMode);
 }
 
 
@@ -464,6 +473,87 @@ void Canvas::rect(float x, float y, float w, float h)
 
 // ----------------------------------------------------------------------
 
+struct Gradient
+{
+	struct ColorStop {
+		float t, r, g, b, a;
+	};
+
+	Gradient() {}
+	void* handle;
+	typedef TinyArray<ColorStop, 4> ColorStops;
+	ColorStops stops;
+	float radiusStart, radiusEnd;	// For radial fill
+};
+
+void* Canvas::createLinearGradient(float xStart, float yStart, float xEnd, float yEnd)
+{
+	Gradient* ret = _allocator.newObj<Gradient>().unref();
+	roZeroMemory(ret, sizeof(*ret));
+
+	ret->handle = vgCreatePaint();
+	vgSetParameteri(ret->handle, VG_PAINT_COLOR_RAMP_SPREAD_MODE, VG_COLOR_RAMP_SPREAD_PAD);
+	vgSetParameteri(ret->handle, VG_PAINT_TYPE, VG_PAINT_TYPE_LINEAR_GRADIENT);
+	const float linear[] = { xStart, yStart ,xEnd, yEnd };
+	vgSetParameterfv(ret->handle, VG_PAINT_LINEAR_GRADIENT, 4, linear);
+
+	return ret;
+}
+
+void* Canvas::createRadialGradient(float xStart, float yStart, float radiusStart, float xEnd, float yEnd, float radiusEnd)
+{
+	Gradient* ret = _allocator.newObj<Gradient>().unref();
+	roZeroMemory(ret, sizeof(*ret));
+
+	ret->handle = vgCreatePaint();
+	vgSetParameteri(ret->handle, VG_PAINT_COLOR_RAMP_SPREAD_MODE, VG_COLOR_RAMP_SPREAD_PAD);
+	vgSetParameteri(ret->handle, VG_PAINT_TYPE, VG_PAINT_TYPE_RADIAL_GRADIENT);
+	ret->radiusStart = radiusStart;
+	ret->radiusEnd = radiusEnd;
+	const float radial[] = { xEnd, yEnd, xStart, yStart ,radiusEnd };
+	vgSetParameterfv(ret->handle, VG_PAINT_RADIAL_GRADIENT, 5, radial);
+
+	return ret;
+}
+
+void Canvas::addGradientColorStop(void* gradient, float offset, float r, float g, float b, float a)
+{
+	Gradient* grad = reinterpret_cast<Gradient*>(gradient);
+	Gradient::ColorStops& stops = grad->stops;
+
+	// We need to adjust the offset for radial fill, to deal with starting radius
+	if(vgGetParameteri(grad->handle, VG_PAINT_TYPE) == VG_PAINT_TYPE_RADIAL_GRADIENT)
+	{
+		// Add an extra stop as the starting radius
+		if(stops.isEmpty()) {
+			stops.incSize(1);
+			stops.back().t = grad->radiusStart / grad->radiusEnd;
+			stops.back().r = r;
+			stops.back().g = g;
+			stops.back().b = b;
+			stops.back().a = a;
+		}
+
+		offset *= 1.0f - grad->radiusStart / grad->radiusEnd;
+		offset += grad->radiusStart / grad->radiusEnd;
+	}
+
+	stops.incSize(1);
+	stops.back().t = offset;
+	stops.back().r = r;
+	stops.back().g = g;
+	stops.back().b = b;
+	stops.back().a = a;
+}
+
+void Canvas::destroyGradient(void* gradient)
+{
+	_allocator.deleteObj(reinterpret_cast<Gradient*>(gradient));
+}
+
+
+// ----------------------------------------------------------------------
+
 void Canvas::stroke()
 {
 	const Mat4& m = _currentState.transform;
@@ -560,6 +650,16 @@ void Canvas::setLineWidth(float width)
 	_currentState.lineWidth = width;
 }
 
+void Canvas::setStrokeGradient(void* gradient)
+{
+	Gradient* grad = reinterpret_cast<Gradient*>(gradient);
+	vgSetParameterfv(
+		grad->handle, VG_PAINT_COLOR_RAMP_STOPS,
+		num_cast<VGint>(grad->stops.size() * 5), (float*)grad->stops.typedPtr()
+	);
+	vgSetPaint(grad->handle, VG_STROKE_PATH);
+}
+
 
 // ----------------------------------------------------------------------
 
@@ -611,6 +711,16 @@ void Canvas::setFillColor(float r, float g, float b, float a)
 {
 	float color[4] = { r, g, b, a };
 	setFillColor(color);
+}
+
+void Canvas::setFillGradient(void* gradient)
+{
+	Gradient* grad = reinterpret_cast<Gradient*>(gradient);
+	vgSetParameterfv(
+		grad->handle, VG_PAINT_COLOR_RAMP_STOPS,
+		num_cast<VGint>(grad->stops.size() * 5), (float*)grad->stops.typedPtr()
+	);
+	vgSetPaint(grad->handle, VG_FILL_PATH);
 }
 
 
