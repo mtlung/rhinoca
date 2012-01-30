@@ -261,7 +261,8 @@ static bool _setRenderTargets(roRDriverTexture** textures, roSize targetCount, b
 // ----------------------------------------------------------------------
 // State management
 
-static const StaticArray<D3D11_BLEND_OP, 5> _blendOp = {
+static const StaticArray<D3D11_BLEND_OP, 6> _blendOp = {
+	D3D11_BLEND_OP(-1),
 	D3D11_BLEND_OP_ADD,
 	D3D11_BLEND_OP_SUBTRACT,
 	D3D11_BLEND_OP_REV_SUBTRACT,
@@ -269,7 +270,8 @@ static const StaticArray<D3D11_BLEND_OP, 5> _blendOp = {
 	D3D11_BLEND_OP_MAX
 };
 
-static const StaticArray<D3D11_BLEND, 10> _blendValue = {
+static const StaticArray<D3D11_BLEND, 11> _blendValue = {
+	D3D11_BLEND(-1),
 	D3D11_BLEND_ZERO,
 	D3D11_BLEND_ONE,
 	D3D11_BLEND_SRC_COLOR,
@@ -378,7 +380,8 @@ static void _setRasterizerState(roRDriverRasterizerState* state)
 	ctx->dxDeviceContext->RSSetState(s);
 }
 
-static const StaticArray<D3D11_COMPARISON_FUNC, 8> _comparisonFuncs = {
+static const StaticArray<D3D11_COMPARISON_FUNC, 9> _comparisonFuncs = {
+	D3D11_COMPARISON_FUNC(-1),
 	D3D11_COMPARISON_NEVER,
 	D3D11_COMPARISON_LESS,
 	D3D11_COMPARISON_EQUAL,
@@ -389,7 +392,8 @@ static const StaticArray<D3D11_COMPARISON_FUNC, 8> _comparisonFuncs = {
 	D3D11_COMPARISON_ALWAYS
 };
 
-static const StaticArray<D3D11_STENCIL_OP, 8> _stencilOps = {
+static const StaticArray<D3D11_STENCIL_OP, 9> _stencilOps = {
+	D3D11_STENCIL_OP(-1),
 	D3D11_STENCIL_OP_ZERO,
 	D3D11_STENCIL_OP_INVERT,
 	D3D11_STENCIL_OP_KEEP,

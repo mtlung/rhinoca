@@ -107,7 +107,7 @@ typedef struct roRDriverShaderInput
 
 typedef enum roRDriverBlendOp
 {
-	roRDriverBlendOp_Add = 0,
+	roRDriverBlendOp_Add = 1,
 	roRDriverBlendOp_Subtract,
 	roRDriverBlendOp_RevSubtract,
 	roRDriverBlendOp_Min,
@@ -116,7 +116,7 @@ typedef enum roRDriverBlendOp
 
 typedef enum roRDriverBlendValue
 {
-	roRDriverBlendValue_Zero = 0,
+	roRDriverBlendValue_Zero = 1,
 	roRDriverBlendValue_One,
 	roRDriverBlendValue_SrcColor,
 	roRDriverBlendValue_InvSrcColor,
@@ -155,7 +155,7 @@ typedef struct roRDriverRasterizerState
 
 typedef enum roRDriverCompareFunc
 {
-	roRDriverDepthCompareFunc_Never = 0,/// Never pass, 
+	roRDriverDepthCompareFunc_Never = 1,/// Never pass, 
 	roRDriverDepthCompareFunc_Less,		/// Pass if src depth < dst depth, pass if (ref & mask) < (stencil & mask)
 	roRDriverDepthCompareFunc_Equal,
 	roRDriverDepthCompareFunc_LEqual,
@@ -167,7 +167,7 @@ typedef enum roRDriverCompareFunc
 
 typedef enum roRDriverStencilOp
 {
-	roRDriverStencilOp_Zero = 0,
+	roRDriverStencilOp_Zero = 1,
 	roRDriverStencilOp_Invert,
 	roRDriverStencilOp_Keep,
 	roRDriverStencilOp_Replace,
@@ -197,7 +197,7 @@ typedef struct roRDriverDepthStencilState
 
 typedef enum roRDriverTextureFilterMode
 {
-	roRDriverTextureFilterMode_MinMagPoint = 0,
+	roRDriverTextureFilterMode_MinMagPoint = 1,
 	roRDriverTextureFilterMode_MinMagLinear,
 	roRDriverTextureFilterMode_MipMagPoint,
 	roRDriverTextureFilterMode_MipMagLinear
@@ -205,7 +205,7 @@ typedef enum roRDriverTextureFilterMode
 
 typedef enum roRDriverTextureAddressMode
 {
-	roRDriverTextureAddressMode_Repeat = 0,
+	roRDriverTextureAddressMode_Repeat = 1,
 	roRDriverTextureAddressMode_Edge,
 	roRDriverTextureAddressMode_Border,
 	roRDriverTextureAddressMode_MirrorRepeat

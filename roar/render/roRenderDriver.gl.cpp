@@ -194,7 +194,8 @@ static bool _setRenderTargets(roRDriverTexture** textures, roSize targetCount, b
 // ----------------------------------------------------------------------
 // State management
 
-static const StaticArray<GLenum, 5> _blendOp = {
+static const StaticArray<GLenum, 6> _blendOp = {
+	GLenum(-1),
 	GL_FUNC_ADD,
 	GL_FUNC_SUBTRACT,
 	GL_FUNC_REVERSE_SUBTRACT,
@@ -202,7 +203,8 @@ static const StaticArray<GLenum, 5> _blendOp = {
 	GL_MAX,
 };
 
-static const StaticArray<GLenum, 10> _blendValue = {
+static const StaticArray<GLenum, 11> _blendValue = {
+	GLenum(-1),
 	GL_ZERO,
 	GL_ONE,
 	GL_SRC_COLOR,
@@ -289,7 +291,8 @@ static void _setRasterizerState(roRDriverRasterizerState* state)
 		glDisable(GL_SCISSOR_TEST);
 }
 
-static const StaticArray<GLenum, 8> _compareFunc = {
+static const StaticArray<GLenum, 9> _compareFunc = {
+	GLenum(-1),
 	GL_NEVER,
 	GL_LESS,
 	GL_EQUAL,
@@ -300,7 +303,8 @@ static const StaticArray<GLenum, 8> _compareFunc = {
 	GL_ALWAYS,
 };
 
-static const StaticArray<GLenum, 8> _stencilOp = {
+static const StaticArray<GLenum, 9> _stencilOp = {
+	GLenum(-1),
 	GL_ZERO,
 	GL_INVERT,
 	GL_KEEP,
@@ -375,9 +379,9 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 	}
 }
 
-static const StaticArray<GLenum, 4> _magFilter = { GL_NEAREST, GL_LINEAR, GL_NEAREST, GL_LINEAR };
-static const StaticArray<GLenum, 4> _minFilter = { GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_LINEAR };
-static const StaticArray<GLenum, 4> _textureAddressMode = { GL_REPEAT, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER, GL_MIRRORED_REPEAT_ARB };
+static const StaticArray<GLenum, 5> _magFilter = { GLenum(-1), GL_NEAREST, GL_LINEAR, GL_NEAREST, GL_LINEAR };
+static const StaticArray<GLenum, 5> _minFilter = { GLenum(-1), GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_LINEAR };
+static const StaticArray<GLenum, 5> _textureAddressMode = { GLenum(-1), GL_REPEAT, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER, GL_MIRRORED_REPEAT_ARB };
 
 // For OpenGl sampler object, see: http://www.geeks3d.com/20110908/opengl-3-3-sampler-objects-control-your-texture-units/
 // and http://www.opengl.org/registry/specs/ARB/sampler_objects.txt
