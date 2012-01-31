@@ -705,6 +705,7 @@ int shDrawRadialGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
 	roRDriverBuffer* vBuf = context->driver->newBuffer();
 	roVerify(context->driver->initBuffer(vBuf, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, NULL, (numsteps-1)*sizeof(float)*vertexSize));
 	context->tex1VertexLayout[0].buffer = vBuf;
+	context->tex1VertexLayout[1].buffer = vBuf;
 	roVerify(context->driver->bindShaderInput(context->tex1VertexLayout, roCountof(context->tex1VertexLayout), NULL));
 
 	// Walk the steps and draw gradient mesh 
@@ -737,11 +738,11 @@ int shDrawRadialGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
 		if (i!=0) {
 			float vertex[vertexSize] = {
 				min1.x,min1.y,	minOffset,minOffset,
-				max1.x,max1.y,	minOffset,minOffset,
-				min2.x,min2.y,	maxOffset,maxOffset,
-				max1.x,max1.y,	minOffset,minOffset,
+				max1.x,max1.y,	maxOffset,maxOffset,
+				min2.x,min2.y,	minOffset,minOffset,
+				max1.x,max1.y,	maxOffset,maxOffset,
 				max2.x,max2.y,	maxOffset,maxOffset,
-				min2.x,min2.y,	maxOffset,maxOffset
+				min2.x,min2.y,	minOffset,minOffset
 			};
 			// TODO: Use mapBuffer may be faster
 			context->driver->updateBuffer(vBuf, (i-1) * sizeof(vertex), vertex, sizeof(vertex));

@@ -345,6 +345,29 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 
 // ----------------------------------------------------------------------
 
+void Canvas::beginBatch()
+{
+}
+
+void Canvas::endBatch()
+{
+}
+
+
+// ----------------------------------------------------------------------
+
+float* Canvas::lockPixelData()
+{
+	return NULL;
+}
+
+void Canvas::unlockPixelData()
+{
+}
+
+
+// ----------------------------------------------------------------------
+
 void Canvas::scale(float x, float y)
 {
 	float v[3] = { x, y, 1 };

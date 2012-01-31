@@ -33,6 +33,14 @@ struct Canvas
 	void drawImage				(roRDriverTexture* texture, float dstx, float dsty, float dstw, float dsth);
 	void drawImage				(roRDriverTexture* texture, float srcx, float srcy, float srcw, float srch, float dstx, float dsty, float dstw, float dsth);
 
+// Batching
+	void beginBatch				();
+	void endBatch				();
+
+// Pixel manipulation
+	float* lockPixelData		();
+	void unlockPixelData		();
+
 // Transforms
 	void scale					(float x, float y);
 	void rotate					(float clockwiseRadian);
@@ -81,10 +89,6 @@ struct Canvas
 	void setFillGradient		(void* gradient);
 
 	void clip();									/// Further constrains the clipping region to the given path.
-
-// Batching
-	void beginBatch				();
-	void endBatch				();
 
 // Attributes
 	unsigned width				() const;

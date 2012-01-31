@@ -219,9 +219,9 @@ void updateBlendingStateGL(VGContext *c, int alphaIsOne)
 static void shDrawStroke(VGContext* c, SHPath *p)
 {
 	roRDriverBuffer* vBuf = c->driver->newBuffer();
-	c->colorOnlyVertexLayout[0].buffer = vBuf;
+	c->tex1VertexLayout[0].buffer = vBuf;
 	roVerify(c->driver->initBuffer(vBuf, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, p->stroke.items, p->stroke.size * sizeof(SHVector2)));
-	roVerify(c->driver->bindShaderInput(c->colorOnlyVertexLayout, roCountof(c->colorOnlyVertexLayout), NULL));
+	roVerify(c->driver->bindShaderInput(c->tex1VertexLayout, roCountof(c->tex1VertexLayout), NULL));
 	c->driver->drawTriangle(0, p->stroke.size, 0);
 	c->driver->deleteBuffer(vBuf);
 }
@@ -237,9 +237,9 @@ static void shDrawVertices(VGContext* c, SHPath *p, roRDriverPrimitiveType primi
 	int size = 0;
 
 	roRDriverBuffer* vBuf = c->driver->newBuffer();
-	c->colorOnlyVertexLayout[0].buffer = vBuf;
+	c->shVertexLayout[0].buffer = vBuf;
 	roVerify(c->driver->initBuffer(vBuf, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, p->vertices.items, p->vertices.size * sizeof(SHVertex)));
-	roVerify(c->driver->bindShaderInput(c->colorOnlyVertexLayout, roCountof(c->colorOnlyVertexLayout), NULL));
+	roVerify(c->driver->bindShaderInput(c->shVertexLayout, roCountof(c->shVertexLayout), NULL));
 
 	// We separate vertex arrays by contours to properly handle the fill modes
 	while (start < p->vertices.size) {

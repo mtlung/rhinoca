@@ -115,8 +115,8 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 	{	// For use with primitive of 1 texture coordinate channel
 		// {posx, posy, u, v}, {posx, posy, u, v}, ...
 		const roRDriverShaderInput input[] = {
-			{ c->vBuffer, c->vShader, "position", 0, 0, sizeof(float)*2, sizeof(float)*2*2 },
-			{ c->vBuffer, c->vShader, "uv", 0, sizeof(float)*2, sizeof(float)*2, sizeof(float)*2*2 },
+			{ c->vBuffer, c->vShader, "position", 0, 0, sizeof(float)*2*2, 0 },
+			{ c->vBuffer, c->vShader, "uv", 0, sizeof(float)*2, sizeof(float)*2*2, 0 },
 			{ c->uBuffer, c->vShader, "constants", 0, 0, 0, 0 },
 			{ c->uBuffer, c->pShader, "constants", 0, 0, 0, 0 },
 		};
@@ -133,9 +133,9 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 			{ c->uBuffer, c->vShader, "constants", 0, 0, 0, 0 },
 			{ c->uBuffer, c->pShader, "constants", 0, 0, 0, 0 },
 		};
-		roAssert(roCountof(input) == roCountof(c->colorOnlyVertexLayout));
+		roAssert(roCountof(input) == roCountof(c->shVertexLayout));
 		for(roSize i=0; i<roCountof(input); ++i)
-			c->colorOnlyVertexLayout[i] = input[i];
+			c->shVertexLayout[i] = input[i];
 	}
 
 	{	// For use with single quad of 1 texture coordinate channel

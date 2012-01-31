@@ -128,7 +128,7 @@ typedef struct
   roRDriverShader*      vShader;
   roRDriverShader*      pShader;
   roRDriverShaderInput  tex1VertexLayout[4];
-  roRDriverShaderInput  colorOnlyVertexLayout[4];
+  roRDriverShaderInput  shVertexLayout[4];
   roRDriverShaderInput  quadInputLayout[4];
 
   roRDriverTexture*		whiteTexture;

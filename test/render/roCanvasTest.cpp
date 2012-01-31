@@ -239,14 +239,14 @@ static void testRadialGradient(Canvas& c)
 
 TEST_FIXTURE(CanvasTest, drawToCanvas)
 {
-	createWindow(800, 400);
+	createWindow(800, 600);
 	initContext(driverStr[driverIndex]);
 	canvas.init(context);
 
 	// Initialize our canvas which use it's own texture as render target
 	Canvas auxCanvas;
 	auxCanvas.init(context);
-	auxCanvas.initTargetTexture(800, 400);
+	auxCanvas.initTargetTexture(800, 600);
 
 	// Init texture
 	TexturePtr texture = resourceManager.loadAs<Texture>("EdSplash.bmp");
@@ -257,7 +257,8 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 		auxCanvas.beginDraw();
 		auxCanvas.save();
 
-		auxCanvas.clearRect(0, 0, 800, 400);
+		driver->clearStencil(0);
+		auxCanvas.clearRect(0, 0, 800, 600);
 
 		auxCanvas.setFillColor(0, 0, 0, 1);
 		auxCanvas.setStrokeColor(0, 0, 0, 1);
@@ -290,7 +291,7 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 		auxCanvas.translate(180, 0);
 		testLinearGradient(auxCanvas);
 
-		auxCanvas.translate(180, 0);
+		auxCanvas.translate(-180 * 3, 180);
 		testRadialGradient(auxCanvas);
 
 		auxCanvas.restore();
@@ -300,7 +301,7 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 
 		// Draw auxCanvas to the main canvas
 		canvas.beginDraw();
-		driver->clearColor(0.1f, 0.1f, 0.1f, 1);
+		driver->clearColor(0.05f, 0.05f, 0.05f, 1);
 		canvas.setGlobalAlpha(0.02f);
 		canvas.drawImage(auxCanvas.targetTexture->handle, 0, 0);
 		canvas.endDraw();
