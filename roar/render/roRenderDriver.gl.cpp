@@ -235,12 +235,15 @@ static void _setBlendState(roRDriverBlendState* state)
 
 	ctx->currentBlendStateHash = state->hash;
 
-	glColorMask(
-		(state->wirteMask & roRDriverColorWriteMask_EnableRed) > 0,
-		(state->wirteMask & roRDriverColorWriteMask_EnableGreen) > 0,
-		(state->wirteMask & roRDriverColorWriteMask_EnableBlue) > 0,
-		(state->wirteMask & roRDriverColorWriteMask_EnableAlpha) > 0
-	);
+	if(state->wirteMask != ctx->currentColorWriteMask) {
+		glColorMask(
+			(state->wirteMask & roRDriverColorWriteMask_EnableRed) > 0,
+			(state->wirteMask & roRDriverColorWriteMask_EnableGreen) > 0,
+			(state->wirteMask & roRDriverColorWriteMask_EnableBlue) > 0,
+			(state->wirteMask & roRDriverColorWriteMask_EnableAlpha) > 0
+		);
+		ctx->currentColorWriteMask = state->wirteMask;
+	}
 
 	if(state->enable)
 		glEnable(GL_BLEND);
@@ -341,7 +344,10 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 	}
 	else {
 		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(_compareFunc[state->depthFunc]);
+		if(ctx->currentDepthFunc != state->depthFunc) {
+			ctx->currentDepthFunc = state->depthFunc;
+			glDepthFunc(_compareFunc[state->depthFunc]);
+		}
 	}
 
 	if(!state->enableStencil) {

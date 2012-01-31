@@ -263,16 +263,16 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 		auxCanvas.setFillColor(0, 0, 0, 1);
 		auxCanvas.setStrokeColor(0, 0, 0, 1);
 
-		auxCanvas.translate(10, 10);
+		auxCanvas.translate(20, 20);
 		auxCanvas.setLineWidth(1);
 		testLineWidth(auxCanvas);
 
 		auxCanvas.setLineWidth(1);
-		auxCanvas.translate(180, 10);
+		auxCanvas.translate(180, 0);
 		testStrokeStyle(auxCanvas);
 
 		auxCanvas.setLineWidth(1);
-		auxCanvas.translate(180, 10);
+		auxCanvas.translate(180, 0);
 		testLineCap(auxCanvas);
 
 		auxCanvas.setLineWidth(1);
@@ -301,8 +301,9 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 
 		// Draw auxCanvas to the main canvas
 		canvas.beginDraw();
-		driver->clearColor(0.05f, 0.05f, 0.05f, 1);
-		canvas.setGlobalAlpha(0.02f);
+//		driver->clearColor(0.05f, 0.05f, 0.05f, 1);
+		driver->clearColor(1, 1, 1, 1);
+		canvas.setGlobalAlpha(0.99f);
 		canvas.drawImage(auxCanvas.targetTexture->handle, 0, 0);
 		canvas.endDraw();
 

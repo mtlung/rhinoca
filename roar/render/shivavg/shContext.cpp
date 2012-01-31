@@ -112,21 +112,21 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 	d->updateBuffer(c->uBuffer, roOffsetof(UniformBuffer, UniformBuffer::projMat), (float*)mat4Identity.data, sizeof(c->projMat));
 
 	// Bind shader input layout
-	{	// For use with primitive of 1 texture coordinate channel
-		// {posx, posy, u, v}, {posx, posy, u, v}, ...
+	{	// For use with stroke
+		// {posx, posy}, {posx, posy}, ...
 		const roRDriverShaderInput input[] = {
-			{ c->vBuffer, c->vShader, "position", 0, 0, sizeof(float)*2*2, 0 },
-			{ c->vBuffer, c->vShader, "uv", 0, sizeof(float)*2, sizeof(float)*2*2, 0 },
+			{ c->vBuffer, c->vShader, "position", 0, 0, sizeof(float)*2, 0 },
+			{ c->vBuffer, c->vShader, "uv", 0, 0, sizeof(float)*2, 0 },
 			{ c->uBuffer, c->vShader, "constants", 0, 0, 0, 0 },
 			{ c->uBuffer, c->pShader, "constants", 0, 0, 0, 0 },
 		};
-		roAssert(roCountof(input) == roCountof(c->tex1VertexLayout));
+		roAssert(roCountof(input) == roCountof(c->strokeLayout));
 		for(roSize i=0; i<roCountof(input); ++i)
-			c->tex1VertexLayout[i] = input[i];
+			c->strokeLayout[i] = input[i];
 	}
 
 	{	// For use with primitive without any texture
-		// {posx, posy}, {posx, posy}, ...
+		// {posx, posy, SHVector2, ...}, {posx, posy, SHVector2, ...}, ...
 		const roRDriverShaderInput input[] = {
 			{ c->vBuffer, c->vShader, "position", 0, 0, sizeof(SHVertex), 0 },
 			{ c->vBuffer, c->vShader, "uv", 0, 0, sizeof(SHVertex), 0 },	// We don't care about uv, so just use the position as uv
@@ -149,6 +149,19 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 		roAssert(roCountof(input) == roCountof(c->quadInputLayout));
 		for(roSize i=0; i<roCountof(input); ++i)
 			c->quadInputLayout[i] = input[i];
+	}
+
+	{	// For use with primitive of 1 texture coordinate channel
+		// {posx, posy, u, v}, {posx, posy, u, v}, ...
+		const roRDriverShaderInput input[] = {
+			{ c->vBuffer, c->vShader, "position", 0, 0, sizeof(float)*2*2, 0 },
+			{ c->vBuffer, c->vShader, "uv", 0, sizeof(float)*2, sizeof(float)*2*2, 0 },
+			{ c->uBuffer, c->vShader, "constants", 0, 0, 0, 0 },
+			{ c->uBuffer, c->pShader, "constants", 0, 0, 0, 0 },
+		};
+		roAssert(roCountof(input) == roCountof(c->tex1VertexLayout));
+		for(roSize i=0; i<roCountof(input); ++i)
+			c->tex1VertexLayout[i] = input[i];
 	}
 
 	roRDriverShader* shaders[] = { c->vShader, c->pShader };

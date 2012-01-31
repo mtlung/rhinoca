@@ -123,10 +123,10 @@ void SHImage_dtor(SHImage *i);
  *-------------------------------------------------------*/
 
 #define CSTORE_RGBA1D_8(c, rgba, x)  { \
-  rgba[x*4+0] = (SHuint8)SH_FLOOR(c.r * 255); \
-  rgba[x*4+1] = (SHuint8)SH_FLOOR(c.g * 255); \
-  rgba[x*4+2] = (SHuint8)SH_FLOOR(c.b * 255); \
-  rgba[x*4+3] = (SHuint8)SH_FLOOR(c.a * 255); }
+  rgba[x*4+0] = (SHuint8)(c.r * 255); \
+  rgba[x*4+1] = (SHuint8)(c.g * 255); \
+  rgba[x*4+2] = (SHuint8)(c.b * 255); \
+  rgba[x*4+3] = (SHuint8)(c.a * 255); }
 
 #define CSTORE_RGBA1D_F(c, rgba, x)  { \
   rgba[x*4+0] = c.r; \
@@ -135,10 +135,10 @@ void SHImage_dtor(SHImage *i);
   rgba[x*4+3] = c.a; }
 
 #define CSTORE_RGBA2D_8(c, rgba, x, y, width) { \
-  rgba[y*width*4+x*4+0] = (SHuint8)SH_FLOOR(c.r * 255); \
-  rgba[y*width*4+x*4+1] = (SHuint8)SH_FLOOR(c.g * 255); \
-  rgba[y*width*4+x*4+2] = (SHuint8)SH_FLOOR(c.b * 255); \
-  rgba[y*width*4+x*4+3] = (SHuint8)SH_FLOOR(c.a * 255); }
+  rgba[y*width*4+x*4+0] = (SHuint8)(c.r * 255); \
+  rgba[y*width*4+x*4+1] = (SHuint8)(c.g * 255); \
+  rgba[y*width*4+x*4+2] = (SHuint8)(c.b * 255); \
+  rgba[y*width*4+x*4+3] = (SHuint8)(c.a * 255); }
 
 #define CSTORE_RGBA2D_F(c, rgba, x, y, width) { \
   rgba[y*width*4+x*4+0] = c.r; \
@@ -147,7 +147,7 @@ void SHImage_dtor(SHImage *i);
   rgba[y*width*4+x*4+3] = c.a; }
 
 #define INT2COLCOORD(i, max) ( (SHfloat)i / (SHfloat)max  )
-#define COL2INTCOORD(c, max) ( (SHuint)SH_FLOOR(c * (SHfloat)max + 0.5f) )
+#define COL2INTCOORD(c, max) ( (SHuint)(c * (SHfloat)max + 0.5f) )
 
 void shStoreColor(SHColor *c, void *data, SHImageFormatDesc *f);
 void shLoadColor(SHColor *c, const void *data, SHImageFormatDesc *f);

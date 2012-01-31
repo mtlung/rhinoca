@@ -219,9 +219,9 @@ void updateBlendingStateGL(VGContext *c, int alphaIsOne)
 static void shDrawStroke(VGContext* c, SHPath *p)
 {
 	roRDriverBuffer* vBuf = c->driver->newBuffer();
-	c->tex1VertexLayout[0].buffer = vBuf;
+	c->strokeLayout[0].buffer = vBuf;
 	roVerify(c->driver->initBuffer(vBuf, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, p->stroke.items, p->stroke.size * sizeof(SHVector2)));
-	roVerify(c->driver->bindShaderInput(c->tex1VertexLayout, roCountof(c->tex1VertexLayout), NULL));
+	roVerify(c->driver->bindShaderInput(c->strokeLayout, roCountof(c->strokeLayout), NULL));
 	c->driver->drawTriangle(0, p->stroke.size, 0);
 	c->driver->deleteBuffer(vBuf);
 }

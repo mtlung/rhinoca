@@ -66,6 +66,9 @@ roRDriverContext* _newDriverContext_GL(roRDriver* driver)
 	roRDriverContextImpl::TextureState texState = { 0, 0 };
 	ret->textureStateCache.assign(texState);
 
+	ret->currentDepthFunc = roRDriverCompareFunc(-1);
+	ret->currentColorWriteMask = roRDriverColorWriteMask(-1);
+
 	ret->hWnd = NULL;
 	ret->hDc = NULL;
 	ret->hRc = NULL;

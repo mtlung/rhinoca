@@ -118,6 +118,9 @@ struct roRDriverContextImpl : public roRDriverContext
 	};
 	StaticArray<TextureState, 64> textureStateCache;
 
+	roRDriverCompareFunc currentDepthFunc;
+	roRDriverColorWriteMask currentColorWriteMask;
+
 	Array<RenderTarget> renderTargetCache;
 	Array<DepthStencilBuffer> depthStencilBufferCache;
 };
