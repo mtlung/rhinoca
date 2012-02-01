@@ -2,8 +2,12 @@
 #include "roCanvas.h"
 #include "shivavg/openvg.h"
 #include "shivavg/vgu.h"
+#include "shivavg/shContext.h"
+#include "../base/roLog.h"
 #include "../base/roStringHash.h"
 #include "../base/roTypeCast.h"
+
+extern void updateBlendingStateGL(VGContext *c, int alphaIsOne);
 
 namespace ro {
 
@@ -145,6 +149,7 @@ void Canvas::init(roRDriverContext* context)
 	setLineJoin("round");
 	setLineWidth(1);
 	setGlobalAlpha(1);
+	setComposition("source-over");
 	setStrokeColor(black);
 	setFillColor(black);
 	setIdentity();
@@ -256,6 +261,8 @@ void Canvas::restore()
 
 	setStrokeColor(_currentState.strokeColor);
 	setFillColor(_currentState.fillColor);
+
+	vgSeti(VG_BLEND_MODE, _currentState.compisitionOperation);
 }
 
 
@@ -323,21 +330,7 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 	roVerify(_driver->setUniformTexture(stringHash("tex"), texture));
 
 	// Blend state
-	static roRDriverBlendState hasBlend = {
-		0, true,
-		roRDriverBlendOp_Add, roRDriverBlendOp_Add,
-		roRDriverBlendValue_SrcAlpha, roRDriverBlendValue_InvSrcAlpha,
-		roRDriverBlendValue_One, roRDriverBlendValue_Zero,
-		roRDriverColorWriteMask_EnableAll
-	};
-	static roRDriverBlendState noBlend = {
-		0, false,
-		roRDriverBlendOp_Add, roRDriverBlendOp_Add,
-		roRDriverBlendValue_SrcAlpha, roRDriverBlendValue_InvSrcAlpha,
-		roRDriverBlendValue_One, roRDriverBlendValue_Zero,
-		roRDriverColorWriteMask_EnableAll
-	};
-	_driver->setBlendState(_currentState.globalAlpha == 1 ? &noBlend : &hasBlend);
+	updateBlendingStateGL(shGetContext(), 0);	// TODO: It would be an optimization to know the texture has transparent or not
 
 	_driver->drawPrimitive(roRDriverPrimitiveType_TriangleStrip, 0, 4, 0);
 }
@@ -776,6 +769,34 @@ void Canvas::setGlobalAlpha(float alpha)
 	vgSetParameterfv(_openvg->fillPaint, VG_PAINT_COLOR, 4, fc);
 
 	_currentState.globalAlpha = alpha;
+}
+
+void Canvas::setComposition(const char* operation)
+{
+	struct Mapping { StringHash h; VGBlendMode mode; };
+	static const Mapping mapping[] = {
+		{ stringHash("source-atop"),		VG_BLEND_SRC_ATOP_SH	},
+		{ stringHash("source-in"),			VG_BLEND_SRC_IN			},
+		{ stringHash("source-out"),			VG_BLEND_SRC_OUT_SH		},
+		{ stringHash("source-over"),		VG_BLEND_SRC_OVER		},
+		{ stringHash("destination-atop"),	VG_BLEND_DST_ATOP_SH	},
+		{ stringHash("destination-in"),		VG_BLEND_DST_IN			},
+		{ stringHash("destination-out"),	VG_BLEND_DST_OUT_SH		},
+		{ stringHash("destination-over"),	VG_BLEND_DST_OVER		},
+		{ stringHash("lighter"),			VG_BLEND_ADDITIVE		},
+		{ stringHash("copy"),				VG_BLEND_SRC			},
+		{ stringHash("xor"),				VGBlendMode(-1)			},	// FIXME
+	};
+
+	StringHash h = stringLowerCaseHash(operation);
+	for(roSize i=0; i<roCountof(mapping); ++i) {
+		if(mapping[i].h != h) continue;
+		_currentState.compisitionOperation = mapping[i].mode;
+		vgSeti(VG_BLEND_MODE, mapping[i].mode);
+		return;
+	}
+
+	roLog("warn", "Wrong parameter given to Canvas::setComposition\n");
 }
 
 }	// namespace ro

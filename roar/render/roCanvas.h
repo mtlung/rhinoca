@@ -97,6 +97,13 @@ struct Canvas
 	float globalAlpha			() const;
 	void setGlobalAlpha			(float alpha);
 
+	/// sets how shapes and images are drawn onto the existing bitmap
+	/// See: http://www.whatwg.org/specs/web-apps/current-work/multipage/the-canvas-element.html#compositing
+	/// Possible values:
+	/// source-atop, source-in, source-out, source-over (default), destination-atop,
+	/// destination-in, destination-out, destination-over, lighter, copy, xor
+	void setComposition			(const char* operation);
+
 	TexturePtr targetTexture;
 	TexturePtr depthStencilTexture;
 
@@ -123,6 +130,7 @@ struct Canvas
 		float globalAlpha;
 		float strokeColor[4];
 		float fillColor[4];
+		int compisitionOperation;
 		ro::Mat4 transform;
 	};
 	State _currentState;
