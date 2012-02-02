@@ -737,8 +737,8 @@ TextureFormatMapping _textureFormatMappings[] = {
 	{ roRDriverTextureFormat_RGBA,			4,	DXGI_FORMAT_R8G8B8A8_UNORM },
 	{ roRDriverTextureFormat_R,				1,	DXGI_FORMAT_R16_UINT },
 	{ roRDriverTextureFormat_A,				0,	DXGI_FORMAT(0) },
-	{ roRDriverTextureFormat_Depth,			0,	DXGI_FORMAT(0) },
-	{ roRDriverTextureFormat_DepthStencil,	0,	DXGI_FORMAT(0) },
+	{ roRDriverTextureFormat_Depth,			0,	DXGI_FORMAT_D32_FLOAT },
+	{ roRDriverTextureFormat_DepthStencil,	0,	DXGI_FORMAT_D24_UNORM_S8_UINT },	// DXGI_FORMAT_D32_FLOAT_S8X24_UINT
 	{ roRDriverTextureFormat_PVRTC2,		0,	DXGI_FORMAT(0) },
 	{ roRDriverTextureFormat_PVRTC4,		0,	DXGI_FORMAT(0) },
 	{ roRDriverTextureFormat_DXT1,			0,	DXGI_FORMAT_BC1_UNORM },
@@ -754,6 +754,16 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, roSize rowP
 
 	const unsigned mipCount = 1;	// TODO: Allow loading mip maps
 
+	UINT bindFlags = 0;
+
+	{	// Setup bind flags
+		if(impl->format != roRDriverTextureFormat_Depth && impl->format != roRDriverTextureFormat_DepthStencil)
+			bindFlags |= D3D11_BIND_SHADER_RESOURCE;
+
+		if(impl->flags & roRDriverTextureFlag_RenderTarget)
+			bindFlags |= D3D11_BIND_RENDER_TARGET;
+	}
+
 	D3D11_TEXTURE2D_DESC desc = {
 		impl->width, impl->height,
 		mipCount,	// MipLevels
@@ -761,9 +771,9 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, roSize rowP
 		_textureFormatMappings[impl->format].dxFormat,
 		{ 1, 0 },	// DXGI_SAMPLE_DESC: 1 sample, quality level 0
 		D3D11_USAGE_DEFAULT,
-		D3D11_BIND_SHADER_RESOURCE | ((impl->flags & roRDriverTextureFlag_RenderTarget) > 0 ? D3D11_BIND_RENDER_TARGET : 0),
+		bindFlags,
 		0,			// CPUAccessFlags
-		0			// MiscFlags 
+		0			// MiscFlags
 	};
 
 	ID3D11Texture2D* tex2d = NULL;
@@ -857,13 +867,15 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, roSize rowP
 		break;
 	}
 
-	ID3D11ShaderResourceView* view = NULL;
-	hr = ctx->dxDevice->CreateShaderResourceView(impl->dxTexture, NULL, &view);
-	impl->dxView = view;
+	if(bindFlags & D3D11_BIND_SHADER_RESOURCE) {
+		ID3D11ShaderResourceView* view = NULL;
+		hr = ctx->dxDevice->CreateShaderResourceView(impl->dxTexture, NULL, &view);
+		impl->dxView = view;
 
-	if(FAILED(hr)) {
-		roLog("error", "CreateShaderResourceView failed\n");
-		return false;
+		if(FAILED(hr)) {
+			roLog("error", "CreateShaderResourceView failed\n");
+			return false;
+		}
 	}
 
 	return true;
@@ -1221,7 +1233,9 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 		{
 			ctx->dxDeviceContext->IASetIndexBuffer(buffer->dxBuffer, DXGI_FORMAT_R16_UINT, 0);
 		}
-		else { roAssert(false); }
+		else {
+			roAssert(false && "An unknow buffer was supplied to bindShaderInput()");
+		}
 	}
 
 	// Create input layout
@@ -1283,8 +1297,14 @@ static void _drawPrimitive(roRDriverPrimitiveType type, roSize offset, roSize ve
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx) return;
-	ctx->dxDeviceContext->IASetPrimitiveTopology(_primitiveTypeMappings[type]);
-	ctx->dxDeviceContext->Draw(num_cast<UINT>(vertexCount), num_cast<UINT>(offset));
+
+	if(type == roRDriverPrimitiveType_TriangleFan) {
+//		ctx->dxDeviceContext->IASetIndexBuffer(buffer->dxBuffer, DXGI_FORMAT_R16_UINT, 0);
+	}
+	else {
+		ctx->dxDeviceContext->IASetPrimitiveTopology(_primitiveTypeMappings[type]);
+		ctx->dxDeviceContext->Draw(num_cast<UINT>(vertexCount), num_cast<UINT>(offset));
+	}
 }
 
 static void _drawPrimitiveIndexed(roRDriverPrimitiveType type, roSize offset, roSize indexCount, unsigned flags)
@@ -1375,6 +1395,8 @@ roRDriver* _roNewRenderDriver_DX11(const char* driverStr, const char*)
 
 	ret->drawTriangle = _drawTriangle;
 	ret->drawTriangleIndexed = _drawTriangleIndexed;
+	ret->drawPrimitive = _drawPrimitive;
+	ret->drawPrimitiveIndexed = _drawPrimitiveIndexed;
 
 	return ret;
 }

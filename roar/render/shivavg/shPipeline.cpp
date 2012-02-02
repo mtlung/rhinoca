@@ -220,6 +220,7 @@ static void shDrawStroke(VGContext* c, SHPath *p)
 {
 	roRDriverBuffer* vBuf = c->driver->newBuffer();
 	c->strokeLayout[0].buffer = vBuf;
+	c->strokeLayout[1].buffer = vBuf;
 	roVerify(c->driver->initBuffer(vBuf, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, p->stroke.items, p->stroke.size * sizeof(SHVector2)));
 	roVerify(c->driver->bindShaderInput(c->strokeLayout, roCountof(c->strokeLayout), NULL));
 	c->driver->drawTriangle(0, p->stroke.size, 0);
@@ -238,6 +239,7 @@ static void shDrawVertices(VGContext* c, SHPath *p, roRDriverPrimitiveType primi
 
 	roRDriverBuffer* vBuf = c->driver->newBuffer();
 	c->shVertexLayout[0].buffer = vBuf;
+	c->shVertexLayout[1].buffer = vBuf;
 	roVerify(c->driver->initBuffer(vBuf, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, p->vertices.items, p->vertices.size * sizeof(SHVertex)));
 	roVerify(c->driver->bindShaderInput(c->shVertexLayout, roCountof(c->shVertexLayout), NULL));
 

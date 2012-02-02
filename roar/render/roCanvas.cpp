@@ -771,28 +771,28 @@ void Canvas::setGlobalAlpha(float alpha)
 	_currentState.globalAlpha = alpha;
 }
 
+struct CompositionMapping { StringHash h; VGBlendMode mode; };
+static const CompositionMapping _compositionMapping[] = {
+	{ stringHash("source-atop"),		VG_BLEND_SRC_ATOP_SH	},
+	{ stringHash("source-in"),			VG_BLEND_SRC_IN			},
+	{ stringHash("source-out"),			VG_BLEND_SRC_OUT_SH		},
+	{ stringHash("source-over"),		VG_BLEND_SRC_OVER		},
+	{ stringHash("destination-atop"),	VG_BLEND_DST_ATOP_SH	},
+	{ stringHash("destination-in"),		VG_BLEND_DST_IN			},
+	{ stringHash("destination-out"),	VG_BLEND_DST_OUT_SH		},
+	{ stringHash("destination-over"),	VG_BLEND_DST_OVER		},
+	{ stringHash("lighter"),			VG_BLEND_ADDITIVE		},
+	{ stringHash("copy"),				VG_BLEND_SRC			},
+	{ stringHash("xor"),				VGBlendMode(-1)			},	// FIXME
+};
+
 void Canvas::setComposition(const char* operation)
 {
-	struct Mapping { StringHash h; VGBlendMode mode; };
-	static const Mapping mapping[] = {
-		{ stringHash("source-atop"),		VG_BLEND_SRC_ATOP_SH	},
-		{ stringHash("source-in"),			VG_BLEND_SRC_IN			},
-		{ stringHash("source-out"),			VG_BLEND_SRC_OUT_SH		},
-		{ stringHash("source-over"),		VG_BLEND_SRC_OVER		},
-		{ stringHash("destination-atop"),	VG_BLEND_DST_ATOP_SH	},
-		{ stringHash("destination-in"),		VG_BLEND_DST_IN			},
-		{ stringHash("destination-out"),	VG_BLEND_DST_OUT_SH		},
-		{ stringHash("destination-over"),	VG_BLEND_DST_OVER		},
-		{ stringHash("lighter"),			VG_BLEND_ADDITIVE		},
-		{ stringHash("copy"),				VG_BLEND_SRC			},
-		{ stringHash("xor"),				VGBlendMode(-1)			},	// FIXME
-	};
-
 	StringHash h = stringLowerCaseHash(operation);
-	for(roSize i=0; i<roCountof(mapping); ++i) {
-		if(mapping[i].h != h) continue;
-		_currentState.compisitionOperation = mapping[i].mode;
-		vgSeti(VG_BLEND_MODE, mapping[i].mode);
+	for(roSize i=0; i<roCountof(_compositionMapping); ++i) {
+		if(_compositionMapping[i].h != h) continue;
+		_currentState.compisitionOperation = _compositionMapping[i].mode;
+		vgSeti(VG_BLEND_MODE, _compositionMapping[i].mode);
 		return;
 	}
 

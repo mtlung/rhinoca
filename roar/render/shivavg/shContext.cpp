@@ -66,15 +66,27 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 		// GLSL
 		"uniform constants { vec4 color; mat4 viewMat, projMat; };"
 		"in vec2 position;"
-		"in vec2 uv;"
-		"out varying vec2 _uv;"
+		"in vec2 texCoord;"
+		"out varying vec2 _texCoord;"
 		"void main(void) {"
 		"	vec4 pos = vec4(position, 0, 1);"
 		"	pos = projMat * viewMat * pos;"
-		"	pos.y = -pos.y;"
+		"	pos.y = -pos.y;"	// Flip y axis
 		"	gl_Position = pos;"
-		"	_uv = uv;"
+		"	_texCoord = texCoord;"
 		"}",
+
+		// HLSL
+		"cbuffer constants { float4 color; float4x4 viewMat, projMat; };"
+		"struct VertexInputType { float2 pos : POSITION; float2 texCoord : TEXCOORD0; };"
+		"struct PixelInputType { float4 pos : SV_POSITION; float2 texCoord : TEXCOORD0; };"
+		"PixelInputType main(VertexInputType input) {"
+		"	PixelInputType output;"
+		"	output.pos = mul(mul(projMat, viewMat), float4(input.pos, 0, 1));"
+		"	output.pos.y = -output.pos.y;"	// Flip y axis
+		"	output.texCoord = input.texCoord;"
+		"	return output;"
+		"}"
 	};
 
 	static const char* pShaderSrc[] =
@@ -82,10 +94,18 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 		// GLSL
 		"uniform constants { vec4 color; mat4 viewMat, projMat; };"
 		"uniform sampler2D texGrad;"
-		"in vec2 _uv;"
+		"in vec2 _texCoord;"
 		"void main(void) {"
-		"	gl_FragColor = color * texture2D(texGrad, _uv);"
+		"	gl_FragColor = color * texture2D(texGrad, _texCoord);"
 		"}",
+
+		"cbuffer constants { float4 color; float4x4 viewMat, projMat; };"
+		"struct PixelInputType { float4 pos : SV_POSITION; float2 texCoord : TEXCOORD0; };"
+		"Texture2D texGrad;"
+		"SamplerState sampleType;"
+		"float4 main(PixelInputType input):SV_Target {"
+		"	return color * texGrad.Sample(sampleType, input.texCoord);"
+		"}"
 	};
 
 	VGContext* c = g_context;
@@ -94,15 +114,21 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 	c->vShader = d->newShader();
 	c->pShader = d->newShader();
 
-	roVerify(d->initShader(c->vShader, roRDriverShaderType_Vertex, &vShaderSrc[0], 1));
-	roVerify(d->initShader(c->pShader, roRDriverShaderType_Pixel, &pShaderSrc[0], 1));
+	int driverIndex = 0;
+	if(roStrCaseCmp(d->driverName, "gl") == 0)
+		driverIndex = 0;
+	if(roStrCaseCmp(d->driverName, "dx11") == 0)
+		driverIndex = 1;
+
+	roVerify(d->initShader(c->vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
+	roVerify(d->initShader(c->pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
 
 	c->quadBuffer = d->newBuffer();
 	c->vBuffer = d->newBuffer();
 	c->uBuffer = d->newBuffer();
 
 	// Vertex position, uv
-	roVerify(d->initBuffer(c->quadBuffer, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, NULL, sizeof(float)*4*2));
+	roVerify(d->initBuffer(c->quadBuffer, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, NULL, sizeof(float)*4*4));
 	roVerify(d->initBuffer(c->uBuffer, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, NULL, sizeof(UniformBuffer)));
 
 	// Init the uniform buffer
@@ -116,7 +142,7 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 		// {posx, posy}, {posx, posy}, ...
 		const roRDriverShaderInput input[] = {
 			{ c->vBuffer, c->vShader, "position", 0, 0, sizeof(float)*2, 0 },
-			{ c->vBuffer, c->vShader, "uv", 0, 0, sizeof(float)*2, 0 },
+			{ c->vBuffer, c->vShader, "texCoord", 0, 0, sizeof(float)*2, 0 },
 			{ c->uBuffer, c->vShader, "constants", 0, 0, 0, 0 },
 			{ c->uBuffer, c->pShader, "constants", 0, 0, 0, 0 },
 		};
@@ -129,7 +155,7 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 		// {posx, posy, SHVector2, ...}, {posx, posy, SHVector2, ...}, ...
 		const roRDriverShaderInput input[] = {
 			{ c->vBuffer, c->vShader, "position", 0, 0, sizeof(SHVertex), 0 },
-			{ c->vBuffer, c->vShader, "uv", 0, 0, sizeof(SHVertex), 0 },	// We don't care about uv, so just use the position as uv
+			{ c->vBuffer, c->vShader, "texCoord", 0, 0, sizeof(SHVertex), 0 },	// We don't care about uv, so just use the position as uv
 			{ c->uBuffer, c->vShader, "constants", 0, 0, 0, 0 },
 			{ c->uBuffer, c->pShader, "constants", 0, 0, 0, 0 },
 		};
@@ -142,7 +168,7 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 		// {posx, posy}, {posx, posy}, ... {u, v}, {u, v}, ...
 		const roRDriverShaderInput input[] = {
 			{ c->quadBuffer, c->vShader, "position", 0, 0, sizeof(float)*2, 0 },
-			{ c->quadBuffer, c->vShader, "uv", 0, sizeof(float)*4*2, sizeof(float)*2, 0 },
+			{ c->quadBuffer, c->vShader, "texCoord", 0, sizeof(float)*4*2, sizeof(float)*2, 0 },
 			{ c->uBuffer, c->vShader, "constants", 0, 0, 0, 0 },
 			{ c->uBuffer, c->pShader, "constants", 0, 0, 0, 0 },
 		};
@@ -155,7 +181,7 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 		// {posx, posy, u, v}, {posx, posy, u, v}, ...
 		const roRDriverShaderInput input[] = {
 			{ c->vBuffer, c->vShader, "position", 0, 0, sizeof(float)*2*2, 0 },
-			{ c->vBuffer, c->vShader, "uv", 0, sizeof(float)*2, sizeof(float)*2*2, 0 },
+			{ c->vBuffer, c->vShader, "texCoord", 0, sizeof(float)*2, sizeof(float)*2*2, 0 },
 			{ c->uBuffer, c->vShader, "constants", 0, 0, 0, 0 },
 			{ c->uBuffer, c->pShader, "constants", 0, 0, 0, 0 },
 		};
