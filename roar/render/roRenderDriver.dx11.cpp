@@ -11,6 +11,7 @@
 #include <dxgi.h>
 #include <D3Dcompiler.h>
 #include <D3DX11async.h>
+#include <stddef.h>	// For offsetof
 
 // DirectX stuffs
 // DX11 tutorial:					http://www.rastertek.com/tutindex.html
@@ -460,10 +461,87 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 	ctx->dxDeviceContext->OMSetDepthStencilState(s, state->stencilRefValue);
 }
 
+static const StaticArray<D3D11_FILTER, 5> _textureFilterMode = {
+	D3D11_FILTER(-1),
+	D3D11_FILTER_MIN_MAG_MIP_POINT,
+	D3D11_FILTER_MIN_MAG_MIP_LINEAR,
+	D3D11_FILTER_MIN_MAG_MIP_POINT,
+	D3D11_FILTER_MIN_MAG_MIP_LINEAR
+};
+
+static const StaticArray<D3D11_TEXTURE_ADDRESS_MODE, 5> _textureAddressMode = {
+	D3D11_TEXTURE_ADDRESS_MODE(-1),
+	D3D11_TEXTURE_ADDRESS_WRAP,
+	D3D11_TEXTURE_ADDRESS_CLAMP,
+	D3D11_TEXTURE_ADDRESS_BORDER,
+	D3D11_TEXTURE_ADDRESS_MIRROR
+};
+
 static void _setTextureState(roRDriverTextureState* states, roSize stateCount, unsigned startingTextureUnit)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx || !states || stateCount == 0) return;
+
+	for(unsigned i=0; i<stateCount; ++i)
+	{
+		roRDriverTextureState& state = states[i];
+
+		// Generate the hash value if not yet
+		if(state.hash == 0) {
+			state.hash = (void*)_hash(
+				&state.filter,
+				sizeof(roRDriverTextureState) - offsetof(roRDriverTextureState, roRDriverTextureState::filter)
+			);
+		}
+
+		ComPtr<ID3D11SamplerState> dxState;
+		roSize freeCacheSlot = roSize(-1);
+
+		// Try to search for the state in the cache
+		for(roSize j=0; j<ctx->samplerStateCache.size(); ++j) {
+			if(state.hash == ctx->samplerStateCache[j].hash) {
+				dxState = ctx->samplerStateCache[j].dxSamplerState;
+				break;
+			}
+			if(freeCacheSlot == -1 && !ctx->samplerStateCache[j].dxSamplerState)
+				freeCacheSlot = j;
+		}
+
+		// Cache miss, create the state object
+		if(!dxState) {
+			// Not enough cache slot
+			if(freeCacheSlot == -1) {
+				roLog("error", "roRDriver texture cache slot full\n");
+				return;
+			}
+
+			D3D11_SAMPLER_DESC samplerDesc = {
+				_textureFilterMode[state.filter],
+				_textureAddressMode[state.u],
+				_textureAddressMode[state.v],
+				D3D11_TEXTURE_ADDRESS_CLAMP,
+				0,							// Mip-LOD bias
+				state.maxAnisotropy + 1,
+				D3D11_COMPARISON_NEVER,		// TODO: Understand what is this
+				0, 0, 0, 0,					// Border color
+				-FLT_MAX, FLT_MAX			// Min/Max LOD
+			};
+
+			// Create the texture sampler state.
+			HRESULT hr = ctx->dxDevice->CreateSamplerState(&samplerDesc, &dxState.ptr);
+
+			if(FAILED(hr)) {
+				roLog("error", "Fail to create sampler state\n");
+				continue;
+			}
+
+			ctx->samplerStateCache[freeCacheSlot].dxSamplerState = dxState;
+			ctx->samplerStateCache[freeCacheSlot].hash = state.hash;
+		}
+
+		// TODO: Optimize this by gather all dxState in any array and call PSSetSamplers at once
+		ctx->dxDeviceContext->PSSetSamplers(startingTextureUnit + i, 1, &dxState.ptr);
+	}
 }
 
 // ----------------------------------------------------------------------

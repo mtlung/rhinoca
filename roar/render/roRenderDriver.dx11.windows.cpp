@@ -54,8 +54,8 @@ roRDriverContext* _newDriverContext_DX11(roRDriver* driver)
 
 	ret->currentRenderTargetViewHash = 0;
 
-	roRDriverContextImpl::TextureState texState = { 0 };
-	ret->textureStateCache.assign(texState);
+	SamplerState texState = { 0, ComPtr<ID3D11SamplerState>(NULL) };
+	ret->samplerStateCache.assign(texState);
 
 	ret->hWnd = NULL;
 

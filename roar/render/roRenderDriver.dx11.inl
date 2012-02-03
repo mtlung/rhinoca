@@ -46,6 +46,11 @@ struct StagingTexture
 	ComPtr<ID3D11Resource> dxTexture;
 };
 
+struct SamplerState {
+	void* hash;
+	ComPtr<ID3D11SamplerState> dxSamplerState;
+};
+
 struct roRDriverTextureImpl : public roRDriverTexture
 {
 	ComPtr<ID3D11Resource> dxTexture;	// May store a 1d, 2d or 3d texture
@@ -71,11 +76,11 @@ struct InputLayout
 
 	ComPtr<ID3D11InputLayout> layout;
 	ComPtr<ID3D10Blob> shader;
-	TinyArray<D3D11_INPUT_ELEMENT_DESC, 4> inputDescs;
+	Array<D3D11_INPUT_ELEMENT_DESC> inputDescs;
 
-	TinyArray<ComPtr<ID3D11Buffer>, 4> buffers;
-	TinyArray<UINT, 4> strides;
-	TinyArray<UINT, 4> offsets;
+	Array<ComPtr<ID3D11Buffer> > buffers;
+	Array<UINT> strides;
+	Array<UINT> offsets;
 };
 
 struct RenderTarget
@@ -102,7 +107,7 @@ struct roRDriverContextImpl : public roRDriverContext
 	typedef StaticArray<roRDriverShaderImpl*, 3> CurrentShaders;
 	CurrentShaders currentShaders;
 
-	TinyArray<InputLayout, 16> inputLayoutCache;
+	Array<InputLayout> inputLayoutCache;
 
 	Array<StagingBuffer> stagingBufferCache;
 	Array<StagingTexture> stagingTextureCache;
@@ -111,8 +116,5 @@ struct roRDriverContextImpl : public roRDriverContext
 	unsigned currentRenderTargetViewHash;
 //	Array<ID3D11DepthStencilState*> depthStencilStateCache;
 
-	struct TextureState {
-		void* hash;
-	};
-	StaticArray<TextureState, 64> textureStateCache;
+	StaticArray<SamplerState, 64> samplerStateCache;
 };

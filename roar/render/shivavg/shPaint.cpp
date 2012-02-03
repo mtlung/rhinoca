@@ -427,16 +427,18 @@ void shSetPatternTexGLState(SHPaint *p, VGContext *c, unsigned texUnit)
 
 static void fillBoundingBox(VGContext* c, SHVector2* corners, SHColor* color)
 {
-	float vertex[6*2] = {
-		corners[0].x,corners[0].y, corners[1].x,corners[1].y, corners[2].x,corners[2].y,
-		corners[2].x,corners[2].y, corners[3].x,corners[3].y, corners[0].x,corners[0].y,
+	float vertex[4*2] = {
+		corners[0].x,corners[0].y,
+		corners[1].x,corners[1].y,
+		corners[2].x,corners[2].y,
+		corners[3].x,corners[3].y
 	};
 
 	roVerify(c->driver->updateBuffer(c->quadBuffer, 0, vertex, sizeof(vertex)));
 	roVerify(c->driver->bindShaderInput(c->quadInputLayout, roCountof(c->quadInputLayout), NULL));
 
 	c->driver->updateBuffer(c->uBuffer, roOffsetof(UniformBuffer, UniformBuffer::color), color, sizeof(SHColor));
-	c->driver->drawTriangle(0, 6, 0);
+	c->driver->drawPrimitive(roRDriverPrimitiveType_TriangleStrip, 0, 4, 0);
 }
 
 int shDrawLinearGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
@@ -528,12 +530,15 @@ int shDrawLinearGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
 	// Draw quad using color-ramp texture
 	shSetGradientTexGLState(p, texUnit);
 
-	float vertex[4*2*2] = {
+	float vertex[4*2] = {
 		r1.x,r1.y,				l1.x,l1.y,				r2.x,r2.y,				l2.x,l2.y,
+	};
+	float uv[4*2] = {
 		minOffset,minOffset,	minOffset,minOffset,	maxOffset,maxOffset,	maxOffset,maxOffset,
 	};
 
 	roVerify(context->driver->updateBuffer(context->quadBuffer, 0, vertex, sizeof(vertex)));
+	roVerify(context->driver->updateBuffer(context->quadUvBuffer, 0, uv, sizeof(uv)));
 	roVerify(context->driver->bindShaderInput(context->quadInputLayout, roCountof(context->quadInputLayout), NULL));
 	context->driver->drawPrimitive(roRDriverPrimitiveType_TriangleStrip, 0, 4, 0);
 

@@ -244,6 +244,7 @@ static void shDrawVertices(VGContext* c, SHPath *p, roRDriverPrimitiveType primi
 	roVerify(c->driver->bindShaderInput(c->shVertexLayout, roCountof(c->shVertexLayout), NULL));
 
 	// We separate vertex arrays by contours to properly handle the fill modes
+	// TODO: May use primitive restart
 	while (start < p->vertices.size) {
 		size = p->vertices.items[start].flags;
 		c->driver->drawPrimitive(primitiveType, start, size, 0);
@@ -255,7 +256,7 @@ static void shDrawVertices(VGContext* c, SHPath *p, roRDriverPrimitiveType primi
 
 void shDrawQuad(VGContext* c, float* fourCorners)
 {
-	roVerify(c->driver->updateBuffer(c->quadBuffer, 0, fourCorners, sizeof(float) * 4 * 2));
+	roVerify(c->driver->updateBuffer(c->quadBuffer, 0, fourCorners, sizeof(float) * 2 * 4));
 	roVerify(c->driver->bindShaderInput(c->quadInputLayout, roCountof(c->quadInputLayout), NULL));
 	c->driver->drawPrimitive(roRDriverPrimitiveType_TriangleStrip, 0, 4, 0);
 }

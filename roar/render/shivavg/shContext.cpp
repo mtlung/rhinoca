@@ -92,6 +92,8 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 	static const char* pShaderSrc[] =
 	{
 		// GLSL
+		// TODO: May look for ARB fragment coord convention to solve the y-axis origin problem
+		// http://www.opengl.org/registry/specs/ARB/fragment_coord_conventions.txt
 		"uniform constants { vec4 color; mat4 viewMat, projMat; };"
 		"uniform sampler2D texGrad;"
 		"in vec2 _texCoord;"
@@ -99,6 +101,7 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 		"	gl_FragColor = color * texture2D(texGrad, _texCoord);"
 		"}",
 
+		// HLSL
 		"cbuffer constants { float4 color; float4x4 viewMat, projMat; };"
 		"struct PixelInputType { float4 pos : SV_POSITION; float2 texCoord : TEXCOORD0; };"
 		"Texture2D texGrad;"
@@ -124,11 +127,13 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 	roVerify(d->initShader(c->pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
 
 	c->quadBuffer = d->newBuffer();
+	c->quadUvBuffer = d->newBuffer();
 	c->vBuffer = d->newBuffer();
 	c->uBuffer = d->newBuffer();
 
 	// Vertex position, uv
-	roVerify(d->initBuffer(c->quadBuffer, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, NULL, sizeof(float)*4*4));
+	roVerify(d->initBuffer(c->quadBuffer, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, NULL, sizeof(float)*2*4));
+	roVerify(d->initBuffer(c->quadUvBuffer, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, NULL, sizeof(float)*2*4));
 	roVerify(d->initBuffer(c->uBuffer, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, NULL, sizeof(UniformBuffer)));
 
 	// Init the uniform buffer
@@ -168,7 +173,7 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 		// {posx, posy}, {posx, posy}, ... {u, v}, {u, v}, ...
 		const roRDriverShaderInput input[] = {
 			{ c->quadBuffer, c->vShader, "position", 0, 0, sizeof(float)*2, 0 },
-			{ c->quadBuffer, c->vShader, "texCoord", 0, sizeof(float)*4*2, sizeof(float)*2, 0 },
+			{ c->quadUvBuffer, c->vShader, "texCoord", 0, 0, sizeof(float)*2, 0 },
 			{ c->uBuffer, c->vShader, "constants", 0, 0, 0, 0 },
 			{ c->uBuffer, c->pShader, "constants", 0, 0, 0, 0 },
 		};
@@ -228,6 +233,7 @@ VG_API_CALL void vgResizeSurfaceSH(VGint width, VGint height)
 	// setup GL projection
 	context->driver->setViewport(0, 0, (unsigned)width, (unsigned)height, 0, 1);
 	context->projMat = makeOrthoMat4(0, (float)width, 0, (float)height, 0, 1);
+	context->driver->adjustDepthRangeMatrix(context->projMat.data);
 	context->driver->updateBuffer(context->uBuffer, roOffsetof(UniformBuffer, UniformBuffer::projMat), context->projMat.data, sizeof(context->projMat));
 
 	VG_RETURN(VG_NO_RETVAL);
@@ -328,6 +334,7 @@ void VGContext_ctor(VGContext *c)
 	c->driver = NULL;
 	c->driverContext = NULL;
 	c->quadBuffer = NULL;
+	c->quadUvBuffer = NULL;
 	c->vBuffer = NULL;
 	c->uBuffer = NULL;
 	c->vShader = NULL;
@@ -363,6 +370,7 @@ void VGContext_dtor(VGContext *c)
 	SH_DEINITOBJ(SHImageArray, c->images);
 
 	c->driver->deleteBuffer(c->quadBuffer);
+	c->driver->deleteBuffer(c->quadUvBuffer);
 	c->driver->deleteBuffer(c->vBuffer);
 	c->driver->deleteBuffer(c->uBuffer);
 	c->driver->deleteShader(c->vShader);

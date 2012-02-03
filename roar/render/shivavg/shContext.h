@@ -123,6 +123,7 @@ typedef struct
   ro::Mat4				projMat;
   ro::Mat4				viewMat;
   roRDriverBuffer*      quadBuffer;
+  roRDriverBuffer*      quadUvBuffer;
   roRDriverBuffer*      vBuffer;
   roRDriverBuffer*      uBuffer;
   roRDriverShader*      vShader;

@@ -212,6 +212,7 @@ void Canvas::beginDraw()
 
 	vgResizeSurfaceSH((VGint)_targetWidth, (VGint)_targetHeight);
 	_orthoMat = makeOrthoMat4(0, _targetWidth, 0, _targetHeight, 0, 1);
+	_driver->adjustDepthRangeMatrix(_orthoMat.data);
 
 	vgSeti(VG_FILL_RULE, VG_NON_ZERO);
 	vgSetPaint(_openvg->strokePaint, VG_STROKE_PATH);
