@@ -104,6 +104,7 @@ struct IArray
 	const_iterator	end() const			{ return _data + _size; }
 
 	roSize			size() const		{ return _size; }
+	roSize			sizeInByte() const	{ return _size * sizeof(T); }
 	roSize			capacity() const	{ return _capacity; }
 
 	T*				typedPtr()			{ return _data; }

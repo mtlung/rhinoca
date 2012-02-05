@@ -112,6 +112,7 @@ void Canvas::init(roRDriverContext* context)
 		{ _vBuffer, _vShader, "position", 0, 0, sizeof(float)*6, 0 },
 		{ _vBuffer, _vShader, "texCoord", 0, sizeof(float)*4, sizeof(float)*6, 0 },
 		{ _uBuffer, _vShader, "constants", 0, 0, 0, 0 },
+		{ _uBuffer, _pShader, "constants", 0, 0, 0, 0 },
 	};
 	roAssert(roCountof(input) == _inputLayout.size());
 	for(roSize i=0; i<roCountof(input); ++i)
