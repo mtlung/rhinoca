@@ -494,7 +494,7 @@ static void _setTextureState(roRDriverTextureState* states, roSize stateCount, u
 			);
 		}
 
-		ComPtr<ID3D11SamplerState> dxState;
+		ID3D11SamplerState* dxState = NULL;
 		roSize freeCacheSlot = roSize(-1);
 
 		// Try to search for the state in the cache
@@ -528,19 +528,21 @@ static void _setTextureState(roRDriverTextureState* states, roSize stateCount, u
 			};
 
 			// Create the texture sampler state.
-			HRESULT hr = ctx->dxDevice->CreateSamplerState(&samplerDesc, &dxState.ptr);
+			ComPtr<ID3D11SamplerState> dxStateComPtr;
+			HRESULT hr = ctx->dxDevice->CreateSamplerState(&samplerDesc, &dxStateComPtr.ptr);
 
 			if(FAILED(hr)) {
 				roLog("error", "Fail to create sampler state\n");
 				continue;
 			}
 
-			ctx->samplerStateCache[freeCacheSlot].dxSamplerState = dxState;
+			dxState = dxStateComPtr;
+			ctx->samplerStateCache[freeCacheSlot].dxSamplerState = dxStateComPtr;
 			ctx->samplerStateCache[freeCacheSlot].hash = state.hash;
 		}
 
 		// TODO: Optimize this by gather all dxState in any array and call PSSetSamplers at once
-		ctx->dxDeviceContext->PSSetSamplers(startingTextureUnit + i, 1, &dxState.ptr);
+		ctx->dxDeviceContext->PSSetSamplers(startingTextureUnit + i, 1, &dxState);
 	}
 }
 
@@ -1137,25 +1139,6 @@ bool _setUniformBuffer(unsigned nameHash, roRDriverBuffer* buffer, roRDriverShad
 	roRDriverBufferImpl* bufferImpl = static_cast<roRDriverBufferImpl*>(buffer);
 	if(!bufferImpl) return false;
 
-	roRDriverShaderImpl* shader = NULL;
-	ConstantBuffer* cb = NULL;
-
-	// Search for the constant buffer with the matching name
-	for(unsigned i=0; i<ctx->currentShaders.size() && !cb; ++i) {
-		shader = ctx->currentShaders[i];
-		if(!shader) continue;
-
-		for(unsigned j=0; j<shader->constantBuffers.size(); ++j) {
-			ConstantBuffer& b = shader->constantBuffers[j];
-			if(b.nameHash == nameHash) {
-				cb = &b;
-				break;
-			}
-		}
-	}
-
-	if(!shader || !cb) return false;
-
 	// Offset is not supported in DX11, have to wait until DX11.1.
 	// Now we create a tmp buffer to emulate this feature.
 	// NOTE: This is a slow path
@@ -1167,12 +1150,21 @@ bool _setUniformBuffer(unsigned nameHash, roRDriverBuffer* buffer, roRDriverShad
 		ctx->dxDeviceContext->CopySubresourceRegion(tmpBuf->dxBuffer, 0, 0, 0, 0, bufferImpl->dxBuffer, 0, &srcBox);
 	}
 
-	if(shader->type == roRDriverShaderType_Vertex)
-		ctx->dxDeviceContext->VSSetConstantBuffers(cb->bindPoint, 1, &tmpBuf->dxBuffer.ptr);
-	else if(shader->type == roRDriverShaderType_Pixel)
-		ctx->dxDeviceContext->PSSetConstantBuffers(cb->bindPoint, 1, &tmpBuf->dxBuffer.ptr);
-	else if(shader->type == roRDriverShaderType_Geometry)
-		ctx->dxDeviceContext->GSSetConstantBuffers(cb->bindPoint, 1, &tmpBuf->dxBuffer.ptr);
+	roRDriverShaderImpl* shader = (roRDriverShaderImpl*)input->shader;
+
+	// Search for the constant buffer with the matching name
+	if(shader) for(unsigned j=0; j<shader->constantBuffers.size(); ++j) {
+		ConstantBuffer& b = shader->constantBuffers[j];
+		if(b.nameHash == nameHash) {
+			if(shader->type == roRDriverShaderType_Vertex)
+				ctx->dxDeviceContext->VSSetConstantBuffers(b.bindPoint, 1, &tmpBuf->dxBuffer.ptr);
+			else if(shader->type == roRDriverShaderType_Pixel)
+				ctx->dxDeviceContext->PSSetConstantBuffers(b.bindPoint, 1, &tmpBuf->dxBuffer.ptr);
+			else if(shader->type == roRDriverShaderType_Geometry)
+				ctx->dxDeviceContext->GSSetConstantBuffers(b.bindPoint, 1, &tmpBuf->dxBuffer.ptr);
+			break;
+		}
+	}
 
 	if(input->offset > 0)
 		_deleteBuffer(tmpBuf);
@@ -1353,9 +1345,7 @@ bool _setUniformTexture(StringHash nameHash, roRDriverTexture* texture)
 	if(!ctx || !impl) return false;
 	if(impl->dxDimension == D3D11_RESOURCE_DIMENSION_UNKNOWN) return false;
 
-	ctx->dxDeviceContext->PSSetShaderResources(0, 1, &impl->dxView.ptr);	// TODO: Fix me
-	ID3D11SamplerState* samplerStates = NULL;
-	ctx->dxDeviceContext->PSSetSamplers(0, 1, &samplerStates);
+	ctx->dxDeviceContext->PSSetShaderResources(0, 1, &impl->dxView.ptr);
 
 	return true;
 }
@@ -1377,7 +1367,21 @@ static void _drawPrimitive(roRDriverPrimitiveType type, roSize offset, roSize ve
 	if(!ctx) return;
 
 	if(type == roRDriverPrimitiveType_TriangleFan) {
-//		ctx->dxDeviceContext->IASetIndexBuffer(buffer->dxBuffer, DXGI_FORMAT_R16_UINT, 0);
+		roAssert(vertexCount < TypeOf<roUint16>::valueMax());
+		TinyArray<roUint16, 3 * 32> index((vertexCount - offset - 2) * 3);
+		for(roUint16 i=0, count=0; i<index.size(); i+=3, ++count) {
+			index[i+0] = 0;
+			index[i+1] = count+1;
+			index[i+2] = count+2;
+		}
+
+		roRDriverBufferImpl* idxBuffer = (roRDriverBufferImpl*)_newBuffer();
+		_initBuffer(idxBuffer, roRDriverBufferType_Index, roRDriverDataUsage_Stream, index.typedPtr(), index.sizeInByte());
+		ctx->dxDeviceContext->IASetIndexBuffer(idxBuffer->dxBuffer, DXGI_FORMAT_R16_UINT, 0);
+		_deleteBuffer(idxBuffer);
+
+		ctx->dxDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		ctx->dxDeviceContext->DrawIndexed(num_cast<UINT>(index.size()), 0, 0);
 	}
 	else {
 		ctx->dxDeviceContext->IASetPrimitiveTopology(_primitiveTypeMappings[type]);
