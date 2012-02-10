@@ -197,6 +197,16 @@ void Canvas::destroy()
 	vgDestroyContextSH();
 }
 
+// Setup rasterizer state
+static roRDriverRasterizerState _rasterizerState = {
+	0,
+	false,		// scissorEnable
+	false,		// smoothLineEnable
+	false,		// multisampleEnable
+	true,		// NOTE: In canvas we use clockwise as front face (to work with the flipped y-axis)
+	roRDriverCullMode_Back
+};
+
 void Canvas::beginDraw()
 {
 	if(!targetTexture || !targetTexture->handle) {
@@ -220,6 +230,8 @@ void Canvas::beginDraw()
 	vgSetPaint(_openvg->fillPaint, VG_FILL_PATH);
 
 	restore();
+
+	_driver->setRasterizerState(&_rasterizerState);
 }
 
 void Canvas::endDraw()
@@ -307,8 +319,8 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 
 	float vertex[][6] = {	// Vertex are arranged in a 'z' order, in order to use TriangleStrip as primitive
 		{dx1, dy1, z, 1,	sx1,sy1},
-		{dx1, dy2, z, 1,	sx1,sy2},
 		{dx2, dy1, z, 1,	sx2,sy1},
+		{dx1, dy2, z, 1,	sx1,sy2},
 		{dx2, dy2, z, 1,	sx2,sy2},
 	};
 

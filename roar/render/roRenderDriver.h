@@ -147,10 +147,21 @@ typedef struct roRDriverBlendState
 	roRDriverColorWriteMask wirteMask;
 } roRDriverBlendState;
 
+typedef enum roRDriverCullMode
+{
+	roRDriverCullMode_None	= 1,
+	roRDriverCullMode_Front	= 2,
+	roRDriverCullMode_Back	= 3,
+} roRDriverCullMode;
+
 typedef struct roRDriverRasterizerState
 {
 	void* hash;		/// Set it to 0 when ever the state is changed
 	bool scissorEnable;
+	bool smoothLineEnable;
+	bool multisampleEnable;
+	bool isFrontFaceClockwise;
+	roRDriverCullMode cullMode;
 } roRDriverRasterizerState;
 
 typedef enum roRDriverCompareFunc

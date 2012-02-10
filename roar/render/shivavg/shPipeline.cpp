@@ -268,26 +268,6 @@ static void setColor(VGContext* c, float* color)
 	c->driver->updateBuffer(c->uBuffer, roOffsetof(UniformBuffer, UniformBuffer::color), color, sizeof(SHColor));
 }
 
-/*-------------------------------------------------------------
- * Draw a single quad that covers the bounding box of a path
- *-------------------------------------------------------------*/
-/*
-static void shDrawBoundBox(VGContext* c, SHPath *p, VGPaintMode mode)
-{
-	SHfloat K = 1.0f;
-	if (mode == VG_STROKE_PATH)
-		K = SH_CEIL(c->strokeMiterLimit * c->strokeLineWidth) + 1.0f;
-
-	float corners[8] = {
-		p->min.x-K, p->min.y-K,
-		p->max.x+K, p->min.y-K,
-		p->min.x-K, p->max.y+K,
-		p->max.x+K, p->max.y+K,
-	};
-
-	shDrawQuad(c, corners);
-}*/
-
 /*--------------------------------------------------------------
  * Constructs & draws colored OpenGL primitives that cover the
  * given bounding box to represent the currently selected
@@ -410,8 +390,6 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
 			&stencilState_drawOdd : &stencilState_drawNonZero);
 
 		shDrawPaintMesh(context, &p->min, &p->max, VG_FILL_PATH, 0);
-
-		// TODO: Clear stencil to zero if necessary
 	}
 
 	// TODO: Turn antialiasing on/off
@@ -447,8 +425,6 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
 			&stencilState_drawOdd : &stencilState_drawNonZero);
 
 		shDrawPaintMesh(context, &p->min, &p->max, VG_STROKE_PATH, 0);
-
-		// TODO: Clear stencil to zero if necessary
 
 		// Reset state
 		context->driver->setBlendState(&blendState_Disabled);

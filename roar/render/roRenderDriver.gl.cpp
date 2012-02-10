@@ -271,6 +271,13 @@ static void _setBlendState(roRDriverBlendState* state)
 	);
 }
 
+static const StaticArray<GLenum, 4> _cullMode = {
+	GLenum(-1),
+	GLenum(-1),
+	GL_FRONT,
+	GL_BACK,
+};
+
 static void _setRasterizerState(roRDriverRasterizerState* state)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
@@ -292,6 +299,24 @@ static void _setRasterizerState(roRDriverRasterizerState* state)
 		glEnable(GL_SCISSOR_TEST);
 	else
 		glDisable(GL_SCISSOR_TEST);
+
+	if(state->smoothLineEnable)
+		glEnable(GL_LINE_SMOOTH);
+	else
+		glDisable(GL_LINE_SMOOTH);
+
+	if(state->multisampleEnable)
+		glEnable(GL_MULTISAMPLE);
+	else
+		glDisable(GL_MULTISAMPLE);
+
+	if(state->cullMode == roRDriverCullMode_None)
+		glDisable(GL_CULL_FACE);
+	else
+		glEnable(GL_CULL_FACE);
+
+	glCullFace(_cullMode[state->cullMode]);
+	glFrontFace(state->isFrontFaceClockwise ? GL_CW : GL_CCW);
 }
 
 static const StaticArray<GLenum, 9> _compareFunc = {

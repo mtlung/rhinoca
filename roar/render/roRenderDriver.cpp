@@ -32,6 +32,19 @@ void rgDriverApplyDefaultState(roRDriverContext* self)
 
 	driver->useContext(self);
 
+	{	// Give the context a default rasterizer state
+		roRDriverRasterizerState state = {
+			0,
+			false,		// scissorEnable
+			false,		// smoothLineEnable
+			false,		// multisampleEnable
+			false,		// isFrontFaceClockwise
+			roRDriverCullMode_Back
+		};
+
+		driver->setRasterizerState(&state);
+	}
+
 	{	// Give the context a default blend state
 		roRDriverBlendState state = {
 			0,

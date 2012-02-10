@@ -229,28 +229,6 @@ bool _initDriverContext_DX11(roRDriverContext* self, void* platformSpecificWindo
 
 	swapChain->SetFullscreenState((BOOL)false, NULL);
 
-	// Create rasterizer state
-	D3D11_RASTERIZER_DESC rasterDesc;
-	rasterDesc.AntialiasedLineEnable = false;
-	rasterDesc.CullMode = D3D11_CULL_BACK;
-	rasterDesc.DepthBias = 0;
-	rasterDesc.DepthBiasClamp = 0.0f;
-	rasterDesc.DepthClipEnable = true;
-	rasterDesc.FillMode = D3D11_FILL_SOLID;
-	rasterDesc.FrontCounterClockwise = true;	// NOTE: This is differ from DX11 initial value, which is false
-	rasterDesc.MultisampleEnable = false;
-	rasterDesc.ScissorEnable = false;
-	rasterDesc.SlopeScaledDepthBias = 0.0f;
-
-	ComPtr<ID3D11RasterizerState> rasterizerState;
-	hr = device->CreateRasterizerState(&rasterDesc, &rasterizerState.ptr);
-	immediateContext->RSSetState(rasterizerState);
-
-	if(FAILED(hr)) {
-		roLog("error", "CreateRasterizerState failed\n");
-		return false;
-	}
-
 	impl->dxSwapChain = swapChain;
 	impl->dxDevice = device;
 	impl->dxDeviceContext = immediateContext;

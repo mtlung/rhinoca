@@ -357,17 +357,21 @@ static void _setRasterizerState(roRDriverRasterizerState* state)
 
 	ctx->currentRasterizerStateHash = state->hash;
 
+	roAssert(roRDriverCullMode_None == D3D11_CULL_NONE);
+	roAssert(roRDriverCullMode_Front == D3D11_CULL_FRONT);
+	roAssert(roRDriverCullMode_Back == D3D11_CULL_BACK);
+
 	D3D11_RASTERIZER_DESC desc = {
-		D3D11_FILL_SOLID,		// Fill mode
-		D3D11_CULL_BACK,		// Cull mode
-		true,					// Is front counter clockwise	// NOTE: This is differ from DX11 initial value, which is false
-		0,						// Depth bias
-		0,						// SlopeScaledDepthBias
-		0,						// DepthBiasClamp
-		true,					// DepthClipEnable
-		state->scissorEnable,	// ScissorEnable
-		false,					// MultisampleEnable
-		false					// AntialiasedLineEnable
+		D3D11_FILL_SOLID,					// Fill mode
+		D3D11_CULL_MODE(state->cullMode),	// Cull mode
+		!state->isFrontFaceClockwise,		// Is front counter clockwise
+		0,									// Depth bias
+		0,									// SlopeScaledDepthBias
+		0,									// DepthBiasClamp
+		true,								// DepthClipEnable
+		state->scissorEnable,				// ScissorEnable
+		state->multisampleEnable,			// MultisampleEnable
+		state->smoothLineEnable				// AntialiasedLineEnable
 	};
 
 	ComPtr<ID3D11RasterizerState> s;
