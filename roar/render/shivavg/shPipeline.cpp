@@ -151,17 +151,17 @@ static roRDriverDepthStencilState stencilState_drawNonZero = {
 };
 
 static roRDriverDepthStencilState stencilState_tesselateTo_OddEven = {
-	0, true, true,
+	0, false, true,
 	roRDriverDepthCompareFunc_Always,
-	0, 0,
+	0, 0xFFFF,
 	{ roRDriverDepthCompareFunc_Always, roRDriverStencilOp_Invert, roRDriverStencilOp_Invert, roRDriverStencilOp_Invert },
 	{ roRDriverDepthCompareFunc_Always, roRDriverStencilOp_Invert, roRDriverStencilOp_Invert, roRDriverStencilOp_Invert }
 };
 
 static roRDriverDepthStencilState stencilState_tesselateTo_NonZero = {
-	0, true, true,
+	0, false, true,
 	roRDriverDepthCompareFunc_Always,
-	0, 0,
+	0, 0xFFFF,
 	{ roRDriverDepthCompareFunc_Always, roRDriverStencilOp_IncrWrap, roRDriverStencilOp_IncrWrap, roRDriverStencilOp_IncrWrap },
 	{ roRDriverDepthCompareFunc_Always, roRDriverStencilOp_DecrWrap, roRDriverStencilOp_DecrWrap, roRDriverStencilOp_DecrWrap }
 };
@@ -169,7 +169,7 @@ static roRDriverDepthStencilState stencilState_tesselateTo_NonZero = {
 static roRDriverDepthStencilState stencilState_strokeTo = {
 	0, true, true,
 	roRDriverDepthCompareFunc_Always,
-	1, 1,
+	1, 0xFFFF,
 	{ roRDriverDepthCompareFunc_NotEqual, roRDriverStencilOp_Keep, roRDriverStencilOp_Incr, roRDriverStencilOp_Incr },
 	{ roRDriverDepthCompareFunc_NotEqual, roRDriverStencilOp_Keep, roRDriverStencilOp_Incr, roRDriverStencilOp_Incr }
 };
@@ -177,7 +177,7 @@ static roRDriverDepthStencilState stencilState_strokeTo = {
 static roRDriverDepthStencilState stencilState_quadTo = {
 	0, true, true,
 	roRDriverDepthCompareFunc_Always,
-	1, 1,
+	1, 0xFFFF,
 	{ roRDriverDepthCompareFunc_Always, roRDriverStencilOp_Replace, roRDriverStencilOp_Replace, roRDriverStencilOp_Replace },
 	{ roRDriverDepthCompareFunc_Always, roRDriverStencilOp_Replace, roRDriverStencilOp_Replace, roRDriverStencilOp_Replace }
 };
@@ -439,6 +439,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
 
 		setColor(context, &c.r);
 		updateBlendingStateGL(context, c.a == 1.0f);
+		roVerify(context->driver->setUniformTexture(ro::stringHash("texGrad"), context->whiteTexture));
 
 		// Draw contour as a line
 		shDrawVertices(context, p, roRDriverPrimitiveType_LineStrip);
