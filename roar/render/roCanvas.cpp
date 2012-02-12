@@ -203,8 +203,8 @@ static roRDriverRasterizerState _rasterizerState = {
 	false,		// scissorEnable
 	false,		// smoothLineEnable
 	false,		// multisampleEnable
-	true,		// NOTE: In canvas we use clockwise as front face (to work with the flipped y-axis)
-	roRDriverCullMode_Back
+	false,		// isFrontFaceClockwise
+	roRDriverCullMode_None	// We don't cull any polygon for Canvas
 };
 
 void Canvas::beginDraw()
