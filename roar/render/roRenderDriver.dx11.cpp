@@ -603,6 +603,8 @@ static void _setTextureState(roRDriverTextureState* states, roSize stateCount, u
 
 struct roRDriverBufferImpl : public roRDriverBuffer
 {
+	void* hash;
+	roSize capacity;	// This is the actual size of the dxBuffer
 	ComPtr<ID3D11Buffer> dxBuffer;
 	StagingBuffer* dxStaging;
 };
@@ -616,10 +618,18 @@ static roRDriverBuffer* _newBuffer()
 
 static void _deleteBuffer(roRDriverBuffer* self)
 {
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
-	if(!impl) return;
+	if(!ctx || !impl) return;
 
 	roAssert(!impl->isMapped);
+
+	// Put the DX buffer back into the cache
+	if(impl->dxBuffer) {
+		BufferCacheEntry tmp = { impl->hash, impl->capacity, ctx->lastSwapTime, impl->dxBuffer };
+		ctx->bufferCache.pushBack(tmp);
+		impl->dxBuffer = (ID3D11Buffer*)NULL;
+	}
 
 	_allocator.deleteObj(static_cast<roRDriverBufferImpl*>(self));
 }
@@ -638,29 +648,68 @@ static const StaticArray<D3D11_USAGE, 4> _bufferUsage = {
 	D3D11_USAGE_DEFAULT
 };
 
+static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, void* data, roSize sizeInBytes);
+
 static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriverDataUsage usage, void* initData, roSize sizeInBytes)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!ctx || !impl) return false;
 
-	self->type = type;
-	self->usage = usage;
-	self->sizeInBytes = sizeInBytes;
-
-	D3D11_BIND_FLAG flag = _bufferBindFlag[type];
-
-	D3D11_BUFFER_DESC desc;
-	ZeroMemory(&desc, sizeof(desc));
-	desc.Usage = _bufferUsage[usage];
-	desc.ByteWidth = num_cast<UINT>(sizeInBytes);
-	desc.BindFlags = flag;
-	desc.CPUAccessFlags = 
-		(usage == roRDriverDataUsage_Static || desc.Usage == D3D11_USAGE_DEFAULT)
+	UINT cpuAccessFlag = 
+		(usage == roRDriverDataUsage_Static || usage == roRDriverDataUsage_Dynamic)
 		? 0
 		: D3D11_CPU_ACCESS_WRITE;
-	desc.MiscFlags = 0;
-	desc.StructureByteStride = 0;
+
+	D3D11_BUFFER_DESC desc = {
+		0,						// ByteWidth
+		_bufferUsage[usage],	// Usage
+		_bufferBindFlag[type],	// BindFlags
+		cpuAccessFlag,			// cpuAccessFlag
+		0,						// MiscFlags
+		0,						// StructureByteStride
+	};
+
+	void* hash = (void*)_hash(&desc, sizeof(desc));
+
+	// First check if the DX buffer can be safely reused
+	if(impl->hash == hash && impl->capacity >= sizeInBytes) {
+		roIgnoreRet(_updateBuffer(impl, 0, initData, sizeInBytes));
+		return true;
+	}
+
+	// The old DX buffer cannot be reused, put it into the cache
+	if(impl->dxBuffer) {
+		BufferCacheEntry tmp = { impl->hash, impl->capacity, ctx->lastSwapTime, impl->dxBuffer };
+		ctx->bufferCache.pushBack(tmp);
+		impl->dxBuffer = (ID3D11Buffer*)NULL;
+	}
+
+	impl->type = type;
+	impl->usage = usage;
+	impl->sizeInBytes = sizeInBytes;
+	impl->hash = hash;
+
+	// A simple first fit algorithm
+	for(roSize i=0; i<ctx->bufferCache.size(); ++i) {
+		if(impl->hash != ctx->bufferCache[i].hash)
+			continue;
+		if(ctx->bufferCache[i].sizeInByte < sizeInBytes)
+			continue;
+
+		// Cache hit
+		impl->dxBuffer = ctx->bufferCache[i].dxBuffer;
+		impl->capacity = ctx->bufferCache[i].sizeInByte;
+		ctx->bufferCache.remove(i);
+
+		roIgnoreRet(_updateBuffer(impl, 0, initData, sizeInBytes));
+		return true;
+	}
+
+	// Cache miss, do create DX buffer
+	roAssert(!impl->dxBuffer);
+
+	desc.ByteWidth = sizeInBytes;
 
 	D3D11_SUBRESOURCE_DATA data;
 	data.pSysMem = initData;
@@ -673,6 +722,8 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 		roLog("error", "Fail to create buffer\n");
 		return false;
 	}
+
+	impl->capacity = sizeInBytes;
 
 	return true;
 }
@@ -733,6 +784,14 @@ static StagingBuffer* _getStagingBuffer(roRDriverContextImpl* ctx, void* initDat
 	return ret;
 }
 
+static const StaticArray<D3D11_MAP, 5> _mapUsage = {
+	D3D11_MAP(-1),
+	D3D11_MAP_READ,
+	D3D11_MAP_WRITE,
+	D3D11_MAP_READ_WRITE,
+	D3D11_MAP_WRITE_DISCARD,
+};
+
 static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, void* data, roSize sizeInBytes)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
@@ -752,14 +811,6 @@ static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, void* dat
 
 	return false;
 }
-
-static const StaticArray<D3D11_MAP, 5> _mapUsage = {
-	D3D11_MAP(-1),
-	D3D11_MAP_READ,
-	D3D11_MAP_WRITE,
-	D3D11_MAP_READ_WRITE,
-	D3D11_MAP_WRITE_DISCARD,
-};
 
 static void* _mapBuffer(roRDriverBuffer* self, roRDriverBufferMapUsage usage)
 {

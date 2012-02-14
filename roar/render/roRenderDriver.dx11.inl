@@ -69,6 +69,13 @@ struct DepthStencilState {
 	ComPtr<ID3D11DepthStencilState> dxDepthStencilState;
 };
 
+struct BufferCacheEntry {
+	void* hash;	// Capture D3D11_BUFFER_DESC without the ByteWidth
+	roSize sizeInByte;
+	float lastUsedTime;
+	ComPtr<ID3D11Buffer> dxBuffer;
+};
+
 struct roRDriverTextureImpl : public roRDriverTexture
 {
 	ComPtr<ID3D11Resource> dxTexture;	// May store a 1d, 2d or 3d texture
@@ -136,4 +143,6 @@ struct roRDriverContextImpl : public roRDriverContext
 
 	Array<RenderTarget> renderTargetCache;
 	unsigned currentRenderTargetViewHash;
+
+	Array<BufferCacheEntry> bufferCache;
 };

@@ -324,6 +324,16 @@ void _driverSwapBuffers_DX11()
 			++i;
 	}
 
+	// Clean up not frequently used buffer cache
+	for(roSize i=0; i<_currentContext->bufferCache.size();) {
+		float lastUsedTime = _currentContext->bufferCache[i].lastUsedTime;
+
+		if(lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
+			_currentContext->bufferCache.remove(i);
+		else
+			++i;
+	}
+
 	int sync = 0;	// use 0 for no vertical sync
 	roVerify(SUCCEEDED(_currentContext->dxSwapChain->Present(sync, 0)));
 
