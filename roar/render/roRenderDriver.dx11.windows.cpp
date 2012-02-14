@@ -294,6 +294,36 @@ void _driverSwapBuffers_DX11()
 			++i;
 	}
 
+	// Clean up not frequently used blend cache
+	for(roSize i=0; i<_currentContext->blendStateCache.size();) {
+		float lastUsedTime = _currentContext->blendStateCache[i].lastUsedTime;
+
+		if(lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
+			_currentContext->blendStateCache.remove(i);
+		else
+			++i;
+	}
+
+	// Clean up not frequently used rasterizer cache
+	for(roSize i=0; i<_currentContext->rasterizerState.size();) {
+		float lastUsedTime = _currentContext->rasterizerState[i].lastUsedTime;
+
+		if(lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
+			_currentContext->rasterizerState.remove(i);
+		else
+			++i;
+	}
+
+	// Clean up not frequently used depth stencil cache
+	for(roSize i=0; i<_currentContext->depthStencilStateCache.size();) {
+		float lastUsedTime = _currentContext->depthStencilStateCache[i].lastUsedTime;
+
+		if(lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
+			_currentContext->depthStencilStateCache.remove(i);
+		else
+			++i;
+	}
+
 	int sync = 0;	// use 0 for no vertical sync
 	roVerify(SUCCEEDED(_currentContext->dxSwapChain->Present(sync, 0)));
 

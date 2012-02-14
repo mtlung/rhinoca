@@ -303,38 +303,54 @@ static void _setBlendState(roRDriverBlendState* state)
 	if(state->hash == 0)
 		state->hash = (void*)_hash(state, sizeof(*state));
 
+	ID3D11BlendState* dxState = NULL;
+
 	if(state->hash == ctx->currentBlendStateHash)
 		return;
 	else {
-		// TODO: Make use of the hash value
+		// Try to search for the state in the cache
+		for(roSize i=0; i<ctx->blendStateCache.size(); ++i) {
+			if(state->hash == ctx->blendStateCache[i].hash) {
+				dxState = ctx->blendStateCache[i].dxBlendState;
+				ctx->blendStateCache[i].lastUsedTime = ctx->lastSwapTime;
+				break;
+			}
+		}
+	}
+
+	// Cache miss, create the state object
+	if(!dxState)
+	{
+		D3D11_BLEND_DESC desc;
+		ZeroMemory(&desc, sizeof(desc));
+
+		desc.AlphaToCoverageEnable = false;
+		desc.IndependentBlendEnable = false;
+		desc.RenderTarget[0].BlendEnable = state->enable;
+		desc.RenderTarget[0].SrcBlend = _blendValue[state->colorSrc];
+		desc.RenderTarget[0].DestBlend = _blendValue[state->colorDst];
+		desc.RenderTarget[0].BlendOp = _blendOp[state->colorOp];
+		desc.RenderTarget[0].SrcBlendAlpha = _blendValue[state->alphaSrc];
+		desc.RenderTarget[0].DestBlendAlpha = _blendValue[state->alphaDst];
+		desc.RenderTarget[0].BlendOpAlpha = _blendOp[state->alphaOp];
+		desc.RenderTarget[0].RenderTargetWriteMask = num_cast<UINT8>(_colorWriteMask[state->wirteMask]);
+
+		ComPtr<ID3D11BlendState> s;
+		HRESULT hr = ctx->dxDevice->CreateBlendState(&desc, &s.ptr);
+
+		if(FAILED(hr)) {
+			roLog("error", "CreateBlendState failed\n");
+			return;
+		}
+
+		BlendState tmp = { state->hash, ctx->lastSwapTime, s };
+		ctx->blendStateCache.pushBack(tmp);
+		dxState = ctx->blendStateCache.back().dxBlendState;
 	}
 
 	ctx->currentBlendStateHash = state->hash;
-
-	D3D11_BLEND_DESC desc;
-	ZeroMemory(&desc, sizeof(desc));
-
-	desc.AlphaToCoverageEnable = false;
-	desc.IndependentBlendEnable = false;
-	desc.RenderTarget[0].BlendEnable = state->enable;
-	desc.RenderTarget[0].SrcBlend = _blendValue[state->colorSrc];
-	desc.RenderTarget[0].DestBlend = _blendValue[state->colorDst];
-	desc.RenderTarget[0].BlendOp = _blendOp[state->colorOp];
-	desc.RenderTarget[0].SrcBlendAlpha = _blendValue[state->alphaSrc];
-	desc.RenderTarget[0].DestBlendAlpha = _blendValue[state->alphaDst];
-	desc.RenderTarget[0].BlendOpAlpha = _blendOp[state->alphaOp];
-	desc.RenderTarget[0].RenderTargetWriteMask = num_cast<UINT8>(_colorWriteMask[state->wirteMask]);
-
-	ComPtr<ID3D11BlendState> s;
-	HRESULT hr = ctx->dxDevice->CreateBlendState(&desc, &s.ptr);
-
-	if(FAILED(hr)) {
-		roLog("error", "CreateBlendState failed\n");
-		return;
-	}
-
 	ctx->dxDeviceContext->OMSetBlendState(
-		s,
+		dxState,
 		0,			// The blend factor, which to use with D3D11_BLEND_BLEND_FACTOR, but we didn't support it yet
 		UINT8(-1)	// Bit mask to do with the multi-sample, not used so set all bits to 1
 	);
@@ -349,40 +365,56 @@ static void _setRasterizerState(roRDriverRasterizerState* state)
 	if(state->hash == 0)
 		state->hash = (void*)_hash(state, sizeof(*state));
 
+	ID3D11RasterizerState* dxState = NULL;
+
 	if(state->hash == ctx->currentRasterizerStateHash)
 		return;
 	else {
-		// TODO: Make use of the hash value
+		// Try to search for the state in the cache
+		for(roSize i=0; i<ctx->rasterizerState.size(); ++i) {
+			if(state->hash == ctx->rasterizerState[i].hash) {
+				dxState = ctx->rasterizerState[i].dxRasterizerState;
+				ctx->rasterizerState[i].lastUsedTime = ctx->lastSwapTime;
+				break;
+			}
+		}
+	}
+
+	// Cache miss, create the state object
+	if(!dxState)
+	{
+		roAssert(roRDriverCullMode_None == D3D11_CULL_NONE);
+		roAssert(roRDriverCullMode_Front == D3D11_CULL_FRONT);
+		roAssert(roRDriverCullMode_Back == D3D11_CULL_BACK);
+
+		D3D11_RASTERIZER_DESC desc = {
+			D3D11_FILL_SOLID,					// Fill mode
+			D3D11_CULL_MODE(state->cullMode),	// Cull mode
+			!state->isFrontFaceClockwise,		// Is front counter clockwise
+			0,									// Depth bias
+			0,									// SlopeScaledDepthBias
+			0,									// DepthBiasClamp
+			true,								// DepthClipEnable
+			state->scissorEnable,				// ScissorEnable
+			state->multisampleEnable,			// MultisampleEnable
+			state->smoothLineEnable				// AntialiasedLineEnable
+		};
+
+		ComPtr<ID3D11RasterizerState> s;
+		HRESULT hr = ctx->dxDevice->CreateRasterizerState(&desc, &s.ptr);
+
+		if(FAILED(hr)) {
+			roLog("error", "CreateRasterizerState failed\n");
+			return;
+		}
+
+		RasterizerState tmp = { state->hash, ctx->lastSwapTime, s };
+		ctx->rasterizerState.pushBack(tmp);
+		dxState = ctx->rasterizerState.back().dxRasterizerState;
 	}
 
 	ctx->currentRasterizerStateHash = state->hash;
-
-	roAssert(roRDriverCullMode_None == D3D11_CULL_NONE);
-	roAssert(roRDriverCullMode_Front == D3D11_CULL_FRONT);
-	roAssert(roRDriverCullMode_Back == D3D11_CULL_BACK);
-
-	D3D11_RASTERIZER_DESC desc = {
-		D3D11_FILL_SOLID,					// Fill mode
-		D3D11_CULL_MODE(state->cullMode),	// Cull mode
-		!state->isFrontFaceClockwise,		// Is front counter clockwise
-		0,									// Depth bias
-		0,									// SlopeScaledDepthBias
-		0,									// DepthBiasClamp
-		true,								// DepthClipEnable
-		state->scissorEnable,				// ScissorEnable
-		state->multisampleEnable,			// MultisampleEnable
-		state->smoothLineEnable				// AntialiasedLineEnable
-	};
-
-	ComPtr<ID3D11RasterizerState> s;
-	HRESULT hr = ctx->dxDevice->CreateRasterizerState(&desc, &s.ptr);
-
-	if(FAILED(hr)) {
-		roLog("error", "CreateRasterizerState failed\n");
-		return;
-	}
-
-	ctx->dxDeviceContext->RSSetState(s);
+	ctx->dxDeviceContext->RSSetState(dxState);
 }
 
 static const StaticArray<D3D11_COMPARISON_FUNC, 9> _comparisonFuncs = {
@@ -422,47 +454,63 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 		);
 	}
 
+	ID3D11DepthStencilState* dxState = NULL;
+
 	if(state->hash == ctx->currentDepthStencilStateHash)
 		return;
 	else {
-		// TODO: Make use of the hash value
+		// Try to search for the state in the cache
+		for(roSize i=0; i<ctx->depthStencilStateCache.size(); ++i) {
+			if(state->hash == ctx->depthStencilStateCache[i].hash) {
+				dxState = ctx->depthStencilStateCache[i].dxDepthStencilState;
+				ctx->depthStencilStateCache[i].lastUsedTime = ctx->lastSwapTime;
+				break;
+			}
+		}
+	}
+
+	// Cache miss, create the state object
+	if(!dxState)
+	{
+		D3D11_DEPTH_STENCIL_DESC desc;
+		ZeroMemory(&desc, sizeof(desc));
+
+		// Set up the description of the stencil state.
+		desc.DepthEnable = state->enableDepth;
+		desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+		desc.DepthFunc = _comparisonFuncs[state->depthFunc];
+
+		desc.StencilEnable = state->enableStencil;
+		desc.StencilReadMask =(UINT8)(state->stencilMask);
+		desc.StencilWriteMask = (UINT8)(state->stencilMask);
+
+		// Stencil operations if pixel is front-facing.
+		desc.FrontFace.StencilFailOp = _stencilOps[state->front.failOp];
+		desc.FrontFace.StencilDepthFailOp = _stencilOps[state->front.zFailOp];
+		desc.FrontFace.StencilPassOp = _stencilOps[state->front.passOp];
+		desc.FrontFace.StencilFunc = _comparisonFuncs[state->front.func];
+
+		// Stencil operations if pixel is back-facing.
+		desc.BackFace.StencilFailOp = _stencilOps[state->back.failOp];
+		desc.BackFace.StencilDepthFailOp = _stencilOps[state->back.zFailOp];
+		desc.BackFace.StencilPassOp = _stencilOps[state->back.passOp];
+		desc.BackFace.StencilFunc = _comparisonFuncs[state->back.func];
+
+		ComPtr<ID3D11DepthStencilState> s;
+		HRESULT hr = ctx->dxDevice->CreateDepthStencilState(&desc, &s.ptr);
+
+		if(FAILED(hr)) {
+			roLog("error", "CreateDepthStencilState failed\n");
+			return;
+		}
+
+		DepthStencilState tmp = { state->hash, ctx->lastSwapTime, s };
+		ctx->depthStencilStateCache.pushBack(tmp);
+		dxState = ctx->depthStencilStateCache.back().dxDepthStencilState;
 	}
 
 	ctx->currentDepthStencilStateHash = state->hash;
-
-	D3D11_DEPTH_STENCIL_DESC desc;
-	ZeroMemory(&desc, sizeof(desc));
-
-	// Set up the description of the stencil state.
-	desc.DepthEnable = state->enableDepth;
-	desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	desc.DepthFunc = _comparisonFuncs[state->depthFunc];
-
-	desc.StencilEnable = state->enableStencil;
-	desc.StencilReadMask =(UINT8)(state->stencilMask);
-	desc.StencilWriteMask = (UINT8)(state->stencilMask);
-
-	// Stencil operations if pixel is front-facing.
-	desc.FrontFace.StencilFailOp = _stencilOps[state->front.failOp];
-	desc.FrontFace.StencilDepthFailOp = _stencilOps[state->front.zFailOp];
-	desc.FrontFace.StencilPassOp = _stencilOps[state->front.passOp];
-	desc.FrontFace.StencilFunc = _comparisonFuncs[state->front.func];
-
-	// Stencil operations if pixel is back-facing.
-	desc.BackFace.StencilFailOp = _stencilOps[state->back.failOp];
-	desc.BackFace.StencilDepthFailOp = _stencilOps[state->back.zFailOp];
-	desc.BackFace.StencilPassOp = _stencilOps[state->back.passOp];
-	desc.BackFace.StencilFunc = _comparisonFuncs[state->back.func];
-
-	ComPtr<ID3D11DepthStencilState> s;
-	HRESULT hr = ctx->dxDevice->CreateDepthStencilState(&desc, &s.ptr);
-
-	if(FAILED(hr)) {
-		roLog("error", "CreateDepthStencilState failed\n");
-		return;
-	}
-
-	ctx->dxDeviceContext->OMSetDepthStencilState(s, state->stencilRefValue);
+	ctx->dxDeviceContext->OMSetDepthStencilState(dxState, state->stencilRefValue);
 }
 
 static const StaticArray<D3D11_FILTER, 5> _textureFilterMode = {
@@ -1216,7 +1264,7 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 	// Search for existing input layout
 	InputLayout* inputLayout = NULL;
 	bool inputLayoutCacheFound = false;
-	for(unsigned i=0; i<ctx->inputLayoutCache.size(); ++i)
+	for(roSize i=0; i<ctx->inputLayoutCache.size(); ++i)
 	{
 		if(inputHash == ctx->inputLayoutCache[i].hash) {
 			inputLayout = &ctx->inputLayoutCache[i];
