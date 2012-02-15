@@ -713,8 +713,10 @@ int shDrawRadialGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
 	context->tex1VertexLayout[1].buffer = vBuf;
 	roVerify(context->driver->bindShaderInput(context->tex1VertexLayout, roCountof(context->tex1VertexLayout), NULL));
 
+	char* pBuf = (char*)context->driver->mapBuffer(vBuf, roRDriverBufferMapUsage_Write);
+
 	// Walk the steps and draw gradient mesh 
-	for (i=0, a=startA; i<numsteps; ++i, a+=step)
+	if(pBuf) for (i=0, a=startA; i<numsteps; ++i, a+=step)
 	{
 		// Distance from focus to circle border
 		// at current angle (gradient space)
@@ -741,6 +743,7 @@ int shDrawRadialGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
 
 		// Draw quad
 		if (i!=0) {
+			// TODO: Compiler may not able to optimize this struct init and memcpy
 			float vertex[vertexSize] = {
 				min1.x,min1.y,	minOffset,minOffset,
 				max1.x,max1.y,	maxOffset,maxOffset,
@@ -749,8 +752,8 @@ int shDrawRadialGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
 				max2.x,max2.y,	maxOffset,maxOffset,
 				min2.x,min2.y,	minOffset,minOffset
 			};
-			// TODO: Use mapBuffer may be faster
-			context->driver->updateBuffer(vBuf, (i-1) * sizeof(vertex), vertex, sizeof(vertex));
+			memcpy(pBuf, vertex, sizeof(vertex));
+			pBuf += sizeof(vertex);
 		}
 
 		// Save prev points
@@ -758,6 +761,7 @@ int shDrawRadialGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
 		max1 = max2;
 	}
 
+	context->driver->unmapBuffer(vBuf);
 	context->driver->drawTriangle(0, (numsteps-1)*6, 0);
 	context->driver->deleteBuffer(vBuf);
 

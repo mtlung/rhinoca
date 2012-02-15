@@ -29,7 +29,6 @@ struct ContextImpl : public roRDriverContextImpl
 {
 	HWND hWnd;
 	StopWatch stopWatch;
-	Array<roRDriverShaderInput> programInputCache;
 };
 
 }	// namespace
@@ -71,15 +70,8 @@ void _deleteDriverContext_DX11(roRDriverContext* self)
 
 	for(unsigned i=0; i<impl->currentShaders.size(); ++i)
 		roAssert(!impl->currentShaders[i] && "Please destroy all shaders before detroy the context");
-
-	// Free the sampler state cache
-//	for(unsigned i=0; i<impl->textureStateCache.size(); ++i) {
-//		if(impl->textureStateCache[i].glh != 0)
-//			glDeleteSamplers(1, &impl->textureStateCache[i].glh);
-//	}
 		
 	if(impl == _currentContext) {
-		 wglMakeCurrent(NULL, NULL); 
 		_currentContext = NULL;
 		roRDriverCurrentContext = NULL;
 	}

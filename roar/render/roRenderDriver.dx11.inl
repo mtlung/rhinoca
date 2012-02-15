@@ -103,7 +103,6 @@ struct InputLayout
 	ComPtr<ID3D10Blob> shader;
 	Array<D3D11_INPUT_ELEMENT_DESC> inputDescs;
 
-	Array<ComPtr<ID3D11Buffer> > buffers;
 	Array<UINT> strides;
 	Array<UINT> offsets;
 };

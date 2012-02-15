@@ -40,6 +40,11 @@ static DefaultAllocator _allocator;
 // ----------------------------------------------------------------------
 // Common stuffs
 
+static unsigned _hashAppend(unsigned hash, unsigned dataToAppend)
+{
+	return dataToAppend + (hash << 6) + (hash << 16) - hash; 
+}
+
 static unsigned _hash(const void* data, roSize len)
 {
 	unsigned h = 0;
@@ -1299,17 +1304,8 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 		if(!i || !i->buffer) continue;
 		if(buffer->type != roRDriverBufferType_Vertex) continue;	// Input layout only consider vertex buffer
 
-		struct BlockToHash {
-			ID3D11Buffer* dxBuffer;
-			unsigned stride, offset;
-		};
-
-		BlockToHash block = {
-			buffer->dxBuffer,
-			i->stride, i->offset
-		};
-
-		inputHash += _hash(&block, sizeof(block));	// We use += such that the order of inputs are not important
+		inputHash = _hashAppend(inputHash, i->stride);
+		inputHash = _hashAppend(inputHash, i->offset);
 	}
 
 	// Search for existing input layout
@@ -1333,6 +1329,8 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 		inputLayout = &ctx->inputLayoutCache.back();
 	}
 
+	TinyArray<ID3D11Buffer*, 8> vertexBuffers;
+
 	// Loop for each inputs and do the necessary binding
 	for(unsigned i=0; i<inputCount; ++i)
 	{
@@ -1345,6 +1343,11 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 		// Gather information for creating input layout and binding vertex buffer
 		if(buffer->type == roRDriverBufferType_Vertex)
 		{
+			// NOTE: The order of the dxBuffer pointers in vertexBuffers is important,
+			// luckily how we make inputHash help us guarantee a matching input layout cache
+			// will be found for this particular order of dxBuffer supplied.
+			vertexBuffers.pushBack(buffer->dxBuffer);
+
 			if(inputLayoutCacheFound) continue;
 
 			roRDriverShaderImpl* shader = static_cast<roRDriverShaderImpl*>(input->shader);
@@ -1389,7 +1392,6 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 
 			inputLayout->strides.pushBack(stride);
 			inputLayout->offsets.pushBack(0);
-			inputLayout->buffers.pushBack(buffer->dxBuffer);
 		}
 		// Bind uniform buffer
 		else if(buffer->type == roRDriverBufferType_Uniform)
@@ -1431,9 +1433,15 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 
 	ctx->dxDeviceContext->IASetInputLayout(inputLayout->layout);
 
+	roAssert(vertexBuffers.size() == inputLayout->strides.size());
+	roAssert(vertexBuffers.size() == inputLayout->offsets.size());
+
+	if(vertexBuffers.isEmpty())
+		return false;
+
 	ctx->dxDeviceContext->IASetVertexBuffers(
 		0, num_cast<UINT>(inputLayout->inputDescs.size()),
-		(ID3D11Buffer**)&inputLayout->buffers.front(),
+		(ID3D11Buffer**)&vertexBuffers.front(),
 		&inputLayout->strides.front(),
 		&inputLayout->offsets.front()
 	);
