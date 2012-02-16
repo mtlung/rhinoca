@@ -58,6 +58,9 @@ roRDriverContext* _newDriverContext_DX11(roRDriver* driver)
 
 	ret->hWnd = NULL;
 
+	ret->triangleFanIndexBufferSize = 0;
+	ret->triangleFanIndexBuffer = driver->newBuffer();
+
 	return ret;
 }
 
@@ -70,11 +73,13 @@ void _deleteDriverContext_DX11(roRDriverContext* self)
 
 	for(unsigned i=0; i<impl->currentShaders.size(); ++i)
 		roAssert(!impl->currentShaders[i] && "Please destroy all shaders before detroy the context");
-		
+
 	if(impl == _currentContext) {
 		_currentContext = NULL;
 		roRDriverCurrentContext = NULL;
 	}
+
+	impl->driver->deleteBuffer(impl->triangleFanIndexBuffer);
 
 	// Change back to windowed mode before releasing swap chain
 	impl->dxSwapChain->SetFullscreenState(false, NULL);

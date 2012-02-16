@@ -144,4 +144,7 @@ struct roRDriverContextImpl : public roRDriverContext
 	unsigned currentRenderTargetViewHash;
 
 	Array<BufferCacheEntry> bufferCache;
+
+	unsigned triangleFanIndexBufferSize;
+	roRDriverBuffer* triangleFanIndexBuffer;	// An index buffer dedicated to draw triangle fan
 };

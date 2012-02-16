@@ -1253,7 +1253,7 @@ bool _setUniformBuffer(unsigned nameHash, roRDriverBuffer* buffer, roRDriverShad
 	roRDriverBufferImpl* tmpBuf = bufferImpl;
 	if(input->offset > 0) {
 		tmpBuf = static_cast<roRDriverBufferImpl*>(_newBuffer());
-		_initBuffer(tmpBuf, roRDriverBufferType_Uniform, roRDriverDataUsage_Dynamic, NULL, bufferImpl->sizeInBytes - input->offset);
+		roVerify(_initBuffer(tmpBuf, roRDriverBufferType_Uniform, roRDriverDataUsage_Dynamic, NULL, bufferImpl->sizeInBytes - input->offset));
 		D3D11_BOX srcBox = { input->offset, 0, 0, num_cast<UINT>(bufferImpl->sizeInBytes), 1, 1 };
 		ctx->dxDeviceContext->CopySubresourceRegion(tmpBuf->dxBuffer, 0, 0, 0, 0, bufferImpl->dxBuffer, 0, &srcBox);
 	}
@@ -1478,22 +1478,33 @@ static void _drawPrimitive(roRDriverPrimitiveType type, roSize offset, roSize ve
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx) return;
 
-	if(type == roRDriverPrimitiveType_TriangleFan) {
+	// We emulate triangle fan for DX11
+	if(type == roRDriverPrimitiveType_TriangleFan)
+	{
 		roAssert(vertexCount < TypeOf<roUint16>::valueMax());
-		TinyArray<roUint16, 3 * 32> index((vertexCount - offset - 2) * 3);
-		for(roUint16 i=0, count=0; i<index.size(); i+=3, ++count) {
-			index[i+0] = 0;
-			index[i+1] = count+1;
-			index[i+2] = count+2;
+
+		unsigned indexCount = (vertexCount - offset - 2) * 3;
+		roRDriverBufferImpl* idxBuffer = (roRDriverBufferImpl*)ctx->triangleFanIndexBuffer;
+
+		if(ctx->triangleFanIndexBufferSize < indexCount)
+		{
+			roVerify(_initBuffer(idxBuffer, roRDriverBufferType_Index, roRDriverDataUsage_Stream, NULL, indexCount * sizeof(roUint16)));
+			roUint16* index = (roUint16*)_mapBuffer(idxBuffer, roRDriverBufferMapUsage_Write);
+
+			roAssert(index && "Buffer in the buffer pool still not lockable? Seems quite unlikely...");
+			if(index) for(roUint16 i=0, count=0; i<indexCount; i+=3, ++count) {
+				index[i+0] = 0;
+				index[i+1] = count+1;
+				index[i+2] = count+2;
+			}
+
+			_unmapBuffer(idxBuffer);
+			ctx->triangleFanIndexBufferSize = indexCount;
 		}
 
-		roRDriverBufferImpl* idxBuffer = (roRDriverBufferImpl*)_newBuffer();
-		_initBuffer(idxBuffer, roRDriverBufferType_Index, roRDriverDataUsage_Stream, index.typedPtr(), index.sizeInByte());
 		ctx->dxDeviceContext->IASetIndexBuffer(idxBuffer->dxBuffer, DXGI_FORMAT_R16_UINT, 0);
-		_deleteBuffer(idxBuffer);
-
 		ctx->dxDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ctx->dxDeviceContext->DrawIndexed(num_cast<UINT>(index.size()), 0, 0);
+		ctx->dxDeviceContext->DrawIndexed(num_cast<UINT>(indexCount), 0, 0);
 	}
 	else {
 		ctx->dxDeviceContext->IASetPrimitiveTopology(_primitiveTypeMappings[type]);
