@@ -1329,6 +1329,7 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 		inputLayout = &ctx->inputLayoutCache.back();
 	}
 
+	unsigned slotCounter = 0;
 	TinyArray<ID3D11Buffer*, 8> vertexBuffers;
 
 	// Loop for each inputs and do the necessary binding
@@ -1379,9 +1380,9 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 			inputDesc.SemanticName = input->name;
 			inputDesc.SemanticIndex = 0;
 			inputDesc.Format = _inputFormatMapping[inputParam->type * 5 + inputParam->elementCount];
-			inputDesc.InputSlot = 0;
+			inputDesc.InputSlot = slotCounter++;
 			inputDesc.AlignedByteOffset = input->offset;
-			inputDesc.InputSlotClass =  D3D11_INPUT_PER_VERTEX_DATA;
+			inputDesc.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 			inputDesc.InstanceDataStepRate = 0;
 
 			inputLayout->inputDescs.pushBack(inputDesc);
