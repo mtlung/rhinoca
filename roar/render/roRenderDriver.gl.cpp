@@ -976,12 +976,9 @@ static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const c
 	return true;
 }
 
-static ProgramUniform* _findProgramUniform(unsigned nameHash)
+static ProgramUniform* _findProgramUniform(roRDriverContextImpl* ctx, roRDriverShaderProgramImpl* impl, unsigned nameHash)
 {
-	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
-	if(!ctx) return NULL;
-
-	roRDriverShaderProgramImpl* impl = ctx->currentShaderProgram;
+	roAssert(ctx);
 	if(!impl) return NULL;
 
 	for(unsigned i=0; i<impl->uniforms.size(); ++i) {
@@ -1238,12 +1235,11 @@ bool _bindShaders(roRDriverShader** shaders, roSize shaderCount)
 
 // See: http://www.opengl.org/wiki/Uniform_Buffer_Object
 // See: http://arcsynthesis.org/gltut/Positioning/Tut07%20Shared%20Uniforms.html
-bool _setUniformBuffer(unsigned nameHash, roRDriverBuffer* buffer, roRDriverShaderInput* input)
+bool _setUniformBuffer(roRDriverShaderProgramImpl* program, unsigned nameHash, roRDriverBuffer* buffer, roRDriverShaderBufferInput* input)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return false;
 
-	roRDriverShaderProgramImpl* program = ctx->currentShaderProgram;
 	if(!program) return false;
 
 	roRDriverBufferImpl* bufferImpl = static_cast<roRDriverBufferImpl*>(buffer);
@@ -1276,7 +1272,7 @@ bool _setUniformBuffer(unsigned nameHash, roRDriverBuffer* buffer, roRDriverShad
 	if(!bufferImpl->systemBuf)
 		roVerify(_switchBufferMode(bufferImpl));
 
-	if(ProgramUniform* uniform = _findProgramUniform(nameHash)) {
+	if(ProgramUniform* uniform = _findProgramUniform(ctx, program, nameHash)) {
 		char* data = (char*)(bufferImpl->systemBuf) + input->offset;
 		switch(uniform->type) {
 		case GL_FLOAT_VEC2:
@@ -1302,26 +1298,49 @@ bool _setUniformBuffer(unsigned nameHash, roRDriverBuffer* buffer, roRDriverShad
 	return true;
 }
 
-bool _setUniformTexture(unsigned nameHash, roRDriverTexture* texture)
+bool _bindShaderTexture(roRDriverShaderTextureInput* inputs, roSize inputCount)
 {
-	ProgramUniform* uniform = _findProgramUniform(nameHash);
-	if(!uniform ) return false;
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
+	if(!ctx || !inputs) return false;
+
+	roRDriverShaderProgramImpl* program = static_cast<roRDriverShaderProgramImpl*>(ctx->currentShaderProgram);
+	if(!program) return false;
 
 	checkError();
 
-	if(texture) {
-		glActiveTexture(GL_TEXTURE0 + uniform->texunit);
-		GLenum glTarget = static_cast<roRDriverTextureImpl*>(texture)->glTarget;
-		GLuint glh = static_cast<roRDriverTextureImpl*>(texture)->glh;
+	for(roSize i=0; i<inputCount; ++i)
+	{
+		roRDriverShaderTextureInput& input = inputs[i];
 
-		glBindTexture(glTarget, glh);
-//		glTexParameteri(glTarget, GL_TEXTURE_MAG_FILTER, crGL_SAMPLER_MAG_FILTER[sampler->filter]);
-//		glTexParameteri(glTarget, GL_TEXTURE_MIN_FILTER, crGL_SAMPLER_MIN_FILTER[sampler->filter]);
-//		glTexParameteri(glTarget, GL_TEXTURE_WRAP_S, crGL_SAMPLER_ADDRESS[sampler->addressU]);
-//		glTexParameteri(glTarget, GL_TEXTURE_WRAP_T, crGL_SAMPLER_ADDRESS[sampler->addressV]);
+		// Generate the hash value if not yet
+		if(input.nameHash == 0)
+			input.nameHash = stringHash(input.name, 0);
+
+		ProgramUniform* uniform = _findProgramUniform(ctx, program, input.nameHash);
+		if(!uniform) {
+			roLog("error", "bindShaderTextures() can't find the shader param '%s'!\n", input.name ? input.name : "");
+			continue;
+		}
+
+		glActiveTexture(GL_TEXTURE0 + uniform->texunit);
+
+		roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(input.texture);
+		if(impl) {
+			GLenum glTarget = impl->glTarget;
+			GLuint glh = impl->glh;
+
+			if(glTarget == 0)
+				glTarget = GL_TEXTURE_2D;
+
+			glBindTexture(glTarget, glh);
+//			glTexParameteri(glTarget, GL_TEXTURE_MAG_FILTER, crGL_SAMPLER_MAG_FILTER[sampler->filter]);
+//			glTexParameteri(glTarget, GL_TEXTURE_MIN_FILTER, crGL_SAMPLER_MIN_FILTER[sampler->filter]);
+//			glTexParameteri(glTarget, GL_TEXTURE_WRAP_S, crGL_SAMPLER_ADDRESS[sampler->addressU]);
+//			glTexParameteri(glTarget, GL_TEXTURE_WRAP_T, crGL_SAMPLER_ADDRESS[sampler->addressV]);
+		}
+		else
+			glBindTexture(GL_TEXTURE_2D, 0);
 	}
-	else
-		glBindTexture(GL_TEXTURE_2D, 0);
 
 	checkError();
 
@@ -1339,7 +1358,7 @@ static const StaticArray<GLenum, 8> _elementTypeMappings = {
 	GL_UNSIGNED_INT
 };
 
-bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*)
+bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, unsigned*)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return false;
@@ -1352,7 +1371,7 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 	unsigned inputHash = 0;
 	for(unsigned attri=0; attri<inputCount; ++attri)
 	{
-		roRDriverShaderInput* i = &inputs[attri];
+		roRDriverShaderBufferInput* i = &inputs[attri];
 		roRDriverBufferImpl* buffer = static_cast<roRDriverBufferImpl*>(i->buffer);
 		roRDriverShaderImpl* shader = static_cast<roRDriverShaderImpl*>(i->shader);
 		if(!i || !i->buffer || !shader) continue;
@@ -1400,7 +1419,7 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 	// Loop for each inputs and do the necessary binding
 	for(unsigned attri=0; attri<inputCount; ++attri)
 	{
-		roRDriverShaderInput* i = &inputs[attri];
+		roRDriverShaderBufferInput* i = &inputs[attri];
 
 		if(!i || !i->buffer)
 			continue;
@@ -1440,7 +1459,7 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 				i->nameHash = stringHash(i->name, 0);
 
 			// NOTE: Shader compiler may optimize away the uniform
-			roIgnoreRet(_setUniformBuffer(i->nameHash, buffer, i));
+			roIgnoreRet(_setUniformBuffer(impl, i->nameHash, buffer, i));
 		}
 	}
 
@@ -1558,9 +1577,8 @@ roRDriver* _roNewRenderDriver_GL(const char* driverStr, const char*)
 	ret->initShader = _initShader;
 
 	ret->bindShaders = _bindShaders;
-	ret->setUniformTexture = _setUniformTexture;
-
-	ret->bindShaderInput = _bindShaderInput;
+	ret->bindShaderTextures = _bindShaderTexture;
+	ret->bindShaderBuffers = _bindShaderUniform;
 
 	ret->drawTriangle = _drawTriangle;
 	ret->drawTriangleIndexed = _drawTriangleIndexed;

@@ -92,20 +92,21 @@ TEST_FIXTURE(TextureLoaderTest, load)
 	CHECK(driver->initBuffer(ibuffer, roRDriverBufferType_Index, roRDriverDataUsage_Static, index, sizeof(index)));
 
 	// Bind shader input layout
-	roRDriverShaderInput input[] = {
-		{ vbuffer, vShader, "position", 0, 0, sizeof(float)*6, 0 },
-		{ vbuffer, vShader, "texCoord", 0, sizeof(float)*4, sizeof(float)*6, 0 },
-		{ ibuffer, NULL, NULL, 0, 0, 0, 0 },
+	roRDriverShaderBufferInput input[] = {
+		{ vShader, vbuffer, "position", 0, 0, sizeof(float)*6, 0 },
+		{ vShader, vbuffer, "texCoord", 0, sizeof(float)*4, sizeof(float)*6, 0 },
+		{ NULL, ibuffer, NULL, 0, 0, 0, 0 },
 	};
 
 	while(keepRun()) {
 		driver->clearColor(0, 0, 0, 0);
 
 		CHECK(driver->bindShaders(shaders, roCountof(shaders)));
-		CHECK(driver->bindShaderInput(input, roCountof(input), NULL));
+		CHECK(driver->bindShaderBuffers(input, roCountof(input), NULL));
 
+		roRDriverShaderTextureInput texInput = { pShader, texture->handle, "tex", stringHash("tex") };
+		CHECK(driver->bindShaderTextures(&texInput, 1));
 		driver->setTextureState(&textureState, 1, 0);
-		CHECK(driver->setUniformTexture(stringHash("tex"), texture->handle));
 
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();

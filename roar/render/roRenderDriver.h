@@ -94,16 +94,24 @@ typedef struct roRDriverShader
 	roRDriverShaderType type;
 } roRDriverShader;
 
-typedef struct roRDriverShaderInput
+typedef struct roRDriverShaderTextureInput
 {
-	roRDriverBuffer* buffer;
 	roRDriverShader* shader;
+	roRDriverTexture* texture;
+	const char* name;
+	unsigned nameHash;		/// after name is changed, reset it to zero will cause it to be re-calculated
+} roRDriverShaderTextureInput;
+
+typedef struct roRDriverShaderBufferInput
+{
+	roRDriverShader* shader;
+	roRDriverBuffer* buffer;
 	const char* name;
 	unsigned nameHash;		/// after name is changed, reset it to zero will cause it to be re-calculated
 	unsigned offset;
 	unsigned stride;
 	unsigned cacheId;
-} roRDriverShaderInput;
+} roRDriverShaderBufferInput;
 
 typedef enum roRDriverBlendOp
 {
@@ -292,9 +300,8 @@ typedef struct roRDriver
 	bool (*initShader)(roRDriverShader* self, roRDriverShaderType type, const char** sources, roSize sourceCount);
 
 	bool (*bindShaders)(roRDriverShader** shaders, roSize shaderCount);
-	bool (*setUniformTexture)(unsigned nameHash, roRDriverTexture* texture);
-
-	bool (*bindShaderInput)(roRDriverShaderInput* inputs, roSize inputCount, unsigned* cacheId);	// Get the cacheId for the first call, and it speed up on later calls
+	bool (*bindShaderTextures)(roRDriverShaderTextureInput* inputs, roSize inputCount);
+	bool (*bindShaderBuffers)(roRDriverShaderBufferInput* inputs, roSize inputCount, unsigned* cacheId);	// Get the cacheId for the first call, and it speed up on later calls
 
 // Making draw call
 	void (*drawTriangle)(roSize offset, roSize vertexCount, unsigned flags);

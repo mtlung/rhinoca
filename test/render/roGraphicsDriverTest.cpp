@@ -84,11 +84,11 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 	roRDriverBuffer* ubuffer2 = driver->newBuffer();
 	CHECK(driver->initBuffer(ubuffer2, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, color2, sizeof(color2)));
 
-	roRDriverShaderInput shaderInput[] = {
-		{ vbuffer, vShader, "position", 0, 0, 0, 0 },
-		{ ibuffer, NULL, NULL, 0, 0, 0, 0 },
-		{ ubuffer1, pShader, "color1", 0, 0, 0, 0 },
-		{ ubuffer2, pShader, "color2", 0, 0, 0, 0 },
+	roRDriverShaderBufferInput shaderInput[] = {
+		{ vShader, vbuffer, "position", 0, 0, 0, 0 },
+		{ NULL, ibuffer, NULL, 0, 0, 0, 0 },
+		{ pShader, ubuffer1, "color1", 0, 0, 0, 0 },
+		{ pShader, ubuffer2, "color2", 0, 0, 0, 0 },
 	};
 
 	while(keepRun()) {
@@ -106,7 +106,7 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 		driver->unmapBuffer(ubuffer2);
 
 		CHECK(driver->bindShaders(shaders, roCountof(shaders)));
-		CHECK(driver->bindShaderInput(shaderInput, roCountof(shaderInput), NULL));
+		CHECK(driver->bindShaderBuffers(shaderInput, roCountof(shaderInput), NULL));
 
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();
@@ -188,10 +188,10 @@ TEST_FIXTURE(GraphicsDriverTest, textureCommit)
 	CHECK(driver->initBuffer(ibuffer, roRDriverBufferType_Index, roRDriverDataUsage_Static, index, sizeof(index)));
 
 	// Bind shader input layout
-	roRDriverShaderInput input[] = {
-		{ vbuffer, vShader, "position", 0, 0, sizeof(float)*6, 0 },
-		{ vbuffer, vShader, "texCoord", 0, sizeof(float)*4, sizeof(float)*6, 0 },
-		{ ibuffer, NULL, NULL, 0, 0, 0, 0 },
+	roRDriverShaderBufferInput input[] = {
+		{ vShader, vbuffer, "position", 0, 0, sizeof(float)*6, 0 },
+		{ vShader, vbuffer, "texCoord", 0, sizeof(float)*4, sizeof(float)*6, 0 },
+		{ NULL, ibuffer, NULL, 0, 0, 0, 0 },
 	};
 
 	while(keepRun()) {
@@ -207,10 +207,11 @@ TEST_FIXTURE(GraphicsDriverTest, textureCommit)
 		CHECK(driver->commitTexture(texture, texData, 0));
 
 		CHECK(driver->bindShaders(shaders, roCountof(shaders)));
-		CHECK(driver->bindShaderInput(input, roCountof(input), NULL));
+		CHECK(driver->bindShaderBuffers(input, roCountof(input), NULL));
 
+		roRDriverShaderTextureInput texInput = { pShader, texture, "tex", stringHash("tex") };
+		CHECK(driver->bindShaderTextures(&texInput, 1));
 		driver->setTextureState(&textureState, 1, 0);
-		CHECK(driver->setUniformTexture(stringHash("tex"), texture));
 
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();
@@ -271,7 +272,7 @@ TEST_FIXTURE(GraphicsDriverTest, _texture)
 	CHECK(driver->initBuffer(ibuffer, roRDriverBufferType_Index, roRDriverDataUsage_Static, index, sizeof(index)));
 
 	// Bind shader input layout
-	roRDriverShaderInput input[] = {
+	roRDriverShaderBufferInput input[] = {
 		{ vbuffer, vShader,"vertex", 0, 0, 0, 0 },
 		{ ibuffer, NULL, NULL, 0, 0, 0, 0 },
 	};
@@ -280,10 +281,10 @@ TEST_FIXTURE(GraphicsDriverTest, _texture)
 		driver->clearColor(0, 0, 0, 0);
 
 		CHECK(driver->bindShaders(shaders, roCountof(shaders)));
-		CHECK(driver->bindShaderInput(input, roCountof(input), NULL));
+		CHECK(driver->bindShaderBuffers(input, roCountof(input), NULL));
 
 		driver->setTextureState(&textureState, 1, 0);
-		CHECK(driver->setUniformTexture(stringHash("u_tex"), texture));
+		CHECK(driver->bindShaderTextures(stringHash("u_tex"), texture));
 
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();
@@ -362,19 +363,19 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 	driver->unmapBuffer(ubuffer);
 
 	// Bind shader input layout
-	roRDriverShaderInput input[] = {
-		{ vbuffer, vShader, "position", 0, 0, 0, 0 },
-		{ ibuffer, NULL, NULL, 0, 0, 0, 0 },
-		{ ubuffer, vShader, "modelViewMat", 0, 0, 0, 0 },
-		{ ubuffer, vShader, "projectionMat", 0, sizeof(float)*16, 0, 0 },
-		{ ubuffer, pShader, "color", 0, sizeof(float)*16*2, 0, 0 },
+	roRDriverShaderBufferInput input[] = {
+		{ vShader, vbuffer, "position", 0, 0, 0, 0 },
+		{ NULL, ibuffer, NULL, 0, 0, 0, 0 },
+		{ vShader, ubuffer, "modelViewMat", 0, 0, 0, 0 },
+		{ vShader, ubuffer, "projectionMat", 0, sizeof(float)*16, 0, 0 },
+		{ pShader, ubuffer, "color", 0, sizeof(float)*16*2, 0, 0 },
 	};
 
 	while(keepRun()) {
 		driver->clearColor(0, 0, 0, 0);
 
 		CHECK(driver->bindShaders(shaders, roCountof(shaders)));
-		CHECK(driver->bindShaderInput(input, roCountof(input), NULL));
+		CHECK(driver->bindShaderBuffers(input, roCountof(input), NULL));
 
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();
@@ -454,12 +455,12 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 			float color[] = { 1, 1, 0, 0.5f };
 			driver->updateBuffer(ubuffer, 0, color, sizeof(color));
 
-			roRDriverShaderInput input[] = {
-				{ vbuffer1, vShader, "position", 0, 0, 0, 0 },
-				{ ibuffer, NULL, NULL, 0, 0, 0, 0 },
-				{ ubuffer, pShader, "color", 0, 0, 0, 0 },
+			roRDriverShaderBufferInput input[] = {
+				{ vShader, vbuffer1, "position", 0, 0, 0, 0 },
+				{ NULL, ibuffer, NULL, 0, 0, 0, 0 },
+				{ pShader, ubuffer, "color", 0, 0, 0, 0 },
 			};
-			CHECK(driver->bindShaderInput(input, roCountof(input), NULL));
+			CHECK(driver->bindShaderBuffers(input, roCountof(input), NULL));
 
 			driver->drawTriangleIndexed(0, 6, 0);
 		}
@@ -468,12 +469,12 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 			float color[] = { 1, 0, 0, 0.5f };
 			driver->updateBuffer(ubuffer, 0, color, sizeof(color));
 
-			roRDriverShaderInput input[] = {
-				{ vbuffer2, vShader, "position", 0, 0, 0, 0 },
-				{ ibuffer, NULL, NULL, 0, 0, 0, 0 },
-				{ ubuffer, pShader, "color", 0, 0, 0, 0 },
+			roRDriverShaderBufferInput input[] = {
+				{ vShader, vbuffer2, "position", 0, 0, 0, 0 },
+				{ NULL, ibuffer, NULL, 0, 0, 0, 0 },
+				{ pShader, ubuffer, "color", 0, 0, 0, 0 },
 			};
-			CHECK(driver->bindShaderInput(input, roCountof(input), NULL));
+			CHECK(driver->bindShaderBuffers(input, roCountof(input), NULL));
 
 			driver->drawTriangleIndexed(0, 6, 0);
 		}
@@ -574,19 +575,19 @@ TEST_FIXTURE(GraphicsDriverTest, GeometryShader)
 	driver->unmapBuffer(ubuffer);
 
 	// Bind shader input layout
-	roRDriverShaderInput input[] = {
-		{ vbuffer, vShader, "position", 0, 0, 0, 0 },
-		{ ibuffer, NULL, NULL, 0, 0, 0, 0 },
-		{ ubuffer, vShader, "modelViewMat", 0, 0, 0, 0 },
-		{ ubuffer, vShader, "projectionMat", 0, sizeof(float)*16, 0, 0 },
-		{ ubuffer, pShader, "color", 0, sizeof(float)*16*2, 0, 0 },
+	roRDriverShaderBufferInput input[] = {
+		{ vShader, vbuffer, "position", 0, 0, 0, 0 },
+		{ NULL, ibuffer, NULL, 0, 0, 0, 0 },
+		{ vShader, ubuffer, "modelViewMat", 0, 0, 0, 0 },
+		{ vShader, ubuffer, "projectionMat", 0, sizeof(float)*16, 0, 0 },
+		{ pShader, ubuffer, "color", 0, sizeof(float)*16*2, 0, 0 },
 	};
 
 	while(keepRun()) {
 		driver->clearColor(0, 0, 0, 0);
 
 		CHECK(driver->bindShaders(shaders, roCountof(shaders)));
-		CHECK(driver->bindShaderInput(input, roCountof(input), NULL));
+		CHECK(driver->bindShaderBuffers(input, roCountof(input), NULL));
 
 		driver->drawTriangleIndexed(0, 6, 0);
 		driver->swapBuffers();

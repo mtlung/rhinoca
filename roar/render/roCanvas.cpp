@@ -107,16 +107,21 @@ void Canvas::init(roRDriverContext* context)
 	_uBuffer = _driver->newBuffer();
 	roVerify(_driver->initBuffer(_uBuffer, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, isRtTexture, sizeof(isRtTexture)));
 
-	// Bind shader input layout
-	const roRDriverShaderInput input[] = {
-		{ _vBuffer, _vShader, "position", 0, 0, sizeof(float)*6, 0 },
-		{ _vBuffer, _vShader, "texCoord", 0, sizeof(float)*4, sizeof(float)*6, 0 },
-		{ _uBuffer, _vShader, "constants", 0, 0, 0, 0 },
-		{ _uBuffer, _pShader, "constants", 0, 0, 0, 0 },
+	// Bind shader buffer input
+	const roRDriverShaderBufferInput input[] = {
+		{ _vShader, _vBuffer, "position", 0, 0, sizeof(float)*6, 0 },
+		{ _vShader, _vBuffer, "texCoord", 0, sizeof(float)*4, sizeof(float)*6, 0 },
+		{ _vShader, _uBuffer, "constants", 0, 0, 0, 0 },
+		{ _pShader, _uBuffer, "constants", 0, 0, 0, 0 },
 	};
-	roAssert(roCountof(input) == _inputLayout.size());
+	roAssert(roCountof(input) == _bufferInputs.size());
 	for(roSize i=0; i<roCountof(input); ++i)
-		_inputLayout[i] = input[i];
+		_bufferInputs[i] = input[i];
+
+	_textureInput.name = "tex";
+	_textureInput.nameHash = 0;
+	_textureInput.shader = _pShader;
+	_textureInput.texture = NULL;
 
 	// Set the texture state
 	roRDriverTextureState textureState =  {
@@ -338,10 +343,11 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 
 	roRDriverShader* shaders[] = { _vShader, _pShader };
 	roVerify(_driver->bindShaders(shaders, roCountof(shaders)));
-	roVerify(_driver->bindShaderInput(_inputLayout.typedPtr(), _inputLayout.size(), NULL));
+	roVerify(_driver->bindShaderBuffers(_bufferInputs.typedPtr(), _bufferInputs.size(), NULL));
 
 	_driver->setTextureState(&_textureState, 1, 0);
-	roVerify(_driver->setUniformTexture(stringHash("tex"), texture));
+	_textureInput.texture = texture;
+	roVerify(_driver->bindShaderTextures(&_textureInput, 1));
 
 	// Blend state
 	updateBlendingStateGL(shGetContext(), 0);	// TODO: It would be an optimization to know the texture has transparent or not

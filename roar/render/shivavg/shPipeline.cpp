@@ -222,7 +222,7 @@ static void shDrawStroke(VGContext* c, SHPath *p)
 	c->strokeLayout[0].buffer = vBuf;
 	c->strokeLayout[1].buffer = vBuf;
 	roVerify(c->driver->initBuffer(vBuf, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, p->stroke.items, p->stroke.size * sizeof(SHVector2)));
-	roVerify(c->driver->bindShaderInput(c->strokeLayout, roCountof(c->strokeLayout), NULL));
+	roVerify(c->driver->bindShaderBuffers(c->strokeLayout, roCountof(c->strokeLayout), NULL));
 	c->driver->drawTriangle(0, p->stroke.size, 0);
 	c->driver->deleteBuffer(vBuf);
 }
@@ -241,7 +241,7 @@ static void shDrawVertices(VGContext* c, SHPath *p, roRDriverPrimitiveType primi
 	c->shVertexLayout[0].buffer = vBuf;
 	c->shVertexLayout[1].buffer = vBuf;
 	roVerify(c->driver->initBuffer(vBuf, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, p->vertices.items, p->vertices.size * sizeof(SHVertex)));
-	roVerify(c->driver->bindShaderInput(c->shVertexLayout, roCountof(c->shVertexLayout), NULL));
+	roVerify(c->driver->bindShaderBuffers(c->shVertexLayout, roCountof(c->shVertexLayout), NULL));
 
 	// We separate vertex arrays by contours to properly handle the fill modes
 	// TODO: May use primitive restart
@@ -257,7 +257,7 @@ static void shDrawVertices(VGContext* c, SHPath *p, roRDriverPrimitiveType primi
 void shDrawQuad(VGContext* c, float* fourCorners)
 {
 	roVerify(c->driver->updateBuffer(c->quadBuffer, 0, fourCorners, sizeof(float) * 2 * 4));
-	roVerify(c->driver->bindShaderInput(c->quadInputLayout, roCountof(c->quadInputLayout), NULL));
+	roVerify(c->driver->bindShaderBuffers(c->quadInputLayout, roCountof(c->quadInputLayout), NULL));
 	c->driver->drawPrimitive(roRDriverPrimitiveType_TriangleStrip, 0, 4, 0);
 }
 
@@ -319,7 +319,8 @@ static void shDrawPaintMesh(VGContext *c, SHVector2 *min, SHVector2 *max,
 			pmin.x, pmin.y, pmax.x, pmin.y,
 			pmin.x, pmax.y, pmax.x, pmax.y,
 		};
-		roVerify(c->driver->setUniformTexture(ro::stringHash("texGrad"), c->whiteTexture));
+		roRDriverShaderTextureInput texInput = { c->pShader, c->whiteTexture, "texGrad", ro::stringHash("texGrad") };
+		roVerify(c->driver->bindShaderTextures(&texInput, 1));
 		setColor(c, &p->color.r);
 		shDrawQuad(c, corners);
 		} break;
@@ -439,7 +440,8 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
 
 		setColor(context, &c.r);
 		updateBlendingStateGL(context, c.a == 1.0f);
-		roVerify(context->driver->setUniformTexture(ro::stringHash("texGrad"), context->whiteTexture));
+		roRDriverShaderTextureInput texInput = { context->pShader, context->whiteTexture, "texGrad", ro::stringHash("texGrad") };
+		roVerify(context->driver->bindShaderTextures(&texInput, 1));
 
 		// Draw contour as a line
 		shDrawVertices(context, p, roRDriverPrimitiveType_LineStrip);
@@ -489,7 +491,7 @@ VG_API_CALL void vgDrawImage(VGImage image)
 //		glEnable(GL_MULTISAMPLE);
 	}
 	context->driver->setTextureState(&state, 1, 0);
-//	context->driver->setUniformTexture(stringHash("u_tex"), i->texture);
+//	context->driver->bindShaderTextures(stringHash("u_tex"), i->texture);
 //	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 	// Generate image texture coords automatically

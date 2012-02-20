@@ -1269,7 +1269,7 @@ bool _bindShaders(roRDriverShader** shaders, roSize shaderCount)
 	return true;
 }
 
-bool _setUniformBuffer(unsigned nameHash, roRDriverBuffer* buffer, roRDriverShaderInput* input)
+bool _setUniformBuffer(unsigned nameHash, roRDriverBuffer* buffer, roRDriverShaderBufferInput* input)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx) return false;
@@ -1320,7 +1320,7 @@ static const StaticArray<DXGI_FORMAT, 20> _inputFormatMapping = {
 	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_R32_FLOAT,	DXGI_FORMAT_R32G32_FLOAT,	DXGI_FORMAT_R32G32B32_FLOAT,DXGI_FORMAT_R32G32B32A32_FLOAT,	// D3D10_REGISTER_COMPONENT_FLOAT32
 };
 
-bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*)
+bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, unsigned*)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx || !inputs || inputCount == 0) return false;
@@ -1329,7 +1329,7 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 	unsigned inputHash = 0;
 	for(unsigned attri=0; attri<inputCount; ++attri)
 	{
-		roRDriverShaderInput* i = &inputs[attri];
+		roRDriverShaderBufferInput* i = &inputs[attri];
 		roRDriverBufferImpl* buffer = static_cast<roRDriverBufferImpl*>(i->buffer);
 		if(!i || !i->buffer) continue;
 		if(buffer->type != roRDriverBufferType_Vertex) continue;	// Input layout only consider vertex buffer
@@ -1365,7 +1365,7 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 	// Loop for each inputs and do the necessary binding
 	for(unsigned i=0; i<inputCount; ++i)
 	{
-		roRDriverShaderInput* input = &inputs[i];
+		roRDriverShaderBufferInput* input = &inputs[i];
 		if(!input) continue;
 
 		roRDriverBufferImpl* buffer = static_cast<roRDriverBufferImpl*>(input->buffer);
@@ -1385,7 +1385,7 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 			if(!shader) continue;
 
 			if(!ctx->currentShaders[buffer->type]) {
-				roLog("error", "Call bindShaders() before calling bindShaderInput()\n"); 
+				roLog("error", "Call bindShaders() before calling bindShaderBuffers()\n"); 
 				return false;
 			}
 
@@ -1440,7 +1440,7 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 			ctx->dxDeviceContext->IASetIndexBuffer(buffer->dxBuffer, DXGI_FORMAT_R16_UINT, 0);
 		}
 		else {
-			roAssert(false && "An unknow buffer was supplied to bindShaderInput()");
+			roAssert(false && "An unknow buffer was supplied to bindShaderBuffers()");
 		}
 	}
 
@@ -1480,23 +1480,47 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 	return true;
 }
 
-bool _setUniformTexture(StringHash nameHash, roRDriverTexture* texture)
+bool _bindShaderTexture(roRDriverShaderTextureInput* inputs, roSize inputCount)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
-	if(!ctx) return false;
+	if(!ctx || !inputs) return false;
 
-	// TODO: Query the slot number for the nameHash
-	UINT slot = 0;
+	for(roSize i=0; i<inputCount; ++i)
+	{
+		roRDriverShaderTextureInput& input = inputs[i];
 
-	// Set the shader resource to NULL if required
-	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(texture);
-	if(!impl || impl->dxDimension == D3D11_RESOURCE_DIMENSION_UNKNOWN) {
-		ID3D11ShaderResourceView* view = NULL;
-		ctx->dxDeviceContext->PSSetShaderResources(slot, 1, &view);
-		return true;
+		roRDriverShaderImpl* shader = static_cast<roRDriverShaderImpl*>(input.shader);
+		if(!shader) continue;
+
+		// Generate the hash value if not yet
+		if(input.nameHash == 0)
+			input.nameHash = stringHash(input.name, 0);
+
+		UINT slot = 0;
+		bool slotFound = false;
+		for(roSize j=0; j<shader->shaderResourceBindings.size(); ++j) {
+			if(shader->shaderResourceBindings[j].nameHash != input.nameHash)
+				continue;
+			slot = shader->shaderResourceBindings[j].bindPoint;
+			slotFound = true;
+			break;
+		}
+
+		if(!slotFound) {
+			roLog("error", "bindShaderTextures() can't find the shader param '%s'!\n", input.name ? input.name : "");
+			continue;
+		}
+
+		// Set the shader resource to NULL if required
+		roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(input.texture);
+		if(!impl || impl->dxDimension == D3D11_RESOURCE_DIMENSION_UNKNOWN) {
+			ID3D11ShaderResourceView* view = NULL;
+			ctx->dxDeviceContext->PSSetShaderResources(slot, 1, &view);
+			return true;
+		}
+
+		ctx->dxDeviceContext->PSSetShaderResources(slot, 1, &impl->dxView.ptr);
 	}
-
-	ctx->dxDeviceContext->PSSetShaderResources(slot, 1, &impl->dxView.ptr);
 
 	return true;
 }
@@ -1632,9 +1656,8 @@ roRDriver* _roNewRenderDriver_DX11(const char* driverStr, const char*)
 	ret->initShader = _initShader;
 
 	ret->bindShaders = _bindShaders;
-	ret->setUniformTexture = _setUniformTexture;
-
-	ret->bindShaderInput = _bindShaderInput;
+	ret->bindShaderTextures = _bindShaderTexture;
+	ret->bindShaderBuffers = _bindShaderUniform;
 //	ret->bindShaderInputCached = _bindShaderInputCached;
 
 	ret->drawTriangle = _drawTriangle;

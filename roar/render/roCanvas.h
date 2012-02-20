@@ -115,7 +115,8 @@ struct Canvas
 	roRDriverShader* _vShader;
 	roRDriverShader* _pShader;
 	roRDriverTextureState _textureState;
-	StaticArray<roRDriverShaderInput, 4> _inputLayout;
+	roRDriverShaderTextureInput _textureInput;
+	StaticArray<roRDriverShaderBufferInput, 4> _bufferInputs;
 
 	float _targetWidth;
 	float _targetHeight;
