@@ -184,6 +184,26 @@ static void _adjustDepthRangeMatrix(float* mat)
 	mat[2 + 3*4] = (mat[2 + 3*4] + mat[3 + 3*4]) * 0.5f;
 }
 
+typedef struct TextureFormatMapping
+{
+	roRDriverTextureFormat format;
+	unsigned pixelSizeInBytes;
+	DXGI_FORMAT dxFormat;
+} TextureFormatMapping;
+
+TextureFormatMapping _textureFormatMappings[] = {
+	{ roRDriverTextureFormat(0),			0,	DXGI_FORMAT(0) },
+	{ roRDriverTextureFormat_RGBA,			4,	DXGI_FORMAT_R8G8B8A8_UNORM },
+	{ roRDriverTextureFormat_R,				1,	DXGI_FORMAT_R16_UINT },
+	{ roRDriverTextureFormat_A,				0,	DXGI_FORMAT(0) },
+	{ roRDriverTextureFormat_Depth,			0,	DXGI_FORMAT_D32_FLOAT },
+	{ roRDriverTextureFormat_DepthStencil,	0,	DXGI_FORMAT_D24_UNORM_S8_UINT },	// DXGI_FORMAT_D32_FLOAT_S8X24_UINT
+	{ roRDriverTextureFormat_PVRTC2,		0,	DXGI_FORMAT(0) },
+	{ roRDriverTextureFormat_PVRTC4,		0,	DXGI_FORMAT(0) },
+	{ roRDriverTextureFormat_DXT1,			0,	DXGI_FORMAT_BC1_UNORM },
+	{ roRDriverTextureFormat_DXT5,			0,	DXGI_FORMAT_BC3_UNORM },
+};
+
 static bool _setRenderTargets(roRDriverTexture** textures, roSize targetCount, bool useDepthStencil)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
@@ -210,7 +230,7 @@ static bool _setRenderTargets(roRDriverTexture** textures, roSize targetCount, b
 
 		ctx->renderTargetCache[i].lastUsedTime = ctx->lastSwapTime;
 		ctx->dxDeviceContext->OMSetRenderTargets(
-			num_cast<UINT>(targetCount),
+			num_cast<UINT>(ctx->renderTargetCache[i].rtViews.size()),
 			&ctx->renderTargetCache[i].rtViews.typedPtr()->ptr,
 			ctx->renderTargetCache[i].depthStencilView.ptr
 		);
@@ -241,22 +261,50 @@ static bool _setRenderTargets(roRDriverTexture** textures, roSize targetCount, b
 	renderTarget.hash = hash;
 	renderTarget.lastUsedTime = ctx->lastSwapTime;
 
-	for(unsigned i=0; i<targetCount; ++i) {
+	for(unsigned i=0; i<targetCount; ++i)
+	{
 		roRDriverTextureImpl* tex = static_cast<roRDriverTextureImpl*>(textures[i]);
-		ID3D11RenderTargetView* renderTargetView = NULL;
-		HRESULT hr = ctx->dxDevice->CreateRenderTargetView(tex->dxTexture, NULL, &renderTargetView);
 
-		renderTarget.rtViews.pushBack(ComPtr<ID3D11RenderTargetView>(renderTargetView));
+		// Create depth stencil view
+		if(tex->format == roRDriverTextureFormat_DepthStencil)
+		{
+			D3D11_DEPTH_STENCIL_VIEW_DESC desc = {
+				_textureFormatMappings[tex->format].dxFormat,	// Format
+				D3D11_DSV_DIMENSION_TEXTURE2D,			// ViewDimension
+				0,										// Flags
+				{ 0 }
+			};
+			desc.Texture2D.MipSlice = 0;
 
-		if(FAILED(hr)) {
-			roLog("error", "CreateRenderTargetView failed\n");
-			return false;
+			ID3D11DepthStencilView* depthStencilView = NULL;
+			HRESULT hr = ctx->dxDevice->CreateDepthStencilView(tex->dxTexture, &desc, &depthStencilView);
+
+			if(FAILED(hr)) {
+				roLog("error", "CreateDepthStencilView failed\n");
+				return false;
+			}
+
+			renderTarget.depthStencilView = depthStencilView;
+		}
+		// Create color render target view
+		else
+		{
+			ID3D11RenderTargetView* renderTargetView = NULL;
+			HRESULT hr = ctx->dxDevice->CreateRenderTargetView(tex->dxTexture, NULL, &renderTargetView);
+
+			if(FAILED(hr)) {
+				roLog("error", "CreateRenderTargetView failed\n");
+				return false;
+			}
+
+			renderTarget.rtViews.pushBack(ComPtr<ID3D11RenderTargetView>(renderTargetView));
 		}
 	}
 
+	// TODO: Unbind any texture which is using as shader resource at the moment
 	ctx->renderTargetCache.pushBack(renderTarget);
 	ctx->dxDeviceContext->OMSetRenderTargets(
-		num_cast<UINT>(targetCount),
+		num_cast<UINT>(renderTarget.rtViews.size()),
 		&renderTarget.rtViews.typedPtr()->ptr,
 		renderTarget.depthStencilView.ptr
 	);
@@ -913,26 +961,6 @@ static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height
 	return true;
 }
 
-typedef struct TextureFormatMapping
-{
-	roRDriverTextureFormat format;
-	unsigned pixelSizeInBytes;
-	DXGI_FORMAT dxFormat;
-} TextureFormatMapping;
-
-TextureFormatMapping _textureFormatMappings[] = {
-	{ roRDriverTextureFormat(0),			0,	DXGI_FORMAT(0) },
-	{ roRDriverTextureFormat_RGBA,			4,	DXGI_FORMAT_R8G8B8A8_UNORM },
-	{ roRDriverTextureFormat_R,				1,	DXGI_FORMAT_R16_UINT },
-	{ roRDriverTextureFormat_A,				0,	DXGI_FORMAT(0) },
-	{ roRDriverTextureFormat_Depth,			0,	DXGI_FORMAT_D32_FLOAT },
-	{ roRDriverTextureFormat_DepthStencil,	0,	DXGI_FORMAT_D24_UNORM_S8_UINT },	// DXGI_FORMAT_D32_FLOAT_S8X24_UINT
-	{ roRDriverTextureFormat_PVRTC2,		0,	DXGI_FORMAT(0) },
-	{ roRDriverTextureFormat_PVRTC4,		0,	DXGI_FORMAT(0) },
-	{ roRDriverTextureFormat_DXT1,			0,	DXGI_FORMAT_BC1_UNORM },
-	{ roRDriverTextureFormat_DXT5,			0,	DXGI_FORMAT_BC3_UNORM },
-};
-
 static bool _commitTexture(roRDriverTexture* self, const void* data, roSize rowPaddingInBytes)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
@@ -945,7 +973,9 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, roSize rowP
 	UINT bindFlags = 0;
 
 	{	// Setup bind flags
-		if(impl->format != roRDriverTextureFormat_Depth && impl->format != roRDriverTextureFormat_DepthStencil)
+		if(impl->format == roRDriverTextureFormat_DepthStencil)
+			bindFlags |= D3D11_BIND_DEPTH_STENCIL;
+		else
 			bindFlags |= D3D11_BIND_SHADER_RESOURCE;
 
 		if(impl->flags & roRDriverTextureFlag_RenderTarget)
@@ -1182,8 +1212,8 @@ static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const c
 		if(FAILED(hr))
 			break;
 
-		ConstantBuffer cb = { stringHash(desc.Name, 0), desc.BindPoint };
-		impl->constantBuffers.pushBack(cb);
+		ShaderResourceBinding cb = { stringHash(desc.Name, 0), desc.BindPoint };
+		impl->shaderResourceBindings.pushBack(cb);
 	}
 
 	return true;
@@ -1261,8 +1291,8 @@ bool _setUniformBuffer(unsigned nameHash, roRDriverBuffer* buffer, roRDriverShad
 	roRDriverShaderImpl* shader = (roRDriverShaderImpl*)input->shader;
 
 	// Search for the constant buffer with the matching name
-	if(shader) for(unsigned j=0; j<shader->constantBuffers.size(); ++j) {
-		ConstantBuffer& b = shader->constantBuffers[j];
+	if(shader) for(unsigned j=0; j<shader->shaderResourceBindings.size(); ++j) {
+		ShaderResourceBinding& b = shader->shaderResourceBindings[j];
 		if(b.nameHash == nameHash) {
 			if(shader->type == roRDriverShaderType_Vertex)
 				ctx->dxDeviceContext->VSSetConstantBuffers(b.bindPoint, 1, &tmpBuf->dxBuffer.ptr);
@@ -1453,11 +1483,20 @@ bool _bindShaderInput(roRDriverShaderInput* inputs, roSize inputCount, unsigned*
 bool _setUniformTexture(StringHash nameHash, roRDriverTexture* texture)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
-	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(texture);
-	if(!ctx || !impl) return false;
-	if(impl->dxDimension == D3D11_RESOURCE_DIMENSION_UNKNOWN) return false;
+	if(!ctx) return false;
 
-	ctx->dxDeviceContext->PSSetShaderResources(0, 1, &impl->dxView.ptr);
+	// TODO: Query the slot number for the nameHash
+	UINT slot = 0;
+
+	// Set the shader resource to NULL if required
+	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(texture);
+	if(!impl || impl->dxDimension == D3D11_RESOURCE_DIMENSION_UNKNOWN) {
+		ID3D11ShaderResourceView* view = NULL;
+		ctx->dxDeviceContext->PSSetShaderResources(slot, 1, &view);
+		return true;
+	}
+
+	ctx->dxDeviceContext->PSSetShaderResources(slot, 1, &impl->dxView.ptr);
 
 	return true;
 }

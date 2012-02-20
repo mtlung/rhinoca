@@ -24,9 +24,9 @@ struct InputParam
 	D3D10_REGISTER_COMPONENT_TYPE type;
 };
 
-struct ConstantBuffer
+struct ShaderResourceBinding
 {
-	StringHash nameHash;		// Hash value for the constant buffer
+	StringHash nameHash;		// Hash value for the shader resource
 	unsigned bindPoint;
 };
 
@@ -91,7 +91,7 @@ struct roRDriverShaderImpl : public roRDriverShader
 	ComPtr<ID3D10Blob> dxShaderBlob;
 
 	TinyArray<InputParam, 4> inputParams;
-	TinyArray<ConstantBuffer, 4> constantBuffers;
+	TinyArray<ShaderResourceBinding, 4> shaderResourceBindings;
 };
 
 struct InputLayout

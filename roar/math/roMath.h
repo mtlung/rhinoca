@@ -38,6 +38,7 @@ float roFrac				(float x);
 float roRound				(float x);	// < 0.5 floor, > 0.5 ceil
 float roClamp				(float x, float min, float max);
 
+bool roIsSameSign			(float v1, float v2);
 bool roIsPowerOfTwo			(unsigned x);
 unsigned roNextPowerOfTwo	(unsigned x);
 
@@ -83,6 +84,8 @@ inline T roStepRunAvg(const T& oldVal, const T& newVal, unsigned avgOverFrame)
 	roAssert(avgOverFrame > 0);
 	return ((oldVal * (avgOverFrame - 1)) + newVal) / avgOverFrame;
 }
+
+inline bool roIsSameSign(float v1, float v2) { return (v1 > 0) == (v2 > 0); }
 
 inline bool roIsPowerOfTwo(unsigned x) { return x == roNextPowerOfTwo(x); }
 
