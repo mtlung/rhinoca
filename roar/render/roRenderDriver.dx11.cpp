@@ -228,6 +228,10 @@ static bool _setRenderTargets(roRDriverTexture** textures, roSize targetCount, b
 		if(ctx->renderTargetCache[i].hash != hash)
 			continue;
 
+		// Unbind any texture which is using as shader resource at the moment
+		ID3D11ShaderResourceView* views[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT] = { NULL };
+		ctx->dxDeviceContext->PSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, views);
+
 		ctx->renderTargetCache[i].lastUsedTime = ctx->lastSwapTime;
 		ctx->dxDeviceContext->OMSetRenderTargets(
 			num_cast<UINT>(ctx->renderTargetCache[i].rtViews.size()),
@@ -301,7 +305,11 @@ static bool _setRenderTargets(roRDriverTexture** textures, roSize targetCount, b
 		}
 	}
 
-	// TODO: Unbind any texture which is using as shader resource at the moment
+	// Unbind any texture which is using as shader resource at the moment
+	ID3D11ShaderResourceView* views[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT] = { NULL };
+	ctx->dxDeviceContext->PSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, views);
+
+
 	ctx->renderTargetCache.pushBack(renderTarget);
 	ctx->dxDeviceContext->OMSetRenderTargets(
 		num_cast<UINT>(renderTarget.rtViews.size()),
@@ -789,9 +797,11 @@ static StagingBuffer* _getStagingBuffer(roRDriverContextImpl* ctx, void* initDat
 	StagingBuffer* ret = NULL;
 
 	for(unsigned i=0; i<ctx->stagingBufferCache.size(); ++i) {
-		StagingBuffer* sb = &ctx->stagingBufferCache[i];
+		unsigned idx = (i + ctx->stagingBufferCacheSearchIndex) % ctx->stagingBufferCache.size();
+		StagingBuffer* sb = &ctx->stagingBufferCache[idx];
 		if(sb->size == size && !sb->busyFrame) {
 			ret = sb;
+			ctx->stagingBufferCacheSearchIndex = idx + 1;
 			break;
 		}
 	}

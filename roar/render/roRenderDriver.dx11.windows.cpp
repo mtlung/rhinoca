@@ -21,7 +21,7 @@ using namespace ro;
 
 static DefaultAllocator _allocator;
 
-namespace {
+//namespace {
 
 #include "roRenderDriver.dx11.inl"
 
@@ -31,7 +31,7 @@ struct ContextImpl : public roRDriverContextImpl
 	StopWatch stopWatch;
 };
 
-}	// namespace
+//}	// namespace
 
 roRDriverContext* _newDriverContext_DX11(roRDriver* driver)
 {
@@ -209,7 +209,10 @@ bool _initDriverContext_DX11(roRDriverContext* self, void* platformSpecificWindo
 		NULL,		// Which graphics adaptor to use, default is the first one returned by IDXGIFactory1::EnumAdapters
 		D3D_DRIVER_TYPE_HARDWARE,
 		NULL,		// Software rasterizer
-		D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_PREVENT_INTERNAL_THREADING_OPTIMIZATIONS,
+#if roDEBUG
+		D3D11_CREATE_DEVICE_DEBUG |
+#endif
+		D3D11_CREATE_DEVICE_PREVENT_INTERNAL_THREADING_OPTIMIZATIONS,
 		NULL, 0,	// Feature level
 		D3D11_SDK_VERSION,
 		&swapChainDesc,
@@ -229,6 +232,8 @@ bool _initDriverContext_DX11(roRDriverContext* self, void* platformSpecificWindo
 	impl->dxSwapChain = swapChain;
 	impl->dxDevice = device;
 	impl->dxDeviceContext = immediateContext;
+
+	impl->stagingBufferCacheSearchIndex = 0;
 
 	// Create render target
 	if(!_initRenderTarget(impl, swapChainDesc))

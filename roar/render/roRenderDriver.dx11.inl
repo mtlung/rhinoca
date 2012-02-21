@@ -132,6 +132,7 @@ struct roRDriverContextImpl : public roRDriverContext
 	CurrentShaders currentShaders;
 
 	Array<InputLayout> inputLayoutCache;
+	unsigned stagingBufferCacheSearchIndex;
 	Array<StagingBuffer> stagingBufferCache;
 	Array<StagingTexture> stagingTextureCache;
 

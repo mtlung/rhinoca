@@ -584,7 +584,9 @@ void Canvas::addGradientColorStop(void* gradient, float offset, float r, float g
 
 void Canvas::destroyGradient(void* gradient)
 {
-	_allocator.deleteObj(reinterpret_cast<Gradient*>(gradient));
+	Gradient* g = reinterpret_cast<Gradient*>(gradient);
+	vgDestroyPaint(g->handle);
+	_allocator.deleteObj(g);
 }
 
 
