@@ -609,7 +609,7 @@ static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, void* dat
 	return true;
 }
 
-static void* _mapBuffer(roRDriverBuffer* self, roRDriverBufferMapUsage usage)
+static void* _mapBuffer(roRDriverBuffer* self, roRDriverMapUsage usage)
 {
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl) return NULL;
@@ -622,12 +622,12 @@ static void* _mapBuffer(roRDriverBuffer* self, roRDriverBufferMapUsage usage)
 #if !defined(RG_GLES)
 	void* ret = NULL;
 	checkError();
-	roAssert("Invalid roRDriverBufferMapUsage" && _bufferMapUsage[usage] != 0);
+	roAssert("Invalid roRDriverMapUsage" && _bufferMapUsage[usage] != 0);
 	GLenum t = _bufferTarget[self->type];
 	glBindBuffer(t, impl->glh);
 
 	// The write discard optimization
-	if(!usage & roRDriverBufferMapUsage_Read)
+	if(!usage & roRDriverMapUsage_Read)
 		glBufferData(t, 0, NULL, GL_STREAM_COPY);
 
 	ret = glMapBuffer(t, _bufferMapUsage[usage]);
@@ -669,7 +669,7 @@ static bool _switchBufferMode(roRDriverBufferImpl* impl)
 	roAssert((impl->glh != 0) != (impl->systemBuf != NULL) && "Only glh or system buffer but not using both");
 
 	if(impl->glh) {
-		if(void* data = _mapBuffer(impl, roRDriverBufferMapUsage_Read))
+		if(void* data = _mapBuffer(impl, roRDriverMapUsage_Read))
 			return _initBufferSpecificLocation(impl, impl->type, impl->usage, data, impl->sizeInBytes, true);
 	}
 	else if(impl->systemBuf) {

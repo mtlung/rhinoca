@@ -40,6 +40,8 @@ static DefaultAllocator _allocator;
 // ----------------------------------------------------------------------
 // Common stuffs
 
+#define D3D11_MAP_FLAG_DO_WAIT ((D3D11_MAP_FLAG)0);
+
 static unsigned _hashAppend(unsigned hash, unsigned dataToAppend)
 {
 	return dataToAppend + (hash << 6) + (hash << 16) - hash; 
@@ -789,70 +791,90 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 	return true;
 }
 
-static StagingBuffer* _getStagingBuffer(roRDriverContextImpl* ctx, void* initData, roSize size)
+static StagingBuffer* _getStagingBuffer(roRDriverContextImpl* ctx, roSize size, D3D11_MAP mapOption, D3D11_MAPPED_SUBRESOURCE* mapResult)
 {
 	roAssert(ctx);
 
 	HRESULT hr;
 	StagingBuffer* ret = NULL;
+	unsigned tryCount = 0;
 
-	for(unsigned i=0; i<ctx->stagingBufferCache.size(); ++i) {
-		unsigned idx = (i + ctx->stagingBufferCacheSearchIndex) % ctx->stagingBufferCache.size();
-		StagingBuffer* sb = &ctx->stagingBufferCache[idx];
-		if(sb->size == size && !sb->busyFrame) {
-			ret = sb;
-			ctx->stagingBufferCacheSearchIndex = idx + 1;
-			break;
+	while(!ret)
+	{
+		++tryCount;
+
+		for(unsigned i=0; i<ctx->stagingBufferCache.size(); ++i) {
+			unsigned idx = (i + ctx->stagingBufferCacheSearchIndex) % ctx->stagingBufferCache.size();
+			StagingBuffer* sb = &ctx->stagingBufferCache[idx];
+			if(sb->size >= size) {
+				ret = sb;
+				ctx->stagingBufferCacheSearchIndex = idx + 1;
+				break;
+			}
 		}
-	}
 
-	if(!ret) {
 		// Cache miss, create new one
-		D3D11_BUFFER_DESC stagingBufferDesc = {
-			num_cast<UINT>(size), D3D11_USAGE_STAGING,
-			0, D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE, 0, 0
-		};
+		if(!ret || tryCount > ctx->stagingBufferCache.size()) {
+			D3D11_BUFFER_DESC desc = {
+				num_cast<UINT>(size), D3D11_USAGE_STAGING,
+				0, D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE, 0, 0
+			};
 
-		ret = &ctx->stagingBufferCache.pushBack();
-		hr = ctx->dxDevice->CreateBuffer(&stagingBufferDesc, NULL, &ret->dxBuffer.ptr);
-		if(FAILED(hr) || !ret->dxBuffer)
-			return NULL;
-	}
+			ID3D11Buffer* stagingBuffer = NULL;
+			hr = ctx->dxDevice->CreateBuffer(&desc, NULL, &stagingBuffer);
 
-	static const unsigned FrameCountForAnyBufferLockFinished = 2;
-	ret->size = size;
-	ret->mapped = false;
-	ret->lastUsedTime = ctx->lastSwapTime;
-	ret->busyFrame = FrameCountForAnyBufferLockFinished;
+			if(FAILED(hr) || !stagingBuffer) {
+				roLog("error", "CreateBuffer failed\n");
+				roAssert(!stagingBuffer && "Leaking ID3D11Buffer");
+				return NULL;
+			}
 
-	if(initData) {
+			ret = &ctx->stagingBufferCache.pushBack();
+			ret->dxBuffer = stagingBuffer;
+			ret->size = size;
+		}
+
+		ret->mapped = false;
+		ret->lastUsedTime = ctx->lastSwapTime;
+
+		if(mapOption == 0)
+			break;
+
 		D3D11_MAPPED_SUBRESOURCE mapped = {0};
 		hr = ctx->dxDeviceContext->Map(
 			ret->dxBuffer,
 			0,
-			D3D11_MAP_WRITE,
+			mapOption,
 			D3D11_MAP_FLAG_DO_NOT_WAIT,
 			&mapped
 		);
 
+		ret->mapped = true;
+		if(mapResult)
+			*mapResult = mapped;
+
 		if(FAILED(hr)) {
-			roLog("error", "Fail to map buffer\n");
+			// If this staging texture is still busy, keep try to search
+			// for another in the cache list, or create a new one.
+			if(hr == DXGI_ERROR_WAS_STILL_DRAWING) {
+				ret = NULL;
+				++ctx->stagingBufferCacheSearchIndex;
+				continue;
+			}
+
+			roLog("error", "Fail to map staging buffer\n");
 			return NULL;
 		}
-
-		memcpy(mapped.pData, initData, size);
-		ctx->dxDeviceContext->Unmap(ret->dxBuffer, 0);
 	}
 
 	return ret;
 }
 
-static const StaticArray<D3D11_MAP, 5> _mapUsage = {
+static const StaticArray<D3D11_MAP, 4> _mapUsage = {
 	D3D11_MAP(-1),
 	D3D11_MAP_READ,
-	D3D11_MAP_WRITE,
+	D3D11_MAP_WRITE,	// D3D11_MAP_WRITE_DISCARD
 	D3D11_MAP_READ_WRITE,
-	D3D11_MAP_WRITE_DISCARD,
 };
 
 static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, void* data, roSize sizeInBytes)
@@ -867,15 +889,21 @@ static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, void* dat
 	if(impl->usage == roRDriverDataUsage_Static) return false;
 
 	// Use staging buffer to do the update
-	if(StagingBuffer* staging = _getStagingBuffer(ctx, data, sizeInBytes)) {
-		ctx->dxDeviceContext->CopySubresourceRegion(impl->dxBuffer.ptr, 0, num_cast<UINT>(offsetInBytes), 0, 0, staging->dxBuffer, 0, NULL);
+	D3D11_MAPPED_SUBRESOURCE mapped = {0};
+	if(StagingBuffer* staging = _getStagingBuffer(ctx, sizeInBytes, D3D11_MAP_WRITE, &mapped)) {
+		roAssert(mapped.pData);
+		roMemcpy(mapped.pData, data, sizeInBytes);
+		ctx->dxDeviceContext->Unmap(staging->dxBuffer, 0);
+		D3D11_BOX srcBox = { 0, 0, 0, num_cast<UINT>(sizeInBytes), 1, 1 };
+		ctx->dxDeviceContext->CopySubresourceRegion(impl->dxBuffer, 0, num_cast<UINT>(offsetInBytes), 0, 0, staging->dxBuffer, 0, &srcBox);
+		staging->mapped = false;
 		return true;
 	}
 
 	return false;
 }
 
-static void* _mapBuffer(roRDriverBuffer* self, roRDriverBufferMapUsage usage)
+static void* _mapBuffer(roRDriverBuffer* self, roRDriverMapUsage usage)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
@@ -884,23 +912,29 @@ static void* _mapBuffer(roRDriverBuffer* self, roRDriverBufferMapUsage usage)
 	if(impl->isMapped) return NULL;
 	if(!impl->dxBuffer) return NULL;
 
-	// Create staging buffer for read/write
-	StagingBuffer* staging = _getStagingBuffer(ctx, NULL, impl->sizeInBytes);
+	// Get staging buffer for read/write
+	// NOTE: We supply the map usage flag to make sure the staging buffer is ready to use for that purpose
+	StagingBuffer* staging = _getStagingBuffer(ctx, impl->sizeInBytes, _mapUsage[usage], NULL);
 	if(!staging)
 		return NULL;
 
 	roAssert(!impl->dxStaging);
+	ctx->dxDeviceContext->Unmap(staging->dxBuffer, 0);
+	staging->mapped = false;
 
 	// Prepare for read
-	if(usage & roRDriverBufferMapUsage_Read)
-		ctx->dxDeviceContext->CopyResource(staging->dxBuffer, impl->dxBuffer);
+	D3D11_MAP_FLAG mapFlag = D3D11_MAP_FLAG_DO_NOT_WAIT;
+	if(usage & roRDriverMapUsage_Read) {
+		ctx->dxDeviceContext->CopySubresourceRegion(staging->dxBuffer, 0, 0, 0, 0, impl->dxBuffer, 0, NULL);
+		mapFlag = D3D11_MAP_FLAG_DO_WAIT;	// For read, we need to wait for the CopyResource() to finish
+	}
 
 	D3D11_MAPPED_SUBRESOURCE mapped = {0};
 	HRESULT hr = ctx->dxDeviceContext->Map(
 		staging->dxBuffer,
 		0,
 		_mapUsage[usage],
-		D3D11_MAP_FLAG_DO_NOT_WAIT,
+		mapFlag,
 		&mapped
 	);
 
@@ -930,8 +964,10 @@ static void _unmapBuffer(roRDriverBuffer* self)
 
 	ctx->dxDeviceContext->Unmap(impl->dxStaging->dxBuffer, 0);
 
-	if(impl->mapUsage & roRDriverBufferMapUsage_Write)
-		ctx->dxDeviceContext->CopyResource(impl->dxBuffer, impl->dxStaging->dxBuffer);
+	if(impl->mapUsage & roRDriverMapUsage_Write) {
+		D3D11_BOX srcBox = { 0, 0, 0, num_cast<UINT>(impl->sizeInBytes), 1, 1 };
+		ctx->dxDeviceContext->CopySubresourceRegion(impl->dxBuffer, 0, 0, 0, 0, impl->dxStaging->dxBuffer, 0, &srcBox);
+	}
 
 	impl->dxStaging->mapped = false;
 	impl->dxStaging = NULL;
@@ -964,11 +1000,106 @@ static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height
 
 	impl->width = width;
 	impl->height = height;
+	impl->isMapped = false;
 	impl->format = format;
 	impl->flags = flags;
 	impl->dxDimension = D3D11_RESOURCE_DIMENSION_TEXTURE2D;
+	impl->dxStaging = NULL;
 
 	return true;
+}
+
+static StagingTexture* _getStagingTexture(roRDriverContextImpl* ctx, roRDriverTextureImpl* impl, D3D11_MAP mapOption, D3D11_MAPPED_SUBRESOURCE* mapResult)
+{
+	roAssert(ctx && impl);
+
+	ID3D11Texture2D* tex2D = static_cast<ID3D11Texture2D*>(impl->dxTexture.ptr);
+	if(!tex2D)
+		return NULL;
+
+	D3D11_RESOURCE_DIMENSION resourceDimension;
+	tex2D->GetType(&resourceDimension);
+	if(resourceDimension != D3D11_RESOURCE_DIMENSION_TEXTURE2D)
+		return NULL;
+
+	D3D11_TEXTURE2D_DESC desc;
+	tex2D->GetDesc(&desc);
+
+	HRESULT hr;
+	StagingTexture* ret = NULL;
+	unsigned hash = _hash(&desc, sizeof(desc));
+	unsigned tryCount = 0;
+
+	while(!ret)
+	{
+		++tryCount;
+
+		for(unsigned i=0; i<ctx->stagingTextureCache.size(); ++i) {
+			unsigned idx = (i + ctx->stagingTextureCacheSearchIndex) % ctx->stagingTextureCache.size();
+			StagingTexture* st = &ctx->stagingTextureCache[idx];
+			if(st->hash == hash) {
+				ret = st;
+				ctx->stagingTextureCacheSearchIndex = idx + 1;
+				break;
+			}
+		}
+
+		// Cache miss, create new one
+		if(!ret || tryCount > ctx->stagingTextureCache.size()) {
+			desc.Usage = D3D11_USAGE_STAGING;
+			desc.BindFlags = 0;
+			desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+
+			ID3D11Texture2D* stagingTexture = NULL;
+			hr = ctx->dxDevice->CreateTexture2D(&desc, NULL, &stagingTexture);
+
+			if(FAILED(hr) || !stagingTexture) {
+				roLog("error", "CreateTexture2D failed\n");
+				roAssert(!stagingTexture && "Leaking ID3D11Texture2D");
+				return NULL;
+			}
+
+			ret = &ctx->stagingTextureCache.pushBack();
+			ret->dxTexture = stagingTexture;
+			ret->hash = hash;
+		}
+
+		ret->mapped = false;
+		ret->lastUsedTime = ctx->lastSwapTime;
+
+		if(mapOption == 0)
+			break;
+
+		D3D11_MAPPED_SUBRESOURCE mapped = {0};
+		hr = ctx->dxDeviceContext->Map(
+			ret->dxTexture,
+			0,
+			mapOption,
+			D3D11_MAP_FLAG_DO_NOT_WAIT,
+			&mapped
+		);
+
+		ret->mapped = true;
+		if(mapResult)
+			*mapResult = mapped;
+
+		if(FAILED(hr)) {
+			// If this staging texture is still busy, keep try to search
+			// for another in the cache list, or create a new one.
+			if(hr == DXGI_ERROR_WAS_STILL_DRAWING) {
+				ret = NULL;
+				++ctx->stagingTextureCacheSearchIndex;
+				continue;
+			}
+
+			roLog("error", "Fail to map staging texture\n");
+			return NULL;
+		}
+
+		roAssert(mapped.RowPitch >= impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes);
+	}
+
+	return ret;
 }
 
 static bool _commitTexture(roRDriverTexture* self, const void* data, roSize rowPaddingInBytes)
@@ -1013,76 +1144,32 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, roSize rowP
 		return false;
 	}
 
-	// Create staging texture for async upload
-	StagingTexture* staging = NULL;
-	unsigned hash = _hash(&desc, sizeof(desc));
-	unsigned cacheIndex = 0;
+	// Get staging texture for async upload
+	D3D11_MAPPED_SUBRESOURCE mapped = {0};
+	StagingTexture* staging = _getStagingTexture(
+		ctx, impl,
+		data ? D3D11_MAP_WRITE : D3D11_MAP(0),
+		&mapped
+	);
 
-	desc.Usage = D3D11_USAGE_STAGING;
-	desc.BindFlags = 0;
-	desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+	if(!staging)
+		return NULL;
 
-	// We need to keep try looking at the cache for a free to use cache
-	if(data) while(!staging)
+	// Copy the source pixel data to the staging texture
+	if(data)
 	{
-		for(; cacheIndex<ctx->stagingTextureCache.size(); ++cacheIndex) {
-			StagingTexture* st = &ctx->stagingTextureCache[cacheIndex];
-			if(st->hash == hash) {
-				staging = st;
-				break;
-			}
-		}
-
-		if(!staging) {
-			// Cache miss, create new one
-			staging = &ctx->stagingTextureCache.pushBack();
-
-			HRESULT hr = ctx->dxDevice->CreateTexture2D(&desc, NULL, (ID3D11Texture2D**)&staging->dxTexture.ptr);
-
-			if(FAILED(hr)) {
-				roLog("error", "CreateTexture2D failed\n");
-				return false;
-			}
-		}
-
-		// Copy the source pixel data to the staging texture
-		const roSize rowSizeInBytes = impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes + rowPaddingInBytes;
-
-		D3D11_MAPPED_SUBRESOURCE mapped = {0};
-		HRESULT hr = ctx->dxDeviceContext->Map(
-			staging->dxTexture,
-			0,
-			D3D11_MAP_WRITE,
-			D3D11_MAP_FLAG_DO_NOT_WAIT,
-			&mapped
-		);
-
-		if(FAILED(hr)) {
-			// If this staging texture is still busy, keep try to search
-			// for another in the cache list, or create a new one.
-			if(hr == DXGI_ERROR_WAS_STILL_DRAWING) {
-				staging = NULL;
-				++cacheIndex;
-				continue;
-			}
-
-			roLog("error", "Fail to map staging texture\n");
-			return false;
-		}
-
+		roAssert(mapped.pData);
 		roAssert(mapped.RowPitch >= impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes);
-
-		// If we come to here it means that we have a ready to use staging texture
-		staging->hash = hash;
-		staging->lastUsedTime = ctx->lastSwapTime;
 
 		// Copy the source data row by row
 		char* pSrc = (char*)data;
 		char* pDst = (char*)mapped.pData;
+		const roSize rowSizeInBytes = impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes + rowPaddingInBytes;
 		for(unsigned r=0; r<impl->height; ++r, pSrc +=rowSizeInBytes, pDst += mapped.RowPitch)
 			memcpy(pDst, pSrc, rowSizeInBytes);
 
 		ctx->dxDeviceContext->Unmap(staging->dxTexture, 0);
+		staging->mapped = false;
 
 		// Preform async upload using CopySubresourceRegion
 		ctx->dxDeviceContext->CopySubresourceRegion(
@@ -1091,8 +1178,6 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, roSize rowP
 			staging->dxTexture, 0,
 			NULL
 		);
-
-		break;
 	}
 
 	if(bindFlags & D3D11_BIND_SHADER_RESOURCE) {
@@ -1107,6 +1192,77 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, roSize rowP
 	}
 
 	return true;
+}
+
+static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage)
+{
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
+	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
+	if(!ctx || !impl) return false;
+
+	if(impl->isMapped) return NULL;
+	if(!impl->dxTexture) return NULL;
+
+	// Get staging texture for read/write
+	// NOTE: We supply the map usage flag to make sure the staging buffer is ready to use for that purpose
+	StagingTexture* staging = _getStagingTexture(ctx, impl, _mapUsage[usage], NULL);
+	if(!staging)
+		return NULL;
+
+	roAssert(!impl->dxStaging);
+	ctx->dxDeviceContext->Unmap(staging->dxTexture, 0);
+	staging->mapped = false;
+
+	// Prepare for read
+	D3D11_MAP_FLAG mapFlag = D3D11_MAP_FLAG_DO_NOT_WAIT;
+	if(usage & roRDriverMapUsage_Read) {
+		ctx->dxDeviceContext->CopyResource(staging->dxTexture, impl->dxTexture);
+		mapFlag = D3D11_MAP_FLAG_DO_WAIT;	// For read, we need to wait for the CopyResource() to finish
+	}
+
+	D3D11_MAPPED_SUBRESOURCE mapped = {0};
+	HRESULT hr = ctx->dxDeviceContext->Map(
+		staging->dxTexture,
+		0,
+		_mapUsage[usage],
+		mapFlag,
+		&mapped
+	);
+
+	if(FAILED(hr)) {
+		roLog("error", "Fail to map texture\n");
+		return NULL;
+	}
+
+	roAssert(mapped.RowPitch >= impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes);
+
+	staging->mapped = true;
+	impl->isMapped = true;
+	impl->mapUsage = usage;
+	impl->dxStaging = staging;
+
+	return mapped.pData;
+}
+
+static void _unmapTexture(roRDriverTexture* self)
+{
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
+	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
+	if(!ctx || !impl || !impl->isMapped) return;
+
+	if(!impl->dxTexture || !impl->dxStaging)
+		return;
+
+	roAssert(impl->dxStaging->dxTexture);
+
+	ctx->dxDeviceContext->Unmap(impl->dxStaging->dxTexture, 0);
+
+	if(impl->mapUsage & roRDriverMapUsage_Write)
+		ctx->dxDeviceContext->CopyResource(impl->dxTexture, impl->dxStaging->dxTexture);
+
+	impl->dxStaging->mapped = false;
+	impl->dxStaging = NULL;
+	impl->isMapped = false;
 }
 
 // ----------------------------------------------------------------------
@@ -1562,7 +1718,7 @@ static void _drawPrimitive(roRDriverPrimitiveType type, roSize offset, roSize ve
 		if(ctx->triangleFanIndexBufferSize < indexCount)
 		{
 			roVerify(_initBuffer(idxBuffer, roRDriverBufferType_Index, roRDriverDataUsage_Stream, NULL, indexCount * sizeof(roUint16)));
-			roUint16* index = (roUint16*)_mapBuffer(idxBuffer, roRDriverBufferMapUsage_Write);
+			roUint16* index = (roUint16*)_mapBuffer(idxBuffer, roRDriverMapUsage_Write);
 
 			roAssert(index && "Buffer in the buffer pool still not lockable? Seems quite unlikely...");
 			if(index) for(roUint16 i=0, count=0; i<indexCount; i+=3, ++count) {
@@ -1660,6 +1816,8 @@ roRDriver* _roNewRenderDriver_DX11(const char* driverStr, const char*)
 	ret->deleteTexture = _deleteTexture;
 	ret->initTexture = _initTexture;
 	ret->commitTexture = _commitTexture;
+	ret->mapTexture = _mapTexture;
+	ret->unmapTexture = _unmapTexture;
 
 	ret->newShader = _newShader;
 	ret->deleteShader = _deleteShader;

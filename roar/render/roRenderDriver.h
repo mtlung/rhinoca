@@ -38,18 +38,18 @@ typedef enum roRDriverDataUsage
 	roRDriverDataUsage_Dynamic	= 3,	/// Write by CPU a few times and read by GPU for many times
 } roRDriverDataUsage;
 
-typedef enum roRDriverBufferMapUsage
+typedef enum roRDriverMapUsage
 {
-	roRDriverBufferMapUsage_Read	= 1 << 0,
-	roRDriverBufferMapUsage_Write	= 1 << 1,
-} roRDriverBufferMapUsage;
+	roRDriverMapUsage_Read	= 1 << 0,
+	roRDriverMapUsage_Write	= 1 << 1,
+} roRDriverMapUsage;
 
 typedef struct roRDriverBuffer
 {
 	roRDriverBufferType type : 8;
 	roRDriverDataUsage usage : 8;
 	unsigned isMapped : 8;
-	roRDriverBufferMapUsage mapUsage : 8;
+	roRDriverMapUsage mapUsage : 8;
 	roSize sizeInBytes;
 } roRDriverBuffer;
 
@@ -78,8 +78,10 @@ typedef struct roRDriverTexture
 {
 	unsigned width;
 	unsigned height;
-	roRDriverTextureFormat format;
-	roRDriverTextureFlag flags;
+	unsigned isMapped : 4;
+	roRDriverMapUsage mapUsage : 4;
+	roRDriverTextureFormat format : 8;
+	roRDriverTextureFlag flags : 16;
 } roRDriverTexture;
 
 typedef enum roRDriverShaderType
@@ -285,7 +287,7 @@ typedef struct roRDriver
 	void (*deleteBuffer)(roRDriverBuffer* self);
 	bool (*initBuffer)(roRDriverBuffer* self, roRDriverBufferType type, roRDriverDataUsage usage, void* initData, roSize sizeInBytes);
 	bool (*updateBuffer)(roRDriverBuffer* self, roSize offsetInBytes, void* data, roSize sizeInBytes);
-	void* (*mapBuffer)(roRDriverBuffer* self, roRDriverBufferMapUsage usage);
+	void* (*mapBuffer)(roRDriverBuffer* self, roRDriverMapUsage usage);
 	void (*unmapBuffer)(roRDriverBuffer* self);
 
 // Texture
@@ -293,6 +295,8 @@ typedef struct roRDriver
 	void (*deleteTexture)(roRDriverTexture* self);
 	bool (*initTexture)(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format, roRDriverTextureFlag flags);	// Can be invoked in loader thread
 	bool (*commitTexture)(roRDriverTexture* self, const void* data, roSize rowPaddingInBytes);	// Can only be invoked in render thread
+	void* (*mapTexture)(roRDriverTexture* self, roRDriverMapUsage usage);
+	void (*unmapTexture)(roRDriverTexture* self);
 
 // Shader
 	roRDriverShader* (*newShader)();

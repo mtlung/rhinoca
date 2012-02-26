@@ -234,6 +234,7 @@ bool _initDriverContext_DX11(roRDriverContext* self, void* platformSpecificWindo
 	impl->dxDeviceContext = immediateContext;
 
 	impl->stagingBufferCacheSearchIndex = 0;
+	impl->stagingTextureCacheSearchIndex = 0;
 
 	// Create render target
 	if(!_initRenderTarget(impl, swapChainDesc))
@@ -266,9 +267,6 @@ void _driverSwapBuffers_DX11()
 	// Update and clean up on staging buffer cache
 	for(roSize i=0; i<_currentContext->stagingBufferCache.size();) {
 		StagingBuffer& staging = _currentContext->stagingBufferCache[i];
-
-		if(staging.busyFrame > 0)
-			staging.busyFrame--;
 
 		if(!staging.mapped && staging.lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
 			_currentContext->stagingBufferCache.remove(i);

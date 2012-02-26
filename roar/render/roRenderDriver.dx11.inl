@@ -32,9 +32,8 @@ struct ShaderResourceBinding
 
 struct StagingBuffer
 {
-	unsigned size:29;
+	unsigned size:31;
 	unsigned mapped:1;
-	unsigned busyFrame:2;	// How many frame till the staging buffer becomes available again
 	float lastUsedTime;
 	ComPtr<ID3D11Buffer> dxBuffer;
 };
@@ -42,6 +41,7 @@ struct StagingBuffer
 struct StagingTexture
 {
 	unsigned hash;
+	unsigned mapped;
 	float lastUsedTime;
 	ComPtr<ID3D11Resource> dxTexture;
 };
@@ -81,6 +81,7 @@ struct roRDriverTextureImpl : public roRDriverTexture
 	ComPtr<ID3D11Resource> dxTexture;	// May store a 1d, 2d or 3d texture
 	ComPtr<ID3D11ShaderResourceView> dxView;
 	D3D11_RESOURCE_DIMENSION dxDimension;
+	StagingTexture* dxStaging;
 };
 
 struct roRDriverShaderImpl : public roRDriverShader
@@ -134,6 +135,7 @@ struct roRDriverContextImpl : public roRDriverContext
 	Array<InputLayout> inputLayoutCache;
 	unsigned stagingBufferCacheSearchIndex;
 	Array<StagingBuffer> stagingBufferCache;
+	unsigned stagingTextureCacheSearchIndex;
 	Array<StagingTexture> stagingTextureCache;
 
 	Array<BlendState> blendStateCache;

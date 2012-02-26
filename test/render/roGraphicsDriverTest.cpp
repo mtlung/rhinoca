@@ -17,7 +17,7 @@ TEST_FIXTURE(GraphicsDriverTest, empty)
 	createWindow(1, 1);
 }
 
-static const unsigned driverIndex = 0;
+static const unsigned driverIndex = 1;
 
 static const char* driverStr[] = 
 {
@@ -101,7 +101,7 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 
 		driver->updateBuffer(ubuffer1, 0, color1, sizeof(color1));
 
-		float* p = (float*)driver->mapBuffer(ubuffer2, roRDriverBufferMapUsage(roRDriverBufferMapUsage_Write));
+		float* p = (float*)driver->mapBuffer(ubuffer2, roRDriverMapUsage(roRDriverMapUsage_Write));
 		memcpy(p, color2, sizeof(color2));
 		driver->unmapBuffer(ubuffer2);
 
@@ -346,7 +346,7 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 	CHECK(driver->initBuffer(ubuffer, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, NULL, sizeof(float)*(16*2+4)));
 
 	// Model view matrix
-	Mat4* modelView = (Mat4*)driver->mapBuffer(ubuffer, roRDriverBufferMapUsage_Write);
+	Mat4* modelView = (Mat4*)driver->mapBuffer(ubuffer, roRDriverMapUsage_Write);
 
 	float translate[] =  { 0, 0, -3 };
 	*modelView = makeTranslationMat4(translate);
@@ -558,7 +558,7 @@ TEST_FIXTURE(GraphicsDriverTest, GeometryShader)
 	CHECK(driver->initBuffer(ubuffer, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, NULL, sizeof(float)*(16*2+4)));
 
 	// Model view matrix
-	Mat4* modelView = (Mat4*)driver->mapBuffer(ubuffer, roRDriverBufferMapUsage_Write);
+	Mat4* modelView = (Mat4*)driver->mapBuffer(ubuffer, roRDriverMapUsage_Write);
 
 	float translate[] =  { 0, 0, -3 };
 	*modelView = makeTranslationMat4(translate);

@@ -39,13 +39,13 @@ TEST_FIXTURE(TextureLoaderTest, load)
 		"in vec4 position;"
 		"in vec2 texCoord;"
 		"out varying vec2 _texCoord;"
-		"void main(void) { gl_Position=position; _texCoord = texCoord; }",
+		"void main(void) { gl_Position=position; texCoord.y = 1-texCoord.y; _texCoord = texCoord; }",
 
 		// HLSL
 		"struct VertexInputType { float4 pos : POSITION; float2 texCoord : TEXCOORD0; };"
 		"struct PixelInputType { float4 pos : SV_POSITION; float2 texCoord : TEXCOORD0; };"
 		"PixelInputType main(VertexInputType input) {"
-		"	PixelInputType output; output.pos = input.pos; output.texCoord = input.texCoord;"
+		"	PixelInputType output; output.pos = input.pos; input.texCoord.y = 1-input.texCoord.y; output.texCoord = input.texCoord; "
 		"	return output;"
 		"}"
 	};
