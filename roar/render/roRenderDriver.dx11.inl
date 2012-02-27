@@ -76,6 +76,14 @@ struct BufferCacheEntry {
 	ComPtr<ID3D11Buffer> dxBuffer;
 };
 
+struct roRDriverBufferImpl : public roRDriverBuffer
+{
+	void* hash;
+	roSize capacity;	// This is the actual size of the dxBuffer
+	ComPtr<ID3D11Buffer> dxBuffer;
+	StagingBuffer* dxStaging;
+};
+
 struct roRDriverTextureImpl : public roRDriverTexture
 {
 	ComPtr<ID3D11Resource> dxTexture;	// May store a 1d, 2d or 3d texture
@@ -147,6 +155,7 @@ struct roRDriverContextImpl : public roRDriverContext
 	unsigned currentRenderTargetViewHash;
 
 	Array<BufferCacheEntry> bufferCache;
+	StaticArray<roRDriverBufferImpl*, 3> constBufferInUse;
 
 	unsigned triangleFanIndexBufferSize;
 	roRDriverBuffer* triangleFanIndexBuffer;	// An index buffer dedicated to draw triangle fan

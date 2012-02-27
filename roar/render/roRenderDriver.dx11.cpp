@@ -664,14 +664,6 @@ static void _setTextureState(roRDriverTextureState* states, roSize stateCount, u
 // ----------------------------------------------------------------------
 // Buffer
 
-struct roRDriverBufferImpl : public roRDriverBuffer
-{
-	void* hash;
-	roSize capacity;	// This is the actual size of the dxBuffer
-	ComPtr<ID3D11Buffer> dxBuffer;
-	StagingBuffer* dxStaging;
-};
-
 static roRDriverBuffer* _newBuffer()
 {
 	roRDriverBufferImpl* ret = _allocator.newObj<roRDriverBufferImpl>().unref();
@@ -849,7 +841,6 @@ static StagingBuffer* _getStagingBuffer(roRDriverContextImpl* ctx, roSize size, 
 			&mapped
 		);
 
-		ret->mapped = true;
 		if(mapResult)
 			*mapResult = mapped;
 
@@ -865,6 +856,8 @@ static StagingBuffer* _getStagingBuffer(roRDriverContextImpl* ctx, roSize size, 
 			roLog("error", "Fail to map staging buffer\n");
 			return NULL;
 		}
+
+		ret->mapped = true;
 	}
 
 	return ret;
@@ -1079,7 +1072,6 @@ static StagingTexture* _getStagingTexture(roRDriverContextImpl* ctx, roRDriverTe
 			&mapped
 		);
 
-		ret->mapped = true;
 		if(mapResult)
 			*mapResult = mapped;
 
@@ -1096,6 +1088,7 @@ static StagingTexture* _getStagingTexture(roRDriverContextImpl* ctx, roRDriverTe
 			return NULL;
 		}
 
+		ret->mapped = true;
 		roAssert(mapped.RowPitch >= impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes);
 	}
 
@@ -1470,8 +1463,10 @@ bool _setUniformBuffer(unsigned nameHash, roRDriverBuffer* buffer, roRDriverShad
 		}
 	}
 
-	if(input->offset > 0)
-		_deleteBuffer(tmpBuf);
+	if(input->offset > 0) {
+		_deleteBuffer(ctx->constBufferInUse[shader->type]);
+		ctx->constBufferInUse[shader->type] = tmpBuf;
+	}
 
 	return true;
 }

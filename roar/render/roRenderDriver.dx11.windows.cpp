@@ -61,6 +61,8 @@ roRDriverContext* _newDriverContext_DX11(roRDriver* driver)
 	ret->triangleFanIndexBufferSize = 0;
 	ret->triangleFanIndexBuffer = driver->newBuffer();
 
+	ret->constBufferInUse.assign(NULL);
+
 	return ret;
 }
 
@@ -71,10 +73,22 @@ void _deleteDriverContext_DX11(roRDriverContext* self)
 	ContextImpl* impl = static_cast<ContextImpl*>(self);
 	if(!impl) return;
 
-	for(unsigned i=0; i<impl->currentShaders.size(); ++i)
+	for(roSize i=0; i<impl->currentShaders.size(); ++i)
 		roAssert(!impl->currentShaders[i] && "Please destroy all shaders before detroy the context");
 
 	impl->driver->deleteBuffer(impl->triangleFanIndexBuffer);
+
+	for(roSize i=0; i<impl->constBufferInUse.size(); ++i)
+		impl->driver->deleteBuffer(impl->constBufferInUse[i]);
+	impl->constBufferInUse.assign(NULL);
+
+	for(roSize i=0; i<impl->stagingBufferCache.size(); ++i) {
+		roAssert(!impl->stagingBufferCache[i].mapped);
+	}
+
+	for(roSize i=0; i<impl->stagingTextureCache.size(); ++i) {
+		roAssert(!impl->stagingTextureCache[i].mapped);
+	}
 
 	if(impl == _currentContext) {
 		_currentContext = NULL;
@@ -278,7 +292,7 @@ void _driverSwapBuffers_DX11()
 	for(roSize i=0; i<_currentContext->stagingTextureCache.size();) {
 		StagingTexture& staging = _currentContext->stagingTextureCache[i];
 
-		if(staging.lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
+		if(!staging.mapped && staging.lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
 			_currentContext->stagingTextureCache.remove(i);
 		else
 			++i;
