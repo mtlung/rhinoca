@@ -711,6 +711,9 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!ctx || !impl) return false;
 
+	roAssert(!impl->isMapped);
+	if(sizeInBytes == 0) initData = NULL;
+
 	UINT cpuAccessFlag = 
 		(usage == roRDriverDataUsage_Static || usage == roRDriverDataUsage_Dynamic)
 		? 0
@@ -728,9 +731,11 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 	void* hash = (void*)_hash(&desc, sizeof(desc));
 
 	// First check if the DX buffer can be safely reused
-	if(impl->hash == hash && impl->capacity >= sizeInBytes) {
-		roIgnoreRet(_updateBuffer(impl, 0, initData, sizeInBytes));
-		return true;
+	if( impl->hash == hash && impl->capacity >= sizeInBytes &&
+		(impl->usage != roRDriverDataUsage_Static)	// If the original buffer is a static one, we can't reuse it anymore
+	)
+	{
+		return _updateBuffer(impl, 0, initData, sizeInBytes);
 	}
 
 	// The old DX buffer cannot be reused, put it into the cache
@@ -749,7 +754,8 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 	impl->hash = hash;
 
 	// A simple first fit algorithm
-	for(roSize i=0; i<ctx->bufferCache.size(); ++i) {
+	if(impl->usage != roRDriverDataUsage_Static) for(roSize i=0; i<ctx->bufferCache.size(); ++i)
+	{
 		if(impl->hash != ctx->bufferCache[i].hash)
 			continue;
 		if(ctx->bufferCache[i].sizeInByte < sizeInBytes)
@@ -878,11 +884,11 @@ static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, const voi
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!ctx || !impl) return false;
-
-	if(!data) return false;
 	if(impl->isMapped) return false;
 	if(offsetInBytes + sizeInBytes > self->sizeInBytes) return false;
 	if(impl->usage == roRDriverDataUsage_Static) return false;
+
+	if(!data || sizeInBytes == 0) return true;
 
 	// Use staging buffer to do the update
 	D3D11_MAPPED_SUBRESOURCE mapped = {0};
@@ -1723,7 +1729,7 @@ static void _drawPrimitive(roRDriverPrimitiveType type, roSize offset, roSize ve
 
 		if(ctx->triangleFanIndexBufferSize < indexCount)
 		{
-			roVerify(_initBuffer(idxBuffer, roRDriverBufferType_Index, roRDriverDataUsage_Stream, NULL, indexCount * sizeof(roUint16)));
+			roVerify(_initBuffer(idxBuffer, roRDriverBufferType_Index, roRDriverDataUsage_Dynamic, NULL, indexCount * sizeof(roUint16)));
 			roUint16* index = (roUint16*)_mapBuffer(idxBuffer, roRDriverMapUsage_Write, 0, 0);
 
 			roAssert(index && "Buffer in the buffer pool still not lockable? Seems quite unlikely...");

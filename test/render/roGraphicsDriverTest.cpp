@@ -30,7 +30,7 @@ TEST_FIXTURE(GraphicsDriverTest, mapBuffer)
 	createWindow(200, 200);
 	initContext(driverStr[driverIndex]);
 
-	roRDriverDataUsage usage = roRDriverDataUsage_Static;
+	roRDriverDataUsage usage = roRDriverDataUsage_Dynamic;
 	float data[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
 	{	// Simple mapping
@@ -39,6 +39,20 @@ TEST_FIXTURE(GraphicsDriverTest, mapBuffer)
 		float* mapped = (float*)driver->mapBuffer(buffer, roRDriverMapUsage_Read, 0, 0);
 		CHECK(mapped);
 		CHECK_EQUAL(data[0], mapped[0]);
+		driver->unmapBuffer(buffer);
+		driver->deleteBuffer(buffer);
+	}
+
+	{	// Multiple init
+		roRDriverBuffer* buffer = driver->newBuffer();
+		CHECK(driver->initBuffer(buffer, roRDriverBufferType_Vertex, roRDriverDataUsage_Static, data, sizeof(data)));
+
+		float data2[] = { 10, 20, 30 };
+		CHECK(driver->initBuffer(buffer, roRDriverBufferType_Vertex, roRDriverDataUsage_Static, data2, sizeof(data2)));
+
+		float* mapped = (float*)driver->mapBuffer(buffer, roRDriverMapUsage_Read, 0, 0);
+		CHECK(mapped);
+		CHECK_EQUAL(data2[0], mapped[0]);
 		driver->unmapBuffer(buffer);
 		driver->deleteBuffer(buffer);
 	}

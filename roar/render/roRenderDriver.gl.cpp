@@ -580,6 +580,9 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl) return false;
 
+	roAssert(!impl->isMapped);
+	if(sizeInBytes == 0) initData = NULL;
+
 	bool keepInSystemMemory = usage == roRDriverDataUsage_Stream;
 	return _initBufferSpecificLocation(impl, type, usage, initData, sizeInBytes, keepInSystemMemory);
 }
@@ -588,11 +591,11 @@ static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, const voi
 {
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl) return false;
-
-	if(!data) return false;
 	if(impl->isMapped) return false;
 	if(offsetInBytes != 0 && offsetInBytes + sizeInBytes > self->sizeInBytes) return false;
 	if(impl->usage == roRDriverDataUsage_Static) return false;
+
+	if(!data || sizeInBytes == 0) return true;
 
 	if(impl->systemBuf) {
 		if(sizeInBytes > self->sizeInBytes) {
