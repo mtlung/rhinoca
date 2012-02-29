@@ -191,6 +191,7 @@ bool _initDriverContext_GL(roRDriverContext* self, void* platformSpecificWindow)
 	wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)(wglGetProcAddress("wglCreateContextAttribsARB"));
 
 	// Create a newer driver if necessary
+	// Reference: http://www.opengl.org/wiki/Tutorial:_OpenGL_3.1_The_First_Triangle_%28C%2B%2B/Win%29#Rendering_Context_Creation
 	if(wglCreateContextAttribsARB && v1 <= impl->magjorVersion && v2 < impl->minorVersion) {
 		const int attribs[] = {
 			WGL_CONTEXT_MAJOR_VERSION_ARB, impl->magjorVersion,
@@ -199,13 +200,17 @@ bool _initDriverContext_GL(roRDriverContext* self, void* platformSpecificWindow)
 			0
 		};
 
-		if((hRc = wglCreateContextAttribsARB(hDc, 0, attribs)) == NULL)
+		if((hRc = wglCreateContextAttribsARB(hDc, 0, attribs)) != NULL)
 		{	// Delete the old GL context (GL2x and use the new one)
-			ret = ::wglMakeCurrent(hDc, hRc) == TRUE;
+			wglMakeCurrent(NULL, NULL);
 			wglDeleteContext(impl->hRc);
+			ret = ::wglMakeCurrent(hDc, hRc) == TRUE;
 			impl->hRc = hRc;
 		}
 	}
+
+	version = (const char*)glGetString(GL_VERSION);
+	sscanf(version, "%u.%u", &v1, &v2);
 
 	impl->magjorVersion = v1;
 	impl->minorVersion = v2;
