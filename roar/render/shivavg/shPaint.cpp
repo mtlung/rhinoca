@@ -722,7 +722,7 @@ int shDrawRadialGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
 	context->tex1VertexLayout[1].buffer = vBuf;
 	roVerify(context->driver->bindShaderBuffers(context->tex1VertexLayout, roCountof(context->tex1VertexLayout), NULL));
 
-	char* pBuf = (char*)context->driver->mapBuffer(vBuf, roRDriverMapUsage_Write);
+	char* pBuf = (char*)context->driver->mapBuffer(vBuf, roRDriverMapUsage_Write, 0, 0);
 
 	// Walk the steps and draw gradient mesh 
 	if(pBuf) for (i=0, a=startA; i<numsteps; ++i, a+=step)

@@ -703,9 +703,9 @@ static const StaticArray<D3D11_USAGE, 4> _bufferUsage = {
 	D3D11_USAGE_DEFAULT
 };
 
-static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, void* data, roSize sizeInBytes);
+static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, const void* data, roSize sizeInBytes);
 
-static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriverDataUsage usage, void* initData, roSize sizeInBytes)
+static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriverDataUsage usage, const void* initData, roSize sizeInBytes)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
@@ -742,6 +742,9 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 
 	impl->type = type;
 	impl->usage = usage;
+	impl->isMapped = false;
+	impl->mapOffset = 0;
+	impl->mapSize = 0;
 	impl->sizeInBytes = sizeInBytes;
 	impl->hash = hash;
 
@@ -870,7 +873,7 @@ static const StaticArray<D3D11_MAP, 4> _mapUsage = {
 	D3D11_MAP_READ_WRITE,
 };
 
-static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, void* data, roSize sizeInBytes)
+static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, const void* data, roSize sizeInBytes)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
@@ -896,7 +899,7 @@ static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, void* dat
 	return false;
 }
 
-static void* _mapBuffer(roRDriverBuffer* self, roRDriverMapUsage usage)
+static void* _mapBuffer(roRDriverBuffer* self, roRDriverMapUsage usage, roSize offsetInBytes, roSize sizeInBytes)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
@@ -905,9 +908,13 @@ static void* _mapBuffer(roRDriverBuffer* self, roRDriverMapUsage usage)
 	if(impl->isMapped) return NULL;
 	if(!impl->dxBuffer) return NULL;
 
+	sizeInBytes = (sizeInBytes == 0) ? impl->sizeInBytes : sizeInBytes;
+	if(offsetInBytes + sizeInBytes > impl->sizeInBytes)
+		return NULL;
+
 	// Get staging buffer for read/write
 	// NOTE: We supply the map usage flag to make sure the staging buffer is ready to use for that purpose
-	StagingBuffer* staging = _getStagingBuffer(ctx, impl->sizeInBytes, _mapUsage[usage], NULL);
+	StagingBuffer* staging = _getStagingBuffer(ctx, sizeInBytes, _mapUsage[usage], NULL);
 	if(!staging)
 		return NULL;
 
@@ -918,7 +925,8 @@ static void* _mapBuffer(roRDriverBuffer* self, roRDriverMapUsage usage)
 	// Prepare for read
 	D3D11_MAP_FLAG mapFlag = D3D11_MAP_FLAG_DO_NOT_WAIT;
 	if(usage & roRDriverMapUsage_Read) {
-		ctx->dxDeviceContext->CopySubresourceRegion(staging->dxBuffer, 0, 0, 0, 0, impl->dxBuffer, 0, NULL);
+		D3D11_BOX srcBox = { num_cast<UINT>(offsetInBytes), 0, 0, num_cast<UINT>(offsetInBytes + sizeInBytes), 1, 1 };
+		ctx->dxDeviceContext->CopySubresourceRegion(staging->dxBuffer, 0, 0, 0, 0, impl->dxBuffer, 0, &srcBox);
 		mapFlag = D3D11_MAP_FLAG_DO_WAIT;	// For read, we need to wait for the CopyResource() to finish
 	}
 
@@ -938,6 +946,8 @@ static void* _mapBuffer(roRDriverBuffer* self, roRDriverMapUsage usage)
 
 	staging->mapped = true;
 	impl->isMapped = true;
+	impl->mapOffset = offsetInBytes;
+	impl->mapSize = sizeInBytes;
 	impl->mapUsage = usage;
 	impl->dxStaging = staging;
 
@@ -958,13 +968,14 @@ static void _unmapBuffer(roRDriverBuffer* self)
 	ctx->dxDeviceContext->Unmap(impl->dxStaging->dxBuffer, 0);
 
 	if(impl->mapUsage & roRDriverMapUsage_Write) {
-		D3D11_BOX srcBox = { 0, 0, 0, num_cast<UINT>(impl->sizeInBytes), 1, 1 };
-		ctx->dxDeviceContext->CopySubresourceRegion(impl->dxBuffer, 0, 0, 0, 0, impl->dxStaging->dxBuffer, 0, &srcBox);
+		D3D11_BOX srcBox = { 0, 0, 0, num_cast<UINT>(impl->mapSize), 1, 1 };
+		ctx->dxDeviceContext->CopySubresourceRegion(impl->dxBuffer, 0, num_cast<UINT>(impl->mapOffset), 0, 0, impl->dxStaging->dxBuffer, 0, &srcBox);
 	}
 
 	impl->dxStaging->mapped = false;
 	impl->dxStaging = NULL;
 	impl->isMapped = false;
+	impl->mapSize = 0;
 }
 
 // ----------------------------------------------------------------------
@@ -1713,7 +1724,7 @@ static void _drawPrimitive(roRDriverPrimitiveType type, roSize offset, roSize ve
 		if(ctx->triangleFanIndexBufferSize < indexCount)
 		{
 			roVerify(_initBuffer(idxBuffer, roRDriverBufferType_Index, roRDriverDataUsage_Stream, NULL, indexCount * sizeof(roUint16)));
-			roUint16* index = (roUint16*)_mapBuffer(idxBuffer, roRDriverMapUsage_Write);
+			roUint16* index = (roUint16*)_mapBuffer(idxBuffer, roRDriverMapUsage_Write, 0, 0);
 
 			roAssert(index && "Buffer in the buffer pool still not lockable? Seems quite unlikely...");
 			if(index) for(roUint16 i=0, count=0; i<indexCount; i+=3, ++count) {

@@ -37,7 +37,6 @@ struct roRDriverBufferImpl : public roRDriverBuffer
 {
 	GLuint glh;
 	void* systemBuf;
-	bool inited;			// For directx compitibility reason, we disallow calling initBuffer() multiple times on the same buffer object
 };	// roRDriverBufferImpl
 
 struct VertexArrayObject

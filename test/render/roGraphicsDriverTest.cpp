@@ -17,13 +17,77 @@ TEST_FIXTURE(GraphicsDriverTest, empty)
 	createWindow(1, 1);
 }
 
-static const unsigned driverIndex = 1;
+static const unsigned driverIndex = 0;
 
 static const char* driverStr[] = 
 {
 	"GL",
 	"DX11"
 };
+
+TEST_FIXTURE(GraphicsDriverTest, mapBuffer)
+{
+	createWindow(200, 200);
+	initContext(driverStr[driverIndex]);
+
+	roRDriverDataUsage usage = roRDriverDataUsage_Static;
+	float data[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+
+	{	// Simple mapping
+		roRDriverBuffer* buffer = driver->newBuffer();
+		CHECK(driver->initBuffer(buffer, roRDriverBufferType_Vertex, usage, data, sizeof(data)));
+		float* mapped = (float*)driver->mapBuffer(buffer, roRDriverMapUsage_Read, 0, 0);
+		CHECK(mapped);
+		CHECK_EQUAL(data[0], mapped[0]);
+		driver->unmapBuffer(buffer);
+		driver->deleteBuffer(buffer);
+	}
+
+	{	// Mapping with offset
+		roSize offset = 3;
+		roRDriverBuffer* buffer = driver->newBuffer();
+		CHECK(driver->initBuffer(buffer, roRDriverBufferType_Vertex, usage, data, sizeof(data)));
+		float* mapped = (float*)driver->mapBuffer(buffer, roRDriverMapUsage_Read, offset * sizeof(float), roCountof(data)-offset);
+		CHECK(mapped);
+		CHECK_EQUAL(data[offset], mapped[0]);
+		driver->unmapBuffer(buffer);
+
+		// Map with read/write mode
+		mapped = (float*)driver->mapBuffer(buffer, roRDriverMapUsage_ReadWrite, offset * sizeof(float), roCountof(data)-offset);
+		CHECK(mapped);
+		mapped[0] += 1;
+		driver->unmapBuffer(buffer);
+
+		// Verify the written data
+		mapped = (float*)driver->mapBuffer(buffer, roRDriverMapUsage_Read, offset * sizeof(float), roCountof(data)-offset);
+		CHECK(mapped);
+		CHECK_EQUAL(data[offset] + 1, mapped[0]);
+		driver->unmapBuffer(buffer);
+		driver->deleteBuffer(buffer);
+	}
+
+	{	// Mapping out of range should fail
+		roSize offset = 3;
+		roRDriverBuffer* buffer = driver->newBuffer();
+		CHECK(driver->initBuffer(buffer, roRDriverBufferType_Vertex, usage, data, sizeof(data)));
+		float* mapped = (float*)driver->mapBuffer(buffer, roRDriverMapUsage_Read, offset, 0);
+		CHECK(!mapped);
+		driver->unmapBuffer(buffer);
+		driver->deleteBuffer(buffer);
+	}
+
+	{	// Double map should fail
+		roRDriverBuffer* buffer = driver->newBuffer();
+		CHECK(driver->initBuffer(buffer, roRDriverBufferType_Vertex, usage, data, sizeof(data)));
+		float* mapped = (float*)driver->mapBuffer(buffer, roRDriverMapUsage_Read, 0, 0);
+		CHECK(mapped);
+		mapped = (float*)driver->mapBuffer(buffer, roRDriverMapUsage_Read, 0, 0);
+		CHECK(!mapped);
+		driver->unmapBuffer(buffer);
+		driver->unmapBuffer(buffer);
+		driver->deleteBuffer(buffer);
+	}
+}
 
 TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 {
@@ -101,7 +165,7 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 
 		driver->updateBuffer(ubuffer1, 0, color1, sizeof(color1));
 
-		float* p = (float*)driver->mapBuffer(ubuffer2, roRDriverMapUsage(roRDriverMapUsage_Write));
+		float* p = (float*)driver->mapBuffer(ubuffer2, roRDriverMapUsage(roRDriverMapUsage_Write), 0, 0);
 		memcpy(p, color2, sizeof(color2));
 		driver->unmapBuffer(ubuffer2);
 
@@ -346,7 +410,7 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 	CHECK(driver->initBuffer(ubuffer, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, NULL, sizeof(float)*(16*2+4)));
 
 	// Model view matrix
-	Mat4* modelView = (Mat4*)driver->mapBuffer(ubuffer, roRDriverMapUsage_Write);
+	Mat4* modelView = (Mat4*)driver->mapBuffer(ubuffer, roRDriverMapUsage_Write, 0, 0);
 
 	float translate[] =  { 0, 0, -3 };
 	*modelView = makeTranslationMat4(translate);
@@ -558,7 +622,7 @@ TEST_FIXTURE(GraphicsDriverTest, GeometryShader)
 	CHECK(driver->initBuffer(ubuffer, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, NULL, sizeof(float)*(16*2+4)));
 
 	// Model view matrix
-	Mat4* modelView = (Mat4*)driver->mapBuffer(ubuffer, roRDriverMapUsage_Write);
+	Mat4* modelView = (Mat4*)driver->mapBuffer(ubuffer, roRDriverMapUsage_Write, 0, 0);
 
 	float translate[] =  { 0, 0, -3 };
 	*modelView = makeTranslationMat4(translate);

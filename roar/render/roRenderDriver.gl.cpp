@@ -491,6 +491,12 @@ static const StaticArray<GLenum, 4> _bufferMapUsage = {
 	GL_WRITE_ONLY,
 	GL_READ_WRITE,
 };
+static const StaticArray<GLenum, 4> _bufferRangeMapUsage = {
+	0,
+	GL_MAP_READ_BIT,
+	GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT,
+	GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
+};
 #endif
 
 static roRDriverBuffer* _newBuffer()
@@ -513,10 +519,11 @@ static void _deleteBuffer(roRDriverBuffer* self)
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl) return;
 
+	roAssert(!impl->isMapped);
+
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	ctx->bufferCache.pushBack(impl);
 
-	impl->inited = false;
 	return;
 }
 
@@ -527,7 +534,7 @@ static const StaticArray<GLenum, 4> _bufferUsage = {
 	GL_DYNAMIC_DRAW
 };
 
-static bool _initBufferSpecificLocation(roRDriverBufferImpl* impl, roRDriverBufferType type, roRDriverDataUsage usage, void* initData, roSize sizeInBytes, bool systemMemory)
+static bool _initBufferSpecificLocation(roRDriverBufferImpl* impl, roRDriverBufferType type, roRDriverDataUsage usage, const void* initData, roSize sizeInBytes, bool systemMemory)
 {
 	checkError();
 
@@ -559,26 +566,25 @@ static bool _initBufferSpecificLocation(roRDriverBufferImpl* impl, roRDriverBuff
 	checkError();
 
 	impl->type = type;
-	impl->sizeInBytes = sizeInBytes;
 	impl->usage = usage;
-	impl->inited = true;
+	impl->isMapped = false;
+	impl->mapOffset = 0;
+	impl->mapSize = 0;
+	impl->sizeInBytes = sizeInBytes;
 
 	return true;
 }
 
-static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriverDataUsage usage, void* initData, roSize sizeInBytes)
+static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriverDataUsage usage, const void* initData, roSize sizeInBytes)
 {
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl) return false;
 
-	roAssert(!impl->inited);
-	if(impl->inited)
-		return false;
-
-	return _initBufferSpecificLocation(impl, type, usage, initData, sizeInBytes, false);
+	bool keepInSystemMemory = usage == roRDriverDataUsage_Stream;
+	return _initBufferSpecificLocation(impl, type, usage, initData, sizeInBytes, keepInSystemMemory);
 }
 
-static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, void* data, roSize sizeInBytes)
+static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, const void* data, roSize sizeInBytes)
 {
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl) return false;
@@ -609,37 +615,58 @@ static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, void* dat
 	return true;
 }
 
-static void* _mapBuffer(roRDriverBuffer* self, roRDriverMapUsage usage)
+// Reference: http://www.opengl.org/wiki/Buffer_Object#Mapping
+static void* _mapBuffer(roRDriverBuffer* self, roRDriverMapUsage usage, roSize offsetInBytes, roSize sizeInBytes)
 {
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl) return NULL;
 
-	if(impl->systemBuf)
-		return impl->systemBuf;
-
 	if(impl->isMapped) return NULL;
 
-#if !defined(RG_GLES)
+	sizeInBytes = (sizeInBytes == 0) ? impl->sizeInBytes : sizeInBytes;
+	if(offsetInBytes + sizeInBytes > impl->sizeInBytes)
+		return NULL;
+
 	void* ret = NULL;
-	checkError();
-	roAssert("Invalid roRDriverMapUsage" && _bufferMapUsage[usage] != 0);
-	GLenum t = _bufferTarget[self->type];
-	glBindBuffer(t, impl->glh);
 
-	// The write discard optimization
-	if(!usage & roRDriverMapUsage_Read)
-		glBufferData(t, 0, NULL, GL_STREAM_COPY);
+	if(impl->systemBuf) {
+		ret = ((char*)impl->systemBuf) + offsetInBytes;
+	}
+	else
+	{
+		checkError();
+		roAssert("Invalid roRDriverMapUsage" && _bufferMapUsage[usage] != 0);
+		GLenum t = _bufferTarget[self->type];
+		glBindBuffer(t, impl->glh);
 
-	ret = glMapBuffer(t, _bufferMapUsage[usage]);
-	checkError();
+		// The write discard optimization
+		if(!(usage & roRDriverMapUsage_Read))
+			glBufferData(t, impl->sizeInBytes, NULL, GL_STREAM_COPY);
+
+#if !defined(RG_GLES)
+		// glMapBufferRange only available for GL3 or above
+		if(glMapBufferRange)
+			ret = glMapBufferRange(t, offsetInBytes, sizeInBytes, _bufferRangeMapUsage[usage]);
+		else
+			ret = ((char*)glMapBuffer(t, _bufferMapUsage[usage])) + offsetInBytes;
+#else
+		// GLES didn't support read back of buffer
+		if(usage & roRDriverMapUsage_Read)
+		{
+			roAssert(false && "GLES didn't support read back of buffer");
+			return NULL;
+		}
+#endif
+
+		checkError();
+	}
 
 	impl->isMapped = true;
 	impl->mapUsage = usage;
+	impl->mapOffset = offsetInBytes;
+	impl->mapSize = sizeInBytes;
 
 	return ret;
-#else
-	return NULL;
-#endif
 }
 
 static void _unmapBuffer(roRDriverBuffer* self)
@@ -662,6 +689,7 @@ static void _unmapBuffer(roRDriverBuffer* self)
 #endif
 
 	impl->isMapped = false;
+	impl->mapSize = 0;
 }
 
 static bool _switchBufferMode(roRDriverBufferImpl* impl)
@@ -669,7 +697,7 @@ static bool _switchBufferMode(roRDriverBufferImpl* impl)
 	roAssert((impl->glh != 0) != (impl->systemBuf != NULL) && "Only glh or system buffer but not using both");
 
 	if(impl->glh) {
-		if(void* data = _mapBuffer(impl, roRDriverMapUsage_Read))
+		if(void* data = _mapBuffer(impl, roRDriverMapUsage_Read, 0, 0))
 			return _initBufferSpecificLocation(impl, impl->type, impl->usage, data, impl->sizeInBytes, true);
 	}
 	else if(impl->systemBuf) {
@@ -878,6 +906,24 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, roSize rowP
 	checkError();
 
 	return true;
+}
+
+static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage)
+{
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
+	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
+	if(!ctx || !impl) return false;
+	if(!impl->format) return NULL;
+
+	return NULL;
+}
+
+static void _unmapTexture(roRDriverTexture* self)
+{
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
+	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
+	if(!ctx || !impl) return;
+	if(!impl->format) return;
 }
 
 // ----------------------------------------------------------------------
@@ -1571,6 +1617,8 @@ roRDriver* _roNewRenderDriver_GL(const char* driverStr, const char*)
 	ret->deleteTexture = _deleteTexture;
 	ret->initTexture = _initTexture;
 	ret->commitTexture = _commitTexture;
+	ret->mapTexture = _mapTexture;
+	ret->unmapTexture = _unmapTexture;
 
 	ret->newShader = _newShader;
 	ret->deleteShader = _deleteShader;

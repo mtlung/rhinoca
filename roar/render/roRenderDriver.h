@@ -42,6 +42,7 @@ typedef enum roRDriverMapUsage
 {
 	roRDriverMapUsage_Read	= 1 << 0,
 	roRDriverMapUsage_Write	= 1 << 1,
+	roRDriverMapUsage_ReadWrite	= roRDriverMapUsage_Read | roRDriverMapUsage_Write,
 } roRDriverMapUsage;
 
 typedef struct roRDriverBuffer
@@ -50,6 +51,8 @@ typedef struct roRDriverBuffer
 	roRDriverDataUsage usage : 8;
 	unsigned isMapped : 8;
 	roRDriverMapUsage mapUsage : 8;
+	roSize mapOffset;
+	roSize mapSize;
 	roSize sizeInBytes;
 } roRDriverBuffer;
 
@@ -272,7 +275,7 @@ typedef struct roRDriver
 	void (*adjustDepthRangeMatrix)(float* inoutMat44);
 
 // Render target
-	void (*setDefaultFrameBuffer)(void* platformSpecificFrameBufferHandle);
+	void (*setDefaultFrameBuffer)(const void* platformSpecificFrameBufferHandle);
 	bool (*setRenderTargets)(roRDriverTexture** textures, roSize targetCount, bool useDepthStencil);
 
 // State management
@@ -285,9 +288,9 @@ typedef struct roRDriver
 // Buffer
 	roRDriverBuffer* (*newBuffer)();
 	void (*deleteBuffer)(roRDriverBuffer* self);
-	bool (*initBuffer)(roRDriverBuffer* self, roRDriverBufferType type, roRDriverDataUsage usage, void* initData, roSize sizeInBytes);
-	bool (*updateBuffer)(roRDriverBuffer* self, roSize offsetInBytes, void* data, roSize sizeInBytes);
-	void* (*mapBuffer)(roRDriverBuffer* self, roRDriverMapUsage usage);
+	bool (*initBuffer)(roRDriverBuffer* self, roRDriverBufferType type, roRDriverDataUsage usage, const void* initData, roSize sizeInBytes);
+	bool (*updateBuffer)(roRDriverBuffer* self, roSize offsetInBytes, const void* data, roSize sizeInBytes);
+	void* (*mapBuffer)(roRDriverBuffer* self, roRDriverMapUsage usage, roSize offsetInBytes, roSize sizeInBytes);
 	void (*unmapBuffer)(roRDriverBuffer* self);
 
 // Texture
