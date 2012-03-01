@@ -561,6 +561,7 @@ static bool _initBufferSpecificLocation(roRDriverBufferImpl* impl, roRDriverBuff
 		roAssert(impl->glh);
 
 		_allocator.free(impl->systemBuf);
+		impl->systemBuf = NULL;
 	}
 
 	checkError();
@@ -1494,6 +1495,7 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 				glEnableVertexAttribArray(a->location);
 				glBindBuffer(GL_ARRAY_BUFFER, buffer->glh);
 				glVertexAttribPointer(a->location, a->elementCount, a->elementType, false, i->stride, (void*)(ptrdiff_t(buffer->systemBuf) + i->offset));
+				checkError();
 			}
 			else {
 				roLog("error", "attribute '%s' not found!\n", i->name ? i->name : "");
