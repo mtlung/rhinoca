@@ -578,13 +578,15 @@ static bool _initBufferSpecificLocation(roRDriverBufferImpl* impl, roRDriverBuff
 
 static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriverDataUsage usage, const void* initData, roSize sizeInBytes)
 {
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
-	if(!impl) return false;
+	if(!ctx || !impl) return false;
 
 	roAssert(!impl->isMapped);
 	if(sizeInBytes == 0) initData = NULL;
 
-	bool keepInSystemMemory = usage == roRDriverDataUsage_Stream;
+	// For newer Opengl driver, we won't use any system memory. At least glVertexAttribPointer() always want a VBO
+	bool keepInSystemMemory = (usage == roRDriverDataUsage_Stream && ctx->majorVersion <= 2);
 	return _initBufferSpecificLocation(impl, type, usage, initData, sizeInBytes, keepInSystemMemory);
 }
 

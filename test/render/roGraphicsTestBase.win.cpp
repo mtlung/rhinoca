@@ -87,7 +87,7 @@ void GraphicsTestBase::initContext(const char* driverStr)
 {
 	driver = roNewRenderDriver(driverStr, NULL);
 	context = driver->newContext(driver);
-	context->magjorVersion = 2;
+	context->majorVersion = 2;
 	context->minorVersion = 0;
 	driver->initContext(context, hWnd);
 	driver->useContext(context);

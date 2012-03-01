@@ -39,7 +39,7 @@ roRDriverContext* _newDriverContext_DX11(roRDriver* driver)
 
 	ret->driver = driver;
 	ret->width = ret->height = 0;
-	ret->magjorVersion = 0;
+	ret->majorVersion = 0;
 	ret->minorVersion = 0;
 	ret->frameCount = 0;
 	ret->lastFrameDuration = 0;

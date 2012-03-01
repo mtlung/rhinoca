@@ -13,7 +13,7 @@ typedef struct roRDriverContext
 {
 	roRDriver* driver;
 	unsigned width, height;
-	unsigned magjorVersion, minorVersion;
+	unsigned majorVersion, minorVersion;
 	unsigned frameCount;
 	float lastFrameDuration;
 	float lastSwapTime;
@@ -318,8 +318,6 @@ typedef struct roRDriver
 
 // Driver version
 	const char* driverName;
-	unsigned majorVersion;
-	unsigned minorVersion;
 	void (*destructor)(roRDriver* self);
 } roRDriver;
 

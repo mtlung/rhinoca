@@ -46,7 +46,7 @@ roRDriverContext* _newDriverContext_GL(roRDriver* driver)
 
 	ret->driver = driver;
 	ret->width = ret->height = 0;
-	ret->magjorVersion = 2;
+	ret->majorVersion = 2;
 	ret->minorVersion = 2;
 	ret->frameCount = 0;
 	ret->lastFrameDuration = 0;
@@ -192,9 +192,9 @@ bool _initDriverContext_GL(roRDriverContext* self, void* platformSpecificWindow)
 
 	// Create a newer driver if necessary
 	// Reference: http://www.opengl.org/wiki/Tutorial:_OpenGL_3.1_The_First_Triangle_%28C%2B%2B/Win%29#Rendering_Context_Creation
-	if(wglCreateContextAttribsARB && v1 <= impl->magjorVersion && v2 < impl->minorVersion) {
+	if(wglCreateContextAttribsARB && v1 <= impl->majorVersion && v2 < impl->minorVersion) {
 		const int attribs[] = {
-			WGL_CONTEXT_MAJOR_VERSION_ARB, impl->magjorVersion,
+			WGL_CONTEXT_MAJOR_VERSION_ARB, impl->majorVersion,
 			WGL_CONTEXT_MINOR_VERSION_ARB, impl->minorVersion,
 			WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
 			0
@@ -212,7 +212,7 @@ bool _initDriverContext_GL(roRDriverContext* self, void* platformSpecificWindow)
 	version = (const char*)glGetString(GL_VERSION);
 	sscanf(version, "%u.%u", &v1, &v2);
 
-	impl->magjorVersion = v1;
+	impl->majorVersion = v1;
 	impl->minorVersion = v2;
 
 	roLog("verbose", "Using Opengl version: %u.%u\n", v1, v2);
