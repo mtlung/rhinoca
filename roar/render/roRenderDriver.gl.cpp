@@ -522,6 +522,9 @@ static void _deleteBuffer(roRDriverBuffer* self)
 	roAssert(!impl->isMapped);
 
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
+
+	// NOTE: We won't delete the buffer object right here, because it will unbind from VAO, where
+	// we have no stored information to invalidate that vao.
 	ctx->bufferCache.pushBack(impl);
 
 	return;
@@ -751,7 +754,7 @@ static void _deleteTexture(roRDriverTexture* self)
 	_allocator.deleteObj(static_cast<roRDriverTextureImpl*>(self));
 }
 
-static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format, roRDriverTextureFlag flags)
+static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format, roRDriverTextureFlag flags, const void* initData, roSize rowPaddingInBytes)
 {
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!impl) return false;
@@ -1452,9 +1455,6 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 		if(inputHash == ctx->vaoCache[i].hash) {
 			vao = ctx->vaoCache[i].glh;
 			ctx->vaoCache[i].lastUsedTime = ctx->lastSwapTime;
-			// FIXME: If the OGL buffer has been destroy and recreated (with the same handle id), the hash number
-			// is still the same but make drawing using VAO crash. One solution was to make a vertex buffer pool
-			// so no OGL buffer ID can be reused even driver->deleteBuffer() was called.
 			vaoCacheFound = true;
 			break;
 		}

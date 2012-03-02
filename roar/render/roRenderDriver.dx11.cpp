@@ -40,8 +40,6 @@ static DefaultAllocator _allocator;
 // ----------------------------------------------------------------------
 // Common stuffs
 
-#define D3D11_MAP_FLAG_DO_WAIT ((D3D11_MAP_FLAG)0);
-
 static unsigned _hashAppend(unsigned hash, unsigned dataToAppend)
 {
 	return dataToAppend + (hash << 6) + (hash << 16) - hash; 
@@ -929,25 +927,34 @@ static void* _mapBuffer(roRDriverBuffer* self, roRDriverMapUsage usage, roSize o
 	staging->mapped = false;
 
 	// Prepare for read
-	D3D11_MAP_FLAG mapFlag = D3D11_MAP_FLAG_DO_NOT_WAIT;
 	if(usage & roRDriverMapUsage_Read) {
 		D3D11_BOX srcBox = { num_cast<UINT>(offsetInBytes), 0, 0, num_cast<UINT>(offsetInBytes + sizeInBytes), 1, 1 };
 		ctx->dxDeviceContext->CopySubresourceRegion(staging->dxBuffer, 0, 0, 0, 0, impl->dxBuffer, 0, &srcBox);
-		mapFlag = D3D11_MAP_FLAG_DO_WAIT;	// For read, we need to wait for the CopyResource() to finish
 	}
 
 	D3D11_MAPPED_SUBRESOURCE mapped = {0};
-	HRESULT hr = ctx->dxDeviceContext->Map(
-		staging->dxBuffer,
-		0,
-		_mapUsage[usage],
-		mapFlag,
-		&mapped
-	);
+	while(true) {
+		HRESULT hr = ctx->dxDeviceContext->Map(
+			staging->dxBuffer,
+			0,
+			_mapUsage[usage],
+			D3D11_MAP_FLAG_DO_NOT_WAIT,
+			&mapped
+		);
 
-	if(FAILED(hr)) {
-		roLog("error", "Fail to map buffer\n");
-		return NULL;
+		if(FAILED(hr)) {
+			// The buffer is still in use, do something useful on the CPU and try again later
+			if(hr == DXGI_ERROR_WAS_STILL_DRAWING) {
+				if(ctx->driver->stallCallback)
+					(*ctx->driver->stallCallback)(ctx->driver->stallCallbackUserData);
+				continue;
+			}
+
+			roLog("error", "Fail to map buffer\n");
+			return NULL;
+		}
+
+		break;	// Map successfully
 	}
 
 	staging->mapped = true;
@@ -1002,7 +1009,7 @@ static void _deleteTexture(roRDriverTexture* self)
 	_allocator.deleteObj(static_cast<roRDriverTextureImpl*>(self));
 }
 
-static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format, roRDriverTextureFlag flags)
+static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format, roRDriverTextureFlag flags, const void* initData, roSize rowPaddingInBytes)
 {
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!impl) return false;
@@ -1224,24 +1231,32 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage)
 	staging->mapped = false;
 
 	// Prepare for read
-	D3D11_MAP_FLAG mapFlag = D3D11_MAP_FLAG_DO_NOT_WAIT;
-	if(usage & roRDriverMapUsage_Read) {
+	if(usage & roRDriverMapUsage_Read)
 		ctx->dxDeviceContext->CopyResource(staging->dxTexture, impl->dxTexture);
-		mapFlag = D3D11_MAP_FLAG_DO_WAIT;	// For read, we need to wait for the CopyResource() to finish
-	}
 
 	D3D11_MAPPED_SUBRESOURCE mapped = {0};
-	HRESULT hr = ctx->dxDeviceContext->Map(
-		staging->dxTexture,
-		0,
-		_mapUsage[usage],
-		mapFlag,
-		&mapped
-	);
+	while(true) {
+		HRESULT hr = ctx->dxDeviceContext->Map(
+			staging->dxTexture,
+			0,
+			_mapUsage[usage],
+			D3D11_MAP_FLAG_DO_NOT_WAIT,
+			&mapped
+		);
 
-	if(FAILED(hr)) {
-		roLog("error", "Fail to map texture\n");
-		return NULL;
+		if(FAILED(hr)) {
+			// The buffer is still in use, do something useful on the CPU and try again later
+			if(hr == DXGI_ERROR_WAS_STILL_DRAWING) {
+				if(ctx->driver->stallCallback)
+					(*ctx->driver->stallCallback)(ctx->driver->stallCallbackUserData);
+				continue;
+			}
+
+			roLog("error", "Fail to map texture\n");
+			return NULL;
+		}
+
+		break;	// Map successfully
 	}
 
 	roAssert(mapped.RowPitch >= impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes);

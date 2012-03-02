@@ -165,14 +165,14 @@ bool Canvas::initTargetTexture(unsigned width, unsigned height)
 {
 	targetTexture = new Texture("");
 	targetTexture->handle = _driver->newTexture();
-	if(!_driver->initTexture(targetTexture->handle, width, height, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_RenderTarget))
+	if(!_driver->initTexture(targetTexture->handle, width, height, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_RenderTarget, NULL, 0))
 		return false;
 	if(!_driver->commitTexture(targetTexture->handle, NULL, 0))
 		return false;
 
 	depthStencilTexture = new Texture("");
 	depthStencilTexture->handle = _driver->newTexture();
-	if(!_driver->initTexture(depthStencilTexture->handle, width, height, roRDriverTextureFormat_DepthStencil, roRDriverTextureFlag_None))
+	if(!_driver->initTexture(depthStencilTexture->handle, width, height, roRDriverTextureFormat_DepthStencil, roRDriverTextureFlag_None, NULL, 0))
 		return false;
 	if(!_driver->commitTexture(depthStencilTexture->handle, NULL, 0))
 		return false;

@@ -296,10 +296,11 @@ typedef struct roRDriver
 // Texture
 	roRDriverTexture* (*newTexture)();
 	void (*deleteTexture)(roRDriverTexture* self);
-	bool (*initTexture)(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format, roRDriverTextureFlag flags);	// Can be invoked in loader thread
+	bool (*initTexture)(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format, roRDriverTextureFlag flags, const void* initData, roSize rowPaddingInBytes);	// Can be invoked in loader thread
 	bool (*commitTexture)(roRDriverTexture* self, const void* data, roSize rowPaddingInBytes);	// Can only be invoked in render thread
 	void* (*mapTexture)(roRDriverTexture* self, roRDriverMapUsage usage);
 	void (*unmapTexture)(roRDriverTexture* self);
+	void (*generateMipMap)(roRDriverTexture* self);
 
 // Shader
 	roRDriverShader* (*newShader)();
@@ -319,6 +320,10 @@ typedef struct roRDriver
 // Driver version
 	const char* driverName;
 	void (*destructor)(roRDriver* self);
+
+// Callback before the driver need to wait for the GPU, a good place to do some useful work instead of stalling the CPU.
+	void (*stallCallback)(void *userData);
+	void* stallCallbackUserData;
 } roRDriver;
 
 roRDriver* roNewRenderDriver(const char* driverType, const char* options);

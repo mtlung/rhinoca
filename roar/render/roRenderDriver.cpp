@@ -11,11 +11,18 @@ roRDriverContext* roRDriverCurrentContext = NULL;
 
 roRDriver* roNewRenderDriver(const char* driverType, const char* options)
 {
+	roRDriver* driver = NULL;
 	if(stringLowerCaseHash(driverType, 0) == stringHash("gl"))
-		return _roNewRenderDriver_GL(driverType, options);
+		driver = _roNewRenderDriver_GL(driverType, options);
 	if(stringLowerCaseHash(driverType, 0) == stringHash("dx11"))
-		return _roNewRenderDriver_DX11(driverType, options);
-	return NULL;
+		driver = _roNewRenderDriver_DX11(driverType, options);
+
+	if(driver) {
+		driver->stallCallback = NULL;
+		driver->stallCallbackUserData = NULL;
+	}
+
+	return driver;
 }
 
 void roDeleteRenderDriver(roRDriver* self)
