@@ -77,8 +77,8 @@ void BmpLoader::load(TaskPool* taskPool)
 void BmpLoader::commit(TaskPool* taskPool)
 {
 	if(	aborted ||
-		!roRDriverCurrentContext->driver->initTexture(texture->handle, width, height, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_None, NULL, 0) ||
-		!roRDriverCurrentContext->driver->commitTexture(texture->handle, pixelData, 0)
+		!roRDriverCurrentContext->driver->initTexture(texture->handle, width, height, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_None) ||
+		!roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, pixelData, 0, NULL)
 	)
 		texture->state = Resource::Aborted;
 	else

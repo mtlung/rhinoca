@@ -754,7 +754,7 @@ static void _deleteTexture(roRDriverTexture* self)
 	_allocator.deleteObj(static_cast<roRDriverTextureImpl*>(self));
 }
 
-static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format, roRDriverTextureFlag flags, const void* initData, roSize rowPaddingInBytes)
+static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format, roRDriverTextureFlag flags)
 {
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!impl) return false;
@@ -770,53 +770,36 @@ static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height
 	return true;
 }
 
-static unsigned _mipLevelOffset(roRDriverTextureImpl* self, unsigned mipIndex, unsigned& mipWidth, unsigned& mipHeight)
+static unsigned _mipLevelInfo(roRDriverTextureImpl* self, unsigned mipIndex, unsigned& mipWidth, unsigned& mipHeight, unsigned& mipSize)
 {
-	unsigned i = 0;
+	mipSize = 0;
 	unsigned offset = 0;
 
 	mipWidth = self->width;
 	mipHeight = self->height;
 
-	for(unsigned i=0; i<mipIndex; ++i) {
-		unsigned mipSize = mipWidth * mipHeight;
+	for(unsigned i=0; i<=mipIndex; ++i) {
+		mipSize = mipWidth * mipHeight;
 
 		if(roRDriverTextureFormat_Compressed & self->format)
 			mipSize = mipSize >> self->formatMapping->glPixelSize;
 		else
 			mipSize = mipSize * self->formatMapping->glPixelSize;
 
-		offset += mipSize;
-		if(mipWidth > 1) mipWidth /= 2;
-		if(mipHeight > 1) mipHeight /= 2;
-	} while(++i < mipIndex);
+		if(i > 0) {
+			offset += mipSize;
+			if(mipWidth > 1) mipWidth /= 2;
+			if(mipHeight > 1) mipHeight /= 2;
+		}
+	}
 
 	return offset;
 }
 
-static unsigned char* _mipLevelData(roRDriverTextureImpl* self, unsigned mipIndex, unsigned& mipWidth, unsigned& mipHeight, const void* data)
+static bool _updateTexture(roRDriverTexture* self, unsigned mipLevel, const void* data, roSize rowPaddingInBytes, unsigned* bytesRead)
 {
-	mipWidth = self->width;
-	mipHeight = self->height;
+	if(bytesRead) *bytesRead = 0;
 
-	if(!data)
-		return NULL;
-
-	return (unsigned char*)(data) + _mipLevelOffset(self, mipIndex, mipWidth, mipHeight);
-}
-
-static unsigned _textureSize(roRDriverTextureImpl* self, unsigned mipCount)
-{
-	unsigned ret = 0;
-	unsigned w, h;
-	for(unsigned i=0; i<mipCount; ++i) {
-		ret += _mipLevelOffset(self, i+1, w, h);
-	}
-	return ret;
-}
-
-static bool _commitTexture(roRDriverTexture* self, const void* data, roSize rowPaddingInBytes)
-{
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!ctx || !impl) return false;
@@ -827,16 +810,20 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, roSize rowP
 	if(!impl->glh)
 		glGenTextures(1, &impl->glh);
 
-	const unsigned mipCount = 1;	// TODO: Allow loading mip maps
+	unsigned mipSize = 0;
+	unsigned mipw = impl->width;
+	unsigned miph = impl->height;
+	_mipLevelInfo(impl, mipLevel, mipw, miph, mipSize);
+	if(bytesRead) *bytesRead = mipSize;
 
 #if !defined(RG_GLES)
 	// Using PBO
 	static const bool usePbo = true;
 	if(usePbo) {
-		unsigned textureSize = _textureSize(impl, mipCount);
 		GLuint pbo = ctx->pixelBufferCache[(ctx->currentPixelBufferIndex++) % ctx->pixelBufferCache.size()];
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
-		glBufferData(GL_PIXEL_UNPACK_BUFFER, textureSize, data, GL_STREAM_DRAW);
+		glBufferData(GL_PIXEL_UNPACK_BUFFER, mipSize, data, GL_STREAM_DRAW);
+		data = NULL;	// If we are using PBO, no need to supply the data pointer to glTexImage2D()
 	}
 #else
 	static const bool usePbo = false;
@@ -852,59 +839,56 @@ static bool _commitTexture(roRDriverTexture* self, const void* data, roSize rowP
 
 	TextureFormatMapping* mapping = impl->formatMapping;
 
-	for(unsigned i=0; i<mipCount; ++i)
-	{
-		unsigned mipw, miph;
-		unsigned char* mipData = _mipLevelData(impl, i, mipw, miph, usePbo ? NULL : data);
+	if(impl->format & roRDriverTextureFormat_Compressed) {
+		unsigned imgSize = (mipw * miph) >> mapping->glPixelSize;
+		glCompressedTexImage2D(
+			impl->glTarget, mipLevel, mapping->glInternalFormat, 
+			mipw, miph, 0,
+			imgSize,
+			data
+		);
+	}
+	else {
+		GLint alignmentBackup;
+		glGetIntegerv(GL_UNPACK_ALIGNMENT, &alignmentBackup);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-		if(impl->format & roRDriverTextureFormat_Compressed) {
-			unsigned imgSize = (mipw * miph) >> mapping->glPixelSize;
-			glCompressedTexImage2D(
-				impl->glTarget, i, mapping->glInternalFormat, 
+		// Handling the empty padding at the end of each row of pixels
+		// NOTE: GL_UNPACK_ROW_LENGTH might help, but OpenGL ES didn't support it
+		// See: http://stackoverflow.com/questions/205522/opengl-subtexturing
+		if(rowPaddingInBytes == 0) {
+			glTexImage2D(
+				impl->glTarget, mipLevel, mapping->glInternalFormat,
 				mipw, miph, 0,
-				imgSize,
-				mipData
+				mapping->glFormat, mapping->glType,
+				data
 			);
 		}
 		else {
-			GLint alignmentBackup;
-			glGetIntegerv(GL_UNPACK_ALIGNMENT, &alignmentBackup);
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+			// Create an empty texture object first
+			glTexImage2D(
+				impl->glTarget, mipLevel, mapping->glInternalFormat,
+				mipw, miph, 0,
+				mapping->glFormat, mapping->glType,
+				NULL
+			);
 
-			// Handling the empty padding at the end of each row of pixels
-			// NOTE: GL_UNPACK_ROW_LENGTH might help, but OpenGL ES didn't support it
-			// See: http://stackoverflow.com/questions/205522/opengl-subtexturing
-			if(rowPaddingInBytes == 0) {
-				glTexImage2D(
-					impl->glTarget, i, mapping->glInternalFormat,
-					mipw, miph, 0,
+			// Then fill the pixels row by row
+			for(unsigned y=0; y<miph; ++y) {
+				const unsigned char* row = ((const unsigned char*)data) + y * (mipw * mapping->glPixelSize + rowPaddingInBytes);
+				glTexSubImage2D(
+					impl->glTarget, mipLevel, 0, y,
+					mipw, 1,
 					mapping->glFormat, mapping->glType,
-					mipData
+					row
 				);
 			}
-			else {
-				// Create an empty texture object first
-				glTexImage2D(
-					impl->glTarget, i, mapping->glInternalFormat,
-					mipw, miph, 0,
-					mapping->glFormat, mapping->glType,
-					NULL
-				);
 
-				// Then fill the pixels row by row
-				for(unsigned y=0; y<miph; ++y) {
-					const unsigned char* row = mipData + y * (mipw * mapping->glPixelSize + rowPaddingInBytes);
-					glTexSubImage2D(
-						impl->glTarget, i, 0, y,
-						mipw, 1,
-						mapping->glFormat, mapping->glType,
-						row
-					);
-				}
-			}
-
-			glPixelStorei(GL_UNPACK_ALIGNMENT, alignmentBackup);
+			if(bytesRead)
+				*bytesRead += rowPaddingInBytes * miph;
 		}
+
+		glPixelStorei(GL_UNPACK_ALIGNMENT, alignmentBackup);
 	}
 
 #if !defined(RG_GLES)
@@ -1623,7 +1607,7 @@ roRDriver* _roNewRenderDriver_GL(const char* driverStr, const char*)
 	ret->newTexture = _newTexture;
 	ret->deleteTexture = _deleteTexture;
 	ret->initTexture = _initTexture;
-	ret->commitTexture = _commitTexture;
+	ret->updateTexture = _updateTexture;
 	ret->mapTexture = _mapTexture;
 	ret->unmapTexture = _unmapTexture;
 

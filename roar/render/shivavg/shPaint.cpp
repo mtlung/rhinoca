@@ -96,7 +96,7 @@ VG_API_CALL VGPaint vgCreatePaint(void)
 	shPaintArrayPushBack(&context->paints, p);
 
 	p->texture = context->driver->newTexture();
-	context->driver->initTexture(p->texture, SH_GRADIENT_TEX_SIZE, 1, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_None, NULL, 0);
+	context->driver->initTexture(p->texture, SH_GRADIENT_TEX_SIZE, 1, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_None);
 
 	VG_RETURN((VGPaint)p);
 }
@@ -199,7 +199,7 @@ void shUpdateColorRampTexture(SHPaint *p)
 	}
 
 	// Update texture image 
-	roVerify(context->driver->commitTexture(p->texture, rgba, 0));
+	roVerify(context->driver->updateTexture(p->texture, 0, rgba, 0, NULL));
 }
 
 void shValidateInputStops(SHPaint *p)

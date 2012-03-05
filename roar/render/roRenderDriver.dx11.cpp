@@ -1009,7 +1009,7 @@ static void _deleteTexture(roRDriverTexture* self)
 	_allocator.deleteObj(static_cast<roRDriverTextureImpl*>(self));
 }
 
-static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format, roRDriverTextureFlag flags, const void* initData, roSize rowPaddingInBytes)
+static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format, roRDriverTextureFlag flags)
 {
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!impl) return false;
@@ -1119,7 +1119,12 @@ static StagingTexture* _getStagingTexture(roRDriverContextImpl* ctx, roRDriverTe
 	return ret;
 }
 
-static bool _commitTexture(roRDriverTexture* self, const void* data, roSize rowPaddingInBytes)
+static unsigned _maxMipLevel(unsigned width, unsigned height)
+{
+
+}
+
+static bool _updateTexture(roRDriverTexture* self, unsigned mipLevel, const void* data, roSize rowPaddingInBytes, unsigned* bytesRead)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
@@ -1842,7 +1847,7 @@ roRDriver* _roNewRenderDriver_DX11(const char* driverStr, const char*)
 	ret->newTexture = _newTexture;
 	ret->deleteTexture = _deleteTexture;
 	ret->initTexture = _initTexture;
-	ret->commitTexture = _commitTexture;
+	ret->updateTexture = _updateTexture;
 	ret->mapTexture = _mapTexture;
 	ret->unmapTexture = _unmapTexture;
 

@@ -17,7 +17,7 @@ TEST_FIXTURE(GraphicsDriverTest, empty)
 	createWindow(1, 1);
 }
 
-static const unsigned driverIndex = 1;
+static const unsigned driverIndex = 0;
 
 static const char* driverStr[] = 
 {
@@ -196,7 +196,7 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 	driver->deleteBuffer(ubuffer2);
 }
 
-TEST_FIXTURE(GraphicsDriverTest, textureCommit)
+TEST_FIXTURE(GraphicsDriverTest, textureUpdate)
 {
 	createWindow(200, 200);
 	initContext(driverStr[driverIndex]);
@@ -245,8 +245,8 @@ TEST_FIXTURE(GraphicsDriverTest, textureCommit)
 	const unsigned char* texData = (const unsigned char*)malloc(sizeof(char) * 4 * texDim * texDim);
 
 	roRDriverTexture* texture = driver->newTexture();
-	CHECK(driver->initTexture(texture, texDim, texDim, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_None, NULL, 0));
-	CHECK(driver->commitTexture(texture, texData, 0));
+	CHECK(driver->initTexture(texture, texDim, texDim, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_None));
+	CHECK(driver->updateTexture(texture, 0, texData, 0, NULL));
 
 	struct Dummy { static void stallCallback(void*)
 	{
@@ -287,7 +287,7 @@ TEST_FIXTURE(GraphicsDriverTest, textureCommit)
 			*pixel = unsigned(randf() * UINT_MAX);
 			pixel = pixel;
 		}
-		CHECK(driver->commitTexture(texture, texData, 0));
+		CHECK(driver->updateTexture(texture, 0, texData, 0, NULL));
 
 		//
 //		driver->mapTexture(texture, roRDriverMapUsage_Read);
@@ -339,7 +339,7 @@ TEST_FIXTURE(GraphicsDriverTest, _texture)
 	};
 	roRDriverTexture* texture = driver->newTexture();
 	CHECK(driver->initTexture(texture, 4, 4, roRDriverTextureFormat_RGBA));
-	CHECK(driver->commitTexture(texture, texData, 0));
+	CHECK(driver->updateTexture(texture, texData, 0));
 
 	// Set the texture state
 	roRDriverTextureState textureState =  {
