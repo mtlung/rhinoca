@@ -96,7 +96,7 @@ VG_API_CALL VGPaint vgCreatePaint(void)
 	shPaintArrayPushBack(&context->paints, p);
 
 	p->texture = context->driver->newTexture();
-	context->driver->initTexture(p->texture, SH_GRADIENT_TEX_SIZE, 1, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_None);
+	context->driver->initTexture(p->texture, SH_GRADIENT_TEX_SIZE, 1, 1, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_None);
 
 	VG_RETURN((VGPaint)p);
 }

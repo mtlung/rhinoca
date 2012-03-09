@@ -754,14 +754,14 @@ static void _deleteTexture(roRDriverTexture* self)
 	_allocator.deleteObj(static_cast<roRDriverTextureImpl*>(self));
 }
 
-static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format, roRDriverTextureFlag flags)
+static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height, unsigned maxMipLevels, roRDriverTextureFormat format, roRDriverTextureFlag flags)
 {
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!impl) return false;
-	if(impl->format || impl->glh) return false;
 
 	impl->width = width;
 	impl->height = height;
+	impl->maxMipLevels = maxMipLevels;
 	impl->format = format;
 	impl->flags = flags;
 	impl->glTarget = GL_TEXTURE_2D;
@@ -796,7 +796,7 @@ static unsigned _mipLevelInfo(roRDriverTextureImpl* self, unsigned mipIndex, uns
 	return offset;
 }
 
-static bool _updateTexture(roRDriverTexture* self, unsigned mipLevel, const void* data, roSize rowPaddingInBytes, unsigned* bytesRead)
+static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, const void* data, roSize rowPaddingInBytes, unsigned* bytesRead)
 {
 	if(bytesRead) *bytesRead = 0;
 
@@ -813,7 +813,7 @@ static bool _updateTexture(roRDriverTexture* self, unsigned mipLevel, const void
 	unsigned mipSize = 0;
 	unsigned mipw = impl->width;
 	unsigned miph = impl->height;
-	_mipLevelInfo(impl, mipLevel, mipw, miph, mipSize);
+	_mipLevelInfo(impl, mipIndex, mipw, miph, mipSize);
 	if(bytesRead) *bytesRead = mipSize;
 
 #if !defined(RG_GLES)
@@ -842,7 +842,7 @@ static bool _updateTexture(roRDriverTexture* self, unsigned mipLevel, const void
 	if(impl->format & roRDriverTextureFormat_Compressed) {
 		unsigned imgSize = (mipw * miph) >> mapping->glPixelSize;
 		glCompressedTexImage2D(
-			impl->glTarget, mipLevel, mapping->glInternalFormat, 
+			impl->glTarget, mipIndex, mapping->glInternalFormat, 
 			mipw, miph, 0,
 			imgSize,
 			data
@@ -858,7 +858,7 @@ static bool _updateTexture(roRDriverTexture* self, unsigned mipLevel, const void
 		// See: http://stackoverflow.com/questions/205522/opengl-subtexturing
 		if(rowPaddingInBytes == 0) {
 			glTexImage2D(
-				impl->glTarget, mipLevel, mapping->glInternalFormat,
+				impl->glTarget, mipIndex, mapping->glInternalFormat,
 				mipw, miph, 0,
 				mapping->glFormat, mapping->glType,
 				data
@@ -867,7 +867,7 @@ static bool _updateTexture(roRDriverTexture* self, unsigned mipLevel, const void
 		else {
 			// Create an empty texture object first
 			glTexImage2D(
-				impl->glTarget, mipLevel, mapping->glInternalFormat,
+				impl->glTarget, mipIndex, mapping->glInternalFormat,
 				mipw, miph, 0,
 				mapping->glFormat, mapping->glType,
 				NULL
@@ -877,7 +877,7 @@ static bool _updateTexture(roRDriverTexture* self, unsigned mipLevel, const void
 			for(unsigned y=0; y<miph; ++y) {
 				const unsigned char* row = ((const unsigned char*)data) + y * (mipw * mapping->glPixelSize + rowPaddingInBytes);
 				glTexSubImage2D(
-					impl->glTarget, mipLevel, 0, y,
+					impl->glTarget, mipIndex, 0, y,
 					mipw, 1,
 					mapping->glFormat, mapping->glType,
 					row

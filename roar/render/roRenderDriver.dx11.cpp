@@ -1009,7 +1009,7 @@ static void _deleteTexture(roRDriverTexture* self)
 	_allocator.deleteObj(static_cast<roRDriverTextureImpl*>(self));
 }
 
-static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height, roRDriverTextureFormat format, roRDriverTextureFlag flags)
+static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height, unsigned maxMipLevels, roRDriverTextureFormat format, roRDriverTextureFlag flags)
 {
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!impl) return false;
@@ -1017,6 +1017,7 @@ static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height
 
 	impl->width = width;
 	impl->height = height;
+	impl->maxMipLevels = maxMipLevels;
 	impl->isMapped = false;
 	impl->format = format;
 	impl->flags = flags;
@@ -1124,14 +1125,12 @@ static unsigned _maxMipLevel(unsigned width, unsigned height)
 
 }
 
-static bool _updateTexture(roRDriverTexture* self, unsigned mipLevel, const void* data, roSize rowPaddingInBytes, unsigned* bytesRead)
+static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, const void* data, roSize rowPaddingInBytes, unsigned* bytesRead)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!ctx || !impl) return false;
 	if(impl->dxDimension == D3D11_RESOURCE_DIMENSION_UNKNOWN) return false;
-
-	const unsigned mipCount = 1;	// TODO: Allow loading mip maps
 
 	UINT bindFlags = 0;
 
@@ -1145,25 +1144,37 @@ static bool _updateTexture(roRDriverTexture* self, unsigned mipLevel, const void
 			bindFlags |= D3D11_BIND_RENDER_TARGET;
 	}
 
-	D3D11_TEXTURE2D_DESC desc = {
-		impl->width, impl->height,
-		mipCount,	// MipLevels
-		1,			// ArraySize
-		_textureFormatMappings[impl->format].dxFormat,
-		{ 1, 0 },	// DXGI_SAMPLE_DESC: 1 sample, quality level 0
-		D3D11_USAGE_DEFAULT,
-		bindFlags,
-		0,			// CPUAccessFlags
-		0			// MiscFlags
-	};
+	if(impl->dxTexture)
+	{
+		D3D11_TEXTURE2D_DESC desc;
+		ID3D11Texture2D* tex2D = static_cast<ID3D11Texture2D*>(impl->dxTexture.ptr);
+		tex2D->GetDesc(&desc);
+		if(mipIndex >= desc.MipLevels)
+			roAssert(false && "Updating at specific mip-level not yet supported");
+	}
 
-	ID3D11Texture2D* tex2d = NULL;
-	HRESULT hr = ctx->dxDevice->CreateTexture2D(&desc, NULL, &tex2d);
-	impl->dxTexture = tex2d;
+	if(!impl->dxTexture)
+	{
+		D3D11_TEXTURE2D_DESC desc = {
+			impl->width, impl->height,
+			impl->maxMipLevels,
+			1,			// ArraySize
+			_textureFormatMappings[impl->format].dxFormat,
+			{ 1, 0 },	// DXGI_SAMPLE_DESC: 1 sample, quality level 0
+			D3D11_USAGE_DEFAULT,
+			bindFlags,
+			0,			// CPUAccessFlags
+			0			// MiscFlags
+		};
 
-	if(FAILED(hr)) {
-		roLog("error", "CreateTexture2D failed\n");
-		return false;
+		ID3D11Texture2D* tex2d = NULL;
+		HRESULT hr = ctx->dxDevice->CreateTexture2D(&desc, NULL, &tex2d);
+		impl->dxTexture = tex2d;
+
+		if(FAILED(hr)) {
+			roLog("error", "CreateTexture2D failed\n");
+			return false;
+		}
 	}
 
 	// Get staging texture for async upload
@@ -1204,7 +1215,7 @@ static bool _updateTexture(roRDriverTexture* self, unsigned mipLevel, const void
 
 	if(bindFlags & D3D11_BIND_SHADER_RESOURCE) {
 		ID3D11ShaderResourceView* view = NULL;
-		hr = ctx->dxDevice->CreateShaderResourceView(impl->dxTexture, NULL, &view);
+		HRESULT hr = ctx->dxDevice->CreateShaderResourceView(impl->dxTexture, NULL, &view);
 		impl->dxView = view;
 
 		if(FAILED(hr)) {
@@ -1293,6 +1304,16 @@ static void _unmapTexture(roRDriverTexture* self)
 	impl->dxStaging->mapped = false;
 	impl->dxStaging = NULL;
 	impl->isMapped = false;
+}
+
+static void _generateMipMap(roRDriverTexture* self)
+{
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
+	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
+	if(!impl->dxView)
+		return;
+
+	ctx->dxDeviceContext->GenerateMips(impl->dxView);
 }
 
 // ----------------------------------------------------------------------
@@ -1850,6 +1871,7 @@ roRDriver* _roNewRenderDriver_DX11(const char* driverStr, const char*)
 	ret->updateTexture = _updateTexture;
 	ret->mapTexture = _mapTexture;
 	ret->unmapTexture = _unmapTexture;
+	ret->generateMipMap = _generateMipMap;
 
 	ret->newShader = _newShader;
 	ret->deleteShader = _deleteShader;

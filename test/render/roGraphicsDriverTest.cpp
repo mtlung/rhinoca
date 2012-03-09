@@ -245,7 +245,7 @@ TEST_FIXTURE(GraphicsDriverTest, textureUpdate)
 	const unsigned char* texData = (const unsigned char*)malloc(sizeof(char) * 4 * texDim * texDim);
 
 	roRDriverTexture* texture = driver->newTexture();
-	CHECK(driver->initTexture(texture, texDim, texDim, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_None));
+	CHECK(driver->initTexture(texture, texDim, texDim, 1, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_None));
 	CHECK(driver->updateTexture(texture, 0, texData, 0, NULL));
 
 	struct Dummy { static void stallCallback(void*)
