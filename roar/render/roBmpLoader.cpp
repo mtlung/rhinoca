@@ -11,6 +11,15 @@
 
 namespace ro {
 
+enum TextureLoadingState {
+	TextureLoadingState_LoadHeader,
+	TextureLoadingState_InitTexture,
+	TextureLoadingState_LoadPixelData,
+	TextureLoadingState_Commit,
+	TextureLoadingState_Finish,
+	TextureLoadingState_Abort
+};
+
 Resource* resourceCreateBmp(const char* uri, ResourceManager* mgr)
 {
 	if(uriExtensionMatch(uri, ".bmp"))
@@ -25,7 +34,8 @@ public:
 		: stream(NULL), texture(t), manager(mgr)
 		, width(0), height(0)
 		, pixelData(NULL), pixelDataSize(0)
-		, aborted(false), headerLoaded(false), readyToCommit(false), flipVertical(false)
+		, flipVertical(false)
+		, textureLoadingState(TextureLoadingState_LoadHeader)
 	{}
 
 	~BmpLoader()
@@ -38,10 +48,11 @@ public:
 
 protected:
 	void load(TaskPool* taskPool);
-	void commit(TaskPool* taskPool);
 
-	void loadHeader();
-	void loadPixelData();
+	void loadHeader(TaskPool* taskPool);
+	void initTexture(TaskPool* taskPool);
+	void loadPixelData(TaskPool* taskPool);
+	void commit(TaskPool* taskPool);
 
 	void* stream;
 	Texture* texture;
@@ -50,44 +61,38 @@ protected:
 	roBytePtr pixelData;
 	roSize pixelDataSize;
 
-	bool aborted;
-	bool headerLoaded;
-	bool readyToCommit;
 	bool flipVertical;
 	BITMAPFILEHEADER fileHeader;
 	BITMAPINFOHEADER infoHeader;
+
+	TextureLoadingState textureLoadingState;
 };
 
 void BmpLoader::run(TaskPool* taskPool)
 {
-	if(!readyToCommit && !aborted)
-		load(taskPool);
-	else
+	if(textureLoadingState == TextureLoadingState_LoadHeader)
+		loadHeader(taskPool);
+	else if(textureLoadingState == TextureLoadingState_InitTexture)
+		initTexture(taskPool);
+	else if(textureLoadingState == TextureLoadingState_LoadPixelData)
+		loadPixelData(taskPool);
+	else if(textureLoadingState == TextureLoadingState_Commit)
 		commit(taskPool);
-}
 
-void BmpLoader::load(TaskPool* taskPool)
-{
-	if(headerLoaded)
-		loadPixelData();
-	else
-		loadHeader();
-}
-
-void BmpLoader::commit(TaskPool* taskPool)
-{
-	if(	aborted ||
-		!roRDriverCurrentContext->driver->initTexture(texture->handle, width, height, 1, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_None) ||
-		!roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, pixelData, 0, NULL)
-	)
-		texture->state = Resource::Aborted;
-	else
+	if(textureLoadingState == TextureLoadingState_Finish) {
 		texture->state = Resource::Loaded;
+		delete this;
+		return;
+	}
 
-	delete this;
+	if(textureLoadingState == TextureLoadingState_Abort) {
+		texture->state = Resource::Aborted;
+		delete this;
+		return;
+	}
 }
 
-void BmpLoader::loadHeader()
+void BmpLoader::loadHeader(TaskPool* taskPool)
 {
 	if(texture->state == Resource::Aborted) goto Abort;
 	if(!stream) stream = fileSystem.openFile(texture->uri());
@@ -137,12 +142,22 @@ void BmpLoader::loadHeader()
 		flipVertical = false;
 	}
 
-	headerLoaded = true;
-	loadPixelData();
-	return;
+	textureLoadingState = TextureLoadingState_InitTexture;
+	return reSchedule(false, taskPool->mainThreadId());
 
 Abort:
-	aborted = true;
+	textureLoadingState = TextureLoadingState_Abort;
+}
+
+void BmpLoader::initTexture(TaskPool* taskPool)
+{
+	if(roRDriverCurrentContext->driver->initTexture(texture->handle, width, height, 1, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_None))
+	{
+		textureLoadingState = TextureLoadingState_LoadPixelData;
+		return reSchedule(false, ~taskPool->mainThreadId());
+	}
+	else
+		textureLoadingState = TextureLoadingState_Abort;
 }
 
 static void _bgrToRgba(roBytePtr src, roBytePtr dst, unsigned width, unsigned height)
@@ -159,11 +174,11 @@ static void _bgrToRgba(roBytePtr src, roBytePtr dst, unsigned width, unsigned he
 	}
 }
 
-void BmpLoader::loadPixelData()
+void BmpLoader::loadPixelData(TaskPool* taskPool)
 {
 	roBytePtr tmpBuffer = NULL;
 
-	if(aborted || !stream) goto Abort;
+	if(!stream) goto Abort;
 
 	// Memory usage for one row of image
 	const roSize rowByte = width * (sizeof(char) * 3);
@@ -208,12 +223,19 @@ void BmpLoader::loadPixelData()
 	roSwap(pixelData, tmpBuffer);
 	roFree(tmpBuffer);
 
-	readyToCommit = true;
-	return;
+	textureLoadingState = TextureLoadingState_Commit;
+	return reSchedule(false, taskPool->mainThreadId());
 
 Abort:
-	readyToCommit = true;
-	aborted = true;
+	textureLoadingState = TextureLoadingState_Abort;
+}
+
+void BmpLoader::commit(TaskPool* taskPool)
+{
+	if(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, pixelData, 0, NULL))
+		textureLoadingState = TextureLoadingState_Finish;
+	else
+		textureLoadingState = TextureLoadingState_Abort;
 }
 
 bool resourceLoadBmp(Resource* resource, ResourceManager* mgr)
@@ -226,9 +248,7 @@ bool resourceLoadBmp(Resource* resource, ResourceManager* mgr)
 	texture->handle = roRDriverCurrentContext->driver->newTexture();
 
 	BmpLoader* loaderTask = new BmpLoader(texture, mgr);
-
-	TaskId taskLoad = taskPool->addFinalized(loaderTask, 0, 0, ~taskPool->mainThreadId());
-	texture->taskReady = texture->taskLoaded = taskPool->addFinalized(loaderTask, 0, taskLoad, taskPool->mainThreadId());
+	texture->taskReady = texture->taskLoaded = taskPool->addFinalized(loaderTask, 0, 0, ~taskPool->mainThreadId());
 
 	return true;
 }

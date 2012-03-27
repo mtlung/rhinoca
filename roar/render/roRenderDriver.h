@@ -297,8 +297,8 @@ typedef struct roRDriver
 // Texture
 	roRDriverTexture* (*newTexture)();
 	void (*deleteTexture)(roRDriverTexture* self);
-	bool (*initTexture)(roRDriverTexture* self, unsigned width, unsigned height, unsigned maxMipLevels, roRDriverTextureFormat format, roRDriverTextureFlag flags);	// Can be invoked in loader thread
-	bool (*updateTexture)(roRDriverTexture* self, unsigned mipLevel, const void* data, roSize rowPaddingInBytes, unsigned* bytesRead);	// Can only be invoked in render thread
+	bool (*initTexture)(roRDriverTexture* self, unsigned width, unsigned height, unsigned maxMipLevels, roRDriverTextureFormat format, roRDriverTextureFlag flags);
+	bool (*updateTexture)(roRDriverTexture* self, unsigned mipLevel, const void* data, roSize rowPaddingInBytes, unsigned* bytesRead);
 	void* (*mapTexture)(roRDriverTexture* self, roRDriverMapUsage usage);
 	void (*unmapTexture)(roRDriverTexture* self);
 	void (*generateMipMap)(roRDriverTexture* self);

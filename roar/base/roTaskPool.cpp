@@ -604,4 +604,20 @@ void Task::reSchedule(bool suspend)
 #endif
 }
 
+void Task::reSchedule(bool suspend, ThreadId affinity)
+{
+	TaskPool::TaskProxy* p = reinterpret_cast<TaskPool::TaskProxy*>(this->_proxy);
+
+	ScopeLock lock(p->taskPool->mutex);
+
+	p->task = this;
+	p->affinity = affinity;
+	p->taskPool->_addPendingTask(p);
+	p->suspended = suspend;
+
+#if DEBUG_PRINT
+	printf("%sreSchedule(%d)\n", _debugIndent + _debugMaxIndent - _debugWaitCount, p->id);
+#endif
+}
+
 }	// namespace ro

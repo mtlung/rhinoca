@@ -7,6 +7,9 @@ namespace ro {
 
 class TaskPool;
 
+typedef roUint32 TaskId;
+typedef roPtrInt ThreadId;
+
 class Task
 {
 public:
@@ -26,14 +29,12 @@ protected:
 	/// Make sure you won't delete 'this' in 'run()'
 	/// The re-scheduled task can be suspended and resume again using TaskPool::suspend(id, false);
 	void reSchedule(bool suspend=false);
+	void reSchedule(bool suspend, ThreadId affinity);
 
 private:
 	friend class TaskPool;
 	void* _proxy;	/// For use with reSchedule()
 };	// Task
-
-typedef roUint32 TaskId;
-typedef roPtrInt ThreadId;
 
 
 // ----------------------------------------------------------------------
