@@ -232,7 +232,7 @@ Abort:
 
 void BmpLoader::commit(TaskPool* taskPool)
 {
-	if(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, pixelData, 0, NULL))
+	if(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, 0, pixelData, 0, NULL))
 		textureLoadingState = TextureLoadingState_Finish;
 	else
 		textureLoadingState = TextureLoadingState_Abort;

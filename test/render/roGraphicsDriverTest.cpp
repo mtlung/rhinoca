@@ -17,7 +17,7 @@ TEST_FIXTURE(GraphicsDriverTest, empty)
 	createWindow(1, 1);
 }
 
-static const unsigned driverIndex = 0;
+static const unsigned driverIndex = 1;
 
 static const char* driverStr[] = 
 {
@@ -246,7 +246,7 @@ TEST_FIXTURE(GraphicsDriverTest, textureUpdate)
 
 	roRDriverTexture* texture = driver->newTexture();
 	CHECK(driver->initTexture(texture, texDim, texDim, 1, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_None));
-	CHECK(driver->updateTexture(texture, 0, texData, 0, NULL));
+	CHECK(driver->updateTexture(texture, 0, 0, texData, 0, NULL));
 
 	struct Dummy { static void stallCallback(void*)
 	{
@@ -277,6 +277,8 @@ TEST_FIXTURE(GraphicsDriverTest, textureUpdate)
 		{ NULL, ibuffer, NULL, 0, 0, 0, 0 },
 	};
 
+	int frameCounter = 0;
+
 	while(keepRun()) {
 		driver->clearColor(0, 0, 0, 0);
 
@@ -287,11 +289,24 @@ TEST_FIXTURE(GraphicsDriverTest, textureUpdate)
 			*pixel = unsigned(randf() * UINT_MAX);
 			pixel = pixel;
 		}
-		CHECK(driver->updateTexture(texture, 0, texData, 0, NULL));
 
-		//
-//		driver->mapTexture(texture, roRDriverMapUsage_Read);
-//		driver->unmapTexture(texture);
+		{	// Update the texture using mapTexture
+			const roRDriverMapUsage usage = roRDriverMapUsage_ReadWrite;
+			void* writePtr = driver->mapTexture(texture, usage, 0, 0);
+			CHECK(writePtr);
+
+			if(writePtr) {
+				// We can verify the result if the usage was set to read/write 
+				if(frameCounter > 0 && usage == roRDriverMapUsage_ReadWrite)
+					CHECK_EQUAL(frameCounter, *(int*)(writePtr));
+				memcpy(writePtr, texData, sizeof(char) * 4 * texDim * texDim);
+			}
+
+			*(int*)(writePtr) = ++frameCounter;
+			driver->unmapTexture(texture, 0, 0);
+		}
+
+//		CHECK(driver->updateTexture(texture, 0, 0, texData, 0, NULL));
 
 		CHECK(driver->bindShaders(shaders, roCountof(shaders)));
 		CHECK(driver->bindShaderBuffers(input, roCountof(input), NULL));

@@ -23,6 +23,7 @@
 
 using namespace ro;
 
+static const bool _usePbo = true;
 static DefaultAllocator _allocator;
 
 // ----------------------------------------------------------------------
@@ -748,6 +749,11 @@ static void _deleteTexture(roRDriverTexture* self)
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!impl) return;
 
+	for(roSize i=0; i<impl->mapInfo.size(); ++i) {
+		roAssert(!impl->mapInfo[i].glPbo && "Call unmapTexture() for all mip-map and tex array befor calling initTexture");
+		roAssert(!impl->mapInfo[i].systemBuf && "Call unmapTexture() for all mip-map and tex array befor calling initTexture");
+	}
+
 	if(impl->glh)
 		glDeleteTextures(1, &impl->glh);
 
@@ -767,16 +773,34 @@ static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height
 	impl->glTarget = GL_TEXTURE_2D;
 	impl->formatMapping = &(_textureFormatMappings[format]);
 
+	for(roSize i=0; i<impl->mapInfo.size(); ++i) {
+		roAssert(!impl->mapInfo[i].glPbo && "Call unmapTexture() for all mip-map and tex array befor calling initTexture");
+		roAssert(!impl->mapInfo[i].systemBuf && "Call unmapTexture() for all mip-map and tex array befor calling initTexture");
+	}
+
+	if(!impl->glh)
+		glGenTextures(1, &impl->glh);
+
+	glBindTexture(impl->glTarget, impl->glh);
+
+	TextureFormatMapping* mapping = impl->formatMapping;
+	glTexImage2D(
+		impl->glTarget, 0, mapping->glInternalFormat,
+		width, height, 0,
+		mapping->glFormat, mapping->glType,
+		NULL
+	);
+
 	return true;
 }
 
-static unsigned _mipLevelInfo(roRDriverTextureImpl* self, unsigned mipIndex, unsigned& mipWidth, unsigned& mipHeight, unsigned& mipSize)
+static unsigned _mipLevelInfo(roRDriverTextureImpl* self, unsigned mipIndex, unsigned& mipSize)
 {
 	mipSize = 0;
 	unsigned offset = 0;
 
-	mipWidth = self->width;
-	mipHeight = self->height;
+	unsigned mipWidth = self->width;
+	unsigned mipHeight = self->height;
 
 	for(unsigned i=0; i<=mipIndex; ++i) {
 		mipSize = mipWidth * mipHeight;
@@ -796,37 +820,31 @@ static unsigned _mipLevelInfo(roRDriverTextureImpl* self, unsigned mipIndex, uns
 	return offset;
 }
 
-static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, const void* data, roSize rowPaddingInBytes, unsigned* bytesRead)
+static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, unsigned aryIndex, const void* data, roSize rowPaddingInBytes, unsigned* bytesRead)
 {
 	if(bytesRead) *bytesRead = 0;
 
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
-	if(!ctx || !impl) return false;
+	if(!ctx || !impl || !impl->glh) return false;
 	if(!impl->format) return false;
 
 	checkError();
 
-	if(!impl->glh)
-		glGenTextures(1, &impl->glh);
-
 	unsigned mipSize = 0;
-	unsigned mipw = impl->width;
-	unsigned miph = impl->height;
-	_mipLevelInfo(impl, mipIndex, mipw, miph, mipSize);
+	unsigned mipw = roMaxOf2<unsigned>(1, impl->width >> mipIndex);
+	unsigned miph = roMaxOf2<unsigned>(1, impl->height >> mipIndex);
+	_mipLevelInfo(impl, mipIndex, mipSize);
 	if(bytesRead) *bytesRead = mipSize;
 
 #if !defined(RG_GLES)
 	// Using PBO
-	static const bool usePbo = true;
-	if(usePbo) {
+	if(_usePbo) {
 		GLuint pbo = ctx->pixelBufferCache[(ctx->currentPixelBufferIndex++) % ctx->pixelBufferCache.size()];
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
 		glBufferData(GL_PIXEL_UNPACK_BUFFER, mipSize, data, GL_STREAM_DRAW);
 		data = NULL;	// If we are using PBO, no need to supply the data pointer to glTexImage2D()
 	}
-#else
-	static const bool usePbo = false;
 #endif
 
 	glBindTexture(impl->glTarget, impl->glh);
@@ -842,7 +860,7 @@ static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, const void
 	if(impl->format & roRDriverTextureFormat_Compressed) {
 		unsigned imgSize = (mipw * miph) >> mapping->glPixelSize;
 		glCompressedTexImage2D(
-			impl->glTarget, mipIndex, mapping->glInternalFormat, 
+			impl->glTarget, mipIndex, mapping->glInternalFormat,
 			mipw, miph, 0,
 			imgSize,
 			data
@@ -892,7 +910,7 @@ static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, const void
 	}
 
 #if !defined(RG_GLES)
-	if(usePbo)
+	if(_usePbo)
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 #endif
 
@@ -901,22 +919,156 @@ static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, const void
 	return true;
 }
 
-static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage)
+static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsigned mipIndex, unsigned aryIndex)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!ctx || !impl) return false;
 	if(!impl->format) return NULL;
 
-	return NULL;
+	bool isCubeMap = false;
+	unsigned bufferIndex = mipIndex * (isCubeMap ? 6 : 1) + aryIndex;
+
+	if(bufferIndex >= impl->mapInfo.size()) {
+		roRDriverTextureImpl::MapInfo mapInfo = { 0 };
+		impl->mapInfo.resize(bufferIndex + 1, mapInfo);
+	}
+
+	TextureFormatMapping* mapping = impl->formatMapping;
+	unsigned mipw = roMaxOf2<unsigned>(1, impl->width >> mipIndex);
+	unsigned miph = roMaxOf2<unsigned>(1, impl->height >> mipIndex);
+	roSize sizeInBytes = mapping->glPixelSize * mipw * miph;
+
+	checkError();
+
+	void* ret = NULL;
+	roRDriverTextureImpl::MapInfo& mapInfo = impl->mapInfo[bufferIndex];
+	mapInfo.usage = usage;
+
+	if(_usePbo && !mapInfo.glPbo)
+	{
+		mapInfo.glPbo = ctx->pixelBufferCache[(ctx->currentPixelBufferIndex++) % ctx->pixelBufferCache.size()];
+
+		if(usage & roRDriverMapUsage_Read) {
+			if(impl->format & roRDriverTextureFormat_Compressed) {
+				roLog("error", "mapTexture failed: trying to read a compressed texture, which is not supported\n");
+				return NULL;
+			}
+
+			glBindBuffer(GL_PIXEL_PACK_BUFFER, mapInfo.glPbo);
+			glBufferData(GL_PIXEL_PACK_BUFFER, sizeInBytes, NULL, GL_STREAM_READ);
+			glBindTexture(impl->glTarget, impl->glh);
+
+			// TODO: This is a blocking operation, try to invoke the stallCallback() if possible
+			glGetTexImage(
+				impl->glTarget,
+				mipIndex,
+				mapping->glFormat, mapping->glType,
+				0	// Offset to the texture
+			);
+
+			ret = glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, sizeInBytes, _bufferRangeMapUsage[usage]);
+		}
+		// NOTE: For roRDriverMapUsage_ReadWrite I assume there is no need to call glMapBufferRange with GL_PIXEL_UNPACK_BUFFER
+		// for a write pointer, it should return the same pointer as the read pointer
+		else if(usage & roRDriverMapUsage_Write) {	// This block of code is for write only situation
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, mapInfo.glPbo);
+			glBufferData(GL_PIXEL_UNPACK_BUFFER, sizeInBytes, NULL, GL_DYNAMIC_DRAW);
+
+			ret = glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, sizeInBytes, _bufferRangeMapUsage[usage]);
+		}
+		else {
+			roAssert(false);
+		}
+	}
+	else if(!mapInfo.systemBuf) {
+		roSize sizeInBytes = impl->formatMapping->glPixelSize * impl->width * impl->height;
+		mapInfo.systemBuf = _allocator.malloc(sizeInBytes);
+		ret = mapInfo.systemBuf;
+
+		if(usage & roRDriverMapUsage_Read) {
+			glBindTexture(impl->glTarget, impl->glh);
+
+			// TODO: This is a blocking operation, try to invoke the stallCallback() if possible
+			glGetTexImage(
+				impl->glTarget,
+				mipIndex,
+				mapping->glFormat, mapping->glType,
+				ret
+			);
+		}
+	}
+
+	checkError();
+	return ret;
 }
 
-static void _unmapTexture(roRDriverTexture* self)
+static void _unmapTexture(roRDriverTexture* self, unsigned mipIndex, unsigned aryIndex)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!ctx || !impl) return;
 	if(!impl->format) return;
+
+	bool isCubeMap = false;
+	unsigned bufferIndex = mipIndex * (isCubeMap ? 6 : 1) + aryIndex;
+
+	roRDriverTextureImpl::MapInfo& mapInfo = impl->mapInfo[bufferIndex];
+
+	if(_usePbo && mapInfo.glPbo)
+	{
+		checkError();
+
+		if(mapInfo.usage & roRDriverMapUsage_Write)
+		{
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, mapInfo.glPbo);
+			glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+
+			glBindTexture(impl->glTarget, impl->glh);
+
+			TextureFormatMapping* mapping = impl->formatMapping;
+			unsigned mipw = roMaxOf2<unsigned>(1, impl->width >> mipIndex);
+			unsigned miph = roMaxOf2<unsigned>(1, impl->height >> mipIndex);
+
+			// Copy the pbo to the texture
+			if(impl->format & roRDriverTextureFormat_Compressed) {
+				unsigned sizeInBytes = (mipw * miph) >> mapping->glPixelSize;
+				glCompressedTexImage2D(
+					impl->glTarget, mipIndex, mapping->glInternalFormat,
+					mipw, miph, 0,
+					sizeInBytes,
+					0		// Offset into pbo
+				);
+			}
+			else {
+				GLint alignmentBackup;
+				glGetIntegerv(GL_UNPACK_ALIGNMENT, &alignmentBackup);
+				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+				glTexSubImage2D(
+					impl->glTarget, mipIndex, 0, 0,
+					mipw, miph,
+					mapping->glFormat, mapping->glType,
+					0		// Offset into pbo
+				);
+
+				glPixelStorei(GL_UNPACK_ALIGNMENT, alignmentBackup);
+				checkError();
+			}
+
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+		}
+
+		if(mapInfo.usage & roRDriverMapUsage_Read)
+			glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+
+		mapInfo.glPbo = 0;
+	}
+	else if(mapInfo.systemBuf) {
+		_updateTexture(self, mipIndex, aryIndex, mapInfo.systemBuf, 0, NULL);
+		_allocator.free(mapInfo.systemBuf);
+		mapInfo.systemBuf = NULL;
+	}
 }
 
 // ----------------------------------------------------------------------

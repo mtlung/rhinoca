@@ -203,7 +203,7 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 	c->whiteTexture = d->newTexture();
 	roUint8 color[4] = { 255, 255, 255, 255 };
 	roVerify(d->initTexture(c->whiteTexture, 1, 1, 1, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_None));
-	roVerify(d->updateTexture(c->whiteTexture, 0, color, 0, NULL));
+	roVerify(d->updateTexture(c->whiteTexture, 0, 0, color, 0, NULL));
 
 	// Set texture state
 	roRDriverTextureState state[1] = {

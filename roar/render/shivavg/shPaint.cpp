@@ -199,7 +199,7 @@ void shUpdateColorRampTexture(SHPaint *p)
 	}
 
 	// Update texture image 
-	roVerify(context->driver->updateTexture(p->texture, 0, rgba, 0, NULL));
+	roVerify(context->driver->updateTexture(p->texture, 0, 0, rgba, 0, NULL));
 }
 
 void shValidateInputStops(SHPaint *p)

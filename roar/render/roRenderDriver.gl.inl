@@ -60,6 +60,14 @@ struct roRDriverTextureImpl : public roRDriverTexture
 	GLuint glh;
 	GLenum glTarget;	// eg. GL_TEXTURE_2D
 	TextureFormatMapping* formatMapping;
+
+	struct MapInfo {
+		GLuint glPbo;
+		char* systemBuf;
+		roRDriverMapUsage usage;
+	};
+
+	TinyArray<MapInfo, 1> mapInfo;	// For mapping different mip-level and texture array
 };	// roRDriverTextureImpl
 
 struct roRDriverShaderProgramImpl : public roRDriverShaderProgram
