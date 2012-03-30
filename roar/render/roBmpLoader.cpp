@@ -47,8 +47,6 @@ public:
 	override void run(TaskPool* taskPool);
 
 protected:
-	void load(TaskPool* taskPool);
-
 	void loadHeader(TaskPool* taskPool);
 	void initTexture(TaskPool* taskPool);
 	void loadPixelData(TaskPool* taskPool);
@@ -70,6 +68,9 @@ protected:
 
 void BmpLoader::run(TaskPool* taskPool)
 {
+	if(texture->state == Resource::Aborted)
+		textureLoadingState = TextureLoadingState_Abort;
+
 	if(textureLoadingState == TextureLoadingState_LoadHeader)
 		loadHeader(taskPool);
 	else if(textureLoadingState == TextureLoadingState_InitTexture)
@@ -94,7 +95,6 @@ void BmpLoader::run(TaskPool* taskPool)
 
 void BmpLoader::loadHeader(TaskPool* taskPool)
 {
-	if(texture->state == Resource::Aborted) goto Abort;
 	if(!stream) stream = fileSystem.openFile(texture->uri());
 	if(!stream) {
 		roLog("error", "BmpLoader: Fail to open file '%s'\n", texture->uri().c_str());

@@ -7,7 +7,9 @@ using namespace ro;
 namespace ro {
 
 extern Resource* resourceCreateBmp(const char*, ResourceManager*);
+extern Resource* resourceCreateJpeg(const char*, ResourceManager*);
 extern bool resourceLoadBmp(Resource*, ResourceManager*);
+extern bool resourceLoadJpeg(Resource*, ResourceManager*);
 
 }
 
@@ -16,6 +18,7 @@ struct TextureLoaderTest : public GraphicsTestBase
 	TextureLoaderTest()
 	{
 		resourceManager.addFactory(resourceCreateBmp, resourceLoadBmp);
+		resourceManager.addFactory(resourceCreateJpeg, resourceLoadJpeg);
 	}
 };
 

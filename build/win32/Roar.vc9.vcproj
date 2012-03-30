@@ -527,6 +527,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\render\roJpegLoader.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\render\roRenderDriver.cpp"
 				>
 			</File>
