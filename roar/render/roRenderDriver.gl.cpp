@@ -950,22 +950,38 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 		mapInfo.glPbo = ctx->pixelBufferCache[(ctx->currentPixelBufferIndex++) % ctx->pixelBufferCache.size()];
 
 		if(usage & roRDriverMapUsage_Read) {
-			if(impl->format & roRDriverTextureFormat_Compressed) {
-				roLog("error", "mapTexture failed: trying to read a compressed texture, which is not supported\n");
-				return NULL;
-			}
-
 			glBindBuffer(GL_PIXEL_PACK_BUFFER, mapInfo.glPbo);
 			glBufferData(GL_PIXEL_PACK_BUFFER, sizeInBytes, NULL, GL_STREAM_READ);
 			glBindTexture(impl->glTarget, impl->glh);
 
-			// TODO: This is a blocking operation, try to invoke the stallCallback() if possible
-			glGetTexImage(
-				impl->glTarget,
-				mipIndex,
-				mapping->glFormat, mapping->glType,
-				0	// Offset to the texture
-			);
+			if(impl->format & roRDriverTextureFormat_Compressed) {
+				glGetCompressedTexImage(
+					impl->glTarget,
+					mipIndex,
+					0	// Offset to the texture
+				);
+			}
+			else {
+				glGetTexImage(
+					impl->glTarget,
+					mipIndex,
+					mapping->glFormat, mapping->glType,
+					0	// Offset to the texture
+				);
+			}
+
+			if(ctx->driver->stallCallback && glFenceSync) {
+				GLsync syn = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+				(*ctx->driver->stallCallback)(ctx->driver->stallCallbackUserData);
+				GLint status = 0;
+				GLsizei numReceived;
+
+				// Wait until the sync object signaled
+				while(glGetSynciv(syn, GL_SYNC_STATUS, 1, &numReceived, &status), status != GL_SIGNALED) {
+					(*ctx->driver->stallCallback)(ctx->driver->stallCallbackUserData);
+				}
+				glDeleteSync(syn);
+			}
 
 			ret = glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, sizeInBytes, _bufferRangeMapUsage[usage]);
 		}
