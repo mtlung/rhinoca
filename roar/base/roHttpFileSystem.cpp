@@ -283,7 +283,7 @@ static bool _blockTillReadable(HttpStream* s, roSize size)
 		if(httpFileSystemReadReady(s, size))
 			break;
 
-		TaskPool::sleep(0);	// TODO: Do something usefull here instead of sleep
+		TaskPool::sleep(0);	// TODO: Do something useful here instead of sleep
 		if(s->headerReceived)
 			continue;
 
@@ -291,6 +291,7 @@ static bool _blockTillReadable(HttpStream* s, roSize size)
 		timeout -= (float)s->stopWatch.getAndReset();
 		if(timeout <= 0) {
 			s->httpError = true;
+			roLog("warn", "Connection to %s time out\n", "http");	// TODO: Print out the URL
 			return false;
 		}
 	}

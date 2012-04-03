@@ -531,6 +531,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\render\roPngLoader.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\render\roRenderDriver.cpp"
 				>
 			</File>

@@ -4,7 +4,7 @@
 #include "../base/roFileSystem.h"
 #include "../base/roLog.h"
 #include "../base/roMemory.h"
-#include "../platform/roPlatformHeaders.h"
+#include "../base/roTypeOf.h"
 #include "../../thirdparty/SmallJpeg/jpegdecoder.h"
 
 #if roCOMPILER_VC
@@ -22,6 +22,7 @@ enum TextureLoadingState {
 	TextureLoadingState_Abort
 };
 
+// TODO: The class jpeg_decoder_stream didn't flexible enough to take advantage of our async file system
 class Stream : public jpeg_decoder_stream
 {
 public:
@@ -58,6 +59,7 @@ public:
 
 	~JpegLoader()
 	{
+		if(stream) fileSystem.closeFile(stream);
 		roFree(pixelData);
 		delete decoder;
 		delete jpegStream;
@@ -158,7 +160,10 @@ void JpegLoader::initTexture(TaskPool* taskPool)
 		return reSchedule(false, ~taskPool->mainThreadId());
 	}
 	else
-		textureLoadingState = TextureLoadingState_Abort;
+		goto Abort;
+
+Abort:
+	textureLoadingState = TextureLoadingState_Abort;
 }
 
 void JpegLoader::loadPixelData(TaskPool* taskPool)
@@ -185,7 +190,7 @@ void JpegLoader::loadPixelData(TaskPool* taskPool)
 
 			// Assign alpha to 1 for incoming is RGB
 			if(c == 3) for(char* end = p + scan_line_len; p < end; p += 4)
-				p[3] = (char)255;
+				p[3] = TypeOf<char>::valueMax();
 			else
 				p += decoder->get_bytes_per_scan_line();
 
@@ -197,21 +202,24 @@ void JpegLoader::loadPixelData(TaskPool* taskPool)
 			goto Abort;
 	}
 
-	fileSystem.closeFile(stream);
 	textureLoadingState = TextureLoadingState_Commit;
 	return reSchedule(false, taskPool->mainThreadId());
 
 Abort:
-	if(stream) fileSystem.closeFile(stream);
-	texture->state = Resource::Aborted;
+	textureLoadingState = TextureLoadingState_Abort;
 }
 
 void JpegLoader::commit(TaskPool* taskPool)
 {
-	if(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, 0, pixelData, 0, NULL))
+	if(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, 0, pixelData, 0, NULL)) {
 		textureLoadingState = TextureLoadingState_Finish;
+		return;
+	}
 	else
-		textureLoadingState = TextureLoadingState_Abort;
+		goto Abort;
+
+Abort:
+	textureLoadingState = TextureLoadingState_Abort;
 }
 
 bool resourceLoadJpeg(Resource* resource, ResourceManager* mgr)

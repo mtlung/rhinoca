@@ -9,8 +9,10 @@ namespace ro {
 
 extern Resource* resourceCreateBmp(const char*, ResourceManager*);
 extern Resource* resourceCreateJpeg(const char*, ResourceManager*);
+extern Resource* resourceCreatePng(const char*, ResourceManager*);
 extern bool resourceLoadBmp(Resource*, ResourceManager*);
 extern bool resourceLoadJpeg(Resource*, ResourceManager*);
+extern bool resourceLoadPng(Resource*, ResourceManager*);
 
 }
 
@@ -20,6 +22,7 @@ struct CanvasTest : public GraphicsTestBase
 	{
 		resourceManager.addFactory(resourceCreateBmp, resourceLoadBmp);
 		resourceManager.addFactory(resourceCreateJpeg, resourceLoadJpeg);
+		resourceManager.addFactory(resourceCreatePng, resourceLoadPng);
 	}
 
 	Canvas canvas;
@@ -40,7 +43,8 @@ TEST_FIXTURE(CanvasTest, drawImage)
 	canvas.init(context);
 
 	// Init texture
-	TexturePtr texture = resourceManager.loadAs<Texture>("EdSplash.jpg");
+//	TexturePtr texture = resourceManager.loadAs<Texture>("EdSplash.jpg");
+	TexturePtr texture = resourceManager.loadAs<Texture>("http://udn.epicgames.com/pub/webbg_udn.jpg");
 	CHECK(texture);
 
 	while(texture && keepRun()) {
