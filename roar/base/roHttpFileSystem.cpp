@@ -48,6 +48,15 @@ static String _encodeUrl(const char* uri)
 	return ret;
 }
 
+enum HttpState {
+	State_Error,
+	State_SendRequest,
+	State_ReadingResponse,
+	State_RecivedResponse,
+	State_ReadingChunkSize,
+	State_ReadReady,
+};
+
 /// Notes on http 1.0 protocol:
 /// Http 1.0 protocol contains an optional "Content-Length" attribute, but
 /// if it's not present, the end of the data will indicated by a graceful disconnection.
@@ -61,11 +70,12 @@ struct HttpStream
 	~HttpStream() { _allocator.free(buffer); }
 	BsdSocket socket;
 	char* buffer;
-	bool headerSent;
-	bool headerReceived;
-	bool httpError;
+	HttpState state;
+	bool chunked;
+	roSize chunkSizeToRead;
 	roSize bufSize;
 	roSize bufCapacity;
+	roSize nextTrunkSize;
 	roSize expectedTotalSize;	///< Rely on Content-Length, 
 	roSize userReadCount;		///< Amount of bytes consumed by httpFileSystemRead()
 	roSize lastReadSize;		///< Size of readable returned by httpFileSystemGetBuffer()
@@ -102,17 +112,18 @@ static bool prepareForRead(HttpStream* s, roSize readSize)
 	return true;
 }
 
-void* httpFileSystemOpenFile(const char* uri)
+static bool _parseUri(const char* uri, SockAddr& addr, Array<char>& host, String& requestStr)
 {
 	String _uri = _encodeUrl(uri);
 
 	// Parse http://host
-	Array<char> host;
 	Array<char> path;
 	host.resize(_uri.size(), 0);
 	path.resize(_uri.size(), 0);
-	if(sscanf(_uri.c_str(), "http://%[^/]%s", host.begin(), path.begin()) < 1)
-		return NULL;
+	if(sscanf(_uri.c_str(), "http://%[^/]%s", host.begin(), path.begin()) < 1) {
+		roLog("error", "Invalid uri: %s\n", _uri.c_str());
+		return false;
+	}
 
 	host.condense();
 	path.condense();
@@ -120,45 +131,73 @@ void* httpFileSystemOpenFile(const char* uri)
 	if(path[0] == '\0')
 		path.insert(0, '/');
 
+	// NOTE: Currently this host resolving operation is blocking
+	if(!addr.parse(host.begin(), 80)) {
+		roLog("error", "Fail to resolve host %s\n", host.begin());
+		return false;
+	}
+
 	const char getFmt[] =
-		"GET %s HTTP/1.0\r\n"
+		"GET %s HTTP/1.1\r\n"
 		"Host: %s\r\n"	// Required for http 1.1
 		"User-Agent: The Roar Engine\r\n"
 		"\r\n";
 
-    int ret = 0;
-	SockAddr adr;
+	requestStr.format(getFmt, path.begin(), host.begin());
+
+	return true;
+}
+
+static bool _makeConnection(HttpStream& s, const char* uri)
+{
+	SockAddr addr;
+	Array<char> host;
+	if(!_parseUri(uri, addr, host, s.getCmd)) {
+		s.state = State_Error;
+		goto Finally;
+	}
+
+	// Create socket
+	roVerify(s.socket.create(BsdSocket::TCP) == 0);
+	s.socket.setBlocking(false);
+
+	// Make connection
+	int ret = s.socket.connect(addr);
+	if(ret != 0 && !BsdSocket::inProgress(s.socket.lastError)) {
+		roLog("error", "Connection to %s failed\n", host.begin());
+		s.state = State_Error;
+	}
+
+Finally:
+	s.state = State_SendRequest;
+	s.chunked = false;
+	s.chunkSizeToRead = 0;
+	s.bufSize = 0;
+	s.bufCapacity = 0;
+	s.nextTrunkSize = 0;
+	s.expectedTotalSize = 0;
+
+	s.userReadCount = 0;
+	s.lastReadSize = 0;
+
+	return true;
+}
+
+static void _closeConnection(HttpStream& s)
+{
+	s.socket.close();
+}
+
+void* httpFileSystemOpenFile(const char* uri)
+{
 	AutoPtr<HttpStream> s = _allocator.newObj<HttpStream>();
 
-	s->getCmd.format(getFmt, path.begin(), host.begin());
+	if(!_makeConnection(*s, uri))
+		return NULL;
 
 	s->buffer = NULL;
-	s->headerSent = false;
-	s->headerReceived = false;
-	s->httpError = false;
-	s->bufSize = 0;
-	s->bufCapacity = 0;
-	s->expectedTotalSize = 0;
-
-	s->userReadCount = 0;
-	s->lastReadSize = 0;
-
-	// NOTE: Currently this host resolving operation is blocking
-	if(!adr.parse(host.begin(), 80))
-		goto OnError;
-
-	roVerify(s->socket.create(BsdSocket::TCP) == 0);
-	s->socket.setBlocking(false);
-
-	ret = s->socket.connect(adr);
-	if(ret != 0 && !BsdSocket::inProgress(s->socket.lastError))
-		goto OnError;
 
 	return s.unref();
-
-OnError:
-	roLog("error", "Connection to %s failed\n", host.begin());
-	return NULL;
 }
 
 bool httpFileSystemReadReady(void* file, roUint64 size)
@@ -166,15 +205,20 @@ bool httpFileSystemReadReady(void* file, roUint64 size)
 	roAssert(file);
 	roSize _size = clamp_cast<roSize>(size);
 
-    int ret = 0;
+	int ret = 0;
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
 
 	static const roSize headerBufSize = 128;
 
-	if(s->httpError)
-		goto OnError;
+ConnectionRestart:
 
-	if(!s->headerSent) {
+	while(s->state == State_Error)
+	{
+		goto OnError;
+	}
+
+	while(s->state == State_SendRequest)
+	{
 		ret = s->socket.send(s->getCmd.c_str(), s->getCmd.size());
 		if(ret < 0 && s->socket.lastError == ENOTCONN)
 			return false;
@@ -182,18 +226,17 @@ bool httpFileSystemReadReady(void* file, roUint64 size)
 		if(ret < 0 && !BsdSocket::inProgress(s->socket.lastError))
 			goto OnError;
 
-		s->headerSent = true;
+		s->state = State_ReadingResponse;
+		break;
 	}
 
-	if(!s->headerReceived) {
-		if(!prepareForRead(s, headerBufSize))
-			goto OnError;
-
+	while(s->state == State_ReadingResponse)
+	{
+		if(!prepareForRead(s, headerBufSize)) goto OnError;
 		ret = s->socket.receive(s->buffer + s->bufSize, headerBufSize);
-		if(ret < 0 && BsdSocket::inProgress(s->socket.lastError))
-			return false;
-		if(ret == 0)
-			goto OnEof;
+		if(ret < 0 && BsdSocket::inProgress(s->socket.lastError)) return false;
+		if(ret < 0) goto OnError;
+		if(ret == 0) goto OnEof;
 
 		s->bufSize += ret;
 
@@ -217,46 +260,107 @@ bool httpFileSystemReadReady(void* file, roUint64 size)
 		if(sscanf(s->buffer, "HTTP/%*c.%*c %d %*[^\n]", &serverRetCode) != 1)
 			goto OnError;
 
-		if( serverRetCode == 302 ||	// Found (http redirect)
-			serverRetCode == 200)	// Ok
+		if(serverRetCode == 302)	// Found (http redirect)
 		{
+			if(const char* p = roStrStr(s->buffer, "Location:")) {
+				char address[256];	// TODO: Not safe
+				if(sscanf(p, "Location:%*[ \t]%s", address) != 1)
+					goto OnError;
+
+				_closeConnection(*s);
+				if(!_makeConnection(*s, address))
+					goto OnError;
+
+				goto ConnectionRestart;
+			}
+
+			goto OnError;
+		}
+		else if(serverRetCode == 200)	// Ok
+		{
+			// See what's the encoding
+			if(const char* p = roStrStr(s->buffer, "Transfer-Encoding:")) {
+				char encoding[64];	// TODO: Not safe
+				if(sscanf(p, "Transfer-Encoding:%*[ \t]%s", encoding) != 1)
+					goto OnError;
+
+				s->chunked = roStrStr(encoding, "chunked") != NULL;
+			}
+
 			// Get the content length
 			if(const char* p = roStrStr(s->buffer, "Content-Length:")) {
-				if(sscanf(p, "Content-Length:%u", &s->expectedTotalSize) != 1)
+				if(sscanf(p, "Content-Length:%*[ \t]%u", &s->expectedTotalSize) != 1)
 					goto OnError;
 			}
 			else
 				s->expectedTotalSize = roSize(-1);
 
-			roSize bodySize = s->bufSize - (messageContent - s->buffer);
 			// Move the received (if any) body content to the beginning of our buffer
+			roSize bodySize = s->bufSize - (messageContent - s->buffer);
 			roMemmov(s->buffer, messageContent, bodySize);
 			s->bufSize = bodySize;
 
-			s->headerReceived = true;
+			if(s->chunked) {
+				s->state = State_ReadingChunkSize;
+				break;
+			}
+
+			s->state = State_ReadReady;
 		}
 		else
 		{
 			roLog("error", "Http stream receive server error code '%d'\n", serverRetCode);
 			goto OnError;
 		}
+
+		break;
+	}
+
+	while(s->state == State_ReadingChunkSize)
+	{
+		if(!prepareForRead(s, 16)) goto OnError;
+		ret = s->socket.receive(s->buffer + s->bufSize, 16);
+		if(ret < 0 && BsdSocket::inProgress(s->socket.lastError)) return false;
+		if(ret < 0) goto OnError;
+		if(ret == 0) goto OnEof;
+		s->bufSize += ret;
+
+		int count;
+		char n, r;
+		if(sscanf(s->buffer, "%x%c%c", &count, &n, &r) != 3)
+			return false;
+
+		if(count == 0)
+			goto OnEof;
+
+		s->chunkSizeToRead = count;
+
+		static const char chunkSizeTerminator[] = "\r\n";
+		static const roSize ignoreBeginningCRLF = 1;
+		char* messageContent = roStrStr(s->buffer + ignoreBeginningCRLF, chunkSizeTerminator);	// TODO: Avoid potential overrun of s->buffer
+		roAssert(messageContent);
+
+		messageContent += (sizeof(chunkSizeTerminator) - 1);	// -1 for the null terminator
+
+		// Move the received (if any) body content to the beginning of our buffer
+		roSize bodySize = s->bufSize - (messageContent - s->buffer);
+		roMemmov(s->buffer, messageContent, bodySize);
+		s->bufSize = bodySize;
+
+		s->state = State_ReadReady;
+		break;
 	}
 
 	if(s->bufSize >= _size)
 		return true;
 
-	roAssert(s->headerReceived);
+	roAssert(s->state > State_ReadingResponse);
 
-	if(!prepareForRead(s, _size - s->bufSize))
-		goto OnError;
+	if(!prepareForRead(s, _size - s->bufSize)) goto OnError;
 	ret = s->socket.receive(s->buffer + s->bufSize, _size - s->bufSize);
-	if(ret < 0 && BsdSocket::inProgress(s->socket.lastError))
-		return false;
-	if(ret < 0)
-		goto OnError;
-	if(ret == 0)
-		goto OnEof;
-
+	if(ret < 0 && BsdSocket::inProgress(s->socket.lastError)) return false;
+	if(ret < 0) goto OnError;
+	if(ret == 0) goto OnEof;
 	s->bufSize += ret;
 
 	return s->bufSize >= _size;
@@ -266,7 +370,7 @@ OnEof:
 
 OnError:
 	roLog("error", "read failed\n");
-	s->httpError = true;
+	s->state = State_Error;
 	return true;
 }
 
@@ -274,23 +378,23 @@ static bool _blockTillReadable(HttpStream* s, roSize size)
 {
 	if(size == 0) return true;
 	if(!prepareForRead(s, size)) {
-		s->httpError = true;
+		s->state = State_Error;
 		return false;
 	}
 
-	float timeout = 5;
-	while(!s->headerReceived || s->bufSize < size) {
+	float timeout = 10;
+	while(s->state != State_ReadReady || s->bufSize < size) {
 		if(httpFileSystemReadReady(s, size))
 			break;
 
-		TaskPool::sleep(0);	// TODO: Do something useful here instead of sleep
-		if(s->headerReceived)
+		TaskPool::sleep(0);	// TODO: Do something usefull here instead of sleep
+		if(s->state == State_ReadReady)
 			continue;
 
 		// Detect timeout for connecting to remote host
 		timeout -= (float)s->stopWatch.getAndReset();
 		if(timeout <= 0) {
-			s->httpError = true;
+			s->state = State_Error;
 			roLog("warn", "Connection to %s time out\n", "http");	// TODO: Print out the URL
 			return false;
 		}
@@ -305,13 +409,19 @@ roUint64 httpFileSystemRead(void* file, void* buffer, roUint64 size)
 	roSize _size = clamp_cast<roSize>(size);
 
 	if(!s || _size == 0) return 0;
-	if(s->httpError) return 0;
+	if(s->state == State_Error) return 0;
 	if(!_blockTillReadable(s, _size)) return 0;
 
-	if(!s->headerReceived) return 0;
+	if(s->state != State_ReadReady) return 0;
 	if(s->userReadCount >= s->expectedTotalSize) return 0;
 
-	roSize bytesToRead = roMinOf2(s->bufSize, _size);
+	roSize bytesToRead = roMinOf3(s->bufSize, _size, s->chunked ? s->chunkSizeToRead : _size);
+
+	if(s->chunked) {
+		s->chunkSizeToRead -= bytesToRead;
+		if(s->chunkSizeToRead == 0)
+			s->state = State_ReadingChunkSize;
+	}
 
 	// Copy s->buffer to destination
 	roMemcpy(buffer, s->buffer, bytesToRead);
@@ -327,7 +437,7 @@ roUint64 httpFileSystemRead(void* file, void* buffer, roUint64 size)
 roUint64 httpFileSystemSize(void* file)
 {
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
-	if(!s || s->httpError || !_blockTillReadable(s, 1)) return 0;
+	if(!s || s->state == State_Error || !_blockTillReadable(s, 1)) return 0;
 	return s->expectedTotalSize;
 }
 
@@ -345,7 +455,7 @@ void httpFileSystemCloseFile(void* file)
 roBytePtr httpFileSystemGetBuffer(void* file, roUint64 requestSize, roUint64& readableSize)
 {
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
-	if(!s || s->httpError || requestSize == 0) { readableSize = 0; return NULL; }
+	if(!s || s->state == State_Error || requestSize == 0) { readableSize = 0; return NULL; }
 	roSize bytesToRead = clamp_cast<roSize>(requestSize);
 
 	if(!_blockTillReadable(s, bytesToRead))
@@ -361,13 +471,13 @@ roBytePtr httpFileSystemGetBuffer(void* file, roUint64 requestSize, roUint64& re
 void httpFileSystemTakeBuffer(void* file)
 {
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
-	if(!s || s->httpError || s->lastReadSize == 0) return;
+	if(!s || s->state == State_Error || s->lastReadSize == 0) return;
 
 	roBytePtr newBuf = _allocator.malloc(s->bufCapacity);
 	s->buffer = newBuf;
 
 	if(!newBuf) {
-		s->httpError = true;
+		s->state = State_Error;
 		return;
 	}
 

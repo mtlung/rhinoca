@@ -421,11 +421,15 @@ ErrorCode BsdSocket::close()
 		return lastError = OK;
 
 #if roOS_WIN
-	if(::closesocket(fd()) == OK)
+	if(::closesocket(fd()) == OK) {
+		setFd(INVALID_SOCKET);
 		return lastError = OK;
+	}
 #else
-	if(::close(fd()) == OK)
+	if(::close(fd()) == OK) {
+		setFd(INVALID_SOCKET);
 		return lastError = OK;
+	}
 #endif
 
 #ifdef RHINOCA_WINDOWS
