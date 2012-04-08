@@ -114,9 +114,10 @@ void JpegLoader::run(TaskPool* taskPool)
 
 void JpegLoader::loadHeader(TaskPool* taskPool)
 {
-	if(!stream) stream = fileSystem.openFile(texture->uri());
-	if(!stream) {
-		roLog("error", "JpegLoader: Fail to open file '%s'\n", texture->uri().c_str());
+	Status st;
+	if(!stream) st = fileSystem.openFile(texture->uri(), stream);
+	if(!st) {
+		roLog("error", "JpegLoader: Fail to open file '%s', reason: %s\n", texture->uri().c_str(), st.c_str());
 		goto Abort;
 	}
 

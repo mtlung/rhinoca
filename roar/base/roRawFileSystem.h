@@ -5,7 +5,7 @@
 
 namespace ro {
 
-void*		rawFileSystemOpenFile		(const char* uri);
+Status	rawFileSystemOpenFile		(const char* uri, void*& outFile);
 bool		rawFileSystemReadReady		(void* file, roUint64 size);
 roUint64	rawFileSystemRead			(void* file, void* buffer, roUint64 size);
 roUint64	rawFileSystemSize			(void* file);

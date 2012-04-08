@@ -98,10 +98,12 @@ void TextLoader::commit(TaskPool* taskPool)
 
 void TextLoader::load(TaskPool* taskPool)
 {
+	Status st;
+
 	if(text->state == Resource::Aborted) goto Abort;
-	if(!stream) stream = fileSystem.openFile(text->uri());
-	if(!stream) {
-		rhLog("error", "TextLoader: Fail to open file '%s'\n", text->uri().c_str());
+	if(!stream) st= fileSystem.openFile(text->uri(), stream);
+	if(!st) {
+		rhLog("error", "TextLoader: Fail to open file '%s', reason %s\n", text->uri().c_str(), st.c_str());
 		goto Abort;
 	}
 

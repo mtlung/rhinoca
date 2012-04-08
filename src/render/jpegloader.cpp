@@ -82,14 +82,15 @@ void JpegLoader::run(TaskPool* taskPool)
 
 void JpegLoader::load(TaskPool* taskPool)
 {
-	texture->scratch = this;
-
+	Status st;
 	void* f = NULL;
 
+	texture->scratch = this;
 	if(texture->state == Resource::Aborted) goto Abort;
-	f = fileSystem.openFile(texture->uri());
-	if(!f) {
-		rhLog("error", "JpegLoader: Fail to open file '%s'\n", texture->uri().c_str());
+
+	st = fileSystem.openFile(texture->uri(), f);
+	if(!st) {
+		rhLog("error", "JpegLoader: Fail to open file '%s', reason: %s\n", texture->uri().c_str(), st.c_str());
 		goto Abort;
 	}
 

@@ -89,10 +89,12 @@ void WaveLoader::run(TaskPool* taskPool)
 
 void WaveLoader::loadHeader()
 {
+	Status st;
+
 	if(buffer->state == Resource::Aborted) goto Abort;
-	if(!stream) stream = fileSystem.openFile(buffer->uri());
-	if(!stream) {
-		rhLog("error", "WaveLoader: Fail to open file '%s'\n", buffer->uri().c_str());
+	if(!stream) st = fileSystem.openFile(buffer->uri(), stream);
+	if(!st) {
+		rhLog("error", "WaveLoader: Fail to open file '%s', reason: %s\n", buffer->uri().c_str(), st.c_str());
 		goto Abort;
 	}
 

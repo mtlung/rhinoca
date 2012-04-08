@@ -133,9 +133,10 @@ void PngLoader::run(TaskPool* taskPool)
 		textureLoadingState = TextureLoadingState_Abort;
 	else do
 	{
-		if(!stream) stream = fileSystem.openFile(texture->uri());
-		if(!stream) {
-			roLog("error", "PngLoader: Fail to open file '%s'\n", texture->uri().c_str());
+		Status st;
+		if(!stream) st = fileSystem.openFile(texture->uri(), stream);
+		if(!st) {
+			roLog("error", "PngLoader: Fail to open file '%s', reason: %s\n", texture->uri().c_str(), st.c_str());
 			textureLoadingState = TextureLoadingState_Abort;
 			break;
 		}

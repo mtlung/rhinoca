@@ -15,10 +15,9 @@ struct _CompoundFSContext
 	FileSystem* fsImpl;
 };
 
-void* _compoundFSOpenFile(const char* uri)
+Status _compoundFSOpenFile(const char* uri, void*& outFile)
 {
-	if(!uri || uri[0] == '\0')
-		return NULL;
+	if(!uri || uri[0] == '\0') return Status::invalid_parameter;
 
 	_CompoundFSContext ctx = { NULL, NULL };
 
@@ -27,9 +26,10 @@ void* _compoundFSOpenFile(const char* uri)
 	else
 		ctx.fsImpl = &rawFileSystem;
 
-	ctx.impl = ctx.fsImpl->openFile(uri);
+	Status st = ctx.fsImpl->openFile(uri, ctx.impl); if(!st) return st;
 
-	return ctx.impl ? _allocator.newObj<_CompoundFSContext>(ctx).unref() : NULL;
+	outFile = _allocator.newObj<_CompoundFSContext>(ctx).unref();
+	return Status::ok;
 }
 
 bool _compoundFSReadReady(void* file, roUint64 size)

@@ -3,8 +3,6 @@
 
 #include "../platform/roCompiler.h"
 
-namespace ro {
-
 struct Status
 {
 	Status()					{ _code = undefined; }
@@ -41,7 +39,5 @@ inline const char* Status::c_str() const
 	}
 	return "unknown";
 }
-
-}	// namespace ro
 
 #endif	// __roStatus_h__

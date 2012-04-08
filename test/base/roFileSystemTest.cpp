@@ -2,6 +2,7 @@
 #include "../../roar/base/roRawFileSystem.h"
 #include "../../roar/base/roHttpFileSystem.h"
 #include "../../roar/base/roStringUtility.h"
+#include "../../roar/base/roString.h"
 
 using namespace ro;
 
@@ -9,7 +10,9 @@ struct FileSystemTest {};
 
 TEST_FIXTURE(FileSystemTest, defaultFS)
 {
-	void* file = fileSystem.openFile("Test.vc9.vcproj");
+	void* file = NULL;
+	Status st = fileSystem.openFile("Test.vc9.vcproj", file);
+	CHECK(st);
 	CHECK(file);
 
 	roUint64 size = fileSystem.size(file);
@@ -20,11 +23,13 @@ TEST_FIXTURE(FileSystemTest, defaultFS)
 
 TEST_FIXTURE(FileSystemTest, rawFS_getBuffer)
 {
-	void* file = rawFileSystemOpenFile("Non-existing file");
+	void* file = NULL;
+	Status st = rawFileSystemOpenFile("Non-existing file", file);
+	CHECK(!st);
 	CHECK(!file);
 
-	file = rawFileSystemOpenFile("Test.vc9.vcproj");
-	if(!file)
+	st = rawFileSystemOpenFile("Test.vc9.vcproj", file);
+	if(!st)
 		return;
 
 	roUint64 size;
@@ -66,9 +71,10 @@ TEST_FIXTURE(FileSystemTest, rawFS_directoryListing)
 
 TEST_FIXTURE(FileSystemTest, httpFS_read)
 {
-	return;	// Enable when needed
+//	return;	// Enable when needed
 
-	void* file = httpFileSystemOpenFile("http://www.google.com/");
+	void* file = NULL;
+	Status st = httpFileSystemOpenFile("http://www.google.com/", file);
 
 	roUint64 size = httpFileSystemSize(file);
 	CHECK(size > 0);
@@ -85,9 +91,10 @@ TEST_FIXTURE(FileSystemTest, httpFS_read)
 
 TEST_FIXTURE(FileSystemTest, httpFS_getBuffer)
 {
-	return;	// Enable when needed
+//	return;	// Enable when needed
 
-	void* file = httpFileSystemOpenFile("http://www.cplusplus.com/");
+	void* file = NULL;
+	Status st = httpFileSystemOpenFile("http://www.cplusplus.com/", file);
 
 	roUint64 readCount;
 	roBytePtr p1 = httpFileSystemGetBuffer(file, httpFileSystemSize(file) / 2, readCount);

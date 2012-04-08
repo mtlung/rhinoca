@@ -26,9 +26,9 @@ struct _RawFile {
 	roSize readable;
 };
 
-void* rawFileSystemOpenFile(const char* uri)
+Status rawFileSystemOpenFile(const char* uri, void*& outFile)
 {
-	if(!uri) return NULL;
+	if(!uri) return Status::invalid_parameter;
 
 	Array<roUint16> wstr;
 	{	roSize len = 0;
@@ -39,11 +39,16 @@ void* rawFileSystemOpenFile(const char* uri)
 	}
 
 	HANDLE h = CreateFileW((wchar_t*)wstr.typedPtr(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
-	if(h == INVALID_HANDLE_VALUE)
-		return NULL;
+	if(h == INVALID_HANDLE_VALUE) {
+		if(GetLastError() == ERROR_FILE_NOT_FOUND)
+			return Status::file_not_found;
+		return Status::file_error;
+	}
 
 	_RawFile ret = { h, false, {0}, NULL, 0, 0, 0 };
-	return _allocator.newObj<_RawFile>(ret).unref();
+	outFile = _allocator.newObj<_RawFile>(ret).unref();
+
+	return Status::ok;
 }
 
 bool rawFileSystemReadReady(void* file, roUint64 size)
@@ -204,13 +209,15 @@ struct _RawFile {
 	roSize bufSize;
 };
 
-void* rawFileSystemOpenFile(const char* uri)
+Status rawFileSystemOpenFile(const char* uri, void*& outFile)
 {
-	if(!uri) return NULL;
+	if(!uri) return Status::invalid_parameter;
 
 	_RawFile ret = { fopen(uri, "rb"), NULL, 0 };
-	if(!ret.file) return NULL;
-	return _allocator.newObj<_RawFile>(ret).unref();
+	if(!ret.file) Status::file_not_found;
+	outFile = _allocator.newObj<_RawFile>(ret).unref();
+
+	return Status::ok;
 }
 
 bool rawFileSystemReadReady(void* file, roUint64 size)

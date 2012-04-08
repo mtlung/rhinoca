@@ -89,10 +89,12 @@ void BmpLoader::commit(TaskPool* taskPool)
 
 void BmpLoader::loadHeader()
 {
+	Status st;
+
 	if(texture->state == Resource::Aborted) goto Abort;
-	if(!stream) stream = fileSystem.openFile(texture->uri());
-	if(!stream) {
-		rhLog("error", "BmpLoader: Fail to open file '%s'\n", texture->uri().c_str());
+	if(!stream) st = fileSystem.openFile(texture->uri(), stream);
+	if(!st) {
+		rhLog("error", "BmpLoader: Fail to open file '%s', reason: %s\n", texture->uri().c_str(), st.c_str());
 		goto Abort;
 	}
 

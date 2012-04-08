@@ -12,7 +12,7 @@ struct Serializer
 {
 	Serializer();
 
-	void	setBuf	(ByteArray* buf);
+	void		setBuf	(ByteArray* buf);
 	Status	ioRaw	(roBytePtr p, roSize size);
 
 	template<class T> Status io(T& value)		{ return serializeIo(*this, value); }
@@ -20,7 +20,7 @@ struct Serializer
 
 // Private
 	Status	_checkRemain(roSize size);
-	void	_advance	(roSize size);
+	void		_advance	(roSize size);
 
 	ByteArray* _buf;
 	roBytePtr _w;
@@ -32,7 +32,7 @@ struct Deserializer
 {
 	Deserializer();
 
-	void	setBuf	(ByteArray* buf);
+	void		setBuf	(ByteArray* buf);
 	Status	ioRaw	(roBytePtr p, roSize size);
 
 	template<class T> Status io(T& value)		{ return serializeIo(*this, value); }
@@ -40,7 +40,7 @@ struct Deserializer
 
 // Private
 	Status	_checkRemain(roSize size);
-	void	_advance	(roSize size);
+	void		_advance	(roSize size);
 
 	ByteArray* _buf;
 	roBytePtr _r;

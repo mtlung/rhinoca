@@ -141,6 +141,7 @@ static bool _parseUri(const char* uri, SockAddr& addr, Array<char>& host, String
 		"GET %s HTTP/1.1\r\n"
 		"Host: %s\r\n"	// Required for http 1.1
 		"User-Agent: The Roar Engine\r\n"
+		"Range: bytes=0-64\r\n"
 		"\r\n";
 
 	requestStr.format(getFmt, path.begin(), host.begin());
@@ -148,13 +149,23 @@ static bool _parseUri(const char* uri, SockAddr& addr, Array<char>& host, String
 	return true;
 }
 
-static bool _makeConnection(HttpStream& s, const char* uri)
+static Status _makeConnection(HttpStream& s, const char* uri)
 {
+	s.state = State_SendRequest;
+	s.chunked = false;
+	s.chunkSizeToRead = 0;
+	s.bufSize = 0;
+	s.bufCapacity = 0;
+	s.nextTrunkSize = 0;
+	s.expectedTotalSize = 0;
+	s.userReadCount = 0;
+	s.lastReadSize = 0;
+
 	SockAddr addr;
 	Array<char> host;
 	if(!_parseUri(uri, addr, host, s.getCmd)) {
 		s.state = State_Error;
-		goto Finally;
+		return Status::http_invalid_uri;
 	}
 
 	// Create socket
@@ -166,21 +177,10 @@ static bool _makeConnection(HttpStream& s, const char* uri)
 	if(ret != 0 && !BsdSocket::inProgress(s.socket.lastError)) {
 		roLog("error", "Connection to %s failed\n", host.begin());
 		s.state = State_Error;
+		return Status::http_error;
 	}
 
-Finally:
-	s.state = State_SendRequest;
-	s.chunked = false;
-	s.chunkSizeToRead = 0;
-	s.bufSize = 0;
-	s.bufCapacity = 0;
-	s.nextTrunkSize = 0;
-	s.expectedTotalSize = 0;
-
-	s.userReadCount = 0;
-	s.lastReadSize = 0;
-
-	return true;
+	return Status::ok;
 }
 
 static void _closeConnection(HttpStream& s)
@@ -188,16 +188,15 @@ static void _closeConnection(HttpStream& s)
 	s.socket.close();
 }
 
-void* httpFileSystemOpenFile(const char* uri)
+Status httpFileSystemOpenFile(const char* uri, void*& outFile)
 {
 	AutoPtr<HttpStream> s = _allocator.newObj<HttpStream>();
 
-	if(!_makeConnection(*s, uri))
-		return NULL;
+	Status st = _makeConnection(*s, uri); if(!st) return st;
 
 	s->buffer = NULL;
-
-	return s.unref();
+	outFile = s.unref();
+	return Status::ok;
 }
 
 bool httpFileSystemReadReady(void* file, roUint64 size)
@@ -260,23 +259,7 @@ ConnectionRestart:
 		if(sscanf(s->buffer, "HTTP/%*c.%*c %d %*[^\n]", &serverRetCode) != 1)
 			goto OnError;
 
-		if(serverRetCode == 302)	// Found (http redirect)
-		{
-			if(const char* p = roStrStr(s->buffer, "Location:")) {
-				char address[256];	// TODO: Not safe
-				if(sscanf(p, "Location:%*[ \t]%s", address) != 1)
-					goto OnError;
-
-				_closeConnection(*s);
-				if(!_makeConnection(*s, address))
-					goto OnError;
-
-				goto ConnectionRestart;
-			}
-
-			goto OnError;
-		}
-		else if(serverRetCode == 200)	// Ok
+		if(serverRetCode == 200)	// Ok
 		{
 			// See what's the encoding
 			if(const char* p = roStrStr(s->buffer, "Transfer-Encoding:")) {
@@ -306,6 +289,26 @@ ConnectionRestart:
 			}
 
 			s->state = State_ReadReady;
+		}
+		if(serverRetCode == 206)		// Partial Content
+		{
+			serverRetCode = 206;
+		}
+		else if(serverRetCode == 302)	// Found (http redirect)
+		{
+			if(const char* p = roStrStr(s->buffer, "Location:")) {
+				char address[256];	// TODO: Not safe
+				if(sscanf(p, "Location:%*[ \t]%s", address) != 1)
+					goto OnError;
+
+				_closeConnection(*s);
+				if(!_makeConnection(*s, address))
+					goto OnError;
+
+				goto ConnectionRestart;
+			}
+
+			goto OnError;
 		}
 		else
 		{
@@ -393,11 +396,11 @@ static bool _blockTillReadable(HttpStream* s, roSize size)
 
 		// Detect timeout for connecting to remote host
 		timeout -= (float)s->stopWatch.getAndReset();
-		if(timeout <= 0) {
+/*		if(timeout <= 0) {
 			s->state = State_Error;
 			roLog("warn", "Connection to %s time out\n", "http");	// TODO: Print out the URL
 			return false;
-		}
+		}*/
 	}
 
 	return true;

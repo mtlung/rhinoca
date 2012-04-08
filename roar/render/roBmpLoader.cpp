@@ -95,9 +95,10 @@ void BmpLoader::run(TaskPool* taskPool)
 
 void BmpLoader::loadHeader(TaskPool* taskPool)
 {
-	if(!stream) stream = fileSystem.openFile(texture->uri());
-	if(!stream) {
-		roLog("error", "BmpLoader: Fail to open file '%s'\n", texture->uri().c_str());
+	Status st;
+	if(!stream) st = fileSystem.openFile(texture->uri(), stream);
+	if(!st) {
+		roLog("error", "BmpLoader: Fail to open file '%s', reason: %s\n", texture->uri().c_str(), st.c_str());
 		goto Abort;
 	}
 

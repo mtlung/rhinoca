@@ -211,8 +211,9 @@ bool Rhinoca::openDoucment(const char* uri)
 	String html;
 
 	{	// Reads the html file into memory
-		void* file = fileSystem.openFile(uri);
-		if(!file) return false;
+		void* file = NULL;
+		Status st = fileSystem.openFile(uri, file);
+		if(!st) return false;
 		appendFileToString(file, html);
 		fileSystem.closeFile(file);
 	}

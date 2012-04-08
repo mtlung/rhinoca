@@ -2,6 +2,7 @@
 #define __roFileSystem_h__
 
 #include "roBytePtr.h"
+#include "roStatus.h"
 
 namespace ro {
 
@@ -14,7 +15,7 @@ struct FileSystem
 	};
 
 // File read operations
-	void*		(*openFile)		(const char* uri);
+	Status		(*openFile)		(const char* uri, void*& outFile);
 	bool		(*readReady)	(void* file, roUint64 size);
 	roUint64	(*read)			(void* file, void* buffer, roUint64 size);
 	roUint64	(*size)			(void* file);										///< Returns roUint64(-1) if the file size is unknown.
