@@ -3,27 +3,34 @@
 
 #include "../platform/roCompiler.h"
 
+// Some marcos to simplify error handling
+#define roEXCP_TRY bool _roExcp_has_throw = false; do {
+#define roEXCP_THROW {_roExcp_has_throw = true; goto roEXCP_CATCH_LABEL;}
+#define roEXCP_CATCH } while(false); roEXCP_CATCH_LABEL:if(_roExcp_has_throw) {
+#define roEXCP_END }
+
 struct Status
 {
-	Status()					{ _code = undefined; }
-	Status(const Status& rhs)	{ _code = rhs._code; }
-	Status(int n)				{ _code = n; }
-
-	operator	bool() const	{ return _code >= 0; }
-	int			code() const	{ return _code; }
-	const char*	c_str() const;
-
-	enum {
+	enum Code {
 		ok = 0,
 #define roStatusEnum(n) n,
-		_std_start = -9000,	// Standard error -9000 ~ -8001
+		_std_start = 8000,	// Standard error -9000 ~ -8001
 #include "roStatusEnum.h"
-		_std_end = -8001,
+		_std_end = 9001,
 #undef roStatusEnum
 	};
 
-private:
-	int _code;
+	Status()					{ _code = undefined; }
+	Status(const Status& rhs)	{ _code = rhs._code; }
+	Status(Code n)				{ _code = n; }
+
+	operator	bool() const	{ return _code <= 0; }
+	const char*	c_str() const;
+
+	bool operator==(Code c) const{ return _code == c; }
+	bool operator!=(Code c) const{ return _code != c; }
+
+	Code _code;
 	operator int()  const;
 };
 

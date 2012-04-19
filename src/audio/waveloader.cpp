@@ -102,24 +102,25 @@ void WaveLoader::loadHeader()
 		char chunkId[5] = {0};
 		rhint32 chunkSize;
 
-		if(!fileSystem.readReady(stream, sizeof(chunkId) + sizeof(chunkSize) + sizeof(WaveFormatExtensible)))
+		if(fileSystem.readWillBlock(stream, sizeof(chunkId) + sizeof(chunkSize) + sizeof(WaveFormatExtensible)))
 			return reSchedule();
 
-		if(	fileSystem.read(stream, chunkId, 4) != 4 ||
-			fileSystem.read(stream, &chunkSize, sizeof(rhint32)) != sizeof(rhint32))
-		{
-			rhLog("error", "WaveLoader: End of file, fail to load header\n");
-			goto Abort;
-		}
+		Status st = fileSystem.atomicRead(stream, chunkId, 4);
+		if(!st) goto Abort;
+
+		st = fileSystem.atomicRead(stream, &chunkSize, sizeof(rhint32));
+		if(!st) goto Abort;
 
 		if(roStrCaseCmp(chunkId, "RIFF") == 0)
 		{
 			char format[5] = {0};
-			roVerify(fileSystem.read(stream, format, 4) == 4);
+			st = fileSystem.atomicRead(stream, format, 4);
+			if(!st) goto Abort;
 		}
 		else if(roStrCaseCmp(chunkId, "FMT ") == 0)
 		{
-			roVerify(fileSystem.read(stream, &format, chunkSize) == chunkSize);
+			st = fileSystem.atomicRead(stream, &format, chunkSize);
+			if(!st) goto Abort;
 		}
 		else if(roStrCaseCmp(chunkId, "DATA") == 0)
 		{
@@ -158,7 +159,7 @@ void WaveLoader::loadData()
 	if(buffer->state == Resource::Aborted) goto Abort;
 	if(!stream) goto Abort;
 
-	if(!fileSystem.readReady(stream, dataChunkSize))
+	if(fileSystem.readWillBlock(stream, dataChunkSize))
 		return reSchedule();
 
 	{	unsigned end = dataChunkSize / format.format.blockAlign;
@@ -167,11 +168,8 @@ void WaveLoader::loadData()
 
 		roAssert(bytesToWrite == dataChunkSize);
 
-		if(fileSystem.read(stream, bufferData, dataChunkSize) != dataChunkSize)
-		{
-			rhLog("error", "WaveLoader: End of file, only partial load of audio data\n");
-			goto Abort;
-		}
+		Status st = fileSystem.atomicRead(stream, bufferData, dataChunkSize);
+		if(!st) goto Abort;
 
 		buffer->commitWriteForRange(0, dataChunkSize / format.format.blockAlign);
 		buffer->state = Resource::Loaded;

@@ -5,6 +5,7 @@
 #include "../platform.h"
 #include "../../thirdparty/png/png.h"
 #include "../../roar/base/roFileSystem.h"
+#include "../../roar/base/roTypeCast.h"
 
 #ifdef RHINOCA_VC
 #	pragma comment(lib, "png")
@@ -177,40 +178,40 @@ void PngLoader::load(TaskPool* taskPool)
 {
 	Status st;
 
-	if(texture->state == Resource::Aborted) goto Abort;
+roEXCP_TRY
+	if(texture->state == Resource::Aborted) roEXCP_THROW;
 	if(!stream) st = fileSystem.openFile(texture->uri(), stream);
-	if(!st) {
-		rhLog("error", "PngLoader: Fail to open file '%s', reason: %s\n", texture->uri().c_str(), st.c_str());
-		goto Abort;
-	}
+	if(!st) roEXCP_THROW;
 
 	char buff[1024*8];
-	unsigned readCount = 0;
+	roUint64 bytesRead = 0;
 
 	// Jump to here if any error occur in png_process_data
-	if(setjmp(png_jmpbuf(png_ptr)))
-		goto Abort;
+	if(setjmp(png_jmpbuf(png_ptr))) { st = Status::image_png_error; roEXCP_THROW; }
 
 	do {
-		if(!fileSystem.readReady(stream, sizeof(buff))) {
+		if(fileSystem.readWillBlock(stream, sizeof(buff))) {
 			// Re-schedule the load operation
 			reSchedule();
 			return;
 		}
 
-		readCount = (unsigned)fileSystem.read(stream, buff, sizeof(buff));
-		png_process_data(png_ptr, info_ptr, (png_bytep)buff, readCount);
+		st = fileSystem.read(stream, buff, sizeof(buff), bytesRead);
+		if(!st && st != Status::end_of_data) roEXCP_THROW;
 
-		if(_aborted) goto Abort;
-	} while(readCount > 0 && !_loadFinished);
+		png_process_data(png_ptr, info_ptr, (png_bytep)buff, num_cast<unsigned>(bytesRead));
+
+		if(_aborted) roEXCP_THROW;
+	} while(bytesRead > 0 && !_loadFinished);
 
 	texture->scratch = this;
 
-	return;
-
-Abort:
+roEXCP_CATCH
+	texture->scratch = this;
 	texture->state = Resource::Aborted;
-	texture->scratch = this;
+	rhLog("error", "PngLoader: Fail to open file '%s', reason: %s\n", texture->uri().c_str(), st.c_str());
+
+roEXCP_END
 }
 
 void PngLoader::commit(TaskPool* taskPool)

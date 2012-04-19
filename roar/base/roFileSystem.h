@@ -16,10 +16,11 @@ struct FileSystem
 
 // File read operations
 	Status		(*openFile)		(const char* uri, void*& outFile);
-	bool		(*readReady)	(void* file, roUint64 size);
-	roUint64	(*read)			(void* file, void* buffer, roUint64 size);
-	roUint64	(*size)			(void* file);										///< Returns roUint64(-1) if the file size is unknown.
-	int			(*seek)			(void* file, roUint64 offset, SeekOrigin origin);	///< Returns 1 for success, 0 for fail, -1 not supported.
+	bool		(*readWillBlock)(void* file, roUint64 bytesToRead);
+	Status		(*read)			(void* file, void* buffer, roUint64 bytesToRead, roUint64& bytesRead);
+	Status		(*atomicRead)	(void* file, void* buffer, roUint64 bytesToRead);
+	Status		(*size)			(void* file, roUint64& bytes);
+	Status		(*seek)			(void* file, roUint64 offset, SeekOrigin origin);
 	void		(*closeFile)	(void* file);
 
 	roBytePtr	(*getBuffer)	(void* file, roUint64 requestSize, roUint64& readableSizeLEqRequest);	///< If fail, readableSize (<= requestSize) will be zero but may/may-not return NULL.

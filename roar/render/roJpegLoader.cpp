@@ -4,6 +4,7 @@
 #include "../base/roFileSystem.h"
 #include "../base/roLog.h"
 #include "../base/roMemory.h"
+#include "../base/roTypeCast.h"
 #include "../base/roTypeOf.h"
 #include "../../thirdparty/SmallJpeg/jpegdecoder.h"
 
@@ -30,10 +31,11 @@ public:
 
 	int read(uchar* Pbuf, int max_bytes_to_read, bool* Peof_flag)
 	{
-		int readCount = (int)fileSystem.read(file, (char*)Pbuf, max_bytes_to_read);
-		*Peof_flag = (readCount == 0);
+		roUint64 bytesRead = 0;
+		fileSystem.read(file, (char*)Pbuf, max_bytes_to_read, bytesRead);
+		*Peof_flag = (bytesRead == 0);
 
-		return readCount;
+		return num_cast<int>(bytesRead);
 	}
 
 	void* file;
@@ -115,23 +117,15 @@ void JpegLoader::run(TaskPool* taskPool)
 void JpegLoader::loadHeader(TaskPool* taskPool)
 {
 	Status st;
+
+roEXCP_TRY
 	if(!stream) st = fileSystem.openFile(texture->uri(), stream);
-	if(!st) {
-		roLog("error", "JpegLoader: Fail to open file '%s', reason: %s\n", texture->uri().c_str(), st.c_str());
-		goto Abort;
-	}
+	if(!st) roEXCP_THROW;
 
 	decoder = new jpeg_decoder(jpegStream = new Stream(stream), true);
 
-	if(decoder->get_error_code() != JPGD_OKAY) {
-		roLog("error", "JpegLoader: load error, operation aborted\n");
-		goto Abort;
-	}
-
-	if(decoder->begin() != JPGD_OKAY) {
-		roLog("error", "JpegLoader: load error, operation aborted\n");
-		goto Abort;
-	}
+	if(decoder->get_error_code() != JPGD_OKAY) { st = Status::image_jpeg_error; roEXCP_THROW; }
+	if(decoder->begin() != JPGD_OKAY) { st = Status::image_jpeg_error; roEXCP_THROW; }
 
 	int c = decoder->get_num_components();
 	if(c == 1)
@@ -139,8 +133,7 @@ void JpegLoader::loadHeader(TaskPool* taskPool)
 	else if(c == 3)
 		pixelDataFormat = roRDriverTextureFormat_RGBA;	// Note that the source format is 4 byte even c == 3
 	else {
-		roLog("error", "JpegLoader: image with number of color component equals to %i is not supported, operation aborted\n", c);
-		goto Abort;
+		st = Status::image_jpeg_channel_count_not_supported; roEXCP_THROW;
 	}
 
 	width = decoder->get_width();
@@ -149,8 +142,11 @@ void JpegLoader::loadHeader(TaskPool* taskPool)
 	textureLoadingState = TextureLoadingState_InitTexture;
 	return reSchedule(false, taskPool->mainThreadId());
 
-Abort:
+roEXCP_CATCH
+	roLog("error", "JpegLoader: Fail to load '%s', reason: %s\n", texture->uri().c_str(), st.c_str());
 	textureLoadingState = TextureLoadingState_Abort;
+
+roEXCP_END
 }
 
 void JpegLoader::initTexture(TaskPool* taskPool)
@@ -169,15 +165,15 @@ Abort:
 
 void JpegLoader::loadPixelData(TaskPool* taskPool)
 {
+	Status st;
+
+roEXCP_TRY
 	roAssert(!pixelData);
 	rowBytes = decoder->get_bytes_per_scan_line();
 	pixelDataSize = rowBytes * height;
 	pixelData = roMalloc(pixelDataSize);
 
-	if(!pixelData) {
-		roLog("error", "JpegLoader: Corruption of file or not enough memory, operation aborted\n");
-		goto Abort;
-	}
+	if(!pixelData) { st = Status::not_enough_memory; roEXCP_THROW; }
 
 	void* Pscan_line_ofs = NULL;
 	uint scan_line_len = 0;
@@ -199,15 +195,19 @@ void JpegLoader::loadPixelData(TaskPool* taskPool)
 		}
 		else if(result == JPGD_DONE)
 			break;
-		else
-			goto Abort;
+		else {
+			st = Status::image_jpeg_error; roEXCP_THROW;
+		}
 	}
 
 	textureLoadingState = TextureLoadingState_Commit;
 	return reSchedule(false, taskPool->mainThreadId());
 
-Abort:
+roEXCP_CATCH
+	roLog("error", "JpegLoader: Fail to load '%s', reason: %s\n", texture->uri().c_str(), st.c_str());
 	textureLoadingState = TextureLoadingState_Abort;
+
+roEXCP_END
 }
 
 void JpegLoader::commit(TaskPool* taskPool)

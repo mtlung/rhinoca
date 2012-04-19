@@ -168,12 +168,12 @@ void TrueTypeFontLoader::load()
 	}
 
 	// TODO: It would be much more efficient if we can know the file size in advance
-	while(unsigned read = (unsigned)fileSystem.read(stream, p, bufIncSize)) {
+/*	while(unsigned read = (unsigned)fileSystem.read(stream, p, bufIncSize)) {
 		buf = (rhbyte*)rhinoca_realloc(buf, bufSize, bufSize + read);
 		size += read;
 		bufSize += read;
 		p = buf + size;
-	}
+	}*/
 
 	if(size == 0 || !impl->create(buf, size)) goto Abort;
 

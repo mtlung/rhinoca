@@ -20,6 +20,7 @@
 #include "render/texture.h"
 #include "../roar/base/roFileSystem.h"
 #include "../roar/base/roLog.h"
+#include "../roar/base/roTypeCast.h"
 
 #ifdef RHINOCA_IOS
 #	include "context_ios.h"
@@ -189,9 +190,9 @@ void Rhinoca::_initGlobal()
 static void appendFileToString(void* file, String& str)
 {
 	char buf[128];
-	rhuint64 readCount;
-	while((readCount = fileSystem.read(file, buf, sizeof(buf))))
-		str.append(buf, (size_t)readCount);
+	rhuint64 bytesRead = 0;
+	while(fileSystem.read(file, buf, sizeof(buf), bytesRead))
+		str.append(buf, num_cast<size_t>(bytesRead));
 }
 
 unsigned countNewline(const char* str, const char* end)

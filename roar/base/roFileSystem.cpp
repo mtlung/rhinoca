@@ -32,27 +32,38 @@ Status _compoundFSOpenFile(const char* uri, void*& outFile)
 	return Status::ok;
 }
 
-bool _compoundFSReadReady(void* file, roUint64 size)
+bool _compoundFSReadWillBlock(void* file, roUint64 size)
 {
 	_CompoundFSContext* c = (_CompoundFSContext*)file;
-	return c->fsImpl->readReady(c->impl, size);
+	if(!c) return false;
+	return c->fsImpl->readWillBlock(c->impl, size);
 }
 
-roUint64 _compoundFSRead(void* file, void* buffer, roUint64 size)
+Status _compoundFSRead(void* file, void* buffer, roUint64 size, roUint64& bytesRead)
 {
 	_CompoundFSContext* c = (_CompoundFSContext*)file;
-	return c->fsImpl->read(c->impl, buffer, size);
+	if(!c) return Status::invalid_parameter;
+	return c->fsImpl->read(c->impl, buffer, size, bytesRead);
 }
 
-roUint64 _compoundFSSize(void* file)
+Status _compoundFSAtomicRead(void* file, void* buffer, roUint64 size)
 {
 	_CompoundFSContext* c = (_CompoundFSContext*)file;
-	return c->fsImpl->size(c->impl);
+	if(!c) return Status::invalid_parameter;
+	return c->fsImpl->atomicRead(c->impl, buffer, size);
 }
 
-int _compoundFSSeek(void* file, roUint64 offset, FileSystem::SeekOrigin origin)
+Status _compoundFSSize(void* file, roUint64& bytes)
 {
 	_CompoundFSContext* c = (_CompoundFSContext*)file;
+	if(!c) return Status::invalid_parameter;
+	return c->fsImpl->size(c->impl, bytes);
+}
+
+Status _compoundFSSeek(void* file, roUint64 offset, FileSystem::SeekOrigin origin)
+{
+	_CompoundFSContext* c = (_CompoundFSContext*)file;
+	if(!c) return Status::invalid_parameter;
 	return c->fsImpl->seek(c->impl, offset, origin);
 }
 
@@ -125,8 +136,9 @@ void _compoundFSCloseDir(void* dir)
 
 static FileSystem _compoundFS = {
 	_compoundFSOpenFile,
-	_compoundFSReadReady,
+	_compoundFSReadWillBlock,
 	_compoundFSRead,
+	_compoundFSAtomicRead,
 	_compoundFSSize,
 	_compoundFSSeek,
 	_compoundFSCloseFile,

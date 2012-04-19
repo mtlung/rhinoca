@@ -23,9 +23,31 @@ char* roStrStr(char* a, const char* b)
 	return NULL;
 }
 
+char* roStrnStr(char* a, roSize aLen, const char* b)
+{
+	char* sa = a;
+	const char* sb = b;
+	if(*b == 0) return NULL;
+	for(roSize i=0; i < aLen; ++i, ++a) {
+		sa = a;
+		sb = b;
+		for(;;) {
+			if(*sb == 0) return a;	// Found
+			if(*sb != *sa) break;
+			++sa; ++sb;
+		}
+	}
+	return NULL;
+}
+
 char* roStrrStr(char* a, const char* b)
 {
-	roSize alen = roStrLen(a);
+	return roStrrnStr(a, roStrLen(a), b);
+}
+
+char* roStrrnStr(char* a, roSize aLen, const char* b)
+{
+	roSize alen = aLen;
 	roSize blen = roStrLen(b);
 
 	if(blen > alen) return NULL;

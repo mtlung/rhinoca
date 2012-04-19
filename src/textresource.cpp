@@ -4,6 +4,7 @@
 #include "rhlog.h"
 #include "platform.h"
 #include "../roar/base/roFileSystem.h"
+#include "../roar/base/roTypeCast.h"
 
 using namespace ro;
 
@@ -98,38 +99,41 @@ void TextLoader::commit(TaskPool* taskPool)
 
 void TextLoader::load(TaskPool* taskPool)
 {
-	Status st;
+	Status st = Status::ok;
 
-	if(text->state == Resource::Aborted) goto Abort;
-	if(!stream) st= fileSystem.openFile(text->uri(), stream);
-	if(!st) {
-		rhLog("error", "TextLoader: Fail to open file '%s', reason %s\n", text->uri().c_str(), st.c_str());
-		goto Abort;
-	}
+roEXCP_TRY
+	if(text->state == Resource::Aborted) roEXCP_THROW;
+	if(!stream) st = fileSystem.openFile(text->uri(), stream);
+	if(!st) roEXCP_THROW;
 
 	static const unsigned loopCount = 10;
 	char buf[1024];
 
 	// If data not ready, give up in this round and do it again in next schedule
-	if(!fileSystem.readReady(stream, sizeof(buf) * loopCount))
+	if(fileSystem.readWillBlock(stream, sizeof(buf) * loopCount))
 		return reSchedule();
 
 	for(unsigned i=0; i<loopCount; ++i) {
-		rhuint64 readCount = fileSystem.read(stream, buf, sizeof(buf));
+		rhuint64 bytesRead = 0;
+		st = fileSystem.read(stream, buf, sizeof(buf), bytesRead);
 
-		if(readCount > 0) {
-			data.append(buf, (size_t)readCount);
-			continue;
+		if(st == Status::file_ended) {
+			readyToCommit = true;
+			return;
 		}
 
-		readyToCommit = true;
-		return;
+		if(!st) roEXCP_THROW;
+
+		data.append(buf, num_cast<size_t>(bytesRead));
 	}
 
 	return reSchedule();
 
-Abort:
+roEXCP_CATCH
 	aborted = true;
+	rhLog("error", "TextLoader: Fail to load '%s', reason: %s\n", text->uri().c_str(), st.c_str());
+
+roEXCP_END
 }
 
 bool loadText(Resource* resource, ResourceManager* mgr)

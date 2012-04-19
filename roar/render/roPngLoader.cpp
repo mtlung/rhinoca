@@ -4,6 +4,7 @@
 #include "../base/roFileSystem.h"
 #include "../base/roLog.h"
 #include "../base/roMemory.h"
+#include "../base/roTypeCast.h"
 #include "../../thirdParty/png/png.h"
 
 #if roCOMPILER_VC
@@ -123,7 +124,7 @@ PngLoader::PngLoader(Texture* t, ResourceManager* mgr)
 void PngLoader::run(TaskPool* taskPool)
 {
 	char buff[1024*8];
-	unsigned readCount = 0;
+	roUint64 bytesRead = 0;
 
 	if(textureLoadingState == TextureLoadingState_InitTexture)
 		initTexture(taskPool);
@@ -141,14 +142,18 @@ void PngLoader::run(TaskPool* taskPool)
 			break;
 		}
 
-		if(!fileSystem.readReady(stream, sizeof(buff))) {
+		if(fileSystem.readWillBlock(stream, sizeof(buff))) {
 			// Re-schedule the load operation
 			return reSchedule();
 		}
 
-		readCount = (unsigned)fileSystem.read(stream, buff, sizeof(buff));
-		png_process_data(png_ptr, info_ptr, (png_bytep)buff, readCount);
-	} while(readCount > 0 && textureLoadingState != TextureLoadingState_Abort);
+		st = fileSystem.read(stream, buff, sizeof(buff), bytesRead);
+		if(!st) {
+			textureLoadingState = TextureLoadingState_Abort;
+			break;
+		}
+		png_process_data(png_ptr, info_ptr, (png_bytep)buff, num_cast<png_size_t>(bytesRead));
+	} while(bytesRead > 0 && textureLoadingState != TextureLoadingState_Abort);
 
 	if(textureLoadingState == TextureLoadingState_Finish) {
 		texture->state = Resource::Loaded;

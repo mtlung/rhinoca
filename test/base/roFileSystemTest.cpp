@@ -15,7 +15,8 @@ TEST_FIXTURE(FileSystemTest, defaultFS)
 	CHECK(st);
 	CHECK(file);
 
-	roUint64 size = fileSystem.size(file);
+	roUint64 size = 0;
+	CHECK(fileSystem.size(file, size));
 	CHECK(size > 0);
 
 	fileSystem.closeFile(file);
@@ -74,17 +75,31 @@ TEST_FIXTURE(FileSystemTest, httpFS_read)
 //	return;	// Enable when needed
 
 	void* file = NULL;
-	Status st = httpFileSystemOpenFile("http://www.google.com/", file);
+//	Status st = httpFileSystemOpenFile("http://www.gamearchitect.net/Images/bigben.gif", file);	// No chunked, know size
+	Status st = httpFileSystemOpenFile("http://yahoo.com", file);
 
-	roUint64 size = httpFileSystemSize(file);
+	roUint64 size = 0;
+	do {
+		st = httpFileSystemSize(file, size);
+	} while(st == Status::in_progress);
+	CHECK(st);
+	printf(st.c_str());
 	CHECK(size > 0);
 
-	char buf[128];
-	roUint64 readCount = httpFileSystemRead(file, buf, sizeof(buf));
-	CHECK(readCount > 0);
+	roUint64 bytesRead = 0;
+//	char buf[128888];
+	String buf;
+	buf.resize(10 * 1024);
+	CHECK(httpFileSystemRead(file, buf.c_str(), buf.size(), bytesRead));
+	CHECK(bytesRead > 0);
 
-	readCount = httpFileSystemRead(file, buf, sizeof(buf));
-	readCount = httpFileSystemRead(file, buf, sizeof(buf));
+	do {
+		CHECK(httpFileSystemRead(file, buf.c_str(), buf.size(), bytesRead));
+
+		if(bytesRead < buf.size())
+			buf[bytesRead] = 0;
+	} while(bytesRead > 0);
+//	readCount = httpFileSystemRead(file, buf, sizeof(buf));
 
 	httpFileSystemCloseFile(file);
 }
@@ -96,15 +111,18 @@ TEST_FIXTURE(FileSystemTest, httpFS_getBuffer)
 	void* file = NULL;
 	Status st = httpFileSystemOpenFile("http://www.cplusplus.com/", file);
 
+	roUint64 size = 0;
+	CHECK(httpFileSystemSize(file, size));
+
 	roUint64 readCount;
-	roBytePtr p1 = httpFileSystemGetBuffer(file, httpFileSystemSize(file) / 2, readCount);
+	roBytePtr p1 = httpFileSystemGetBuffer(file, size / 2, readCount);
 
 	httpFileSystemTakeBuffer(file);
 
-	roBytePtr p2 = httpFileSystemGetBuffer(file, httpFileSystemSize(file) / 2, readCount);
+	roBytePtr p2 = httpFileSystemGetBuffer(file, size, readCount);
 
 	char buf[1024];
-	readCount = httpFileSystemRead(file, buf, sizeof(buf));
+	CHECK(httpFileSystemRead(file, buf, sizeof(buf), readCount));
 
 	httpFileSystemUntakeBuffer(file, p1);
 	httpFileSystemCloseFile(file);

@@ -43,8 +43,9 @@ TEST_FIXTURE(CanvasTest, drawImage)
 	canvas.init(context);
 
 	// Init texture
-//	TexturePtr texture = resourceManager.loadAs<Texture>("EdSplash.jpg");
-	TexturePtr texture = resourceManager.loadAs<Texture>("http://udn.epicgames.com/pub/webbg_udn.jpg");
+	TexturePtr texture = resourceManager.loadAs<Texture>("EdSplash.jpg");
+//	TexturePtr texture = resourceManager.loadAs<Texture>("http://udn.epicgames.com/pub/webbg_udn.jpg");
+//	TexturePtr texture = resourceManager.loadAs<Texture>("http://4.bp.blogspot.com/-1rQdRXHNKAM/T4BU4ndq01I/AAAAAAAAAgc/ZgexwVGnk1U/s1600/Cupisz_Robert_Light_Probe_Interpolation2.jpg");
 	CHECK(texture);
 
 	while(texture && keepRun()) {

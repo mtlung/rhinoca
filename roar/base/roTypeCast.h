@@ -47,6 +47,9 @@ inline bool roCastAssert(roInt16 from, roUint16)	{ return from >= 0; }
 template<class From, class To>
 inline bool roCastAssert(From from, To)				{ return true; }
 
+template<class To, class From>
+inline bool roCastAssert(From from)					{ To to = 0; return roCastAssert(from, to); }
+
 
 // ----------------------------------------------------------------------
 

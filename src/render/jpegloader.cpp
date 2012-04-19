@@ -4,6 +4,7 @@
 #include "../rhlog.h"
 #include "../platform.h"
 #include "../../roar/base/roFileSystem.h"
+#include "../../roar/base/roTypeCast.h"
 #include "../../thirdparty/SmallJpeg/jpegdecoder.h"
 
 #ifdef RHINOCA_VC
@@ -22,10 +23,12 @@ public:
 
 	int read(uchar* Pbuf, int max_bytes_to_read, bool* Peof_flag)
 	{
-		int readCount = (int)fileSystem.read(file, (char*)Pbuf, max_bytes_to_read);
-		*Peof_flag = (readCount == 0);
+		roUint64 bytesRead = 0;
+		
+		fileSystem.read(file, (char*)Pbuf, max_bytes_to_read, bytesRead);
+		*Peof_flag = (bytesRead == 0);
 
-		return readCount;
+		return num_cast<int>(bytesRead);
 	}
 
 	void* file;

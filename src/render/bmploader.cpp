@@ -104,11 +104,13 @@ void BmpLoader::loadHeader()
 	memset(&fileHeader, 0, sizeof(fileHeader));
 
 	// If data not ready, give up in this round and do it again in next schedule
-	if(!fileSystem.readReady(stream, sizeof(fileHeader) + sizeof(infoHeader)))
+	if(fileSystem.readWillBlock(stream, sizeof(fileHeader) + sizeof(infoHeader)))
 		return reSchedule();
 
 	// Read the file header
-	fileSystem.read(stream, &fileHeader, sizeof(fileHeader));
+	roUint64 bytesRead = 0;
+	if(!fileSystem.read(stream, &fileHeader, sizeof(fileHeader), bytesRead))
+		goto Abort;
 
 	// Check against the magic 2 bytes.
 	// The value of 'BM' in integer is 19778 (assuming little endian)
@@ -117,7 +119,8 @@ void BmpLoader::loadHeader()
 		goto Abort;
 	}
 
-	fileSystem.read(stream, &infoHeader, sizeof(infoHeader));
+	if(!fileSystem.read(stream, &infoHeader, sizeof(infoHeader), bytesRead))
+		goto Abort;
 	width = infoHeader.biWidth;
 
 	pixelDataFormat = Driver::BGR;
@@ -160,7 +163,7 @@ void BmpLoader::loadPixelData()
 	pixelDataSize = rowByte * height;
 
 	// If data not ready, give up in this round and do it again in next schedule
-	if(!fileSystem.readReady(stream, pixelDataSize))
+	if(fileSystem.readWillBlock(stream, pixelDataSize))
 		return reSchedule();
 
 	pixelData = (char*)rhinoca_malloc(pixelDataSize);
@@ -177,7 +180,8 @@ void BmpLoader::loadPixelData()
 		const rhuint invertedH = flipVertical ? height - 1 - h : h;
 
 		char* p = pixelData + (invertedH * rowByte);
-		if(fileSystem.read(stream, p, rowByte) != rowByte) {
+		roUint64 bytesRead = 0;
+		if(!fileSystem.read(stream, p, rowByte, bytesRead) || bytesRead != rowByte) {
 			rhLog("warn", "BitmapLoader: End of file, bitmap data incomplete\n");
 			goto Abort;
 		}

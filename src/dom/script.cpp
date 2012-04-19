@@ -111,7 +111,7 @@ static void appendFileToString(void* file, ro::String& str)
 {
 	char buf[128];
 	rhuint64 readCount;
-	while((readCount = ro::fileSystem.read(file, buf, sizeof(buf))))
+	while(ro::fileSystem.read(file, buf, sizeof(buf), readCount))
 		str.append(buf, (size_t)readCount);
 }
 

@@ -96,11 +96,10 @@ void BmpLoader::run(TaskPool* taskPool)
 void BmpLoader::loadHeader(TaskPool* taskPool)
 {
 	Status st;
+
+roEXCP_TRY
 	if(!stream) st = fileSystem.openFile(texture->uri(), stream);
-	if(!st) {
-		roLog("error", "BmpLoader: Fail to open file '%s', reason: %s\n", texture->uri().c_str(), st.c_str());
-		goto Abort;
-	}
+	if(!st) roEXCP_THROW;
 
 	// Windows.h gives us these types to work with the Bitmap files
 	roAssert(sizeof(BITMAPFILEHEADER) == 14);
@@ -108,32 +107,24 @@ void BmpLoader::loadHeader(TaskPool* taskPool)
 	memset(&fileHeader, 0, sizeof(fileHeader));
 
 	// If data not ready, give up in this round and do it again in next schedule
-	if(!fileSystem.readReady(stream, sizeof(fileHeader) + sizeof(infoHeader)))
+	if(fileSystem.readWillBlock(stream, sizeof(fileHeader) + sizeof(infoHeader)))
 		return reSchedule();
 
 	// Read the file header
-	fileSystem.read(stream, &fileHeader, sizeof(fileHeader));
+	st = fileSystem.atomicRead(stream, &fileHeader, sizeof(fileHeader));
+	if(!st) roEXCP_THROW;
+
+	// Read the info header
+	st = fileSystem.atomicRead(stream, &infoHeader, sizeof(infoHeader));
+	if(!st) roEXCP_THROW;
 
 	// Check against the magic 2 bytes.
 	// The value of 'BM' in integer is 19778 (assuming little endian)
-	if(fileHeader.bfType != 19778u) {
-		roLog("error", "BitmapLoader: Invalid bitmap header, operation aborted\n");
-		goto Abort;
-	}
+	if(fileHeader.bfType != 19778u) { st = Status::image_invalid_header; roEXCP_THROW; }
+	if(infoHeader.biBitCount != 24) { st = Status::image_bmp_only_24bits_color_supported; roEXCP_THROW; }
+	if(infoHeader.biCompression != 0) { st = Status::image_bmp_compression_not_supported; roEXCP_THROW; }
 
-	fileSystem.read(stream, &infoHeader, sizeof(infoHeader));
 	width = infoHeader.biWidth;
-
-	if(infoHeader.biBitCount != 24) {
-		roLog("error", "BitmapLoader: Only 24-bit color is supported, operation aborted\n");
-		goto Abort;
-	}
-
-	if(infoHeader.biCompression != 0) {
-		roLog("error", "BitmapLoader: Compressed bmp is not supported, operation aborted\n");
-		goto Abort;
-	}
-
 	if(infoHeader.biHeight > 0) {
 		height = infoHeader.biHeight;
 		flipVertical = true;
@@ -146,8 +137,11 @@ void BmpLoader::loadHeader(TaskPool* taskPool)
 	textureLoadingState = TextureLoadingState_InitTexture;
 	return reSchedule(false, taskPool->mainThreadId());
 
-Abort:
+roEXCP_CATCH
+	roLog("error", "BmpLoader: Fail to load '%s', reason: %s\n", texture->uri().c_str(), st.c_str());
 	textureLoadingState = TextureLoadingState_Abort;
+
+roEXCP_END
 }
 
 void BmpLoader::initTexture(TaskPool* taskPool)
@@ -177,9 +171,10 @@ static void _bgrToRgba(roBytePtr src, roBytePtr dst, unsigned width, unsigned he
 
 void BmpLoader::loadPixelData(TaskPool* taskPool)
 {
-	roBytePtr tmpBuffer = NULL;
+	Status st;
 
-	if(!stream) goto Abort;
+roEXCP_TRY
+	if(!stream) { st = Status::pointer_is_null; roEXCP_THROW; }
 
 	// Memory usage for one row of image
 	const roSize rowByte = width * (sizeof(char) * 3);
@@ -189,15 +184,12 @@ void BmpLoader::loadPixelData(TaskPool* taskPool)
 	pixelDataSize = rowByte * height;
 
 	// If data not ready, give up in this round and do it again in next schedule
-	if(!fileSystem.readReady(stream, pixelDataSize + rowPadding * height))
+	if(fileSystem.readWillBlock(stream, pixelDataSize + rowPadding * height))
 		return reSchedule();
 
 	pixelData = roMalloc(pixelDataSize);
 
-	if(!pixelData) {
-		roLog("error", "BitmapLoader: Corruption of file or not enough memory, operation aborted\n");
-		goto Abort;
-	}
+	if(!pixelData) { st = Status::not_enough_memory; roEXCP_THROW; }
 
 	char paddingBuf[4];
 
@@ -209,17 +201,16 @@ void BmpLoader::loadPixelData(TaskPool* taskPool)
 
 		roBytePtr p = pixelData + (invertedH * rowByte);
 
-		if(fileSystem.read(stream, p, rowByte) != rowByte) {
-			roLog("warn", "BitmapLoader: End of file, bitmap data incomplete\n");
-			goto Abort;
-		}
+		st = fileSystem.atomicRead(stream, p, rowByte);
+		if(!st) roEXCP_THROW;
 
 		// Consume any row padding
-		roVerify(fileSystem.read(stream, paddingBuf, rowPadding) == rowPadding);
+		st = fileSystem.atomicRead(stream, paddingBuf, rowPadding);
+		if(!st) roEXCP_THROW;
 	}
 
 	// Convert BGR to RGBA
-	tmpBuffer = roMalloc(width * height * 4);
+	roBytePtr tmpBuffer = roMalloc(width * height * 4);
 	_bgrToRgba(pixelData, tmpBuffer, width, height);
 	roSwap(pixelData, tmpBuffer);
 	roFree(tmpBuffer);
@@ -227,8 +218,11 @@ void BmpLoader::loadPixelData(TaskPool* taskPool)
 	textureLoadingState = TextureLoadingState_Commit;
 	return reSchedule(false, taskPool->mainThreadId());
 
-Abort:
+roEXCP_CATCH
 	textureLoadingState = TextureLoadingState_Abort;
+	roLog("error", "BmpLoader: Fail to load '%s', reason: %s\n", texture->uri().c_str(), st.c_str());
+
+roEXCP_END
 }
 
 void BmpLoader::commit(TaskPool* taskPool)

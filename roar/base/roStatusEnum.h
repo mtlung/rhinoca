@@ -6,6 +6,8 @@ roStatusEnum( not_implemented )
 roStatusEnum( not_enough_memory )
 roStatusEnum( not_found )
 roStatusEnum( invalid_parameter )
+roStatusEnum( arithmetic_overflow )
+roStatusEnum( numeric_cast_overflow )
 roStatusEnum( pointer_is_null )
 roStatusEnum( already_exist )
 roStatusEnum( not_initialized )
@@ -20,6 +22,7 @@ roStatusEnum( in_progress )
 
 // File
 roStatusEnum( file_error )
+roStatusEnum( file_not_open )
 roStatusEnum( file_read_error )
 roStatusEnum( file_write_error )
 roStatusEnum( file_seek_error )
@@ -39,4 +42,17 @@ roStatusEnum( net_error )
 // Http
 roStatusEnum( http_error )
 roStatusEnum( http_invalid_uri )
+roStatusEnum( http_unknow_size )
 roStatusEnum( http_404_not_found )
+
+// Image
+roStatusEnum( image_invalid_header )
+
+roStatusEnum( image_bmp_error )
+roStatusEnum( image_bmp_only_24bits_color_supported )
+roStatusEnum( image_bmp_compression_not_supported )
+
+roStatusEnum( image_png_error )
+
+roStatusEnum( image_jpeg_error )
+roStatusEnum( image_jpeg_channel_count_not_supported )

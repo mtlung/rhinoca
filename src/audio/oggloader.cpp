@@ -5,6 +5,7 @@
 #include "../common.h"
 #include "../rhlog.h"
 #include "../../roar/base/roFileSystem.h"
+#include "../../roar/base/roTypeCast.h"
 
 using namespace ro;
 using namespace Audio;
@@ -152,12 +153,15 @@ void OggLoader::loadHeader()
 		goto Abort;
 	}
 
-	if(!fileSystem.readReady(stream, _dataChunkSize))
+	if(fileSystem.readWillBlock(stream, _dataChunkSize))
 		return reSchedule();
 
 	{	// Read from stream and put to ring buffer
 		rhbyte* p = ringBuffer.write(_dataChunkSize);
-		unsigned readCount = (unsigned)fileSystem.read(stream, p, _dataChunkSize);
+		roUint64 bytesRead = 0;
+		st = fileSystem.read(stream, p, _dataChunkSize, bytesRead);
+		if(!st) goto Abort;
+		unsigned readCount = num_cast<unsigned>(bytesRead);
 		ringBuffer.commitWrite(readCount);
 
 		// Read from ring buffer and put to vorbis
@@ -197,10 +201,12 @@ Abort:
 
 void OggLoader::loadData()
 {
+	Status st;
+
 	if(buffer->state == Resource::Aborted) goto Abort;
 	if(!stream) goto Abort;
 
-	if(!fileSystem.readReady(stream, _dataChunkSize))
+	if(fileSystem.readWillBlock(stream, _dataChunkSize))
 		return reSchedule();
 
 	{
@@ -228,7 +234,10 @@ void OggLoader::loadData()
 
 		// Read from stream and put to ring buffer
 		rhbyte* p = ringBuffer.write(_dataChunkSize);
-		unsigned readCount = (unsigned)fileSystem.read(stream, p, _dataChunkSize);
+		roUint64 bytesRead = 0;
+		st = fileSystem.read(stream, p, _dataChunkSize, bytesRead);
+		if(!st) goto Abort;
+		unsigned readCount = num_cast<unsigned>(bytesRead);
 		ringBuffer.commitWrite(readCount);
 
 		if(readCount == 0) {	// EOF
