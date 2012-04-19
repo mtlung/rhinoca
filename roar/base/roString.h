@@ -42,8 +42,8 @@ struct String
 
 	void		format		(const char* format, ...);
 	void		appendFormat(const char* format, ...);
-	bool		fromUtf16	(roUint16* src, roSize maxSrcLen);
-	bool		toUtf16		(roUint16* dst, roSize& dstLen);
+	Status		fromUtf16	(roUint16* src, roSize maxSrcLen=roSize(-1));
+	Status		toUtf16		(roUint16* dst, roSize& dstLen);
 
 // Attributes
 	roSize		size		() const	{ return _length; }

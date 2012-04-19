@@ -166,10 +166,6 @@ void Mp3Loader::loadData()
 	if(buffer->state == Resource::Aborted) goto Abort;
 	if(!stream) goto Abort;
 
-	const char* name = buffer->key().c_str();
-	if(roStrStr(name, "intro"))
-		name = name;
-
 	if(fileSystem.readWillBlock(stream, _dataChunkSize))
 		return reSchedule();
 

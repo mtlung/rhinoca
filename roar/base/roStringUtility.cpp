@@ -271,10 +271,10 @@ static const roUint8 _utf8Limits[] = {
 	0xFE	// Invalid: not defined by original UTF-8 specification
 };
 
-bool roUtf8ToUtf16(roUint16* dest, roSize& destLen, const char* src, roSize maxSrcLen)
+roStatus roUtf8ToUtf16(roUint16* dest, roSize& destLen, const char* src, roSize maxSrcLen)
 {
 	if(!src)
-		return false;
+		return roStatus::invalid_parameter;
 
 	roSize destPos = 0, srcPos = 0;
 
@@ -283,11 +283,11 @@ bool roUtf8ToUtf16(roUint16* dest, roSize& destLen, const char* src, roSize maxS
 		if(srcPos == maxSrcLen || src[srcPos] == '\0') {
 			if(dest && destLen != destPos) {
 				roAssert(false && "The provided destLen should equals to what we calculated here");
-				return false;
+				return roStatus::string_encoding_error;
 			}
 
 			destLen = destPos;
-			return true;
+			return roStatus::ok;
 		}
 
 		roUint8 c = src[srcPos++];
@@ -336,13 +336,13 @@ bool roUtf8ToUtf16(roUint16* dest, roSize& destLen, const char* src, roSize maxS
 	}
 
 	destLen = destPos;
-	return false;
+	return roStatus::string_encoding_error;
 }
 
-bool roUtf8ToUtf32(roUint32* dest, roSize& destLen, const char* src, roSize maxSrcLen)
+roStatus roUtf8ToUtf32(roUint32* dest, roSize& destLen, const char* src, roSize maxSrcLen)
 {
 	if(!src)
-		return false;
+		return roStatus::invalid_parameter;
 
 	roSize destPos = 0, srcPos = 0;
 
@@ -351,11 +351,11 @@ bool roUtf8ToUtf32(roUint32* dest, roSize& destLen, const char* src, roSize maxS
 		if(srcPos == maxSrcLen || src[srcPos] == '\0') {
 			if(dest && destLen != destPos) {
 				roAssert(false && "The provided destLen should equals to what we calculated here");
-				return false;
+				return roStatus::string_encoding_error;
 			}
 
 			destLen = destPos;
-			return true;
+			return roStatus::ok;
 		}
 
 		roUint8 c = src[srcPos++];
@@ -402,13 +402,13 @@ bool roUtf8ToUtf32(roUint32* dest, roSize& destLen, const char* src, roSize maxS
 	}
 
 	destLen = destPos;
-	return false;
+	return roStatus::string_encoding_error;
 }
 
-bool roUtf16ToUtf8(char* dest, roSize& destLen, const roUint16* src, roSize maxSrcLen)
+roStatus roUtf16ToUtf8(char* dest, roSize& destLen, const roUint16* src, roSize maxSrcLen)
 {
 	if(!src)
-		return false;
+		return roStatus::invalid_parameter;
 
 	roSize destPos = 0, srcPos = 0;
 
@@ -417,10 +417,10 @@ bool roUtf16ToUtf8(char* dest, roSize& destLen, const roUint16* src, roSize maxS
 		if(srcPos == maxSrcLen || src[srcPos] == L'\0') {
 			if(dest && destLen != destPos) {
 				roAssert(false && "The provided destLen should equals to what we calculated here");
-				return false;
+				return roStatus::string_encoding_error;
 			}
 			destLen = destPos;
-			return true;
+			return roStatus::ok;
 		}
 
 		roUint32 value = src[srcPos++];
@@ -459,5 +459,5 @@ bool roUtf16ToUtf8(char* dest, roSize& destLen, const roUint16* src, roSize maxS
 	}
 
 	destLen = destPos;
-	return false;
+	return roStatus::string_encoding_error;
 }

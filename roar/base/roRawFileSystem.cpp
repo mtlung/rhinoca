@@ -33,9 +33,9 @@ Status rawFileSystemOpenFile(const char* uri, void*& outFile)
 
 	Array<roUint16> wstr;
 	{	roSize len = 0;
-		if(!roUtf8ToUtf16(NULL, len, uri, roSize(-1))) return Status::invalid_parameter;
+		Status st = roUtf8ToUtf16(NULL, len, uri, roSize(-1)); if(!st) return st;
 		if(!wstr.resize(len+1)) return Status::invalid_parameter;
-		if(!roUtf8ToUtf16(wstr.typedPtr(), len, uri, roSize(-1))) return Status::invalid_parameter;
+		st = roUtf8ToUtf16(wstr.typedPtr(), len, uri, roSize(-1)); if(!st) return st;
 		wstr[len] = 0;
 	}
 
@@ -356,13 +356,11 @@ void* rawFileSystemOpenDir(const char* uri)
 	Array<wchar_t> buf;
 	{	// Convert the source uri to utf 16
 		roSize len = 0;
-		if(!roUtf8ToUtf16(NULL, len, uri, roSize(-1)))
-			return NULL;
+		Status st = roUtf8ToUtf16(NULL, len, uri, roSize(-1)); if(!st) return NULL;
 
 		buf.resize(len);
 		roStaticAssert(sizeof(wchar_t) == sizeof(roUint16));
-		if(len == 0 || !roUtf8ToUtf16((roUint16*)&buf[0], len, uri, roSize(-1)))
-			return NULL;
+		st = roUtf8ToUtf16((roUint16*)&buf[0], len, uri, roSize(-1)); if(!st) return NULL;
 	}
 
 	AutoPtr<OpenDirContext> dirCtx = _allocator.newObj<OpenDirContext>();

@@ -231,23 +231,18 @@ void String::appendFormat(const char* format, ...)
 	vsprintf(_cstr + oldSize, format, vl);
 }
 
-bool String::fromUtf16(roUint16* src, roSize maxSrcLen)
+Status String::fromUtf16(roUint16* src, roSize maxSrcLen)
 {
 	roSize len = 0;
-	if(!roUtf16ToUtf8(NULL, len, src, maxSrcLen))
-		return false;
-
-	if(len == 0)
-		return false;
+	Status st = roUtf16ToUtf8(NULL, len, src, maxSrcLen); if(!st) return st;
 
 	resize(len);
-	if(!roUtf16ToUtf8(_cstr, len, src, maxSrcLen))
-		return false;
+	st = roUtf16ToUtf8(_cstr, len, src, maxSrcLen); if(!st) return st;
 
-	return true;
+	return Status::ok;
 }
 
-bool String::toUtf16(roUint16* dst, roSize& dstLen)
+Status String::toUtf16(roUint16* dst, roSize& dstLen)
 {
 	return roUtf8ToUtf16(dst, dstLen, c_str(), roSize(-1));
 }

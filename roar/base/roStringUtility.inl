@@ -94,3 +94,14 @@ inline char roToUpper(char c)
 	ebx = ((ebx & ~eax) >> 2)  & 0x20202020u;
 	return (char)(eax - ebx);
 }
+
+inline bool roIsDigit(char ch)
+{
+	return (ch - '0' + 0u) <= 9u;
+}
+
+inline bool roIsAlpha(char ch)
+{
+	// | 32 is a simple way toLower, which is enough for the comparison
+	return ((ch | 32) - 'a' + 0u) <= ('z' - 'a' + 0u);
+}

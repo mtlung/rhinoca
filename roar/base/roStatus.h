@@ -9,7 +9,7 @@
 #define roEXCP_CATCH } while(false); roEXCP_CATCH_LABEL:if(_roExcp_has_throw) {
 #define roEXCP_END }
 
-struct Status
+struct roStatus
 {
 	enum Code {
 		ok = 0,
@@ -20,9 +20,9 @@ struct Status
 #undef roStatusEnum
 	};
 
-	Status()					{ _code = undefined; }
-	Status(const Status& rhs)	{ _code = rhs._code; }
-	Status(Code n)				{ _code = n; }
+	roStatus()						{ _code = undefined; }
+	roStatus(const roStatus& rhs)	{ _code = rhs._code; }
+	roStatus(Code n)				{ _code = n; }
 
 	operator	bool() const	{ return _code <= 0; }
 	const char*	c_str() const;
@@ -34,7 +34,7 @@ struct Status
 	operator int()  const;
 };
 
-inline const char* Status::c_str() const
+inline const char* roStatus::c_str() const
 {
 	if(_code == 0) return "success";
 	if(_code > _std_start && _code < _std_end) {
@@ -46,5 +46,11 @@ inline const char* Status::c_str() const
 	}
 	return "unknown";
 }
+
+namespace ro {
+
+typedef roStatus Status;
+
+}	// namespace ro
 
 #endif	// __roStatus_h__

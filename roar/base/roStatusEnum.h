@@ -20,6 +20,9 @@ roStatusEnum( data_corrupted )
 roStatusEnum( end_of_data )
 roStatusEnum( in_progress )
 
+// String
+roStatusEnum( string_encoding_error )
+
 // File
 roStatusEnum( file_error )
 roStatusEnum( file_not_open )

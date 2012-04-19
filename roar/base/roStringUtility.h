@@ -1,7 +1,7 @@
 #ifndef __roStringUtility_h__
 #define __roStringUtility_h__
 
-#include "../platform/roCompiler.h"
+#include "roStatus.h"
 
 inline roSize	roStrLen	(const char* str);
 
@@ -24,6 +24,9 @@ inline char		roToUpper	(char c);
 
 void			roToLower	(char* str);
 void			roToUpper	(char* str);
+
+bool			roIsDigit	(char ch);
+bool			roIsAlpha	(char ch);
 
 inline void		roStrReverse(char* str, roSize len);
 
@@ -58,9 +61,9 @@ roUint64	roStrToUint64	(const char* str, roUint64 defaultValue);
 
 // ----------------------------------------------------------------------
 
-bool roUtf8ToUtf16(roUint16* dest, roSize& destLen, const char* src, roSize maxSrcLen);
-bool roUtf8ToUtf32(roUint32* dest, roSize& destLen, const char* src, roSize maxSrcLen);
-bool roUtf16ToUtf8(char* dest, roSize& destLen, const roUint16* src, roSize maxSrcLen);
+roStatus roUtf8ToUtf16(roUint16* dest, roSize& destLen, const char* src, roSize maxSrcLen);
+roStatus roUtf8ToUtf32(roUint32* dest, roSize& destLen, const char* src, roSize maxSrcLen);
+roStatus roUtf16ToUtf8(char* dest, roSize& destLen, const roUint16* src, roSize maxSrcLen);
 
 #include "roStringUtility.inl"
 
