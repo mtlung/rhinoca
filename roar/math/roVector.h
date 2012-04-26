@@ -16,6 +16,7 @@ struct Vec2
 
 	Vec2		();
 	Vec2		(const float* p2f);
+	Vec2		(float xy);
 	Vec2		(float x, float y);
 
 	void 		set(float x, float y);
@@ -73,6 +74,7 @@ struct Vec3
 
 	Vec3		();
 	Vec3		(const float* p3f);
+	Vec3		(float xyz);
 	Vec3		(float x, float y, float z);
 
 	void 		set(float x, float y, float z);
@@ -150,6 +152,7 @@ struct Vec4
 
 	Vec4		();
 	Vec4		(const float* p4f);
+	Vec4		(float xyzw);
 	Vec4		(float x, float y, float z, float w);
 
 	void 		set(float x, float y, float z, float w);

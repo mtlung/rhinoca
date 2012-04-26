@@ -10,6 +10,10 @@ inline Vec2::Vec2(const float* p2f) {
 	this->y = p2f[1];
 }
 
+inline Vec2::Vec2(float xy) {
+	x = y = xy;
+}
+
 inline Vec2::Vec2(float x, float y) {
 	this->x = x;
 	this->y = y;
@@ -186,6 +190,10 @@ inline Vec3::Vec3(const float* p3f) {
 	this->x = p3f[0];
 	this->y = p3f[1];
 	this->z = p3f[2];
+}
+
+inline Vec3::Vec3(float xyz) {
+	x = y = z = xyz;
 }
 
 inline Vec3::Vec3(float x, float y, float z) {
@@ -402,6 +410,10 @@ inline Vec4::Vec4(const float* p4f) {
 	this->y = p4f[1];
 	this->z = p4f[2];
 	this->w = p4f[3];
+}
+
+inline Vec4::Vec4(float xyzw) {
+	x = y = z = w = xyzw;
 }
 
 inline Vec4::Vec4(float x, float y, float z, float w) {

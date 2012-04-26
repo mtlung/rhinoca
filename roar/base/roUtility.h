@@ -28,4 +28,10 @@ const T& roMinOf3(const T& v1, const T& v2, const T& v3) { return roMinOf2(v1, r
 template<typename T> inline
 const T& roMaxOf3(const T& v1, const T& v2, const T& v3) { return roMaxOf2(v1, roMaxOf2(v2, v3)); }
 
+template<typename T> inline
+T roAlignFloor(const T& val, const T& alignTo) { return val - (val % alignTo); }
+
+template<typename T> inline
+T roAlignCeiling(const T& val, const T& alignTo) { T d = val % alignTo; return d == 0 ? val : val - d + alignTo; }
+
 #endif	// __roUtility_h__

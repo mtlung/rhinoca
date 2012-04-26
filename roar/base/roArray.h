@@ -110,6 +110,11 @@ struct IArray
 	T*				typedPtr()			{ return _data; }
 	const T*		typedPtr() const	{ return _data; }
 
+	template<class U>
+	U*				castedPtr()			{ return (U*)_data; }
+	template<class U>
+	const U*		castedPtr() const	{ return (U*)_data; }
+
 	roBytePtr		bytePtr()			{ return _data; }
 	const roBytePtr	bytePtr() const		{ return _data; }
 

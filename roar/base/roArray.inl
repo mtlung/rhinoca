@@ -197,8 +197,8 @@ Status Array<T>::reserve(roSize newCapacity)
 	T* newPtr = roRealloc(_data, newCapacity * sizeof(T), newCapacity * sizeof(T)).cast<T>();
 	if(!newPtr) return Status::not_enough_memory;
 
-	if(!TypeOf<T>::isPOD() && _data != _data) for(roSize i=0; i<_size; ++i)	// Notify the object that it's memory is moved
-		roOnMemMove(_data[i], &_data[i]);
+	if(!TypeOf<T>::isPOD() && newPtr != _data) for(roSize i=0; i<_size; ++i)	// Notify the object that it's memory is moved
+		roOnMemMove(_data[i], newPtr + i);
 	_data = newPtr;
 	_capacity = newCapacity;
 	return Status::ok;
