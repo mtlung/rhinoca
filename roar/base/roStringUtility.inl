@@ -47,6 +47,17 @@ inline int roStrCaseCmp(const char* s1, const char* s2)
 	return 0;
 }
 
+inline int roStrnCaseCmp(const char* s1, const char* s2, roSize n)
+{
+	for(roSize i=0; i<n; ++s1, ++s2 ) {
+		char c1 = roToLower(*s1);
+		char c2 = roToLower(*s2);
+		if(c1 != c2) return (c1 - c2);
+		if(c1 == 0 || c2 == 0 ) break;
+	}
+	return 0;
+}
+
 inline char* roStrChr(char* sz, char ch)
 {
 	for( ; *sz; ++sz) {
@@ -69,6 +80,11 @@ inline char* roStrrChr(char* sz, char ch)
 inline const char* roStrChr(const char* sz, char ch)
 {
 	return roStrChr((char*)sz, ch);
+}
+
+inline const char* roStrrChr(const char* sz, char ch)
+{
+	return roStrrChr((char*)sz, ch);
 }
 
 inline const char* roStrStr(const char* a, const char* b)

@@ -9,7 +9,7 @@
 #	define NOGDICAPMASKS
 #	define NOMENUS
 #	define NOATOM
-#	define NODRAWTEXT
+//#	define NODRAWTEXT
 #	define NOKERNEL
 #	define NOMEMMGR
 #	define NOMETAFILE

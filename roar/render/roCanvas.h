@@ -83,6 +83,7 @@ struct Canvas
 // Fill
 	void fill					();					/// Fills the subpaths with the current fill style.
 	void fillRect				(float x, float y, float w, float h);
+	void fillText				(const char* utf8Str, float x, float y, float maxWidth);
 	void getFillColor			(float* rgba);
 	void setFillColor			(const float* rgba);
 	void setFillColor			(float r, float g, float b, float a);

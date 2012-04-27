@@ -730,6 +730,10 @@ void Canvas::fillRect(float x, float y, float w, float h)
 	vgDrawPath(_openvg->pathSimpleShape, VG_FILL_PATH);
 }
 
+void Canvas::fillText(const char* utf8Str, float x, float y, float maxWidth)
+{
+}
+
 void Canvas::getFillColor(float* rgba)
 {
 	vgGetParameterfv(_openvg->fillPaint, VG_PAINT_COLOR, 4, rgba);

@@ -37,6 +37,7 @@ struct FileSystem
 extern FileSystem fileSystem;
 
 extern bool uriExtensionMatch(const char* uri, const char* extension);
+extern bool uriNameMatch(const char* uri, const char* name, const char* extension);
 
 }	// namespace ro
 

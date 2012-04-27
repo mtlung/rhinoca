@@ -194,8 +194,8 @@ typedef struct TextureFormatMapping
 TextureFormatMapping _textureFormatMappings[] = {
 	{ roRDriverTextureFormat(0),			0,	DXGI_FORMAT(0) },
 	{ roRDriverTextureFormat_RGBA,			4,	DXGI_FORMAT_R8G8B8A8_UNORM },
-	{ roRDriverTextureFormat_R,				2,	DXGI_FORMAT_R16_UINT },
-	{ roRDriverTextureFormat_A,				0,	DXGI_FORMAT(0) },
+	{ roRDriverTextureFormat_R,				1,	DXGI_FORMAT_R8_UNORM },
+	{ roRDriverTextureFormat_A,				1,	DXGI_FORMAT_A8_UNORM },
 	{ roRDriverTextureFormat_Depth,			4,	DXGI_FORMAT_D32_FLOAT },
 	{ roRDriverTextureFormat_DepthStencil,	4,	DXGI_FORMAT_D24_UNORM_S8_UINT },	// DXGI_FORMAT_D32_FLOAT_S8X24_UINT
 	{ roRDriverTextureFormat_PVRTC2,		0,	DXGI_FORMAT(0) },
@@ -1279,7 +1279,8 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 		break;	// Map successfully
 	}
 
-	roAssert(mapped.RowPitch >= impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes);
+	// Currently for simplicity we assume no row alignment
+	roAssert(mapped.RowPitch == impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes);
 
 	staging->mapped = true;
 	impl->isMapped = true;

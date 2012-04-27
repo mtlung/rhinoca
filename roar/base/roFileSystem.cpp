@@ -162,4 +162,22 @@ bool uriExtensionMatch(const char* uri, const char* extension)
 	return roStrCaseCmp(uri + uriLen - extLen, extension) == 0;
 }
 
+bool uriNameMatch(const char* uri, const char* name, const char* extension)
+{
+	roSize uriLen = roStrLen(uri);
+	roSize nameLen = roStrLen(name);
+	roSize extLen = roStrLen(extension);
+
+	if(uriLen < nameLen + 1 + extLen) return false;
+	if(roStrCaseCmp(uri + uriLen - extLen, extension) != 0) return false;
+
+	const char* p1 = roStrrChr(uri, '/');
+	if(!p1) return false;
+	const char* p2 = roStrrChr(uri, '.');
+	if(!p2) return false;
+
+	if(p2 - p1 < roPtrInt(nameLen)) return false;
+	return roStrnCaseCmp(p1, name, p2 - p1) == 0;
+}
+
 }	// namespace ro

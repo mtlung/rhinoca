@@ -527,6 +527,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\render\roFont.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\render\roFont.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\render\roFontLoader.win.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\render\roJpegLoader.cpp"
 				>
 			</File>

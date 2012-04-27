@@ -3,32 +3,33 @@
 
 #include "roStatus.h"
 
-inline roSize	roStrLen	(const char* str);
+inline roSize	roStrLen		(const char* str);
 
-inline char*	roStrnCpy	(char* dst, const char* src, roSize n);
+inline char*	roStrnCpy		(char* dst, const char* src, roSize n);
 
-inline int		roStrCmp	(const char* s1, const char* s2);
-inline int		roStrnCmp	(const char* s1, const char* s2, roSize n);
-inline int		roStrCaseCmp(const char* s1, const char* s2);
+inline int		roStrCmp		(const char* s1, const char* s2);
+inline int		roStrnCmp		(const char* s1, const char* s2, roSize n);
+inline int		roStrCaseCmp	(const char* s1, const char* s2);
+inline int		roStrnCaseCmp	(const char* s1, const char* s2, roSize n);
 
-inline char*	roStrChr	(char* sz, char ch);
-inline char*	roStrrChr	(char* sz, char ch);
+inline char*	roStrChr		(char* sz, char ch);
+inline char*	roStrrChr		(char* sz, char ch);
 
-char*			roStrStr	(char* a, const char* b);
-char*			roStrnStr	(char* a, roSize aLen, const char* b);
-char*			roStrrStr	(char* a, const char* b);
-char*			roStrrnStr	(char* a, roSize aLen, const char* b);
+char*			roStrStr		(char* a, const char* b);
+char*			roStrnStr		(char* a, roSize aLen, const char* b);
+char*			roStrrStr		(char* a, const char* b);
+char*			roStrrnStr		(char* a, roSize aLen, const char* b);
 
-inline char		roToLower	(char c);
-inline char		roToUpper	(char c);
+inline char		roToLower		(char c);
+inline char		roToUpper		(char c);
 
-void			roToLower	(char* str);
-void			roToUpper	(char* str);
+void			roToLower		(char* str);
+void			roToUpper		(char* str);
 
-bool			roIsDigit	(char ch);
-bool			roIsAlpha	(char ch);
+bool			roIsDigit		(char ch);
+bool			roIsAlpha		(char ch);
 
-inline void		roStrReverse(char* str, roSize len);
+inline void		roStrReverse	(char* str, roSize len);
 
 
 // ----------------------------------------------------------------------
