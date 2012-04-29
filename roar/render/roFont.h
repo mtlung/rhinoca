@@ -13,10 +13,10 @@ struct Font : public ro::Resource
 	virtual ~Font();
 
 	/// Affect the font style for later draw command
-	virtual bool setStyle(const char* styleStr);
+	virtual bool setStyle(const char* styleStr) { return false; }
 
 	/// Draw to the roRDriverCurrentContext, with it current selected render target
-	virtual void draw(unsigned x, unsigned y, const char* utf8Str);
+	virtual void draw(unsigned x, unsigned y, const char* utf8Str) {}
 
 // Attributes
 };	// Texture
@@ -26,19 +26,17 @@ typedef ro::SharedPtr<Font> FontPtr;
 /// Map font typeface name to Font resource
 struct FontManager
 {
-	FontManager(ResourceManager* resourceMgr);
-
 	/// Called by font loader to register the typefaces it contains
-	void addTypefaceForFont(const char* typeface, const char* fontUri);
+	void registerFontTypeface(const char* typeface, const char* fontUri);
 
 	FontPtr getFont(const char* typeFace);
 
 // Private
-	struct Pair {
+	struct _FontTypeface {
+		ConstString fontUri;
 		ConstString typeface;
-		FontPtr font;
 	};
-	Array<Pair> mapping;
+	Array<_FontTypeface> _mapping;
 };	// FontManager
 
 }	// namespace ro

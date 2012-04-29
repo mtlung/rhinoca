@@ -1,6 +1,6 @@
 #include "../../roar/render/roRenderDriver.h"
-#include "../../roar/base/roResource.h"
 #include "../../roar/platform/roPlatformHeaders.h"
+#include "../../roar/roSubSystems.h"
 
 struct GraphicsTestBase
 {
@@ -26,6 +26,5 @@ struct GraphicsTestBase
 
 	float averageFrameDuration;
 
-	ro::TaskPool taskPool;
-	ro::ResourceManager resourceManager;
+	ro::SubSystems subSystems;
 };

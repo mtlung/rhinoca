@@ -1,30 +1,13 @@
 #include "pch.h"
 #include "roGraphicsTestBase.win.h"
 #include "../../roar/render/roCanvas.h"
+#include "../../roar/render/roFont.h"
 #include "../../roar/render/roTexture.h"
 
 using namespace ro;
 
-namespace ro {
-
-extern Resource* resourceCreateBmp(const char*, ResourceManager*);
-extern Resource* resourceCreateJpeg(const char*, ResourceManager*);
-extern Resource* resourceCreatePng(const char*, ResourceManager*);
-extern bool resourceLoadBmp(Resource*, ResourceManager*);
-extern bool resourceLoadJpeg(Resource*, ResourceManager*);
-extern bool resourceLoadPng(Resource*, ResourceManager*);
-
-}
-
 struct CanvasTest : public GraphicsTestBase
 {
-	CanvasTest()
-	{
-		resourceManager.addFactory(resourceCreateBmp, resourceLoadBmp);
-		resourceManager.addFactory(resourceCreateJpeg, resourceLoadJpeg);
-		resourceManager.addFactory(resourceCreatePng, resourceLoadPng);
-	}
-
 	Canvas canvas;
 };
 
@@ -40,12 +23,12 @@ TEST_FIXTURE(CanvasTest, drawImage)
 {
 	createWindow(200, 200);
 	initContext(driverStr[driverIndex]);
-	canvas.init(context);
+	canvas.init();
 
 	// Init texture
-	TexturePtr texture = resourceManager.loadAs<Texture>("EdSplash.jpg");
-//	TexturePtr texture = resourceManager.loadAs<Texture>("http://udn.epicgames.com/pub/webbg_udn.jpg");
-//	TexturePtr texture = resourceManager.loadAs<Texture>("http://4.bp.blogspot.com/-1rQdRXHNKAM/T4BU4ndq01I/AAAAAAAAAgc/ZgexwVGnk1U/s1600/Cupisz_Robert_Light_Probe_Interpolation2.jpg");
+	TexturePtr texture = subSystems.resourceMgr->loadAs<Texture>("EdSplash.jpg");
+//	TexturePtr texture = subSystems.resourceMgr->loadAs<Texture>("http://udn.epicgames.com/pub/webbg_udn.jpg");
+//	TexturePtr texture = subSystems.resourceMgr->loadAs<Texture>("http://4.bp.blogspot.com/-1rQdRXHNKAM/T4BU4ndq01I/AAAAAAAAAgc/ZgexwVGnk1U/s1600/Cupisz_Robert_Light_Probe_Interpolation2.jpg");
 	CHECK(texture);
 
 	while(texture && keepRun()) {
@@ -57,7 +40,6 @@ TEST_FIXTURE(CanvasTest, drawImage)
 	}
 
 	texture = NULL;
-	resourceManager.shutdown();
 }
 
 static void testLineWidth(Canvas& c)
@@ -250,15 +232,15 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 {
 	createWindow(800, 600);
 	initContext(driverStr[driverIndex]);
-	canvas.init(context);
+	canvas.init();
 
 	// Initialize our canvas which use it's own texture as render target
 	Canvas auxCanvas;
-	auxCanvas.init(context);
+	auxCanvas.init();
 	auxCanvas.initTargetTexture(800, 600);
 
 	// Init texture
-	TexturePtr texture = resourceManager.loadAs<Texture>("EdSplash.bmp");
+	TexturePtr texture = subSystems.resourceMgr->loadAs<Texture>("EdSplash.bmp");
 
 	while(keepRun())
 	{
@@ -320,5 +302,35 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 	}
 
 	texture = NULL;
-	resourceManager.shutdown();
+}
+
+TEST_FIXTURE(CanvasTest, drawText)
+{
+	createWindow(800, 600);
+	initContext(driverStr[driverIndex]);
+	canvas.init();
+
+	// Initialize our canvas which use it's own texture as render target
+	Canvas auxCanvas;
+	auxCanvas.init();
+	auxCanvas.initTargetTexture(800, 600);
+
+	// Init font
+	FontPtr font = subSystems.resourceMgr->loadAs<Font>("win.fnt");
+
+	while(keepRun())
+	{
+		// Draw to auxCanvas
+		auxCanvas.beginDraw();
+		auxCanvas.save();
+
+		driver->clearStencil(0);
+		auxCanvas.clearRect(0, 0, 800, 600);
+
+		auxCanvas.setFillColor(0, 0, 0, 1);
+		auxCanvas.setStrokeColor(0, 0, 0, 1);
+
+
+		driver->swapBuffers();
+	}
 }

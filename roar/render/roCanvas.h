@@ -15,7 +15,7 @@ struct Canvas
 	~Canvas();
 
 // Operations
-	void init					(roRDriverContext* context);
+	void init					();
 	bool initTargetTexture		(unsigned width, unsigned height);
 	void destroy				();
 
@@ -125,6 +125,8 @@ struct Canvas
 	struct OpenVG;
 	OpenVG* _openvg;
 
+	ResourceManager* _resourceMgr;
+
 	struct State {
 		int lineCap;
 		int lineJoin;
@@ -133,6 +135,7 @@ struct Canvas
 		float strokeColor[4];
 		float fillColor[4];
 		int compisitionOperation;
+		ConstString fontUri;
 		ro::Mat4 transform;
 	};
 	State _currentState;

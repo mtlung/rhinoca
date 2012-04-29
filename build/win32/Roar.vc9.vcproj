@@ -739,6 +739,14 @@
 				/>
 			</FileConfiguration>
 		</File>
+		<File
+			RelativePath="..\..\roar\roSubSystems.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\roar\roSubSystems.h"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

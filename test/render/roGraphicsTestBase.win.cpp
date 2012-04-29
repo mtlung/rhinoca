@@ -1,16 +1,18 @@
 #include "pch.h"
 #include "roGraphicsTestBase.win.h"
+#include "../../roar/base/roResource.h"
 #include "../../roar/math/roMath.h"
 
 GraphicsTestBase::GraphicsTestBase()
 	: hWnd(0), driver(NULL), context(NULL), averageFrameDuration(0)
 {
-	resourceManager.taskPool = &taskPool;
-	taskPool.init(1);
+	subSystems.init();
 }
 
 GraphicsTestBase::~GraphicsTestBase()
 {
+	subSystems.resourceMgr->shutdown();
+
 	if(driver) {
 		driver->deleteShader(vShader);
 		driver->deleteShader(gShader);
@@ -92,6 +94,9 @@ void GraphicsTestBase::initContext(const char* driverStr)
 	driver->initContext(context, hWnd);
 	driver->useContext(context);
 
+	subSystems.renderDriver = driver;
+	subSystems.renderContext = context;
+
 	driver->setViewport(0, 0, context->width, context->height, 0, 1);
 
 	vShader = driver->newShader();
@@ -110,8 +115,8 @@ bool GraphicsTestBase::keepRun()
 			return false;
 	}
 
-	taskPool.doSomeTask(1.0f / 100.0f);
-	resourceManager.tick();
+	subSystems.taskPool->doSomeTask(1.0f / 100.0f);
+	subSystems.resourceMgr->tick();
 
 	if(context)
 		averageFrameDuration = roStepRunAvg(averageFrameDuration, context->lastFrameDuration, 60);

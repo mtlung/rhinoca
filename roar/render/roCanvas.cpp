@@ -6,6 +6,7 @@
 #include "../base/roLog.h"
 #include "../base/roStringHash.h"
 #include "../base/roTypeCast.h"
+#include "../roSubSystems.h"
 
 extern void updateBlendingStateGL(VGContext *c, int alphaIsOne);
 
@@ -18,6 +19,7 @@ Canvas::Canvas()
 	, _vBuffer(NULL), _uBuffer(NULL)
 	, _vShader(NULL), _pShader(NULL)
 	, _targetWidth(0), _targetHeight(0)
+	, _openvg(NULL), _resourceMgr(NULL)
 {
 }
 
@@ -35,14 +37,18 @@ struct Canvas::OpenVG
 	VGPaint fillPaint;
 };
 
-void Canvas::init(roRDriverContext* context)
+void Canvas::init()
 {
-	if(!context) return;
-	_context = context;
-	_driver = context->driver;
+	if(!roSubSystems) return;
+	if(!roSubSystems->renderContext) return;
+
+	_context = roSubSystems->renderContext;
+	_driver = _context->driver;
 
 	_vShader = _driver->newShader();
 	_pShader = _driver->newShader();
+
+	_resourceMgr = roSubSystems->resourceMgr;
 
 	int driverIndex = 0;
 	
@@ -134,7 +140,7 @@ void Canvas::init(roRDriverContext* context)
 	// Init _openvg
 	_openvg = new OpenVG;
 
-	roVerify(vgCreateContextSH(1, 1, context));
+	roVerify(vgCreateContextSH(1, 1, _context));
 
 	_openvg->path = vgCreatePath(
 		VG_PATH_FORMAT_STANDARD, VG_PATH_DATATYPE_F,

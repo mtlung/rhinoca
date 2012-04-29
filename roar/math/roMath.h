@@ -36,17 +36,12 @@ float roFloor				(float x);
 float roCeil				(float x);
 float roFrac				(float x);
 float roRound				(float x);	// < 0.5 floor, > 0.5 ceil
-float roClamp				(float x, float min, float max);
-roUint32 roClamp			(roUint32 x, roUint32 min, roUint32 max);
-roUint64 roClamp			(roUint64 x, roUint64 min, roUint64 max);
-float roClampMin			(float x, float min);
-roInt32 roClampMin			(roInt32 x, roInt32 min);
-roInt64 roClampMin			(roInt64 x, roInt64 min);
-roUint32 roClampMin			(roUint32 x, roUint32 min);
-roUint64 roClampMin			(roUint64 x, roUint64 min);
 
-roUint32 roClampedSubtraction(roUint32 a, roUint32 b);
-roUint64 roClampedSubtraction(roUint64 a, roUint64 b);
+template<class T> T roClamp	(T x, T min, T max);
+template<class T> T roClampMin(T x, T min);
+template<class T> T roClampMax(T x, T max);
+
+template<class T> T roClampedSubtraction(T a, T b);
 
 bool roIsSameSign			(float v1, float v2);
 bool roIsPowerOfTwo			(unsigned x);
@@ -77,17 +72,18 @@ inline float roFloor(float x) { return ::floorf(x); }
 inline float roCeil(float x) { return ::ceilf(x); }
 inline float roFrac(float x) { return x - roFloor(x); }
 inline float roRound(float x) { return ::floorf(x + 0.5f); }
-inline float roClamp(float x, float min, float max) { return x < min ? min : (x > max ? max : x); }
-inline roUint32 roClamp(roUint32 x, roUint32 min, roUint32 max) { return x < min ? min : (x > max ? max : x); }
-inline roUint64 roClamp(roUint64 x, roUint64 min, roUint64 max) { return x < min ? min : (x > max ? max : x); }
-inline float roClampMin(float x, float min) { return x < min ? min : x; }
-inline roInt32 roClampMin(roInt32 x, roInt32 min) { return x < min ? min : x; }
-inline roInt64 roClampMin(roInt64 x, roInt64 min) { return x < min ? min : x; }
-inline roUint32 roClampMin(roUint32 x, roUint32 min) { return x < min ? min : x; }
-inline roUint64 roClampMin(roUint64 x, roUint64 min) { return x < min ? min : x; }
 
-inline roUint32 roClampedSubtraction(roUint32 a, roUint32 b) { return a > b ? a - b : 0; }
-inline roUint64 roClampedSubtraction(roUint64 a, roUint64 b) { return a > b ? a - b : 0; }
+template<class T>
+inline T roClamp(T x, T min, T max) { return x < min ? min : (x > max ? max : x); }
+
+template<class T>
+inline T roClampMin(T x, T min) { return x < min ? min : x; }
+
+template<class T>
+inline T roClampMax(T x, T max) { return x > max ? max : x; }
+
+template<class T>
+inline T roClampedSubtraction(T a, T b) { return a > b ? a - b : 0; }
 
 template<class T>
 inline T roStepLinear(const T& v1, const T& v2, float t) { return v1 + (v2 - v1) * t; }

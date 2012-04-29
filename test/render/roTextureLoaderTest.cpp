@@ -4,22 +4,8 @@
 
 using namespace ro;
 
-namespace ro {
-
-extern Resource* resourceCreateBmp(const char*, ResourceManager*);
-extern Resource* resourceCreateJpeg(const char*, ResourceManager*);
-extern bool resourceLoadBmp(Resource*, ResourceManager*);
-extern bool resourceLoadJpeg(Resource*, ResourceManager*);
-
-}
-
 struct TextureLoaderTest : public GraphicsTestBase
 {
-	TextureLoaderTest()
-	{
-		resourceManager.addFactory(resourceCreateBmp, resourceLoadBmp);
-		resourceManager.addFactory(resourceCreateJpeg, resourceLoadJpeg);
-	}
 };
 
 static const unsigned driverIndex = 0;
@@ -75,7 +61,7 @@ TEST_FIXTURE(TextureLoaderTest, load)
 	roRDriverShader* shaders[] = { vShader, pShader };
 
 	// Init texture
-	TexturePtr texture = resourceManager.loadAs<Texture>("gogo1.bmp");
+	TexturePtr texture = subSystems.resourceMgr->loadAs<Texture>("gogo1.bmp");
 
 	// Set the texture state
 	roRDriverTextureState textureState =  {
@@ -116,7 +102,6 @@ TEST_FIXTURE(TextureLoaderTest, load)
 	}
 
 	texture = NULL;
-	resourceManager.shutdown();
 
 	driver->deleteBuffer(vbuffer);
 	driver->deleteBuffer(ibuffer);
