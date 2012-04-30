@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "roCanvas.h"
+#include "roFont.h"
 #include "shivavg/openvg.h"
 #include "shivavg/vgu.h"
 #include "shivavg/shContext.h"
@@ -738,6 +739,10 @@ void Canvas::fillRect(float x, float y, float w, float h)
 
 void Canvas::fillText(const char* utf8Str, float x, float y, float maxWidth)
 {
+	if(!roSubSystems || !roSubSystems->fontMgr) return;
+
+	if(FontPtr font = roSubSystems->fontMgr->getFont("Arial"))
+		font->draw(utf8Str, x, y, maxWidth);
 }
 
 void Canvas::getFillColor(float* rgba)

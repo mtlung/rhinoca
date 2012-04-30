@@ -16,7 +16,7 @@ struct Font : public ro::Resource
 	virtual bool setStyle(const char* styleStr) { return false; }
 
 	/// Draw to the roRDriverCurrentContext, with it current selected render target
-	virtual void draw(unsigned x, unsigned y, const char* utf8Str) {}
+	virtual void draw(const char* utf8Str, float x, float y, float maxWidth) {}
 
 // Attributes
 };	// Texture

@@ -8,6 +8,7 @@
 #include "../base/roTypeCast.h"
 #include "../math/roVector.h"
 #include "../platform/roPlatformHeaders.h"
+#include "../roSubSystems.h"
 
 namespace ro {
 
@@ -42,6 +43,199 @@ struct FontImpl : public Font
 };
 
 }	// namespace
+
+enum FontLoadingState {
+	FontLoadingState_EmumTypeface,
+	FontLoadingState_LoadMetric,
+	FontLoadingState_Load,
+	FontLoadingState_InitTexture,
+	FontLoadingState_Commit,
+	FontLoadingState_Finish,
+	FontLoadingState_Abort
+};
+
+Resource* resourceCreateFont(const char* uri, ResourceManager* mgr)
+{
+	if(roStrCaseCmp("win.fnt", uri) == 0)
+		return new FontImpl(uri);
+	return NULL;
+}
+
+class FontLoader : public Task
+{
+public:
+	FontLoader(FontImpl* f, ResourceManager* mgr)
+		: font(f), manager(mgr)
+		, fontLoadingState(FontLoadingState_EmumTypeface)
+		, hdc(NULL), hFont(NULL)
+	{}
+
+	~FontLoader()
+	{
+		if(hFont) ::DeleteObject(hFont);
+		if(hdc) ::DeleteDC(hdc);
+	}
+
+	override void run(TaskPool* taskPool);
+
+protected:
+	void emumTypeface(TaskPool* taskPool);
+	void loadMetric(TaskPool* taskPool);
+	void load(TaskPool* taskPool);
+	void initTexture(TaskPool* taskPool);
+	void commit(TaskPool* taskPool);
+
+	FontImpl* font;
+	ResourceManager* manager;
+	FontLoadingState fontLoadingState;
+
+	HDC hdc;
+	HFONT hFont;
+	TEXTMETRIC tm;
+};
+
+void FontLoader::run(TaskPool* taskPool)
+{
+	if(font->state == Resource::Aborted)
+		fontLoadingState = FontLoadingState_Abort;
+
+	if(fontLoadingState == FontLoadingState_EmumTypeface)
+		emumTypeface(taskPool);
+	else if(fontLoadingState == FontLoadingState_LoadMetric)
+		loadMetric(taskPool);
+	else if(fontLoadingState == FontLoadingState_Load)
+		load(taskPool);
+	else if(fontLoadingState == FontLoadingState_InitTexture)
+		initTexture(taskPool);
+	else if(fontLoadingState == FontLoadingState_Commit)
+		commit(taskPool);
+
+	if(fontLoadingState == FontLoadingState_Finish) {
+		font->state = Resource::Loaded;
+		delete this;
+		return;
+	}
+
+	if(fontLoadingState == FontLoadingState_Abort) {
+		font->state = Resource::Aborted;
+		delete this;
+		return;
+	}
+}
+
+static int CALLBACK _enumFamCallBack(const LOGFONTW* lplf, const TEXTMETRICW* lpntm, DWORD fontType, LPARAM)
+{
+	String str;
+	roVerify(str.fromUtf16((const roUint16*)lplf->lfFaceName));
+	roSubSystems->fontMgr->registerFontTypeface(str.c_str(), "win.fnt");
+
+	return TRUE;
+}
+
+// Reference: http://msdn.microsoft.com/en-us/library/dd162615%28v=vs.85%29.aspx
+void FontLoader::emumTypeface(TaskPool* taskPool)
+{
+	if(!roSubSystems || !roSubSystems->fontMgr) {
+		fontLoadingState = FontLoadingState_Abort;
+		return;
+	}
+
+	if(!hdc)
+		hdc = CreateCompatibleDC(NULL);
+
+	::EnumFontFamiliesW(hdc, NULL, _enumFamCallBack, (LPARAM)this);
+
+	fontLoadingState = FontLoadingState_LoadMetric;
+	return reSchedule(false, ~taskPool->mainThreadId());
+}
+
+void FontLoader::loadMetric(TaskPool* taskPool)
+{
+	Status st;
+
+roEXCP_TRY
+	// Get the font name from the uri
+	String fontName;
+	{	const char* p = roStrrChr(font->uri(), '.');
+		if(!p) { roAssert(false); roEXCP_THROW; }
+		fontName.assign(font->uri(), p - font->uri());
+	}
+
+	// http://stackoverflow.com/questions/6595772/painting-text-above-opengl-context-in-mfc
+
+	// http://msdn.microsoft.com/en-us/library/windows/desktop/dd183499%28v=vs.85%29.aspx
+	hFont = CreateFontW(30,0,0,0,FW_DONTCARE,FALSE,FALSE,0,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,
+		CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,DEFAULT_PITCH,L"DFKai-SB");
+//		CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,DEFAULT_PITCH,L"Arial");
+
+	SelectObject(hdc, hFont);
+
+	// Get the unicode range
+	Array<char> glyphSet(GetFontUnicodeRanges(hdc, NULL));
+	GLYPHSET* pGlyphSet = glyphSet.castedPtr<GLYPHSET>();
+	GetFontUnicodeRanges(hdc, pGlyphSet);
+
+	// Get text metric
+	GetTextMetricsW(hdc, &tm);
+
+	// Get the kerning table
+	DWORD pairCount = GetKerningPairsW(hdc, 0, NULL);
+	Array<KERNINGPAIR> kerningPair(pairCount);
+	GetKerningPairsW(hdc, pairCount, kerningPair.typedPtr());
+
+	font->kerningPairs.reserve(pairCount);
+	for(roSize i=0; i<pairCount; ++i) {
+		if(kerningPair[i].iKernAmount == 0)
+			continue;
+		KerningPair k = { kerningPair[i].wFirst, kerningPair[i].wSecond, kerningPair[i].iKernAmount };
+		font->kerningPairs.pushBack(k);
+	}
+
+	// Fill in the data structures
+	for(roSize i=0; i<pGlyphSet->cRanges; ++i)
+	{
+		WCRANGE& range = pGlyphSet->ranges[i];
+		roSize k = 0;
+
+		for(roSize j=0; j<range.cGlyphs; ++j)
+		{
+			unsigned codePoint = range.wcLow + j;
+			Glyph g = { codePoint, 0, 0, 0, 0, 0, Vec2(0.f), Vec2(0.f) };
+
+			// Find the kerning for this code point
+			roSize kBeg = k;
+			for(; k<font->kerningPairs.size(); ++k) {
+				if(font->kerningPairs[k].first == codePoint)
+					g.kerningIndex = kBeg;
+				else if(font->kerningPairs[k].first > codePoint)
+					break;
+			}
+			g.kerningCount = num_cast<roUint16>(k - kBeg);
+
+			// Set the width and height
+			INT w;
+			roVerify(GetCharWidth32W(hdc, codePoint, codePoint, &w));	// NOTE: Use GetCharABCWidthsW if necessary
+			g.width = num_cast<roUint16>(w);
+			g.height = num_cast<roUint16>(tm.tmHeight);
+			roAssert(g.texSize.x <= tm.tmMaxCharWidth);
+
+			font->glyphs.pushBack(g);
+		}
+	}
+
+	font->kerningPairs.condense();
+	font->glyphs.condense();
+
+	fontLoadingState = FontLoadingState_Load;
+//	fontLoadingState = FontLoadingState_InitTexture;
+	return reSchedule(false, taskPool->mainThreadId());
+
+roEXCP_CATCH
+	roLog("error", "FontLoader: Fail to load '%s', reason: %s\n", font->uri().c_str(), st.c_str());
+	fontLoadingState = FontLoadingState_Abort;
+
+roEXCP_END
+}
 
 // Copy a texture from one memory to another memory
 // TODO: Move to texture utilities
@@ -86,151 +280,11 @@ static TexturePtr _allocateTexture(unsigned dimension, char** outMappedPtr)
 	return texture;
 }
 
-enum FontLoadingState {
-	FontLoadingState_Load,
-	FontLoadingState_InitTexture,
-	FontLoadingState_Commit,
-	FontLoadingState_Finish,
-	FontLoadingState_Abort
-};
-
-Resource* resourceCreateFont(const char* uri, ResourceManager* mgr)
-{
-	if(roStrCaseCmp("win.fnt", uri) == 0)
-		return new FontImpl(uri);
-	return NULL;
-}
-
-class FontLoader : public Task
-{
-public:
-	FontLoader(FontImpl* f, ResourceManager* mgr)
-		: font(f), manager(mgr)
-		, fontLoadingState(FontLoadingState_Load)
-	{}
-
-	~FontLoader()
-	{
-	}
-
-	override void run(TaskPool* taskPool);
-
-protected:
-	void load(TaskPool* taskPool);
-	void initTexture(TaskPool* taskPool);
-	void commit(TaskPool* taskPool);
-
-	FontImpl* font;
-	ResourceManager* manager;
-	FontLoadingState fontLoadingState;
-};
-
-void FontLoader::run(TaskPool* taskPool)
-{
-	if(font->state == Resource::Aborted)
-		fontLoadingState = FontLoadingState_Abort;
-
-	if(fontLoadingState == FontLoadingState_Load)
-		load(taskPool);
-	else if(fontLoadingState == FontLoadingState_InitTexture)
-		initTexture(taskPool);
-	else if(fontLoadingState == FontLoadingState_Commit)
-		commit(taskPool);
-
-	if(fontLoadingState == FontLoadingState_Finish) {
-		font->state = Resource::Loaded;
-		delete this;
-		return;
-	}
-
-	if(fontLoadingState == FontLoadingState_Abort) {
-		font->state = Resource::Aborted;
-		delete this;
-		return;
-	}
-}
-
 void FontLoader::load(TaskPool* taskPool)
 {
 	Status st;
 
-roEXCP_TRY
-	// Get the font name from the uri
-	String fontName;
-	{	const char* p = roStrrChr(font->uri(), '.');
-		if(!p) { roAssert(false); roEXCP_THROW; }
-		fontName.assign(font->uri(), p - font->uri());
-	}
-
-	// http://stackoverflow.com/questions/6595772/painting-text-above-opengl-context-in-mfc
-
-	// http://msdn.microsoft.com/en-us/library/windows/desktop/dd183499%28v=vs.85%29.aspx
-	HFONT hFont = CreateFontW(30,0,0,0,FW_DONTCARE,FALSE,FALSE,0,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,
-		CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,DEFAULT_PITCH,L"DFKai-SB");
-//		CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,DEFAULT_PITCH,L"Arial");
-
-	HDC hdc = CreateCompatibleDC(NULL);
-
-	SelectObject(hdc, hFont);
-
-	// Get the unicode range
-	Array<char> glyphSet(GetFontUnicodeRanges(hdc, NULL));
-	GLYPHSET* pGlyphSet = glyphSet.castedPtr<GLYPHSET>();
-	GetFontUnicodeRanges(hdc, pGlyphSet);
-
-	// Get text metric
-	TEXTMETRIC tm;
-	GetTextMetricsW(hdc, &tm);
-
-	// Get the kerning table
-	DWORD pairCount = GetKerningPairsW(hdc, 0, NULL);
-	Array<KERNINGPAIR> kerningPair(pairCount);
-	GetKerningPairsW(hdc, pairCount, kerningPair.typedPtr());
-
-	font->kerningPairs.reserve(pairCount);
-	for(roSize i=0; i<pairCount; ++i) {
-		if(kerningPair[i].iKernAmount == 0)
-			continue;
-		KerningPair k = { kerningPair[i].wFirst, kerningPair[i].wSecond, kerningPair[i].iKernAmount };
-		font->kerningPairs.pushBack(k);
-	}
-
-	// Fill in the data structures
-	font->glyphs.reserve(pGlyphSet->cRanges);
-
-	for(roSize i=0; i<pGlyphSet->cRanges; ++i)
-	{
-		WCRANGE& range = pGlyphSet->ranges[i];
-		roSize k = 0;
-
-		for(roSize j=0; j<range.cGlyphs; ++j)
-		{
-			unsigned codePoint = range.wcLow + j;
-			Glyph g = { codePoint, 0, 0, 0, 0, 0, Vec2(0.f), Vec2(0.f) };
-
-			// Find the kerning for this code point
-			roSize kBeg = k;
-			for(; k<font->kerningPairs.size(); ++k) {
-				if(font->kerningPairs[k].first == codePoint)
-					g.kerningIndex = kBeg;
-				else if(font->kerningPairs[k].first > codePoint)
-					break;
-			}
-			g.kerningCount = num_cast<roUint16>(k - kBeg);
-
-			// Set the width and height
-			INT w;
-			roVerify(GetCharWidth32W(hdc, codePoint, codePoint, &w));	// NOTE: Use GetCharABCWidthsW if necessary
-			g.width = num_cast<roUint16>(w);
-			g.height = num_cast<roUint16>(tm.tmHeight);
-			roAssert(g.texSize.x <= tm.tmMaxCharWidth);
-
-			font->glyphs.pushBack(g);
-		}
-	}
-
-	font->glyphs.condense();
-
+	roEXCP_TRY
 	// Calculate the optimal number of texture to use, base on the the average glyph width and fixed glyph height
 	roSize pixelNeeded = tm.tmAveCharWidth * tm.tmHeight * font->glyphs.size();
 
@@ -315,12 +369,7 @@ roEXCP_TRY
 	if(currentTextureIdx < font->textures.size() && font->textures[currentTextureIdx])
 		roRDriverCurrentContext->driver->unmapTexture(font->textures[currentTextureIdx]->handle, 0, 0);
 
-	DeleteObject(hFont);
-	DeleteDC(hdc);
-
 	fontLoadingState = FontLoadingState_Finish;
-//	fontLoadingState = FontLoadingState_InitTexture;
-//	return reSchedule(false, taskPool->mainThreadId());
 
 roEXCP_CATCH
 	roLog("error", "FontLoader: Fail to load '%s', reason: %s\n", font->uri().c_str(), st.c_str());

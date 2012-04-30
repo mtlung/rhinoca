@@ -1,3 +1,5 @@
+#include "base/roSharedPtr.h"
+
 struct roRDriver;
 struct roRDriverContext;
 
@@ -6,6 +8,7 @@ namespace ro {
 struct FontManager;
 struct ResourceManager;
 class TaskPool;
+typedef SharedPtr<struct Font> FontPtr;
 
 /// Container of most important sub-system
 /// This simplify how we access from one sub-system to another sub-system
@@ -25,6 +28,8 @@ struct SubSystems
 
 	roRDriver* renderDriver;
 	roRDriverContext* renderContext;
+
+	FontPtr defaultFont;
 };	// SubSystems
 
 }	// namespace ro

@@ -310,26 +310,19 @@ TEST_FIXTURE(CanvasTest, drawText)
 	initContext(driverStr[driverIndex]);
 	canvas.init();
 
-	// Initialize our canvas which use it's own texture as render target
-	Canvas auxCanvas;
-	auxCanvas.init();
-	auxCanvas.initTargetTexture(800, 600);
-
-	// Init font
-	FontPtr font = subSystems.resourceMgr->loadAs<Font>("win.fnt");
-
 	while(keepRun())
 	{
 		// Draw to auxCanvas
-		auxCanvas.beginDraw();
-		auxCanvas.save();
+		canvas.beginDraw();
+		canvas.save();
 
 		driver->clearStencil(0);
-		auxCanvas.clearRect(0, 0, 800, 600);
+		canvas.clearRect(0, 0, 800, 600);
 
-		auxCanvas.setFillColor(0, 0, 0, 1);
-		auxCanvas.setStrokeColor(0, 0, 0, 1);
+		canvas.setFillColor(0, 0, 0, 1);
+		canvas.setStrokeColor(0, 0, 0, 1);
 
+		canvas.fillText("Hello world!", 0, 0, 0);
 
 		driver->swapBuffers();
 	}

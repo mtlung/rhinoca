@@ -37,6 +37,7 @@ extern bool resourceLoadWinfnt(Resource*, ResourceManager*);
 void SubSystems::init()
 {
 	taskPool = new TaskPool;
+	taskPool->init(2);
 
 	resourceMgr = new ResourceManager;
 	resourceMgr->taskPool = taskPool;
@@ -47,13 +48,17 @@ void SubSystems::init()
 	resourceMgr->addFactory(resourceCreateJpeg, resourceLoadJpeg);
 	resourceMgr->addFactory(resourceCreatePng, resourceLoadPng);
 	resourceMgr->addFactory(resourceCreateFont, resourceLoadWinfnt);
+
+	defaultFont = resourceMgr->loadAs<Font>("win.fnt");
 }
 
 void SubSystems::shutdown()
 {
-	delete fontMgr;
-	delete resourceMgr;
-	delete taskPool;
+	defaultFont = NULL;
+
+	delete fontMgr;		fontMgr = NULL;
+	delete resourceMgr;	resourceMgr = NULL;
+	delete taskPool;	taskPool = NULL;
 }
 
 }	// namespace ro

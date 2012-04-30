@@ -11,7 +11,7 @@ GraphicsTestBase::GraphicsTestBase()
 
 GraphicsTestBase::~GraphicsTestBase()
 {
-	subSystems.resourceMgr->shutdown();
+	subSystems.shutdown();
 
 	if(driver) {
 		driver->deleteShader(vShader);

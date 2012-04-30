@@ -42,7 +42,7 @@ struct String
 
 	void		format		(const char* format, ...);
 	void		appendFormat(const char* format, ...);
-	Status		fromUtf16	(roUint16* src, roSize maxSrcLen=roSize(-1));
+	Status		fromUtf16	(const roUint16* src, roSize maxSrcLen=roSize(-1));
 	Status		toUtf16		(roUint16* dst, roSize& dstLen);
 
 // Attributes

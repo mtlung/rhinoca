@@ -231,7 +231,7 @@ void String::appendFormat(const char* format, ...)
 	vsprintf(_cstr + oldSize, format, vl);
 }
 
-Status String::fromUtf16(roUint16* src, roSize maxSrcLen)
+Status String::fromUtf16(const roUint16* src, roSize maxSrcLen)
 {
 	roSize len = 0;
 	Status st = roUtf16ToUtf8(NULL, len, src, maxSrcLen); if(!st) return st;
