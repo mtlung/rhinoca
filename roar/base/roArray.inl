@@ -193,6 +193,7 @@ template<class T>
 Status Array<T>::reserve(roSize newCapacity)
 {
 	newCapacity = roMaxOf2(newCapacity, size());
+	if(newCapacity == 0) return Status::ok;
 
 	T* newPtr = roRealloc(_data, newCapacity * sizeof(T), newCapacity * sizeof(T)).cast<T>();
 	if(!newPtr) return Status::not_enough_memory;

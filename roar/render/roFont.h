@@ -13,6 +13,12 @@ struct Font : public ro::Resource
 	virtual ~Font();
 
 	/// Affect the font style for later draw command
+	/// Use CSS font style string: http://www.w3schools.com/css/css_font.asp
+	/// Format:
+	///	font-family : "Times New Roman" | ...,
+	///	font-style : "normal" | "italic",
+	/// font-weight : "normal" | "bold"
+	///	font-size : 40px | 1.875em,
 	virtual bool setStyle(const char* styleStr) { return false; }
 
 	/// Draw to the roRDriverCurrentContext, with it current selected render target

@@ -141,7 +141,7 @@ void FontLoader::emumTypeface(TaskPool* taskPool)
 	}
 
 	if(!hdc)
-		hdc = CreateCompatibleDC(NULL);
+		hdc = ::CreateCompatibleDC(NULL);
 
 	::EnumFontFamiliesW(hdc, NULL, _enumFamCallBack, (LPARAM)this);
 
@@ -164,24 +164,24 @@ roEXCP_TRY
 	// http://stackoverflow.com/questions/6595772/painting-text-above-opengl-context-in-mfc
 
 	// http://msdn.microsoft.com/en-us/library/windows/desktop/dd183499%28v=vs.85%29.aspx
-	hFont = CreateFontW(30,0,0,0,FW_DONTCARE,FALSE,FALSE,0,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,
+	hFont = ::CreateFontW(30,0,0,0,FW_DONTCARE,FALSE,FALSE,0,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,
 		CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,DEFAULT_PITCH,L"DFKai-SB");
 //		CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,DEFAULT_PITCH,L"Arial");
 
-	SelectObject(hdc, hFont);
+	::SelectObject(hdc, hFont);
 
 	// Get the unicode range
-	Array<char> glyphSet(GetFontUnicodeRanges(hdc, NULL));
+	Array<char> glyphSet(::GetFontUnicodeRanges(hdc, NULL));
 	GLYPHSET* pGlyphSet = glyphSet.castedPtr<GLYPHSET>();
-	GetFontUnicodeRanges(hdc, pGlyphSet);
+	::GetFontUnicodeRanges(hdc, pGlyphSet);
 
 	// Get text metric
-	GetTextMetricsW(hdc, &tm);
+	::GetTextMetricsW(hdc, &tm);
 
 	// Get the kerning table
-	DWORD pairCount = GetKerningPairsW(hdc, 0, NULL);
+	DWORD pairCount = ::GetKerningPairsW(hdc, 0, NULL);
 	Array<KERNINGPAIR> kerningPair(pairCount);
-	GetKerningPairsW(hdc, pairCount, kerningPair.typedPtr());
+	::GetKerningPairsW(hdc, pairCount, kerningPair.typedPtr());
 
 	font->kerningPairs.reserve(pairCount);
 	for(roSize i=0; i<pairCount; ++i) {
@@ -214,7 +214,7 @@ roEXCP_TRY
 
 			// Set the width and height
 			INT w;
-			roVerify(GetCharWidth32W(hdc, codePoint, codePoint, &w));	// NOTE: Use GetCharABCWidthsW if necessary
+			roVerify(::GetCharWidth32W(hdc, codePoint, codePoint, &w));	// NOTE: Use GetCharABCWidthsW if necessary
 			g.width = num_cast<roUint16>(w);
 			g.height = num_cast<roUint16>(tm.tmHeight);
 			roAssert(g.texSize.x <= tm.tmMaxCharWidth);
@@ -315,7 +315,7 @@ void FontLoader::load(TaskPool* taskPool)
 		// http://www.winehq.org/pipermail/wine-patches/2002-July/002790.html
 		GLYPHMETRICS glyphMetrics;
 		static const MAT2 matrix = { { 0, 1 }, { 0, 0 }, { 0, 0 }, { 0, 1 } };
-		roSize bufSize = GetGlyphOutlineW(hdc, codePoint, GGO_GRAY8_BITMAP, &glyphMetrics, 0, NULL, &matrix);
+		roSize bufSize = ::GetGlyphOutlineW(hdc, codePoint, GGO_GRAY8_BITMAP, &glyphMetrics, 0, NULL, &matrix);
 		if(GDI_ERROR == bufSize) {
 			roLog("warn", "GetGlyphOutlineW for code point %s failed\n", codePoint);
 			continue;
@@ -327,7 +327,7 @@ void FontLoader::load(TaskPool* taskPool)
 
 		// Get the glyph outline
 		glyhpBitmapBuf.resize(bufSize);
-		GetGlyphOutlineW(hdc, codePoint, GGO_GRAY8_BITMAP, &glyphMetrics, bufSize, glyhpBitmapBuf.bytePtr(), &matrix);
+		::GetGlyphOutlineW(hdc, codePoint, GGO_GRAY8_BITMAP, &glyphMetrics, bufSize, glyhpBitmapBuf.bytePtr(), &matrix);
 		bufSize = bufSize;
 
 		// Scale up from GGO_GRAY8_BITMAP to 0 - 255
