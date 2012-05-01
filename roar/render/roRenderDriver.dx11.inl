@@ -81,7 +81,7 @@ struct roRDriverBufferImpl : public roRDriverBuffer
 	void* hash;
 	roSize capacity;	// This is the actual size of the dxBuffer
 	ComPtr<ID3D11Buffer> dxBuffer;
-	StagingBuffer* dxStaging;
+	int dxStagingIdx;	// Index into stagingBufferCache
 };
 
 struct roRDriverTextureImpl : public roRDriverTexture
@@ -89,7 +89,7 @@ struct roRDriverTextureImpl : public roRDriverTexture
 	ComPtr<ID3D11Resource> dxTexture;	// May store a 1d, 2d or 3d texture
 	ComPtr<ID3D11ShaderResourceView> dxView;
 	D3D11_RESOURCE_DIMENSION dxDimension;
-	StagingTexture* dxStaging;
+	int dxStagingIdx;	// Index into stagingTextureCache
 };
 
 struct roRDriverShaderImpl : public roRDriverShader

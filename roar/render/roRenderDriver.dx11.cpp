@@ -750,6 +750,7 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 	impl->mapSize = 0;
 	impl->sizeInBytes = sizeInBytes;
 	impl->hash = hash;
+	impl->dxStagingIdx = -1;
 
 	// A simple first fit algorithm
 	if(impl->usage != roRDriverDataUsage_Static) for(roSize i=0; i<ctx->bufferCache.size(); ++i)
@@ -828,7 +829,17 @@ static StagingBuffer* _getStagingBuffer(roRDriverContextImpl* ctx, roSize size, 
 				return NULL;
 			}
 
-			ret = &ctx->stagingBufferCache.pushBack();
+			for(unsigned i=0; i<ctx->stagingBufferCache.size(); ++i) {
+				StagingBuffer* sb = &ctx->stagingBufferCache[i];
+				if(!sb->dxBuffer) {
+					ret = sb;
+					break;
+				}
+			}
+
+			if(!ret)
+				ret = &ctx->stagingBufferCache.pushBack();
+
 			ret->dxBuffer = stagingBuffer;
 			ret->size = size;
 		}
@@ -922,7 +933,7 @@ static void* _mapBuffer(roRDriverBuffer* self, roRDriverMapUsage usage, roSize o
 	if(!staging)
 		return NULL;
 
-	roAssert(!impl->dxStaging);
+	roAssert(impl->dxStagingIdx == -1);
 	ctx->dxDeviceContext->Unmap(staging->dxBuffer, 0);
 	staging->mapped = false;
 
@@ -962,7 +973,7 @@ static void* _mapBuffer(roRDriverBuffer* self, roRDriverMapUsage usage, roSize o
 	impl->mapOffset = offsetInBytes;
 	impl->mapSize = sizeInBytes;
 	impl->mapUsage = usage;
-	impl->dxStaging = staging;
+	impl->dxStagingIdx = staging - &ctx->stagingBufferCache.front();
 
 	return mapped.pData;
 }
@@ -973,20 +984,21 @@ static void _unmapBuffer(roRDriverBuffer* self)
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!ctx || !impl || !impl->isMapped) return;
 
-	if(!impl->dxBuffer || !impl->dxStaging)
+	if(!impl->dxBuffer ||  impl->dxStagingIdx < 0)
 		return;
 
-	roAssert(impl->dxStaging->dxBuffer);
+	StagingBuffer* dxStaging = &ctx->stagingBufferCache[impl->dxStagingIdx];
+	roAssert(dxStaging->dxBuffer);
 
-	ctx->dxDeviceContext->Unmap(impl->dxStaging->dxBuffer, 0);
+	ctx->dxDeviceContext->Unmap(dxStaging->dxBuffer, 0);
 
 	if(impl->mapUsage & roRDriverMapUsage_Write) {
 		D3D11_BOX srcBox = { 0, 0, 0, num_cast<UINT>(impl->mapSize), 1, 1 };
-		ctx->dxDeviceContext->CopySubresourceRegion(impl->dxBuffer, 0, num_cast<UINT>(impl->mapOffset), 0, 0, impl->dxStaging->dxBuffer, 0, &srcBox);
+		ctx->dxDeviceContext->CopySubresourceRegion(impl->dxBuffer, 0, num_cast<UINT>(impl->mapOffset), 0, 0, dxStaging->dxBuffer, 0, &srcBox);
 	}
 
-	impl->dxStaging->mapped = false;
-	impl->dxStaging = NULL;
+	dxStaging->mapped = false;
+	impl->dxStagingIdx = -1;
 	impl->isMapped = false;
 	impl->mapSize = 0;
 }
@@ -1023,7 +1035,7 @@ static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height
 	impl->format = format;
 	impl->flags = flags;
 	impl->dxDimension = D3D11_RESOURCE_DIMENSION_TEXTURE2D;
-	impl->dxStaging = NULL;
+	impl->dxStagingIdx = -1;
 
 	UINT bindFlags = 0;
 
@@ -1111,7 +1123,17 @@ static StagingTexture* _getStagingTexture(roRDriverContextImpl* ctx, roRDriverTe
 				return NULL;
 			}
 
-			ret = &ctx->stagingTextureCache.pushBack();
+			for(unsigned i=0; i<ctx->stagingTextureCache.size(); ++i) {
+				StagingTexture* st = &ctx->stagingTextureCache[i];
+				if(!st->dxTexture) {
+					ret = st;
+					break;
+				}
+			}
+
+			if(!ret)
+				ret = &ctx->stagingTextureCache.pushBack();
+
 			ret->dxTexture = stagingTexture;
 			ret->hash = hash;
 		}
@@ -1246,7 +1268,7 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 	if(!staging)
 		return NULL;
 
-	roAssert(!impl->dxStaging);
+	roAssert(impl->dxStagingIdx == -1);
 	ctx->dxDeviceContext->Unmap(staging->dxTexture, 0);
 	staging->mapped = false;
 
@@ -1285,7 +1307,7 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 	staging->mapped = true;
 	impl->isMapped = true;
 	impl->mapUsage = usage;
-	impl->dxStaging = staging;
+	impl->dxStagingIdx = staging - &ctx->stagingTextureCache.front();
 
 	return mapped.pData;
 }
@@ -1296,18 +1318,19 @@ static void _unmapTexture(roRDriverTexture* self, unsigned mipIndex, unsigned ar
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!ctx || !impl || !impl->isMapped) return;
 
-	if(!impl->dxTexture || !impl->dxStaging)
+	if(!impl->dxTexture || impl->dxStagingIdx < 0)
 		return;
 
-	roAssert(impl->dxStaging->dxTexture);
+	StagingTexture* dxStaging = &ctx->stagingTextureCache[impl->dxStagingIdx];
+	roAssert(dxStaging->dxTexture);
 
-	ctx->dxDeviceContext->Unmap(impl->dxStaging->dxTexture, mipIndex);
+	ctx->dxDeviceContext->Unmap(dxStaging->dxTexture, mipIndex);
 
 	if(impl->mapUsage & roRDriverMapUsage_Write)
-		ctx->dxDeviceContext->CopyResource(impl->dxTexture, impl->dxStaging->dxTexture);
+		ctx->dxDeviceContext->CopyResource(impl->dxTexture, dxStaging->dxTexture);
 
-	impl->dxStaging->mapped = false;
-	impl->dxStaging = NULL;
+	dxStaging->mapped = false;
+	impl->dxStagingIdx = -1;
 	impl->isMapped = false;
 }
 

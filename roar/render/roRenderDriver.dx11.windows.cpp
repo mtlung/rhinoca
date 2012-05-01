@@ -279,11 +279,15 @@ void _driverSwapBuffers_DX11()
 	}
 
 	// Update and clean up on staging buffer cache
+	// NOTE: We just set dxBuffer to null rather than remove the entry in 
+	// stagingBufferCache, to avoid array container re-allocation invaliding pointer
 	for(roSize i=0; i<_currentContext->stagingBufferCache.size();) {
 		StagingBuffer& staging = _currentContext->stagingBufferCache[i];
 
-		if(!staging.mapped && staging.lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
-			_currentContext->stagingBufferCache.remove(i);
+		if(staging.dxBuffer && !staging.mapped && staging.lastUsedTime < _currentContext->lastSwapTime - removalTimeOut) {
+			staging.size = 0;
+			staging.dxBuffer = (ID3D11Resource*)NULL;
+		}
 		else
 			++i;
 	}
@@ -292,8 +296,10 @@ void _driverSwapBuffers_DX11()
 	for(roSize i=0; i<_currentContext->stagingTextureCache.size();) {
 		StagingTexture& staging = _currentContext->stagingTextureCache[i];
 
-		if(!staging.mapped && staging.lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
-			_currentContext->stagingTextureCache.remove(i);
+		if(staging.dxTexture && !staging.mapped && staging.lastUsedTime < _currentContext->lastSwapTime - removalTimeOut) {
+			staging.hash = 0;
+			staging.dxTexture = (ID3D11Resource*)NULL;
+		}
 		else
 			++i;
 	}

@@ -122,7 +122,7 @@ static roRDriverBlendState blendState_SrcOver = {
 	0, true,
 	roRDriverBlendOp_Add, roRDriverBlendOp_Add,
 	roRDriverBlendValue_SrcAlpha, roRDriverBlendValue_InvSrcAlpha,
-	roRDriverBlendValue_One, roRDriverBlendValue_One,
+	roRDriverBlendValue_SrcAlpha, roRDriverBlendValue_InvSrcAlpha,
 	roRDriverColorWriteMask_EnableAll
 };
 

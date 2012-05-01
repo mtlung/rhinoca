@@ -750,8 +750,8 @@ static void _deleteTexture(roRDriverTexture* self)
 	if(!impl) return;
 
 	for(roSize i=0; i<impl->mapInfo.size(); ++i) {
-		roAssert(!impl->mapInfo[i].glPbo && "Call unmapTexture() for all mip-map and tex array befor calling initTexture");
-		roAssert(!impl->mapInfo[i].systemBuf && "Call unmapTexture() for all mip-map and tex array befor calling initTexture");
+		roAssert(!impl->mapInfo[i].glPbo && "Call unmapTexture() for all mip-map and tex array befor calling deleteTexture");
+		roAssert(!impl->mapInfo[i].systemBuf && "Call unmapTexture() for all mip-map and tex array befor calling deleteTexture");
 	}
 
 	if(impl->glh)
