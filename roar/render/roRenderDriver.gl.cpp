@@ -668,6 +668,9 @@ static void* _mapBuffer(roRDriverBuffer* self, roRDriverMapUsage usage, roSize o
 		}
 #endif
 
+		// NOTE: It's better to un-bind it, since we might call unmapBuffer()
+		// at a much much later time than mapBuffer()
+		glBindBuffer(t, 0);
 		checkError();
 	}
 
@@ -695,6 +698,7 @@ static void _unmapBuffer(roRDriverBuffer* self)
 	GLenum t = _bufferTarget[self->type];
 	glBindBuffer(t, impl->glh);
 	glUnmapBuffer(t);
+	glBindBuffer(t, 0);
 	checkError();
 #endif
 
@@ -984,6 +988,8 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 			}
 
 			ret = glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, sizeInBytes, _bufferRangeMapUsage[usage]);
+			glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+			glBindTexture(impl->glTarget, 0);
 		}
 		// NOTE: For roRDriverMapUsage_ReadWrite I assume there is no need to call glMapBufferRange with GL_PIXEL_UNPACK_BUFFER
 		// for a write pointer, it should return the same pointer as the read pointer
@@ -992,6 +998,7 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 			glBufferData(GL_PIXEL_UNPACK_BUFFER, sizeInBytes, NULL, GL_DYNAMIC_DRAW);
 
 			ret = glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, sizeInBytes, _bufferRangeMapUsage[usage]);
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 		}
 		else {
 			roAssert(false);
@@ -1012,6 +1019,8 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 				mapping->glFormat, mapping->glType,
 				ret
 			);
+
+			glBindTexture(impl->glTarget, 0);
 		}
 	}
 
@@ -1073,6 +1082,7 @@ static void _unmapTexture(roRDriverTexture* self, unsigned mipIndex, unsigned ar
 			}
 
 			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+			glBindTexture(impl->glTarget, 0);
 		}
 
 		if(mapInfo.usage & roRDriverMapUsage_Read)

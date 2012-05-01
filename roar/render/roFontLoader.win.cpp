@@ -47,8 +47,8 @@ struct FontImpl : public Font
 enum FontLoadingState {
 	FontLoadingState_EmumTypeface,
 	FontLoadingState_LoadMetric,
-	FontLoadingState_Load,
-	FontLoadingState_InitTexture,
+	FontLoadingState_LoadBitmaps,
+	FontLoadingState_AllocateTexture,
 	FontLoadingState_Commit,
 	FontLoadingState_Finish,
 	FontLoadingState_Abort
@@ -68,6 +68,10 @@ public:
 		: font(f), manager(mgr)
 		, fontLoadingState(FontLoadingState_EmumTypeface)
 		, hdc(NULL), hFont(NULL)
+		, texDimension(1)
+		, currentGlyphIdx(0), currentTextureIdx(0)
+		, dstX(0), dstY(0)
+		, mappedTexPtr(NULL)
 	{}
 
 	~FontLoader()
@@ -81,8 +85,8 @@ public:
 protected:
 	void emumTypeface(TaskPool* taskPool);
 	void loadMetric(TaskPool* taskPool);
-	void load(TaskPool* taskPool);
-	void initTexture(TaskPool* taskPool);
+	void loadBitmaps(TaskPool* taskPool);
+	void allocateTexture(TaskPool* taskPool);
 	void commit(TaskPool* taskPool);
 
 	FontImpl* font;
@@ -92,21 +96,31 @@ protected:
 	HDC hdc;
 	HFONT hFont;
 	TEXTMETRIC tm;
+
+	// Variable used for reading font bitmaps
+	unsigned texDimension;
+	roSize currentGlyphIdx;
+	roSize currentTextureIdx;
+	unsigned dstX, dstY;
+	char* mappedTexPtr;
 };
 
 void FontLoader::run(TaskPool* taskPool)
 {
-	if(font->state == Resource::Aborted)
+	if(font->state == Resource::Aborted) {
+		if(currentTextureIdx < font->textures.size() && font->textures[currentTextureIdx])
+			roRDriverCurrentContext->driver->unmapTexture(font->textures[currentTextureIdx]->handle, 0, 0);
 		fontLoadingState = FontLoadingState_Abort;
+	}
 
 	if(fontLoadingState == FontLoadingState_EmumTypeface)
 		emumTypeface(taskPool);
 	else if(fontLoadingState == FontLoadingState_LoadMetric)
 		loadMetric(taskPool);
-	else if(fontLoadingState == FontLoadingState_Load)
-		load(taskPool);
-	else if(fontLoadingState == FontLoadingState_InitTexture)
-		initTexture(taskPool);
+	else if(fontLoadingState == FontLoadingState_LoadBitmaps)
+		loadBitmaps(taskPool);
+	else if(fontLoadingState == FontLoadingState_AllocateTexture)
+		allocateTexture(taskPool);
 	else if(fontLoadingState == FontLoadingState_Commit)
 		commit(taskPool);
 
@@ -226,9 +240,21 @@ roEXCP_TRY
 	font->kerningPairs.condense();
 	font->glyphs.condense();
 
-	fontLoadingState = FontLoadingState_Load;
+	// Calculate the optimal number of texture to use, base on the the average glyph width and fixed glyph height
+	roSize pixelNeeded = tm.tmAveCharWidth * tm.tmHeight * font->glyphs.size();
+
+	texDimension = 1;
+	for(roSize i=1; i<=10; ++i) {
+		texDimension = (1 << i);
+		unsigned pixels = (1 << i) * (1 << i);
+		if(pixels > pixelNeeded)
+			break;
+	}
+	roAssert(texDimension <= 1024);
+
+	fontLoadingState = FontLoadingState_LoadBitmaps;
 //	fontLoadingState = FontLoadingState_InitTexture;
-	return reSchedule(false, taskPool->mainThreadId());
+	return reSchedule(false, ~taskPool->mainThreadId());
 
 roEXCP_CATCH
 	roLog("error", "FontLoader: Fail to load '%s', reason: %s\n", font->uri().c_str(), st.c_str());
@@ -255,59 +281,17 @@ static void texBlit(
 	}
 }
 
-static TexturePtr _allocateTexture(unsigned dimension, char** outMappedPtr)
-{
-	static const unsigned bytePerPixel = 1;
-	TexturePtr texture = new Texture("");
-	texture->handle = roRDriverCurrentContext->driver->newTexture();
-
-	bool ok = roRDriverCurrentContext->driver->initTexture(
-		texture->handle, dimension, dimension, 1, roRDriverTextureFormat_R, roRDriverTextureFlag_None);
-	if(!ok) {
-		// TODO: More error handling
-		roLog("error", "Fail to create texture for font\n");
-		return NULL;
-	}
-
-	roVerify(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, 0, NULL, 0, NULL));
-
-	if(outMappedPtr) {
-		*outMappedPtr = (char*)roRDriverCurrentContext->driver->mapTexture(
-			texture->handle, roRDriverMapUsage_Write, 0, 0);
-		roZeroMemory(*outMappedPtr, dimension * dimension * bytePerPixel);
-	}
-
-	return texture;
-}
-
-void FontLoader::load(TaskPool* taskPool)
+void FontLoader::loadBitmaps(TaskPool* taskPool)
 {
 	Status st;
 
 	roEXCP_TRY
-	// Calculate the optimal number of texture to use, base on the the average glyph width and fixed glyph height
-	roSize pixelNeeded = tm.tmAveCharWidth * tm.tmHeight * font->glyphs.size();
-
-	unsigned texDimension = 1;
-	for(roSize i=1; i<=10; ++i) {
-		texDimension = (1 << i);
-		unsigned pixels = (1 << i) * (1 << i);
-		if(pixels > pixelNeeded)
-			break;
-	}
-
-	roAssert(texDimension <= 1024);
-
-	roSize currentTextureIdx = 0;
-	unsigned dstX = 0, dstY = 0;
-	char* textureMem = NULL;
-
 	// Get the bitmap data
 	ro::Array<char> glyhpBitmapBuf;
 
-	for(roSize i=0; i<font->glyphs.size(); ++i)
+	for(; currentGlyphIdx<font->glyphs.size(); ++currentGlyphIdx)
 	{
-		Glyph& g = font->glyphs[i];
+		Glyph& g = font->glyphs[currentGlyphIdx];
 		unsigned codePoint = g.codePoint;
 
 		// Get the glyph bitmaps
@@ -343,33 +327,26 @@ void FontLoader::load(TaskPool* taskPool)
 			dstX = 0;
 			dstY += tm.tmHeight;
 		}
-		if(dstY + tm.tmHeight > texDimension) {
-			dstX = dstY = 0;
-			roRDriverCurrentContext->driver->unmapTexture(font->textures[currentTextureIdx]->handle, 0, 0);
-			++currentTextureIdx;
-		}
 
-		if(currentTextureIdx == font->textures.size()) {
-			TexturePtr tex = _allocateTexture(texDimension, &textureMem);
-			// If we fail to allocate texture, seems not much we can do
-			if(!tex)
-				break;
-			font->textures.pushBack(tex);
+		// Condition for allocating new texture
+		bool texturesEmpty = currentTextureIdx == font->textures.size();
+		bool textureFull = dstY + tm.tmHeight > texDimension;
+		if(texturesEmpty || textureFull) {
+			fontLoadingState = FontLoadingState_AllocateTexture;
+			return reSchedule(false, taskPool->mainThreadId());
 		}
 
 		// Copy the outline bitmap to the texture atlas
 		roSize rowLen = roAlignCeiling(glyphMetrics.gmBlackBoxX, 4u);
 		texBlit(1,
 			glyhpBitmapBuf.bytePtr(), 0, 0, glyphMetrics.gmBlackBoxX, glyphMetrics.gmBlackBoxY, rowLen,
-			textureMem, dstX, dstY, texDimension, texDimension, texDimension * 1);
+			mappedTexPtr, dstX, dstY, texDimension, texDimension, texDimension * 1);
 
 		dstX += glyphMetrics.gmBlackBoxX;
 	}	// end for each glyphs
 
-	if(currentTextureIdx < font->textures.size() && font->textures[currentTextureIdx])
-		roRDriverCurrentContext->driver->unmapTexture(font->textures[currentTextureIdx]->handle, 0, 0);
-
-	fontLoadingState = FontLoadingState_Finish;
+	fontLoadingState = FontLoadingState_Commit;
+	return reSchedule(false, taskPool->mainThreadId());
 
 roEXCP_CATCH
 	roLog("error", "FontLoader: Fail to load '%s', reason: %s\n", font->uri().c_str(), st.c_str());
@@ -378,14 +355,58 @@ roEXCP_CATCH
 roEXCP_END
 }
 
-void FontLoader::initTexture(TaskPool* taskPool)
+static TexturePtr _allocateTexture(unsigned dimension, char** outMappedPtr)
 {
-	fontLoadingState = FontLoadingState_Load;
+	static const unsigned bytePerPixel = 1;
+	TexturePtr texture = new Texture("");
+	texture->handle = roRDriverCurrentContext->driver->newTexture();
+
+	bool ok = roRDriverCurrentContext->driver->initTexture(
+		texture->handle, dimension, dimension, 1, roRDriverTextureFormat_R, roRDriverTextureFlag_None);
+	if(!ok) {
+		// TODO: More error handling
+		roLog("error", "Fail to create texture for font\n");
+		return NULL;
+	}
+
+	roVerify(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, 0, NULL, 0, NULL));
+
+	if(outMappedPtr) {
+		*outMappedPtr = (char*)roRDriverCurrentContext->driver->mapTexture(
+			texture->handle, roRDriverMapUsage_Write, 0, 0);
+		roZeroMemory(*outMappedPtr, dimension * dimension * bytePerPixel);
+	}
+
+	return texture;
+}
+
+void FontLoader::allocateTexture(TaskPool* taskPool)
+{
+	if(dstY + tm.tmHeight > texDimension) {
+		dstX = dstY = 0;
+		roRDriverCurrentContext->driver->unmapTexture(font->textures[currentTextureIdx]->handle, 0, 0);
+		++currentTextureIdx;
+	}
+
+	if(currentTextureIdx == font->textures.size()) {
+		TexturePtr tex = _allocateTexture(texDimension, &mappedTexPtr);
+		// If we fail to allocate texture, seems not much we can do
+		if(!tex) {
+			fontLoadingState = FontLoadingState_Abort;
+			return;
+		}
+		font->textures.pushBack(tex);
+	}
+
+	fontLoadingState = FontLoadingState_LoadBitmaps;
 	return reSchedule(false, ~taskPool->mainThreadId());
 }
 
 void FontLoader::commit(TaskPool* taskPool)
 {
+	if(currentTextureIdx < font->textures.size() && font->textures[currentTextureIdx])
+		roRDriverCurrentContext->driver->unmapTexture(font->textures[currentTextureIdx]->handle, 0, 0);
+
 	fontLoadingState = FontLoadingState_Finish;
 }
 
@@ -399,7 +420,7 @@ bool resourceLoadWinfnt(Resource* resource, ResourceManager* mgr)
 
 	FontLoader* loaderTask = new FontLoader(font, mgr);
 	// TODO: Currently for fast prototype purpose, I used single thread right now
-	font->taskReady = font->taskLoaded = taskPool->addFinalized(loaderTask, 0, 0, taskPool->mainThreadId());
+	font->taskReady = font->taskLoaded = taskPool->addFinalized(loaderTask, 0, 0, ~taskPool->mainThreadId());
 
 	return true;
 }
