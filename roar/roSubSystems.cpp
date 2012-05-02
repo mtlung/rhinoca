@@ -6,12 +6,48 @@
 
 namespace ro {
 
+static void _initTaskPool(SubSystems& subSystems)
+{
+	subSystems.taskPool = new TaskPool;
+	subSystems.taskPool->init(2);
+}
+
+static void _initRenderDriver(SubSystems& subSystems)
+{
+	// Left for the application to initialize, because it need platform specific handle
+}
+
+static void _initResourceManager(SubSystems& subSystems)
+{
+	extern Resource* resourceCreateBmp(const char*, ResourceManager*);
+	extern Resource* resourceCreateJpeg(const char*, ResourceManager*);
+	extern Resource* resourceCreatePng(const char*, ResourceManager*);
+	extern Resource* resourceCreateFont(const char*, ResourceManager*);
+	extern bool resourceLoadBmp(Resource*, ResourceManager*);
+	extern bool resourceLoadJpeg(Resource*, ResourceManager*);
+	extern bool resourceLoadPng(Resource*, ResourceManager*);
+	extern bool resourceLoadWinfnt(Resource*, ResourceManager*);
+
+	subSystems.resourceMgr = new ResourceManager;
+	subSystems.resourceMgr->taskPool = subSystems.taskPool;
+	subSystems.resourceMgr->addFactory(resourceCreateBmp, resourceLoadBmp);
+	subSystems.resourceMgr->addFactory(resourceCreateJpeg, resourceLoadJpeg);
+	subSystems.resourceMgr->addFactory(resourceCreatePng, resourceLoadPng);
+	subSystems.resourceMgr->addFactory(resourceCreateFont, resourceLoadWinfnt);
+}
+
+static void _initFont(SubSystems& subSystems)
+{
+	subSystems.fontMgr = new FontManager;
+	subSystems.defaultFont = subSystems.resourceMgr->loadAs<Font>("win.fnt");
+}
+
 SubSystems::SubSystems()
-	: fontMgr(NULL)
-	, resourceMgr(NULL)
-	, taskPool(NULL)
-	, renderDriver(NULL)
-	, renderContext(NULL)
+	: userData(NULL)
+	, initTaskPool(_initTaskPool), taskPool(NULL)
+	, initRenderDriver(_initRenderDriver), renderDriver(NULL), renderContext(NULL)
+	, initResourceManager(_initResourceManager), resourceMgr(NULL)
+	, initFont(_initFont), fontMgr(NULL)
 {
 	if(!roSubSystems)
 		roSubSystems = this;
@@ -25,31 +61,12 @@ SubSystems::~SubSystems()
 		roSubSystems = NULL;
 }
 
-extern Resource* resourceCreateBmp(const char*, ResourceManager*);
-extern Resource* resourceCreateJpeg(const char*, ResourceManager*);
-extern Resource* resourceCreatePng(const char*, ResourceManager*);
-extern Resource* resourceCreateFont(const char*, ResourceManager*);
-extern bool resourceLoadBmp(Resource*, ResourceManager*);
-extern bool resourceLoadJpeg(Resource*, ResourceManager*);
-extern bool resourceLoadPng(Resource*, ResourceManager*);
-extern bool resourceLoadWinfnt(Resource*, ResourceManager*);
-
 void SubSystems::init()
 {
-	taskPool = new TaskPool;
-	taskPool->init(2);
-
-	resourceMgr = new ResourceManager;
-	resourceMgr->taskPool = taskPool;
-
-	fontMgr = new FontManager;
-
-	resourceMgr->addFactory(resourceCreateBmp, resourceLoadBmp);
-	resourceMgr->addFactory(resourceCreateJpeg, resourceLoadJpeg);
-	resourceMgr->addFactory(resourceCreatePng, resourceLoadPng);
-	resourceMgr->addFactory(resourceCreateFont, resourceLoadWinfnt);
-
-	defaultFont = resourceMgr->loadAs<Font>("win.fnt");
+	initTaskPool(*this);
+	initRenderDriver(*this);
+	initResourceManager(*this);
+	initFont(*this);
 }
 
 void SubSystems::shutdown()

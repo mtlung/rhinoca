@@ -6,7 +6,6 @@
 GraphicsTestBase::GraphicsTestBase()
 	: hWnd(0), driver(NULL), context(NULL), averageFrameDuration(0)
 {
-	subSystems.init();
 }
 
 GraphicsTestBase::~GraphicsTestBase()
@@ -85,19 +84,27 @@ void GraphicsTestBase::createWindow(int width, int height)
 	::ShowWindow(hWnd, true);
 }
 
-void GraphicsTestBase::initContext(const char* driverStr)
+static void _initRenderDriver(ro::SubSystems& subSystems)
 {
-	driver = roNewRenderDriver(driverStr, NULL);
-	context = driver->newContext(driver);
+	GraphicsTestBase& self = *(GraphicsTestBase*)(subSystems.userData[0]);
+	roRDriver* driver = roNewRenderDriver((char*)subSystems.userData[1], NULL);
+	roRDriverContext* context = driver->newContext(driver);
 	context->majorVersion = 2;
 	context->minorVersion = 0;
-	driver->initContext(context, hWnd);
+	driver->initContext(context, self.hWnd);
 	driver->useContext(context);
-
-	subSystems.renderDriver = driver;
-	subSystems.renderContext = context;
-
 	driver->setViewport(0, 0, context->width, context->height, 0, 1);
+
+	self.driver = subSystems.renderDriver = driver;
+	self.context = subSystems.renderContext = context;
+}
+
+void GraphicsTestBase::initContext(const char* driverStr)
+{
+	subSystems.userData.pushBack(this);
+	subSystems.userData.pushBack((void*)driverStr);
+	subSystems.initRenderDriver = _initRenderDriver;
+	subSystems.init();
 
 	vShader = driver->newShader();
 	gShader = driver->newShader();

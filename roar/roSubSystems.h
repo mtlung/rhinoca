@@ -1,3 +1,4 @@
+#include "base/roArray.h"
 #include "base/roSharedPtr.h"
 
 struct roRDriver;
@@ -17,18 +18,27 @@ struct SubSystems
 	SubSystems();
 	~SubSystems();
 
+	typedef void (*CustomInit)(SubSystems& subSystems);
+
 // Operations
 	void init();
 	void shutdown();
 
 // Attributes
-	FontManager* fontMgr;
-	ResourceManager* resourceMgr;
+	Array<void*> userData;
+
+	CustomInit initTaskPool;
 	TaskPool* taskPool;
 
+	CustomInit initRenderDriver;
 	roRDriver* renderDriver;
 	roRDriverContext* renderContext;
 
+	CustomInit initResourceManager;
+	ResourceManager* resourceMgr;
+
+	CustomInit initFont;
+	FontManager* fontMgr;
 	FontPtr defaultFont;
 };	// SubSystems
 
