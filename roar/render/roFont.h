@@ -6,6 +6,8 @@
 
 namespace ro {
 
+struct Canvas;
+
 /// A Font resource contain a set of typeface
 struct Font : public ro::Resource
 {
@@ -22,7 +24,7 @@ struct Font : public ro::Resource
 	virtual bool setStyle(const char* styleStr) { return false; }
 
 	/// Draw to the roRDriverCurrentContext, with it current selected render target
-	virtual void draw(const char* utf8Str, float x, float y, float maxWidth) {}
+	virtual void draw(const char* utf8Str, float x, float y, float maxWidth, Canvas& canvas) {}
 
 // Attributes
 };	// Texture

@@ -314,15 +314,15 @@ TEST_FIXTURE(CanvasTest, drawText)
 	{
 		// Draw to auxCanvas
 		canvas.beginDraw();
-		canvas.save();
 
 		driver->clearStencil(0);
 		canvas.clearRect(0, 0, 800, 600);
 
-		canvas.setFillColor(0, 0, 0, 1);
-		canvas.setStrokeColor(0, 0, 0, 1);
+		canvas.setGlobalColor(1, 1, 0, 0.1f);
 
 		canvas.fillText("Hello world!", 0, 0, 0);
+
+		canvas.endDraw();
 
 		driver->swapBuffers();
 	}

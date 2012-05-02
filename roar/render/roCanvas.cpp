@@ -40,8 +40,10 @@ struct Canvas::OpenVG
 
 void Canvas::init()
 {
-	if(!roSubSystems || !roSubSystems->renderContext)
-		return roAssert(false);
+	if(!roSubSystems || !roSubSystems->renderContext) {
+		roAssert(false);
+		return;
+	}
 
 	_context = roSubSystems->renderContext;
 	_driver = _context->driver;

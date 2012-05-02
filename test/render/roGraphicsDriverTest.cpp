@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "roGraphicsTestBase.win.h"
+#include "../../roar/base/roStringHash.h"
 #include "../../roar/math/roMatrix.h"
 
 #include <math.h>
