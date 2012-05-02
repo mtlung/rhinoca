@@ -194,7 +194,7 @@ typedef struct TextureFormatMapping
 TextureFormatMapping _textureFormatMappings[] = {
 	{ roRDriverTextureFormat(0),			0,	DXGI_FORMAT(0) },
 	{ roRDriverTextureFormat_RGBA,			4,	DXGI_FORMAT_R8G8B8A8_UNORM },
-	{ roRDriverTextureFormat_R,				1,	DXGI_FORMAT_R8_UNORM },
+	{ roRDriverTextureFormat_L,				1,	DXGI_FORMAT_R8_UNORM },				// NOTE: DX11 no longer support gray scale texture, have to deal with it in shader
 	{ roRDriverTextureFormat_A,				1,	DXGI_FORMAT_A8_UNORM },
 	{ roRDriverTextureFormat_Depth,			4,	DXGI_FORMAT_D32_FLOAT },
 	{ roRDriverTextureFormat_DepthStencil,	4,	DXGI_FORMAT_D24_UNORM_S8_UINT },	// DXGI_FORMAT_D32_FLOAT_S8X24_UINT

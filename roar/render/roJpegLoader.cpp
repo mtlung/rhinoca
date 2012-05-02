@@ -129,7 +129,7 @@ roEXCP_TRY
 
 	int c = decoder->get_num_components();
 	if(c == 1)
-		pixelDataFormat = roRDriverTextureFormat_R;
+		pixelDataFormat = roRDriverTextureFormat_L;
 	else if(c == 3)
 		pixelDataFormat = roRDriverTextureFormat_RGBA;	// Note that the source format is 4 byte even c == 3
 	else {

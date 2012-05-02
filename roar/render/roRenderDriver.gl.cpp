@@ -729,7 +729,7 @@ static bool _switchBufferMode(roRDriverBufferImpl* impl)
 TextureFormatMapping _textureFormatMappings[] = {
 	{ roRDriverTextureFormat(0),			0, 0, 0, 0 },
 	{ roRDriverTextureFormat_RGBA,			4, GL_RGBA8, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV },	// NOTE: Endianness
-	{ roRDriverTextureFormat_R,				1, GL_R8, GL_RED, GL_UNSIGNED_BYTE },
+	{ roRDriverTextureFormat_L,				1, GL_LUMINANCE8, GL_LUMINANCE, GL_UNSIGNED_BYTE },
 	{ roRDriverTextureFormat_A,				1, GL_ALPHA, GL_ALPHA, GL_UNSIGNED_BYTE },
 	{ roRDriverTextureFormat_Depth,			0, 0, 0, 0 },
 	{ roRDriverTextureFormat_DepthStencil,	4, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8 },

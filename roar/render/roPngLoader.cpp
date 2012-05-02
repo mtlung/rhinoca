@@ -184,7 +184,7 @@ void PngLoader::loadHeader()
 		pixelDataFormat = roRDriverTextureFormat_RGBA;
 		break;
 	case PNG_COLOR_TYPE_GRAY:
-		pixelDataFormat = roRDriverTextureFormat_R;
+		pixelDataFormat = roRDriverTextureFormat_L;
 		break;
 	case PNG_COLOR_TYPE_GRAY_ALPHA:
 		pixelDataFormat = roRDriverTextureFormat_A;
