@@ -98,6 +98,10 @@ struct Canvas
 	float globalAlpha			() const;
 	void setGlobalAlpha			(float alpha);
 
+	void getglobalColor			(float* rgba);
+	void setGlobalColor			(const float* rgba);
+	void setGlobalColor			(float r, float g, float b, float a);
+
 	/// sets how shapes and images are drawn onto the existing bitmap
 	/// See: http://www.whatwg.org/specs/web-apps/current-work/multipage/the-canvas-element.html#compositing
 	/// Possible values:
@@ -131,7 +135,7 @@ struct Canvas
 		int lineCap;
 		int lineJoin;
 		float lineWidth;
-		float globalAlpha;
+		float globalColor[4];
 		float strokeColor[4];
 		float fillColor[4];
 		int compisitionOperation;

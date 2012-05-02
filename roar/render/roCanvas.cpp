@@ -40,8 +40,8 @@ struct Canvas::OpenVG
 
 void Canvas::init()
 {
-	if(!roSubSystems) return;
-	if(!roSubSystems->renderContext) return;
+	if(!roSubSystems || !roSubSystems->renderContext)
+		return roAssert(false);
 
 	_context = roSubSystems->renderContext;
 	_driver = _context->driver;
@@ -61,7 +61,7 @@ void Canvas::init()
 	static const char* vShaderSrc[] = 
 	{
 		// GLSL
-		"uniform constants { float alpha; bool isRtTexture; };"
+		"uniform constants { vec4 globalColor; bool isRtTexture; bool isAlphaTexture; bool isGrayScaleTexture; };"
 		"in vec4 position;"
 		"in vec2 texCoord;"
 		"out varying vec2 _texCoord;"
@@ -71,7 +71,7 @@ void Canvas::init()
 		"}",
 
 		// HLSL
-		"cbuffer constants { float alpha; bool isRtTexture; }"
+		"cbuffer constants { float4 globalColor; bool isRtTexture; bool isAlphaTexture; bool isGrayScaleTexture; }"
 		"struct VertexInputType { float4 pos : POSITION; float2 texCoord : TEXCOORD0; };"
 		"struct PixelInputType { float4 pos : SV_POSITION; float2 texCoord : TEXCOORD0; };"
 		"PixelInputType main(VertexInputType input) {"
@@ -84,20 +84,25 @@ void Canvas::init()
 	static const char* pShaderSrc[] = 
 	{
 		// GLSL
-		"uniform constants { float alpha; bool isRtTexture; };"
+		"uniform constants { vec4 globalColor; bool isRtTexture; bool isAlphaTexture; bool isGrayScaleTexture; };"
 		"uniform sampler2D tex;"
 		"in vec2 _texCoord;"
-		"void main(void) { gl_FragColor = texture2D(tex, _texCoord); gl_FragColor.a *= alpha; }",
+		"void main(void) { "
+		"	vec4 ret = texture2D(tex, _texCoord);"
+		"	if(isAlphaTexture) ret.rgb = 1;"
+		"	gl_FragColor = globalColor * ret;"
+		"}",
 
 		// HLSL
-		"cbuffer constants { float alpha; bool isRtTexture; }"
+		"cbuffer constants { float4 globalColor; bool isRtTexture; bool isAlphaTexture; bool isGrayScaleTexture; }"
 		"Texture2D tex;"
 		"SamplerState sampleType;"
 		"struct PixelInputType { float4 pos : SV_POSITION; float2 texCoord : TEXCOORD0; };"
 		"float4 main(PixelInputType input):SV_Target {"
 		"	float4 ret = tex.Sample(sampleType, input.texCoord);"
-		"	ret.a *= alpha;"
-		"	return ret;"
+		"	if(isAlphaTexture) ret.rgb = 1;"
+		"	if(isGrayScaleTexture) ret.rgb = ret.r;"
+		"	return globalColor * ret;"
 		"}"
 	};
 
@@ -110,7 +115,7 @@ void Canvas::init()
 	roVerify(_driver->initBuffer(_vBuffer, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, vertex, sizeof(vertex)));
 
 	// Create uniform buffer
-	bool isRtTexture[16] = {0};	// Most of the time we use a block of 16 bytes
+	bool isRtTexture[16*2] = {0};	// In DirectX the size of the const buffer must be multiple of 16
 	_uBuffer = _driver->newBuffer();
 	roVerify(_driver->initBuffer(_uBuffer, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, isRtTexture, sizeof(isRtTexture)));
 
@@ -156,12 +161,16 @@ void Canvas::init()
 	_openvg->strokePaint = vgCreatePaint();
 	_openvg->fillPaint = vgCreatePaint();
 
+	vgSeti(VG_FILL_RULE, VG_NON_ZERO);
+	vgSetPaint(_openvg->strokePaint, VG_STROKE_PATH);
+	vgSetPaint(_openvg->fillPaint, VG_FILL_PATH);
+
 	// Setup initial drawing states
 	static const float black[4] = { 0, 0, 0, 1 };
 	setLineCap("butt");
 	setLineJoin("round");
 	setLineWidth(1);
-	setGlobalAlpha(1);
+	setGlobalColor(1, 1, 1, 1);
 	setComposition("source-over");
 	setStrokeColor(black);
 	setFillColor(black);
@@ -236,13 +245,6 @@ void Canvas::beginDraw()
 	vgResizeSurfaceSH((VGint)_targetWidth, (VGint)_targetHeight);
 	_orthoMat = makeOrthoMat4(0, _targetWidth, 0, _targetHeight, 0, 1);
 	_driver->adjustDepthRangeMatrix(_orthoMat.data);
-
-	vgSeti(VG_FILL_RULE, VG_NON_ZERO);
-	vgSetPaint(_openvg->strokePaint, VG_STROKE_PATH);
-	vgSetPaint(_openvg->fillPaint, VG_FILL_PATH);
-
-	restore();
-
 	_driver->setRasterizerState(&_rasterizerState);
 }
 
@@ -279,7 +281,7 @@ void Canvas::restore()
 		_stateStack.popBack();
 	}
 
-	setGlobalAlpha(_currentState.globalAlpha);
+	setGlobalColor(_currentState.globalColor[0], _currentState.globalColor[1], _currentState.globalColor[2], _currentState.globalColor[3]);
 	setLineWidth(_currentState.lineWidth);
 
 	vgSeti(VG_STROKE_CAP_STYLE,  _currentState.lineCap);
@@ -314,7 +316,7 @@ void Canvas::drawImage(roRDriverTexture* texture, float dstx, float dsty, float 
 
 void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float srcw, float srch, float dstx, float dsty, float dstw, float dsth)
 {
-	if(!texture || !texture->width || !texture->height || _currentState.globalAlpha <= 0) return;
+	if(!texture || !texture->width || !texture->height || globalAlpha() <= 0) return;
 
 	const float z = 0;
 
@@ -344,8 +346,18 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 
 	roVerify(_driver->updateBuffer(_vBuffer, 0, vertex, sizeof(vertex)));
 
-	struct Constants { float alpha; bool isRtTexture[4]; };
-	Constants constants = { _currentState.globalAlpha, { texture->flags & roRDriverTextureFlag_RenderTarget } };
+	struct Constants {
+		Vec4 color;
+		roInt32 isRtTexture;
+		roInt32 isAlphaTexture;
+		roInt32 isGrayScaleTexture;
+	};
+	Constants constants = {
+		Vec4(_currentState.globalColor),
+		texture->flags & roRDriverTextureFlag_RenderTarget,
+		texture->format == roRDriverTextureFormat_A,
+		texture->format == roRDriverTextureFormat_L,
+	};
 	roVerify(_driver->updateBuffer(_uBuffer, 0, &constants, sizeof(constants)));
 
 	roRDriverShader* shaders[] = { _vShader, _pShader };
@@ -637,7 +649,11 @@ void Canvas::setStrokeColor(const float* rgba)
 {
 	float color[4];
 	roMemcpy(color, rgba, sizeof(color));
-	color[3] *= _currentState.globalAlpha;
+
+	color[0] *= _currentState.globalColor[0];
+	color[1] *= _currentState.globalColor[1];
+	color[2] *= _currentState.globalColor[2];
+	color[3] *= _currentState.globalColor[3];
 
 	vgSetParameterfv(_openvg->strokePaint, VG_PAINT_COLOR, 4, color);
 	roMemcpy(_currentState.strokeColor, rgba, sizeof(_currentState.strokeColor));
@@ -742,7 +758,7 @@ void Canvas::fillText(const char* utf8Str, float x, float y, float maxWidth)
 	if(!roSubSystems || !roSubSystems->fontMgr) return;
 
 	if(FontPtr font = roSubSystems->fontMgr->getFont("Arial"))
-		font->draw(utf8Str, x, y, maxWidth);
+		font->draw(utf8Str, x, y, maxWidth, *this);
 }
 
 void Canvas::getFillColor(float* rgba)
@@ -754,7 +770,11 @@ void Canvas::setFillColor(const float* rgba)
 {
 	float color[4];
 	roMemcpy(color, rgba, sizeof(color));
-	color[3] *= _currentState.globalAlpha;
+
+	color[0] *= _currentState.globalColor[0];
+	color[1] *= _currentState.globalColor[1];
+	color[2] *= _currentState.globalColor[2];
+	color[3] *= _currentState.globalColor[3];
 
 	vgSetParameterfv(_openvg->fillPaint, VG_PAINT_COLOR, 4, color);
 	roMemcpy(_currentState.fillColor, rgba, sizeof(_currentState.fillColor));
@@ -788,10 +808,28 @@ unsigned Canvas::height() const {
 }
 
 float Canvas::globalAlpha() const {
-	return _currentState.globalAlpha;
+	return _currentState.globalColor[3];
 }
 
 void Canvas::setGlobalAlpha(float alpha)
+{
+	setGlobalColor(1, 1, 1, alpha);
+}
+
+void Canvas::getglobalColor(float* rgba)
+{
+	rgba[0] = _currentState.globalColor[0];
+	rgba[1] = _currentState.globalColor[1];
+	rgba[2] = _currentState.globalColor[2];
+	rgba[3] = _currentState.globalColor[3];
+}
+
+void Canvas::setGlobalColor(const float* rgba)
+{
+	setGlobalColor(rgba[0], rgba[1], rgba[2], rgba[3]);
+}
+
+void Canvas::setGlobalColor(float r, float g, float b, float a)
 {
 	float sc[4];
 	roMemcpy(sc, _currentState.strokeColor, sizeof(sc));
@@ -799,13 +837,16 @@ void Canvas::setGlobalAlpha(float alpha)
 	float fc[4];
 	roMemcpy(fc, _currentState.fillColor, sizeof(fc));
 
-	sc[3] *= alpha;
-	fc[3] *= alpha;
+	sc[0] *= r; sc[1] *= g; sc[2] *= b; sc[3] *= a;
+	fc[0] *= r; fc[1] *= g; fc[2] *= b; fc[3] *= a;
 
 	vgSetParameterfv(_openvg->strokePaint, VG_PAINT_COLOR, 4, sc);
 	vgSetParameterfv(_openvg->fillPaint, VG_PAINT_COLOR, 4, fc);
 
-	_currentState.globalAlpha = alpha;
+	_currentState.globalColor[0] = r;
+	_currentState.globalColor[1] = g;
+	_currentState.globalColor[2] = b;
+	_currentState.globalColor[3] = a;
 }
 
 struct CompositionMapping { StringHash h; VGBlendMode mode; };
