@@ -327,6 +327,10 @@
 			Name="base"
 			>
 			<File
+				RelativePath="..\..\roar\base\roAlgorithm.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roArray.h"
 				>
 			</File>

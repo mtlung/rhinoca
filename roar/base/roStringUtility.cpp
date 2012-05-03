@@ -261,6 +261,29 @@ roUint64 roStrToUint64(const char* str, roUint64 defaultValue) {
 
 // ----------------------------------------------------------------------
 
+int roUtf8ToUtf16Char(roUint16& out, const char *utf8, roSize len)
+{
+	if(len < 1) return 0;
+	if((utf8[0] & 0x80) == 0) {
+		out = (roUint16)utf8[0];
+		return 1;
+	}
+	if((utf8[0] & 0xE0) == 0xC0) {
+		if(len < 2) return 0;
+		out = (roUint16)(utf8[0] & 0x1F) << 6
+			| (roUint16)(utf8[1] & 0x3F);
+		return 2;
+	}
+	if((utf8[0] & 0xF0) == 0xE0) {
+		if(len < 3) return 0;
+		out = (roUint16)(utf8[0] & 0x0F) << 12
+			| (roUint16)(utf8[1] & 0x3F) << 6
+			| (roUint16)(utf8[2] & 0x3F);
+		return 3;
+	}
+	return -1;
+}
+
 // Reference: http://en.wikipedia.org/wiki/Utf8
 static const roUint8 _utf8Limits[] = {
 	0xC0,	// Start of a 2-byte sequence
