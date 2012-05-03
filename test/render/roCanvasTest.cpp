@@ -237,7 +237,7 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 	// Initialize our canvas which use it's own texture as render target
 	Canvas auxCanvas;
 	auxCanvas.init();
-	auxCanvas.initTargetTexture(800, 600);
+	auxCanvas.initTargetTexture(context->width, context->height);
 
 	// Init texture
 	TexturePtr texture = subSystems.resourceMgr->loadAs<Texture>("EdSplash.bmp");
@@ -249,7 +249,7 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 		auxCanvas.save();
 
 		driver->clearStencil(0);
-		auxCanvas.clearRect(0, 0, 800, 600);
+		auxCanvas.clearRect(0, 0, context->width, context->height);
 
 		auxCanvas.setFillColor(0, 0, 0, 1);
 		auxCanvas.setStrokeColor(0, 0, 0, 1);
@@ -316,11 +316,12 @@ TEST_FIXTURE(CanvasTest, drawText)
 		canvas.beginDraw();
 
 		driver->clearStencil(0);
-		canvas.clearRect(0, 0, 800, 600);
+//		driver->clearColor(1, 1, 1, 1);
+		canvas.clearRect(0, 0, context->width, context->height);
 
-		canvas.setGlobalColor(1, 1, 0, 0.1f);
+		canvas.setGlobalColor(1, 1, 1, 0.1f);
 
-		canvas.fillText("Hello world!", 0, 0, 0);
+		canvas.fillText("AT_-\nHello world!", 0, 40, 0);
 
 		canvas.endDraw();
 

@@ -313,10 +313,11 @@ static void _setRasterizerState(roRDriverRasterizerState* state)
 
 	if(state->cullMode == roRDriverCullMode_None)
 		glDisable(GL_CULL_FACE);
-	else
+	else {
 		glEnable(GL_CULL_FACE);
+		glCullFace(_cullMode[state->cullMode]);
+	}
 
-	glCullFace(_cullMode[state->cullMode]);
 	glFrontFace(state->isFrontFaceClockwise ? GL_CW : GL_CCW);
 }
 

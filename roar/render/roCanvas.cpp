@@ -248,6 +248,9 @@ void Canvas::beginDraw()
 	_orthoMat = makeOrthoMat4(0, _targetWidth, 0, _targetHeight, 0, 1);
 	_driver->adjustDepthRangeMatrix(_orthoMat.data);
 	_driver->setRasterizerState(&_rasterizerState);
+
+	vgSetPaint(_openvg->strokePaint, VG_STROKE_PATH);
+	vgSetPaint(_openvg->fillPaint, VG_FILL_PATH);
 }
 
 void Canvas::endDraw()

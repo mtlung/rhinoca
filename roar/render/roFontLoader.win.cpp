@@ -3,6 +3,7 @@
 #include "roCanvas.h"
 #include "roTexture.h"
 #include "roRenderDriver.h"
+#include "../base/roAlgorithm.h"
 #include "../base/roArray.h"
 #include "../base/roFileSystem.h"
 #include "../base/roLog.h"
@@ -22,6 +23,7 @@ struct Glyph {
 	roUint16 texIndex;			/// Index to the texture table
 	roUint16 width, height;		/// Width and height for the glyph
 	Vec2 texOffset, texSize;	/// Defines the location in the texture
+	Vec2 origin, advance;
 };
 
 struct KerningPair {
@@ -31,11 +33,7 @@ struct KerningPair {
 
 struct FontImpl : public Font
 {
-	explicit FontImpl(const char* uri)
-		: Font(uri)
-	{
-		canvas.init();
-	}
+	explicit FontImpl(const char* uri) : Font(uri) {}
 
 	override bool setStyle(const char* styleStr);
 
@@ -45,8 +43,6 @@ struct FontImpl : public Font
 	Array<TexturePtr> textures;
 	Array<KerningPair> kerningPairs;	/// Sorted by KerningPair.first and then KerningPair.second
 	Array<Glyph> glyphs;				/// Array of Glyph sorted by the code point for fast searching
-
-	Canvas canvas;	/// Canvas for putting the font textures into the render target
 };
 
 }	// namespace
@@ -110,7 +106,7 @@ protected:
 	// Variable used for reading font bitmaps
 	unsigned texDimension;
 	roSize currentGlyphIdx;
-	roSize currentTextureIdx;
+	roUint16 currentTextureIdx;
 	unsigned dstX, dstY;
 	char* mappedTexPtr;
 };
@@ -187,9 +183,9 @@ roEXCP_TRY
 	// http://stackoverflow.com/questions/6595772/painting-text-above-opengl-context-in-mfc
 
 	// http://msdn.microsoft.com/en-us/library/windows/desktop/dd183499%28v=vs.85%29.aspx
-	hFont = ::CreateFontW(30,0,0,0,FW_DONTCARE,FALSE,FALSE,0,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,
-//		CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,DEFAULT_PITCH,L"DFKai-SB");
-		CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,DEFAULT_PITCH,L"Arial");
+	hFont = ::CreateFontW(40,0,0,0,FW_DONTCARE,FALSE,FALSE,0,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,
+//		CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH,L"DFKai-SB");
+		CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH,L"Calibri");
 
 	::SelectObject(hdc, hFont);
 
@@ -228,9 +224,9 @@ roEXCP_TRY
 			// Find the kerning for this code point
 			roSize kBeg = k;
 			for(; k<font->kerningPairs.size(); ++k) {
-				if(font->kerningPairs[k].first == codePoint)
+				if(font->kerningPairs[k].second == codePoint)
 					g.kerningIndex = num_cast<roUint16>(kBeg);
-				else if(font->kerningPairs[k].first > codePoint)
+				else if(font->kerningPairs[k].second > codePoint)
 					break;
 			}
 			g.kerningCount = num_cast<roUint16>(k - kBeg);
@@ -313,14 +309,9 @@ void FontLoader::loadBitmaps(TaskPool* taskPool)
 			continue;
 		}
 
-		// For some character (like tab and space), there is no need for a bitmap representation
-		if(bufSize == 0)
-			continue;
-
 		// Get the glyph outline
 		glyhpBitmapBuf.resize(bufSize);
 		::GetGlyphOutlineW(hdc, codePoint, GGO_GRAY8_BITMAP, &glyphMetrics, bufSize, glyhpBitmapBuf.bytePtr(), &matrix);
-		bufSize = bufSize;
 
 		// Scale up from GGO_GRAY8_BITMAP to 0 - 255
 		for(roSize i=0; i<glyhpBitmapBuf.size(); ++i) {
@@ -346,9 +337,16 @@ void FontLoader::loadBitmaps(TaskPool* taskPool)
 
 		// Copy the outline bitmap to the texture atlas
 		roSize rowLen = roAlignCeiling(glyphMetrics.gmBlackBoxX, 4u);
-		texBlit(1,
+		if(!glyhpBitmapBuf.isEmpty()) texBlit(1,
 			glyhpBitmapBuf.bytePtr(), 0, 0, glyphMetrics.gmBlackBoxX, glyphMetrics.gmBlackBoxY, rowLen,
 			mappedTexPtr, dstX, dstY, texDimension, texDimension, texDimension * 1);
+
+		g.texIndex = currentTextureIdx;
+		g.texOffset = Vec2(dstX, dstY);
+		g.texSize = Vec2(glyphMetrics.gmBlackBoxX, glyphMetrics.gmBlackBoxY);
+
+		g.origin = Vec2(glyphMetrics.gmptGlyphOrigin.x, glyphMetrics.gmptGlyphOrigin.y);
+		g.advance = Vec2(glyphMetrics.gmCellIncX, glyphMetrics.gmCellIncY);
 
 		dstX += glyphMetrics.gmBlackBoxX;
 	}	// end for each glyphs
@@ -449,14 +447,52 @@ bool FontImpl::setStyle(const char* styleStr)
 	return true;
 }
 
-void FontImpl::draw(const char* utf8Str, float x, float y, float maxWidth, Canvas& c)
+void FontImpl::draw(const char* utf8Str, float x_, float y_, float maxWidth, Canvas& c)
 {
-//	canvas.setFillColor(1, 1, 1, 1);
-//	canvas.setStrokeColor(1, 1, 1, 1);
+	if(state != Loaded || textures.isEmpty())
+		return;
 
-	// NOTE: We don't call canvas.beginDraw(), to preserve the current render target and view port settings
-	if(state == Loaded && !textures.isEmpty())
-		c.drawImage(textures[0]->handle, 0, 0);
+	roSize len = roStrLen(utf8Str);
+
+	float x = x_, y = y_;
+
+	for(roUint16 w, prev = 0; len; prev = w)
+	{
+		int utf8Consumed = roUtf8ToUtf16Char(w, utf8Str, len);
+		if(utf8Consumed == 0) break;	// Invalid utf8 string encountered
+
+		utf8Str += utf8Consumed;
+		len -= utf8Consumed;
+
+		// Search for the glyph by the given code point
+		struct Pred { static bool less(const Glyph& g, const roUint16& k) {
+			return g.codePoint < k;
+		}};
+		Glyph* g = roLowerBound(glyphs.typedPtr(), glyphs.size(), w, &Pred::less);
+
+		if(g->codePoint == w) {
+			// Calculate kerning
+			for(roSize i=g->kerningIndex; i<g->kerningIndex + g->kerningCount; ++i) {
+				roAssert(kerningPairs[i].second == w);
+				if(kerningPairs[i].first == prev)
+					x += kerningPairs[i].offset;
+			}
+
+			roRDriverTexture* tex = textures[g->texIndex]->handle;
+			float srcx = g->texOffset.x,	srcy = g->texOffset.y;
+			float srcw = g->texSize.x,		srch = g->texSize.y;
+			float dstx = x + g->origin.x,	dsty = y - g->origin.y;
+
+			c.drawImage(tex, srcx, srcy, srcw, srch, dstx, dsty, srcw, srch);
+			x += g->advance.x;
+			y += g->advance.y;
+		}
+
+		if(w == L'\n') {
+			x = x_;
+			y += g->height;
+		}
+	}
 }
 
 }	// namespace ro
