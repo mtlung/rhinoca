@@ -31,6 +31,27 @@ struct KerningPair {
 	int offset;
 };
 
+static roUint32 fontHash(const char* typeface, unsigned fontSize, unsigned fontWeight)
+{
+	return stringHash(typeface, 0) +
+		stringHash((char*)&fontSize, sizeof(fontSize)) +
+		stringHash((char*)&fontWeight, sizeof(fontWeight));
+}
+
+struct FontData
+{
+	roUint32 fontHash;
+	Array<TexturePtr> textures;
+	Array<KerningPair> kerningPairs;	/// Sorted by KerningPair.first and then KerningPair.second
+	Array<Glyph> glyphs;				/// Array of Glyph sorted by the code point for fast searching
+};
+
+struct Request
+{
+	roUint32 fontHash;
+	unsigned codepoint;
+};
+
 struct FontImpl : public Font
 {
 	explicit FontImpl(const char* uri) : Font(uri) {}
@@ -39,25 +60,15 @@ struct FontImpl : public Font
 
 	override void draw(const char* utf8Str, float x, float y, float maxWidth, Canvas&);
 
-// Attributes
+	Array<Request> requestMainThread, requestLoadThread;
+	Array<FontData> fontData;
+
 	Array<TexturePtr> textures;
 	Array<KerningPair> kerningPairs;	/// Sorted by KerningPair.first and then KerningPair.second
 	Array<Glyph> glyphs;				/// Array of Glyph sorted by the code point for fast searching
 };
 
 }	// namespace
-
-enum FontLoadingState {
-	FontLoadingState_EmumTypeface,
-	FontLoadingState_LoadMetric,
-	FontLoadingState_LoadBitmaps,
-	FontLoadingState_AllocateTexture,
-	FontLoadingState_Cleanup,
-	FontLoadingState_Commit,
-	FontLoadingState_Finish,
-	FontLoadingState_RequestAbort,
-	FontLoadingState_Abort
-};
 
 Resource* resourceCreateFont(const char* uri, ResourceManager* mgr)
 {
@@ -71,12 +82,12 @@ class FontLoader : public Task
 public:
 	FontLoader(FontImpl* f, ResourceManager* mgr)
 		: font(f), manager(mgr)
-		, fontLoadingState(FontLoadingState_EmumTypeface)
 		, hdc(NULL), hFont(NULL)
 		, texDimension(1)
 		, currentGlyphIdx(0), currentTextureIdx(0)
 		, dstX(0), dstY(0)
 		, mappedTexPtr(NULL)
+		, nextFun(&FontLoader::emumTypeface)
 	{}
 
 	~FontLoader()
@@ -88,6 +99,8 @@ public:
 	override void run(TaskPool* taskPool);
 
 protected:
+	void checkRequest(TaskPool* taskPool);
+	void processRequest(TaskPool* taskPool);
 	void emumTypeface(TaskPool* taskPool);
 	void loadMetric(TaskPool* taskPool);
 	void loadBitmaps(TaskPool* taskPool);
@@ -97,7 +110,6 @@ protected:
 
 	FontImpl* font;
 	ResourceManager* manager;
-	FontLoadingState fontLoadingState;
 
 	HDC hdc;
 	HFONT hFont;
@@ -109,37 +121,25 @@ protected:
 	roUint16 currentTextureIdx;
 	unsigned dstX, dstY;
 	char* mappedTexPtr;
+
+	void (FontLoader::*nextFun)(TaskPool*);
 };
 
 void FontLoader::run(TaskPool* taskPool)
 {
-	if(font->state == Resource::Aborted && fontLoadingState != FontLoadingState_Cleanup)
-		fontLoadingState = FontLoadingState_RequestAbort;
+	if(font->state == Resource::Aborted && nextFun != &FontLoader::cleanup)
+		nextFun = &FontLoader::requestAbort;
 
-	if(fontLoadingState == FontLoadingState_EmumTypeface)
-		emumTypeface(taskPool);
-	else if(fontLoadingState == FontLoadingState_LoadMetric)
-		loadMetric(taskPool);
-	else if(fontLoadingState == FontLoadingState_LoadBitmaps)
-		loadBitmaps(taskPool);
-	else if(fontLoadingState == FontLoadingState_AllocateTexture)
-		allocateTexture(taskPool);
-	else if(fontLoadingState == FontLoadingState_RequestAbort)
-		requestAbort(taskPool);
-	else if(fontLoadingState == FontLoadingState_Cleanup)
-		cleanup(taskPool);
+	(this->*nextFun)(taskPool);
+}
 
-	if(fontLoadingState == FontLoadingState_Finish) {
-		font->state = Resource::Loaded;
-		delete this;
-		return;
-	}
+void FontLoader::checkRequest(TaskPool* taskPool)
+{
+	font->requestMainThread.swap(font->requestLoadThread);
+}
 
-	if(fontLoadingState == FontLoadingState_Abort) {
-		font->state = Resource::Aborted;
-		delete this;
-		return;
-	}
+void FontLoader::processRequest(TaskPool* taskPool)
+{
 }
 
 static int CALLBACK _enumFamCallBack(const LOGFONTW* lplf, const TEXTMETRICW* lpntm, DWORD fontType, LPARAM)
@@ -155,8 +155,8 @@ static int CALLBACK _enumFamCallBack(const LOGFONTW* lplf, const TEXTMETRICW* lp
 void FontLoader::emumTypeface(TaskPool* taskPool)
 {
 	if(!roSubSystems || !roSubSystems->fontMgr) {
-		fontLoadingState = FontLoadingState_RequestAbort;
-		return;
+		nextFun = &FontLoader::requestAbort;
+		return reSchedule(false, taskPool->mainThreadId());
 	}
 
 	if(!hdc)
@@ -164,7 +164,7 @@ void FontLoader::emumTypeface(TaskPool* taskPool)
 
 	::EnumFontFamiliesW(hdc, NULL, _enumFamCallBack, (LPARAM)this);
 
-	fontLoadingState = FontLoadingState_LoadMetric;
+	nextFun = &FontLoader::loadMetric;
 	return reSchedule(false, ~taskPool->mainThreadId());
 }
 
@@ -184,8 +184,8 @@ roEXCP_TRY
 
 	// http://msdn.microsoft.com/en-us/library/windows/desktop/dd183499%28v=vs.85%29.aspx
 	hFont = ::CreateFontW(40,0,0,0,FW_DONTCARE,FALSE,FALSE,0,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,
-//		CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH,L"DFKai-SB");
-		CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH,L"Calibri");
+		CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH,L"DFKai-SB");
+//		CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH,L"Calibri");
 
 	::SelectObject(hdc, hFont);
 
@@ -257,12 +257,13 @@ roEXCP_TRY
 	}
 	roAssert(texDimension <= 1024);
 
-	fontLoadingState = FontLoadingState_LoadBitmaps;
+	nextFun = &FontLoader::loadBitmaps;
 	return reSchedule(false, ~taskPool->mainThreadId());
 
 roEXCP_CATCH
 	roLog("error", "FontLoader: Fail to load '%s', reason: %s\n", font->uri().c_str(), st.c_str());
-	fontLoadingState = FontLoadingState_RequestAbort;
+	nextFun = &FontLoader::requestAbort;
+	return reSchedule(false, taskPool->mainThreadId());
 
 roEXCP_END
 }
@@ -331,7 +332,7 @@ void FontLoader::loadBitmaps(TaskPool* taskPool)
 		bool texturesEmpty = currentTextureIdx == font->textures.size();
 		bool textureFull = dstY + tm.tmHeight > texDimension;
 		if(texturesEmpty || textureFull) {
-			fontLoadingState = FontLoadingState_AllocateTexture;
+			nextFun = &FontLoader::allocateTexture;
 			return reSchedule(false, taskPool->mainThreadId());
 		}
 
@@ -351,14 +352,14 @@ void FontLoader::loadBitmaps(TaskPool* taskPool)
 		dstX += glyphMetrics.gmBlackBoxX;
 	}	// end for each glyphs
 
-	fontLoadingState = FontLoadingState_Cleanup;
-	return reSchedule(false, taskPool->mainThreadId());
+	nextFun = &FontLoader::cleanup;
 
 roEXCP_CATCH
 	roLog("error", "FontLoader: Fail to load '%s', reason: %s\n", font->uri().c_str(), st.c_str());
-	fontLoadingState = FontLoadingState_RequestAbort;
+	nextFun = &FontLoader::requestAbort;
 
 roEXCP_END
+	return reSchedule(false, taskPool->mainThreadId());
 }
 
 static TexturePtr _allocateTexture(unsigned dimension, char** outMappedPtr)
@@ -398,20 +399,20 @@ void FontLoader::allocateTexture(TaskPool* taskPool)
 		TexturePtr tex = _allocateTexture(texDimension, &mappedTexPtr);
 		// If we fail to allocate texture, seems not much we can do
 		if(!tex || !mappedTexPtr) {
-			fontLoadingState = FontLoadingState_RequestAbort;
-			return;
+			nextFun = &FontLoader::requestAbort;
+			return reSchedule(false, taskPool->mainThreadId());
 		}
 		font->textures.pushBack(tex);
 	}
 
-	fontLoadingState = FontLoadingState_LoadBitmaps;
+	nextFun = &FontLoader::loadBitmaps;
 	return reSchedule(false, ~taskPool->mainThreadId());
 }
 
 void FontLoader::requestAbort(TaskPool* taskPool)
 {
 	font->state = Resource::Aborted;
-	fontLoadingState = FontLoadingState_Cleanup;
+	nextFun = &FontLoader::cleanup;
 	return reSchedule(false, taskPool->mainThreadId());
 }
 
@@ -422,10 +423,10 @@ void FontLoader::cleanup(TaskPool* taskPool)
 		mappedTexPtr = NULL;
 	}
 
-	if(font->state == Resource::Aborted)
-		fontLoadingState = FontLoadingState_Abort;
-	else
-		fontLoadingState = FontLoadingState_Finish;
+	if(font->state != Resource::Aborted)
+		font->state = Resource::Loaded;
+
+	delete this;
 }
 
 bool resourceLoadWinfnt(Resource* resource, ResourceManager* mgr)
@@ -486,6 +487,10 @@ void FontImpl::draw(const char* utf8Str, float x_, float y_, float maxWidth, Can
 			c.drawImage(tex, srcx, srcy, srcw, srch, dstx, dsty, srcw, srch);
 			x += g->advance.x;
 			y += g->advance.y;
+		}
+		else {
+			Request req = { 0, w };
+			requestMainThread.pushBack(req);
 		}
 
 		if(w == L'\n') {
