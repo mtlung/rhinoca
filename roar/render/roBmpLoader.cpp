@@ -11,15 +11,6 @@
 
 namespace ro {
 
-enum TextureLoadingState {
-	TextureLoadingState_LoadHeader,
-	TextureLoadingState_InitTexture,
-	TextureLoadingState_LoadPixelData,
-	TextureLoadingState_Commit,
-	TextureLoadingState_Finish,
-	TextureLoadingState_Abort
-};
-
 Resource* resourceCreateBmp(const char* uri, ResourceManager* mgr)
 {
 	if(uriExtensionMatch(uri, ".bmp"))
@@ -35,7 +26,7 @@ public:
 		, width(0), height(0)
 		, pixelData(NULL), pixelDataSize(0)
 		, flipVertical(false)
-		, textureLoadingState(TextureLoadingState_LoadHeader)
+		, nextFun(&BmpLoader::loadHeader)
 	{}
 
 	~BmpLoader()
@@ -51,6 +42,7 @@ protected:
 	void initTexture(TaskPool* taskPool);
 	void loadPixelData(TaskPool* taskPool);
 	void commit(TaskPool* taskPool);
+	void abort(TaskPool* taskPool);
 
 	void* stream;
 	Texture* texture;
@@ -63,34 +55,15 @@ protected:
 	BITMAPFILEHEADER fileHeader;
 	BITMAPINFOHEADER infoHeader;
 
-	TextureLoadingState textureLoadingState;
+	void (BmpLoader::*nextFun)(TaskPool*);
 };
 
 void BmpLoader::run(TaskPool* taskPool)
 {
 	if(texture->state == Resource::Aborted)
-		textureLoadingState = TextureLoadingState_Abort;
+		nextFun = &BmpLoader::abort;
 
-	if(textureLoadingState == TextureLoadingState_LoadHeader)
-		loadHeader(taskPool);
-	else if(textureLoadingState == TextureLoadingState_InitTexture)
-		initTexture(taskPool);
-	else if(textureLoadingState == TextureLoadingState_LoadPixelData)
-		loadPixelData(taskPool);
-	else if(textureLoadingState == TextureLoadingState_Commit)
-		commit(taskPool);
-
-	if(textureLoadingState == TextureLoadingState_Finish) {
-		texture->state = Resource::Loaded;
-		delete this;
-		return;
-	}
-
-	if(textureLoadingState == TextureLoadingState_Abort) {
-		texture->state = Resource::Aborted;
-		delete this;
-		return;
-	}
+	(this->*nextFun)(taskPool);
 }
 
 void BmpLoader::loadHeader(TaskPool* taskPool)
@@ -134,25 +107,28 @@ roEXCP_TRY
 		flipVertical = false;
 	}
 
-	textureLoadingState = TextureLoadingState_InitTexture;
-	return reSchedule(false, taskPool->mainThreadId());
+	nextFun = &BmpLoader::initTexture;
 
 roEXCP_CATCH
 	roLog("error", "BmpLoader: Fail to load '%s', reason: %s\n", texture->uri().c_str(), st.c_str());
-	textureLoadingState = TextureLoadingState_Abort;
+	nextFun = &BmpLoader::abort;
 
 roEXCP_END
+	return reSchedule(false, taskPool->mainThreadId());
 }
 
 void BmpLoader::initTexture(TaskPool* taskPool)
 {
 	if(roRDriverCurrentContext->driver->initTexture(texture->handle, width, height, 1, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_None))
 	{
-		textureLoadingState = TextureLoadingState_LoadPixelData;
+		nextFun = &BmpLoader::loadPixelData;
 		return reSchedule(false, ~taskPool->mainThreadId());
 	}
 	else
-		textureLoadingState = TextureLoadingState_Abort;
+	{
+		nextFun = &BmpLoader::abort;
+		return reSchedule(false, taskPool->mainThreadId());
+	}
 }
 
 static void _bgrToRgba(roBytePtr src, roBytePtr dst, unsigned width, unsigned height)
@@ -215,22 +191,32 @@ roEXCP_TRY
 	roSwap(pixelData, tmpBuffer);
 	roFree(tmpBuffer);
 
-	textureLoadingState = TextureLoadingState_Commit;
-	return reSchedule(false, taskPool->mainThreadId());
+	nextFun = &BmpLoader::commit;
 
 roEXCP_CATCH
-	textureLoadingState = TextureLoadingState_Abort;
 	roLog("error", "BmpLoader: Fail to load '%s', reason: %s\n", texture->uri().c_str(), st.c_str());
+	nextFun = &BmpLoader::abort;
 
 roEXCP_END
+	return reSchedule(false, taskPool->mainThreadId());
 }
 
 void BmpLoader::commit(TaskPool* taskPool)
 {
-	if(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, 0, pixelData, 0, NULL))
-		textureLoadingState = TextureLoadingState_Finish;
-	else
-		textureLoadingState = TextureLoadingState_Abort;
+	if(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, 0, pixelData, 0, NULL)) {
+		texture->state = Resource::Loaded;
+		delete this;
+	}
+	else {
+		nextFun = &BmpLoader::abort;
+		return reSchedule(false, taskPool->mainThreadId());
+	}
+}
+
+void BmpLoader::abort(TaskPool* taskPool)
+{
+	texture->state = Resource::Aborted;
+	delete this;
 }
 
 bool resourceLoadBmp(Resource* resource, ResourceManager* mgr)

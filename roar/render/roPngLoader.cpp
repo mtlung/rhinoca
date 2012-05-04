@@ -20,15 +20,6 @@
 
 namespace ro {
 
-enum TextureLoadingState {
-	TextureLoadingState_LoadHeader,
-	TextureLoadingState_InitTexture,
-	TextureLoadingState_LoadPixelData,
-	TextureLoadingState_Commit,
-	TextureLoadingState_Finish,
-	TextureLoadingState_Abort
-};
-
 Resource* resourceCreatePng(const char* uri, ResourceManager* mgr)
 {
 	if(uriExtensionMatch(uri, ".png"))
@@ -51,10 +42,11 @@ public:
 
 	override void run(TaskPool* taskPool);
 
+	void processData(TaskPool* taskPool);
 	void loadHeader();
 	void initTexture(TaskPool* taskPool);
-	void loadPixelData();
 	void commit(TaskPool* taskPool);
+	void abort(TaskPool* taskPool);
 
 	void* stream;
 	Texture* texture;
@@ -69,7 +61,7 @@ public:
 	png_structp png_ptr;
 	int currentPass;		// For keep tracking when a new pass is loaded
 
-	TextureLoadingState textureLoadingState;
+	void (PngLoader::*nextFun)(TaskPool*);
 };
 
 static void info_callback(png_structp png_ptr, png_infop)
@@ -100,7 +92,7 @@ static void row_callback(png_structp png_ptr, png_bytep new_row, png_uint_32 row
 static void end_callback(png_structp png_ptr, png_infop)
 {
 	PngLoader* impl = reinterpret_cast<PngLoader*>(png_get_progressive_ptr(png_ptr));
-	impl->loadPixelData();
+	impl->nextFun = &PngLoader::commit;
 }
 
 PngLoader::PngLoader(Texture* t, ResourceManager* mgr)
@@ -109,7 +101,7 @@ PngLoader::PngLoader(Texture* t, ResourceManager* mgr)
 	, pixelData(NULL), pixelDataSize(0), rowBytes(0), pixelDataFormat(roRDriverTextureFormat_RGBA)
 	, info_ptr(NULL), png_ptr(NULL)
 	, currentPass(0)
-	, textureLoadingState(TextureLoadingState_LoadHeader)
+	, nextFun(&PngLoader::processData)
 {
 	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	roAssert(png_ptr);
@@ -123,49 +115,10 @@ PngLoader::PngLoader(Texture* t, ResourceManager* mgr)
 
 void PngLoader::run(TaskPool* taskPool)
 {
-	char buff[1024*8];
-	roUint64 bytesRead = 0;
+	if(texture->state == Resource::Aborted)
+		nextFun = &PngLoader::abort;
 
-	if(textureLoadingState == TextureLoadingState_InitTexture)
-		initTexture(taskPool);
-	else if(textureLoadingState == TextureLoadingState_Commit)
-		commit(taskPool);
-	else if(setjmp(png_jmpbuf(png_ptr)))
-		textureLoadingState = TextureLoadingState_Abort;
-	else do
-	{
-		Status st;
-		if(!stream) st = fileSystem.openFile(texture->uri(), stream);
-		if(!st) {
-			roLog("error", "PngLoader: Fail to open file '%s', reason: %s\n", texture->uri().c_str(), st.c_str());
-			textureLoadingState = TextureLoadingState_Abort;
-			break;
-		}
-
-		if(fileSystem.readWillBlock(stream, sizeof(buff))) {
-			// Re-schedule the load operation
-			return reSchedule();
-		}
-
-		st = fileSystem.read(stream, buff, sizeof(buff), bytesRead);
-		if(!st) {
-			textureLoadingState = TextureLoadingState_Abort;
-			break;
-		}
-		png_process_data(png_ptr, info_ptr, (png_bytep)buff, num_cast<png_size_t>(bytesRead));
-	} while(bytesRead > 0 && textureLoadingState != TextureLoadingState_Abort);
-
-	if(textureLoadingState == TextureLoadingState_Finish) {
-		texture->state = Resource::Loaded;
-		delete this;
-		return;
-	}
-
-	if(textureLoadingState == TextureLoadingState_Abort) {
-		texture->state = Resource::Aborted;
-		delete this;
-		return;
-	}
+	(this->*nextFun)(taskPool);
 }
 
 void PngLoader::loadHeader()
@@ -210,44 +163,76 @@ void PngLoader::loadHeader()
 	pixelDataSize = rowBytes * height;
 	pixelData = roMalloc(pixelDataSize);
 
-	textureLoadingState = TextureLoadingState_InitTexture;
-	return reSchedule(false, manager->taskPool->mainThreadId());
+	nextFun = &PngLoader::initTexture;
+	return;
 
 Abort:
-	textureLoadingState = TextureLoadingState_Abort;
+	nextFun = &PngLoader::abort;
 }
 
 void PngLoader::initTexture(TaskPool* taskPool)
 {
 	if(roRDriverCurrentContext->driver->initTexture(texture->handle, width, height, 1, pixelDataFormat, roRDriverTextureFlag_None))
 	{
-		textureLoadingState = TextureLoadingState_LoadPixelData;
+		nextFun = &PngLoader::processData;
 		return reSchedule(false, ~taskPool->mainThreadId());
 	}
 	else
-		goto Abort;
-
-Abort:
-	textureLoadingState = TextureLoadingState_Abort;
+	{
+		nextFun = &PngLoader::abort;
+		return reSchedule(false, taskPool->mainThreadId());
+	}
 }
 
-void PngLoader::loadPixelData()
+void PngLoader::processData(TaskPool* taskPool)
 {
-	textureLoadingState = TextureLoadingState_Commit;
-	return reSchedule(false, manager->taskPool->mainThreadId());
+	char buff[1024*8];
+
+	if(setjmp(png_jmpbuf(png_ptr)))
+		nextFun = &PngLoader::abort;
+	else do
+	{
+		Status st = Status::ok;
+		if(!stream) st = fileSystem.openFile(texture->uri(), stream);
+		if(!st) {
+			roLog("error", "PngLoader: Fail to open file '%s', reason: %s\n", texture->uri().c_str(), st.c_str());
+			nextFun = &PngLoader::abort;
+			break;
+		}
+
+		if(fileSystem.readWillBlock(stream, sizeof(buff))) {
+			// Re-schedule the load operation
+			return reSchedule(false, ~taskPool->mainThreadId());
+		}
+
+		roUint64 bytesRead = 0;
+		st = fileSystem.read(stream, buff, sizeof(buff), bytesRead);
+		if(!st || bytesRead == 0) {
+			nextFun = &PngLoader::abort;
+			break;
+		}
+		png_process_data(png_ptr, info_ptr, (png_bytep)buff, num_cast<png_size_t>(bytesRead));
+	} while(nextFun == &PngLoader::processData);
+
+	return reSchedule(false, taskPool->mainThreadId());
 }
 
 void PngLoader::commit(TaskPool* taskPool)
 {
 	if(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, 0, pixelData, 0, NULL)) {
-		textureLoadingState = TextureLoadingState_Finish;
-		return;
+		texture->state = Resource::Loaded;
+		delete this;
 	}
-	else
-		goto Abort;
+	else {
+		nextFun = &PngLoader::abort;
+		return reSchedule(false, taskPool->mainThreadId());
+	}
+}
 
-Abort:
-	textureLoadingState = TextureLoadingState_Abort;
+void PngLoader::abort(TaskPool* taskPool)
+{
+	texture->state = Resource::Aborted;
+	delete this;
 }
 
 bool resourceLoadPng(Resource* resource, ResourceManager* mgr)

@@ -14,15 +14,6 @@
 
 namespace ro {
 
-enum TextureLoadingState {
-	TextureLoadingState_LoadHeader,
-	TextureLoadingState_InitTexture,
-	TextureLoadingState_LoadPixelData,
-	TextureLoadingState_Commit,
-	TextureLoadingState_Finish,
-	TextureLoadingState_Abort
-};
-
 // TODO: The class jpeg_decoder_stream didn't flexible enough to take advantage of our async file system
 class Stream : public jpeg_decoder_stream
 {
@@ -56,7 +47,7 @@ public:
 		, width(0), height(0)
 		, pixelData(NULL), pixelDataSize(0), rowBytes(0), pixelDataFormat(roRDriverTextureFormat_RGBA)
 		, decoder(NULL), jpegStream(NULL)
-		, textureLoadingState(TextureLoadingState_LoadHeader)
+		, nextFun(&JpegLoader::loadHeader)
 	{}
 
 	~JpegLoader()
@@ -74,6 +65,7 @@ protected:
 	void initTexture(TaskPool* taskPool);
 	void loadPixelData(TaskPool* taskPool);
 	void commit(TaskPool* taskPool);
+	void abort(TaskPool* taskPool);
 
 	void* stream;
 	Texture* texture;
@@ -87,31 +79,15 @@ protected:
 	Pjpeg_decoder decoder;
 	Stream* jpegStream;
 
-	TextureLoadingState textureLoadingState;
+	void (JpegLoader::*nextFun)(TaskPool*);
 };
 
 void JpegLoader::run(TaskPool* taskPool)
 {
-	if(textureLoadingState == TextureLoadingState_LoadHeader)
-		loadHeader(taskPool);
-	else if(textureLoadingState == TextureLoadingState_InitTexture)
-		initTexture(taskPool);
-	else if(textureLoadingState == TextureLoadingState_LoadPixelData)
-		loadPixelData(taskPool);
-	else if(textureLoadingState == TextureLoadingState_Commit)
-		commit(taskPool);
+	if(texture->state == Resource::Aborted)
+		nextFun = &JpegLoader::abort;
 
-	if(textureLoadingState == TextureLoadingState_Finish) {
-		texture->state = Resource::Loaded;
-		delete this;
-		return;
-	}
-
-	if(textureLoadingState == TextureLoadingState_Abort) {
-		texture->state = Resource::Aborted;
-		delete this;
-		return;
-	}
+	(this->*nextFun)(taskPool);
 }
 
 void JpegLoader::loadHeader(TaskPool* taskPool)
@@ -139,28 +115,28 @@ roEXCP_TRY
 	width = decoder->get_width();
 	height = decoder->get_height();
 
-	textureLoadingState = TextureLoadingState_InitTexture;
-	return reSchedule(false, taskPool->mainThreadId());
+	nextFun = &JpegLoader::initTexture;
 
 roEXCP_CATCH
 	roLog("error", "JpegLoader: Fail to load '%s', reason: %s\n", texture->uri().c_str(), st.c_str());
-	textureLoadingState = TextureLoadingState_Abort;
+	nextFun = &JpegLoader::abort;
 
 roEXCP_END
+	return reSchedule(false, taskPool->mainThreadId());
 }
 
 void JpegLoader::initTexture(TaskPool* taskPool)
 {
 	if(roRDriverCurrentContext->driver->initTexture(texture->handle, width, height, 1, pixelDataFormat, roRDriverTextureFlag_None))
 	{
-		textureLoadingState = TextureLoadingState_LoadPixelData;
+		nextFun = &JpegLoader::loadPixelData;
 		return reSchedule(false, ~taskPool->mainThreadId());
 	}
 	else
-		goto Abort;
-
-Abort:
-	textureLoadingState = TextureLoadingState_Abort;
+	{
+		nextFun = &JpegLoader::abort;
+		return reSchedule(false, taskPool->mainThreadId());
+	}
 }
 
 void JpegLoader::loadPixelData(TaskPool* taskPool)
@@ -179,15 +155,15 @@ roEXCP_TRY
 	uint scan_line_len = 0;
 	int c = decoder->get_num_components();
 
-	char* p = pixelData;
+	unsigned char* p = pixelData.cast<unsigned char>();
 	while(true) {
 		int result = decoder->decode(&Pscan_line_ofs, &scan_line_len);
 		if(result == JPGD_OKAY) {
 			memcpy(p, Pscan_line_ofs, scan_line_len);
 
 			// Assign alpha to 1 for incoming is RGB
-			if(c == 3) for(char* end = p + scan_line_len; p < end; p += 4)
-				p[3] = TypeOf<char>::valueMax();
+			if(c == 3) for(unsigned char* end = p + scan_line_len; p < end; p += 4)
+				p[3] = TypeOf<unsigned char>::valueMax();
 			else
 				p += decoder->get_bytes_per_scan_line();
 
@@ -200,27 +176,32 @@ roEXCP_TRY
 		}
 	}
 
-	textureLoadingState = TextureLoadingState_Commit;
-	return reSchedule(false, taskPool->mainThreadId());
+	nextFun = &JpegLoader::commit;
 
 roEXCP_CATCH
 	roLog("error", "JpegLoader: Fail to load '%s', reason: %s\n", texture->uri().c_str(), st.c_str());
-	textureLoadingState = TextureLoadingState_Abort;
+	nextFun = &JpegLoader::abort;
 
 roEXCP_END
+	return reSchedule(false, taskPool->mainThreadId());
 }
 
 void JpegLoader::commit(TaskPool* taskPool)
 {
 	if(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, 0, pixelData, 0, NULL)) {
-		textureLoadingState = TextureLoadingState_Finish;
-		return;
+		texture->state = Resource::Loaded;
+		delete this;
 	}
-	else
-		goto Abort;
+	else {
+		nextFun = &JpegLoader::abort;
+		return reSchedule(false, taskPool->mainThreadId());
+	}
+}
 
-Abort:
-	textureLoadingState = TextureLoadingState_Abort;
+void JpegLoader::abort(TaskPool* taskPool)
+{
+	texture->state = Resource::Aborted;
+	delete this;
 }
 
 bool resourceLoadJpeg(Resource* resource, ResourceManager* mgr)
