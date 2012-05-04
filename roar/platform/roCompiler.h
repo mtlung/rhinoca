@@ -9,6 +9,20 @@
 #	include "roCompiler.gcc.h"
 #endif
 
+#ifdef __APPLE__
+#	include <Availability.h>
+#	include <TargetConditionals.h>
+#	if TARGET_OS_IPHONE
+#		define roOS_iOS 1
+#	endif
+#	if TARGET_IPHONE_SIMULATOR
+#		define roOS_iOS 1
+#	endif
+#	if TARGET_OS_IPHONE && !TARGET_IPHONE_SIMULATOR
+#		define roOS_iOS 1
+#	endif
+#endif
+
 #ifndef NULL
 #	define NULL 0
 #endif

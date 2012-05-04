@@ -49,6 +49,13 @@
 			remoteGlobalIDString = D2AAC07D0554694100DB518D;
 			remoteInfo = Rhinoca;
 		};
+		9CE75C5415454CF80023D472 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9CE75C5015454CF70023D472 /* Roar.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 9CE75C4015454CF70023D472;
+			remoteInfo = Roar;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -77,6 +84,7 @@
 		9C871A9E13AE0248009F1382 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		9C990DCD1406908500E72D24 /* biolab */ = {isa = PBXFileReference; lastKnownFileType = folder; name = biolab; path = ../../../demo/impactjs/biolab; sourceTree = "<group>"; };
 		9CD888721382E0C1003751E2 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
+		9CE75C5015454CF70023D472 /* Roar.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Roar.xcodeproj; path = ../Roar/Roar/Roar.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -148,6 +156,7 @@
 		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
 			isa = PBXGroup;
 			children = (
+				9CE75C5015454CF70023D472 /* Roar.xcodeproj */,
 				9C990DCD1406908500E72D24 /* biolab */,
 				182F5537130390D1003805A7 /* SpiderMonkey.xcodeproj */,
 				187BCB8A12FAA71F0042FDB1 /* Rhinoca.xcodeproj */,
@@ -193,6 +202,14 @@
 				1D30AB110D05D00D00671497 /* Foundation.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		9CE75C5115454CF70023D472 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9CE75C5515454CF80023D472 /* libRoar.a */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -242,6 +259,10 @@
 					ProjectRef = 187BCB8A12FAA71F0042FDB1 /* Rhinoca.xcodeproj */;
 				},
 				{
+					ProductGroup = 9CE75C5115454CF70023D472 /* Products */;
+					ProjectRef = 9CE75C5015454CF70023D472 /* Roar.xcodeproj */;
+				},
+				{
 					ProductGroup = 182F5538130390D1003805A7 /* Products */;
 					ProjectRef = 182F5537130390D1003805A7 /* SpiderMonkey.xcodeproj */;
 				},
@@ -266,6 +287,13 @@
 			fileType = archive.ar;
 			path = libRhinoca.a;
 			remoteRef = 187BCB8E12FAA71F0042FDB1 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9CE75C5515454CF80023D472 /* libRoar.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libRoar.a;
+			remoteRef = 9CE75C5415454CF80023D472 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */

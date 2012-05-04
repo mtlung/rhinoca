@@ -220,16 +220,16 @@ const T* IArray<T,S>::find(const T& val) const
 template<class T>
 Status Array<T>::reserve(roSize newCapacity)
 {
-	newCapacity = roMaxOf2(newCapacity, size());
+	newCapacity = roMaxOf2(newCapacity, this->size());
 	if(newCapacity == 0) return Status::ok;
 
-	T* newPtr = roRealloc(_data, newCapacity * sizeof(T), newCapacity * sizeof(T)).cast<T>();
+	T* newPtr = roRealloc(this->_data, newCapacity * sizeof(T), newCapacity * sizeof(T)).template cast<T>();
 	if(!newPtr) return Status::not_enough_memory;
 
-	if(!TypeOf<T>::isPOD() && newPtr != _data) for(roSize i=0; i<_size; ++i)	// Notify the object that it's memory is moved
-		roOnMemMove(_data[i], newPtr + i);
-	_data = newPtr;
-	_capacity = newCapacity;
+	if(!TypeOf<T>::isPOD() && newPtr != this->_data) for(roSize i=0; i<this->_size; ++i)	// Notify the object that it's memory is moved
+		roOnMemMove(this->_data[i], newPtr + i);
+	this->_data = newPtr;
+	this->_capacity = newCapacity;
 	return Status::ok;
 }
 
@@ -239,36 +239,36 @@ Status Array<T>::reserve(roSize newCapacity)
 template<class T, roSize PreAllocCount>
 Status TinyArray<T,PreAllocCount>::reserve(roSize newSize)
 {
-	newSize = roMaxOf2(newSize, size());
+	newSize = roMaxOf2(newSize, this->size());
 	bool moved = false;
 
 	// Transit from dynamic to static
-	if(newSize <= PreAllocCount && PreAllocCount < _capacity) {
-		roMemcpy(_buffer, _data, sizeof(T) * _size);
-		roFree(_data);
-		_data = (T*)_buffer;
-		_capacity = PreAllocCount;
+	if(newSize <= PreAllocCount && PreAllocCount < this->_capacity) {
+		roMemcpy(this->_buffer, this->_data, sizeof(T) * this->_size);
+		roFree(this->_data);
+		this->_data = (T*)this->_buffer;
+		this->_capacity = PreAllocCount;
 		moved = true;
 	}
 	// Transit from static to dynamic
 	else {
-		T* oldPtr = (_data == (T*)_buffer) ? NULL : _data;
-		T* newPtr = roRealloc(oldPtr, _capacity, newSize * sizeof(T)).cast<T>();
+		T* oldPtr = (this->_data == (T*)this->_buffer) ? NULL : this->_data;
+		T* newPtr = roRealloc(oldPtr, this->_capacity, newSize * sizeof(T)).template cast<T>();
 		if(!newPtr) return Status::not_enough_memory;
 
-		moved = _data != oldPtr;
+		moved = this->_data != oldPtr;
 
-		if(_capacity == PreAllocCount) {
-			roMemcpy(newPtr, _buffer, sizeof(T) * _size);
+		if(this->_capacity == PreAllocCount) {
+			roMemcpy(newPtr, this->_buffer, sizeof(T) * this->_size);
 			moved = true;
 		}
 
-		_data = newPtr;
-		_capacity = newSize;
+		this->_data = newPtr;
+		this->_capacity = newSize;
 	}
 
-	if(!TypeOf<T>::isPOD() && moved) for(roSize i=0; i<_size; ++i)	// Notify the object that it's memory is moved
-		roOnMemMove(_data[i], &_data[i]);
+	if(!TypeOf<T>::isPOD() && moved) for(roSize i=0; i<this->_size; ++i)	// Notify the object that it's memory is moved
+		roOnMemMove(this->_data[i], &this->_data[i]);
 
 	return Status::ok;
 }

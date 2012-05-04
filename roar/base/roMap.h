@@ -47,19 +47,21 @@ struct _TreeNode
 	roInt8 _balance;			///< Negative=Left, Positive=Right
 };	// _TreeNode
 
-template<class Key, class T, class Comparator = MapComparator<Key> >
+template<class Key> struct MapComparator;
+	
+template<class Key_, class T, class Comparator_ = MapComparator<Key_> >
 struct MapNode : public _TreeNode
 {
-	typedef Key Key;
-	typedef Comparator Comparator;
+	typedef Key_ Key;
+	typedef Comparator_ Comparator;
 
 	MapNode() {}
 	explicit MapNode(const Key& key) : _key(key) {}
 
 	bool			isInMap() const	{ return _tree != NULL; }
 	Map<T>*			getMap() const	{ return static_cast<Map<T>*>(_tree); }
-	T*				next() const	{ return _tree ? (T*)(_tree->walkR((_TreeNode&)*this)) : NULL; }
-	T*				prev() const	{ return _tree ? (T*)(_tree->walkL((_TreeNode&)*this)) : NULL; }
+	T*				next() const	{ return _tree ? (T*)(this->_tree->walkR((_TreeNode&)*this)) : NULL; }
+	T*				prev() const	{ return _tree ? (T*)(this->_tree->walkL((_TreeNode&)*this)) : NULL; }
 
 	const Key&		key() const		{ return _key; }
 	void			setKey(const Key& key);

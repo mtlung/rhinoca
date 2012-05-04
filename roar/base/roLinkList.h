@@ -56,10 +56,10 @@ struct _LinkList : private NonCopyable
 };	// _LinkList
 
 ///	A wrapper class over the _LinkList to provide typed interface.
-template<class Node>
+template<class Node_>
 struct LinkList : public _LinkList
 {
-	typedef Node Node;
+	typedef Node_ Node;
 
 	LinkList() : _LinkList() {}
 

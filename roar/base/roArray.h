@@ -93,10 +93,8 @@ struct IArray
 	void		popBack();
 	void		remove(roSize i);
 	void		removeBySwap(roSize i);
-	void		removeByKey(const T& key);
 
-	T*			find(const T& key);
-	const T*	find(const T& key) const;
+	T*			find(const T& val) const;
 
 // Attributes
 	iterator		begin()				{ return _data; }
@@ -111,11 +109,6 @@ struct IArray
 
 	T*				typedPtr()			{ return _data; }
 	const T*		typedPtr() const	{ return _data; }
-
-	template<class U>
-	U*				castedPtr()			{ return (U*)_data; }
-	template<class U>
-	const U*		castedPtr() const	{ return (U*)_data; }
 
 	roBytePtr		bytePtr()			{ return _data; }
 	const roBytePtr	bytePtr() const		{ return _data; }
@@ -134,7 +127,7 @@ template<class T>
 struct Array : public IArray<T, Array<T> >
 {
 	Array() {}
-	Array(roSize size)					{ resize(size); }
+	Array(roSize size)					{ this->resize(size); }
 	Array(roSize size, const T& val)	{ resize(size, val); }
 	Array(const Array<T>& src)			{ copy(src); }
 	~Array()							{ clear(); roFree(_data); }

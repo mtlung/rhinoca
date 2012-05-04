@@ -36,13 +36,12 @@ struct roStatus
 
 inline const char* roStatus::c_str() const
 {
-	if(_code == 0) return "success";
-	if(_code > _std_start && _code < _std_end) {
-		switch(_code) {
+	switch(_code) {
+	case ok: return "ok";
 #define roStatusEnum(n) case n: return #n;
 #include "roStatusEnum.h"
 #undef roStatusEnum
-		}
+	default: return "unknown";
 	}
 	return "unknown";
 }
