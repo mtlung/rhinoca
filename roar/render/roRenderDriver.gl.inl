@@ -112,7 +112,8 @@ struct roRDriverContextImpl : public roRDriverContext
 	roRDriverShaderProgramImpl* currentShaderProgram;
 
 	// A ring of pixel buffer object
-	TinyArray<GLuint, 1> pixelBufferCache;
+	TinyArray<GLuint, 4> pixelBufferInUse;
+	TinyArray<GLuint, 4> pixelBufferCache;
 	unsigned currentPixelBufferIndex;
 
 	Array<roRDriverBufferImpl*> bufferCache;	// We would like to minimize the create/delete of buffer objects

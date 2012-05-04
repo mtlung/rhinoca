@@ -61,7 +61,6 @@ roRDriverContext* _newDriverContext_GL(roRDriver* driver)
 	ret->currentShaderProgram = NULL;
 
 	ret->currentPixelBufferIndex = 0;
-	ret->pixelBufferCache.resize(8);	// FIXME: Just an arbitrary number
 
 	roRDriverContextImpl::TextureState texState = { 0, 0 };
 	ret->textureStateCache.assign(texState);
@@ -223,9 +222,6 @@ bool _initDriverContext_GL(roRDriverContext* self, void* platformSpecificWindow)
 	wglSwapIntervalEXT(0);
 
 	impl->driver->applyDefaultState(impl);
-
-	// Init pixel buffer cache
-	glGenBuffers(num_cast<GLsizei>(impl->pixelBufferCache.size()), &impl->pixelBufferCache[0]);
 
 	return ret;
 }

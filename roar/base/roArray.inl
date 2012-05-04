@@ -36,7 +36,19 @@ T* arrayFind(T* begin, T* end, const T& val)
 }
 
 template<class T>
+const T* arrayFind(const T* begin, const T* end, const T& val)
+{
+	return arrayFind((T*)begin, end, val);
+}
+
+template<class T>
 T* arrayFind(T* begin, roSize count, const T& val)
+{
+	return arrayFind(begin, begin + count, val);
+}
+
+template<class T>
+const T* arrayFind(const T* begin, roSize count, const T& val)
 {
 	return arrayFind(begin, begin + count, val);
 }
@@ -181,9 +193,25 @@ void IArray<T,S>::removeBySwap(roSize idx)
 }
 
 template<class T, class S>
-T* IArray<T,S>::find(const T& val) const
+void IArray<T,S>::removeByKey(const T& key)
 {
-	return arrayFind(begin, end, val);
+	T* v = find(key);
+	if(!v) return;
+
+	roAssert(v >= begin() && v < end());
+	remove(v - begin());
+}
+
+template<class T, class S>
+T* IArray<T,S>::find(const T& val)
+{
+	return arrayFind(begin(), end(), val);
+}
+
+template<class T, class S>
+const T* IArray<T,S>::find(const T& val) const
+{
+	return arrayFind(begin(), end(), val);
 }
 
 

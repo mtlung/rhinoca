@@ -93,8 +93,10 @@ struct IArray
 	void		popBack();
 	void		remove(roSize i);
 	void		removeBySwap(roSize i);
+	void		removeByKey(const T& key);
 
-	T*			find(const T& val) const;
+	T*			find(const T& key);
+	const T*	find(const T& key) const;
 
 // Attributes
 	iterator		begin()				{ return _data; }

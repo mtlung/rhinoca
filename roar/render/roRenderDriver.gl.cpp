@@ -825,6 +825,25 @@ static unsigned _mipLevelInfo(roRDriverTextureImpl* self, unsigned mipIndex, uns
 	return offset;
 }
 
+static GLuint _getPbo(roRDriverContextImpl* ctx)
+{
+	GLuint pbo = 0;
+	for(roSize i=0; i<ctx->pixelBufferCache.size(); ++i) {
+		unsigned index = ctx->currentPixelBufferIndex++;
+		ctx->currentPixelBufferIndex = ctx->currentPixelBufferIndex % ctx->pixelBufferCache.size();
+		pbo = ctx->pixelBufferCache[index];
+
+		if(!ctx->pixelBufferInUse.find(pbo))
+			return pbo;
+		else
+			pbo = pbo;
+	}
+
+	glGenBuffers(1, &pbo);
+	ctx->pixelBufferCache.pushBack(pbo);
+	return pbo;
+}
+
 static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, unsigned aryIndex, const void* data, roSize rowPaddingInBytes, unsigned* bytesRead)
 {
 	if(bytesRead) *bytesRead = 0;
@@ -845,8 +864,7 @@ static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, unsigned a
 #if !defined(RG_GLES)
 	// Using PBO
 	if(_usePbo) {
-		GLuint pbo = ctx->pixelBufferCache[(ctx->currentPixelBufferIndex++) % ctx->pixelBufferCache.size()];
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _getPbo(ctx));
 		glBufferData(GL_PIXEL_UNPACK_BUFFER, mipSize, data, GL_STREAM_DRAW);
 		data = NULL;	// If we are using PBO, no need to supply the data pointer to glTexImage2D()
 	}
@@ -952,7 +970,7 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 
 	if(_usePbo && !mapInfo.glPbo)
 	{
-		mapInfo.glPbo = ctx->pixelBufferCache[(ctx->currentPixelBufferIndex++) % ctx->pixelBufferCache.size()];
+		mapInfo.glPbo = _getPbo(ctx);
 
 		if(usage & roRDriverMapUsage_Read) {
 			glBindBuffer(GL_PIXEL_PACK_BUFFER, mapInfo.glPbo);
@@ -1004,6 +1022,8 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 		else {
 			roAssert(false);
 		}
+
+		ctx->pixelBufferInUse.pushBack(mapInfo.glPbo);
 	}
 	else if(!mapInfo.systemBuf) {
 		roSize sizeInBytes = impl->formatMapping->glPixelSize * impl->width * impl->height;
@@ -1089,6 +1109,7 @@ static void _unmapTexture(roRDriverTexture* self, unsigned mipIndex, unsigned ar
 		if(mapInfo.usage & roRDriverMapUsage_Read)
 			glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 
+		ctx->pixelBufferInUse.removeByKey(mapInfo.glPbo);
 		mapInfo.glPbo = 0;
 	}
 	else if(mapInfo.systemBuf) {
