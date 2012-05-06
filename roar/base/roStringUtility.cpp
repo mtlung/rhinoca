@@ -428,7 +428,7 @@ roStatus roUtf8ToUtf32(roUint32* dest, roSize& destLen, const char* src, roSize 
 	return roStatus::string_encoding_error;
 }
 
-roStatus roUtf16ToUtf8(char* dest, roSize& destLen, const roUint16* src, roSize maxSrcLen)
+roStatus roUtf16ToUtf8(unsigned char* dest, roSize& destLen, const roUint16* src, roSize maxSrcLen)
 {
 	if(!src)
 		return roStatus::invalid_parameter;
@@ -450,7 +450,7 @@ roStatus roUtf16ToUtf8(char* dest, roSize& destLen, const roUint16* src, roSize 
 
 		if(value < 0x80) {	// 0-127, US-ASCII (single byte)
 			if(dest)
-				dest[destPos] = num_cast<char>(value);
+				dest[destPos] = num_cast<unsigned char>(value);
 			++destPos;
 			continue;
 		}
@@ -470,13 +470,13 @@ roStatus roUtf16ToUtf8(char* dest, roSize& destLen, const roUint16* src, roSize 
 				break;
 
 		if(dest)
-			dest[destPos] = num_cast<char>(_utf8Limits[numAdds - 1] + (value >> (6 * numAdds)));
+			dest[destPos] = num_cast<unsigned char>(_utf8Limits[numAdds - 1] + (value >> (6 * numAdds)));
 		++destPos;
 
 		do {
 			--numAdds;
 			if(dest)
-				dest[destPos] = num_cast<char>(0x80 + ((value >> (6 * numAdds)) & 0x3F));
+				dest[destPos] = num_cast<unsigned char>(0x80 + ((value >> (6 * numAdds)) & 0x3F));
 			++destPos;
 		} while(numAdds != 0);
 	}

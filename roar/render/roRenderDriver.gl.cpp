@@ -1149,11 +1149,7 @@ static void _deleteShader(roRDriverShader* self)
 	for(unsigned i=0; i<ctx->shaderProgramCache.size();) {
 		roRDriverShaderProgramImpl& program = ctx->shaderProgramCache[i];
 
-		roRDriverShaderImpl** cache = arrayFind(
-			program.shaders.begin(),
-			program.shaders.end(),
-			impl
-		);
+		roRDriverShaderImpl** cache = program.shaders.find(impl);
 
 		// Destroy the shader program
 		if(cache) {

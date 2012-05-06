@@ -1,6 +1,7 @@
 #ifndef __roArray_h__
 #define __roArray_h__
 
+#include "roAlgorithm.h"
 #include "roBytePtr.h"
 #include "roMemory.h"
 #include "roStatus.h"
@@ -8,13 +9,6 @@
 #include "roUtility.h"
 
 namespace ro {
-
-template<class T>
-T* arrayFind(T* begin, T* end, const T& val);
-
-template<class T>
-T* arrayFind(T* begin, roSize count, const T& val);
-
 
 // ----------------------------------------------------------------------
 
@@ -93,8 +87,15 @@ struct IArray
 	void		popBack();
 	void		remove(roSize i);
 	void		removeBySwap(roSize i);
+	void		removeByKey(const T& key);
 
-	T*			find(const T& val) const;
+	T*			find(const T& key);
+	const T*	find(const T& key) const;
+
+	template<class K>
+	T*			find(const K& key, bool(*equal)(const T&, const K&));
+	template<class K>
+	const T*	find(const K& key, bool(*equal)(const T&, const K&)) const;
 
 // Attributes
 	iterator		begin()				{ return _data; }
@@ -109,6 +110,11 @@ struct IArray
 
 	T*				typedPtr()			{ return _data; }
 	const T*		typedPtr() const	{ return _data; }
+
+	template<class U>
+	U*				castedPtr()			{ return (U*)_data; }
+	template<class U>
+	const U*		castedPtr() const	{ return (U*)_data; }
 
 	roBytePtr		bytePtr()			{ return _data; }
 	const roBytePtr	bytePtr() const		{ return _data; }

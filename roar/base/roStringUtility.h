@@ -66,7 +66,7 @@ roUint64	roStrToUint64	(const char* str, roUint64 defaultValue);
 int roUtf8ToUtf16Char(roUint16& out, const char *utf8, roSize utf8Len);
 roStatus roUtf8ToUtf16(roUint16* dest, roSize& destLen, const char* src, roSize maxSrcLen);
 roStatus roUtf8ToUtf32(roUint32* dest, roSize& destLen, const char* src, roSize maxSrcLen);
-roStatus roUtf16ToUtf8(char* dest, roSize& destLen, const roUint16* src, roSize maxSrcLen);
+roStatus roUtf16ToUtf8(unsigned char* dest, roSize& destLen, const roUint16* src, roSize maxSrcLen);
 
 #include "roStringUtility.inl"
 

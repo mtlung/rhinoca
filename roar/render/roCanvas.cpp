@@ -762,8 +762,10 @@ void Canvas::fillText(const char* utf8Str, float x, float y, float maxWidth)
 {
 	if(!roSubSystems || !roSubSystems->fontMgr) return;
 
-	if(FontPtr font = roSubSystems->fontMgr->getFont("Arial"))
+	if(FontPtr font = roSubSystems->fontMgr->getFont(_currentState.fontName.c_str())) {
+		font->setStyle(_currentState.fontName.c_str());
 		font->draw(utf8Str, x, y, maxWidth, *this);
+	}
 }
 
 void Canvas::getFillColor(float* rgba)
@@ -852,6 +854,11 @@ void Canvas::setGlobalColor(float r, float g, float b, float a)
 	_currentState.globalColor[1] = g;
 	_currentState.globalColor[2] = b;
 	_currentState.globalColor[3] = a;
+}
+
+void Canvas::setFont(const char* style)
+{
+	_currentState.fontName = style;
 }
 
 struct CompositionMapping { StringHash h; VGBlendMode mode; };

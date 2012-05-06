@@ -237,7 +237,7 @@ Status String::fromUtf16(const roUint16* src, roSize maxSrcLen)
 	Status st = roUtf16ToUtf8(NULL, len, src, maxSrcLen); if(!st) return st;
 
 	resize(len);
-	st = roUtf16ToUtf8(_cstr, len, src, maxSrcLen); if(!st) return st;
+	st = roUtf16ToUtf8((unsigned char*)_cstr, len, src, maxSrcLen); if(!st) return st;
 
 	return Status::ok;
 }

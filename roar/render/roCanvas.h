@@ -102,6 +102,10 @@ struct Canvas
 	void setGlobalColor			(const float* rgba);
 	void setGlobalColor			(float r, float g, float b, float a);
 
+	void setFont				(const char* style);	/// "20pt Arial"
+	void setTextAlign			(const char* align);	/// Valid values are 'left', 'right' , 'center', 'start' and 'end'
+	void setTextBaseline		(const char* baseLine);	/// Valid values are 'top', 'hanging' , 'middle', 'alphabetic', 'ideographic' and 'bottom'
+
 	/// sets how shapes and images are drawn onto the existing bitmap
 	/// See: http://www.whatwg.org/specs/web-apps/current-work/multipage/the-canvas-element.html#compositing
 	/// Possible values:
@@ -139,7 +143,7 @@ struct Canvas
 		float strokeColor[4];
 		float fillColor[4];
 		int compisitionOperation;
-		ConstString fontUri;
+		ConstString fontName;
 		ro::Mat4 transform;
 	};
 	State _currentState;

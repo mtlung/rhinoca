@@ -95,7 +95,8 @@ void _deleteDriverContext_GL(roRDriverContext* self)
 	}
 
 	// Free the pixel buffer cache
-	glDeleteBuffers(num_cast<GLsizei>(impl->pixelBufferCache.size()), &impl->pixelBufferCache[0]);
+	if(!impl->pixelBufferCache.isEmpty())
+		glDeleteBuffers(num_cast<GLsizei>(impl->pixelBufferCache.size()), &impl->pixelBufferCache[0]);
 
 	// Free buffer object cache
 	while(!impl->bufferCache.isEmpty()) {

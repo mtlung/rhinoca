@@ -310,6 +310,8 @@ TEST_FIXTURE(CanvasTest, drawText)
 	initContext(driverStr[driverIndex]);
 	canvas.init();
 
+	roUint16 codePoint = 0;
+
 	while(keepRun())
 	{
 		// Draw to auxCanvas
@@ -319,9 +321,27 @@ TEST_FIXTURE(CanvasTest, drawText)
 //		driver->clearColor(1, 1, 1, 1);
 		canvas.clearRect(0, 0, context->width, context->height);
 
-		canvas.setGlobalColor(1, 1, 1, 0.1f);
+		canvas.setGlobalColor(1, 1, 1, 1);
 
-		canvas.fillText("AT_-\nHello world!", 0, 40, 0);
+		Array<roUint16> wStr;
+
+		for(roSize i=0; i<10; ++i) {
+			if(codePoint > 1024 * 100)
+				codePoint = 1;
+			wStr.pushBack(++codePoint);
+		}
+
+		String str;
+		str.fromUtf16(wStr.typedPtr(), wStr.size());
+
+		canvas.setFont("Calibri");
+		canvas.fillText("AT_-Hello world!", 0, 40, 0);
+
+		canvas.setFont("Comic Sans MS");
+		canvas.fillText("Lung Man Tat", 0, 60, 0);
+
+		canvas.setFont("DFKai-SB");
+		canvas.fillText(str.c_str(), 0, 100, 0);
 
 		canvas.endDraw();
 

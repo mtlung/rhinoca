@@ -26,33 +26,6 @@ void roOnMemMove(ro::TinyArray<T,N>& ary, void* newMemLocation)
 
 namespace ro {
 
-template<class T>
-T* arrayFind(T* begin, T* end, const T& val)
-{
-	for(T* i=begin; i!=end; ++i)
-		if(*i == val)
-			return i;
-	return NULL;
-}
-
-template<class T>
-const T* arrayFind(const T* begin, const T* end, const T& val)
-{
-	return arrayFind((T*)begin, end, val);
-}
-
-template<class T>
-T* arrayFind(T* begin, roSize count, const T& val)
-{
-	return arrayFind(begin, begin + count, val);
-}
-
-template<class T>
-const T* arrayFind(const T* begin, roSize count, const T& val)
-{
-	return arrayFind(begin, begin + count, val);
-}
-
 template<class T, roSize N>
 void StaticArray<T,N>::assign(const T& fill)
 {
@@ -203,15 +176,27 @@ void IArray<T,S>::removeByKey(const T& key)
 }
 
 template<class T, class S>
-T* IArray<T,S>::find(const T& val)
+T* IArray<T,S>::find(const T& key)
 {
-	return arrayFind(begin(), end(), val);
+	return roArrayFind(this->_data, this->_size, key);
 }
 
 template<class T, class S>
-const T* IArray<T,S>::find(const T& val) const
+const T* IArray<T,S>::find(const T& key) const
 {
-	return arrayFind(begin(), end(), val);
+	return roArrayFind(this->_data, this->_size, key);
+}
+
+template<class T, class S> template<class K>
+T* IArray<T,S>::find(const K& key, bool(*equal)(const T&, const K&))
+{
+	return roArrayFind(this->_data, this->_size, key, equal);
+}
+
+template<class T, class S>  template<class K>
+const T* IArray<T,S>::find(const K& key, bool(*equal)(const T&, const K&)) const
+{
+	return roArrayFind(this->_data, this->_size, key, equal);
 }
 
 
