@@ -16,13 +16,15 @@ namespace ro {
 namespace {
 
 struct Glyph {
-	roUint16 codePoint;			/// The unicode that identify the character
-	roUint16 kerningIndex;		/// Index to the kerning table to begin the kerning pair search
-	roUint16 kerningCount;		/// Number of kerning associated with this glyph
-	roUint16 texIndex;			/// Index to the texture table
-	roUint16 width, height;		/// Width and height for the glyph
-	Vec2 texOffset, texSize;	/// Defines the location in the texture
-	Vec2 origin, advance;
+	roUint16 codePoint;					/// The unicode that identify the character
+	roUint16 kerningIndex;				/// Index to the kerning table to begin the kerning pair search
+	roUint16 kerningCount;				/// Number of kerning associated with this glyph
+	roUint16 texIndex;					/// Index to the texture table
+	roUint16 width, height;				/// Width and height for the glyph
+	roUint16 texOffsetX, texOffsetY;	/// Defines the location in the texture
+	roUint16 texSizeX, texSizeY;
+	roInt16 originX, originY;
+	roInt16 advanceX, advanceY;
 };
 
 struct KerningPair {
@@ -30,22 +32,15 @@ struct KerningPair {
 	int offset;
 };
 
-static roUint32 fontHash(const char* fontName, unsigned fontSize, unsigned fontWeight)
-{
-	return stringHash(fontName, 0) +
-		stringHash((char*)&fontSize, sizeof(fontSize)) +
-		stringHash((char*)&fontWeight, sizeof(fontWeight));
-}
-
 struct FontData
 {
 	FontData();
-	~FontData();
+	~FontData() { if(hFont) ::DeleteObject(hFont); }
 
 	ConstString fontName;
+	roUint32 fontHash;
 	unsigned fontSize;
 	unsigned fontWeight;
-	roUint32 fontHash;
 
 	HFONT hFont;
 	TEXTMETRIC tm;
@@ -55,8 +50,18 @@ struct FontData
 	Array<Glyph> glyphs;				/// Array of Glyph sorted by the code point for fast searching
 
 	roUint16 currentTextureIdx;
-	unsigned dstX, dstY;
+	roUint16 dstX, dstY;
 };
+
+FontData::FontData()
+	: fontSize(0)
+	, fontWeight(FW_DONTCARE)
+	, fontHash(0)
+	, hFont(NULL)
+	, currentTextureIdx(0)
+	, dstX(0), dstY(0)
+{
+}
 
 struct Request
 {
@@ -76,22 +81,40 @@ struct FontImpl : public Font
 {
 	explicit FontImpl(const char* uri)
 		: Font(uri)
+		, hdc(NULL)
 		, currnetFontForDraw(0)
-	{}
+	{
+		hdc = ::CreateCompatibleDC(NULL);
+	}
+
+	~FontImpl()
+	{
+		if(hdc) ::DeleteDC(hdc);
+	}
 
 	override bool setStyle(const char* styleStr);
 
 	override void draw(const char* utf8Str, float x, float y, float maxWidth, Canvas&);
 
+	HDC hdc;	/// It is used when drawing text
+
 	Array<FontData> typefaces;
 	Array<Request> requestMainThread, requestLoadThread;
 	Array<Reply> replys;
 
-	Array<TexturePtr> textures;
-	Array<KerningPair> kerningPairs;	/// Sorted by KerningPair.first and then KerningPair.second
-	Array<Glyph> glyphs;				/// Array of Glyph sorted by the code point for fast searching
-
 	roSize currnetFontForDraw;
+};
+
+struct Pred {
+	static bool fontDataEqual(const FontData& f, const roUint32& k) {
+		return f.fontHash == k;
+	}
+	static bool glyphLess(const Glyph& g, const roUint16& k) {
+		return g.codePoint < k;
+	}
+	static bool glyphEqual(const Glyph& g, const roUint16& k) {
+		return g.codePoint == k;
+	}
 };
 
 }	// namespace
@@ -106,19 +129,15 @@ Resource* resourceCreateFont(const char* uri, ResourceManager* mgr)
 class FontLoader : public Task
 {
 public:
-	FontLoader(FontImpl* f, ResourceManager* mgr)
-		: font(f), manager(mgr)
-		, hdc(NULL), hFont(NULL)
+	FontLoader(FontImpl* f)
+		: font(f)
+		, hdc(NULL)
 		, texDimension(512)
-//		, currentGlyphIdx(0), currentTextureIdx(0)
-//		, dstX(0), dstY(0)
-//		, mappedTexPtr(NULL)
 		, nextFun(&FontLoader::emumTypeface)
 	{}
 
 	~FontLoader()
 	{
-		if(hFont) ::DeleteObject(hFont);
 		if(hdc) ::DeleteDC(hdc);
 	}
 
@@ -128,25 +147,13 @@ protected:
 	void checkRequest(TaskPool* taskPool);
 	void processRequest(TaskPool* taskPool);
 	void emumTypeface(TaskPool* taskPool);
-	void loadMetric(TaskPool* taskPool);
-	void loadBitmaps(TaskPool* taskPool);
-	void allocateTexture(TaskPool* taskPool);
 	void requestAbort(TaskPool* taskPool);
 	void cleanup(TaskPool* taskPool);
 
 	FontImpl* font;
-	ResourceManager* manager;
 
 	HDC hdc;
-	HFONT hFont;
-	TEXTMETRIC tm;
-
-	// Variable used for reading font bitmaps
-	unsigned texDimension;
-//	roSize currentGlyphIdx;
-//	roUint16 currentTextureIdx;
-//	unsigned dstX, dstY;
-//	char* mappedTexPtr;
+	roUint16 texDimension;
 
 	void (FontLoader::*nextFun)(TaskPool*);
 };
@@ -168,33 +175,30 @@ void FontLoader::checkRequest(TaskPool* taskPool)
 	{
 		Reply& reply = font->replys[i];
 
-		struct Pred {
-			static bool equal(const FontData& f, const roUint32& k) {
-				return f.fontHash == k;
-			}
-			static bool less(const Glyph& g, const roUint16& k) {
-				return g.codePoint < k;
-			}
-		};
-		FontData* fontData = font->typefaces.find(reply.fontHash, Pred::equal);
+		FontData* fontData = font->typefaces.find(reply.fontHash, Pred::fontDataEqual);
 		roAssert(fontData);
 
-		// Insert the glyph from reply.glyphs into fontData->glyphs in order of the code point
+		// Insert the glyph from reply.glyphs into fontData->glyphs in asscending order of the code point
 		for(roSize j=0; j<reply.glyphs.size(); ++j) {
 			roAssert(reply.glyphs[j].texIndex == reply.texIndex);
 
-			Glyph* g = roLowerBound(fontData->glyphs.typedPtr(), fontData->glyphs.size(), reply.glyphs[j].codePoint, &Pred::less);
+			Glyph* g = roLowerBound(fontData->glyphs.typedPtr(), fontData->glyphs.size(), reply.glyphs[j].codePoint, &Pred::glyphLess);
 			roSize insertPos = g ? g - fontData->glyphs.typedPtr() : fontData->glyphs.size();
 
 			fontData->glyphs.insert(insertPos, reply.glyphs[j]);
 		}
 
+		// Create new texture if necessary
 		if(reply.texIndex >= fontData->textures.size()) {
 			TexturePtr texture = new Texture("");
 			texture->handle = roRDriverCurrentContext->driver->newTexture();
 
 			bool ok = roRDriverCurrentContext->driver->initTexture(
 				texture->handle, texDimension, texDimension, 1, roRDriverTextureFormat_A, roRDriverTextureFlag_None);
+			if(!ok) {
+				fontData->textures.popBack();
+				continue;
+			}
 
 			// Zero the pixels
 			roUint8* texPtr = (roUint8*)roRDriverCurrentContext->driver->mapTexture(
@@ -210,6 +214,7 @@ void FontLoader::checkRequest(TaskPool* taskPool)
 		roUint8* texPtr = (roUint8*)roRDriverCurrentContext->driver->mapTexture(
 			tex->handle, roRDriverMapUsage_ReadWrite, 0, 0);
 
+		// "Adds" the loaded glyphs to the texture
 		for(roSize j=0; j<reply.bitmapBuf.size(); ++j, ++texPtr)
 			*texPtr += reply.bitmapBuf[j];
 
@@ -239,10 +244,10 @@ static void _initWinFont(FontData& fontData, HDC hdc)
 	Array<roUint16> wStr;
 	{	// Convert the source uri to utf 16
 		roSize len = 0;
-		Status st = roUtf8ToUtf16(NULL, len, fontData.fontName.c_str(), roSize(-1)); if(!st) return;
+		Status st = roUtf8ToUtf16(NULL, len, fontData.fontName.c_str()); if(!st) return;
 
 		wStr.resize(len);
-		st = roUtf8ToUtf16((roUint16*)&wStr[0], len, fontData.fontName.c_str(), roSize(-1)); if(!st) return;
+		st = roUtf8ToUtf16((roUint16*)&wStr[0], len, fontData.fontName.c_str()); if(!st) return;
 		wStr.pushBack(0);
 	}
 
@@ -287,18 +292,20 @@ void FontLoader::processRequest(TaskPool* taskPool)
 		FontData* fontData = _findFontData(font->typefaces, request.fontHash);
 		roAssert(fontData && "Hash value should already be registered by Font::setStyle()");
 
-		// Find out the request and reply object
-		Reply* reply = NULL;
-		for(roSize j=0; j<font->replys.size(); ++j) {
-			if(request.fontHash == font->replys[j].fontHash)
-				reply = &font->replys[j];
-		}
+		// Init the win32 font if not yet
 		if(!fontData->hFont)
 			_initWinFont(*fontData, hdc);
 		if(!fontData->hFont)
 			continue;
 
-		// If no reply object exsit yet, create one
+		// Find out the reply object
+		Reply* reply = NULL;
+		for(roSize j=0; j<font->replys.size(); ++j) {
+			if(request.fontHash == font->replys[j].fontHash)
+				reply = &font->replys[j];
+		}
+
+		// If no reply object exist yet, create one
 		if(!reply) {
 			reply = &font->replys.pushBack();
 			if(!reply)
@@ -311,20 +318,11 @@ void FontLoader::processRequest(TaskPool* taskPool)
 
 		// See if the codepoint already exist in the font, and the reply object
 		roUint16 codePoint = request.codepoint;
-		struct Pred {
-			static bool less(const Glyph& g, const roUint16& k) {
-				return g.codePoint < k;
-			}
-			static bool equal(const Glyph& g, const roUint16& k) {
-				return g.codePoint == k;
-			}
-		};
-
-		Glyph* g = roLowerBound(fontData->glyphs.typedPtr(), fontData->glyphs.size(), codePoint, &Pred::less);
+		Glyph* g = roLowerBound(fontData->glyphs.typedPtr(), fontData->glyphs.size(), codePoint, &Pred::glyphLess);
 		if(g && g->codePoint == codePoint)
 			continue;
 
-		if(reply->glyphs.find(codePoint, &Pred::equal))
+		if(reply->glyphs.find(codePoint, &Pred::glyphEqual))
 			continue;
 
 		g = &reply->glyphs.pushBack();
@@ -348,6 +346,13 @@ void FontLoader::processRequest(TaskPool* taskPool)
 		glyhpBitmapBuf.resize(bufSize);
 		::GetGlyphOutlineW(hdc, codePoint, GGO_GRAY8_BITMAP, &glyphMetrics, bufSize, glyhpBitmapBuf.bytePtr(), &matrix);
 
+		// Fail if the size of a glyph is too large
+		if(glyphMetrics.gmBlackBoxX > texDimension || glyphMetrics.gmBlackBoxY > texDimension) {
+			roLog("warn", "Glyph size of %d*%d was too large to fit into texture with size %d*%d\n",
+				glyphMetrics.gmBlackBoxX, glyphMetrics.gmBlackBoxY, texDimension, texDimension);
+			continue;
+		}			
+
 		// Scale up from GGO_GRAY8_BITMAP to 0 - 255
 		for(roSize i=0; i<glyhpBitmapBuf.size(); ++i) {
 			int c = glyhpBitmapBuf[i];
@@ -359,11 +364,12 @@ void FontLoader::processRequest(TaskPool* taskPool)
 		// TODO: Add border
 		if(fontData->dstX + glyphMetrics.gmBlackBoxX > texDimension) {
 			fontData->dstX = 0;
-			fontData->dstY += fontData->tm.tmHeight;
+			fontData->dstY = num_cast<roUint16>(fontData->dstY + fontData->tm.tmHeight);
 		}
 
-		// Condition for allocating new texture
-		bool textureFull = fontData->dstY + fontData->tm.tmHeight > texDimension;
+		// Condition for allocating new texture, for simplicity only one texture update at a time,
+		// so if we detected a new texture is needed, we simply ignore the remaining request.
+		bool textureFull = num_cast<roUint16>(fontData->dstY + fontData->tm.tmHeight) > texDimension;
 		if(textureFull) {
 			++fontData->currentTextureIdx;
 			reply->glyphs.popBack();
@@ -379,13 +385,17 @@ void FontLoader::processRequest(TaskPool* taskPool)
 			reply->bitmapBuf.bytePtr(), fontData->dstX, fontData->dstY, texDimension, texDimension, texDimension * 1);
 
 		g->texIndex = fontData->currentTextureIdx;
-		g->texOffset = Vec2(fontData->dstX, fontData->dstY);
-		g->texSize = Vec2(glyphMetrics.gmBlackBoxX, glyphMetrics.gmBlackBoxY);
+		g->texOffsetX = fontData->dstX;
+		g->texOffsetY = fontData->dstY;
+		g->texSizeX = num_cast<roUint16>(glyphMetrics.gmBlackBoxX);
+		g->texSizeY = num_cast<roUint16>(glyphMetrics.gmBlackBoxY);
 
-		g->origin = Vec2(glyphMetrics.gmptGlyphOrigin.x, glyphMetrics.gmptGlyphOrigin.y);
-		g->advance = Vec2(glyphMetrics.gmCellIncX, glyphMetrics.gmCellIncY);
+		g->originX = num_cast<roInt16>(glyphMetrics.gmptGlyphOrigin.x);
+		g->originY = num_cast<roInt16>(glyphMetrics.gmptGlyphOrigin.y);
+		g->advanceX = num_cast<roInt16>(glyphMetrics.gmCellIncX);
+		g->advanceY = num_cast<roInt16>(glyphMetrics.gmCellIncY);
 
-		fontData->dstX += glyphMetrics.gmBlackBoxX;
+		fontData->dstX += num_cast<roUint16>(glyphMetrics.gmBlackBoxX);
 	}
 
 	font->requestLoadThread.clear();
@@ -420,229 +430,6 @@ void FontLoader::emumTypeface(TaskPool* taskPool)
 	return reSchedule(false, taskPool->mainThreadId());
 }
 
-void FontLoader::loadMetric(TaskPool* taskPool)
-{
-	Status st;
-
-roEXCP_TRY
-	// Get the font name from the uri
-	String fontName;
-	{	const char* p = roStrrChr(font->uri(), '.');
-		if(!p) { roAssert(false); roEXCP_THROW; }
-		fontName.assign(font->uri(), p - font->uri());
-	}
-
-	// http://stackoverflow.com/questions/6595772/painting-text-above-opengl-context-in-mfc
-
-	// http://msdn.microsoft.com/en-us/library/windows/desktop/dd183499%28v=vs.85%29.aspx
-	hFont = ::CreateFontW(40,0,0,0,FW_DONTCARE,FALSE,FALSE,0,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,
-//		CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH,L"DFKai-SB");
-		CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH,L"Calibri");
-
-	::SelectObject(hdc, hFont);
-
-	// Get the unicode range
-	Array<char> glyphSet(::GetFontUnicodeRanges(hdc, NULL));
-	GLYPHSET* pGlyphSet = glyphSet.castedPtr<GLYPHSET>();
-	::GetFontUnicodeRanges(hdc, pGlyphSet);
-
-	// Get text metric
-	::GetTextMetricsW(hdc, &tm);
-
-	// Get the kerning table
-	DWORD pairCount = ::GetKerningPairsW(hdc, 0, NULL);
-	Array<KERNINGPAIR> kerningPair(pairCount);
-	::GetKerningPairsW(hdc, pairCount, kerningPair.typedPtr());
-
-	font->kerningPairs.reserve(pairCount);
-	for(roSize i=0; i<pairCount; ++i) {
-		if(kerningPair[i].iKernAmount == 0)
-			continue;
-		KerningPair k = { kerningPair[i].wFirst, kerningPair[i].wSecond, kerningPair[i].iKernAmount };
-		font->kerningPairs.pushBack(k);
-	}
-
-	// Fill in the data structures
-	for(roSize i=0; i<pGlyphSet->cRanges; ++i)
-	{
-		WCRANGE& range = pGlyphSet->ranges[i];
-		roSize k = 0;
-
-		for(roSize j=0; j<range.cGlyphs; ++j)
-		{
-			unsigned codePoint = range.wcLow + j;
-			Glyph g = { codePoint, 0, 0, 0, 0, 0, Vec2(0.f), Vec2(0.f) };
-
-			// Find the kerning for this code point
-			roSize kBeg = k;
-			for(; k<font->kerningPairs.size(); ++k) {
-				if(font->kerningPairs[k].second == codePoint)
-					g.kerningIndex = num_cast<roUint16>(kBeg);
-				else if(font->kerningPairs[k].second > codePoint)
-					break;
-			}
-			g.kerningCount = num_cast<roUint16>(k - kBeg);
-
-			// Set the width and height
-			INT w;
-			roVerify(::GetCharWidth32W(hdc, codePoint, codePoint, &w));	// NOTE: Use GetCharABCWidthsW if necessary
-			g.width = num_cast<roUint16>(w);
-			g.height = num_cast<roUint16>(tm.tmHeight);
-			roAssert(g.texSize.x <= tm.tmMaxCharWidth);
-
-			font->glyphs.pushBack(g);
-		}
-	}
-
-	font->kerningPairs.condense();
-	font->glyphs.condense();
-
-	// Calculate the optimal number of texture to use, base on the the average glyph width and fixed glyph height
-	roSize pixelNeeded = tm.tmAveCharWidth * tm.tmHeight * font->glyphs.size();
-
-	texDimension = 1;
-	for(roSize i=1; i<=10; ++i) {
-		texDimension = (1 << i);
-		unsigned pixels = (1 << i) * (1 << i);
-		if(pixels > pixelNeeded)
-			break;
-	}
-	roAssert(texDimension <= 1024);
-
-	nextFun = &FontLoader::loadBitmaps;
-	return reSchedule(false, ~taskPool->mainThreadId());
-
-roEXCP_CATCH
-	roLog("error", "FontLoader: Fail to load '%s', reason: %s\n", font->uri().c_str(), st.c_str());
-	nextFun = &FontLoader::requestAbort;
-	return reSchedule(false, taskPool->mainThreadId());
-
-roEXCP_END
-}
-
-void FontLoader::loadBitmaps(TaskPool* taskPool)
-{
-/*	Status st;
-
-	roEXCP_TRY
-	// Get the bitmap data
-	ro::Array<char> glyhpBitmapBuf;
-
-	for(; currentGlyphIdx<font->glyphs.size(); ++currentGlyphIdx)
-	{
-		Glyph& g = font->glyphs[currentGlyphIdx];
-		unsigned codePoint = g.codePoint;
-
-		// Get the glyph bitmaps
-		// Reference: http://opensource.apple.com/source/WebCore/WebCore-1C25/platform/cairo/cairo/src/cairo-win32-font->c
-		// http://www.winehq.org/pipermail/wine-patches/2002-July/002790.html
-		GLYPHMETRICS glyphMetrics;
-		static const MAT2 matrix = { { 0, 1 }, { 0, 0 }, { 0, 0 }, { 0, 1 } };
-		roSize bufSize = ::GetGlyphOutlineW(hdc, codePoint, GGO_GRAY8_BITMAP, &glyphMetrics, 0, NULL, &matrix);
-		if(GDI_ERROR == bufSize) {
-			roLog("warn", "GetGlyphOutlineW for code point %s failed\n", codePoint);
-			continue;
-		}
-
-		// Get the glyph outline
-		glyhpBitmapBuf.resize(bufSize);
-		::GetGlyphOutlineW(hdc, codePoint, GGO_GRAY8_BITMAP, &glyphMetrics, bufSize, glyhpBitmapBuf.bytePtr(), &matrix);
-
-		// Scale up from GGO_GRAY8_BITMAP to 0 - 255
-		for(roSize i=0; i<glyhpBitmapBuf.size(); ++i) {
-			int c = glyhpBitmapBuf[i];
-			c = int(c * (float)255 / 64);
-			glyhpBitmapBuf[i] = num_cast<char>(c);
-		}
-
-		// Increment the position in the destination texture
-		// TODO: Add border
-		if(dstX + glyphMetrics.gmBlackBoxX > texDimension) {
-			dstX = 0;
-			dstY += tm.tmHeight;
-		}
-
-		// Condition for allocating new texture
-		bool texturesEmpty = currentTextureIdx == font->textures.size();
-		bool textureFull = dstY + tm.tmHeight > texDimension;
-		if(texturesEmpty || textureFull) {
-			nextFun = &FontLoader::allocateTexture;
-			return reSchedule(false, taskPool->mainThreadId());
-		}
-
-		// Copy the outline bitmap to the texture atlas
-		roSize rowLen = roAlignCeiling(glyphMetrics.gmBlackBoxX, 4u);
-		if(!glyhpBitmapBuf.isEmpty()) _texBlit(1,
-			glyhpBitmapBuf.bytePtr(), 0, 0, glyphMetrics.gmBlackBoxX, glyphMetrics.gmBlackBoxY, rowLen,
-			mappedTexPtr, dstX, dstY, texDimension, texDimension, texDimension * 1);
-
-		g.texIndex = currentTextureIdx;
-		g.texOffset = Vec2(dstX, dstY);
-		g.texSize = Vec2(glyphMetrics.gmBlackBoxX, glyphMetrics.gmBlackBoxY);
-
-		g.origin = Vec2(glyphMetrics.gmptGlyphOrigin.x, glyphMetrics.gmptGlyphOrigin.y);
-		g.advance = Vec2(glyphMetrics.gmCellIncX, glyphMetrics.gmCellIncY);
-
-		dstX += glyphMetrics.gmBlackBoxX;
-	}	// end for each glyphs
-
-	nextFun = &FontLoader::cleanup;
-
-roEXCP_CATCH
-	roLog("error", "FontLoader: Fail to load '%s', reason: %s\n", font->uri().c_str(), st.c_str());
-	nextFun = &FontLoader::requestAbort;
-
-roEXCP_END
-	return reSchedule(false, taskPool->mainThreadId());*/
-}
-
-static TexturePtr _allocateTexture(unsigned dimension, char** outMappedPtr)
-{
-	static const unsigned bytePerPixel = 1;
-	TexturePtr texture = new Texture("");
-	texture->handle = roRDriverCurrentContext->driver->newTexture();
-
-	bool ok = roRDriverCurrentContext->driver->initTexture(
-		texture->handle, dimension, dimension, 1, roRDriverTextureFormat_A, roRDriverTextureFlag_None);
-	if(!ok) {
-		// TODO: More error handling
-		roLog("error", "Fail to create texture for font\n");
-		return NULL;
-	}
-
-	roVerify(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, 0, NULL, 0, NULL));
-
-	if(outMappedPtr) {
-		*outMappedPtr = (char*)roRDriverCurrentContext->driver->mapTexture(
-			texture->handle, roRDriverMapUsage_Write, 0, 0);
-		roZeroMemory(*outMappedPtr, dimension * dimension * bytePerPixel);
-	}
-
-	return texture;
-}
-
-void FontLoader::allocateTexture(TaskPool* taskPool)
-{
-/*	if(dstY + tm.tmHeight > texDimension) {
-		dstX = dstY = 0;
-		roRDriverCurrentContext->driver->unmapTexture(font->textures[currentTextureIdx]->handle, 0, 0);
-		++currentTextureIdx;
-	}
-
-	if(currentTextureIdx == font->textures.size()) {
-		TexturePtr tex = _allocateTexture(texDimension, &mappedTexPtr);
-		// If we fail to allocate texture, seems not much we can do
-		if(!tex || !mappedTexPtr) {
-			nextFun = &FontLoader::requestAbort;
-			return reSchedule(false, taskPool->mainThreadId());
-		}
-		font->textures.pushBack(tex);
-	}
-
-	nextFun = &FontLoader::loadBitmaps;
-	return reSchedule(false, ~taskPool->mainThreadId());*/
-}
-
 void FontLoader::requestAbort(TaskPool* taskPool)
 {
 	font->state = Resource::Aborted;
@@ -652,11 +439,6 @@ void FontLoader::requestAbort(TaskPool* taskPool)
 
 void FontLoader::cleanup(TaskPool* taskPool)
 {
-/*	if(mappedTexPtr) {
-		roRDriverCurrentContext->driver->unmapTexture(font->textures[currentTextureIdx]->handle, 0, 0);
-		mappedTexPtr = NULL;
-	}*/
-
 	if(font->state != Resource::Aborted)
 		font->state = Resource::Loaded;
 
@@ -671,25 +453,10 @@ bool resourceLoadWinfnt(Resource* resource, ResourceManager* mgr)
 
 	FontImpl* font = dynamic_cast<FontImpl*>(resource);
 
-	FontLoader* loaderTask = new FontLoader(font, mgr);
+	FontLoader* loaderTask = new FontLoader(font);
 	font->taskReady = font->taskLoaded = taskPool->addFinalized(loaderTask, 0, 0, ~taskPool->mainThreadId());
 
 	return true;
-}
-
-FontData::FontData()
-	: fontSize(0)
-	, fontWeight(FW_DONTCARE)
-	, fontHash(0)
-	, hFont(NULL)
-	, currentTextureIdx(0)
-	, dstX(0), dstY(0)
-{
-}
-
-FontData::~FontData()
-{
-	if(hFont) ::DeleteObject(hFont);
 }
 
 bool FontImpl::setStyle(const char* styleStr)
@@ -704,7 +471,6 @@ bool FontImpl::setStyle(const char* styleStr)
 	}
 
 	FontData fontData;
-	fontData.fontName = "Calibri";
 	fontData.fontName = styleStr;
 	fontData.fontSize = 30;
 	fontData.fontWeight = FW_DONTCARE;
@@ -723,20 +489,36 @@ void FontImpl::draw(const char* utf8Str, float x_, float y_, float maxWidth, Can
 //		return;
 
 	roSize len = roStrLen(utf8Str);
+	FontData& fontData = typefaces[currnetFontForDraw];
 
 	float x = x_, y = y_;
+
+/*	{	INT iDxArr[512];
+		GCP_RESULTS cres;
+		cres.lStructSize = sizeof(GCP_RESULTS);
+		cres.lpOutString	= NULL;
+		cres.lpOrder		= NULL;
+		cres.lpDx		= iDxArr;
+		cres.lpCaretPos		= NULL;
+		cres.lpClass		= NULL;
+		cres.lpGlyphs		= NULL;
+		cres.nGlyphs		= 8;
+		cres.nMaxFit		= 0;
+
+		::SelectObject(hdc, fontData.hFont);
+		DWORD dwRet = ::GetCharacterPlacement(hdc, L"AT Hello", 8, 0, &cres, GCP_USEKERNING);
+		roAssert(dwRet != 0);
+	}*/
 
 	for(roUint16 w, prev = 0; len; prev = w)
 	{
 		int utf8Consumed = roUtf8ToUtf16Char(w, utf8Str, len);
-		if(utf8Consumed == 0) break;	// Invalid utf8 string encountered
+		if(utf8Consumed < 1) break;	// Invalid utf8 string encountered
 
 		utf8Str += utf8Consumed;
 		len -= utf8Consumed;
 
 		// Search for the glyph by the given code point
-		FontData& fontData = typefaces[currnetFontForDraw];
-
 		struct Pred { static bool less(const Glyph& g, const roUint16& k) {
 			return g.codePoint < k;
 		}};
@@ -744,23 +526,23 @@ void FontImpl::draw(const char* utf8Str, float x_, float y_, float maxWidth, Can
 
 		if(g && g->codePoint == w) {
 			// Calculate kerning
-			for(roSize i=g->kerningIndex; i<g->kerningIndex + g->kerningCount; ++i) {
+/*			for(roSize i=g->kerningIndex; i<g->kerningIndex + g->kerningCount; ++i) {
 				roAssert(kerningPairs[i].second == w);
 				if(kerningPairs[i].first == prev)
 					x += kerningPairs[i].offset;
-			}
+			}*/
 
 			roRDriverTexture* tex = fontData.textures[g->texIndex]->handle;
-			float srcx = g->texOffset.x,	srcy = g->texOffset.y;
-			float srcw = g->texSize.x,		srch = g->texSize.y;
-			float dstx = x + g->origin.x,	dsty = y - g->origin.y;
+			float srcx = g->texOffsetX,		srcy = g->texOffsetY;
+			float srcw = g->texSizeX,		srch = g->texSizeY;
+			float dstx = x + g->originX,	dsty = y - g->originY;
 
 			c.drawImage(tex, srcx, srcy, srcw, srch, dstx, dsty, srcw, srch);
-			x += g->advance.x;
-			y += g->advance.y;
+			x += g->advanceX;
+			y += g->advanceY;
 		}
 		else {
-			Request req = { typefaces[currnetFontForDraw].fontHash, w };
+			Request req = { fontData.fontHash, w };
 			requestMainThread.pushBack(req);
 		}
 

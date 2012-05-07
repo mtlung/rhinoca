@@ -611,14 +611,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\render\textrenderer.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\render\textrenderer.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\render\texture.cpp"
 				>
 			</File>
