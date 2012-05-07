@@ -1,4 +1,12 @@
-inline roSize roStrLen(const char* str)
+inline roSize roStrLen(const roUtf8* str)
+{
+	if(!str) return 0;
+	roSize len = 0;
+	for(; *str; ++str, ++len) {}
+	return len;
+}
+
+inline roSize roStrLen(const roUtf16* str)
 {
 	if(!str) return 0;
 	roSize len = 0;

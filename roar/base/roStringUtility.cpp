@@ -261,27 +261,183 @@ roUint64 roStrToUint64(const char* str, roUint64 defaultValue) {
 
 // ----------------------------------------------------------------------
 
-int roUtf8ToUtf16Char(roUint16& out, const char *utf8, roSize len)
+int roUtf8ToUtf16Char(roUtf16& out, const roUtf8* utf8, roSize len)
 {
 	if(len < 1) return 0;
 	if((utf8[0] & 0x80) == 0) {
-		out = (roUint16)utf8[0];
+		out = (roUtf16)utf8[0];
 		return 1;
 	}
 	if((utf8[0] & 0xE0) == 0xC0) {
 		if(len < 2) return 0;
-		out = (roUint16)(utf8[0] & 0x1F) << 6
-			| (roUint16)(utf8[1] & 0x3F);
+		out = (roUtf16)(utf8[0] & 0x1F) << 6
+			| (roUtf16)(utf8[1] & 0x3F);
 		return 2;
 	}
 	if((utf8[0] & 0xF0) == 0xE0) {
 		if(len < 3) return 0;
-		out = (roUint16)(utf8[0] & 0x0F) << 12
-			| (roUint16)(utf8[1] & 0x3F) << 6
-			| (roUint16)(utf8[2] & 0x3F);
+		out = (roUtf16)(utf8[0] & 0x0F) << 12
+			| (roUtf16)(utf8[1] & 0x3F) << 6
+			| (roUtf16)(utf8[2] & 0x3F);
 		return 3;
 	}
 	return -1;
+}
+
+int roUtf16ToUtf8(roUtf8* utf8, roSize utf8Len, roUtf16 c)
+{
+	if(c <= 0x7F) {
+		if(utf8Len < 1) return -1;
+		utf8[0] = (roUtf8)c;
+		return 1;
+	}
+	if(c <= 0x7FF) {
+		if(utf8Len < 2) return -2;
+		utf8[0] = num_cast<roUtf8>((c >> 6) | 0xC0);
+		utf8[1] = num_cast<roUtf8>((c & 0x3F) | 0x80);
+		return 2;
+	}
+	if(utf8Len < 3) return -3;
+	utf8[0] = (c >> 12) | 0xE0;
+	utf8[1] = ((c >> 6) & 0x3F) | 0x80;
+	utf8[2] = (c & 0x3F) | 0x80;
+	return 3;
+}
+
+roStatus roUtf8CountInUtf16(roSize& outLen, const roUtf16* utf16)
+{
+	if(!utf16) return roStatus::invalid_parameter;
+	outLen = 0;
+	for(; *utf16; ++utf16) {
+		if(*utf16 <= 0x7F ) { outLen += 1; continue; }
+		if(*utf16 <= 0x7FF) { outLen += 2; continue; }
+		outLen += 3;
+	}
+	return roStatus::ok;
+}
+
+roStatus roUtf8CountInUtf16(roSize& outLen, const roUtf16* utf16, roSize utf16len)
+{
+	if(!utf16) return roStatus::invalid_parameter;
+	outLen = 0;
+	for(roSize i=0; i<utf16len && *utf16; ++i, ++utf16) {
+		if(*utf16 <= 0x7F ) { outLen += 1; continue; }
+		if(*utf16 <= 0x7FF) { outLen += 2; continue; }
+		outLen += 3;
+	}
+	return roStatus::ok;
+}
+
+roStatus roUtf16CountInUtf8(roSize& outLen, const roUtf8* utf8)
+{
+	if(!utf8) return roStatus::invalid_parameter;
+	outLen = 0;
+	for(; *utf8; ++utf8, ++outLen) {
+		if((*utf8 & 0x80) == 0) {
+			continue;
+		}
+		if((*utf8 & 0xE0) == 0xC0) {
+			++utf8; if(*utf8 == 0) return roStatus::string_encoding_error;
+			continue;
+		}
+		if((*utf8 & 0xF0) == 0xE0) {
+			++utf8; if(*utf8 == 0) return roStatus::string_encoding_error;
+			++utf8; if(*utf8 == 0) return roStatus::string_encoding_error;
+			continue;
+		}
+	}
+	return roStatus::ok;
+}
+
+roStatus roUtf16CountInUtf8(roSize& outLen, const roUtf8* utf8, roSize utf8Len)
+{
+	if(!utf8) return roStatus::invalid_parameter;
+	outLen = 0;
+	for(roSize i=0; i<utf8Len && *utf8; ++i, ++utf8, ++outLen) {
+		if((*utf8 & 0x80) == 0) {
+			continue;
+		}
+		if((*utf8 & 0xE0) == 0xC0) {
+			++utf8; if(*utf8 == 0) return roStatus::string_encoding_error;
+			continue;
+		}
+		if((*utf8 & 0xF0) == 0xE0) {
+			++utf8; if(*utf8 == 0) return roStatus::string_encoding_error;
+			++utf8; if(*utf8 == 0) return roStatus::string_encoding_error;
+			continue;
+		}
+	}
+	return roStatus::ok;
+}
+
+roStatus roUtf8ToUtf16(roUtf16* dst, roSize& dstLen, const roUtf8* src)
+{
+	if(!src) return roStatus::invalid_parameter;
+	if(!dst) return roUtf16CountInUtf8(dstLen, src);
+
+	for(roSize srcLen = roStrLen(src); srcLen && dstLen;) {
+		int utf8Consumed = roUtf8ToUtf16Char(*dst, src, srcLen);
+		if(utf8Consumed == 0) return roStatus::string_encoding_error;
+		roAssert(srcLen >= roSize(utf8Consumed));
+		++dst;
+		--dstLen;
+		src += utf8Consumed;
+		srcLen -= utf8Consumed;
+	}
+
+	return roStatus::ok;
+}
+
+roStatus roUtf8ToUtf16(roUtf16* dst, roSize& dstLen, const roUtf8* src, roSize maxSrcLen)
+{
+	if(!src) return roStatus::invalid_parameter;
+	if(!dst) return roUtf16CountInUtf8(dstLen, src, maxSrcLen);
+
+	for(; maxSrcLen && dstLen;) {
+		int utf8Consumed = roUtf8ToUtf16Char(*dst, src, maxSrcLen);
+		if(utf8Consumed == 0) return roStatus::string_encoding_error;
+		roAssert(maxSrcLen >= roSize(utf8Consumed));
+		++dst;
+		--dstLen;
+		src += utf8Consumed;
+		maxSrcLen -= utf8Consumed;
+	}
+
+	return roStatus::ok;
+}
+
+roStatus roUtf16ToUtf8(roUtf8* dst, roSize& dstLen, const roUtf16* src)
+{
+	if(!src) return roStatus::invalid_parameter;
+	if(!dst) return roUtf8CountInUtf16(dstLen, src);
+
+	for(roSize srcLen = roStrLen(src); srcLen && dstLen;) {
+		int utf8Written = roUtf16ToUtf8(dst, dstLen, *src);
+		if(utf8Written < 1) return roStatus::string_encoding_error;
+		++src;
+		--srcLen;
+		dst += utf8Written;
+		dstLen -= utf8Written;
+	}
+
+	return roStatus::ok;
+}
+
+roStatus roUtf16ToUtf8(roUtf8* dst, roSize& dstLen, const roUtf16* src, roSize maxSrcLen)
+{
+	if(!src) return roStatus::invalid_parameter;
+	if(!dst) return roUtf8CountInUtf16(dstLen, src, maxSrcLen);
+
+	for(; maxSrcLen && dstLen;) {
+		int utf8Written = roUtf16ToUtf8(dst, dstLen, *src);
+		if(utf8Written < 1) return roStatus::string_encoding_error;
+		++src;
+		--maxSrcLen;
+		dst += utf8Written;
+		dstLen -= utf8Written;
+	}
+
+	return roStatus::ok;
 }
 
 // Reference: http://en.wikipedia.org/wiki/Utf8
@@ -293,194 +449,3 @@ static const roUint8 _utf8Limits[] = {
 	0xFC,	// Start of a 6-byte sequence
 	0xFE	// Invalid: not defined by original UTF-8 specification
 };
-
-roStatus roUtf8ToUtf16(roUint16* dest, roSize& destLen, const char* src, roSize maxSrcLen)
-{
-	if(!src)
-		return roStatus::invalid_parameter;
-
-	roSize destPos = 0, srcPos = 0;
-
-	while(true)
-	{
-		if(srcPos == maxSrcLen || src[srcPos] == '\0') {
-			if(dest && destLen != destPos) {
-				roAssert(false && "The provided destLen should equals to what we calculated here");
-				return roStatus::string_encoding_error;
-			}
-
-			destLen = destPos;
-			return roStatus::ok;
-		}
-
-		roUint8 c = src[srcPos++];
-
-		if(c < 0x80) {	// 0-127, US-ASCII (single byte)
-			if(dest)
-				dest[destPos] = c;
-			++destPos;
-			continue;
-		}
-
-		if(c < 0xC0)	// The first octet for each code point should within 0-191
-			break;
-
-		roSize numAdds = 1;
-		for(; numAdds < 5; ++numAdds)
-			if(c < _utf8Limits[numAdds])
-				break;
-		roUint32 value = c - _utf8Limits[numAdds - 1];
-
-		do {
-			if(srcPos == maxSrcLen || src[srcPos] == '\0')
-				break;
-			roUint8 c2 = src[srcPos++];
-			if(c2 < 0x80 || c2 >= 0xC0)
-				break;
-			value <<= 6;
-			value |= (c2 - 0x80);
-		} while(--numAdds != 0);
-
-		if(value < 0x10000) {
-			if(dest)
-				dest[destPos] = num_cast<roUint16>(value);
-			++destPos;
-		}
-		else {
-			value -= 0x10000;
-			if(value >= 0x100000)
-				break;
-			if(dest) {
-				dest[destPos + 0] = num_cast<roUint16>(0xD800 + (value >> 10));
-				dest[destPos + 1] = num_cast<roUint16>(0xDC00 + (value & 0x3FF));
-			}
-			destPos += 2;
-		}
-	}
-
-	destLen = destPos;
-	return roStatus::string_encoding_error;
-}
-
-roStatus roUtf8ToUtf32(roUint32* dest, roSize& destLen, const char* src, roSize maxSrcLen)
-{
-	if(!src)
-		return roStatus::invalid_parameter;
-
-	roSize destPos = 0, srcPos = 0;
-
-	while(true)
-	{
-		if(srcPos == maxSrcLen || src[srcPos] == '\0') {
-			if(dest && destLen != destPos) {
-				roAssert(false && "The provided destLen should equals to what we calculated here");
-				return roStatus::string_encoding_error;
-			}
-
-			destLen = destPos;
-			return roStatus::ok;
-		}
-
-		roUint8 c = src[srcPos++];
-
-		if(c < 0x80) {	// 0-127, US-ASCII (single byte)
-			if(dest)
-				dest[destPos] = num_cast<roUint32>(c);
-			++destPos;
-			continue;
-		}
-
-		if(c < 0xC0)	// The first octet for each code point should within 0-191
-			break;
-
-		roSize numAdds = 1;
-		for(; numAdds < 5; ++numAdds)
-			if(c < _utf8Limits[numAdds])
-				break;
-		roUint32 value = c - _utf8Limits[numAdds - 1];
-
-		do {
-			if(srcPos == maxSrcLen || src[srcPos] == '\0')
-				break;
-			roUint8 c2 = src[srcPos++];
-			if(c2 < 0x80 || c2 >= 0xC0)
-				break;
-			value <<= 6;
-			value |= (c2 - 0x80);
-		} while(--numAdds != 0);
-
-		if(value < 0x10000) {
-			if(dest)
-				dest[destPos] = value;
-			++destPos;
-		}
-		else {
-			value -= 0x10000;
-			if(value >= 0x100000)
-				break;
-			if(dest)
-				dest[destPos] = value;
-			++destPos;
-		}
-	}
-
-	destLen = destPos;
-	return roStatus::string_encoding_error;
-}
-
-roStatus roUtf16ToUtf8(unsigned char* dest, roSize& destLen, const roUint16* src, roSize maxSrcLen)
-{
-	if(!src)
-		return roStatus::invalid_parameter;
-
-	roSize destPos = 0, srcPos = 0;
-
-	while(true)
-	{
-		if(srcPos == maxSrcLen || src[srcPos] == L'\0') {
-			if(dest && destLen != destPos) {
-				roAssert(false && "The provided destLen should equals to what we calculated here");
-				return roStatus::string_encoding_error;
-			}
-			destLen = destPos;
-			return roStatus::ok;
-		}
-
-		roUint32 value = src[srcPos++];
-
-		if(value < 0x80) {	// 0-127, US-ASCII (single byte)
-			if(dest)
-				dest[destPos] = num_cast<unsigned char>(value);
-			++destPos;
-			continue;
-		}
-
-		if(value >= 0xD800 && value < 0xE000) {
-			if(value >= 0xDC00 || srcPos == maxSrcLen)
-				break;
-			roUint32 c2 = src[srcPos++];
-			if(c2 < 0xDC00 || c2 >= 0xE000)
-				break;
-			value = ((value - 0xD800) << 10) | (c2 - 0xDC00);
-		}
-
-		roSize numAdds = 1;
-		for(; numAdds < 5; ++numAdds)
-			if(value < (1u << (numAdds * 5 + 6)))
-				break;
-
-		if(dest)
-			dest[destPos] = num_cast<unsigned char>(_utf8Limits[numAdds - 1] + (value >> (6 * numAdds)));
-		++destPos;
-
-		do {
-			--numAdds;
-			if(dest)
-				dest[destPos] = num_cast<unsigned char>(0x80 + ((value >> (6 * numAdds)) & 0x3F));
-			++destPos;
-		} while(numAdds != 0);
-	}
-
-	destLen = destPos;
-	return roStatus::string_encoding_error;
-}

@@ -3,7 +3,8 @@
 
 #include "roStatus.h"
 
-inline roSize	roStrLen		(const char* str);
+inline roSize	roStrLen		(const roUtf8* str);
+inline roSize	roStrLen		(const roUtf16* str);
 
 inline char*	roStrnCpy		(char* dst, const char* src, roSize n);
 
@@ -63,10 +64,17 @@ roUint64	roStrToUint64	(const char* str, roUint64 defaultValue);
 // ----------------------------------------------------------------------
 // String encodings
 
-int roUtf8ToUtf16Char(roUint16& out, const char *utf8, roSize utf8Len);
-roStatus roUtf8ToUtf16(roUint16* dest, roSize& destLen, const char* src, roSize maxSrcLen);
-roStatus roUtf8ToUtf32(roUint32* dest, roSize& destLen, const char* src, roSize maxSrcLen);
-roStatus roUtf16ToUtf8(unsigned char* dest, roSize& destLen, const roUint16* src, roSize maxSrcLen);
+int roUtf8ToUtf16Char(roUtf16& out, const roUtf8* src, roSize maxSrcLen);	/// Returns number of characters consumed in utf8 string, < 0 for any error
+int roUtf16ToUtf8(roUtf8* utf8, roSize dstLen, roUtf16 utf16c);				/// Returns number of characters written to utf8 string, < 0 for any error
+roStatus roUtf8CountInUtf16(roSize& outLen, const roUtf16* src);
+roStatus roUtf8CountInUtf16(roSize& outLen, const roUtf16* src, roSize maxSrcLen);
+roStatus roUtf16CountInUtf8(roSize& outLen, const roUtf8* src);
+roStatus roUtf16CountInUtf8(roSize& outLen, const roUtf8* src, roSize maxSrcLen);
+
+roStatus roUtf8ToUtf16(roUtf16* dest, roSize& dstLen, const roUtf8* src);
+roStatus roUtf8ToUtf16(roUtf16* dest, roSize& dstLen, const roUtf8* src, roSize maxSrcLen);
+roStatus roUtf16ToUtf8(roUtf8* dest, roSize& dstLen, const roUtf16* src);
+roStatus roUtf16ToUtf8(roUtf8* dest, roSize& dstLen, const roUtf16* src, roSize maxSrcLen);
 
 #include "roStringUtility.inl"
 
