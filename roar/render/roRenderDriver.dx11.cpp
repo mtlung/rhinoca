@@ -1070,6 +1070,17 @@ static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height
 		return false;
 	}
 
+	if(bindFlags & D3D11_BIND_SHADER_RESOURCE) {
+		ID3D11ShaderResourceView* view = NULL;
+		HRESULT hr = ctx->dxDevice->CreateShaderResourceView(impl->dxTexture, NULL, &view);
+		impl->dxView = view;
+
+		if(FAILED(hr)) {
+			roLog("error", "CreateShaderResourceView failed\n");
+			return false;
+		}
+	}
+
 	return true;
 }
 
@@ -1183,18 +1194,6 @@ static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, unsigned a
 	if(!ctx || !impl || !impl->dxTexture) return false;
 	if(impl->dxDimension == D3D11_RESOURCE_DIMENSION_UNKNOWN) return false;
 
-	UINT bindFlags = 0;
-
-	{	// Setup bind flags
-		if(impl->format == roRDriverTextureFormat_DepthStencil)
-			bindFlags |= D3D11_BIND_DEPTH_STENCIL;
-		else
-			bindFlags |= D3D11_BIND_SHADER_RESOURCE;
-
-		if(impl->flags & roRDriverTextureFlag_RenderTarget)
-			bindFlags |= D3D11_BIND_RENDER_TARGET;
-	}
-
 	{	// Mip-map check
 		D3D11_TEXTURE2D_DESC desc;
 		ID3D11Texture2D* tex2D = static_cast<ID3D11Texture2D*>(impl->dxTexture.ptr);
@@ -1237,17 +1236,6 @@ static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, unsigned a
 			staging->dxTexture, 0,
 			NULL
 		);
-	}
-
-	if(bindFlags & D3D11_BIND_SHADER_RESOURCE) {
-		ID3D11ShaderResourceView* view = NULL;
-		HRESULT hr = ctx->dxDevice->CreateShaderResourceView(impl->dxTexture, NULL, &view);
-		impl->dxView = view;
-
-		if(FAILED(hr)) {
-			roLog("error", "CreateShaderResourceView failed\n");
-			return false;
-		}
 	}
 
 	return true;

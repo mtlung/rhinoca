@@ -183,11 +183,10 @@ void FontLoader::checkRequest(TaskPool* taskPool)
 		// Insert the glyph from reply.glyphs into fontData->glyphs in asscending order of the code point
 		for(roSize j=0; j<reply.glyphs.size(); ++j) {
 			roAssert(reply.glyphs[j].texIndex == reply.texIndex);
-
-			Glyph* g = roLowerBound(fontData->glyphs.typedPtr(), fontData->glyphs.size(), reply.glyphs[j].codePoint, &Pred::glyphLess);
-			roSize insertPos = g ? g - fontData->glyphs.typedPtr() : fontData->glyphs.size();
-
-			fontData->glyphs.insert(insertPos, reply.glyphs[j]);
+			struct Pred { static bool less(const Glyph& lhs, const Glyph& rhs) {
+				return lhs.codePoint < rhs.codePoint;
+			}};
+			fontData->glyphs.insertSorted(reply.glyphs[j], &Pred::less);
 		}
 
 		// Create new texture if necessary
@@ -307,7 +306,6 @@ void FontLoader::processRequest(TaskPool* taskPool)
 {
 	ro::Array<char> glyhpBitmapBuf;
 
-	// TODO: Sort the request queue first for better performance
 	for(roSize i=0; i<font->requestLoadThread.size(); ++i)
 	{
 		Request& request = font->requestLoadThread[i];
@@ -393,14 +391,20 @@ void FontLoader::processRequest(TaskPool* taskPool)
 			roLog("warn", "Glyph size of %d*%d was too large to fit into texture with size %d*%d\n",
 				glyphMetrics.gmBlackBoxX, glyphMetrics.gmBlackBoxY, texDimension, texDimension);
 			continue;
-		}			
+		}
 
 		// Scale up from GGO_GRAY8_BITMAP to 0 - 255
+		roUint64 pixelSum = 0;
 		for(roSize i=0; i<glyhpBitmapBuf.size(); ++i) {
 			int c = glyhpBitmapBuf[i];
+			pixelSum += c;
 			c = int(c * (float)255 / 64);
 			glyhpBitmapBuf[i] = num_cast<char>(c);
 		}
+
+		// If the bitmap doesn't has any visual pixel, force the box to be zero
+		if(pixelSum == 0)
+			glyphMetrics.gmBlackBoxX = glyphMetrics.gmBlackBoxY = 0;
 
 		// Increment the position in the destination texture
 		// TODO: Add border
@@ -576,7 +580,7 @@ void FontImpl::draw(const char* utf8Str, float x_, float y_, float maxWidth, Can
 
 		if(w == L'\n') {
 			x = x_;
-			if(g2) y += g2->height;	// TODO: Replace g->height with height for that font
+			y += fontData.tm.tmHeight;
 		}
 	}
 }

@@ -25,6 +25,7 @@ struct GraphicsTestBase
 	roRDriverShader* pShader;
 
 	float averageFrameDuration;
+	float maxFrameDuration;
 
 	ro::SubSystems subSystems;
 };
