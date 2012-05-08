@@ -41,6 +41,7 @@ struct FontData
 	roUint32 fontHash;
 	unsigned fontSize;
 	unsigned fontWeight;
+	bool italic;
 
 	HFONT hFont;
 	TEXTMETRIC tm;
@@ -56,6 +57,7 @@ struct FontData
 FontData::FontData()
 	: fontSize(0)
 	, fontWeight(FW_DONTCARE)
+	, italic(false)
 	, fontHash(0)
 	, hFont(NULL)
 	, currentTextureIdx(0)
@@ -106,14 +108,14 @@ struct FontImpl : public Font
 };
 
 struct Pred {
-	static bool fontDataEqual(const FontData& f, const roUint32& k) {
-		return f.fontHash == k;
+	static bool fontDataEqual(const FontData& f, const roUint32& h) {
+		return f.fontHash == h;
 	}
-	static bool glyphLess(const Glyph& g, const roUint16& k) {
-		return g.codePoint < k;
+	static bool glyphLess(const Glyph& g, const roUint16& c) {
+		return g.codePoint < c;
 	}
-	static bool glyphEqual(const Glyph& g, const roUint16& k) {
-		return g.codePoint == k;
+	static bool glyphEqual(const Glyph& g, const roUint16& c) {
+		return g.codePoint == c;
 	}
 };
 
@@ -254,13 +256,33 @@ static void _initWinFont(FontData& fontData, HDC hdc)
 	// http://msdn.microsoft.com/en-us/library/windows/desktop/dd183499%28v=vs.85%29.aspx
 	fontData.hFont = ::CreateFontW(
 		fontData.fontSize, 0, 0, 0, fontData.fontWeight,
-		FALSE, FALSE, 0, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+		fontData.italic, FALSE, 0, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
 		CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH,
 		wStr.castedPtr<wchar_t>()
 	);
 
 	::SelectObject(hdc, fontData.hFont);
 	::GetTextMetricsW(hdc, &fontData.tm);
+
+	// Get the kerning table
+	DWORD pairCount = ::GetKerningPairsW(hdc, 0, NULL);
+	Array<KERNINGPAIR> kerningPair(pairCount);
+	::GetKerningPairsW(hdc, pairCount, kerningPair.typedPtr());
+
+	fontData.kerningPairs.reserve(pairCount);
+	for(roSize i=0; i<pairCount; ++i) {
+		if(kerningPair[i].iKernAmount == 0)
+			continue;
+
+		// Make sure the kerning table is sorted for fast query
+		KerningPair k = { kerningPair[i].wFirst, kerningPair[i].wSecond, kerningPair[i].iKernAmount };
+		struct Pred { static bool less(const KerningPair& lhs, const KerningPair& rhs) {
+			if(lhs.first == rhs.first) return lhs.second < rhs.second;
+			return lhs.first < rhs.first;
+		}};
+		fontData.kerningPairs.insertSorted(k, &Pred::less);
+	}
+	fontData.kerningPairs.condense();
 }
 
 // Copy a texture from one memory to another memory
@@ -329,6 +351,26 @@ void FontLoader::processRequest(TaskPool* taskPool)
 		g->codePoint = codePoint;
 		g->kerningIndex = 0;
 		g->kerningCount = 0;
+
+		// Find the kerning for this code point
+		if(!fontData->kerningPairs.isEmpty()) {
+			struct Pred {
+				static bool kerningLowerBound(const KerningPair& k, const roUint16& c) {
+					return k.first < c;
+				}
+				static bool kerningUpperBound(const roUint16& c, const KerningPair& k) {
+					return c < k.first;
+				}
+			};
+
+			KerningPair* k1 = roLowerBound(fontData->kerningPairs.typedPtr(), fontData->kerningPairs.size(), codePoint, &Pred::kerningLowerBound);
+			KerningPair* k2 = roUpperBound(fontData->kerningPairs.typedPtr(), fontData->kerningPairs.size(), codePoint, &Pred::kerningUpperBound);
+			if(k1 && k1->first == codePoint) {
+				roAssert(k2 > k1);
+				g->kerningIndex = num_cast<roUint16>(k1 - fontData->kerningPairs.begin());
+				g->kerningCount = num_cast<roUint16>(k2 - k1);
+			}
+		}
 
 		// Get the glyph bitmaps
 		// Reference: http://opensource.apple.com/source/WebCore/WebCore-1C25/platform/cairo/cairo/src/cairo-win32-font->c
@@ -407,7 +449,7 @@ void FontLoader::processRequest(TaskPool* taskPool)
 static int CALLBACK _enumFamCallBack(const LOGFONTW* lplf, const TEXTMETRICW* lpntm, DWORD fontType, LPARAM)
 {
 	String str;
-	roVerify(str.fromUtf16((const roUint16*)lplf->lfFaceName));
+	roVerify(str.fromUtf16((const roUtf16*)lplf->lfFaceName));
 	roSubSystems->fontMgr->registerFontTypeface(str.c_str(), "win.fnt");
 
 	return TRUE;
@@ -424,7 +466,7 @@ void FontLoader::emumTypeface(TaskPool* taskPool)
 	if(!hdc)
 		hdc = ::CreateCompatibleDC(NULL);
 
-	::EnumFontFamiliesW(hdc, NULL, _enumFamCallBack, (LPARAM)this);
+	::EnumFontFamiliesExW(hdc, NULL, _enumFamCallBack, (LPARAM)this, 0);
 
 	nextFun = &FontLoader::checkRequest;
 	return reSchedule(false, taskPool->mainThreadId());
@@ -474,6 +516,7 @@ bool FontImpl::setStyle(const char* styleStr)
 	fontData.fontName = styleStr;
 	fontData.fontSize = 30;
 	fontData.fontWeight = FW_DONTCARE;
+	fontData.italic = true;
 	fontData.fontHash = hash;
 	currnetFontForDraw = typefaces.size();
 	typefaces.pushBack(fontData);
@@ -483,34 +526,18 @@ bool FontImpl::setStyle(const char* styleStr)
 
 void FontImpl::draw(const char* utf8Str, float x_, float y_, float maxWidth, Canvas& c)
 {
-	// TODO: Use windows's function to calculate text position
-	// http://social.msdn.microsoft.com/Forums/en-US/vcgeneral/thread/28c492af-1bed-4415-9385-9b0345a41871
-//	if(state != Loaded || textures.isEmpty())
-//		return;
+	if(typefaces.isEmpty())
+		return;
 
-	roSize len = roStrLen(utf8Str);
 	FontData& fontData = typefaces[currnetFontForDraw];
 
 	float x = x_, y = y_;
 
-/*	{	INT iDxArr[512];
-		GCP_RESULTS cres;
-		cres.lStructSize = sizeof(GCP_RESULTS);
-		cres.lpOutString	= NULL;
-		cres.lpOrder		= NULL;
-		cres.lpDx		= iDxArr;
-		cres.lpCaretPos		= NULL;
-		cres.lpClass		= NULL;
-		cres.lpGlyphs		= NULL;
-		cres.nGlyphs		= 8;
-		cres.nMaxFit		= 0;
+	// Pointer to the last and the current glyph
+	Glyph* g1 = NULL, *g2 = NULL;
 
-		::SelectObject(hdc, fontData.hFont);
-		DWORD dwRet = ::GetCharacterPlacement(hdc, L"AT Hello", 8, 0, &cres, GCP_USEKERNING);
-		roAssert(dwRet != 0);
-	}*/
-
-	for(roUint16 w, prev = 0; len; prev = w)
+	roSize len = roStrLen(utf8Str);
+	for(roUint16 w; len; g1 = g2)
 	{
 		int utf8Consumed = roUtf8ToUtf16Char(w, utf8Str, len);
 		if(utf8Consumed < 1) break;	// Invalid utf8 string encountered
@@ -519,27 +546,28 @@ void FontImpl::draw(const char* utf8Str, float x_, float y_, float maxWidth, Can
 		len -= utf8Consumed;
 
 		// Search for the glyph by the given code point
-		struct Pred { static bool less(const Glyph& g, const roUint16& k) {
-			return g.codePoint < k;
-		}};
-		Glyph* g = roLowerBound(fontData.glyphs.typedPtr(), fontData.glyphs.size(), w, &Pred::less);
+		g2 = roLowerBound(fontData.glyphs.typedPtr(), fontData.glyphs.size(), w, &Pred::glyphLess);
 
-		if(g && g->codePoint == w) {
+		if(g2 && g2->codePoint == w) {
 			// Calculate kerning
-/*			for(roSize i=g->kerningIndex; i<g->kerningIndex + g->kerningCount; ++i) {
-				roAssert(kerningPairs[i].second == w);
-				if(kerningPairs[i].first == prev)
-					x += kerningPairs[i].offset;
-			}*/
+			if(g1 && !fontData.kerningPairs.isEmpty()) {
+				struct Pred { static bool kerningLowerBound(const KerningPair& k, const roUint16& c) {
+					return k.second < c;
+				}};
 
-			roRDriverTexture* tex = fontData.textures[g->texIndex]->handle;
-			float srcx = g->texOffsetX,		srcy = g->texOffsetY;
-			float srcw = g->texSizeX,		srch = g->texSizeY;
-			float dstx = x + g->originX,	dsty = y - g->originY;
+				KerningPair* k = roLowerBound(&fontData.kerningPairs[g1->kerningIndex], g1->kerningCount, w, &Pred::kerningLowerBound);
+				if(k && k->second == w)
+					x += k->offset;
+			}
+
+			roRDriverTexture* tex = fontData.textures[g2->texIndex]->handle;
+			float srcx = g2->texOffsetX,	srcy = g2->texOffsetY;
+			float srcw = g2->texSizeX,		srch = g2->texSizeY;
+			float dstx = x + g2->originX,	dsty = y - g2->originY;
 
 			c.drawImage(tex, srcx, srcy, srcw, srch, dstx, dsty, srcw, srch);
-			x += g->advanceX;
-			y += g->advanceY;
+			x += g2->advanceX;
+			y += g2->advanceY;
 		}
 		else {
 			Request req = { fontData.fontHash, w };
@@ -548,7 +576,7 @@ void FontImpl::draw(const char* utf8Str, float x_, float y_, float maxWidth, Can
 
 		if(w == L'\n') {
 			x = x_;
-			if(g) y += g->height;	// TODO: Replace g->height with height for that font
+			if(g2) y += g2->height;	// TODO: Replace g->height with height for that font
 		}
 	}
 }

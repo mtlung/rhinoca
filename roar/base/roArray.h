@@ -83,6 +83,8 @@ struct IArray
 	T&			pushBackBySwap(const T& val);
 	T&			insert(roSize idx, const T& val);
 	T&			insert(roSize idx, const T* srcBegin, const T* srcEnd);
+	T&			insertSorted(const T& val);
+	T&			insertSorted(const T& val, bool(*less)(const T&, const T&));
 
 	void		popBack();
 	void		remove(roSize i);
@@ -123,6 +125,8 @@ struct IArray
 	roSize _size;
 	roSize _capacity;
 	T* _data;
+	Super& _typedThis() { return static_cast<Super&>(*this); }
+	const Super& _typedThis() const { return static_cast<const Super&>(*this); }
 };	// IArray
 
 

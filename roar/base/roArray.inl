@@ -39,7 +39,7 @@ void StaticArray<T,N>::assign(const T& fill)
 template<class T, class S>
 Status IArray<T,S>::copy(const S& src)
 {
-	Status st = resize(src._size);
+	Status st = _typedThis().resize(src._size);
 	if(!st) return st;
 	for(roSize i = 0; i < src._size; ++i) {
 		_data[i] = src._data[i];
@@ -51,7 +51,7 @@ template<class T, class S>
 Status IArray<T,S>::resize(roSize newSize, const T& fill)
 {
 	if(newSize > _capacity) {
-		Status st = static_cast<S&>(*this).reserve(roMaxOf2(newSize, _size*3/2));	// Extend the size by 1.5x
+		Status st = _typedThis().reserve(roMaxOf2(newSize, _size*3/2));	// Extend the size by 1.5x
 		if(!st) return st;
 	}
 
@@ -100,7 +100,7 @@ T& IArray<T,S>::pushBack(const T& fill)
 template<class T, class S>
 T& IArray<T,S>::pushBackBySwap(const T& val)
 {
-	resize(_size + 1);
+	_typedThis().resize(_size + 1);
 	roSwap(back(), const_cast<T&>(val));
 	return back();
 }
@@ -108,7 +108,7 @@ T& IArray<T,S>::pushBackBySwap(const T& val)
 template<class T, class S>
 T& IArray<T,S>::insert(roSize idx, const T& val)
 {
-	resize(_size + 1);
+	_typedThis().resize(_size + 1);
 	for(roSize i = _size - 1; i > idx; --i) {
 		_data[i] = _data[i - 1];
 	}
@@ -120,7 +120,7 @@ template<class T, class S>
 T& IArray<T,S>::insert(roSize idx, const T* srcBegin, const T* srcEnd)
 {
 	roAssert(srcBegin <= srcEnd);
-	resize(_size + (srcEnd - srcBegin));
+	_typedThis().resize(_size + (srcEnd - srcBegin));
 	for(roSize i = _size - 1; i > idx; --i) {
 		_data[i] = _data[i - 1];
 	}
@@ -132,10 +132,30 @@ T& IArray<T,S>::insert(roSize idx, const T* srcBegin, const T* srcEnd)
 }
 
 template<class T, class S>
+T& IArray<T,S>::insertSorted(const T&val)
+{
+	if(T* p = roLowerBound(_data, _size, val)) {
+		roAssert(!(*p < val));
+		return _typedThis().insert(p - _data, val);
+	} else
+		return _typedThis().pushBack(val);
+}
+
+template<class T, class S>
+T& IArray<T,S>::insertSorted(const T& val, bool(*less)(const T&, const T&))
+{
+	if(T* p = roLowerBound(_data, _size, val, less)) {
+		roAssert(!less(*p, val));
+		return _typedThis().insert(p - _data, val);
+	} else
+		return _typedThis().pushBack(val);
+}
+
+template<class T, class S>
 void IArray<T,S>::popBack()
 {
 	if(_size > 0)
-		resize(_size - 1);
+		_typedThis().resize(_size - 1);
 }
 
 template<class T, class S>
@@ -162,17 +182,17 @@ void IArray<T,S>::removeBySwap(roSize idx)
 	if(_size > 1)
 		roSwap(_data[idx], back());
 
-	popBack();
+	_typedThis().popBack();
 }
 
 template<class T, class S>
 void IArray<T,S>::removeByKey(const T& key)
 {
-	T* v = find(key);
+	T* v = _typedThis().find(key);
 	if(!v) return;
 
 	roAssert(v >= begin() && v < end());
-	remove(v - begin());
+	_typedThis().remove(v - begin());
 }
 
 template<class T, class S>
