@@ -35,4 +35,21 @@ struct StopWatch
 
 }	// namespace ro
 
+/// A handy tool to debug which code block contribute to a frame spike
+#define roDetectFrameSpike(nameForDebug) \
+static float _frameSpikeTime = 0; \
+struct _FrameSPikeDetector { \
+	float& _maxTime; const char* _name; ro::StopWatch _sw; \
+	_FrameSPikeDetector(float& maxTime, const char* n) : _maxTime(maxTime), _name(n) {} \
+	void operator=(const _FrameSPikeDetector&){} \
+	~_FrameSPikeDetector() { \
+		float t = _sw.getFloat(); \
+		if(t > _maxTime) { \
+			_maxTime = t; \
+			printf("\rFrame spike in %s, %fs\n", _name, _maxTime); \
+		} \
+	} \
+}; \
+_FrameSPikeDetector _frameSpikeDetector(_frameSpikeTime, nameForDebug);
+
 #endif	// __roStopWatch_h__

@@ -158,7 +158,7 @@ roUint64 microSecondsSince1970()
 #endif
 
 StopWatch::StopWatch()
-: _pauseAccumulate(0), _pause(false)
+	: _pauseAccumulate(0), _pause(false)
 {
 	reset();
 }

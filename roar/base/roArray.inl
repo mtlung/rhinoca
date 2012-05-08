@@ -125,7 +125,7 @@ T& IArray<T,S>::insert(roSize idx, const T* srcBegin, const T* srcEnd)
 		_data[i] = _data[i - 1];
 	}
 
-	for(const T* src = srcBegin, *dst = _data + idx; src != srcEnd; ++src, ++dst)
+	for(T* src = (T*)srcBegin, *dst = _data + idx; src != srcEnd; ++src, ++dst)
 		*dst = *src;
 
 	return _data[idx];
