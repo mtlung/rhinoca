@@ -3,6 +3,7 @@
 
 #include "../platform/roCompiler.h"
 
+// Searching
 template<class T>			T*	roArrayFind	(T* begin, T* end, const T& key);
 template<class T>			T*	roArrayFind	(T* begin, roSize count, const T& key);
 template<class T, class K>	T*	roArrayFind	(T* begin, roSize count, const K& key, bool(*equal)(const T&, const K&));
@@ -11,6 +12,10 @@ template<class T>			T*	roLowerBound(T* ary, roSize count, const T& key);
 template<class T, class K>	T*	roLowerBound(T* ary, roSize count, const K& key, bool(*less)(const T&, const K&));
 template<class T>			T*	roUpperBound(T* ary, roSize count, const T& key);
 template<class T, class K>	T*	roUpperBound(T* ary, roSize count, const K& key, bool(*less)(const K&, const T&));
+
+// Sorting
+template<class T>	void roInsertionSort(T* begin, T* end);	/// Stable, O(1) space, O(n2) compare and swaps, adaptive
+template<class T>	void roSelectionSort(T* begin, T* end);	/// Not stable, O(1) space, O(n2) compare, O(n) swaps, non-adaptive
 
 
 template<class T>
@@ -121,6 +126,28 @@ T* roUpperBound(T* ary, roSize count, const K& key, bool(*less)(const K&, const 
 			count = count2;
 	}
 	return ary == end ? NULL : ary;
+}
+
+template<class T>
+void roInsertionSort(T* begin, T* end)
+{
+	roSize count = end - begin;
+	for(roSize i=1; i<count; ++i) {
+		for(roSize j=i; j>0 && begin[j] < begin[j-1]; --j)
+			roSwap(begin[j], begin[j-1]);
+	}
+}
+
+template<class T>
+void roSelectionSort(T* begin, T* end)
+{
+	roSize count = end - begin;
+	for(roSize i=0; i<count; ++i) {
+		roSize k=i;
+		for(roSize j=i+1; j<count; ++j)
+			if(begin[j] < begin[k]) k = j;
+		roSwap(begin[i], begin[k]);
+	}
 }
 
 #endif	// __roAlgorithm_h__

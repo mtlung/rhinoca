@@ -249,7 +249,7 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 		auxCanvas.save();
 
 		driver->clearStencil(0);
-		auxCanvas.clearRect(0, 0, context->width, context->height);
+		auxCanvas.clearRect(0, 0, (float)context->width, (float)context->height);
 
 		auxCanvas.setFillColor(0, 0, 0, 1);
 		auxCanvas.setStrokeColor(0, 0, 0, 1);
@@ -310,7 +310,9 @@ TEST_FIXTURE(CanvasTest, drawText)
 	initContext(driverStr[driverIndex]);
 	canvas.init();
 
-	roUint16 codePoint = 0;
+	roUint16 beginChi = 0x4E00;
+	roUint16 endChi = 0x9FFF;
+	roUint16 codePoint = beginChi;
 
 	while(keepRun())
 	{
@@ -319,16 +321,19 @@ TEST_FIXTURE(CanvasTest, drawText)
 
 		driver->clearStencil(0);
 //		driver->clearColor(1, 1, 1, 1);
-		canvas.clearRect(0, 0, context->width, context->height);
+		canvas.clearRect(0, 0, (float)context->width, (float)context->height);
 
 		canvas.setGlobalColor(1, 1, 1, 1);
 
 		Array<roUint16> wStr;
 
 		for(roSize i=0; i<10; ++i) {
-			if(codePoint > 1024 * 100)
-				codePoint = 1;
-			wStr.pushBack(++codePoint);
+			for(roSize j=0; j<10; ++j) {
+				if(codePoint >= endChi)
+					codePoint = beginChi;
+				wStr.pushBack(++codePoint);
+			}
+			wStr.pushBack(L'\n');
 		}
 
 		String str;
