@@ -499,6 +499,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roTextResource.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roTextResource.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roTypeCast.h"
 				>
 			</File>

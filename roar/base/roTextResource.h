@@ -1,15 +1,14 @@
-#ifndef __TEXTRESOURCE_H__
-#define __TEXTRESOURCE_H__
+#ifndef __roTextResource_h__
+#define __roTextResource_h__
 
-#include "../roar/base/roResource.h"
+#include "roResource.h"
+
+namespace ro {
 
 /// A text based resource
-class TextResource : public ro::Resource
+struct TextResource : public ro::Resource
 {
-public:
 	explicit TextResource(const char* uri);
-
-// Operations
 
 // Attributes
 	ro::String data;
@@ -19,4 +18,6 @@ public:
 
 typedef ro::SharedPtr<TextResource> TextResourcePtr;
 
-#endif	// __TEXTRESOURCE_H__
+}	// namespace ro
+
+#endif	// __roTextResource_h__

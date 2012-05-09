@@ -36,9 +36,6 @@ bool loadMp3(ro::Resource* resource, ro::ResourceManager* mgr);
 
 #endif
 
-ro::Resource* createText(const char* uri, ro::ResourceManager* mgr);
-bool loadText(ro::Resource* resource, ro::ResourceManager* mgr);
-
 ro::Resource* createTrueTypeFont(const char* uri, ro::ResourceManager* mgr);
 bool loadTrueTypeFont(ro::Resource* resource, ro::ResourceManager* mgr);
 

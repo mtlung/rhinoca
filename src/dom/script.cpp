@@ -4,8 +4,8 @@
 #include "../common.h"
 #include "../context.h"
 #include "../path.h"
-#include "../textresource.h"
 #include "../../roar/base/roFileSystem.h"
+#include "../../roar/base/roTextResource.h"
 
 namespace Dom {
 
@@ -124,7 +124,7 @@ void HTMLScriptElement::setSrc(const char* uri)
 	fixRelativePath(uri, rhinoca->documentUrl.c_str(), path);
 
 	ro::ResourceManager& mgr = rhinoca->resourceManager;
-	_src = mgr.loadAs<TextResource>(path.c_str());
+	_src = mgr.loadAs<ro::TextResource>(path.c_str());
 
 	mgr.taskPool->wait(_src->taskLoaded);
 

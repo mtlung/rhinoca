@@ -18,9 +18,8 @@ Resource* resourceCreateBmp(const char* uri, ResourceManager* mgr)
 	return NULL;
 }
 
-class BmpLoader : public Task
+struct BmpLoader : public Task
 {
-public:
 	BmpLoader(Texture* t, ResourceManager* mgr)
 		: stream(NULL), texture(t), manager(mgr)
 		, width(0), height(0)
@@ -37,7 +36,6 @@ public:
 
 	override void run(TaskPool* taskPool);
 
-protected:
 	void loadHeader(TaskPool* taskPool);
 	void initTexture(TaskPool* taskPool);
 	void loadPixelData(TaskPool* taskPool);

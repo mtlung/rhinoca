@@ -1,12 +1,10 @@
 #include "pch.h"
-#include "textresource.h"
-#include "common.h"
-#include "rhlog.h"
-#include "platform.h"
-#include "../roar/base/roFileSystem.h"
-#include "../roar/base/roTypeCast.h"
+#include "roTextResource.h"
+#include "roFileSystem.h"
+#include "roLog.h"
+#include "roTypeCast.h"
 
-using namespace ro;
+namespace ro {
 
 TextResource::TextResource(const char* uri)
 	: Resource(uri)
@@ -14,9 +12,7 @@ TextResource::TextResource(const char* uri)
 {
 }
 
-namespace Loader {
-
-Resource* createText(const char* uri, ResourceManager* mgr)
+Resource* resourceCreateText(const char* uri, ResourceManager* mgr)
 {
 	if( uriExtensionMatch(uri, ".js") ||
 		uriExtensionMatch(uri, ".css")
@@ -25,13 +21,11 @@ Resource* createText(const char* uri, ResourceManager* mgr)
 	return NULL;
 }
 
-// 
-class TextLoader : public Task
+struct TextLoader : public Task
 {
-public:
 	TextLoader(TextResource* t, ResourceManager* mgr)
 		: stream(NULL), text(t), manager(mgr)
-		, aborted(false), readyToCommit(false)
+		, nextFun(&TextLoader::load)
 	{}
 
 	~TextLoader()
@@ -41,40 +35,39 @@ public:
 
 	override void run(TaskPool* taskPool);
 
-protected:
 	void load(TaskPool* taskPool);
 	void commit(TaskPool* taskPool);
+	void abort(TaskPool* taskPool);
 
 	void* stream;
 	TextResource* text;
 	ResourceManager* manager;
 
 	String data;
-	bool aborted;
-	bool readyToCommit;
+	void (TextLoader::*nextFun)(TaskPool*);
 };
 
 void TextLoader::run(TaskPool* taskPool)
 {
-	if(!readyToCommit)
-		load(taskPool);
-	else
-		commit(taskPool);
+	if(text->state == Resource::Aborted)
+		nextFun = &TextLoader::abort;
+
+	(this->*nextFun)(taskPool);
 }
 
-const char* removeBom(const char* str, unsigned& len)
+static const char* _removeBom(const char* str, unsigned& len)
 {
 	if(len < 3) return str;
 
-	if( (str[0] == (char)0xFE && str[1] == (char)0xFF) ||
-		(str[0] == (char)0xFF && str[1] == (char)0xFE))
+	if( (str[0] == 0xFE && str[1] == 0xFF) ||
+		(str[0] == 0xFF && str[1] == 0xFE))
 	{
-		rhLog("error", "'%s' is encoded using UTF-16 which is not supported\n");
+		roLog("error", "'%s' is encoded using UTF-16 which is not supported\n");
 		len = 0;
 		return NULL;
 	}
 
-	if(str[0] == (char)0xEF && str[1] == (char)0xBB && str[2] == (char)0xBF) {
+	if(str[0] == 0xEF && str[1] == 0xBB && str[2] == 0xBF) {
 		len -= 3;
 		return str + 3;
 	}
@@ -83,16 +76,12 @@ const char* removeBom(const char* str, unsigned& len)
 
 void TextLoader::commit(TaskPool* taskPool)
 {
-	if(!aborted) {
-		roSwap(text->data, data);
-		text->state = Resource::Loaded;
+	roSwap(text->data, data);
+	text->state = Resource::Loaded;
 
-		// Remove any BOM
-		unsigned len;
-		text->dataWithoutBOM = removeBom(text->data.c_str(), len);
-	}
-	else
-		text->state = Resource::Aborted;
+	// Remove any BOM
+	unsigned len;
+	text->dataWithoutBOM = _removeBom(text->data.c_str(), len);
 
 	delete this;
 }
@@ -114,29 +103,34 @@ roEXCP_TRY
 		return reSchedule();
 
 	for(unsigned i=0; i<loopCount; ++i) {
-		rhuint64 bytesRead = 0;
+		roUint64 bytesRead = 0;
 		st = fileSystem.read(stream, buf, sizeof(buf), bytesRead);
 
 		if(st == Status::file_ended) {
-			readyToCommit = true;
-			return;
+			nextFun = &TextLoader::commit;
+			break;
 		}
 
 		if(!st) roEXCP_THROW;
-
 		data.append(buf, num_cast<size_t>(bytesRead));
 	}
 
-	return reSchedule();
-
 roEXCP_CATCH
-	aborted = true;
-	rhLog("error", "TextLoader: Fail to load '%s', reason: %s\n", text->uri().c_str(), st.c_str());
+	roLog("error", "TextLoader: Fail to load '%s', reason: %s\n", text->uri().c_str(), st.c_str());
+	nextFun = &TextLoader::abort;
 
 roEXCP_END
+
+	return reSchedule(false, taskPool->mainThreadId());
 }
 
-bool loadText(Resource* resource, ResourceManager* mgr)
+void TextLoader::abort(TaskPool* taskPool)
+{
+	text->state = Resource::Aborted;
+	delete this;
+}
+
+bool resourceLoadText(Resource* resource, ResourceManager* mgr)
 {
 	if( !uriExtensionMatch(resource->uri(), ".js") &&
 		!uriExtensionMatch(resource->uri(), ".css")
@@ -148,11 +142,9 @@ bool loadText(Resource* resource, ResourceManager* mgr)
 	TextResource* text = dynamic_cast<TextResource*>(resource);
 
 	TextLoader* loaderTask = new TextLoader(text, mgr);
-
-	TaskId taskLoad = taskPool->addFinalized(loaderTask, 0, 0, ~taskPool->mainThreadId());
-	text->taskReady = text->taskLoaded = taskPool->addFinalized(loaderTask, 0, taskLoad, taskPool->mainThreadId());
+	text->taskReady = text->taskLoaded = taskPool->addFinalized(loaderTask, 0, 0, ~taskPool->mainThreadId());
 
 	return true;
 }
 
-}	// namespace Loader
+}	// namespace ro

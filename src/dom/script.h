@@ -2,7 +2,7 @@
 #define __DOM_SCRIPT_H__
 
 #include "element.h"
-#include "../textresource.h"
+#include "../../roar/base/roTextResource.h"
 
 namespace Dom {
 
@@ -30,7 +30,7 @@ public:
 
 	override const ro::ConstString& tagName() const;
 
-	TextResourcePtr _src;
+	ro::TextResourcePtr _src;
 
 	static JSClass jsClass;
 };	// HTMLScriptElement
