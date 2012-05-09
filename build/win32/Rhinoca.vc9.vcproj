@@ -567,14 +567,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\render\font.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\render\font.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\render\framebuffer.cpp"
 				>
 			</File>

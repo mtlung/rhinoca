@@ -75,25 +75,25 @@ Status IArray<T,S>::resize(roSize newSize, const T& fill)
 template<class T, class S>
 Status IArray<T,S>::incSize(roSize newSize, const T& fill)
 {
-	return resize(_size + newSize, fill);
+	return _typedThis().resize(_size + newSize, fill);
 }
 
 template<class T, class S>
 void IArray<T,S>::clear()
 {
-	resize(0);
+	_typedThis().resize(0);
 }
 
 template<class T, class S>
 void IArray<T,S>::condense()
 {
-	static_cast<S&>(*this).reserve(_size);
+	_typedThis().reserve(_size);
 }
 
 template<class T, class S>
 T& IArray<T,S>::pushBack(const T& fill)
 {
-	resize(_size + 1, fill);
+	_typedThis().resize(_size + 1, fill);
 	return back();
 }
 
@@ -108,10 +108,11 @@ T& IArray<T,S>::pushBackBySwap(const T& val)
 template<class T, class S>
 T& IArray<T,S>::insert(roSize idx, const T& val)
 {
+	roAssert(idx <= _size);
 	_typedThis().resize(_size + 1);
-	for(roSize i = _size - 1; i > idx; --i) {
+	for(roSize i = _size - 1; i > idx; --i)
 		_data[i] = _data[i - 1];
-	}
+
 	_data[idx] = val;
 	return _data[idx];
 }
@@ -119,11 +120,15 @@ T& IArray<T,S>::insert(roSize idx, const T& val)
 template<class T, class S>
 T& IArray<T,S>::insert(roSize idx, const T* srcBegin, const T* srcEnd)
 {
+	roAssert(idx <= _size);
 	roAssert(srcBegin <= srcEnd);
-	_typedThis().resize(_size + (srcEnd - srcBegin));
-	for(roSize i = _size - 1; i > idx; --i) {
-		_data[i] = _data[i - 1];
-	}
+	roSize inc = srcEnd - srcBegin;
+	if(inc == 0)
+		return _data[idx];
+
+	_typedThis().resize(_size + inc);
+	for(roSize i = _size - 1; i >= idx + inc; --i)
+		_data[i] = _data[i - inc];
 
 	for(T* src = (T*)srcBegin, *dst = _data + idx; src != srcEnd; ++src, ++dst)
 		*dst = *src;

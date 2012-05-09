@@ -48,3 +48,49 @@ TEST_FIXTURE(TinyArrayTest, basic)
 
 	v.reserve(1);
 }
+
+TEST_FIXTURE(TinyArrayTest, insert)
+{
+	{	TinyArray<int, 1> v;
+
+		// Insert at beginning
+		v.insert(0, 3);
+		CHECK_EQUAL(3, v[0]);
+
+		v.insert(0, 1);
+		CHECK_EQUAL(1, v[0]);
+
+		// Insert in the middle
+		v.insert(1, 2);
+		CHECK_EQUAL(2, v[1]);
+
+		// Insert at the end
+		v.insert(v.size(), 4);
+		CHECK_EQUAL(4, v.back());
+	}
+
+	{	Array<int> v;
+
+		// Insert nothing
+		v.insert(0, NULL, NULL);
+
+		// Insert range at beginning
+		int r1[] = { 5, 6 };
+		v.insert(0, r1, r1 + roCountof(r1));
+		CHECK_EQUAL(5, v[0]); CHECK_EQUAL(6, v[1]);
+
+		int r2[] = { 1, 2 };
+		v.insert(0, r2, r2 + roCountof(r2));
+		CHECK_EQUAL(1, v[0]); CHECK_EQUAL(2, v[1]);
+
+		// Insert range in the middle
+		int r3[] = { 3, 4 };
+		v.insert(2, r3, r3 + roCountof(r3));
+		CHECK_EQUAL(3, v[2]); CHECK_EQUAL(4, v[3]);
+
+		// Insert range at the end
+		int r4[] = { 7, 8 };
+		v.insert(v.size(), r4, r4 + roCountof(r4));
+		CHECK_EQUAL(7, v[6]); CHECK_EQUAL(8, v[7]);
+	}
+}

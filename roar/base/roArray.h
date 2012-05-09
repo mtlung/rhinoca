@@ -158,8 +158,6 @@ struct TinyArray : public IArray<T, TinyArray<T,PreAllocCount> >
 	TinyArray& operator=(const TinyArray& rhs)		{ copy(rhs); }
 
 // Operations
-	void insert(roSize idx, const T& val);
-
 	Status reserve(roSize newSize);
 
 // Private
