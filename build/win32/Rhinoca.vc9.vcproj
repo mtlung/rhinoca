@@ -610,14 +610,6 @@
 				RelativePath="..\..\src\render\texture.h"
 				>
 			</File>
-			<File
-				RelativePath="..\..\src\render\truetypefont.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\render\truetypefont.h"
-				>
-			</File>
 			<Filter
 				Name="shivavg"
 				>

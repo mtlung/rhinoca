@@ -11,7 +11,7 @@ GraphicsTestBase::GraphicsTestBase()
 
 GraphicsTestBase::~GraphicsTestBase()
 {
-	subSystems.shutdown();
+	subSystems.resourceMgr->shutdown();
 
 	if(driver) {
 		driver->deleteShader(vShader);
@@ -23,13 +23,13 @@ GraphicsTestBase::~GraphicsTestBase()
 		::ShowWindow(hWnd, false);
 		::PostQuitMessage(0);
 		while(keepRun()) {}
-		if(driver) driver->deleteContext(context);
-		roDeleteRenderDriver(driver);
 		::DestroyWindow(hWnd);
 	}
 
 	if(HMODULE hModule = ::GetModuleHandle(NULL))
 		::UnregisterClassW(windowClass, hModule);
+
+	subSystems.shutdown();
 }
 
 static LRESULT CALLBACK wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)

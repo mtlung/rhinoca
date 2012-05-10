@@ -32,16 +32,8 @@ public:
 	void* file;
 };	// Stream
 
-Resource* resourceCreateJpeg(const char* uri, ResourceManager* mgr)
+struct JpegLoader : public Task
 {
-	if(uriExtensionMatch(uri, ".jpg") || uriExtensionMatch(uri, ".jpeg"))
-		return new Texture(uri);
-	return NULL;
-}
-
-class JpegLoader : public Task
-{
-public:
 	JpegLoader(Texture* t, ResourceManager* mgr)
 		: stream(NULL), texture(t), manager(mgr)
 		, width(0), height(0)
@@ -60,7 +52,6 @@ public:
 
 	override void run(TaskPool* taskPool);
 
-protected:
 	void loadHeader(TaskPool* taskPool);
 	void initTexture(TaskPool* taskPool);
 	void loadPixelData(TaskPool* taskPool);
@@ -204,18 +195,34 @@ void JpegLoader::abort(TaskPool* taskPool)
 	delete this;
 }
 
-bool resourceLoadJpeg(Resource* resource, ResourceManager* mgr)
+Resource* resourceCreateJpeg(ResourceManager* mgr, const char* uri)
 {
-	if(!uriExtensionMatch(resource->uri(), ".jpg") && !uriExtensionMatch(resource->uri(), ".jpeg")) return false;
+	return new Texture(uri);
+}
+
+bool resourceLoadJpeg(ResourceManager* mgr, Resource* resource)
+{
+	Texture* texture = dynamic_cast<Texture*>(resource);
+	if(!texture)
+		return false;
+
+	if(!texture->handle)
+		texture->handle = roRDriverCurrentContext->driver->newTexture();
 
 	TaskPool* taskPool = mgr->taskPool;
-
-	Texture* texture = dynamic_cast<Texture*>(resource);
-	texture->handle = roRDriverCurrentContext->driver->newTexture();
-
 	JpegLoader* loaderTask = new JpegLoader(texture, mgr);
 	texture->taskReady = texture->taskLoaded = taskPool->addFinalized(loaderTask, 0, 0, ~taskPool->mainThreadId());
 
+	return true;
+}
+
+bool extMappingJpeg(const char* uri, void*& createFunc, void*& loadFunc)
+{
+	if(!uriExtensionMatch(uri, ".jpg") && !uriExtensionMatch(uri, ".jpeg"))
+		return false;
+
+	createFunc = resourceCreateJpeg;
+	loadFunc = resourceLoadJpeg;
 	return true;
 }
 

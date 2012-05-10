@@ -27,6 +27,7 @@ struct Font : public ro::Resource
 	virtual void draw(const char* utf8Str, float x, float y, float maxWidth, Canvas& canvas) {}
 
 // Attributes
+	override ConstString resourceType() const { return "Font"; }
 };	// Texture
 
 typedef ro::SharedPtr<Font> FontPtr;

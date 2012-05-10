@@ -11,15 +11,9 @@
 
 namespace ro {
 
-Resource* resourceCreateBmp(const char* uri, ResourceManager* mgr)
+class BmpLoader : public Task
 {
-	if(uriExtensionMatch(uri, ".bmp"))
-		return new Texture(uri);
-	return NULL;
-}
-
-struct BmpLoader : public Task
-{
+public:
 	BmpLoader(Texture* t, ResourceManager* mgr)
 		: stream(NULL), texture(t), manager(mgr)
 		, width(0), height(0)
@@ -36,6 +30,7 @@ struct BmpLoader : public Task
 
 	override void run(TaskPool* taskPool);
 
+protected:
 	void loadHeader(TaskPool* taskPool);
 	void initTexture(TaskPool* taskPool);
 	void loadPixelData(TaskPool* taskPool);
@@ -217,18 +212,34 @@ void BmpLoader::abort(TaskPool* taskPool)
 	delete this;
 }
 
-bool resourceLoadBmp(Resource* resource, ResourceManager* mgr)
+Resource* resourceCreateBmp(ResourceManager* mgr, const char* uri)
 {
-	if(!uriExtensionMatch(resource->uri(), ".bmp")) return false;
+	return new Texture(uri);
+}
+
+bool resourceLoadBmp(ResourceManager* mgr, Resource* resource)
+{
+	Texture* texture = dynamic_cast<Texture*>(resource);
+	if(!texture)
+		return false;
+
+	if(!texture->handle)
+		texture->handle = roRDriverCurrentContext->driver->newTexture();
 
 	TaskPool* taskPool = mgr->taskPool;
-
-	Texture* texture = dynamic_cast<Texture*>(resource);
-	texture->handle = roRDriverCurrentContext->driver->newTexture();
-
 	BmpLoader* loaderTask = new BmpLoader(texture, mgr);
 	texture->taskReady = texture->taskLoaded = taskPool->addFinalized(loaderTask, 0, 0, ~taskPool->mainThreadId());
 
+	return true;
+}
+
+bool extMappingBmp(const char* uri, void*& createFunc, void*& loadFunc)
+{
+	if(!uriExtensionMatch(uri, ".bmp"))
+		return false;
+
+	createFunc = resourceCreateBmp;
+	loadFunc = resourceLoadBmp;
 	return true;
 }
 

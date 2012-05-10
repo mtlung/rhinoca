@@ -3,6 +3,7 @@
 #include "render/roFont.h"
 #include "base/roResource.h"
 #include "base/roTaskPool.h"
+#include "render/roRenderDriver.h"
 
 namespace ro {
 
@@ -19,27 +20,36 @@ static void _initRenderDriver(SubSystems& subSystems)
 
 static void _initResourceManager(SubSystems& subSystems)
 {
-	extern Resource* resourceCreateBmp(const char*, ResourceManager*);
-	extern Resource* resourceCreateJpeg(const char*, ResourceManager*);
-	extern Resource* resourceCreatePng(const char*, ResourceManager*);
-	extern Resource* resourceCreateFont(const char*, ResourceManager*);
-	extern bool resourceLoadBmp(Resource*, ResourceManager*);
-	extern bool resourceLoadJpeg(Resource*, ResourceManager*);
-	extern bool resourceLoadPng(Resource*, ResourceManager*);
-	extern bool resourceLoadWinfnt(Resource*, ResourceManager*);
-
 	subSystems.resourceMgr = new ResourceManager;
 	subSystems.resourceMgr->taskPool = subSystems.taskPool;
-	subSystems.resourceMgr->addFactory(resourceCreateBmp, resourceLoadBmp);
-	subSystems.resourceMgr->addFactory(resourceCreateJpeg, resourceLoadJpeg);
-	subSystems.resourceMgr->addFactory(resourceCreatePng, resourceLoadPng);
-	subSystems.resourceMgr->addFactory(resourceCreateFont, resourceLoadWinfnt);
+
+	extern bool extMappingBmp(const char*, void*&, void*&);
+	extern bool extMappingJpeg(const char*, void*&, void*&);
+	extern bool extMappingPng(const char*, void*&, void*&);
+	subSystems.resourceMgr->addExtMapping(extMappingBmp);
+	subSystems.resourceMgr->addExtMapping(extMappingJpeg);
+	subSystems.resourceMgr->addExtMapping(extMappingPng);
+
+	extern Resource* resourceCreateBmp(ResourceManager*, const char*);
+	extern Resource* resourceCreateJpeg(ResourceManager*, const char*);
+	extern Resource* resourceCreatePng(ResourceManager*, const char*);
+	extern bool resourceLoadBmp(ResourceManager*, Resource*);
+	extern bool resourceLoadJpeg(ResourceManager*, Resource*);
+	extern bool resourceLoadPng(ResourceManager*, Resource*);
+	subSystems.resourceMgr->addLoader(resourceCreateBmp, resourceLoadBmp);
+	subSystems.resourceMgr->addLoader(resourceCreateJpeg, resourceLoadJpeg);
+	subSystems.resourceMgr->addLoader(resourceCreatePng, resourceLoadPng);
 }
 
 static void _initFont(SubSystems& subSystems)
 {
 	subSystems.fontMgr = new FontManager;
-	subSystems.defaultFont = subSystems.resourceMgr->loadAs<Font>("win.fnt");
+
+	extern Resource* resourceCreateWin32Font(ResourceManager*, const char*, StringHash);
+	extern bool resourceLoadWin32Font(ResourceManager*, Resource*);
+
+	Resource* r = resourceCreateWin32Font(subSystems.resourceMgr, "win32Font", stringHash("Font"));
+	subSystems.defaultFont = subSystems.resourceMgr->loadAs<Font>(r, resourceLoadWin32Font);
 }
 
 SubSystems::SubSystems()
@@ -76,6 +86,14 @@ void SubSystems::shutdown()
 	delete fontMgr;		fontMgr = NULL;
 	delete resourceMgr;	resourceMgr = NULL;
 	delete taskPool;	taskPool = NULL;
+
+	if(renderDriver) {
+		renderDriver->deleteContext(renderContext);
+		roDeleteRenderDriver(renderDriver);
+	}
+
+	renderDriver = NULL;
+	renderContext = NULL;
 }
 
 }	// namespace ro

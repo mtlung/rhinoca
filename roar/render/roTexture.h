@@ -13,6 +13,8 @@ struct Texture : public ro::Resource
 	virtual ~Texture();
 
 // Attributes
+	override ConstString resourceType() const { return "Texture"; }
+
 	roRDriverTexture* handle;
 };	// Texture
 

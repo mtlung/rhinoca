@@ -1,6 +1,8 @@
 #ifndef __roResource_h__
 #define __roResource_h__
 
+#include "roArray.h"
+#include "roAtomic.h"
 #include "roMap.h"
 #include "roSharedPtr.h"
 #include "roString.h"
@@ -8,10 +10,10 @@
 
 namespace ro {
 
+struct ResourceManager;
+
 struct Resource
-	// NOTE: No need to use atomic integer as the refCount if no worker thread
-	// will hold strong reference to Resource
-	: public SharedObject<unsigned>
+	: public SharedObject<AtomicInteger>
 	, public MapNode<ConstString, Resource>
 	, private NonCopyable
 {
@@ -27,10 +29,15 @@ struct Resource
 // Attributes
 	ConstString uri() const;
 
+	virtual ConstString resourceType() const { return ""; }
+
 	enum State { NotLoaded, Loading, Ready, Loaded, Unloaded, Aborted };
 	State state;	///!< Important: changing of this value must be performed on main thread
 
 	TaskId taskReady, taskLoaded;
+
+	Resource* (*createFunc)(ResourceManager* mgr, const char* uri);
+	bool (*loadFunc)(ResourceManager*, Resource*);
 
 	float hotness;	///!< For tracking resource usage and perform unload when resource is scarce
 
@@ -46,13 +53,26 @@ struct ResourceManager
 	ResourceManager();
 	~ResourceManager();
 
+// Loader function
+	typedef Resource* (*CreateFunc)(ResourceManager* mgr, const char* uri);
+	typedef bool (*LoadFunc)(ResourceManager* mgr, Resource* resource);
+	void addLoader(CreateFunc createFunc, LoadFunc loadFunc);
+
+// Extension mapping
+	typedef bool (*ExtMappingFunc)(const char* uri, void*& createFunc, void*& loadFunc);
+	void addExtMapping(ExtMappingFunc extMappingFunc);
+
 // Operations
-	/// This function is async, you need to wait for the resource's TaskId to do synchronization
+	/// Load functions are async, you need to wait for the resource's TaskId to do synchronization
 	/// @note: Recursive and re-entrant
 	ResourcePtr load(const char* uri);
+	ResourcePtr load(Resource* r, LoadFunc loadFunc);
 
 	template<class T>
 	SharedPtr<T> loadAs(const char* uri) { return dynamic_cast<T*>(load(uri).get()); }
+
+	template<class T>
+	SharedPtr<T> loadAs(Resource* r, LoadFunc loadFunc) { return dynamic_cast<T*>(load(r, loadFunc).get()); }
 
 	/// Remove the resource from the management of the ResourceManager
 	Resource* forget(const char* uri);
@@ -68,21 +88,16 @@ struct ResourceManager
 
 	void shutdown();
 
-// Factories
-	typedef Resource* (*CreateFunc)(const char* uri, ResourceManager* mgr);
-	typedef bool (*LoadFunc)(Resource* resource, ResourceManager* mgr);
-	void addFactory(CreateFunc createFunc, LoadFunc loadFunc);
-
 // Attributes
 	TaskPool* taskPool;
 
 // Private
 	Mutex _mutex;
 
-	struct Tuple { CreateFunc create; LoadFunc load; };
-	Tuple* _factories;
-	roSize _factoryCount;
-	roSize _factoryBufCount;
+	Array<ExtMappingFunc> _extMapping;
+
+	struct Factory { CreateFunc create; LoadFunc load; };
+	Array<Factory> _factories;
 
 	typedef Map<Resource> Resources;
 	Resources _resources;

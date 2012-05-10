@@ -9,17 +9,18 @@ class MyResource : public Resource
 {
 public:
 	MyResource(const char* uri) : Resource(uri), dummyData(0) {}
+	override ConstString resourceType() const { return "MyResource"; }
 	int dummyData;
 };
 
 typedef SharedPtr<MyResource> MyResourcePtr;
 
-Resource* create(const char* uri, ResourceManager* mgr)
+Resource* create(ResourceManager* mgr, const char* uri)
 {
 	return new MyResource(uri);
 }
 
-bool load(Resource* resource, ResourceManager* mgr)
+bool load(ResourceManager* mgr, Resource* resource)
 {
 	class LoadTask : public Task
 	{
@@ -51,8 +52,8 @@ bool load(Resource* resource, ResourceManager* mgr)
 	TaskId loadId = mgr->taskPool->addFinalized(new LoadTask(r));
 	TaskId commitId = mgr->taskPool->addFinalized(new CommitTask(r), 0, loadId, mgr->taskPool->mainThreadId());
 
-	resource->taskReady = commitId;
-	resource->taskLoaded = commitId;
+	r->taskReady = commitId;
+	r->taskLoaded = commitId;
 
 	return true;
 }
@@ -65,9 +66,9 @@ TEST(ResourceTest)
 	taskPool.init(1);
 	ResourceManager mgr;
 	mgr.taskPool = &taskPool;
-	mgr.addFactory(create, load);
+	mgr.addLoader(create, load);
 
-	MyResourcePtr r = mgr.loadAs<MyResource>("dummy");
+	MyResourcePtr r = mgr.loadAs<MyResource>(new MyResource(""), load);
 
 	mgr.tick();
 	taskPool.doSomeTask();

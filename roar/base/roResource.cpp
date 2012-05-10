@@ -10,6 +10,7 @@ static DefaultAllocator _allocator;
 Resource::Resource(const char* p)
 	: state(NotLoaded)
 	, taskReady(0), taskLoaded(0)
+	, createFunc(NULL), loadFunc(NULL)
 	, hotness(0)
 	, scratch(NULL)
 {
@@ -31,16 +32,12 @@ unsigned Resource::refCount() const
 
 ResourceManager::ResourceManager()
 	: taskPool(NULL)
-	, _factories(NULL)
-	, _factoryCount(0)
-	, _factoryBufCount(0)
 {
 }
 
 ResourceManager::~ResourceManager()
 {
 	shutdown();
-	_allocator.free(_factories);
 }
 
 ResourcePtr ResourceManager::load(const char* uri)
@@ -49,10 +46,28 @@ ResourcePtr ResourceManager::load(const char* uri)
 
 	Resource* r = _resources.find(uri);
 
+	// Find out the factory functions base on the uri
+	CreateFunc createFunc = NULL;
+	LoadFunc loadFunc = NULL;
+
+	if(!r) {
+		for(roSize i=0; i<_extMapping.size(); ++i) {
+			if(_extMapping[i](uri, (void*&)createFunc, (void*&)loadFunc))
+				break;
+		}
+
+		if(!createFunc || ! loadFunc) {
+			roLog("error", "ResourceManager unable to find extension mapping for uri '%s'\n", uri);
+			return NULL;
+		}
+	}
+	else
+		loadFunc = r->loadFunc;
+
 	// Create the resource if the uri not found in resource list
 	if(!r) {
-		for(roSize i=0; !r && i<_factoryCount; ++i)
-			r = _factories[i].create(uri, this);
+		r = createFunc(this, uri);
+		r->createFunc = createFunc;
 
 		if(!r) {
 			roLog("error", "No loader for \"%s\" can be found\n", uri);
@@ -68,18 +83,49 @@ ResourcePtr ResourceManager::load(const char* uri)
 	// Perform load if not loaded
 	if(r->state == Resource::NotLoaded || r->state == Resource::Unloaded) {
 		r->state = Resource::Loading;
+		r->loadFunc = loadFunc;
 
 		lock.unlockAndCancel();
 
-		bool loadInvoked = false;
-		for(roSize i=0; i<_factoryCount; ++i) {
-			if(_factories[i].load(r, this)) {
-				loadInvoked = true;
-				r->hotness = 1000;	// Give a relative hot value right after the resource is loaded
-				break;
-			}
+		if(!loadFunc || !loadFunc(this, r)) {
+			r->state = Resource::Aborted;
+			return NULL;
 		}
-		roAssert(loadInvoked);
+
+		r->hotness = 1000;	// Give a relative hot value right after the resource is loaded
+	}
+
+	return r;
+}
+
+ResourcePtr ResourceManager::load(Resource* r, LoadFunc loadFunc)
+{
+	if(!r || !loadFunc) return NULL;
+
+	ScopeLock lock(_mutex);
+
+	if(!_resources.insertUnique(*r)) {
+		roLog("error", "ResourceManager::load: resource with uri '%s' already exist\n", r->uri().c_str());
+		return NULL;
+	}
+
+	// We will keep the resource alive such that the time for a Resource destruction
+	// is deterministic: always inside ResourceManager::collectUnused()
+	sharedPtrAddRef(r);
+
+	// Perform load if not loaded
+	if(r->state == Resource::NotLoaded || r->state == Resource::Unloaded) {
+		r->state = Resource::Loading;
+		r->loadFunc = loadFunc;
+
+		lock.unlockAndCancel();
+
+		if(!loadFunc(this, r)) {
+			r->state = Resource::Aborted;
+			return NULL;
+		}
+
+		r->hotness = 1000;	// Give a relative hot value right after the resource is loaded
 	}
 
 	return r;
@@ -157,18 +203,17 @@ void ResourceManager::shutdown()
 	}
 }
 
-void ResourceManager::addFactory(CreateFunc createFunc, LoadFunc loadFunc)
+void ResourceManager::addExtMapping(ExtMappingFunc extMappingFunc)
 {
-	++_factoryCount;
+	// Push at the font, so late added mapping function always has a higher priority
+	_extMapping.insert(0, extMappingFunc);
+}
 
-	if(_factoryBufCount < _factoryCount) {
-		roSize oldBufCount = _factoryBufCount;
-		_factoryBufCount = (_factoryBufCount == 0) ? 2 : _factoryBufCount * 2;
-		_factories = _allocator.typedRealloc(_factories, oldBufCount, _factoryBufCount);
-	}
-
-	_factories[_factoryCount-1].create = createFunc;
-	_factories[_factoryCount-1].load = loadFunc;
+void ResourceManager::addLoader(CreateFunc createFunc, LoadFunc loadFunc)
+{
+	Factory factory = { createFunc, loadFunc };
+	// Push at the font, so late added load function always has a higher priority
+	_factories.insert(0, factory);
 }
 
 }	// namespace ro

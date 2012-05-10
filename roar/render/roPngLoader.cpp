@@ -20,16 +20,8 @@
 
 namespace ro {
 
-Resource* resourceCreatePng(const char* uri, ResourceManager* mgr)
+struct PngLoader : public Task
 {
-	if(uriExtensionMatch(uri, ".png"))
-		return new Texture(uri);
-	return NULL;
-}
-
-class PngLoader : public Task
-{
-public:
 	PngLoader(Texture* t, ResourceManager* mgr);
 
 	~PngLoader()
@@ -235,18 +227,34 @@ void PngLoader::abort(TaskPool* taskPool)
 	delete this;
 }
 
-bool resourceLoadPng(Resource* resource, ResourceManager* mgr)
+Resource* resourceCreatePng(ResourceManager* mgr, const char* uri)
 {
-	if(!uriExtensionMatch(resource->uri(), ".png")) return false;
+	return new Texture(uri);
+}
+
+bool resourceLoadPng(ResourceManager* mgr, Resource* resource)
+{
+	Texture* texture = dynamic_cast<Texture*>(resource);
+	if(!texture)
+		return false;
+
+	if(!texture->handle)
+		texture->handle = roRDriverCurrentContext->driver->newTexture();
 
 	TaskPool* taskPool = mgr->taskPool;
-
-	Texture* texture = dynamic_cast<Texture*>(resource);
-	texture->handle = roRDriverCurrentContext->driver->newTexture();
-
 	PngLoader* loaderTask = new PngLoader(texture, mgr);
 	texture->taskReady = texture->taskLoaded = taskPool->addFinalized(loaderTask, 0, 0, ~taskPool->mainThreadId());
 
+	return true;
+}
+
+bool extMappingPng(const char* uri, void*& createFunc, void*& loadFunc)
+{
+	if(!uriExtensionMatch(uri, ".png"))
+		return false;
+
+	createFunc = resourceCreatePng;
+	loadFunc = resourceLoadPng;
 	return true;
 }
 

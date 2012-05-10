@@ -1,15 +1,14 @@
 #include "pch.h"
 #include "roFont.h"
 #include "roCanvas.h"
-#include "roRenderDriver.h"
-#include "../base/roAlgorithm.h"
 #include "../base/roArray.h"
-#include "../base/roFileSystem.h"
 #include "../base/roLog.h"
 #include "../base/roTypeCast.h"
-#include "../math/roVector.h"
 #include "../platform/roPlatformHeaders.h"
 #include "../roSubSystems.h"
+#include "../base/roStopWatch.h"
+#include <stdio.h>
+#include <algorithm>
 
 namespace ro {
 
@@ -25,6 +24,10 @@ struct Glyph {
 	roUint16 texSizeX, texSizeY;
 	roInt16 originX, originY;
 	roInt16 advanceX, advanceY;
+
+	bool operator<(const Glyph& rhs) {
+		return codePoint < rhs.codePoint;
+	}
 };
 
 struct KerningPair {
@@ -170,8 +173,11 @@ void FontLoader::run(TaskPool* taskPool)
 
 void FontLoader::checkRequest(TaskPool* taskPool)
 {
+	roDetectFrameSpike("checkRequest");
+
 	font->requestMainThread.swap(font->requestLoadThread);
 
+	static int count = 0;
 	// Process reply
 	for(roSize i=0; i<font->replys.size(); ++i)
 	{
@@ -180,13 +186,22 @@ void FontLoader::checkRequest(TaskPool* taskPool)
 		FontData* fontData = font->typefaces.find(reply.fontHash, Pred::fontDataEqual);
 		roAssert(fontData);
 
+	if(reply.glyphs.size() > count) {
+		count = reply.glyphs.size();
+		printf("\rcount=%d, total=%d\n", count, fontData->glyphs.size());
+	}
+		{roDetectFrameSpike("insert");
 		// Insert the glyph from reply.glyphs into fontData->glyphs in asscending order of the code point
-		for(roSize j=0; j<reply.glyphs.size(); ++j) {
+		fontData->glyphs.insert(fontData->glyphs.size(), reply.glyphs.begin(), reply.glyphs.end());
+/*		for(roSize j=0; j<reply.glyphs.size(); ++j) {
 			roAssert(reply.glyphs[j].texIndex == reply.texIndex);
 			struct Pred { static bool less(const Glyph& lhs, const Glyph& rhs) {
 				return lhs.codePoint < rhs.codePoint;
 			}};
 			fontData->glyphs.insertSorted(reply.glyphs[j], &Pred::less);
+		}*/
+//		roInsertionSort(fontData->glyphs.begin(), fontData->glyphs.end());
+		std::sort(fontData->glyphs.begin(), fontData->glyphs.end());
 		}
 
 		// Create new texture if necessary
@@ -454,7 +469,7 @@ static int CALLBACK _enumFamCallBack(const LOGFONTW* lplf, const TEXTMETRICW* lp
 {
 	String str;
 	roVerify(str.fromUtf16((const roUtf16*)lplf->lfFaceName));
-	roSubSystems->fontMgr->registerFontTypeface(str.c_str(), "win.fnt");
+	roSubSystems->fontMgr->registerFontTypeface(str.c_str(), "win32Font");
 
 	return TRUE;
 }
@@ -491,14 +506,20 @@ void FontLoader::cleanup(TaskPool* taskPool)
 	delete this;
 }
 
-bool resourceLoadWinfnt(Resource* resource, ResourceManager* mgr)
+Resource* resourceCreateWin32Font(ResourceManager* mgr, const char* uri, StringHash type)
 {
-	if(roStrCaseCmp("win.fnt", resource->uri()) != 0) return false;
+	if(type != stringHash("Font"))
+		return NULL;
+	return new FontImpl(uri);
+}
+
+bool resourceLoadWin32Font(ResourceManager* mgr, Resource* resource)
+{
+	FontImpl* font = dynamic_cast<FontImpl*>(resource);
+	if(!font)
+		return false;
 
 	TaskPool* taskPool = mgr->taskPool;
-
-	FontImpl* font = dynamic_cast<FontImpl*>(resource);
-
 	FontLoader* loaderTask = new FontLoader(font);
 	font->taskReady = font->taskLoaded = taskPool->addFinalized(loaderTask, 0, 0, ~taskPool->mainThreadId());
 
@@ -520,7 +541,7 @@ bool FontImpl::setStyle(const char* styleStr)
 	fontData.fontName = styleStr;
 	fontData.fontSize = 30;
 	fontData.fontWeight = FW_DONTCARE;
-	fontData.italic = true;
+	fontData.italic = false;
 	fontData.fontHash = hash;
 	currnetFontForDraw = typefaces.size();
 	typefaces.pushBack(fontData);
