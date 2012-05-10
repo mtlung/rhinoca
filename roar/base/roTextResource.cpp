@@ -12,15 +12,6 @@ TextResource::TextResource(const char* uri)
 {
 }
 
-Resource* resourceCreateText(const char* uri, ResourceManager* mgr)
-{
-	if( uriExtensionMatch(uri, ".js") ||
-		uriExtensionMatch(uri, ".css")
-	)
-		return new TextResource(uri);
-	return NULL;
-}
-
 struct TextLoader : public Task
 {
 	TextLoader(TextResource* t, ResourceManager* mgr)
@@ -130,21 +121,38 @@ void TextLoader::abort(TaskPool* taskPool)
 	delete this;
 }
 
-bool resourceLoadText(Resource* resource, ResourceManager* mgr)
+Resource* resourceCreateText(ResourceManager* mgr, const char* uri)
 {
-	if( !uriExtensionMatch(resource->uri(), ".js") &&
-		!uriExtensionMatch(resource->uri(), ".css")
-	)
+	return new TextResource(uri);
+}
+
+bool resourceLoadText(ResourceManager* mgr, Resource* resource)
+{
+	TextResource* text = dynamic_cast<TextResource*>(resource);
+	if(!text)
 		return false;
 
 	TaskPool* taskPool = mgr->taskPool;
-
-	TextResource* text = dynamic_cast<TextResource*>(resource);
-
 	TextLoader* loaderTask = new TextLoader(text, mgr);
 	text->taskReady = text->taskLoaded = taskPool->addFinalized(loaderTask, 0, 0, ~taskPool->mainThreadId());
 
 	return true;
+}
+
+bool extMappingText(const char* uri, void*& createFunc, void*& loadFunc)
+{
+	static const char* extensions[] = {
+		".txt", ".html", ".htm", ".xml", ".js", ".css"
+	};
+
+	for(roSize i=0; i<roCountof(extensions); ++i) {
+		if(uriExtensionMatch(uri, extensions[i])) {
+			createFunc = resourceCreateText;
+			loadFunc = resourceLoadText;
+		}
+	}
+
+	return false;
 }
 
 }	// namespace ro

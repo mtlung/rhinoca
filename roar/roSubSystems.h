@@ -7,6 +7,7 @@ struct roRDriverContext;
 namespace ro {
 
 struct FontManager;
+struct Resource;
 struct ResourceManager;
 class TaskPool;
 typedef SharedPtr<struct Font> FontPtr;
@@ -41,6 +42,12 @@ struct SubSystems
 	FontManager* fontMgr;
 	FontPtr defaultFont;
 };	// SubSystems
+
+// Forward declarations of all build-in loaders
+extern bool resourceLoadText(ResourceManager*, Resource*);
+extern bool resourceLoadBmp(ResourceManager*, Resource*);
+extern bool resourceLoadJpeg(ResourceManager*, Resource*);
+extern bool resourceLoadPng(ResourceManager*, Resource*);
 
 }	// namespace ro
 

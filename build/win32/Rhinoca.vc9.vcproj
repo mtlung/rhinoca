@@ -543,10 +543,6 @@
 			Name="render"
 			>
 			<File
-				RelativePath="..\..\src\render\bmploader.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\render\driver.cpp"
 				>
 			</File>
@@ -572,14 +568,6 @@
 			</File>
 			<File
 				RelativePath="..\..\src\render\framebuffer.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\render\jpegloader.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\render\pngloader.cpp"
 				>
 			</File>
 			<File

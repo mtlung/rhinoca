@@ -23,6 +23,12 @@ static void _initResourceManager(SubSystems& subSystems)
 	subSystems.resourceMgr = new ResourceManager;
 	subSystems.resourceMgr->taskPool = subSystems.taskPool;
 
+	extern bool extMappingText(const char*, void*&, void*&);
+	extern Resource* resourceCreateText(ResourceManager*, const char*);
+	subSystems.resourceMgr->addExtMapping(extMappingText);
+	subSystems.resourceMgr->addLoader(resourceCreateText, resourceLoadText);
+
+	// Image loaders
 	extern bool extMappingBmp(const char*, void*&, void*&);
 	extern bool extMappingJpeg(const char*, void*&, void*&);
 	extern bool extMappingPng(const char*, void*&, void*&);
@@ -33,9 +39,6 @@ static void _initResourceManager(SubSystems& subSystems)
 	extern Resource* resourceCreateBmp(ResourceManager*, const char*);
 	extern Resource* resourceCreateJpeg(ResourceManager*, const char*);
 	extern Resource* resourceCreatePng(ResourceManager*, const char*);
-	extern bool resourceLoadBmp(ResourceManager*, Resource*);
-	extern bool resourceLoadJpeg(ResourceManager*, Resource*);
-	extern bool resourceLoadPng(ResourceManager*, Resource*);
 	subSystems.resourceMgr->addLoader(resourceCreateBmp, resourceLoadBmp);
 	subSystems.resourceMgr->addLoader(resourceCreateJpeg, resourceLoadJpeg);
 	subSystems.resourceMgr->addLoader(resourceCreatePng, resourceLoadPng);
