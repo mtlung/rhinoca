@@ -375,12 +375,12 @@ roStatus roUtf8ToUtf16(roUtf16* dst, roSize& dstLen, const roUtf8* src)
 	if(!src) return roStatus::invalid_parameter;
 	if(!dst) return roUtf16CountInUtf8(dstLen, src);
 
-	for(roSize srcLen = roStrLen(src); srcLen && dstLen;) {
+	for(roSize srcLen = roStrLen(src), dLen=dstLen; srcLen && dLen;) {
 		int utf8Consumed = roUtf8ToUtf16Char(*dst, src, srcLen);
 		if(utf8Consumed == 0) return roStatus::string_encoding_error;
 		roAssert(srcLen >= roSize(utf8Consumed));
 		++dst;
-		--dstLen;
+		--dLen;
 		src += utf8Consumed;
 		srcLen -= utf8Consumed;
 	}
@@ -393,12 +393,12 @@ roStatus roUtf8ToUtf16(roUtf16* dst, roSize& dstLen, const roUtf8* src, roSize m
 	if(!src) return roStatus::invalid_parameter;
 	if(!dst) return roUtf16CountInUtf8(dstLen, src, maxSrcLen);
 
-	for(; maxSrcLen && dstLen;) {
+	for(roSize dLen = dstLen; maxSrcLen && dLen;) {
 		int utf8Consumed = roUtf8ToUtf16Char(*dst, src, maxSrcLen);
 		if(utf8Consumed == 0) return roStatus::string_encoding_error;
 		roAssert(maxSrcLen >= roSize(utf8Consumed));
 		++dst;
-		--dstLen;
+		--dLen;
 		src += utf8Consumed;
 		maxSrcLen -= utf8Consumed;
 	}
@@ -411,13 +411,13 @@ roStatus roUtf16ToUtf8(roUtf8* dst, roSize& dstLen, const roUtf16* src)
 	if(!src) return roStatus::invalid_parameter;
 	if(!dst) return roUtf8CountInUtf16(dstLen, src);
 
-	for(roSize srcLen = roStrLen(src); srcLen && dstLen;) {
-		int utf8Written = roUtf16ToUtf8(dst, dstLen, *src);
+	for(roSize srcLen = roStrLen(src), dLen = dstLen; srcLen && dstLen;) {
+		int utf8Written = roUtf16ToUtf8(dst, dLen, *src);
 		if(utf8Written < 1) return roStatus::string_encoding_error;
 		++src;
 		--srcLen;
 		dst += utf8Written;
-		dstLen -= utf8Written;
+		dLen -= utf8Written;
 	}
 
 	return roStatus::ok;
@@ -428,13 +428,13 @@ roStatus roUtf16ToUtf8(roUtf8* dst, roSize& dstLen, const roUtf16* src, roSize m
 	if(!src) return roStatus::invalid_parameter;
 	if(!dst) return roUtf8CountInUtf16(dstLen, src, maxSrcLen);
 
-	for(; maxSrcLen && dstLen;) {
+	for(roSize dLen = dstLen; maxSrcLen && dLen;) {
 		int utf8Written = roUtf16ToUtf8(dst, dstLen, *src);
 		if(utf8Written < 1) return roStatus::string_encoding_error;
 		++src;
 		--maxSrcLen;
 		dst += utf8Written;
-		dstLen -= utf8Written;
+		dLen -= utf8Written;
 	}
 
 	return roStatus::ok;
