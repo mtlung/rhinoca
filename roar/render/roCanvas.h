@@ -34,8 +34,8 @@ struct Canvas
 	void drawImage				(roRDriverTexture* texture, float srcx, float srcy, float srcw, float srch, float dstx, float dsty, float dstw, float dsth);
 
 // Batching
-	void beginBatch				();
-	void endBatch				();
+	void beginDrawImageBatch	();	/// For best performance, sort the call to drawImage() by the texture used
+	void endDrawImageBatch		();
 
 // Pixel manipulation
 	float* lockPixelData		();
@@ -117,6 +117,8 @@ struct Canvas
 	TexturePtr depthStencilTexture;
 
 // Private
+	void _flushDrawImageBatch();
+
 	roRDriver* _driver;
 	roRDriverContext* _context;
 	roRDriverBuffer* _vBuffer;
@@ -130,10 +132,12 @@ struct Canvas
 	float _targetWidth;
 	float _targetHeight;
 
+	bool _isBatchMode;
+	unsigned _batchedQuadCount;
+	roRDriverTexture* _batchModeCurrentTexture;
+
 	struct OpenVG;
 	OpenVG* _openvg;
-
-	ResourceManager* _resourceMgr;
 
 	struct State {
 		int lineCap;

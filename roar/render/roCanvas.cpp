@@ -20,7 +20,9 @@ Canvas::Canvas()
 	, _vBuffer(NULL), _uBuffer(NULL)
 	, _vShader(NULL), _pShader(NULL)
 	, _targetWidth(0), _targetHeight(0)
-	, _openvg(NULL), _resourceMgr(NULL)
+	, _isBatchMode(false), _batchedQuadCount(0)
+	, _batchModeCurrentTexture(NULL)
+	, _openvg(NULL)
 {
 }
 
@@ -50,8 +52,6 @@ void Canvas::init()
 
 	_vShader = _driver->newShader();
 	_pShader = _driver->newShader();
-
-	_resourceMgr = roSubSystems->resourceMgr;
 
 	int driverIndex = 0;
 	
@@ -112,7 +112,7 @@ void Canvas::init()
 	roVerify(_driver->initShader(_pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
 
 	// Create vertex buffer
-	float vertex[][6] = { {-1,1,0,1, 0,1}, {-1,-1,0,1, 0,0}, {1,-1,0,1, 1,0}, {1,1,0,1, 1,1} };
+	float vertex[6][6] = { {-1,1,0,1, 0,1}, {-1,-1,0,1, 0,0}, {1,-1,0,1, 1,0}, {1,1,0,1, 1,1} };
 	_vBuffer = _driver->newBuffer();
 	roVerify(_driver->initBuffer(_vBuffer, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, vertex, sizeof(vertex)));
 
@@ -319,6 +319,41 @@ void Canvas::drawImage(roRDriverTexture* texture, float dstx, float dsty, float 
 	);
 }
 
+void Canvas::_flushDrawImageBatch()
+{
+	if(_batchedQuadCount == 0)
+		return;
+
+	struct Constants {
+		Vec4 color;
+		roInt32 isRtTexture;
+		roInt32 isAlphaTexture;
+		roInt32 isGrayScaleTexture;
+	};
+	Constants constants = {
+		Vec4(_currentState.globalColor),
+		_batchModeCurrentTexture->flags & roRDriverTextureFlag_RenderTarget,
+		_batchModeCurrentTexture->format == roRDriverTextureFormat_A,
+		_batchModeCurrentTexture->format == roRDriverTextureFormat_L,
+	};
+	roVerify(_driver->updateBuffer(_uBuffer, 0, &constants, sizeof(constants)));
+
+	roRDriverShader* shaders[] = { _vShader, _pShader };
+	roVerify(_driver->bindShaders(shaders, roCountof(shaders)));
+	roVerify(_driver->bindShaderBuffers(_bufferInputs.typedPtr(), _bufferInputs.size(), NULL));
+
+	_driver->setTextureState(&_textureState, 1, 0);
+	_textureInput.texture = _batchModeCurrentTexture;
+	roVerify(_driver->bindShaderTextures(&_textureInput, 1));
+
+	// Blend state
+	updateBlendingStateGL(shGetContext(), 0);	// TODO: It would be an optimization to know the texture has transparent or not
+
+	_driver->drawPrimitive(roRDriverPrimitiveType_TriangleList, 0, _batchedQuadCount * 6, 0);
+
+	_batchedQuadCount = 0;
+}
+
 void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float srcw, float srch, float dstx, float dsty, float dstw, float dsth)
 {
 	if(!texture || !texture->width || !texture->height || globalAlpha() <= 0) return;
@@ -336,58 +371,60 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 	sx1 *= invw; sx2 *= invw;
 	sy1 *= invh; sy2 *= invh;
 
-	float vertex[][6] = {	// Vertex are arranged in a 'z' order, in order to use TriangleStrip as primitive
+	// TODO: Optimize the vertex buffer size by using indexed draw
+	float vertex[6][6] = {	// Vertex are arranged in a 'z' order, in order to use TriangleStrip as primitive
 		{dx1, dy1, z, 1,	sx1,sy1},
+		{dx2, dy1, z, 1,	sx2,sy1},
+		{dx1, dy2, z, 1,	sx1,sy2},
+
 		{dx2, dy1, z, 1,	sx2,sy1},
 		{dx1, dy2, z, 1,	sx1,sy2},
 		{dx2, dy2, z, 1,	sx2,sy2},
 	};
 
 	// Transform the vertex using the current transform
-	for(roSize i=0; i<4; ++i) {
+	for(roSize i=0; i<6; ++i) {
 		mat4MulVec3(_currentState.transform.mat, vertex[i], vertex[i]);
 		mat4MulVec3(_orthoMat.mat, vertex[i], vertex[i]);
 	}
 
-	roVerify(_driver->updateBuffer(_vBuffer, 0, vertex, sizeof(vertex)));
+	if(_isBatchMode) {
+		if(_vBuffer->sizeInBytes <= _batchedQuadCount * sizeof(vertex))
+			_driver->resizeBuffer(_vBuffer, _vBuffer->sizeInBytes * 2);
 
-	struct Constants {
-		Vec4 color;
-		roInt32 isRtTexture;
-		roInt32 isAlphaTexture;
-		roInt32 isGrayScaleTexture;
-	};
-	Constants constants = {
-		Vec4(_currentState.globalColor),
-		texture->flags & roRDriverTextureFlag_RenderTarget,
-		texture->format == roRDriverTextureFormat_A,
-		texture->format == roRDriverTextureFormat_L,
-	};
-	roVerify(_driver->updateBuffer(_uBuffer, 0, &constants, sizeof(constants)));
+		roVerify(_driver->updateBuffer(_vBuffer, _batchedQuadCount * sizeof(vertex), vertex, sizeof(vertex)));
+		++_batchedQuadCount;
 
-	roRDriverShader* shaders[] = { _vShader, _pShader };
-	roVerify(_driver->bindShaders(shaders, roCountof(shaders)));
-	roVerify(_driver->bindShaderBuffers(_bufferInputs.typedPtr(), _bufferInputs.size(), NULL));
+		if(_batchModeCurrentTexture && texture != _batchModeCurrentTexture)
+			_flushDrawImageBatch();
 
-	_driver->setTextureState(&_textureState, 1, 0);
-	_textureInput.texture = texture;
-	roVerify(_driver->bindShaderTextures(&_textureInput, 1));
+		_batchModeCurrentTexture = texture;
+	}
+	else {
+		roAssert(_batchedQuadCount == 0);
 
-	// Blend state
-	updateBlendingStateGL(shGetContext(), 0);	// TODO: It would be an optimization to know the texture has transparent or not
+		roVerify(_driver->updateBuffer(_vBuffer, 0, vertex, sizeof(vertex)));
+		_batchedQuadCount = 1;
 
-	_driver->drawPrimitive(roRDriverPrimitiveType_TriangleStrip, 0, 4, 0);
+		_batchModeCurrentTexture = texture;
+		_flushDrawImageBatch();
+	}
 }
 
 
 // ----------------------------------------------------------------------
 
-void Canvas::beginBatch()
+void Canvas::beginDrawImageBatch()
 {
+	_isBatchMode = true;
+	_batchedQuadCount = 0;
 }
 
-void Canvas::endBatch()
+void Canvas::endDrawImageBatch()
 {
+	_flushDrawImageBatch();
+	_isBatchMode = false;
+	_batchModeCurrentTexture = NULL;
 }
 
 

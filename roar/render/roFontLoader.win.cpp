@@ -561,6 +561,8 @@ void FontImpl::draw(const char* utf8Str, float x_, float y_, float maxWidth, Can
 	// Pointer to the last and the current glyph
 	Glyph* g1 = NULL, *g2 = NULL;
 
+	c.beginDrawImageBatch();
+
 	roSize len = roStrLen(utf8Str);
 	for(roUint16 w; len; g1 = g2)
 	{
@@ -590,7 +592,9 @@ void FontImpl::draw(const char* utf8Str, float x_, float y_, float maxWidth, Can
 			float srcw = g2->texSizeX,		srch = g2->texSizeY;
 			float dstx = x + g2->originX,	dsty = y - g2->originY;
 
-			c.drawImage(tex, srcx, srcy, srcw, srch, dstx, dsty, srcw, srch);
+			if(dstx < c.width())
+				c.drawImage(tex, srcx, srcy, srcw, srch, dstx, dsty, srcw, srch);
+
 			x += g2->advanceX;
 			y += g2->advanceY;
 		}
@@ -600,10 +604,16 @@ void FontImpl::draw(const char* utf8Str, float x_, float y_, float maxWidth, Can
 		}
 
 		if(w == L'\n') {
+			// Text getting out of our canvas, no need to continue
+			if(y > c.height())
+				break;
+
 			x = x_;
 			y += fontData.tm.tmHeight;
 		}
 	}
+
+	c.endDrawImageBatch();
 }
 
 }	// namespace ro
