@@ -7,6 +7,7 @@ void roMemcpy(void* dst, const void* src, roSize size);
 void roMemmov(void* dst, const void* src, roSize size);
 
 void roZeroMemory(void* dst, roSize size);
+void roSwapMemory(void* p1, void* p2, roSize size);
 
 /// The generic version of swap
 template<typename T> inline
