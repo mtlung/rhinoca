@@ -291,6 +291,7 @@ typedef struct roRDriver
 	void (*deleteBuffer)(roRDriverBuffer* self);
 	bool (*initBuffer)(roRDriverBuffer* self, roRDriverBufferType type, roRDriverDataUsage usage, const void* initData, roSize sizeInBytes);	// TODO: May change the name to allocBuffer
 	bool (*updateBuffer)(roRDriverBuffer* self, roSize offsetInBytes, const void* data, roSize sizeInBytes);
+	bool (*resizeBuffer)(roRDriverBuffer* self, roSize sizeInBytes);	// Resizing the buffer while preserving it's content
 	void* (*mapBuffer)(roRDriverBuffer* self, roRDriverMapUsage usage, roSize offsetInBytes, roSize sizeInBytes);
 	void (*unmapBuffer)(roRDriverBuffer* self);
 

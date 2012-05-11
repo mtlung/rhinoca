@@ -1003,6 +1003,30 @@ static void _unmapBuffer(roRDriverBuffer* self)
 	impl->mapSize = 0;
 }
 
+static bool _resizeBuffer(roRDriverBuffer* self, roSize sizeInBytes)
+{
+	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
+	if(!impl) return false;
+	if(impl->isMapped) return false;
+	if(impl->usage == roRDriverDataUsage_Static) return false;
+
+	roRDriverBuffer* newBuf = _newBuffer();
+	if(!_initBuffer(newBuf, impl->type, impl->usage, NULL, sizeInBytes)) return false;
+
+	if(void* mapped = _mapBuffer(self, roRDriverMapUsage_Read, 0, impl->sizeInBytes)) {
+		// TODO: May consider ARB_copy_buffer?
+		if(!_updateBuffer(newBuf, 0, mapped, impl->sizeInBytes))
+			return false;
+		_unmapBuffer(self);
+
+		roSwapMemory(impl, newBuf, sizeof(*impl));
+		_deleteBuffer(newBuf);
+		return true;
+	}
+
+	return false;
+}
+
 // ----------------------------------------------------------------------
 // Texture
 
@@ -1878,6 +1902,7 @@ roRDriver* _roNewRenderDriver_DX11(const char* driverStr, const char*)
 	ret->deleteBuffer = _deleteBuffer;
 	ret->initBuffer = _initBuffer;
 	ret->updateBuffer = _updateBuffer;
+	ret->resizeBuffer = _resizeBuffer;
 	ret->mapBuffer = _mapBuffer;
 	ret->unmapBuffer = _unmapBuffer;
 
