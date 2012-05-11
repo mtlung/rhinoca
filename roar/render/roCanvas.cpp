@@ -22,12 +22,15 @@ Canvas::Canvas()
 	, _targetWidth(0), _targetHeight(0)
 	, _isBatchMode(false), _batchedQuadCount(0)
 	, _batchModeCurrentTexture(NULL)
+	, _mappedVBuffer(NULL)
 	, _openvg(NULL)
 {
 }
 
 Canvas::~Canvas()
 {
+	roAssert(!_isBatchMode);
+	roAssert(!_mappedVBuffer);
 	destroy();
 }
 
@@ -321,6 +324,10 @@ void Canvas::drawImage(roRDriverTexture* texture, float dstx, float dsty, float 
 
 void Canvas::_flushDrawImageBatch()
 {
+	if(_mappedVBuffer)
+		_driver->unmapBuffer(_vBuffer);
+	_mappedVBuffer = NULL;
+
 	if(_batchedQuadCount == 0)
 		return;
 
@@ -354,6 +361,7 @@ void Canvas::_flushDrawImageBatch()
 	_batchedQuadCount = 0;
 }
 
+// TODO: There are still rooms for optimization
 void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float srcw, float srch, float dstx, float dsty, float dstw, float dsth)
 {
 	if(!texture || !texture->width || !texture->height || globalAlpha() <= 0) return;
@@ -383,20 +391,27 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 	};
 
 	// Transform the vertex using the current transform
-	for(roSize i=0; i<6; ++i) {
-		mat4MulVec3(_currentState.transform.mat, vertex[i], vertex[i]);
-		mat4MulVec3(_orthoMat.mat, vertex[i], vertex[i]);
-	}
+	Mat4 mat44 = _orthoMat * _currentState.transform;
+	for(roSize i=0; i<6; ++i)
+		mat4MulVec3(mat44.mat, vertex[i], vertex[i]);
 
 	if(_isBatchMode) {
-		if(_vBuffer->sizeInBytes <= _batchedQuadCount * sizeof(vertex))
-			_driver->resizeBuffer(_vBuffer, _vBuffer->sizeInBytes * 2);
+		// Check if larger vertex buffer is needed
+		if(_vBuffer->sizeInBytes <= _batchedQuadCount * sizeof(vertex)) {
+			_driver->unmapBuffer(_vBuffer);
+			roVerify(_driver->resizeBuffer(_vBuffer, _vBuffer->sizeInBytes * 2 + sizeof(vertex)));
+			_mappedVBuffer = (char*)_driver->mapBuffer(_vBuffer, roRDriverMapUsage_ReadWrite, 0, _vBuffer->sizeInBytes);
+		}
 
-		roVerify(_driver->updateBuffer(_vBuffer, _batchedQuadCount * sizeof(vertex), vertex, sizeof(vertex)));
+		roMemcpy(_mappedVBuffer + _batchedQuadCount * sizeof(vertex), vertex, sizeof(vertex));
 		++_batchedQuadCount;
 
-		if(_batchModeCurrentTexture && texture != _batchModeCurrentTexture)
+		if(_batchModeCurrentTexture && texture != _batchModeCurrentTexture) {
 			_flushDrawImageBatch();
+			// TODO: Might not be optimal: every unmap is uploading the whole _vBuffer
+			// which is bigger than necessary
+			_mappedVBuffer = (char*)_driver->mapBuffer(_vBuffer, roRDriverMapUsage_Write, 0, _vBuffer->sizeInBytes);
+		}
 
 		_batchModeCurrentTexture = texture;
 	}
@@ -418,6 +433,10 @@ void Canvas::beginDrawImageBatch()
 {
 	_isBatchMode = true;
 	_batchedQuadCount = 0;
+
+	roAssert(!_mappedVBuffer);
+
+	_mappedVBuffer = (char*)_driver->mapBuffer(_vBuffer, roRDriverMapUsage_Write, 0, _vBuffer->sizeInBytes);
 }
 
 void Canvas::endDrawImageBatch()

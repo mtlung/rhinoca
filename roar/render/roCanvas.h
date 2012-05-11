@@ -135,6 +135,7 @@ struct Canvas
 	bool _isBatchMode;
 	unsigned _batchedQuadCount;
 	roRDriverTexture* _batchModeCurrentTexture;
+	char* _mappedVBuffer;
 
 	struct OpenVG;
 	OpenVG* _openvg;
