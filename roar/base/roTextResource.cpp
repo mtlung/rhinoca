@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "roTextResource.h"
+#include "roByteOrder.h"
 #include "roFileSystem.h"
 #include "roLog.h"
 #include "roTypeCast.h"
@@ -8,7 +9,6 @@ namespace ro {
 
 TextResource::TextResource(const char* uri)
 	: Resource(uri)
-	, dataWithoutBOM(NULL)
 {
 }
 
@@ -27,6 +27,7 @@ struct TextLoader : public Task
 	override void run(TaskPool* taskPool);
 
 	void load(TaskPool* taskPool);
+	void convert(TaskPool* taskPool);
 	void commit(TaskPool* taskPool);
 	void abort(TaskPool* taskPool);
 
@@ -44,37 +45,6 @@ void TextLoader::run(TaskPool* taskPool)
 		nextFun = &TextLoader::abort;
 
 	(this->*nextFun)(taskPool);
-}
-
-static const char* _removeBom(const char* str, unsigned& len)
-{
-	if(len < 3) return str;
-
-	if( (str[0] == 0xFE && str[1] == 0xFF) ||
-		(str[0] == 0xFF && str[1] == 0xFE))
-	{
-		roLog("error", "'%s' is encoded using UTF-16 which is not supported\n");
-		len = 0;
-		return NULL;
-	}
-
-	if(str[0] == 0xEF && str[1] == 0xBB && str[2] == 0xBF) {
-		len -= 3;
-		return str + 3;
-	}
-	return str;
-}
-
-void TextLoader::commit(TaskPool* taskPool)
-{
-	roSwap(text->data, data);
-	text->state = Resource::Loaded;
-
-	// Remove any BOM
-	unsigned len;
-	text->dataWithoutBOM = _removeBom(text->data.c_str(), len);
-
-	delete this;
 }
 
 void TextLoader::load(TaskPool* taskPool)
@@ -98,8 +68,8 @@ roEXCP_TRY
 		st = fileSystem.read(stream, buf, sizeof(buf), bytesRead);
 
 		if(st == Status::file_ended) {
-			nextFun = &TextLoader::commit;
-			break;
+			nextFun = &TextLoader::convert;
+			return reSchedule(false, ~taskPool->mainThreadId());
 		}
 
 		if(!st) roEXCP_THROW;
@@ -109,10 +79,55 @@ roEXCP_TRY
 roEXCP_CATCH
 	roLog("error", "TextLoader: Fail to load '%s', reason: %s\n", text->uri().c_str(), st.c_str());
 	nextFun = &TextLoader::abort;
+	return reSchedule(false, taskPool->mainThreadId());
 
 roEXCP_END
 
+	roAssert(false);
+	nextFun = &TextLoader::abort;
 	return reSchedule(false, taskPool->mainThreadId());
+}
+
+void TextLoader::convert(TaskPool* taskPool)
+{
+	unsigned char bomUtf8[] = { 0xEF, 0xBB, 0xBF };
+	unsigned char bomUtf16BE[] = { 0xFE, 0xFF };
+	unsigned char bomUtf16LE[] = { 0xFF, 0xFE };
+
+	// UTF-8 BOM
+	if(data.size() >= 3 && roStrnCmp(data.c_str(), (char*)bomUtf8, roCountof(bomUtf8)) == 0)
+		data.erase(0, 3);
+
+	// UTF-16 big endian
+	else if(data.size() >= 2 && roStrnCmp(data.c_str(), (char*)bomUtf16BE, roCountof(bomUtf16BE)) == 0) {
+		for(roSize i=0; i<data.size() - 2; i+=2)
+			(roUtf16&)data[i] = roBEToHost((roUtf16&)data[i]);
+
+		String tmp;
+		tmp.fromUtf16((roUtf16*)&data[2], data.size() - 2);
+		roSwap(data, tmp);
+	}
+
+	// UTF-16 little endian
+	else if(data.size() >= 2 && roStrnCmp(data.c_str(), (char*)bomUtf16LE, roCountof(bomUtf16LE)) == 0) {
+		for(roSize i=0; i<data.size() - 2; i+=2)
+			(roUtf16&)data[i] = roLEToHost((roUtf16&)data[i]);
+
+		String tmp;
+		tmp.fromUtf16((roUtf16*)&data[2], data.size() - 2);
+		roSwap(data, tmp);
+	}
+
+	nextFun = &TextLoader::commit;
+	return reSchedule(false, taskPool->mainThreadId());
+}
+
+void TextLoader::commit(TaskPool* taskPool)
+{
+	roSwap(text->data, data);
+	text->state = Resource::Loaded;
+
+	delete this;
 }
 
 void TextLoader::abort(TaskPool* taskPool)

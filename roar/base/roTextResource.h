@@ -14,8 +14,6 @@ struct TextResource : public ro::Resource
 	override ConstString resourceType() const { return "Text"; }
 
 	ro::String data;
-
-	const char* dataWithoutBOM;
 };	// TextResource
 
 typedef ro::SharedPtr<TextResource> TextResourcePtr;
