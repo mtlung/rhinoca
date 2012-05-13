@@ -102,7 +102,7 @@ struct Canvas
 	void setGlobalColor			(const float* rgba);
 	void setGlobalColor			(float r, float g, float b, float a);
 
-	void setFont				(const char* style);	/// "20pt Arial"
+	void setFont				(const char* style);	/// "20pt Arial" see: http://www.w3.org/TR/css3-fonts/#propdef-font
 	void setTextAlign			(const char* align);	/// Valid values are 'left', 'right' , 'center', 'start' and 'end'
 	void setTextBaseline		(const char* baseLine);	/// Valid values are 'top', 'hanging' , 'middle', 'alphabetic', 'ideographic' and 'bottom'
 

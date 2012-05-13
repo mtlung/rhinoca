@@ -138,8 +138,8 @@ void HTMLScriptElement::setSrc(const char* uri)
 const char* HTMLScriptElement::src() const
 {
 	return _src ?
-		(_src->dataWithoutBOM ?
-			_src->dataWithoutBOM : ""
+		(_src->data.isEmpty() ?
+			"" : _src->data.c_str()
 		) :
 		"";
 }

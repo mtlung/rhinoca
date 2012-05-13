@@ -42,7 +42,7 @@ struct FontData
 
 	ConstString fontName;
 	roUint32 fontHash;
-	unsigned fontSize;
+	int fontSize;
 	unsigned fontWeight;
 	bool italic;
 
@@ -539,7 +539,9 @@ bool FontImpl::setStyle(const char* styleStr)
 
 	FontData fontData;
 	fontData.fontName = styleStr;
-	fontData.fontSize = 30;
+	// For the formula to calculate the font height:
+	// http://msdn.microsoft.com/en-us/library/dd183499%28v=vs.85%29.aspx
+	fontData.fontSize = -MulDiv(40, ::GetDeviceCaps(hdc, LOGPIXELSY), 72);
 	fontData.fontWeight = FW_DONTCARE;
 	fontData.italic = false;
 	fontData.fontHash = hash;
@@ -571,6 +573,22 @@ void FontImpl::draw(const char* utf8Str, float x_, float y_, float maxWidth, Can
 
 		utf8Str += utf8Consumed;
 		len -= utf8Consumed;
+		g2 = NULL;
+
+		// Handling of special characters
+		if(w == L'\r') {
+			x = x_;
+			continue;
+		}
+		if(w == L'\n') {
+			// Text getting out of our canvas, no need to continue
+			if(y > c.height())
+				break;
+
+			x = x_;
+			y += fontData.tm.tmHeight;
+			continue;
+		}
 
 		// Search for the glyph by the given code point
 		g2 = roLowerBound(fontData.glyphs.typedPtr(), fontData.glyphs.size(), w, &Pred::glyphLess);
@@ -601,15 +619,6 @@ void FontImpl::draw(const char* utf8Str, float x_, float y_, float maxWidth, Can
 		else {
 			Request req = { fontData.fontHash, w };
 			requestMainThread.pushBack(req);
-		}
-
-		if(w == L'\n') {
-			// Text getting out of our canvas, no need to continue
-			if(y > c.height())
-				break;
-
-			x = x_;
-			y += fontData.tm.tmHeight;
 		}
 	}
 
