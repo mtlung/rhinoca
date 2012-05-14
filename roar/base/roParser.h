@@ -7,6 +7,14 @@
 /// See: http://en.wikipedia.org/wiki/Recursive-descent_parser
 /// TODO: May need to use wide character type
 
+/// Grammar used in the documentation:
+/// *: 0 or more
+/// +: 1 or more 
+/// ?: 0 or 1
+/// |: separates alternatives
+/// [ ]: grouping 
+
+
 namespace ro {
 namespace Parsing {
 
@@ -127,7 +135,7 @@ struct Matcher
 		}
 
 		if(result) {
-			if(customResult.begin)
+			if(customResult.type && customResult.begin)
 				*result = customResult;
 			else {
 				result->begin = bk;
@@ -226,6 +234,18 @@ struct DoubleQuotedStringMatcher
 
 inline Matcher<DoubleQuotedStringMatcher> doubleQuotedString(Parser* parser) {
 	Matcher<DoubleQuotedStringMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// Match an identifier in the C language, may applicable to other lang/format as well
+/// [a-z_]+ [a-z0-9_]*
+struct CIdentifierStringMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<CIdentifierStringMatcher> cIdentifierString(Parser* parser) {
+	Matcher<CIdentifierStringMatcher> ret = { {}, parser };
 	return ret;
 }
 

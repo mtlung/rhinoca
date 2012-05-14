@@ -112,6 +112,22 @@ bool DoubleQuotedStringMatcher::match(Parser* p)
 	return false;
 }
 
+bool CIdentifierStringMatcher::match(Parser* p)
+{
+	const char* c = p->begin;
+	if( !roIsAlpha(*c) && *c != '_' )
+		return false;
+
+	for(; (++c) < p->end;)
+	{
+		if( !roIsAlpha(*c) && !roIsDigit(*c) && *c != '_' )
+			break;
+	}
+
+	p->begin = c;
+	return true;
+}
+
 bool AnyCharExceptMatcher::match(Parser* p)
 {
 	const char* ret = roStrChr(except, *p->begin);
