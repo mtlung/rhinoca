@@ -7,7 +7,8 @@
 #include "../../roar/base/roArray.h"
 #include "../../roar/base/roStringHash.h"
 
-using namespace Parsing;
+using namespace ro;
+using namespace ro::Parsing;
 
 namespace Dom {
 
@@ -108,7 +109,7 @@ void CSSStyleRule::selectorMatch(Element* tree)
 	// Construct the selector representation buffer
 	SelectionBuffer state;
 	Parser parser(_selectorTextBegin, _selectorTextEnd, selectorParserCallback, &state);
-	Parsing::selector(&parser).once();
+	ro::Parsing::selector(&parser).once();
 
 	// Perform selection on each node
 	for(NodeIterator i(tree); !i.ended(); i.next())
@@ -152,7 +153,7 @@ void CSSStyleRule::setCssText(const char* str)
 	_cssText = str;
 
 	Parser parser(_cssText.c_str(), _cssText.c_str() + _cssText.size(), cssParserCallback, this);
-	Parsing::ruleSet(&parser).once();
+	ro::Parsing::ruleSet(&parser).once();
 }
 
 void CSSStyleRule::bind(JSContext* cx, JSObject* parent)

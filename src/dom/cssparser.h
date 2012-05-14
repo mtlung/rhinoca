@@ -1,8 +1,9 @@
 #ifndef __DOM_CSSPARSER_H__
 #define __DOM_CSSPARSER_H__
 
-#include "../parser.h"
+#include "../../roar/base/roParser.h"
 
+namespace ro {
 namespace Parsing {
 
 /// CSS selector syntax: http://www.w3.org/TR/CSS2/selector.html#selector-syntax
@@ -456,5 +457,6 @@ inline Matcher<TransformOriginMatcher> transformOrigin(Parser* parser) {
 }
 
 }	// namespace Parsing
+}	// namespace ro
 
 #endif	// __DOM_CSSPARSER_H__

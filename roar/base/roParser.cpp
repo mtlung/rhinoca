@@ -1,9 +1,8 @@
 #include "pch.h"
-#include "parser.h"
+#include "roParser.h"
+#include "roStringUtility.h"
 
-#include <string.h>
-#include <stdio.h>
-
+namespace ro {
 namespace Parsing {
 
 Parser::Parser(const char* b, const char* e, ParserResultCallback c, void* u)
@@ -28,7 +27,7 @@ bool WhiteSpaceMatcher::match(Parser* p)
 	char c = *p->begin;
 	char chars[] = { ' ', '\t', '\r', '\n' };
 
-	for(unsigned i=0; i<sizeof(chars)/sizeof(char); ++i) {
+	for(roSize i=0; i<sizeof(chars)/sizeof(char); ++i) {
 		if(c != chars[i])
 			continue;
 
@@ -41,12 +40,12 @@ bool WhiteSpaceMatcher::match(Parser* p)
 
 bool StringMatcher::match(Parser* p)
 {
-	unsigned len = strlen(str);
+	roSize len = roStrLen(str);
 
 	if(p->end - p->begin < (int)len)
 		return false;
 
-	int ret = strncmp(p->begin, str, len);
+	int ret = roStrnCmp(p->begin, str, len);
 	if(ret == 0) {
 		p->begin += len;
 		return true;
@@ -115,7 +114,7 @@ bool DoubleQuotedStringMatcher::match(Parser* p)
 
 bool AnyCharExceptMatcher::match(Parser* p)
 {
-	const char* ret = strchr(except, *p->begin);
+	const char* ret = roStrChr(except, *p->begin);
 
 	if(ret == NULL) {	// No exception found
 		++p->begin;
@@ -126,3 +125,4 @@ bool AnyCharExceptMatcher::match(Parser* p)
 }
 
 }	// namespace Parsing
+}	// namespace ro

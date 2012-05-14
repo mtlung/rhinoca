@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "cssparser.h"
 
+namespace ro {
 namespace Parsing {
 
 static bool _CdoCdc(Parser* p)
@@ -611,3 +612,4 @@ bool TransformOriginMatcher::match(Parser* p)
 }
 
 }	// namespace Parsing
+}	// namespace ro

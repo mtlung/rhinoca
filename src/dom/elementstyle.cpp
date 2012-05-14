@@ -8,8 +8,8 @@
 #include "../rhlog.h"
 #include "../path.h"
 
-using namespace Parsing;
 using namespace ro;
+using namespace ro::Parsing;
 
 namespace Dom {
 
@@ -309,7 +309,7 @@ void ElementStyle::setStyleString(const char* begin, const char* end)
 
 	ParserState state = { this, NULL, NULL };
 	Parser parser(begin, end, ParserState::parserCallback, &state);
-	Parsing::declarations(&parser, false).once();
+	ro::Parsing::declarations(&parser, false).once();
 }
 
 void ElementStyle::setStyleAttribute(const char* name, const char* value)
@@ -519,7 +519,7 @@ void ElementStyle::setTransform(const char* transformStr)
 
 	ParserState state = { this, NULL, NULL, 0, {0} };
 	Parser parser(transformStr, transformStr + strlen(transformStr), ParserState::callback, &state);
-	Parsing::transform(&parser).any();
+	ro::Parsing::transform(&parser).any();
 }
 
 void ElementStyle::setTransformOrigin(const char* transformOriginStr)
@@ -578,7 +578,7 @@ void ElementStyle::setTransformOrigin(const char* transformOriginStr)
 
 	ParserState state = { this, NULL, NULL, {0}, { true, true } };
 	Parser parser(transformOriginStr, transformOriginStr + strlen(transformOriginStr), ParserState::callback, &state);
-	Parsing::transformOrigin(&parser).once();
+	ro::Parsing::transformOrigin(&parser).once();
 }
 
 Vec3 ElementStyle::origin() const
@@ -636,16 +636,16 @@ bool ElementStyle::setBackgroundPosition(const char* cssBackgroundPosition)
 
 	ParserState state = { this, 0, { 0.0f } };
 	Parser parser(cssBackgroundPosition, cssBackgroundPosition + strlen(cssBackgroundPosition), ParserState::callback, &state);
-	return Parsing::backgroundPosition(&parser).once();
+	return ro::Parsing::backgroundPosition(&parser).once();
 }
 
 bool ElementStyle::setBackgroundImage(const char* cssUrl)
 {
 	// Get the url from the style string value
-	Parsing::Parser parser(cssUrl, cssUrl + strlen(cssUrl));
-	Parsing::ParserResult result;
+	Parser parser(cssUrl, cssUrl + strlen(cssUrl));
+	ParserResult result;
 
-	if(!Parsing::url(&parser).once(&result)) {
+	if(!ro::Parsing::url(&parser).once(&result)) {
 		// TODO: Give some warning
 		return false;
 	}

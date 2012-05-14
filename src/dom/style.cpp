@@ -5,7 +5,8 @@
 #include "document.h"
 #include "textnode.h"
 
-using namespace Parsing;
+using namespace ro;
+using namespace ro::Parsing;
 
 namespace Dom {
 
@@ -61,7 +62,7 @@ void HTMLStyleElement::onParserEndElement()
 
 	char* source = text->data.c_str();
 	Parser parser(source, source + strlen(source), parserCallback, css);
-	Parsing::css(&parser).once();
+	ro::Parsing::css(&parser).once();
 }
 
 static const ro::ConstString _tagName = "STYLE";

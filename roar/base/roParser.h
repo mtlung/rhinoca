@@ -1,6 +1,13 @@
-#ifndef __PARSER_H__
-#define __PARSER_H__
+#ifndef __roParser_h__
+#define __roParser_h__
 
+#include "../platform/roCompiler.h"
+
+/// A really simple "Recursive descent parser" without look ahead, back tracking, and dis-ambiguity.
+/// See: http://en.wikipedia.org/wiki/Recursive-descent_parser
+/// TODO: May need to use wide character type
+
+namespace ro {
 namespace Parsing {
 
 struct ParserResult
@@ -10,9 +17,8 @@ struct ParserResult
 	const char* end;
 };
 
-class Parser
+struct Parser
 {
-public:
 	typedef void (*ParserResultCallback)(ParserResult* result, Parser* parser);
 
 	Parser(const char* begin, const char* end, ParserResultCallback callback=NULL, void* userdata=NULL);
@@ -50,17 +56,17 @@ struct Matcher
 		return true;
 	}
 
-	bool count(unsigned min, unsigned max, ParserResult* result=NULL)
+	bool count(roSize min, roSize max, ParserResult* result=NULL)
 	{
 		const char* bk = parser->begin, *bk2;
 
 		// Match min occurrences
-		for(unsigned i=0; i<min; ++i)
+		for(roSize i=0; i<min; ++i)
 			if(!t.match(parser))
 				goto Fail;
 
 		// Try to continue match() until the max occurrence reach
-		for(unsigned i=min; i<max; ++i)
+		for(roSize i=min; i<max; ++i)
 			if(!t.match(parser))
 				break;
 
@@ -85,7 +91,7 @@ struct Matcher
 
 	bool atLeastOnce(ParserResult* result=NULL)
 	{
-		return count(1, unsigned(-1), result);
+		return count(1, roSize(-1), result);
 	}
 
 	bool atMostOnce(ParserResult* result=NULL)
@@ -235,5 +241,6 @@ inline Matcher<AnyCharExceptMatcher> anyCharExcept(Parser* parser, const char* e
 }
 
 }	// namespace Parsing
+}	// namespace ro
 
-#endif	// __PARSER_H__
+#endif	// __roParser_h__

@@ -415,6 +415,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roParser.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roParser.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roRawFileSystem.cpp"
 				>
 			</File>

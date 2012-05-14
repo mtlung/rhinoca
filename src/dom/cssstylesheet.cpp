@@ -2,7 +2,7 @@
 #include "cssstylesheet.h"
 #include "cssparser.h"
 
-using namespace Parsing;
+using namespace ro::Parsing;
 
 namespace Dom {
 
