@@ -64,6 +64,18 @@ bool DigitMatcher::match(Parser* p)
 	return true;
 }
 
+bool NumberMatcher::match(Parser* p)
+{
+	const char* c=p->begin;
+
+	for(;; ++c) if(roIsDigit(*c)) break;
+	if(*c == '.') ++c;
+	for(;; ++c) if(roIsDigit(*c)) break;
+
+	if(c > p->begin) p->begin = c;
+	return c > p->begin;
+}
+
 bool QuotedStringMatcher::match(Parser* p)
 {
 	ParserResult& result = *p->customResult;

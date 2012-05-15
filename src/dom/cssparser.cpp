@@ -360,24 +360,6 @@ bool FunctionMatcher::match(Parser* p)
 		skip(p).any();
 }
 
-// TODO: This number matching is not strict enough
-bool NumberMatcher::match(Parser* p)
-{
-	const char* bk = p->begin;
-
-	while(true) {
-		char c = *p->begin;
-		if( (c >= '0' && c <= '9') || c == '.') {
-			p->begin++;
-			continue;
-		}
-
-		break;
-	}
-
-	return bk < p->begin;
-}
-
 bool SignedNumberMatcher::match(Parser* p)
 {
 	return unaryOperator(p).atMostOnce() && skip(p).any() && number(p).once();

@@ -311,17 +311,6 @@ inline Matcher<FunctionMatcher> function(Parser* parser) {
 	return ret;
 }
 
-/// [0-9]+|[0-9]*"."[0-9]+
-struct NumberMatcher
-{
-	bool match(Parser* parser);
-};
-
-inline Matcher<NumberMatcher> number(Parser* parser) {
-	Matcher<NumberMatcher> ret = { {}, parser };
-	return ret;
-}
-
 /// unary_operator? S* NUMBER
 struct SignedNumberMatcher
 {

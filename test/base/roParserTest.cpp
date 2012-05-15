@@ -57,6 +57,8 @@ inline Matcher<ElementMatcher> element(Parser* parser) {
 
 bool ElementMatcher::match(Parser* p)
 {
+	Transcation transcation(p);
+
 	ParserResult eleBeginResult = { "eleBegin", NULL, NULL };
 	ParserResult charNodedResult = { "charNode", NULL, NULL };
 	ParserResult eleEndResult = { "eleEnd", NULL, NULL };
@@ -68,14 +70,18 @@ bool ElementMatcher::match(Parser* p)
 		whiteSpace(p).any() && character(p, '>').once();
 	if(!ret) return false;
 
-	ret = (element(p).atLeastOnce() || characterNode(p).atMostOnce(&charNodedResult));
-	if(!ret) return false;
+	characterNode(p).once(&charNodedResult);
+	// NOTE: We have a recursion here
+	element(p).atLeastOnce();
+	characterNode(p).once(&charNodedResult);
 
 	ret =
 		whiteSpace(p).any() && string(p, "</").once() &&
 		whiteSpace(p).any() && cIdentifierString(p).once(&eleEndResult) &&
 		whiteSpace(p).any() && character(p, '>').once();
+	if(!ret) return false;
 
+	transcation.commit();
 	return ret;
 }
 
@@ -106,8 +112,8 @@ TEST_FIXTURE(ParserTest, xml)
 
 //	String xmlStr("<xml></xml>");
 //	String xmlStr("<xml>abc</xml>");
-	String xmlStr("<xml><e1></e2></xml>");
-//	String xmlStr("<xml><ele1 att1='abc' att2=\"def\">chardata</ele></xml>");
+//	String xmlStr("<xml><e1></e2></xml>");
+	String xmlStr("<xml><ele1 att1='abc' att2=\"def\">chardata</ele></xml>");
 	Parser parser(xmlStr.c_str(), xmlStr.c_str() + xmlStr.size(), xmlParserCallback, NULL);
 	ro::Parsing::xml(&parser).atLeastOnce();
 }

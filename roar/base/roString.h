@@ -86,6 +86,7 @@ struct ConstString
 	///	The input string will copied and reference counted.
 	/// Null input string will result an empty string.
 	ConstString(const char* str);
+	ConstString(const char* str, roSize count);
 
 	/// Construct with an existing string in the global table, indexed with it's hash value.
 	/// Make sure there is an other instance of ConstString constructed with a string content first.

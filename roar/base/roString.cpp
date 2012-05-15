@@ -288,12 +288,12 @@ struct ConstStringHashTable
 		return _nullNode;
 	}
 
-	Node& add(const char* str)
+	Node& add(const char* str, roSize count=0)
 	{
 		if(!str)
 			return _nullNode;
 
-		const StringHash hash = stringHash(str, 0);
+		const StringHash hash = stringHash(str, count);
 
 		ScopeLock lock(_mutex);
 		const roSize index = hash % _buckets.size();
@@ -392,6 +392,15 @@ ConstString::ConstString()
 
 ConstString::ConstString(const char* str)
 	: _node(&_constStringHashTable().add(str))
+{
+	++_node->refCount;
+#if roDEBUG
+	_debugStr = c_str();
+#endif
+}
+
+ConstString::ConstString(const char* str, roSize count)
+	: _node(&_constStringHashTable().add(str, count))
 {
 	++_node->refCount;
 #if roDEBUG

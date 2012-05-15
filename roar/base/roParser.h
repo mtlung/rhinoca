@@ -43,6 +43,17 @@ struct Parser
 	const char* erroMessage;
 };	// Parser
 
+struct Transcation
+{
+	explicit Transcation(Parser* parser) : _parser(parser), _begin(parser->begin) {}
+	~Transcation() { rollback(); }
+	void commit() { _parser = NULL; }
+	void commit(const char* newBegin) { _parser->begin = newBegin; _parser = NULL; }
+	void rollback() { if(_parser) _parser->begin = _begin; }
+	Parser* _parser;
+	const char* _begin;
+};
+
 template<typename T>
 struct Matcher
 {
@@ -212,6 +223,17 @@ struct DigitMatcher
 
 inline Matcher<DigitMatcher> digit(Parser* parser) {
 	Matcher<DigitMatcher> ret = { {}, parser };
+	return ret;
+}
+
+/// [0-9]+|[0-9]*"."[0-9]+
+struct NumberMatcher
+{
+	bool match(Parser* parser);
+};
+
+inline Matcher<NumberMatcher> number(Parser* parser) {
+	Matcher<NumberMatcher> ret = { {}, parser };
 	return ret;
 }
 
