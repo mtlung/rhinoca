@@ -520,14 +520,24 @@ bool resourceLoadWin32Font(ResourceManager* mgr, Resource* resource)
 
 using namespace Parsing;
 
+namespace { struct _Pair {
+	FontImpl* impl;
+	FontData* fontData;
+};}
+
 static void fontParserCallback(ParserResult* result, Parser* parser)
 {
-	FontData* fontData = reinterpret_cast<FontData*>(parser->userdata);
+	FontImpl* impl = reinterpret_cast<_Pair*>(parser->userdata)->impl;
+	FontData* fontData = reinterpret_cast<_Pair*>(parser->userdata)->fontData;
 
 	if(roStrCmp(result->type, "fontFamily") == 0)
 		fontData->fontName = ConstString(result->begin, result->end - result->begin);
-	else if(roStrCmp(result->type, "fontSize") == 0)
+	else if(roStrCmp(result->type, "fontSize") == 0) {
+		int ptSize = 10; char c1, c2;
+		if(sscanf(result->begin, "%d%c%c", &ptSize, &c1, &c2) == 3 && c1 == 'p' && c2 == 't')
+			fontData->fontSize = -MulDiv(ptSize, ::GetDeviceCaps(impl->hdc, LOGPIXELSY), 72);
 		result = result;
+	}
 }
 
 bool FontImpl::setStyle(const char* styleStr)
@@ -544,7 +554,6 @@ bool FontImpl::setStyle(const char* styleStr)
 	FontData fontData;
 	fontData.fontHash = hash;
 	currnetFontForDraw = typefaces.size();
-	typefaces.pushBack(fontData);
 
 	// Give the font some default values
 	// For the formula to calculate the font height:
@@ -552,12 +561,16 @@ bool FontImpl::setStyle(const char* styleStr)
 	fontData.fontSize = -MulDiv(12, ::GetDeviceCaps(hdc, LOGPIXELSY), 72);
 	fontData.fontWeight = FW_DONTCARE;
 	fontData.italic = false;
+	fontData.fontName = "arial";
 
 	// Parser the style string and set the font params
-	Parser parser(styleStr, styleStr + roStrLen(styleStr), fontParserCallback, &fontData);
+	_Pair pair = { this, &fontData };
+	Parser parser(styleStr, styleStr + roStrLen(styleStr), fontParserCallback, &pair);
 	
 	if(!ro::Parsing::font(&parser).once())
 		roLog("warn", "Invalid CSS font style string '%s'\n", styleStr);
+
+	typefaces.pushBack(fontData);
 
 	return true;
 }

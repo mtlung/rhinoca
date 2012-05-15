@@ -175,7 +175,7 @@ bool FontMatcher::match(Parser* p)
 
 	ParserResult lineHeightResult = { "lineHeight", NULL, NULL };
 	{	Transcation t2(p);
-		if(whiteSpace(p).any() && character(p, '/').once() && lineHeight(p).once(&lineHeightResult))
+		if(whiteSpace(p).any() && character(p, '/').once() && whiteSpace(p).any() && lineHeight(p).once(&lineHeightResult))
 			t2.commit();
 	}
 
