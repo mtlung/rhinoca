@@ -149,6 +149,7 @@ struct Canvas
 		float fillColor[4];
 		int compisitionOperation;
 		ConstString fontName;
+		ConstString fontStyle;
 		ro::Mat4 transform;
 	};
 	State _currentState;

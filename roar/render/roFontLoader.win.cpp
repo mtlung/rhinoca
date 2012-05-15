@@ -3,12 +3,13 @@
 #include "roCanvas.h"
 #include "../base/roArray.h"
 #include "../base/roLog.h"
+#include "../base/roParser.h"
 #include "../base/roTypeCast.h"
 #include "../platform/roPlatformHeaders.h"
 #include "../roSubSystems.h"
 #include "../base/roStopWatch.h"
 #include <stdio.h>
-#include <algorithm>
+#include <algorithm>	// TODO: Remove the dependency on STL
 
 namespace ro {
 
@@ -173,11 +174,8 @@ void FontLoader::run(TaskPool* taskPool)
 
 void FontLoader::checkRequest(TaskPool* taskPool)
 {
-	roDetectFrameSpike("checkRequest");
-
 	font->requestMainThread.swap(font->requestLoadThread);
 
-	static int count = 0;
 	// Process reply
 	for(roSize i=0; i<font->replys.size(); ++i)
 	{
@@ -186,11 +184,6 @@ void FontLoader::checkRequest(TaskPool* taskPool)
 		FontData* fontData = font->typefaces.find(reply.fontHash, Pred::fontDataEqual);
 		roAssert(fontData);
 
-	if(reply.glyphs.size() > count) {
-		count = reply.glyphs.size();
-		printf("\rcount=%d, total=%d\n", count, fontData->glyphs.size());
-	}
-		{roDetectFrameSpike("insert");
 		// Insert the glyph from reply.glyphs into fontData->glyphs in asscending order of the code point
 		fontData->glyphs.insert(fontData->glyphs.size(), reply.glyphs.begin(), reply.glyphs.end());
 /*		for(roSize j=0; j<reply.glyphs.size(); ++j) {
@@ -202,7 +195,6 @@ void FontLoader::checkRequest(TaskPool* taskPool)
 		}*/
 //		roInsertionSort(fontData->glyphs.begin(), fontData->glyphs.end());
 		std::sort(fontData->glyphs.begin(), fontData->glyphs.end());
-		}
 
 		// Create new texture if necessary
 		if(reply.texIndex >= fontData->textures.size()) {
@@ -526,6 +518,18 @@ bool resourceLoadWin32Font(ResourceManager* mgr, Resource* resource)
 	return true;
 }
 
+using namespace Parsing;
+
+static void fontParserCallback(ParserResult* result, Parser* parser)
+{
+	FontData* fontData = reinterpret_cast<FontData*>(parser->userdata);
+
+	if(roStrCmp(result->type, "fontFamily") == 0)
+		fontData->fontName = ConstString(result->begin, result->end - result->begin);
+	else if(roStrCmp(result->type, "fontSize") == 0)
+		result = result;
+}
+
 bool FontImpl::setStyle(const char* styleStr)
 {
 	roUint32 hash = stringHash(styleStr, 0);
@@ -538,15 +542,22 @@ bool FontImpl::setStyle(const char* styleStr)
 	}
 
 	FontData fontData;
-	fontData.fontName = styleStr;
-	// For the formula to calculate the font height:
-	// http://msdn.microsoft.com/en-us/library/dd183499%28v=vs.85%29.aspx
-	fontData.fontSize = -MulDiv(40, ::GetDeviceCaps(hdc, LOGPIXELSY), 72);
-	fontData.fontWeight = FW_DONTCARE;
-	fontData.italic = false;
 	fontData.fontHash = hash;
 	currnetFontForDraw = typefaces.size();
 	typefaces.pushBack(fontData);
+
+	// Give the font some default values
+	// For the formula to calculate the font height:
+	// http://msdn.microsoft.com/en-us/library/dd183499%28v=vs.85%29.aspx
+	fontData.fontSize = -MulDiv(12, ::GetDeviceCaps(hdc, LOGPIXELSY), 72);
+	fontData.fontWeight = FW_DONTCARE;
+	fontData.italic = false;
+
+	// Parser the style string and set the font params
+	Parser parser(styleStr, styleStr + roStrLen(styleStr), fontParserCallback, &fontData);
+	
+	if(!ro::Parsing::font(&parser).once())
+		roLog("warn", "Invalid CSS font style string '%s'\n", styleStr);
 
 	return true;
 }

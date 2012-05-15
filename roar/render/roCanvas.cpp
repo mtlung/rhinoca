@@ -5,6 +5,7 @@
 #include "shivavg/vgu.h"
 #include "shivavg/shContext.h"
 #include "../base/roLog.h"
+#include "../base/roParser.h"
 #include "../base/roStringHash.h"
 #include "../base/roTypeCast.h"
 #include "../roSubSystems.h"
@@ -819,7 +820,7 @@ void Canvas::fillText(const char* utf8Str, float x, float y, float maxWidth)
 	if(!roSubSystems || !roSubSystems->fontMgr) return;
 
 	if(FontPtr font = roSubSystems->fontMgr->getFont(_currentState.fontName.c_str())) {
-		font->setStyle(_currentState.fontName.c_str());
+		font->setStyle(_currentState.fontStyle.c_str());
 		font->draw(utf8Str, x, y, maxWidth, *this);
 	}
 }
@@ -912,9 +913,21 @@ void Canvas::setGlobalColor(float r, float g, float b, float a)
 	_currentState.globalColor[3] = a;
 }
 
+static void fontParserCallback(Parsing::ParserResult* result, Parsing::Parser* parser)
+{
+	Canvas* canvas = reinterpret_cast<Canvas*>(parser->userdata);
+
+	// Extract the font family, which is important for knowing which font resource to use
+	if(roStrCmp(result->type, "fontFamily") == 0)
+		canvas->_currentState.fontName = ConstString(result->begin, result->end - result->begin);
+}
+
 void Canvas::setFont(const char* style)
 {
-	_currentState.fontName = style;
+	using namespace Parsing;
+	Parser parser(style, style + roStrLen(style), fontParserCallback, this);
+	ro::Parsing::font(&parser).once();
+	_currentState.fontStyle = style;
 }
 
 struct CompositionMapping { StringHash h; VGBlendMode mode; };
