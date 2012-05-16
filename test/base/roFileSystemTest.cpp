@@ -75,7 +75,7 @@ TEST_FIXTURE(FileSystemTest, httpFS_read)
 //	return;	// Enable when needed
 
 	void* file = NULL;
-//	Status st = httpFileSystemOpenFile("http://www.gamearchitect.net/Images/bigben.gif", file);	// No chunked, know size
+//	Status st = httpFileSystemOpenFile("http://www.gamearchitect.net/Images/bigben.gif", file);
 	Status st = httpFileSystemOpenFile("http://yahoo.com", file);
 
 	roUint64 size = 0;

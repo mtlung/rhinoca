@@ -538,12 +538,12 @@ static void fontParserCallback(ParserResult* result, Parser* parser)
 			fontData->fontSize = -MulDiv(ptSize, ::GetDeviceCaps(impl->hdc, LOGPIXELSY), 72);
 		result = result;
 	}
-	else if(roStrCmp(result->type, "fontweight") == 0) {
-		if(stringHash(result->begin, result->end - result->begin) == stringHash("bold"))
+	else if(roStrCmp(result->type, "fontWeight") == 0) {
+		if(roStrnStr(result->begin, result->end - result->begin, "bold"))
 			fontData->fontWeight = FW_BOLD;
 	}
 	else if(roStrCmp(result->type, "fontStyle") == 0) {
-		if(stringHash(result->begin, result->end - result->begin) == stringHash("italic"))
+		if(roStrnStr(result->begin, result->end - result->begin, "italic"))
 			fontData->italic = true;
 	}
 }

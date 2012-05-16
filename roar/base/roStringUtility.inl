@@ -100,6 +100,21 @@ inline const char* roStrStr(const char* a, const char* b)
 	return roStrStr((char*)a, b);
 }
 
+inline const char* roStrnStr(const char* a, roSize aLen, const char* b)
+{
+	return roStrnStr((char*)a, aLen, b);
+}
+
+inline const char* roStrrStr(const char* a, const char* b)
+{
+	return roStrrStr((char*)a, b);
+}
+
+inline const char* roStrrnStr(const char* a, roSize aLen, const char* b)
+{
+	return roStrrnStr((char*)a, aLen, b);
+}
+
 // Borrowed from http://code.google.com/p/stringencoders/source/browse/trunk/src/modp_ascii.c
 inline char roToLower(char c)
 {

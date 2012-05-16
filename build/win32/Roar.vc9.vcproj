@@ -351,6 +351,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roCachedVal.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roFileSystem.cpp"
 				>
 			</File>

@@ -70,8 +70,8 @@ bool FontWeightMatcher::match(Parser* p)
 	Transcation t(p);
 
 	bool ret =
-		string(p, "normal").once() ||
-		string(p, "bold").once() ||
+		(string(p, "normal").once() && whiteSpace(p).atLeastOnce()) ||
+		(string(p, "bold").once() && whiteSpace(p).atLeastOnce()) ||
 		(string(p, "100").once() && whiteSpace(p).atLeastOnce()) ||
 		(string(p, "200").once() && whiteSpace(p).atLeastOnce()) ||
 		(string(p, "300").once() && whiteSpace(p).atLeastOnce()) ||
@@ -177,7 +177,8 @@ bool FontMatcher::match(Parser* p)
 	ParserResult fontStyleResult = { "fontStyle", NULL, NULL };
 	ParserResult fontWeightResult = { "fontWeight", NULL, NULL };
 
-	fontStyle(p).once(&fontStyleResult) || fontWeight(p).once(&fontWeightResult);
+	fontStyle(p).once(&fontStyleResult);
+	fontWeight(p).once(&fontWeightResult);
 
 	ParserResult fontSizeResult = { "fontSize", NULL, NULL };
 	if(!fontSize(p).once(&fontSizeResult))
