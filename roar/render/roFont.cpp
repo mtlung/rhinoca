@@ -67,18 +67,24 @@ Matcher<FontStyleMatcher> fontStyle(Parser* parser) {
 bool FontWeightMatcher::match(Parser* p)
 {
 	whiteSpace(p).any();
-	return
+	Transcation t(p);
+
+	bool ret =
 		string(p, "normal").once() ||
 		string(p, "bold").once() ||
-		string(p, "100").once() ||
-		string(p, "200").once() ||
-		string(p, "300").once() ||
-		string(p, "400").once() ||
-		string(p, "500").once() ||
-		string(p, "600").once() ||
-		string(p, "700").once() ||
-		string(p, "800").once() ||
-		string(p, "900").once();
+		(string(p, "100").once() && whiteSpace(p).atLeastOnce()) ||
+		(string(p, "200").once() && whiteSpace(p).atLeastOnce()) ||
+		(string(p, "300").once() && whiteSpace(p).atLeastOnce()) ||
+		(string(p, "400").once() && whiteSpace(p).atLeastOnce()) ||
+		(string(p, "500").once() && whiteSpace(p).atLeastOnce()) ||
+		(string(p, "600").once() && whiteSpace(p).atLeastOnce()) ||
+		(string(p, "700").once() && whiteSpace(p).atLeastOnce()) ||
+		(string(p, "800").once() && whiteSpace(p).atLeastOnce()) ||
+		(string(p, "900").once() && whiteSpace(p).atLeastOnce());
+	if(!ret) return false;
+
+	t.commit();
+	return true;
 }
 
 Matcher<FontWeightMatcher> fontWeight(Parser* parser) {
@@ -158,6 +164,10 @@ Matcher<FontStretchMatcher> fontStretch(Parser* parser) {
 	return ret;
 }
 
+// NOTE: For this we need a parser with back tracking support
+// http://pauillac.inria.fr/~ddr/camlp5/doc/htmlc/bparsers.html
+// For example: "100pt Calibri" should be reconized as fontSize and fontFamily,
+// but without back tracking, the first "100" will reconized as fontWeight
 bool FontMatcher::match(Parser* p)
 {
 	whiteSpace(p).any();

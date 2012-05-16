@@ -538,6 +538,14 @@ static void fontParserCallback(ParserResult* result, Parser* parser)
 			fontData->fontSize = -MulDiv(ptSize, ::GetDeviceCaps(impl->hdc, LOGPIXELSY), 72);
 		result = result;
 	}
+	else if(roStrCmp(result->type, "fontweight") == 0) {
+		if(stringHash(result->begin, result->end - result->begin) == stringHash("bold"))
+			fontData->fontWeight = FW_BOLD;
+	}
+	else if(roStrCmp(result->type, "fontStyle") == 0) {
+		if(stringHash(result->begin, result->end - result->begin) == stringHash("italic"))
+			fontData->italic = true;
+	}
 }
 
 bool FontImpl::setStyle(const char* styleStr)
