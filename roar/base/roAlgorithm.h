@@ -4,19 +4,29 @@
 #include "../platform/roCompiler.h"
 
 // Searching
-template<class T>			T*	roArrayFind	(T* begin, T* end, const T& key);
-template<class T>			T*	roArrayFind	(T* begin, roSize count, const T& key);
-template<class T, class K>	T*	roArrayFind	(T* begin, roSize count, const K& key, bool(*equal)(const T&, const K&));
+template<class T>			T*		roArrayFind	(T* begin, T* end, const T& key);
+template<class T>			T*		roArrayFind	(T* begin, roSize count, const T& key);
+template<class T, class K>	T*		roArrayFind	(T* begin, roSize count, const K& key, bool(*equal)(const T&, const K&));
 
-template<class T>			T*	roLowerBound(T* ary, roSize count, const T& key);
-template<class T, class K>	T*	roLowerBound(T* ary, roSize count, const K& key, bool(*less)(const T&, const K&));
-template<class T>			T*	roUpperBound(T* ary, roSize count, const T& key);
-template<class T, class K>	T*	roUpperBound(T* ary, roSize count, const K& key, bool(*less)(const K&, const T&));
+template<class T>			T*		roLowerBound(T* ary, roSize count, const T& key);
+template<class T, class K>	T*		roLowerBound(T* ary, roSize count, const K& key, bool(*less)(const T&, const K&));
+template<class T>			T*		roUpperBound(T* ary, roSize count, const T& key);
+template<class T, class K>	T*		roUpperBound(T* ary, roSize count, const K& key, bool(*less)(const K&, const T&));
+
+//
+template<class T>			bool	roEqual(T* begin, T* end, T* begin2);
+template<class T, class P>	bool	roEqual(T* begin, T* end, T* begin2, P p);
+
+//
+template<class T>			T*		roPartition(T* begin, T* end, bool(*pred)(const T&));
 
 // Sorting
-template<class T>	void roInsertionSort(T* begin, T* end);	/// Stable, O(1) space, O(n2) compare and swaps, adaptive
-template<class T>	void roSelectionSort(T* begin, T* end);	/// Not stable, O(1) space, O(n2) compare, O(n) swaps, non-adaptive
-
+template<class T>			void	roInsertionSort(T* begin, T* end);	/// Stable, O(1) space, O(n2) compare and swaps, adaptive
+template<class T, class P>	void	roInsertionSort(T* begin, T* end, P p);
+template<class T>			void	roSelectionSort(T* begin, T* end);	/// Not stable, O(1) space, O(n2) compare, O(n) swaps, non-adaptive
+template<class T, class P>	void	roSelectionSort(T* begin, T* end, P p);
+template<class T>			void	roQuickSort(T* begin, T* end);		/// Not stable, O(1) space
+template<class T, class P>	void	roQuickSort(T* begin, T* end, P p);
 
 template<class T>
 T* roArrayFind(T* begin, T* end, const T& key)
@@ -129,25 +139,114 @@ T* roUpperBound(T* ary, roSize count, const K& key, bool(*less)(const K&, const 
 }
 
 template<class T>
-void roInsertionSort(T* begin, T* end)
+bool roEqual(T* begin, T* end, T* begin2)
+{
+	for(T* i=begin; i<end; ++i, ++begin2)
+		if(!(*i == *begin2))
+			return false;
+	return true;
+}
+
+template<class T, class Pred>
+bool roEqual(T* begin, T* end, T* begin2, Pred pred)
+{
+	for(T* i=begin; i<end; ++i, ++begin2)
+		if(!pred(*i, *begin2))
+			return false;
+	return true;
+}
+
+/// Parition the sequence into 2 such that left part fulfill pred, and the second do not
+/// Return the first element which do not fulfill pred
+template<class T>
+T* roPartition(T* begin, T* end, bool(*pred)(const T&))
+{
+	T* p = begin;
+	for(T* i=begin; i<end; ++i) {
+		if(pred(*i))
+			roSwap(*i, *p), ++p;
+	}
+	return p;
+}
+
+template<class T, class Pred>
+void roInsertionSort(T* begin, T* end, Pred pred)
 {
 	roSize count = end - begin;
 	for(roSize i=1; i<count; ++i) {
-		for(roSize j=i; j>0 && begin[j] < begin[j-1]; --j)
+		for(roSize j=i; j>0 && pred(begin[j], begin[j-1]); --j)
 			roSwap(begin[j], begin[j-1]);
+	}
+}
+
+template<class T>
+void roInsertionSort(T* begin, T* end)
+{
+	struct _Less { bool operator()(const T& a, const T& b) {
+		return a < b;
+	}};
+	roInsertionSort(begin, end, _Less());
+}
+
+template<class T, class Pred>
+void roSelectionSort(T* begin, T* end, Pred pred)
+{
+	roSize count = end - begin;
+	for(roSize i=0; i<count; ++i) {
+		roSize k=i;
+		for(roSize j=i+1; j<count; ++j)
+			if(pred(begin[j], begin[k])) k = j;
+		roSwap(begin[i], begin[k]);
 	}
 }
 
 template<class T>
 void roSelectionSort(T* begin, T* end)
 {
-	roSize count = end - begin;
-	for(roSize i=0; i<count; ++i) {
-		roSize k=i;
-		for(roSize j=i+1; j<count; ++j)
-			if(begin[j] < begin[k]) k = j;
-		roSwap(begin[i], begin[k]);
-	}
+	struct _Less { bool operator()(const T& a, const T& b) {
+		return a < b;
+	}};
+	roSelectionSort(begin, end, _Less());
+}
+
+template<class T, class Pred>
+void roQuickSort(T* begin, T* end, Pred pred)
+{
+	if(end - begin < 5)
+		return roSelectionSort(begin, end, pred);
+
+	struct Local { static T* partition(T* b, T* e, Pred pred) {
+		roAssert(e - b > 2);
+		T* p = b;
+		T* pivot = b + (e - b) / 2;
+		T* l = e - 1;	// The last element
+
+		if(pred(*pivot, *b)) roSwap(*pivot, *b);
+		if(pred(*l, *pivot)) roSwap(*l, *pivot);
+		if(pred(*pivot, *b)) roSwap(*pivot, *b);
+
+		roSwap(*pivot, *l);	// Move pivot to end
+		pivot = l;
+		for(T* i=b; i<l; ++i) {
+			if(pred(*i, *pivot))
+				roSwap(*i, *p), ++p;
+		}
+		roSwap(*p, *l); // Move pivot to its final place
+		return p;
+	}};
+
+	T* pivot = Local::partition(begin, end, pred);
+	roQuickSort(begin, pivot, pred);
+	roQuickSort(pivot+1, end, pred);
+}
+
+template<class T>
+void roQuickSort(T* begin, T* end)
+{
+	struct _Less { bool operator()(const T& a, const T& b) {
+		return a < b;
+	}};
+	roQuickSort(begin, end, _Less());
 }
 
 #endif	// __roAlgorithm_h__

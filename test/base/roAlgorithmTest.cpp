@@ -29,6 +29,43 @@ TEST_FIXTURE(AlgorithmTest, lowerBound)
 	}
 }
 
+TEST_FIXTURE(AlgorithmTest, partition)
+{
+	struct Pred { static bool lessThan5(const int& x) {
+		return x < 4;
+	}};
+	
+	{	int v[]			= { 7, 1, 8, 4, 5, 0, 2, 2, 3 };
+		int expected[]	= { 1, 4, 0, 2, 2, 3, 7, 5, 8 };
+		CHECK_EQUAL(7, *roPartition(v, v + roCountof(v), Pred::lessThan5));
+		CHECK(roEqual(v, v + roCountof(v), expected));
+	}
+
+	{	int v[]			= { 10, 1, 9, 2, 0, 5, 7, 3, 4, 6, 8 };
+		int expected[]	= { 1, 2, 0, 3, 4, 5, 7, 10, 9, 6, 8 };
+		CHECK_EQUAL(5, *roPartition(v, v + roCountof(v), Pred::lessThan5));
+		CHECK(roEqual(v, v + roCountof(v), expected));
+	}
+
+	{	int v[]			= { 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 };
+		int expected[]	= { 9, 8, 0, 3, 4, 5, 3, 2, 1, 0 };
+		CHECK_EQUAL(5, *roPartition(v, v + roCountof(v), Pred::lessThan5));
+		CHECK(roEqual(v, v + roCountof(v), expected));
+	}
+
+	{	int v[]			= { 4, 4, 4, 4, 4 };
+		CHECK_EQUAL(v + roCountof(v), roPartition(v, v + roCountof(v), Pred::lessThan5));
+	}
+
+	{	int v[]			= { 6, 6, 6, 6, 6 };
+		CHECK_EQUAL(v, roPartition(v, v + roCountof(v), Pred::lessThan5));
+	}
+
+	{	int v[]			= { 1, 6, 6, 6, 6 };
+		CHECK_EQUAL(v + 1, roPartition(v, v + roCountof(v), Pred::lessThan5));
+	}
+}
+
 TEST_FIXTURE(AlgorithmTest, sort)
 {
 	struct Check { static bool isSorted(const Array<int>& a) {
@@ -47,6 +84,7 @@ TEST_FIXTURE(AlgorithmTest, sort)
 
 	{	// Insertion sort
 		Array<int> v;
+		roInsertionSort(v.begin(), v.end());
 
 		v = accending;
 		roInsertionSort(v.begin(), v.end());
@@ -63,6 +101,7 @@ TEST_FIXTURE(AlgorithmTest, sort)
 
 	{	// Selection sort
 		Array<int> v;
+		roSelectionSort(v.begin(), v.end());
 
 		v = accending;
 		roSelectionSort(v.begin(), v.end());
@@ -74,6 +113,22 @@ TEST_FIXTURE(AlgorithmTest, sort)
 
 		v = random;
 		roSelectionSort(v.begin(), v.end());
+		CHECK(Check::isSorted(v));
+	}
+
+	{	// Quick sort
+		Array<int> v;
+
+		v = accending;
+		roQuickSort(v.begin(), v.end());
+		CHECK(Check::isSorted(v));
+
+		v = decending;
+		roQuickSort(v.begin(), v.end());
+		CHECK(Check::isSorted(v));
+
+		v = random;
+		roQuickSort(v.begin(), v.end());
 		CHECK(Check::isSorted(v));
 	}
 }
