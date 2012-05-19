@@ -404,15 +404,15 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 			_mappedVBuffer = (char*)_driver->mapBuffer(_vBuffer, roRDriverMapUsage_ReadWrite, 0, _vBuffer->sizeInBytes);
 		}
 
-		roMemcpy(_mappedVBuffer + _batchedQuadCount * sizeof(vertex), vertex, sizeof(vertex));
-		++_batchedQuadCount;
-
 		if(_batchModeCurrentTexture && texture != _batchModeCurrentTexture) {
 			_flushDrawImageBatch();
 			// TODO: Might not be optimal: every unmap is uploading the whole _vBuffer
 			// which is bigger than necessary
 			_mappedVBuffer = (char*)_driver->mapBuffer(_vBuffer, roRDriverMapUsage_Write, 0, _vBuffer->sizeInBytes);
 		}
+
+		roMemcpy(_mappedVBuffer + _batchedQuadCount * sizeof(vertex), vertex, sizeof(vertex));
+		++_batchedQuadCount;
 
 		_batchModeCurrentTexture = texture;
 	}

@@ -9,7 +9,6 @@
 #include "../roSubSystems.h"
 #include "../base/roStopWatch.h"
 #include <stdio.h>
-#include <algorithm>	// TODO: Remove the dependency on STL
 
 namespace ro {
 
@@ -26,7 +25,7 @@ struct Glyph {
 	roInt16 originX, originY;
 	roInt16 advanceX, advanceY;
 
-	bool operator<(const Glyph& rhs) {
+	bool operator<(const Glyph& rhs) const {
 		return codePoint < rhs.codePoint;
 	}
 };
@@ -59,10 +58,10 @@ struct FontData
 };
 
 FontData::FontData()
-	: fontSize(0)
+	: fontHash(0)
+	, fontSize(0)
 	, fontWeight(FW_DONTCARE)
 	, italic(false)
-	, fontHash(0)
 	, hFont(NULL)
 	, currentTextureIdx(0)
 	, dstX(0), dstY(0)
@@ -186,15 +185,7 @@ void FontLoader::checkRequest(TaskPool* taskPool)
 
 		// Insert the glyph from reply.glyphs into fontData->glyphs in asscending order of the code point
 		fontData->glyphs.insert(fontData->glyphs.size(), reply.glyphs.begin(), reply.glyphs.end());
-/*		for(roSize j=0; j<reply.glyphs.size(); ++j) {
-			roAssert(reply.glyphs[j].texIndex == reply.texIndex);
-			struct Pred { static bool less(const Glyph& lhs, const Glyph& rhs) {
-				return lhs.codePoint < rhs.codePoint;
-			}};
-			fontData->glyphs.insertSorted(reply.glyphs[j], &Pred::less);
-		}*/
-//		roInsertionSort(fontData->glyphs.begin(), fontData->glyphs.end());
-		std::sort(fontData->glyphs.begin(), fontData->glyphs.end());
+		roQuickSort(fontData->glyphs.begin(), fontData->glyphs.end());
 
 		// Create new texture if necessary
 		if(reply.texIndex >= fontData->textures.size()) {
@@ -454,7 +445,7 @@ void FontLoader::processRequest(TaskPool* taskPool)
 	font->requestLoadThread.clear();
 
 	nextFun = &FontLoader::checkRequest;
-	return reSchedule(false, taskPool->mainThreadId());
+	return reSchedule(true, taskPool->mainThreadId());
 }
 
 static int CALLBACK _enumFamCallBack(const LOGFONTW* lplf, const TEXTMETRICW* lpntm, DWORD fontType, LPARAM)
@@ -655,6 +646,9 @@ void FontImpl::draw(const char* utf8Str, float x_, float y_, float maxWidth, Can
 	}
 
 	c.endDrawImageBatch();
+
+	if(!requestMainThread.isEmpty())
+		roSubSystems->taskPool->resume(taskLoaded);
 }
 
 }	// namespace ro
