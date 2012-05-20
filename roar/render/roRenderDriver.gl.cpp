@@ -719,6 +719,9 @@ static bool _resizeBuffer(roRDriverBuffer* self, roSize sizeInBytes)
 		self->sizeInBytes = sizeInBytes;
 	}
 	else {
+		// TODO: This implementation will change the value of impl->glh!
+		// which gives problem when roRDriverBuffer is binded to the shader buffers,
+		// we should try our best to keep impl->glh unchange!
 		roRDriverBuffer* newBuf = _newBuffer();
 		if(!_initBuffer(newBuf, impl->type, impl->usage, NULL, sizeInBytes)) return false;
 
@@ -1679,6 +1682,7 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 	}
 
 	glBindVertexArray(vao);
+	ctx->bindedIndexCount = 0;
 
 	// Loop for each inputs and do the necessary binding
 	for(unsigned attri=0; attri<inputCount; ++attri)
@@ -1695,6 +1699,7 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 		{
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->glh);
 			ctx->currentIndexBufSysMemPtr = buffer->systemBuf;
+			ctx->bindedIndexCount = buffer->sizeInBytes / sizeof(roUint16);
 		}
 		// Bind vertex buffer
 		else if((buffer->type == roRDriverBufferType_Vertex) && !vaoCacheFound)
@@ -1756,6 +1761,8 @@ static void _drawPrimitiveIndexed(roRDriverPrimitiveType type, roSize offset, ro
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx) return;
 
+	roAssert(indexCount <= ctx->bindedIndexCount);
+
 	GLenum mode = _primitiveTypeMappings[type];
 	GLenum indexType = GL_UNSIGNED_SHORT;
 	ptrdiff_t byteOffset = offset * sizeof(roUint16);
@@ -1764,7 +1771,8 @@ static void _drawPrimitiveIndexed(roRDriverPrimitiveType type, roSize offset, ro
 	if(ctx->currentIndexBufSysMemPtr)
 		byteOffset += ptrdiff_t(ctx->currentIndexBufSysMemPtr);
 
-	glDrawElements(mode, num_cast<GLsizei>(indexCount), indexType, (void*)byteOffset);
+	roUint16 index[] = { 0, 1, 2, 1, 2, 3 };
+	glDrawElements(mode, num_cast<GLsizei>(indexCount), indexType, index);
 	checkError();
 }
 

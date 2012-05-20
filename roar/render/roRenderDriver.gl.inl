@@ -131,4 +131,6 @@ struct roRDriverContextImpl : public roRDriverContext
 
 	Array<RenderTarget> renderTargetCache;
 	Array<DepthStencilBuffer> depthStencilBufferCache;
+
+	unsigned bindedIndexCount;	// For debug purpose
 };

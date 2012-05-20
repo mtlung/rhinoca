@@ -294,6 +294,7 @@ struct ConstStringHashTable
 			return _nullNode;
 
 		const StringHash hash = stringHash(str, count);
+		const roSize length = count == 0 ? roStrLen(str) : count;
 
 		ScopeLock lock(_mutex);
 		const roSize index = hash % _buckets.size();
@@ -301,18 +302,17 @@ struct ConstStringHashTable
 		// Find any string with the same hash value
 		for(Node* n = _buckets[index]; n; n = n->next) {
 			if(n->hash == hash) {
-				roAssert(roStrCmp(n->stringValue(), str) == 0 && "String hash collision in ConstString" );
+				roAssert(roStrnCmp(n->stringValue(), str, length) == 0 && "String hash collision in ConstString" );
 				return *n;
 			}
 		}
 
-		const roSize length = roStrLen(str) + 1;
-		if(Node* n = _allocator.malloc(sizeof(Node) + length).cast<Node>()) {
-			memcpy((void*)n->stringValue(), str, length);
+		if(Node* n = _allocator.malloc(sizeof(Node) + length + 1).cast<Node>()) {
+			memcpy((void*)n->stringValue(), str, length + 1);
 			n->hash = hash;
 			n->lowerCaseHash = 0;	// We will assign it lazily
 			n->refCount = 0;
-			n->size = length - 1;
+			n->size = length;
 
 			n->next = _buckets[index];
 			_buckets[index] = n;

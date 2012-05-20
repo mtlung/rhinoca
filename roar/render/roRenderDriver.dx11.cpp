@@ -1618,6 +1618,7 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 		inputLayout = &ctx->inputLayoutCache.back();
 	}
 
+	ctx->bindedIndexCount = 0;
 	unsigned slotCounter = 0;
 	TinyArray<ID3D11Buffer*, 8> vertexBuffers;
 
@@ -1696,6 +1697,7 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 		// Bind index buffer
 		else if(buffer->type == roRDriverBufferType_Index)
 		{
+			ctx->bindedIndexCount = buffer->sizeInBytes / sizeof(roUint16);
 			ctx->dxDeviceContext->IASetIndexBuffer(buffer->dxBuffer, DXGI_FORMAT_R16_UINT, 0);
 		}
 		else {
@@ -1838,6 +1840,7 @@ static void _drawPrimitiveIndexed(roRDriverPrimitiveType type, roSize offset, ro
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx) return;
+	roAssert(indexCount <= ctx->bindedIndexCount);
 	ctx->dxDeviceContext->IASetPrimitiveTopology(_primitiveTypeMappings[type]);
 	ctx->dxDeviceContext->DrawIndexed(num_cast<UINT>(indexCount), num_cast<UINT>(offset), 0);
 }

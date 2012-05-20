@@ -159,4 +159,6 @@ struct roRDriverContextImpl : public roRDriverContext
 
 	unsigned triangleFanIndexBufferSize;
 	roRDriverBuffer* triangleFanIndexBuffer;	// An index buffer dedicated to draw triangle fan
+
+	unsigned bindedIndexCount;	// For debug purpose
 };
