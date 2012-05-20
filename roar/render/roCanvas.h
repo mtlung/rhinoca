@@ -118,24 +118,34 @@ struct Canvas
 
 // Private
 	void _flushDrawImageBatch();
+	void _drawImageDrawcall(roRDriverTexture* texture, roSize quadCount);
 
 	roRDriver* _driver;
 	roRDriverContext* _context;
 	roRDriverBuffer* _vBuffer;
+	roRDriverBuffer* _iBuffer;
 	roRDriverBuffer* _uBuffer;
 	roRDriverShader* _vShader;
 	roRDriverShader* _pShader;
 	roRDriverTextureState _textureState;
 	roRDriverShaderTextureInput _textureInput;
-	StaticArray<roRDriverShaderBufferInput, 4> _bufferInputs;
+	StaticArray<roRDriverShaderBufferInput, 5> _bufferInputs;
 
 	float _targetWidth;
 	float _targetHeight;
 
+	// For image draw batching
 	bool _isBatchMode;
-	unsigned _batchedQuadCount;
-	roRDriverTexture* _batchModeCurrentTexture;
+	roUint16 _batchedQuadCount;
 	char* _mappedVBuffer;
+	roUint16* _mappedIBuffer;
+	struct PerTextureQuadList {
+		roRDriverTexture* tex;
+		roUint16 quadCount;
+		struct Range { roUint16 begin, end; };
+		ro::Array<Range> range;
+	};
+	ro::Array<PerTextureQuadList> perTextureQuadList;
 
 	struct OpenVG;
 	OpenVG* _openvg;

@@ -376,7 +376,7 @@ void FontLoader::processRequest(TaskPool* taskPool)
 		::SelectObject(hdc, fontData->hFont);
 		roSize bufSize = ::GetGlyphOutlineW(hdc, codePoint, GGO_GRAY8_BITMAP, &glyphMetrics, 0, NULL, &matrix);
 		if(GDI_ERROR == bufSize) {
-			roLog("warn", "GetGlyphOutlineW for code point %s failed\n", codePoint);
+			roLog("warn", "GetGlyphOutlineW for code point %d failed\n", codePoint);
 			continue;
 		}
 

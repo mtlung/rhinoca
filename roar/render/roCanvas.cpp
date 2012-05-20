@@ -22,7 +22,6 @@ Canvas::Canvas()
 	, _vShader(NULL), _pShader(NULL)
 	, _targetWidth(0), _targetHeight(0)
 	, _isBatchMode(false), _batchedQuadCount(0)
-	, _batchModeCurrentTexture(NULL)
 	, _mappedVBuffer(NULL)
 	, _openvg(NULL)
 {
@@ -116,9 +115,11 @@ void Canvas::init()
 	roVerify(_driver->initShader(_pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
 
 	// Create vertex buffer
-	float vertex[6][6] = { {-1,1,0,1, 0,1}, {-1,-1,0,1, 0,0}, {1,-1,0,1, 1,0}, {1,1,0,1, 1,1} };
 	_vBuffer = _driver->newBuffer();
-	roVerify(_driver->initBuffer(_vBuffer, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, vertex, sizeof(vertex)));
+	roVerify(_driver->initBuffer(_vBuffer, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, NULL, 4 * 6 * sizeof(float)));
+
+	_iBuffer = _driver->newBuffer();
+	roVerify(_driver->initBuffer(_iBuffer, roRDriverBufferType_Index, roRDriverDataUsage_Stream, NULL, 6 * sizeof(roUint16)));
 
 	// Create uniform buffer
 	bool isRtTexture[16*2] = {0};	// In DirectX the size of the const buffer must be multiple of 16
@@ -131,6 +132,7 @@ void Canvas::init()
 		{ _vShader, _vBuffer, "texCoord", 0, sizeof(float)*4, sizeof(float)*6, 0 },
 		{ _vShader, _uBuffer, "constants", 0, 0, 0, 0 },
 		{ _pShader, _uBuffer, "constants", 0, 0, 0, 0 },
+		{ NULL,		_iBuffer, "", 0, 0, 0, 0 },
 	};
 	roAssert(roCountof(input) == _bufferInputs.size());
 	for(roSize i=0; i<roCountof(input); ++i)
@@ -206,6 +208,7 @@ void Canvas::destroy()
 {
 	if(!_context || !_driver) return;
 	_driver->deleteBuffer(_vBuffer);
+	_driver->deleteBuffer(_iBuffer);
 	_driver->deleteBuffer(_uBuffer);
 	_driver->deleteShader(_vShader);
 	_driver->deleteShader(_pShader);
@@ -332,6 +335,39 @@ void Canvas::_flushDrawImageBatch()
 	if(_batchedQuadCount == 0)
 		return;
 
+	for(roSize i=0; i<perTextureQuadList.size(); ++i)
+	{
+		// Resize the index buffer if needed
+		roSize indexBufSize = perTextureQuadList[i].quadCount * 6 * sizeof(roUint16);
+		if(_iBuffer->sizeInBytes <= indexBufSize)
+			roVerify(_driver->resizeBuffer(_iBuffer, indexBufSize));
+
+		// Build the index buffer
+		roUint16 iIdx = 0;
+		ro::Array<PerTextureQuadList::Range>& ranges = perTextureQuadList[i].range;
+		_mappedIBuffer = (roUint16*)_driver->mapBuffer(_iBuffer, roRDriverMapUsage_Write, 0, indexBufSize);
+		for(roSize j=0; j<ranges.size(); ++j) {
+			for(roUint16 k=ranges[j].begin; k<ranges[j].end; ++k) {
+				_mappedIBuffer[iIdx++] = k * 4 + 0;
+				_mappedIBuffer[iIdx++] = k * 4 + 1;
+				_mappedIBuffer[iIdx++] = k * 4 + 2;
+				_mappedIBuffer[iIdx++] = k * 4 + 1;
+				_mappedIBuffer[iIdx++] = k * 4 + 2;
+				_mappedIBuffer[iIdx++] = k * 4 + 3;
+			}
+		}
+		_driver->unmapBuffer(_iBuffer);
+
+		_drawImageDrawcall(perTextureQuadList[i].tex, perTextureQuadList[i].quadCount);
+	}
+
+	_batchedQuadCount = 0;
+	perTextureQuadList.clear();
+}
+
+void Canvas::_drawImageDrawcall(roRDriverTexture* texture, roSize quadCount)
+{
+	// Shader constants
 	struct Constants {
 		Vec4 color;
 		roInt32 isRtTexture;
@@ -340,26 +376,26 @@ void Canvas::_flushDrawImageBatch()
 	};
 	Constants constants = {
 		Vec4(_currentState.globalColor),
-		_batchModeCurrentTexture->flags & roRDriverTextureFlag_RenderTarget,
-		_batchModeCurrentTexture->format == roRDriverTextureFormat_A,
-		_batchModeCurrentTexture->format == roRDriverTextureFormat_L,
+		texture->flags & roRDriverTextureFlag_RenderTarget,
+		texture->format == roRDriverTextureFormat_A,
+		texture->format == roRDriverTextureFormat_L,
 	};
 	roVerify(_driver->updateBuffer(_uBuffer, 0, &constants, sizeof(constants)));
 
+	// Shaders
 	roRDriverShader* shaders[] = { _vShader, _pShader };
 	roVerify(_driver->bindShaders(shaders, roCountof(shaders)));
 	roVerify(_driver->bindShaderBuffers(_bufferInputs.typedPtr(), _bufferInputs.size(), NULL));
 
+	// Texutre
 	_driver->setTextureState(&_textureState, 1, 0);
-	_textureInput.texture = _batchModeCurrentTexture;
+	_textureInput.texture = texture;
 	roVerify(_driver->bindShaderTextures(&_textureInput, 1));
 
 	// Blend state
 	updateBlendingStateGL(shGetContext(), 0);	// TODO: It would be an optimization to know the texture has transparent or not
 
-	_driver->drawPrimitive(roRDriverPrimitiveType_TriangleList, 0, _batchedQuadCount * 6, 0);
-
-	_batchedQuadCount = 0;
+	_driver->drawPrimitiveIndexed(roRDriverPrimitiveType_TriangleList, 0, quadCount * 6, 0);
 }
 
 // TODO: There are still rooms for optimization
@@ -381,11 +417,8 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 	sy1 *= invh; sy2 *= invh;
 
 	// TODO: Optimize the vertex buffer size by using indexed draw
-	float vertex[6][6] = {	// Vertex are arranged in a 'z' order, in order to use TriangleStrip as primitive
+	float vertex[4][6] = {	// Vertex are arranged in a 'z' order, in order to use TriangleStrip as primitive
 		{dx1, dy1, z, 1,	sx1,sy1},
-		{dx2, dy1, z, 1,	sx2,sy1},
-		{dx1, dy2, z, 1,	sx1,sy2},
-
 		{dx2, dy1, z, 1,	sx2,sy1},
 		{dx1, dy2, z, 1,	sx1,sy2},
 		{dx2, dy2, z, 1,	sx2,sy2},
@@ -393,28 +426,43 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 
 	// Transform the vertex using the current transform
 	Mat4 mat44 = _orthoMat * _currentState.transform;
-	for(roSize i=0; i<6; ++i)
+	for(roSize i=0; i<4; ++i)
 		mat4MulVec3(mat44.mat, vertex[i], vertex[i]);
 
 	if(_isBatchMode) {
-		// Check if larger vertex buffer is needed
-		if(_vBuffer->sizeInBytes <= _batchedQuadCount * sizeof(vertex)) {
-			_driver->unmapBuffer(_vBuffer);
-			roVerify(_driver->resizeBuffer(_vBuffer, _vBuffer->sizeInBytes * 2 + sizeof(vertex)));
-			_mappedVBuffer = (char*)_driver->mapBuffer(_vBuffer, roRDriverMapUsage_ReadWrite, 0, _vBuffer->sizeInBytes);
+		// Search for the cache entry
+		PerTextureQuadList* listEntry = NULL;
+		for(roSize i=0; i<perTextureQuadList.size(); ++i) {
+			if(perTextureQuadList[i].tex == texture) {
+				listEntry = &perTextureQuadList[i];
+				break;
+			}
+		}
+		if(!listEntry) {
+			listEntry = &perTextureQuadList.pushBack();
+			listEntry->tex = texture;
+			listEntry->quadCount = 0;
+		}
+		listEntry->quadCount++;
+
+		// Insert into the vertex range
+		if(!listEntry->range.isEmpty() && listEntry->range.back().end == _batchedQuadCount)
+			listEntry->range.back().end++;
+		else {
+			PerTextureQuadList::Range range = { _batchedQuadCount, _batchedQuadCount + 1 };
+			listEntry->range.pushBack(range);
 		}
 
-		if(_batchModeCurrentTexture && texture != _batchModeCurrentTexture) {
-			_flushDrawImageBatch();
-			// TODO: Might not be optimal: every unmap is uploading the whole _vBuffer
-			// which is bigger than necessary
-			_mappedVBuffer = (char*)_driver->mapBuffer(_vBuffer, roRDriverMapUsage_Write, 0, _vBuffer->sizeInBytes);
+		// Check if larger vertex buffer is needed
+		if(_vBuffer->sizeInBytes <= (_batchedQuadCount + 1) * sizeof(vertex)) {
+			_driver->unmapBuffer(_vBuffer);
+			roSize larger = roMaxOf2(_vBuffer->sizeInBytes * 2, (_batchedQuadCount + 1) * sizeof(vertex));
+			roVerify(_driver->resizeBuffer(_vBuffer, larger));
+			_mappedVBuffer = (char*)_driver->mapBuffer(_vBuffer, roRDriverMapUsage_ReadWrite, 0, _vBuffer->sizeInBytes);
 		}
 
 		roMemcpy(_mappedVBuffer + _batchedQuadCount * sizeof(vertex), vertex, sizeof(vertex));
 		++_batchedQuadCount;
-
-		_batchModeCurrentTexture = texture;
 	}
 	else {
 		roAssert(_batchedQuadCount == 0);
@@ -422,7 +470,10 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 		roVerify(_driver->updateBuffer(_vBuffer, 0, vertex, sizeof(vertex)));
 		_batchedQuadCount = 1;
 
-		_batchModeCurrentTexture = texture;
+		roUint16 index[] = { 0, 1, 2, 1, 2, 3 };
+		roVerify(_driver->updateBuffer(_iBuffer, 0, index, sizeof(index)));
+
+		_drawImageDrawcall(texture, 1);
 		_flushDrawImageBatch();
 	}
 }
@@ -444,7 +495,6 @@ void Canvas::endDrawImageBatch()
 {
 	_flushDrawImageBatch();
 	_isBatchMode = false;
-	_batchModeCurrentTexture = NULL;
 }
 
 
