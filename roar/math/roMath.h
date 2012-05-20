@@ -47,6 +47,8 @@ bool roIsSameSign			(float v1, float v2);
 bool roIsPowerOfTwo			(unsigned x);
 unsigned roNextPowerOfTwo	(unsigned x);
 
+roUint64 roFactorial		(roUint64 n);
+
 // A bunch of interpolation functions
 // http://sol.gfxile.net/interpolation/index.html
 template<class T> T roStepLinear(const T& v1, const T& v2, float t);
@@ -115,6 +117,15 @@ inline unsigned roNextPowerOfTwo(unsigned x)
 	x = x | (x >> 8);
 	x = x | (x >>16);
 	return x + 1;
+}
+
+inline roUint64 roFactorial(roUint64 n)
+{
+	if(n > 20) { roAssert("roFactorial overflow"); return 0; }
+	roUint64 ret = 1;
+	if(n > 0) for(roUint64 i=n; i>=1; --i)
+		ret *= i;
+	return ret;
 }
 
 
