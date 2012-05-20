@@ -308,7 +308,8 @@ struct ConstStringHashTable
 		}
 
 		if(Node* n = _allocator.malloc(sizeof(Node) + length + 1).cast<Node>()) {
-			memcpy((void*)n->stringValue(), str, length + 1);
+			memcpy((void*)n->stringValue(), str, length);
+			((char*)n->stringValue())[length] = '\0';
 			n->hash = hash;
 			n->lowerCaseHash = 0;	// We will assign it lazily
 			n->refCount = 0;

@@ -41,7 +41,8 @@ namespace Parsing {
 bool FontFamilyMatcher::match(Parser* p)
 {
 	whiteSpace(p).any();
-	return cIdentifierString(p).once() ||
+	return 
+		anyCharExcept(p, " ,\t\n\r").atLeastOnce() ||
 		doubleQuotedString(p).once();
 }
 

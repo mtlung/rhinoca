@@ -1771,8 +1771,7 @@ static void _drawPrimitiveIndexed(roRDriverPrimitiveType type, roSize offset, ro
 	if(ctx->currentIndexBufSysMemPtr)
 		byteOffset += ptrdiff_t(ctx->currentIndexBufSysMemPtr);
 
-	roUint16 index[] = { 0, 1, 2, 1, 2, 3 };
-	glDrawElements(mode, num_cast<GLsizei>(indexCount), indexType, index);
+	glDrawElements(mode, num_cast<GLsizei>(indexCount), indexType, (void*)byteOffset);
 	checkError();
 }
 
