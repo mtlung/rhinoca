@@ -318,9 +318,9 @@ public:
     if (error_flag)
       return (-1);
 
-    int bytes_read = fread(Pbuf, 1, max_bytes_to_read, Pfile);
+    size_t bytes_read = fread(Pbuf, 1, max_bytes_to_read, Pfile);
 
-    if (bytes_read < max_bytes_to_read)
+    if (bytes_read < size_t(max_bytes_to_read))
     {
       if (ferror(Pfile))
       {
@@ -332,7 +332,7 @@ public:
       *Peof_flag = true;
     }
 
-    return (bytes_read);
+    return int(bytes_read);
   }
 
   bool get_error_status(void)
@@ -624,9 +624,9 @@ private:
   bool use_mmx;
   bool use_mmx_idct;
   bool mmx_active;
+  bool ready_flag;
 
   int error_code;
-  bool ready_flag;
 
   jmp_buf jmp_state;
 

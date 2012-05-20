@@ -76,7 +76,7 @@ TEST_FIXTURE(AlgorithmTest, sort)
 
 	Array<int> accending, decending, random;
 
-	for(roSize i=0; i<10; ++i) {
+	for(int i=0; i<10; ++i) {
 		accending.pushBack(i);
 		decending.insert(0, i);
 		random.insert(rand() % (random.size()+1), i);

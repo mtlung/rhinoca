@@ -141,9 +141,9 @@ struct roRDriverContextImpl : public roRDriverContext
 	CurrentShaders currentShaders;
 
 	Array<InputLayout> inputLayoutCache;
-	unsigned stagingBufferCacheSearchIndex;
+	roSize stagingBufferCacheSearchIndex;
 	Array<StagingBuffer> stagingBufferCache;
-	unsigned stagingTextureCacheSearchIndex;
+	roSize stagingTextureCacheSearchIndex;
 	Array<StagingTexture> stagingTextureCache;
 
 	Array<BlendState> blendStateCache;
@@ -157,8 +157,8 @@ struct roRDriverContextImpl : public roRDriverContext
 	Array<BufferCacheEntry> bufferCache;
 	StaticArray<roRDriverBufferImpl*, 3> constBufferInUse;
 
-	unsigned triangleFanIndexBufferSize;
+	roSize triangleFanIndexBufferSize;
 	roRDriverBuffer* triangleFanIndexBuffer;	// An index buffer dedicated to draw triangle fan
 
-	unsigned bindedIndexCount;	// For debug purpose
+	roSize bindedIndexCount;	// For debug purpose
 };

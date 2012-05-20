@@ -88,7 +88,7 @@ TEST_FIXTURE(TaskPoolTest, singleThreadDependency)
 		taskPool.dependsOn(t1, t2);
 		taskPool.finishAdd(t1);
 
-		for(roSize i=0; i<10; ++i)
+		for(int i=0; i<10; ++i)
 			taskPool.addFinalized(new MyTask(i+2), 0, 0, 0);
 
 		while(taskPool.taskCount())

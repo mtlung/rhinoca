@@ -4,7 +4,7 @@
 
 void roSinCos(float x, float& s, float& c)
 {
-#if roCOMPILER_VC
+#if roCOMPILER_VC && !roCPU_x86_64
 	__asm
 	{
 		fld DWORD PTR[x]

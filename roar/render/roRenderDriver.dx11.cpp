@@ -772,7 +772,7 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 	// Cache miss, do create DX buffer
 	roAssert(!impl->dxBuffer);
 
-	desc.ByteWidth = sizeInBytes;
+	desc.ByteWidth = num_cast<UINT>(sizeInBytes);
 
 	D3D11_SUBRESOURCE_DATA data;
 	data.pSysMem = initData;
@@ -803,8 +803,8 @@ static StagingBuffer* _getStagingBuffer(roRDriverContextImpl* ctx, roSize size, 
 	{
 		++tryCount;
 
-		for(unsigned i=0; i<ctx->stagingBufferCache.size(); ++i) {
-			unsigned idx = (i + ctx->stagingBufferCacheSearchIndex) % ctx->stagingBufferCache.size();
+		for(roSize i=0; i<ctx->stagingBufferCache.size(); ++i) {
+			roSize idx = (i + ctx->stagingBufferCacheSearchIndex) % ctx->stagingBufferCache.size();
 			StagingBuffer* sb = &ctx->stagingBufferCache[idx];
 			if(sb->size >= size) {
 				ret = sb;
@@ -973,7 +973,7 @@ static void* _mapBuffer(roRDriverBuffer* self, roRDriverMapUsage usage, roSize o
 	impl->mapOffset = offsetInBytes;
 	impl->mapSize = sizeInBytes;
 	impl->mapUsage = usage;
-	impl->dxStagingIdx = staging - &ctx->stagingBufferCache.front();
+	impl->dxStagingIdx = num_cast<int>(staging - &ctx->stagingBufferCache.front());
 
 	return mapped.pData;
 }
@@ -1133,8 +1133,8 @@ static StagingTexture* _getStagingTexture(roRDriverContextImpl* ctx, roRDriverTe
 	{
 		++tryCount;
 
-		for(unsigned i=0; i<ctx->stagingTextureCache.size(); ++i) {
-			unsigned idx = (i + ctx->stagingTextureCacheSearchIndex) % ctx->stagingTextureCache.size();
+		for(roSize i=0; i<ctx->stagingTextureCache.size(); ++i) {
+			roSize idx = (i + ctx->stagingTextureCacheSearchIndex) % ctx->stagingTextureCache.size();
 			StagingTexture* st = &ctx->stagingTextureCache[idx];
 			if(st->hash == hash) {
 				ret = st;
@@ -1211,7 +1211,7 @@ static StagingTexture* _getStagingTexture(roRDriverContextImpl* ctx, roRDriverTe
 	return ret;
 }
 
-static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, unsigned aryIndex, const void* data, roSize rowPaddingInBytes, unsigned* bytesRead)
+static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, unsigned aryIndex, const void* data, roSize rowPaddingInBytes, roSize* bytesRead)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
@@ -1319,7 +1319,7 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 	staging->mapped = true;
 	impl->isMapped = true;
 	impl->mapUsage = usage;
-	impl->dxStagingIdx = staging - &ctx->stagingTextureCache.front();
+	impl->dxStagingIdx = num_cast<int>(staging - &ctx->stagingTextureCache.front());
 
 	return mapped.pData;
 }
@@ -1807,7 +1807,7 @@ static void _drawPrimitive(roRDriverPrimitiveType type, roSize offset, roSize ve
 	{
 		roAssert(vertexCount < TypeOf<roUint16>::valueMax());
 
-		unsigned indexCount = (vertexCount - offset - 2) * 3;
+		roSize indexCount = (vertexCount - offset - 2) * 3;
 		roRDriverBufferImpl* idxBuffer = (roRDriverBufferImpl*)ctx->triangleFanIndexBuffer;
 
 		if(ctx->triangleFanIndexBufferSize < indexCount)

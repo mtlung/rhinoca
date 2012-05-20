@@ -864,7 +864,7 @@ static GLuint _getPbo(roRDriverContextImpl* ctx)
 {
 	GLuint pbo = 0;
 	for(roSize i=0; i<ctx->pixelBufferCache.size(); ++i) {
-		unsigned index = ctx->currentPixelBufferIndex++;
+		roSize index = ctx->currentPixelBufferIndex++;
 		ctx->currentPixelBufferIndex = ctx->currentPixelBufferIndex % ctx->pixelBufferCache.size();
 		pbo = ctx->pixelBufferCache[index];
 
@@ -879,7 +879,7 @@ static GLuint _getPbo(roRDriverContextImpl* ctx)
 	return pbo;
 }
 
-static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, unsigned aryIndex, const void* data, roSize rowPaddingInBytes, unsigned* bytesRead)
+static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, unsigned aryIndex, const void* data, roSize rowPaddingInBytes, roSize* bytesRead)
 {
 	if(bytesRead) *bytesRead = 0;
 

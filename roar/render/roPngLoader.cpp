@@ -10,6 +10,7 @@
 #if roCOMPILER_VC
 #	pragma comment(lib, "png")
 #	pragma comment(lib, "zlib")
+#	pragma warning(disable:4611)
 #endif
 
 // Reading of png files using the libpng

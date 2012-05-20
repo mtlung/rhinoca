@@ -114,7 +114,7 @@ struct roRDriverContextImpl : public roRDriverContext
 	// A ring of pixel buffer object
 	TinyArray<GLuint, 4> pixelBufferInUse;
 	TinyArray<GLuint, 4> pixelBufferCache;
-	unsigned currentPixelBufferIndex;
+	roSize currentPixelBufferIndex;
 
 	Array<roRDriverBufferImpl*> bufferCache;	// We would like to minimize the create/delete of buffer objects
 
@@ -132,5 +132,5 @@ struct roRDriverContextImpl : public roRDriverContext
 	Array<RenderTarget> renderTargetCache;
 	Array<DepthStencilBuffer> depthStencilBufferCache;
 
-	unsigned bindedIndexCount;	// For debug purpose
+	roSize bindedIndexCount;	// For debug purpose
 };

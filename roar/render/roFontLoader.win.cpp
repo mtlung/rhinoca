@@ -382,7 +382,7 @@ void FontLoader::processRequest(TaskPool* taskPool)
 
 		// Get the glyph outline
 		glyhpBitmapBuf.resize(bufSize);
-		::GetGlyphOutlineW(hdc, codePoint, GGO_GRAY8_BITMAP, &glyphMetrics, bufSize, glyhpBitmapBuf.bytePtr(), &matrix);
+		::GetGlyphOutlineW(hdc, codePoint, GGO_GRAY8_BITMAP, &glyphMetrics, num_cast<DWORD>(bufSize), glyhpBitmapBuf.bytePtr(), &matrix);
 
 		// Fail if the size of a glyph is too large
 		if(glyphMetrics.gmBlackBoxX > texDimension || glyphMetrics.gmBlackBoxY > texDimension) {
@@ -423,7 +423,7 @@ void FontLoader::processRequest(TaskPool* taskPool)
 		}
 
 		// Copy the outline bitmap to the texture atlas
-		roSize rowLen = roAlignCeiling(glyphMetrics.gmBlackBoxX, 4u);
+		unsigned rowLen = roAlignCeiling(glyphMetrics.gmBlackBoxX, 4u);
 		if(!glyhpBitmapBuf.isEmpty()) _texBlit(1,
 			glyhpBitmapBuf.bytePtr(), 0, 0, glyphMetrics.gmBlackBoxX, glyphMetrics.gmBlackBoxY, rowLen,
 			reply->bitmapBuf.bytePtr(), fontData->dstX, fontData->dstY, texDimension, texDimension, texDimension * 1);

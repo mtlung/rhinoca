@@ -97,7 +97,7 @@ TEST_FIXTURE(FileSystemTest, httpFS_read)
 		CHECK(httpFileSystemRead(file, buf.c_str(), buf.size(), bytesRead));
 
 		if(bytesRead < buf.size())
-			buf[bytesRead] = 0;
+			buf[roSize(bytesRead)] = 0;
 	} while(bytesRead > 0);
 //	readCount = httpFileSystemRead(file, buf, sizeof(buf));
 
