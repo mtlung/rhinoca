@@ -2,6 +2,7 @@
 #define __DOM_WINDOW_H__
 
 #include "touchevent.h"
+#include "../rhinoca.h"
 #include "../jsbindable.h"
 #include "../../roar/base/roArray.h"
 #include "../../roar/base/roMap.h"

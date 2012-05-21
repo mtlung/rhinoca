@@ -2,6 +2,7 @@
 #define __DOM_NODE_H__
 
 #include "event.h"
+#include "../rhinoca.h"
 #include "../jsbindable.h"
 
 namespace Dom {

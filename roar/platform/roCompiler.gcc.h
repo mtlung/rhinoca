@@ -1,4 +1,4 @@
-#define	roCOMPILER_VC 1
+#define	roCOMPILER_GCC 1
 
 typedef char roInt8;
 typedef short roInt16;
@@ -8,6 +8,9 @@ typedef unsigned char roUint8;
 typedef unsigned short roUint16;
 typedef unsigned int roUint32;
 typedef unsigned long long roUint64;
+
+typedef char roUtf8;
+typedef unsigned short roUtf16;
 
 #define roSize size_t
 
@@ -43,8 +46,8 @@ typedef unsigned long long roUint64;
 #define roFORCEINLINE __forceinline
 
 // Printf style compiler check
-#define roPRINTF_FORMAT_PARAM _In_z_ _Printf_format_string_
-#define roPRINTF_ATTRIBUTE(param1, param2)
+#define roPRINTF_FORMAT_PARAM
+#define roPRINTF_ATTRIBUTE(param1, param2) __attribute__((format(printf, param1, param2)))
 
 #ifndef _CRT_SECURE_NO_WARNINGS
 #	define _CRT_SECURE_NO_WARNINGS

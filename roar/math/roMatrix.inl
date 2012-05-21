@@ -66,9 +66,11 @@ inline Mat4 Mat4::operator*(const Mat4& a) const {
 }
 
 inline Mat4 Mat4::operator+(const Mat4& a) const {
+	return *this;
 }
 
 inline Mat4 Mat4::operator-(const Mat4& a) const {
+	return *this;
 }
 
 inline Mat4& Mat4::operator*=(float a) {

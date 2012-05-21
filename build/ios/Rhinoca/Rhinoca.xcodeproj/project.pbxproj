@@ -60,8 +60,6 @@
 		18F0C73E1304F121007752DB /* driverios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 18F0C73D1304F121007752DB /* driverios.cpp */; };
 		9C1130EA13B4DAC8001F4B3B /* windowscreen.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1130E813B4DAC8001F4B3B /* windowscreen.cpp */; };
 		9C1130EB13B4DAC8001F4B3B /* windowscreen.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1130E913B4DAC8001F4B3B /* windowscreen.h */; };
-		9C11FA1613E9A1EB0024299D /* parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C11FA1413E9A1EB0024299D /* parser.cpp */; };
-		9C11FA1713E9A1EB0024299D /* parser.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C11FA1513E9A1EB0024299D /* parser.h */; };
 		9C11FA1A13E9A20B0024299D /* cssparser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C11FA1813E9A20B0024299D /* cssparser.cpp */; };
 		9C11FA1B13E9A20B0024299D /* cssparser.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C11FA1913E9A20B0024299D /* cssparser.h */; };
 		9C18241A144752A7006C8382 /* rhlog.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C182418144752A7006C8382 /* rhlog.h */; };
@@ -94,8 +92,6 @@
 		9C93C92A1379885300682898 /* canvasgradient.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C93C9281379885300682898 /* canvasgradient.h */; };
 		9C93C92D1379886000682898 /* color.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C93C92B1379886000682898 /* color.cpp */; };
 		9C93C92E1379886000682898 /* color.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C93C92C1379886000682898 /* color.h */; };
-		9CB37B1E13F2F074003115F7 /* textresource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CB37B1C13F2F074003115F7 /* textresource.cpp */; };
-		9CB37B1F13F2F074003115F7 /* textresource.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CB37B1D13F2F074003115F7 /* textresource.h */; };
 		9CB37B2413F2F129003115F7 /* script.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CB37B2013F2F129003115F7 /* script.cpp */; };
 		9CB37B2513F2F129003115F7 /* script.h in Headers */ = {isa = PBXBuildFile; fileRef = 9CB37B2113F2F129003115F7 /* script.h */; };
 		9CB37B2613F2F129003115F7 /* style.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CB37B2213F2F129003115F7 /* style.cpp */; };
@@ -221,8 +217,6 @@
 		18F0C73D1304F121007752DB /* driverios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = driverios.cpp; path = ../../../src/render/ios/driverios.cpp; sourceTree = SOURCE_ROOT; };
 		9C1130E813B4DAC8001F4B3B /* windowscreen.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = windowscreen.cpp; path = ../../../src/dom/windowscreen.cpp; sourceTree = "<group>"; };
 		9C1130E913B4DAC8001F4B3B /* windowscreen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = windowscreen.h; path = ../../../src/dom/windowscreen.h; sourceTree = "<group>"; };
-		9C11FA1413E9A1EB0024299D /* parser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = parser.cpp; path = ../../../src/parser.cpp; sourceTree = "<group>"; };
-		9C11FA1513E9A1EB0024299D /* parser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = parser.h; path = ../../../src/parser.h; sourceTree = "<group>"; };
 		9C11FA1813E9A20B0024299D /* cssparser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = cssparser.cpp; path = ../../../src/dom/cssparser.cpp; sourceTree = "<group>"; };
 		9C11FA1913E9A20B0024299D /* cssparser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cssparser.h; path = ../../../src/dom/cssparser.h; sourceTree = "<group>"; };
 		9C182418144752A7006C8382 /* rhlog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = rhlog.h; path = ../../../src/rhlog.h; sourceTree = "<group>"; };
@@ -255,8 +249,6 @@
 		9C93C9281379885300682898 /* canvasgradient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = canvasgradient.h; path = ../../../src/dom/canvasgradient.h; sourceTree = "<group>"; };
 		9C93C92B1379886000682898 /* color.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = color.cpp; path = ../../../src/dom/color.cpp; sourceTree = "<group>"; };
 		9C93C92C1379886000682898 /* color.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = color.h; path = ../../../src/dom/color.h; sourceTree = "<group>"; };
-		9CB37B1C13F2F074003115F7 /* textresource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = textresource.cpp; path = ../../../src/textresource.cpp; sourceTree = "<group>"; };
-		9CB37B1D13F2F074003115F7 /* textresource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = textresource.h; path = ../../../src/textresource.h; sourceTree = "<group>"; };
 		9CB37B2013F2F129003115F7 /* script.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = script.cpp; path = ../../../src/dom/script.cpp; sourceTree = "<group>"; };
 		9CB37B2113F2F129003115F7 /* script.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = script.h; path = ../../../src/dom/script.h; sourceTree = "<group>"; };
 		9CB37B2213F2F129003115F7 /* style.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = style.cpp; path = ../../../src/dom/style.cpp; sourceTree = "<group>"; };
@@ -372,8 +364,6 @@
 				9C182418144752A7006C8382 /* rhlog.h */,
 				9C182419144752A7006C8382 /* rhlog.cpp */,
 				187BC9FB12F9B6730042FDB1 /* memory.cpp */,
-				9C11FA1413E9A1EB0024299D /* parser.cpp */,
-				9C11FA1513E9A1EB0024299D /* parser.h */,
 				187BCA0712F9B6CD0042FDB1 /* path.cpp */,
 				187BCA0812F9B6CD0042FDB1 /* path.h */,
 				187BCA0912F9B6CD0042FDB1 /* platform.h */,
@@ -381,8 +371,6 @@
 				187BCA1812F9B8B40042FDB1 /* rhinoca.h */,
 				187BCA1B12F9B8B40042FDB1 /* sort.h */,
 				9C81DC89139FC94500952557 /* stack.h */,
-				9CB37B1C13F2F074003115F7 /* textresource.cpp */,
-				9CB37B1D13F2F074003115F7 /* textresource.h */,
 				187BCA2F12F9B9180042FDB1 /* xmlparser.cpp */,
 				187BCA3012F9B9190042FDB1 /* xmlparser.h */,
 			);
@@ -612,9 +600,7 @@
 				9C1130EB13B4DAC8001F4B3B /* windowscreen.h in Headers */,
 				9C5D0EB913D65EA1001E3A0E /* elementstyle.h in Headers */,
 				9C5D0EBB13D65EA1001E3A0E /* touchevent.h in Headers */,
-				9C11FA1713E9A1EB0024299D /* parser.h in Headers */,
 				9C11FA1B13E9A20B0024299D /* cssparser.h in Headers */,
-				9CB37B1F13F2F074003115F7 /* textresource.h in Headers */,
 				9CB37B2513F2F129003115F7 /* script.h in Headers */,
 				9CB37B2713F2F129003115F7 /* style.h in Headers */,
 				9CB37B2B13F2F13E003115F7 /* textnode.h in Headers */,
@@ -753,9 +739,7 @@
 				9C1130EA13B4DAC8001F4B3B /* windowscreen.cpp in Sources */,
 				9C5D0EB813D65EA1001E3A0E /* elementstyle.cpp in Sources */,
 				9C5D0EBA13D65EA1001E3A0E /* touchevent.cpp in Sources */,
-				9C11FA1613E9A1EB0024299D /* parser.cpp in Sources */,
 				9C11FA1A13E9A20B0024299D /* cssparser.cpp in Sources */,
-				9CB37B1E13F2F074003115F7 /* textresource.cpp in Sources */,
 				9CB37B2413F2F129003115F7 /* script.cpp in Sources */,
 				9CB37B2613F2F129003115F7 /* style.cpp in Sources */,
 				9CB37B2A13F2F13E003115F7 /* textnode.cpp in Sources */,

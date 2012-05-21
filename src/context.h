@@ -7,6 +7,7 @@
 extern JSRuntime* jsrt;
 
 struct AudioDevice;
+struct Rhinoca;
 
 struct Rhinoca
 {

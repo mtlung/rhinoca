@@ -29,7 +29,7 @@ void Rhinoca::processEvent(RhinocaEvent ev)
 		Dom::TouchEvent* e = new Dom::TouchEvent;
 		e->type = touchEvent;
 		e->touches = domWindow->touches;
-		e->changedTouches.push_back(data);
+		e->changedTouches.pushBack(data);
 
 		e->bind(domWindow->jsContext, NULL);
 

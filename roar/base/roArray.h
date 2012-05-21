@@ -139,9 +139,9 @@ struct Array : public IArray<T, Array<T> >
 	Array() {}
 	Array(roSize size)					{ this->resize(size); }
 	Array(roSize size, const T& val)	{ resize(size, val); }
-	Array(const Array<T>& src)			{ copy(src); }
-	~Array()							{ clear(); roFree(_data); }
-	Array&	operator=(const Array& rhs) { copy(rhs); return *this; }
+	Array(const Array<T>& src)			{ this->copy(src); }
+	~Array()							{ this->clear(); roFree(this->_data); }
+	Array&	operator=(const Array& rhs) { this->copy(rhs); return *this; }
 
 // Operations
 	Status reserve(roSize newCapacity);
@@ -150,12 +150,12 @@ struct Array : public IArray<T, Array<T> >
 template<class T, roSize PreAllocCount>
 struct TinyArray : public IArray<T, TinyArray<T,PreAllocCount> >
 {
-	TinyArray()										{ _data = (T*)_buffer; _capacity = PreAllocCount; }
-	TinyArray(roSize size)							{ resize(size); }
-	TinyArray(roSize size, const T& val)			{ resize(size, val); }
-	TinyArray(const TinyArray<T,PreAllocCount>& v)	{ _data = (T*)_buffer; _capacity = PreAllocCount;  copy(v); }
-	~TinyArray()									{ clear(); if(_data != (T*)_buffer) roFree(_data); }
-	TinyArray& operator=(const TinyArray& rhs)		{ copy(rhs); }
+	TinyArray()										{ this->_data = (T*)_buffer; this->_capacity = PreAllocCount; }
+	TinyArray(roSize size)							{ this->resize(size); }
+	TinyArray(roSize size, const T& val)			{ this->resize(size, val); }
+	TinyArray(const TinyArray<T,PreAllocCount>& v)	{ this->_data = (T*)_buffer; this->_capacity = PreAllocCount;  copy(v); }
+	~TinyArray()									{ this->clear(); if(this->_data != (T*)this->_buffer) roFree(this->_data); }
+	TinyArray& operator=(const TinyArray& rhs)		{ this->copy(rhs); }
 
 // Operations
 	Status reserve(roSize newSize);
@@ -188,7 +188,7 @@ public:
 		: data(rhs.data), size(rhs.size), stride(rhs.stride)
 	{}
 
-	T&			operator[](roSize i) const	{ roAssert(i < size); return *(data + i*stride).cast<T>(); }
+	T&			operator[](roSize i) const	{ roAssert(i < size); return *(data + i*stride).template cast<T>(); }
 
 	T*			typedPtr() const			{ return data.cast<T>(); }
 	roBytePtr	bytePtr() const				{ return data; }
@@ -226,7 +226,7 @@ public:
 #endif
 	{}
 
-	T&			operator[](roSize i) const	{ roAssert(i < size); return *(data + i*stride_).cast<T>(); }
+	T&			operator[](roSize i) const	{ roAssert(i < size); return *(data + i*stride_).template cast<T>(); }
 
 	T*			typedPtr() const			{ return data.cast<T>(); }
 	roBytePtr	bytePtr() const				{ return data; }
