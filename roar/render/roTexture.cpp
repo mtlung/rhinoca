@@ -15,4 +15,14 @@ Texture::~Texture()
 	roRDriverCurrentContext->driver->deleteTexture(handle);
 }
 
+unsigned Texture::width() const
+{
+	return handle ? handle->width : 0;
+}
+
+unsigned Texture::height() const
+{
+	return handle ? handle->height : 0;
+}
+
 }	// namespace ro

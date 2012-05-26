@@ -12,6 +12,10 @@
 #include <string.h>
 #include <sys/stat.h>
 
+//////////////////////////////////////////////////////////////////////////
+// A note on how web browser works:
+// http://taligarsiel.com/Projects/howbrowserswork1.htm
+
 using namespace ro;
 
 // Context

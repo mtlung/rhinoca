@@ -230,8 +230,7 @@ void roHeapSort(T* begin, T* end, Pred pred)
 		}
 	}
 
-	static void shiftDown(T* b, T* e, Pred pred) {
-		T* i = b;
+	static void shiftDown(T* b, T* e, T* i, Pred pred) {
 		while(true) {
 			T* l = b + (i - b) * 2 + 1;	// Left child
 			T* r = l + 1;				// Right child
@@ -251,14 +250,20 @@ void roHeapSort(T* begin, T* end, Pred pred)
 	}
 	};
 
-	Local::makeHeap(begin, end, pred);
+	// This is the shift up version
+//	Local::makeHeap(begin, end, pred);
+
+	// This is the shitf down version
+	if(begin >= end) return;
+	for(T* i=begin + (end - begin - 2) / 2; i >= begin; --i)
+		Local::shiftDown(begin, end, i, pred);
 
 	// Put the front (where it shold be the largest) to the end
 	// and re-balance the heap
 	while(begin < end) {
 		--end;
 		roSwap(*begin, *end);
-		Local::shiftDown(begin, end, pred);
+		Local::shiftDown(begin, end, begin, pred);
 	}
 }
 

@@ -416,8 +416,7 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 	sx1 *= invw; sx2 *= invw;
 	sy1 *= invh; sy2 *= invh;
 
-	// TODO: Optimize the vertex buffer size by using indexed draw
-	float vertex[4][6] = {	// Vertex are arranged in a 'z' order, in order to use TriangleStrip as primitive
+	float vertex[4][6] = {
 		{dx1, dy1, z, 1,	sx1,sy1},
 		{dx2, dy1, z, 1,	sx2,sy1},
 		{dx1, dy2, z, 1,	sx1,sy2},
