@@ -25,6 +25,8 @@ template<class T>			void	roInsertionSort(T* begin, T* end);	/// Stable, O(1) spa
 template<class T, class P>	void	roInsertionSort(T* begin, T* end, P p);
 template<class T>			void	roSelectionSort(T* begin, T* end);	/// Not stable, O(1) space, O(n2) compare, O(n) swaps, non-adaptive
 template<class T, class P>	void	roSelectionSort(T* begin, T* end, P p);
+template<class T>			void	roHeapSort(T* begin, T* end);
+template<class T, class P>	void	roHeapSort(T* begin, T* end, P p);
 template<class T>			void	roQuickSort(T* begin, T* end);		/// Not stable, O(1) space
 template<class T, class P>	void	roQuickSort(T* begin, T* end, P p);
 
@@ -172,6 +174,7 @@ T* roPartition(T* begin, T* end, bool(*pred)(const T&))
 template<class T, class Pred>
 void roInsertionSort(T* begin, T* end, Pred pred)
 {
+	// For each element, find (towards the font) correct position to insert
 	for(T* i=begin; i<end; ++i)
 		for(T* j=i; j>begin && pred(*j, *(j-1)); --j)
 			roSwap(*j, *(j-1));
@@ -189,6 +192,8 @@ void roInsertionSort(T* begin, T* end)
 template<class T, class Pred>
 void roSelectionSort(T* begin, T* end, Pred pred)
 {
+	// Select the smallest in the whole list, and swap it to the font
+	// Advance the font by one
 	for(T* i=begin; i<end; ++i) {
 		T* k=i;
 		for(T* j=i+1; j<end; ++j)
@@ -204,6 +209,66 @@ void roSelectionSort(T* begin, T* end)
 		return a < b;
 	}};
 	roSelectionSort(begin, end, _Less());
+}
+
+template<class T, class Pred>
+void roHeapSort(T* begin, T* end, Pred pred)
+{
+	struct Local {
+	// A heap is where the value of the parent bigger than it's 2 children
+	static void makeHeap(T* b, T* e, Pred pred) {
+		for(T* i=b+1; i<e; ++i) {
+			for(T* mov=i;;) {
+				T* parent = b + (mov - b - 1) / 2;
+				if(pred(*parent, *mov)) {
+					roSwap(*mov, *parent);
+					mov = parent;
+				}
+				else
+					break;
+			}
+		}
+	}
+
+	static void shiftDown(T* b, T* e, Pred pred) {
+		T* i = b;
+		while(true) {
+			T* l = b + (i - b) * 2 + 1;	// Left child
+			T* r = l + 1;				// Right child
+			if(l >= e)
+				return;
+
+			T* pSwap = i;
+			if(pred(*pSwap, *l))			pSwap = l;
+			if(r < e && pred(*pSwap, *r))	pSwap = r;
+
+			if(pSwap == i)
+				return;
+
+			roSwap(*i, *pSwap);
+			i = pSwap;
+		}
+	}
+	};
+
+	Local::makeHeap(begin, end, pred);
+
+	// Put the front (where it shold be the largest) to the end
+	// and re-balance the heap
+	while(begin < end) {
+		--end;
+		roSwap(*begin, *end);
+		Local::shiftDown(begin, end, pred);
+	}
+}
+
+template<class T>
+void roHeapSort(T* begin, T* end)
+{
+	struct _Less { bool operator()(const T& a, const T& b) {
+		return a < b;
+	}};
+	roHeapSort(begin, end, _Less());
 }
 
 template<class T, class Pred>

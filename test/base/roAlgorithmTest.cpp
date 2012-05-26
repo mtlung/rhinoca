@@ -116,6 +116,23 @@ TEST_FIXTURE(AlgorithmTest, sort)
 		CHECK(Check::isSorted(v));
 	}
 
+	{	// Heap sort
+		Array<int> v;
+		roHeapSort(v.begin(), v.end());
+
+		v = accending;
+		roHeapSort(v.begin(), v.end());
+		CHECK(Check::isSorted(v));
+
+		v = decending;
+		roHeapSort(v.begin(), v.end());
+		CHECK(Check::isSorted(v));
+
+		v = random;
+		roHeapSort(v.begin(), v.end());
+		CHECK(Check::isSorted(v));
+	}
+
 	{	// Quick sort
 		Array<int> v;
 
