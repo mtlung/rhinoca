@@ -172,11 +172,9 @@ T* roPartition(T* begin, T* end, bool(*pred)(const T&))
 template<class T, class Pred>
 void roInsertionSort(T* begin, T* end, Pred pred)
 {
-	roSize count = end - begin;
-	for(roSize i=1; i<count; ++i) {
-		for(roSize j=i; j>0 && pred(begin[j], begin[j-1]); --j)
-			roSwap(begin[j], begin[j-1]);
-	}
+	for(T* i=begin; i<end; ++i)
+		for(T* j=i; j>begin && pred(*j, *(j-1)); --j)
+			roSwap(*j, *(j-1));
 }
 
 template<class T>
@@ -191,12 +189,11 @@ void roInsertionSort(T* begin, T* end)
 template<class T, class Pred>
 void roSelectionSort(T* begin, T* end, Pred pred)
 {
-	roSize count = end - begin;
-	for(roSize i=0; i<count; ++i) {
-		roSize k=i;
-		for(roSize j=i+1; j<count; ++j)
-			if(pred(begin[j], begin[k])) k = j;
-		roSwap(begin[i], begin[k]);
+	for(T* i=begin; i<end; ++i) {
+		T* k=i;
+		for(T* j=i+1; j<end; ++j)
+			if(pred(*j, *k)) k = j;
+		roSwap(*i, *k);
 	}
 }
 

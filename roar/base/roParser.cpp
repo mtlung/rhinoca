@@ -142,6 +142,9 @@ bool CIdentifierStringMatcher::match(Parser* p)
 
 bool AnyCharExceptMatcher::match(Parser* p)
 {
+	if(*p->begin == '\0')
+		return false;
+
 	const char* ret = roStrChr(except, *p->begin);
 
 	if(ret == NULL) {	// No exception found
