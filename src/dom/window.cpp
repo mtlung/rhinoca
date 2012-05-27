@@ -339,7 +339,6 @@ Window::Window(Rhinoca* rh)
 {
 	document = new HTMLDocument(rh);
 	virtualCanvas = new HTMLCanvasElement(rh);
-	virtualCanvas->useExternalFrameBuffer(rh);
 	virtualCanvas->createContext("2d");
 }
 
@@ -545,11 +544,17 @@ void Window::render()
 
 	// Clear the virtual canvas first
 	CanvasRenderingContext2D* ctx = dynamic_cast<CanvasRenderingContext2D*>(virtualCanvas->context);
-	if(virtualCanvas->clearEveryFrame)
-		ctx->clearRect(0, 0, (float)width(), (float)height());
+	ctx->_canvas.beginDraw();
 
-	// If no other canvas which use  "frontBufferOnly" clearEveryFrame will still be true on next frame
-	virtualCanvas->clearEveryFrame = true;
+	// Set background color
+	rhinoca->subSystems.renderDriver->clearStencil(0);
+	rhinoca->subSystems.renderDriver->clearColor(1, 1, 1, 1);
+
+	ctx->_canvas.setGlobalColor(1, 0, 1, 1);
+	ctx->_canvas.setFont("italic bold 40pt Calibri");
+	ctx->_canvas.fillText("AT Hello World! Lung Man Tat", 0, 100, 0);
+
+	ctx->_canvas.endDraw();
 
 	for(NodeIterator i(document); !i.ended(); i.next()) {
 		i->render(ctx);

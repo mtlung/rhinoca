@@ -255,7 +255,7 @@ void HTMLImageElement::setSrc(const char* uri)
 	Path path;
 	fixRelativePath(uri, rhinoca->documentUrl.c_str(), path);
 
-	ResourceManager& mgr = rhinoca->resourceManager;
+	ResourceManager& mgr = *rhinoca->subSystems.resourceMgr;
 	texture = mgr.loadAs<Texture>(path.c_str());
 
 	// Register callbacks

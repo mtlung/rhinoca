@@ -227,8 +227,8 @@ void Element::render(CanvasRenderingContext2D* ctx)
 	if(_style)
 		_style->render(ctx);
 	else {
-		ctx->setIdentity();
-		ctx->setGlobalAlpha(1);
+		ctx->_canvas.setIdentity();
+		ctx->_canvas.setGlobalAlpha(1);
 	}
 }
 

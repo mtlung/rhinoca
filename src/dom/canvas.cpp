@@ -80,7 +80,6 @@ static JSBool getContext(JSContext* cx, uintN argc, jsval* vp)
 		// they live together in JSGC
 		RHVERIFY(JS_SetReservedSlot(cx, *self->context, 0, *self));
 		RHVERIFY(JS_SetReservedSlot(cx, *self, 0, *self->context));
-
 	}
 
 	if(self->context) {
@@ -98,23 +97,18 @@ static JSFunctionSpec methods[] = {
 
 HTMLCanvasElement::HTMLCanvasElement(Rhinoca* rh)
 	: Element(rh)
-	, clearEveryFrame(false)
 	, context(NULL)
+	, _useRenderTarget(false)
+	, _width(0), _height(0)
 {
 }
 
 HTMLCanvasElement::HTMLCanvasElement(Rhinoca* rh, unsigned width, unsigned height, bool frontBufferOnly)
 	: Element(rh)
 	, context(NULL)
+	, _useRenderTarget(!frontBufferOnly)
+	, _width(width), _height(height)
 {
-	if(frontBufferOnly)
-		useExternalFrameBuffer(rh);
-
-	if(!(_framebuffer.handle && !_framebuffer.texture))	// No need to resize external render target
-		createTextureFrameBuffer(width, height);
-
-	_framebuffer.width = width;
-	_framebuffer.height = height;
 }
 
 HTMLCanvasElement::~HTMLCanvasElement()
@@ -136,29 +130,17 @@ void HTMLCanvasElement::bind(JSContext* cx, JSObject* parent)
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
-void HTMLCanvasElement::bindFramebuffer()
-{
-	_framebuffer.bind();
-}
-
-void HTMLCanvasElement::createTextureFrameBuffer(unsigned w, unsigned h)
-{
-	if(w > 0 && h > 0)
-		_framebuffer.createTexture(w, h);
-}
-
-void HTMLCanvasElement::useExternalFrameBuffer(Rhinoca* rh)
-{
-	_framebuffer.useExternal(rh->renderContex);
-}
-
 void HTMLCanvasElement::createContext(const char* ctxName)
 {
 	if(context) return;
 
 	if(roStrCaseCmp(ctxName, "2d") == 0) {
-		context = new CanvasRenderingContext2D(this);
+		CanvasRenderingContext2D* ctx2d = new CanvasRenderingContext2D(this);
+		context = ctx2d;
 		context->addReference();	// releaseReference() in ~HTMLCanvasElement()
+
+		if(_useRenderTarget)
+			ctx2d->_canvas.initTargetTexture(_width, _height);
 	}
 }
 
@@ -169,15 +151,15 @@ void HTMLCanvasElement::render(CanvasRenderingContext2D* ctx)
 	Window* window = ownerDocument()->window();
 	HTMLCanvasElement* vc = window->virtualCanvas;
 
-	// No need to draw to the window, if 'frontBufferOnly' is set to true such that all
-	// draw operation is already put on the window
-	if(!_framebuffer.texture) {
-		// Require the virtual canvas not to clear itself
-		vc->clearEveryFrame = false;
-		return;
-	}
+	CanvasRenderingContext2D* ctx2d = dynamic_cast<CanvasRenderingContext2D*>(ctx);
+	CanvasRenderingContext2D* self2d = dynamic_cast<CanvasRenderingContext2D*>(context);
 
-	ctx->drawImage(texture(), Render::Driver::SamplerState::MIN_MAG_LINEAR, 0, 0);
+	if(self2d && ctx2d)
+		if(ro::Texture* tex = self2d->_canvas.targetTexture.get()) {
+			ctx2d->_canvas.beginDraw();
+			ctx2d->_canvas.drawImage(tex->handle, 0, 0);
+			ctx2d->_canvas.endDraw();
+		}
 }
 
 void HTMLCanvasElement::registerClass(JSContext* cx, JSObject* parent)
@@ -207,23 +189,16 @@ Element* HTMLCanvasElement::factoryCreate(Rhinoca* rh, const char* type, XmlPars
 	return canvas;
 }
 
-Texture* HTMLCanvasElement::texture()
-{
-	return _framebuffer.texture.get();
-}
-
 void HTMLCanvasElement::setWidth(unsigned w)
 {
-	if(!(_framebuffer.handle && !_framebuffer.texture))	// No need to resize external render target
-		createTextureFrameBuffer(w, _framebuffer.height);
-	_framebuffer.width = w;
+	_width = w;
+	if(context) context->setWidth(w);
 }
 
 void HTMLCanvasElement::setHeight(unsigned h)
 {
-	if(!(_framebuffer.handle && !_framebuffer.texture))	// No need to resize external render target
-		createTextureFrameBuffer(_framebuffer.width, h);
-	_framebuffer.height = h;
+	_height = h;
+	if(context) context->setHeight(h);
 }
 
 const ro::ConstString& HTMLCanvasElement::tagName() const

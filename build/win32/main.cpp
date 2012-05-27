@@ -15,23 +15,11 @@
 
 #include "DropHandler.h"
 
-#include "../../roar/render/roRenderDriver.h"
 #include "../../roar/base/roString.h"
 
 static const wchar_t* windowClass = L"Rhinoca Launcher";
 
 static bool _quitWindow = false;
-
-extern PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer;
-extern PFNGLGENFRAMEBUFFERSPROC glGenFramebuffers;
-extern PFNGLDELETEFRAMEBUFFERSPROC glDeleteFramebuffers;
-extern PFNGLGENRENDERBUFFERSPROC glGenRenderbuffers;
-extern PFNGLBINDRENDERBUFFERPROC glBindRenderbuffer;
-extern PFNGLDELETERENDERBUFFERSPROC glDeleteRenderbuffers;
-extern PFNGLRENDERBUFFERSTORAGEPROC glRenderbufferStorage;
-extern PFNGLFRAMEBUFFERRENDERBUFFERPROC glFramebufferRenderbuffer;
-extern PFNGLFRAMEBUFFERTEXTURE2DPROC glFramebufferTexture2D;
-extern PFNGLCHECKFRAMEBUFFERSTATUSPROC glCheckFramebufferStatus;
 
 struct RhinocaRenderContext
 {
@@ -47,48 +35,11 @@ int _height = 500;
 
 void fileDropCallback(const char* filePath, void* userData)
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, 1);	// Handle '1' is the main buffer
-	glClearColor(1, 1, 1, 1);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	Rhinoca* rh = reinterpret_cast<Rhinoca*>(userData);
 	rhinoca_openDocument(rh, filePath);
 }
 
 static RhinocaRenderContext renderContext = { NULL, 0, 0, 0, 0 };
-
-static bool setupFbo(unsigned width, unsigned height)
-{
-	if(!glGenFramebuffers)
-		return false;
-
-	// Generate texture
-	if(!renderContext.texture) glGenTextures(1, &renderContext.texture);
-	glBindTexture(GL_TEXTURE_2D, renderContext.texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	roAssert(GL_NO_ERROR == glGetError());
-
-	// Generate frame buffer for depth and stencil
-	if(!renderContext.depth) glGenRenderbuffers(1, &renderContext.depth);
-	glBindRenderbuffer(GL_RENDERBUFFER, renderContext.depth);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-	roAssert(GL_NO_ERROR == glGetError());
-
-	// Create render target for Rhinoca to draw to
-	if(!renderContext.fbo) glGenFramebuffers(1, &renderContext.fbo);
-	glBindFramebuffer(GL_FRAMEBUFFER, renderContext.fbo);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderContext.texture, 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderContext.depth);
-	roAssert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-	roAssert(GL_NO_ERROR == glGetError());
-
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-	return true;
-}
 
 LRESULT CALLBACK wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -204,19 +155,9 @@ int main()
 
 	HWND hWnd = createWindow(NULL, _width, _height, false);
 
-	roRDriver* driver = roNewRenderDriver("GL", NULL);
-	roRDriverContext* context = driver->newContext(driver);
-	driver->initContext(context, hWnd);
-	driver->useContext(context);
+	renderContext.platformSpecificContext = hWnd;
 
 	rhinoca_init();
-
-	if(!setupFbo(_width, _height)) {
-		printf("Seems like your OpenGL driver didn't support 'Frame Buffer Object', program quit.");
-		return 0;
-	}
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	Rhinoca* rh = rhinoca_create(&renderContext);
 	rhinoca_setAlertFunc(alertFunc, hWnd);
@@ -229,9 +170,9 @@ int main()
 
 //	rhinoca_openDocument(rh, "../../test/htmlTest/audioTest/test.html");
 //	rhinoca_openDocument(rh, "../../demo/impactjs/drop/drop.html");
-	rhinoca_openDocument(rh, "../../demo/impactjs/biolab/biolab-ios.html");
+//	rhinoca_openDocument(rh, "../../demo/impactjs/biolab/biolab-ios.html");
 //	rhinoca_openDocument(rh, "../../test/htmlTest/cssTest/bg.html");
-//	rhinoca_openDocument(rh, "../../test.html");
+	rhinoca_openDocument(rh, "../../test/htmlTest/vgTest/LineTo.html");
 //	rhinoca_openDocument(rh, "http://playbiolab.com/");
 
 	while(true) {
@@ -244,44 +185,9 @@ int main()
 			if(_quitWindow) break;
 		}
 
-		if(!_quitWindow) {
-			roAssert(GL_NO_ERROR == glGetError());
-
-			glDepthMask(GL_FALSE);
-
+		if(!_quitWindow)
 			rhinoca_update(rh);
-			roAssert(GL_NO_ERROR == glGetError());
-
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-			glViewport(0, 0, _width, _height);
-			glClearColor(1, 1, 1, 1);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			glMatrixMode(GL_PROJECTION);
-			glLoadIdentity();
-			glOrtho(0, _width, _height, 0, 1, -1);
-			glMatrixMode(GL_MODELVIEW);
-			glLoadIdentity();
-
-			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D, renderContext.texture);
-
-			glColor4f(1, 1, 1, 1);
-			glBegin(GL_QUADS);
-				glTexCoord2f(0, 0);
-				glVertex3i(0, 0, 0);
-				glTexCoord2f(1, 0);
-				glVertex3i(_width, 0, 0);
-				glTexCoord2f(1, 1);
-				glVertex3i(_width, _height, 0);
-				glTexCoord2f(0, 1);
-				glVertex3i(0, _height, 0);
-			glEnd();
-
-			roAssert(GL_NO_ERROR == glGetError());
-			driver->swapBuffers();
-		} else
+		else
 			break;
 	}
 
@@ -290,18 +196,7 @@ int main()
 	rhinoca_destroy(rh);
 	rhinoca_close();
 
-	{	// Destroy the render context
-		glDeleteRenderbuffers(1, &renderContext.stencil);
-		glDeleteRenderbuffers(1, &renderContext.depth);
-		glDeleteFramebuffers(1, &renderContext.fbo);
-		glDeleteTextures(1, &renderContext.texture);
-		wglDeleteContext(wglGetCurrentContext());
-	}
-
 	OleUninitialize();
-
-	driver->deleteContext(context);
-	roDeleteRenderDriver(driver);
 
 	return 0;
 }

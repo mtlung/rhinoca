@@ -3,11 +3,11 @@
 
 #include "dom/window.h"
 #include "../roar/base/roResource.h"
+#include "../roar/roSubSystems.h"
 
 extern JSRuntime* jsrt;
 
 struct AudioDevice;
-struct Rhinoca;
 
 struct Rhinoca
 {
@@ -20,6 +20,8 @@ public:
 	void closeDocument();
 
 	void update();
+
+	void screenResized();
 
 	void processEvent(RhinocaEvent ev);
 
@@ -43,18 +45,9 @@ public:
 
 	AudioDevice* audioDevice;
 
-	ro::TaskPool taskPool;
-	ro::ResourceManager resourceManager;
+	ro::SubSystems subSystems;
 
-	/// Frame per second, averaged over several frames
-	float fps;
-
-	/// Instantaneous frame time
-	float frameTime;
-
-	/// Timer for calculation of FPS etc
-	ro::StopWatch _stopWatch;
-	float _lastFrameTime;
+	void* lastCanvas;	/// To determine if we have changed our canvas
 
 	/// Parameter to tune how often we perform explicit GC.
 	/// It's kind of temporary solution, since I am seeking some multi-thready way to do GC

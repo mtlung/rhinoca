@@ -247,16 +247,16 @@ void ElementStyle::render(CanvasRenderingContext2D* ctx)
 {
 	updateTransformation();
 
-	ctx->setIdentity();
-	ctx->translate((float)left(), (float)top());
-	ctx->transform(_localToWorld.data);
+	ctx->_canvas.setIdentity();
+	ctx->_canvas.translate((float)left(), (float)top());
+	ctx->_canvas.transform(_localToWorld.data);
 
-	ctx->setGlobalAlpha(opacity);
+	ctx->_canvas.setGlobalAlpha(opacity);
 
 	// Render the background color
 	if(backgroundColor.a > 0) {
-		ctx->setFillColor(&backgroundColor.r);
-		ctx->fillRect(0, 0, (float)width(), (float)height());
+		ctx->_canvas.setFillColor(&backgroundColor.r);
+		ctx->_canvas.fillRect(0, 0, (float)width(), (float)height());
 	}
 
 	// Render the style's background image if any
@@ -268,11 +268,13 @@ void ElementStyle::render(CanvasRenderingContext2D* ctx)
 
 		float sx = (float)-backgroundPositionX;
 		float sy = (float)-backgroundPositionY;
-		float sw = (float)_min(width(), backgroundImage->virtualWidth);
-		float sh = (float)_min(height(), backgroundImage->virtualHeight);
+//		float sw = (float)_min(width(), backgroundImage->virtualWidth);
+//		float sh = (float)_min(height(), backgroundImage->virtualHeight);
+		float sw = (float)width();
+		float sh = (float)height();
 
-		ctx->drawImage(
-			backgroundImage.get(), Render::Driver::SamplerState::MIN_MAG_LINEAR,
+		ctx->_canvas.drawImage(
+			backgroundImage->handle,
 			sx, sy, sw, sh,
 			dx, dy, dw, dh
 		);
@@ -658,8 +660,8 @@ bool ElementStyle::setBackgroundImage(const char* cssUrl)
 
 	*const_cast<char*>(result.end) = bk;
 
-	ResourceManager& mgr = element->rhinoca->resourceManager;
-	backgroundImage = mgr.loadAs<Render::Texture>(path.c_str());
+	ResourceManager& mgr = *element->rhinoca->subSystems.resourceMgr;
+	backgroundImage = mgr.loadAs<ro::Texture>(path.c_str());
 
 	return true;
 }

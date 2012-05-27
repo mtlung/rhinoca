@@ -16,11 +16,10 @@
 #include "dom/textnode.h"
 #include "dom/touchevent.h"
 #include "dom/registerfactories.h"
-#include "render/driver.h"
-#include "render/texture.h"
 #include "../roar/base/roFileSystem.h"
 #include "../roar/base/roLog.h"
 #include "../roar/base/roTypeCast.h"
+#include "../roar/render/roRenderDriver.h"
 
 #ifdef RHINOCA_IOS
 #	include "context_ios.h"
@@ -69,15 +68,36 @@ static JSFunctionSpec jsConsoleMethods[] = {
 	{0}
 };
 
+struct RhinocaRenderContext
+{
+	void* platformSpecificContext;
+	unsigned fbo;
+	unsigned depth;
+	unsigned stencil;
+	unsigned texture;
+};
+
+static void _initRenderDriver(ro::SubSystems& subSystems)
+{
+	Rhinoca& rh = *(Rhinoca*)(subSystems.userData[0]);
+	roRDriver* driver = roNewRenderDriver((char*)subSystems.userData[1], NULL);
+	roRDriverContext* context = driver->newContext(driver);
+	context->majorVersion = 2;
+	context->minorVersion = 0;
+	driver->initContext(context, rh.renderContex->platformSpecificContext);
+	driver->useContext(context);
+	driver->setViewport(0, 0, context->width, context->height, 0, 1);
+
+	subSystems.renderDriver = driver;
+	subSystems.renderContext = context;
+}
+
 Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 	: privateData(NULL)
 	, domWindow(NULL)
 	, width(0), height(0)
 	, renderContex(rc)
 	, audioDevice(NULL)
-	, fps(1)
-	, frameTime(1)
-	, _lastFrameTime(0)
 	, _gcFrameIntervalCounter(_gcFrameInterval)
 {
 	jsContext = JS_NewContext(jsrt, 8192);
@@ -87,9 +107,10 @@ Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 	JS_SetContextPrivate(jsContext, this);
 	JS_SetErrorReporter(jsContext, jsReportError);
 
-	taskPool.init(2);
-	resourceManager.taskPool = &taskPool;
-	Loader::registerLoaders(&resourceManager);
+	subSystems.userData.pushBack(this);
+	subSystems.userData.pushBack((void*)"GL");
+	subSystems.initRenderDriver = _initRenderDriver;
+	subSystems.init();
 
 	audioDevice = audiodevice_create();
 
@@ -113,17 +134,15 @@ Rhinoca::~Rhinoca()
 
 void Rhinoca::update()
 {
-	Render::Driver::forceApplyCurrent();
-
 	if(domWindow)
 		domWindow->update();
 
-	resourceManager.tick();
-	resourceManager.collectInfrequentlyUsed();
+	subSystems.resourceMgr->tick();
+	subSystems.resourceMgr->collectInfrequentlyUsed();
 
 	audiodevice_update(audioDevice);
 
-	taskPool.doSomeTask(1.0f / 60);
+	subSystems.taskPool->doSomeTask(1.0f / 60);
 
 	if(domWindow) {
 		domWindow->render();
@@ -133,15 +152,12 @@ void Rhinoca::update()
 			JS_MaybeGC(jsContext);
 		}
 	}
+}
 
-	Render::Driver::useRenderTarget(NULL);
-
-	// FPS calculation
-	float currentTime = _stopWatch.getFloat();
-	frameTime = currentTime - _lastFrameTime;
-	fps = (1.0f / frameTime) * 0.1f + fps * 0.9f;
-//	printf("\rfps: %f", fps);
-	_lastFrameTime = currentTime;
+void Rhinoca::screenResized()
+{
+	subSystems.renderDriver->changeResolution(width, height);
+	subSystems.renderDriver->setViewport(0, 0, width, height, 0, 1);
 }
 
 void Rhinoca::collectGarbage()
@@ -343,10 +359,10 @@ bool Rhinoca::openDoucment(const char* uri)
 
 void Rhinoca::closeDocument()
 {
-	resourceManager.abortAllLoader();
+//	subSystems.resourceMgr->abortAllLoader();
 
 	// Clear all tasks before the VM shutdown, since any task would use the VM
-	taskPool.waitAll();
+//	subSystems.taskPool->waitAll();
 
 	RHVERIFY(JS_RemoveObjectRoot(jsContext, &jsConsole));
 	jsConsole = NULL;

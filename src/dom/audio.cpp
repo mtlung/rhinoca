@@ -69,7 +69,7 @@ static JSBool construct(JSContext* cx, uintN argc, jsval* vp)
 
 	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
 
-	HTMLAudioElement* audio = new HTMLAudioElement(rh, rh->audioDevice, &rh->resourceManager);
+	HTMLAudioElement* audio = new HTMLAudioElement(rh, rh->audioDevice, rh->subSystems.resourceMgr);
 	audio->bind(cx, NULL);
 
 	if(argc > 0)
@@ -114,7 +114,7 @@ static ro::ConstString _tagName = "AUDIO";
 Element* HTMLAudioElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
 	HTMLAudioElement* audio = roStrCaseCmp(type, _tagName) == 0 ?
-		new HTMLAudioElement(rh, rh->audioDevice, &rh->resourceManager) : NULL;
+		new HTMLAudioElement(rh, rh->audioDevice, rh->subSystems.resourceMgr) : NULL;
 	if(!audio) return NULL;
 
 	return audio;

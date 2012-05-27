@@ -3,6 +3,7 @@
 
 #include "element.h"
 #include "../render/framebuffer.h"
+#include "../../roar/render/roTexture.h"
 
 namespace Render { class Texture; }
 
@@ -18,11 +19,6 @@ public:
 // Operations
 	override void bind(JSContext* cx, JSObject* parent);
 
-	void bindFramebuffer();
-
-	void createTextureFrameBuffer(unsigned w, unsigned h);
-	void useExternalFrameBuffer(Rhinoca* rh);
-
 	void createContext(const char* ctxName);
 
 	override void render(CanvasRenderingContext2D* virtualCanvas);
@@ -36,18 +32,17 @@ public:
 	public:
 		explicit Context(HTMLCanvasElement*);
 		virtual ~Context();
+		virtual unsigned width() const = 0;
+		virtual unsigned height() const = 0;
+		virtual void setWidth(unsigned width) = 0;
+		virtual void setHeight(unsigned height) = 0;
 		HTMLCanvasElement* canvas;
 	};	// Context
 
-	/// For the virtual canvas to clear itself every frame
-	bool clearEveryFrame;
-
 	Context* context;
 
-	Render::Texture* texture();
-
-	override unsigned width() const { return _framebuffer.width; }
-	override unsigned height() const { return _framebuffer.height; }
+	override unsigned width() const { return _width; }
+	override unsigned height() const { return _height; }
 
 	override void setWidth(unsigned width);
 	override void setHeight(unsigned height);
@@ -56,8 +51,8 @@ public:
 
 	static JSClass jsClass;
 
-protected:
-	Render::Framebuffer _framebuffer;
+	bool _useRenderTarget;
+	unsigned _width, _height;
 };	// HTMLCanvasElement
 
 }	// namespace Dom

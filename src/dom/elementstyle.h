@@ -3,8 +3,8 @@
 
 #include "color.h"
 #include "../jsbindable.h"
-#include "../render/texture.h"
 #include "../../roar/math/roMatrix.h"
+#include "../../roar/render/roTexture.h"
 
 namespace Dom {
 
@@ -87,7 +87,7 @@ public:
 	bool setBackgroundPosition(const char* cssBackgroundPosition);
 
 	bool setBackgroundImage(const char* cssUrl);
-	Render::TexturePtr backgroundImage;
+	ro::TexturePtr backgroundImage;
 
 	bool setBackgroundColor(const char* cssColor);
 	Color backgroundColor;

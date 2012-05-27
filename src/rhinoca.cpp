@@ -5,9 +5,8 @@
 #include "../roar/base/roHttpFileSystem.h"
 #include "../roar/base/roLog.h"
 #include "../roar/base/roSocket.h"
+#include "../roar/render/roRenderDriver.h"
 #include "audio/audiodevice.h"
-#include "render/driver.h"
-#include "render/vg/openvg.h"
 #include <stdarg.h>	// For va_list
 #include <string.h>
 #include <sys/stat.h>
@@ -20,17 +19,10 @@ using namespace ro;
 
 // Context
 JSRuntime* jsrt = NULL;
-void* driverContext = NULL;
 
 void rhinoca_init()
 {
 	jsrt = JS_NewRuntime(8L * 1024L * 1024L);
-	Render::Driver::init();
-	driverContext = Render::Driver::createContext(0);
-	Render::Driver::useContext(driverContext);
-	Render::Driver::forceApplyCurrent();
-
-	RHVERIFY(vgCreateContextSH(1, 1));
 
 	RHVERIFY(BsdSocket::initApplication() == 0);
 
@@ -43,8 +35,7 @@ void rhinoca_close()
 	JS_ShutDown();
 
 	jsrt = NULL;
-	vgDestroyContextSH();
-	Render::Driver::deleteContext(driverContext);
+//	vgDestroyContextSH();
 
 	RHVERIFY(BsdSocket::closeApplication() == 0);
 
@@ -77,6 +68,7 @@ void rhinoca_setSize(Rhinoca* rh, rhuint width, rhuint height)
 	if(width != 0 && height != 0) {
 		rh->width = width;
 		rh->height = height;
+		rh->screenResized();
 	}
 }
 
@@ -108,6 +100,7 @@ void rhinoca_closeDocument(Rhinoca* rh)
 void rhinoca_update(Rhinoca* context)
 {
 	context->update();
+	context->subSystems.renderDriver->swapBuffers();
 }
 
 void rhinoca_processEvent(Rhinoca* context, RhinocaEvent ev)
