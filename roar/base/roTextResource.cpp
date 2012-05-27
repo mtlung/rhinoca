@@ -69,7 +69,7 @@ roEXCP_TRY
 
 		if(st == Status::file_ended) {
 			nextFun = &TextLoader::convert;
-			return reSchedule(false, ~taskPool->mainThreadId());
+			break;
 		}
 
 		if(!st) roEXCP_THROW;
@@ -83,9 +83,7 @@ roEXCP_CATCH
 
 roEXCP_END
 
-	roAssert(false);
-	nextFun = &TextLoader::abort;
-	return reSchedule(false, taskPool->mainThreadId());
+	return reSchedule(false, ~taskPool->mainThreadId());
 }
 
 void TextLoader::convert(TaskPool* taskPool)

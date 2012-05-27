@@ -9,6 +9,7 @@ namespace Parsing {
 /// CSS selector syntax: http://www.w3.org/TR/CSS2/selector.html#selector-syntax
 /// W3C rough  http://www.w3.org/TR/1998/REC-CSS2-19980512/syndata.html
 /// W3C detail http://www.w3.org/TR/1998/REC-CSS2-19980512/grammar.html
+///	Synatx of the CSS parsing rules: http://www.w3.org/TR/CSS21/syndata.html
 /// See http://www.codeproject.com/KB/recipes/CSSParser.aspx
 /// http://stackoverflow.com/questions/4656975/use-css-selectors-to-collect-html-elements-from-a-streaming-parser-e-g-sax-stre
 

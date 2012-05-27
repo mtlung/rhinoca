@@ -37,6 +37,8 @@ float roCeil				(float x);
 float roFrac				(float x);
 float roRound				(float x);	// < 0.5 floor, > 0.5 ceil
 
+template<class T> T roGcd	(T a, T b);	// Greatest common divisor
+
 template<class T> T roClamp	(T x, T min, T max);
 template<class T> T roClampMin(T x, T min);
 template<class T> T roClampMax(T x, T max);
@@ -74,6 +76,14 @@ inline float roFloor(float x) { return ::floorf(x); }
 inline float roCeil(float x) { return ::ceilf(x); }
 inline float roFrac(float x) { return x - roFloor(x); }
 inline float roRound(float x) { return ::floorf(x + 0.5f); }
+
+template<class T>
+inline T roGcd(T a, T b)
+{
+	T r = a % b;
+	if(r == 0) return b;
+	return roGcd(b, r);
+}
 
 template<class T>
 inline T roClamp(T x, T min, T max) { return x < min ? min : (x > max ? max : x); }
