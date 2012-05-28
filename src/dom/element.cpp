@@ -4,6 +4,7 @@
 #include "canvas2dcontext.h"
 #include "document.h"
 #include "nodelist.h"
+#include "../common.h"
 #include "../context.h"
 #include "../path.h"
 #include "../../roar/base/roStringHash.h"
@@ -172,24 +173,24 @@ Element::Element(Rhinoca* rh)
 
 JSObject* Element::createPrototype()
 {
-	RHASSERT(jsContext);
+	roAssert(jsContext);
 	JSObject* proto = JS_NewObject(jsContext, &jsClass, Node::createPrototype(), NULL);
-	RHVERIFY(JS_SetPrivate(jsContext, proto, this));
-	RHVERIFY(JS_DefineFunctions(jsContext, proto, elementMethods));
-	RHVERIFY(JS_DefineProperties(jsContext, proto, elementProperties));
+	roVerify(JS_SetPrivate(jsContext, proto, this));
+	roVerify(JS_DefineFunctions(jsContext, proto, elementMethods));
+	roVerify(JS_DefineProperties(jsContext, proto, elementProperties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 	return proto;
 }
 
 static JSBool construct(JSContext* cx, uintN argc, jsval* vp)
 {
-	RHASSERT(false && "For compatible with javascript instanceof operator only, you are not suppose to new a HTMLElement directly");
+	roAssert(false && "For compatible with javascript instanceof operator only, you are not suppose to new a HTMLElement directly");
 	return JS_FALSE;
 }
 
 void Element::registerClass(JSContext* cx, JSObject* parent)
 {
-	RHVERIFY(JS_InitClass(cx, parent, NULL, &jsClass, construct, 0, NULL, NULL, NULL, NULL));
+	roVerify(JS_InitClass(cx, parent, NULL, &jsClass, construct, 0, NULL, NULL, NULL, NULL));
 }
 
 static Node* getElementsByTagNameFilter_(NodeIterator& iter, void* userData)
@@ -239,7 +240,7 @@ ElementStyle* Element::style()
 
 	if(!_style->jsObject) {
 		_style->bind(jsContext, *this);
-		RHVERIFY(JS_SetReservedSlot(jsContext, jsObjectOfType(&Element::jsClass), 0, *_style));
+		roVerify(JS_SetReservedSlot(jsContext, jsObjectOfType(&Element::jsClass), 0, *_style));
 	}
 
 	return _style;

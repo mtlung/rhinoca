@@ -10,7 +10,7 @@
 
 #include "../platform/roPlatformHeaders.h"
 #include <gl/gl.h>
-#include "../../src/render/gl/glext.h"
+#include "gl/glext.h"
 
 #pragma comment(lib, "OpenGL32")
 #pragma comment(lib, "GLU32")

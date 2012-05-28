@@ -5,8 +5,8 @@
 #include "cssparser.h"
 #include "document.h"
 #include "../context.h"
-#include "../rhlog.h"
 #include "../path.h"
+#include "../../roar/base/roLog.h"
 
 using namespace ro;
 using namespace ro::Parsing;
@@ -29,7 +29,7 @@ static JSBool JS_ValueToCssDimension(JSContext *cx, jsval v, float& val)
 		ret = (sscanf(jss.c_str(), "%f%s", &val, buf) == 2) ? JS_TRUE : JS_FALSE;
 
 		if(roStrCaseCmp(buf, "px") != 0)
-			rhLog("warn", "%s", "Only 'px' is supported for CSS dimension unit\n");
+			roLog("warn", "%s", "Only 'px' is supported for CSS dimension unit\n");
 	}
 
 	return ret;
@@ -152,7 +152,7 @@ static JSBool styleSetBG(JSContext* cx, JSObject* obj, jsid id, JSBool strict, j
 
 	JsString jss(cx, *vp);
 	if(!jss || !self->setBackgroundImage(jss.c_str()))
-		rhLog("warn", "Invalid CSS background image: %s\n", jss ? jss.c_str() : "");
+		roLog("warn", "Invalid CSS background image: %s\n", jss ? jss.c_str() : "");
 
 	return JS_TRUE;
 }
@@ -163,7 +163,7 @@ static JSBool styleSetBGColor(JSContext* cx, JSObject* obj, jsid id, JSBool stri
 
 	JsString jss(cx, *vp);
 	if(!jss || !self->setBackgroundColor(jss.c_str()))
-		rhLog("warn", "Invalid CSS color: %s\n", jss ? jss.c_str() : "");
+		roLog("warn", "Invalid CSS color: %s\n", jss ? jss.c_str() : "");
 
 	return JS_TRUE;
 }
@@ -174,7 +174,7 @@ static JSBool styleSetBGPos(JSContext* cx, JSObject* obj, jsid id, JSBool strict
 
 	JsString jss(cx, *vp);
 	if(!jss || !self->setBackgroundPosition(jss.c_str()))
-		rhLog("warn", "Invalid CSS backgroundPosition: %s\n", jss ? jss.c_str() : "");
+		roLog("warn", "Invalid CSS backgroundPosition: %s\n", jss ? jss.c_str() : "");
 
 	return JS_TRUE;
 }
@@ -200,11 +200,11 @@ static JSPropertySpec properties[] = {
 
 void ElementStyle::bind(JSContext* cx, JSObject* parent)
 {
-	RHASSERT(!jsContext);
+	roAssert(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
-	RHVERIFY(JS_SetPrivate(cx, *this, this));
-	RHVERIFY(JS_DefineProperties(cx, *this, properties));
+	roVerify(JS_SetPrivate(cx, *this, this));
+	roVerify(JS_DefineProperties(cx, *this, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
@@ -451,23 +451,23 @@ void ElementStyle::setTransform(const char* transformStr)
 			}
 			else if(hash == stringHash("skew"))
 			{
-				RHASSERT(false && "Not implemented");
+				roAssert(false && "Not implemented");
 			}
 			else if(hash == stringHash("skewx"))
 			{
-				RHASSERT(false && "Not implemented");
+				roAssert(false && "Not implemented");
 			}
 			else if(hash == stringHash("skewy"))
 			{
-				RHASSERT(false && "Not implemented");
+				roAssert(false && "Not implemented");
 			}
 			else if(hash == stringHash("matrix"))
 			{
-				RHASSERT(false && "Not implemented");
+				roAssert(false && "Not implemented");
 			}
 			else
 			{
-				RHASSERT(false && "invalid transform function");
+				roAssert(false && "invalid transform function");
 			}
 
 			// Apply the transform with origin adjustment
@@ -515,7 +515,7 @@ void ElementStyle::setTransform(const char* transformStr)
 				style->setIdentity();
 			}
 			else
-				RHASSERT(false);
+				roAssert(false);
 		}
 	};	// ParserState
 
@@ -574,7 +574,7 @@ void ElementStyle::setTransformOrigin(const char* transformOriginStr)
 				style->_originUsePercentage[1] = state->usePercentage[1];
 			}
 			else
-				RHASSERT(false);
+				roAssert(false);
 		}
 	};	// ParserState
 
@@ -632,7 +632,7 @@ bool ElementStyle::setBackgroundPosition(const char* cssBackgroundPosition)
 				style->backgroundPositionY = state->values[1];
 			}
 			else
-				RHASSERT(false);
+				roAssert(false);
 		}
 	};	// ParserState
 

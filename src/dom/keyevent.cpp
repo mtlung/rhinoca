@@ -47,11 +47,11 @@ KeyEvent::~KeyEvent()
 
 void KeyEvent::bind(JSContext* cx, JSObject* parent)
 {
-	RHASSERT(!jsContext);
+	roAssert(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, Event::createPrototype(), parent);
-	RHVERIFY(JS_SetPrivate(cx, *this, this));
-	RHVERIFY(JS_DefineProperties(cx, *this, properties));
+	roVerify(JS_SetPrivate(cx, *this, this));
+	roVerify(JS_DefineProperties(cx, *this, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 

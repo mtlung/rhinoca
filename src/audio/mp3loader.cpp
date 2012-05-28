@@ -2,8 +2,8 @@
 #include "audiobuffer.h"
 #include "audioloader.h"
 #include "../common.h"
-#include "../rhlog.h"
 #include "../../roar/base/roFileSystem.h"
+#include "../../roar/base/roLog.h"
 #include "../../roar/base/roTypeCast.h"
 #include "../../thirdParty/libmpg/mpg123.h"
 
@@ -105,7 +105,7 @@ void Mp3Loader::loadHeader()
 	if(buffer->state == Resource::Aborted) goto Abort;
 	if(!stream) st = fileSystem.openFile(buffer->uri(), stream);
 	if(!st) {
-		rhLog("error", "Mp3Loader: Fail to open file '%s', reason: %s\n", buffer->uri().c_str(), st.c_str());
+		roLog("error", "Mp3Loader: Fail to open file '%s', reason: %s\n", buffer->uri().c_str(), st.c_str());
 		goto Abort;
 	}
 
@@ -237,7 +237,7 @@ void Mp3Loader::loadData()
 		goto Abort;
 
 	if(mpgRet == MPG123_NEW_FORMAT)
-		rhLog("error", "Mp3Loader: Changing audio format in the middle of loading is not supported '%s'\n", buffer->uri().c_str());
+		roLog("error", "Mp3Loader: Changing audio format in the middle of loading is not supported '%s'\n", buffer->uri().c_str());
 
 	if(decodeBytes > 0) {
 		currentSamplePos = mpg123_tell(mpg);

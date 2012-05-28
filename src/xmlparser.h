@@ -1,7 +1,7 @@
 #ifndef __XMLPARSER_H__
 #define __XMLPARSER_H__
 
-#include "noncopyable.h"
+#include "../roar/base/roNonCopyable.h"
 
 /*!	XmlParser is intended to be a high speed and easy-to-use XML Parser specialized for
 	game development.
@@ -77,7 +77,7 @@
 	}
 	\endcode
  */
-class XmlParser : Noncopyable
+class XmlParser : ro::NonCopyable
 {
 public:
 	struct Event { enum Enum {

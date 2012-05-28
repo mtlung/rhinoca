@@ -1,9 +1,6 @@
 #include "pch.h"
 #include "canvasgradient.h"
 #include "color.h"
-#include "../render/vg/openvg.h"
-
-using namespace Render;
 
 namespace Dom {
 
@@ -20,7 +17,7 @@ static JSBool addColorStop(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	double t;
-	RHVERIFY(JS_ValueToNumber(cx, JS_ARGV0, &t));
+	roVerify(JS_ValueToNumber(cx, JS_ARGV0, &t));
 
 	JsString jss(cx, JS_ARGV1);
 	self->addColorStop((float)t, jss.c_str());
@@ -34,88 +31,35 @@ static JSFunctionSpec methods[] = {
 };
 
 CanvasGradient::CanvasGradient()
-	: handle(NULL)
-	, stops(NULL)
-	, stopCount(0)
 {
 }
 
 CanvasGradient::~CanvasGradient()
 {
-	vgDestroyPaint(handle);
-	rhdelete(stops);
 }
 
 void CanvasGradient::bind(JSContext* cx, JSObject* parent)
 {
-	RHASSERT(!jsContext);
+	roAssert(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
-	RHVERIFY(JS_SetPrivate(cx, *this, this));
-	RHVERIFY(JS_DefineFunctions(cx, *this, methods));
+	roVerify(JS_SetPrivate(cx, *this, this));
+	roVerify(JS_DefineFunctions(cx, *this, methods));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
 void CanvasGradient::createLinear(float xStart, float yStart, float xEnd, float yEnd)
 {
-	RHASSERT(!handle);
-	handle = vgCreatePaint();
-	vgSetParameteri(handle, VG_PAINT_COLOR_RAMP_SPREAD_MODE, VG_COLOR_RAMP_SPREAD_PAD);
-	vgSetParameteri(handle, VG_PAINT_TYPE, VG_PAINT_TYPE_LINEAR_GRADIENT);
-	const float linear[] = { xStart, yStart ,xEnd, yEnd };
-	vgSetParameterfv(handle, VG_PAINT_LINEAR_GRADIENT, 4, linear);
 }
 
 void CanvasGradient::createRadial(float xStart, float yStart, float radiusStart, float xEnd, float yEnd, float radiusEnd)
 {
-	RHASSERT(!handle);
-	handle = vgCreatePaint();
-	vgSetParameteri(handle, VG_PAINT_COLOR_RAMP_SPREAD_MODE, VG_COLOR_RAMP_SPREAD_PAD);
-	vgSetParameteri(handle, VG_PAINT_TYPE, VG_PAINT_TYPE_RADIAL_GRADIENT);
-	_radiusStart = radiusStart;
-	_radiusEnd = radiusEnd;
-	const float radial[] = { xEnd, yEnd, xStart, yStart ,radiusEnd };
-	vgSetParameterfv(handle, VG_PAINT_RADIAL_GRADIENT, 5, radial);
 }
-
-struct ColorStop {
-	float t, r, g, b, a;
-};
 
 void CanvasGradient::addColorStop(float offset, const char* color)
 {
 	Color c;
 	c.parse(color);
-
-	// We need to adjust the offset for radial fill, to deal with starting radius
-	if(vgGetParameteri(handle, VG_PAINT_TYPE) == VG_PAINT_TYPE_RADIAL_GRADIENT)
-	{
-		// Add an extra stop as the starting radius
-		if(stops == 0) {
-			stops = (float*)rhnew<ColorStop>(1);
-			ColorStop* s = reinterpret_cast<ColorStop*>(stops);
-
-			s[stopCount].t = _radiusStart / _radiusEnd;
-			s[stopCount].r = c.r;
-			s[stopCount].g = c.g;
-			s[stopCount].b = c.b;
-			s[stopCount].a = c.a;
-			++stopCount;
-		}
-
-		offset *= 1.0f - _radiusStart / _radiusEnd;
-		offset += _radiusStart / _radiusEnd;
-	}
-
-	stops = (float*)rhrenew<ColorStop>((ColorStop*)stops, stopCount, stopCount + 1);
-	ColorStop* s = reinterpret_cast<ColorStop*>(stops);
-
-	s[stopCount].t = offset;
-	s[stopCount].r = c.r;
-	s[stopCount].g = c.g;
-	s[stopCount].b = c.b;
-	s[stopCount].a = c.a;
-	++stopCount;
 }
 
 }	// namespace Dom

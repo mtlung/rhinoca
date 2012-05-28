@@ -138,11 +138,11 @@ HTMLMediaElement::~HTMLMediaElement()
 
 JSObject* HTMLMediaElement::createPrototype()
 {
-	RHASSERT(jsContext);
+	roAssert(jsContext);
 	JSObject* proto = JS_NewObject(jsContext, &jsClass, Element::createPrototype(), NULL);
-	RHVERIFY(JS_SetPrivate(jsContext, proto, this));
-	RHVERIFY(JS_DefineFunctions(jsContext, proto, methods));
-	RHVERIFY(JS_DefineProperties(jsContext, proto, properties));
+	roVerify(JS_SetPrivate(jsContext, proto, this));
+	roVerify(JS_DefineFunctions(jsContext, proto, methods));
+	roVerify(JS_DefineProperties(jsContext, proto, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 	return proto;
 }

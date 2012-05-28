@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "context.h"
 #include "common.h"
-#include "loader.h"
 #include "path.h"
 #include "platform.h"
 #include "rhinoca.h"
@@ -167,13 +166,13 @@ void Rhinoca::collectGarbage()
 
 void Rhinoca::_initGlobal()
 {
-	RHASSERT(!domWindow);
+	roAssert(!domWindow);
 
 	// NOTE: We use the Window object as the global
 	jsGlobal = JS_NewCompartmentAndGlobalObject(jsContext, &Dom::Window::jsClass, NULL);
 	JS_SetGlobalObject(jsContext, jsGlobal);
 
-	RHVERIFY(JS_InitStandardClasses(jsContext, jsGlobal));
+	roVerify(JS_InitStandardClasses(jsContext, jsGlobal));
 
 	Dom::registerClasses(jsContext, jsGlobal);
 
@@ -184,9 +183,9 @@ void Rhinoca::_initGlobal()
 
 	{	// Register the console object
 		jsConsole = JS_DefineObject(jsContext, jsGlobal, "console", &jsConsoleClass, 0, JSPROP_ENUMERATE);
-		RHVERIFY(JS_SetPrivate(jsContext, jsConsole, this));
-		RHVERIFY(JS_AddNamedObjectRoot(jsContext, &jsConsole, "console"));
-		RHVERIFY(JS_DefineFunctions(jsContext, jsConsole, jsConsoleMethods));
+		roVerify(JS_SetPrivate(jsContext, jsConsole, this));
+		roVerify(JS_AddNamedObjectRoot(jsContext, &jsConsole, "console"));
+		roVerify(JS_DefineFunctions(jsContext, jsConsole, jsConsoleMethods));
 	}
 
 	{	// Run some default settings
@@ -199,7 +198,7 @@ void Rhinoca::_initGlobal()
 			"var Canvas = HTMLCanvasElement;"
 			"var Image = HTMLImageElement;"
 		;
-		RHVERIFY(JS_EvaluateScript(jsContext, jsGlobal, script, strlen(script), "", 0, NULL));
+		roVerify(JS_EvaluateScript(jsContext, jsGlobal, script, strlen(script), "", 0, NULL));
 	}
 }
 
@@ -284,7 +283,7 @@ bool Rhinoca::openDoucment(const char* uri)
 				roToLower(const_cast<char*>(name));
 
 				jsval v = STRING_TO_JSVAL(JS_NewStringCopyZ(jsContext, value));
-				RHVERIFY(JS_SetProperty(jsContext, *currentNode, name, &v));
+				roVerify(JS_SetProperty(jsContext, *currentNode, name, &v));
 			}
 
 		}	break;
@@ -364,7 +363,7 @@ void Rhinoca::closeDocument()
 	// Clear all tasks before the VM shutdown, since any task would use the VM
 //	subSystems.taskPool->waitAll();
 
-	RHVERIFY(JS_RemoveObjectRoot(jsContext, &jsConsole));
+	roVerify(JS_RemoveObjectRoot(jsContext, &jsConsole));
 	jsConsole = NULL;
 
 	if(domWindow)

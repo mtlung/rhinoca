@@ -2,7 +2,6 @@
 #define __DOM_CANVAS_H__
 
 #include "element.h"
-#include "../render/framebuffer.h"
 #include "../../roar/render/roTexture.h"
 
 namespace Render { class Texture; }

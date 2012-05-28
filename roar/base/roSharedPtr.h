@@ -56,7 +56,7 @@ template<class T, class U>	bool operator<(const SharedPtr<T>& a, const SharedPtr
 
 template<class T, class U>	SharedPtr<T> static_pointer_cast(const SharedPtr<U>& p)	{ return static_cast<T*>(p.get()); }
 template<class T, class U>	SharedPtr<T> const_pointer_cast(const SharedPtr<U>& p)	{ return const_cast<T*>(p.get()); }
-template<class T, class U>	SharedPtr<T> dynamic_pointer_cast(const SharedPtr<U>& p)	{ return dynamic_cast<T*>(p.get()); }
+template<class T, class U>	SharedPtr<T> dynamic_pointer_cast(const SharedPtr<U>& p){ return dynamic_cast<T*>(p.get()); }
 
 
 // ----------------------------------------------------------------------

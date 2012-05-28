@@ -3,12 +3,7 @@
 
 #include "element.h"
 #include "../../roar/base/roSharedPtr.h"
-
-namespace Render {
-
-typedef ro::SharedPtr<class Texture> TexturePtr;
-
-}	// namespace Render
+#include "../../roar/render/roTexture.h"
 
 namespace Dom {
 
@@ -25,7 +20,8 @@ public:
 	static Element* factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser);
 
 // Attributes
-	Render::TexturePtr texture;
+	ro::TexturePtr texture;
+//	Render::TexturePtr texture;
 
 	void setSrc(const char* uri);
 

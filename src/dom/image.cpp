@@ -4,11 +4,9 @@
 #include "../context.h"
 #include "../path.h"
 #include "../xmlparser.h"
-#include "../render/texture.h"
 #include "../../roar/base/roStringUtility.h"
 
 using namespace ro;
-using namespace Render;
 
 namespace Dom {
 
@@ -167,10 +165,10 @@ static JSBool setFilter(JSContext* cx, JSObject* obj, jsid id, JSBool strict, js
 	JsString jss(cx, *vp);
 	if(!jss) return JS_FALSE;
 
-	if(roStrCaseCmp(jss.c_str(), "nearest") == 0)
+/*	if(roStrCaseCmp(jss.c_str(), "nearest") == 0)
 		self->filter = Driver::SamplerState::MIN_MAG_POINT;
 	else
-		self->filter = Driver::SamplerState::MIN_MAG_LINEAR;
+		self->filter = Driver::SamplerState::MIN_MAG_LINEAR;*/
 
 	return JS_TRUE;
 }
@@ -217,7 +215,7 @@ static JSFunctionSpec methods[] = {
 HTMLImageElement::HTMLImageElement(Rhinoca* rh)
 	: Element(rh)
 	, texture(NULL)
-	, filter(Driver::SamplerState::MIN_MAG_LINEAR)
+//	, filter(Driver::SamplerState::MIN_MAG_LINEAR)
 {
 	_width = _height = -1;
 }
@@ -228,18 +226,18 @@ HTMLImageElement::~HTMLImageElement()
 
 void HTMLImageElement::bind(JSContext* cx, JSObject* parent)
 {
-	RHASSERT(!jsContext);
+	roAssert(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, Element::createPrototype(), parent);
-	RHVERIFY(JS_SetPrivate(cx, *this, this));
-	RHVERIFY(JS_DefineFunctions(cx, *this, methods));
-	RHVERIFY(JS_DefineProperties(cx, *this, properties));
+	roVerify(JS_SetPrivate(cx, *this, this));
+	roVerify(JS_DefineFunctions(cx, *this, methods));
+	roVerify(JS_DefineProperties(cx, *this, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
 void HTMLImageElement::registerClass(JSContext* cx, JSObject* parent)
 {
-	RHVERIFY(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
+	roVerify(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
 }
 
 static const ro::ConstString _tagName = "IMG";
@@ -286,12 +284,12 @@ unsigned HTMLImageElement::height() const
 
 unsigned HTMLImageElement::naturalWidth() const
 {
-	return texture ? texture->width : 0;
+	return texture ? texture->width() : 0;
 }
 
 unsigned HTMLImageElement::naturalHeight() const
 {
-	return texture ? texture->height : 0;
+	return texture ? texture->height() : 0;
 }
 
 void HTMLImageElement::setWidth(unsigned w)

@@ -5,13 +5,9 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <ole2.h>
-#include <gl/gl.h>
-//#define GL_GLEXT_PROTOTYPES
-#include "../../src/render/gl/glext.h"
 #include <stdio.h>
 #include <crtdbg.h>
 #include <assert.h>
-#include <malloc.h>
 
 #include "DropHandler.h"
 

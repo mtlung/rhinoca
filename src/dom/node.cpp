@@ -80,7 +80,7 @@ static JSBool cloneNode(JSContext* cx, uintN argc, jsval* vp)
 
 	Node* self = getJsBindable<Node>(cx, vp);
 	Node* newNode = self->cloneNode(recursive);
-	RHASSERT(!newNode || newNode->jsContext && "Overrided cloneNode() is responsible to bind the object");
+	roAssert(!newNode || newNode->jsContext && "Overrided cloneNode() is responsible to bind the object");
 
 	JS_RVAL(cx, vp) = *newNode;
 	return JS_TRUE;
@@ -207,22 +207,22 @@ Node::~Node()
 
 void Node::bind(JSContext* cx, JSObject* parent)
 {
-	RHASSERT(!jsContext);
+	roAssert(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
-	RHVERIFY(JS_SetPrivate(cx, *this, this));
-	RHVERIFY(JS_DefineFunctions(cx, *this, methods));
-	RHVERIFY(JS_DefineProperties(cx, *this, properties));
+	roVerify(JS_SetPrivate(cx, *this, this));
+	roVerify(JS_DefineFunctions(cx, *this, methods));
+	roVerify(JS_DefineProperties(cx, *this, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
 JSObject* Node::createPrototype()
 {
-	RHASSERT(jsContext);
+	roAssert(jsContext);
 	JSObject* proto = JS_NewObject(jsContext, &jsClass, NULL, NULL);
-	RHVERIFY(JS_SetPrivate(jsContext, proto, this));
-	RHVERIFY(JS_DefineFunctions(jsContext, proto, methods));
-	RHVERIFY(JS_DefineProperties(jsContext, proto, properties));
+	roVerify(JS_SetPrivate(jsContext, proto, this));
+	roVerify(JS_DefineFunctions(jsContext, proto, methods));
+	roVerify(JS_DefineProperties(jsContext, proto, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 	return proto;
 }

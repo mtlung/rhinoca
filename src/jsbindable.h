@@ -1,7 +1,6 @@
 #ifndef __JSBINDABLE_H__
 #define __JSBINDABLE_H__
 
-#include "rhassert.h"
 #include "../roar/base/roString.h"
 
 #define XP_WIN
@@ -72,7 +71,7 @@ template<class T>
 static T* getJsBindable(JSContext* cx, jsval* vp)
 {
 	JsBindable* ret = getJsBindable<T>(cx, JS_THIS_OBJECT(cx, vp));
-	RHASSERT(dynamic_cast<T*>(ret));
+	roAssert(dynamic_cast<T*>(ret));
 	return static_cast<T*>(ret);
 }
 

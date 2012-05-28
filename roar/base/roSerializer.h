@@ -20,7 +20,7 @@ struct Serializer
 
 // Private
 	Status	_checkRemain(roSize size);
-	void		_advance	(roSize size);
+	void	_advance	(roSize size);
 
 	ByteArray* _buf;
 	roBytePtr _w;
@@ -40,7 +40,7 @@ struct Deserializer
 
 // Private
 	Status	_checkRemain(roSize size);
-	void		_advance	(roSize size);
+	void	_advance	(roSize size);
 
 	ByteArray* _buf;
 	roBytePtr _r;

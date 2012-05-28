@@ -21,16 +21,6 @@ public:
 	void addColorStop(float offset, const char* color);
 
 // Attribbutes
-	enum Type {
-		Linear = 0x1A04,	// Values come from openvg.h
-		Radial = 0x1A05,
-	};
-
-	void* handle;
-	float* stops;
-	unsigned stopCount;
-	float _radiusStart, _radiusEnd;	// For radial fill
-
 	static JSClass jsClass;
 };	// CanvasGradient
 

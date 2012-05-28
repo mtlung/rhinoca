@@ -2,8 +2,8 @@
 #include "audiobuffer.h"
 #include "audioloader.h"
 #include "../common.h"
-#include "../rhlog.h"
 #include "../../roar/base/roFileSystem.h"
+#include "../../roar/base/roLog.h"
 
 namespace Loader {
 
@@ -94,7 +94,7 @@ void WaveLoader::loadHeader()
 	if(buffer->state == Resource::Aborted) goto Abort;
 	if(!stream) st = fileSystem.openFile(buffer->uri(), stream);
 	if(!st) {
-		rhLog("error", "WaveLoader: Fail to open file '%s', reason: %s\n", buffer->uri().c_str(), st.c_str());
+		roLog("error", "WaveLoader: Fail to open file '%s', reason: %s\n", buffer->uri().c_str(), st.c_str());
 		goto Abort;
 	}
 

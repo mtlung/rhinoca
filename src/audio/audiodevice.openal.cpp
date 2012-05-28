@@ -1,9 +1,9 @@
 #include "pch.h"
 #include "audiodevice.h"
 #include "../common.h"
-#include "../rhlog.h"
 #include "../../roar/base/roArray.h"
 #include "../../roar/base/roLinkList.h"
+#include "../../roar/base/roLog.h"
 
 #if defined(RHINOCA_APPLE)
 #	include <OpenAL/al.h>
@@ -75,7 +75,7 @@ static bool checkAndPrintError(const char* prefixMessage)
 	if(err == AL_NO_ERROR)
 		return true;
 
-	rhLog("error", "%s%s\n", prefixMessage, getALErrorString(err));
+	roLog("error", "%s%s\n", prefixMessage, getALErrorString(err));
 	return false;
 }
 
@@ -350,7 +350,7 @@ int AudioDevice::allocateAlBufferFor(AudioBuffer* src, unsigned begin, unsigned 
 	}
 
 	// No more buffer to play around, the last audio request will be ignored
-	rhLog("warn", "Not enough audio buffers for simultaneous sound play, last audio play request will be ignored\n");
+	roLog("warn", "Not enough audio buffers for simultaneous sound play, last audio play request will be ignored\n");
 
 	return -1;
 }
@@ -527,7 +527,7 @@ void audiodevice_init()
 	_alcDevice = alcOpenDevice(NULL);
 
 	if(!_alcDevice)
-		rhLog("error", "Fail to initialize audio device\n");
+		roLog("error", "Fail to initialize audio device\n");
 	else
 		++_initCount;
 }

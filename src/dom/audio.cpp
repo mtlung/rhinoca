@@ -95,18 +95,18 @@ HTMLAudioElement::~HTMLAudioElement()
 
 void HTMLAudioElement::bind(JSContext* cx, JSObject* parent)
 {
-	RHASSERT(!jsContext);
+	roAssert(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, HTMLMediaElement::createPrototype(), parent);
-	RHVERIFY(JS_SetPrivate(cx, *this, this));
-	RHVERIFY(JS_DefineFunctions(cx, *this, methods));
-	RHVERIFY(JS_DefineProperties(cx, *this, properties));
+	roVerify(JS_SetPrivate(cx, *this, this));
+	roVerify(JS_DefineFunctions(cx, *this, methods));
+	roVerify(JS_DefineProperties(cx, *this, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
 void HTMLAudioElement::registerClass(JSContext* cx, JSObject* parent)
 {
-	RHVERIFY(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
+	roVerify(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
 }
 
 static ro::ConstString _tagName = "AUDIO";

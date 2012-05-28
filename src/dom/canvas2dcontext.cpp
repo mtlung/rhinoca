@@ -5,9 +5,6 @@
 #include "image.h"
 #include "imagedata.h"
 #include "../../roar/base/roLog.h"
-#include "../render/vg/openvg.h"
-#include "../render/vg/vgu.h"
-#include <string.h>	// For roStrCaseCmp
 
 using namespace Render;
 using namespace ro;
@@ -25,7 +22,7 @@ static void getFloat(JSContext* cx, jsval* vp, float* dest, unsigned count)
 {
 	for(unsigned i=0; i<count; ++i) {
 		double tmp;
-		RHVERIFY(JS_ValueToNumber(cx, JS_ARGV(cx, vp)[i], &tmp));
+		roVerify(JS_ValueToNumber(cx, JS_ARGV(cx, vp)[i], &tmp));
 		dest[i] = (float)tmp;
 	}
 }
@@ -34,7 +31,7 @@ static void getFloat(JSContext* cx, jsval* vp, unsigned argOffset, float* dest, 
 {
 	for(unsigned i=0; i<count; ++i) {
 		double tmp;
-		RHVERIFY(JS_ValueToNumber(cx, JS_ARGV(cx, vp)[i + argOffset], &tmp));
+		roVerify(JS_ValueToNumber(cx, JS_ARGV(cx, vp)[i + argOffset], &tmp));
 		dest[i] = (float)tmp;
 	}
 }
@@ -321,7 +318,7 @@ static JSBool drawImage(JSContext* cx, uintN argc, jsval* vp)
 	}
 	else if(HTMLCanvasElement* otherCanvas = getJsBindable<HTMLCanvasElement>(cx, vp, 0)) {
 //		texture = otherCanvas->texture();
-		filter = Driver::SamplerState::MIN_MAG_LINEAR;
+//		filter = Driver::SamplerState::MIN_MAG_LINEAR;
 		imgw = otherCanvas->width();
 		imgh = otherCanvas->height();
 	}
@@ -419,7 +416,7 @@ static JSBool rotate(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	double angle;
-	RHVERIFY(JS_ValueToNumber(cx, JS_ARGV0, &angle));
+	roVerify(JS_ValueToNumber(cx, JS_ARGV0, &angle));
 	self->_canvas.rotate((float)angle);
 
 	return JS_TRUE;
@@ -539,7 +536,7 @@ static JSBool arc(JSContext* cx, uintN argc, jsval* vp)
 	bool antiClockwise;
 	struct { float x, y, radius, startAngle, endAngle; } s;
 	getFloat(cx, vp, &s.x, 5);
-	RHVERIFY(JS_GetValue(cx, JS_ARGV5, antiClockwise));
+	roVerify(JS_GetValue(cx, JS_ARGV5, antiClockwise));
 	self->_canvas.arc(s.x, s.y, s.radius, s.startAngle, s.endAngle, antiClockwise);
 
 	return JS_TRUE;
@@ -661,10 +658,10 @@ static JSBool getImageData(JSContext* cx, uintN argc, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	int32 x, y, w, h;
-	RHVERIFY(JS_ValueToInt32(cx, JS_ARGV0, &x));
-	RHVERIFY(JS_ValueToInt32(cx, JS_ARGV1, &y));
-	RHVERIFY(JS_ValueToInt32(cx, JS_ARGV2, &w));
-	RHVERIFY(JS_ValueToInt32(cx, JS_ARGV3, &h));
+	roVerify(JS_ValueToInt32(cx, JS_ARGV0, &x));
+	roVerify(JS_ValueToInt32(cx, JS_ARGV1, &y));
+	roVerify(JS_ValueToInt32(cx, JS_ARGV2, &w));
+	roVerify(JS_ValueToInt32(cx, JS_ARGV3, &h));
 //	ImageData* imgData = self->getImageData(cx, x, y, w, h);
 
 //	JS_RVAL(cx, vp) = *imgData;
@@ -685,15 +682,15 @@ static JSBool putImageData(JSContext* cx, uintN argc, jsval* vp)
 	int32 dirtyWidth = imgData->width;
 	int32 dirtyHeight = imgData->height;
 
-	RHVERIFY(JS_ValueToInt32(cx, JS_ARGV1, &dx));
-	RHVERIFY(JS_ValueToInt32(cx, JS_ARGV2, &dy));
+	roVerify(JS_ValueToInt32(cx, JS_ARGV1, &dx));
+	roVerify(JS_ValueToInt32(cx, JS_ARGV2, &dy));
 
 	if(argc >= 7) {
 		// TODO: Deal with negative values, as state in the spec
-		RHVERIFY(JS_ValueToInt32(cx, JS_ARGV3, &dirtyX));
-		RHVERIFY(JS_ValueToInt32(cx, JS_ARGV4, &dirtyY));
-		RHVERIFY(JS_ValueToInt32(cx, JS_ARGV5, &dirtyWidth));
-		RHVERIFY(JS_ValueToInt32(cx, JS_ARGV6, &dirtyHeight));
+		roVerify(JS_ValueToInt32(cx, JS_ARGV3, &dirtyX));
+		roVerify(JS_ValueToInt32(cx, JS_ARGV4, &dirtyY));
+		roVerify(JS_ValueToInt32(cx, JS_ARGV5, &dirtyWidth));
+		roVerify(JS_ValueToInt32(cx, JS_ARGV6, &dirtyHeight));
 	}
 
 //	self->putImageData(imgData, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight);
@@ -806,24 +803,24 @@ CanvasRenderingContext2D::~CanvasRenderingContext2D()
 
 void CanvasRenderingContext2D::bind(JSContext* cx, JSObject* parent)
 {
-	RHASSERT(!jsContext);
+	roAssert(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
-	RHVERIFY(JS_SetPrivate(cx, *this, this));
-	RHVERIFY(JS_DefineFunctions(cx, *this, methods));
-	RHVERIFY(JS_DefineProperties(cx, *this, properties));
+	roVerify(JS_SetPrivate(cx, *this, this));
+	roVerify(JS_DefineFunctions(cx, *this, methods));
+	roVerify(JS_DefineProperties(cx, *this, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 
 static JSBool construct(JSContext* cx, uintN argc, jsval* vp)
 {
-	RHASSERT(false && "For compatible with javascript instanceof operator only, you are not suppose to new a CanvasRenderingContext2D directly");
+	roAssert(false && "For compatible with javascript instanceof operator only, you are not suppose to new a CanvasRenderingContext2D directly");
 	return JS_FALSE;
 }
 
 void CanvasRenderingContext2D::registerClass(JSContext* cx, JSObject* parent)
 {
-	RHVERIFY(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
+	roVerify(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
 }
 
 void CanvasRenderingContext2D::setWidth(unsigned width)

@@ -592,10 +592,6 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\src\common.cpp"
-			>
-		</File>
-		<File
 			RelativePath="..\..\src\common.h"
 			>
 		</File>
@@ -620,19 +616,7 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\src\loader.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\loader.h"
-			>
-		</File>
-		<File
 			RelativePath="..\..\src\memory.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\noncopyable.h"
 			>
 		</File>
 		<File
@@ -688,23 +672,11 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\src\rhassert.h"
-			>
-		</File>
-		<File
 			RelativePath="..\..\src\rhinoca.cpp"
 			>
 		</File>
 		<File
 			RelativePath="..\..\src\rhinoca.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\rhlog.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\rhlog.h"
 			>
 		</File>
 		<File

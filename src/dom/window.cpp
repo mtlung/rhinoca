@@ -71,7 +71,7 @@ static JSBool compileScript(TimerCallback* cb, JSContext* cx, jsval* vp)
 	JsString jss(cx, vp, 0);
 	cb->jsScript = JS_CompileScript(cx, JS_THIS_OBJECT(cx, vp), jss.c_str(), jss.size(), NULL, 0);
 	if(!cb->jsScript) return JS_FALSE;
-	RHVERIFY(JS_SetReservedSlot(cx, *cb, 0, OBJECT_TO_JSVAL(cb->jsScript)));
+	roVerify(JS_SetReservedSlot(cx, *cb, 0, OBJECT_TO_JSVAL(cb->jsScript)));
 
 	return JS_TRUE;
 }
@@ -90,7 +90,7 @@ JSBool setTimeout(JSContext* cx, uintN argc, jsval* vp)
 	}
 	else {
 		cb->closure = JS_ARGV0;
-		RHVERIFY(JS_SetReservedSlot(cx, *cb, 0, cb->closure));
+		roVerify(JS_SetReservedSlot(cx, *cb, 0, cb->closure));
 	}
 
 	cb->interval = 0;
@@ -117,7 +117,7 @@ JSBool setInterval(JSContext* cx, uintN argc, jsval* vp)
 	}
 	else {
 		cb->closure = JS_ARGV0;
-		RHVERIFY(JS_SetReservedSlot(cx, *cb, 0, cb->closure));
+		roVerify(JS_SetReservedSlot(cx, *cb, 0, cb->closure));
 	}
 
 	cb->interval = (float)interval/1000;
@@ -171,7 +171,7 @@ JSBool requestAnimationFrame(JSContext* cx, uintN argc, jsval* vp)
 		return JS_FALSE;
 
 	cb->closure = JS_ARGV0;
-	RHVERIFY(JS_SetReservedSlot(cx, *cb, 0, cb->closure));
+	roVerify(JS_SetReservedSlot(cx, *cb, 0, cb->closure));
 
 	self->frameRequestCallbacks.pushFront(*cb);
 
@@ -358,13 +358,13 @@ Window::~Window()
 
 void Window::bind(JSContext* cx, JSObject* parent)
 {
-	RHASSERT(!jsContext);
-	RHASSERT(jsObject);
+	roAssert(!jsContext);
+	roAssert(jsObject);
 
 	jsContext = cx;
-	RHVERIFY(JS_SetPrivate(cx, *this, this));
-	RHVERIFY(JS_DefineFunctions(cx, *this, methods));
-	RHVERIFY(JS_DefineProperties(cx, *this, properties));
+	roVerify(JS_SetPrivate(cx, *this, this));
+	roVerify(JS_DefineFunctions(cx, *this, methods));
+	roVerify(JS_DefineProperties(cx, *this, properties));
 	addReference();
 
 	document->bind(cx, parent);
@@ -384,7 +384,7 @@ static bool isInsideElement(Element* ele, int x, int y)
 
 void Window::dispatchEvent(Event* e)
 {
-	RHASSERT(e->jsObject);
+	roAssert(e->jsObject);
 
 	// Get a list of traversed node first
 	TinyArray<EventTarget*, 64> targets;
@@ -587,7 +587,7 @@ TouchData& Window::allocateTouchData(int identifier)
 int Window::findTouchIndexByIdentifier(int identifier) const
 {
 	for(unsigned i=0; i<touches.size(); ++i) {
-		RHASSERT(touches[i].index == i);
+		roAssert(touches[i].index == i);
 		if(touches[i].identifier == identifier)
 			return i;
 	}
@@ -597,13 +597,13 @@ int Window::findTouchIndexByIdentifier(int identifier) const
 
 static JSBool construct(JSContext* cx, uintN argc, jsval* vp)
 {
-	RHASSERT(false && "For compatible with javascript instanceof operator only, you are not suppose to new a Window directly");
+	roAssert(false && "For compatible with javascript instanceof operator only, you are not suppose to new a Window directly");
 	return JS_FALSE;
 }
 
 void Window::registerClass(JSContext* cx, JSObject* parent)
 {
-	RHVERIFY(JS_InitClass(cx, parent, NULL, &jsClass, construct, 0, NULL, NULL, NULL, NULL));
+	roVerify(JS_InitClass(cx, parent, NULL, &jsClass, construct, 0, NULL, NULL, NULL, NULL));
 }
 
 unsigned Window::width() const
@@ -630,16 +630,16 @@ TimerCallback::TimerCallback()
 
 TimerCallback::~TimerCallback()
 {
-	RHASSERT(closure == JSVAL_VOID);
-	RHASSERT(jsScript == NULL);
+	roAssert(closure == JSVAL_VOID);
+	roAssert(jsScript == NULL);
 }
 
 void TimerCallback::bind(JSContext* cx, JSObject* parent)
 {
-	RHASSERT(!jsContext);
+	roAssert(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
-	RHVERIFY(JS_SetPrivate(cx, *this, this));
+	roVerify(JS_SetPrivate(cx, *this, this));
 	addReference();
 }
 
@@ -664,15 +664,15 @@ FrameRequestCallback::FrameRequestCallback()
 
 FrameRequestCallback::~FrameRequestCallback()
 {
-	RHASSERT(closure == JSVAL_VOID);
+	roAssert(closure == JSVAL_VOID);
 }
 
 void FrameRequestCallback::bind(JSContext* cx, JSObject* parent)
 {
-	RHASSERT(!jsContext);
+	roAssert(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
-	RHVERIFY(JS_SetPrivate(cx, *this, this));
+	roVerify(JS_SetPrivate(cx, *this, this));
 	addReference();
 }
 

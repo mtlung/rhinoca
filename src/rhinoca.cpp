@@ -24,7 +24,7 @@ void rhinoca_init()
 {
 	jsrt = JS_NewRuntime(8L * 1024L * 1024L);
 
-	RHVERIFY(BsdSocket::initApplication() == 0);
+	roVerify(BsdSocket::initApplication() == 0);
 
 	audiodevice_init();
 }
@@ -37,7 +37,7 @@ void rhinoca_close()
 	jsrt = NULL;
 //	vgDestroyContextSH();
 
-	RHVERIFY(BsdSocket::closeApplication() == 0);
+	roVerify(BsdSocket::closeApplication() == 0);
 
 	audiodevice_close();
 }

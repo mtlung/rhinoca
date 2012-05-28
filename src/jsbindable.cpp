@@ -16,10 +16,10 @@ JsBindable::JsBindable()
 
 JsBindable::~JsBindable()
 {
-	RHASSERT(refCount == 0);
-	RHASSERT(gcRootCount == 0);
-//	RHASSERT(!jsContext);
-//	RHASSERT(!jsObject);
+	roAssert(refCount == 0);
+	roAssert(gcRootCount == 0);
+//	roAssert(!jsContext);
+//	roAssert(!jsObject);
 }
 
 void JsBindable::addGcRoot()
@@ -28,16 +28,16 @@ void JsBindable::addGcRoot()
 		return;
 
 	addReference();	// releaseReference() in JsBindable::releaseGcRoot()
-	RHASSERT(jsContext);
+	roAssert(jsContext);
 	if(typeName.isEmpty()) {
 #ifdef DEBUG
-		RHVERIFY(JS_AddNamedObjectRoot(jsContext, &jsObject, typeid(*this).name()));
+		roVerify(JS_AddNamedObjectRoot(jsContext, &jsObject, typeid(*this).name()));
 #else
-		RHVERIFY(JS_AddObjectRoot(jsContext, &jsObject));
+		roVerify(JS_AddObjectRoot(jsContext, &jsObject));
 #endif
 	}
 	else
-		RHVERIFY(JS_AddNamedObjectRoot(jsContext, &jsObject, typeName.c_str()));
+		roVerify(JS_AddNamedObjectRoot(jsContext, &jsObject, typeName.c_str()));
 }
 
 void JsBindable::releaseGcRoot()
@@ -45,8 +45,8 @@ void JsBindable::releaseGcRoot()
 	if(--gcRootCount > 0)
 		return;
 
-	RHASSERT(jsContext);
-	RHVERIFY(JS_RemoveObjectRoot(jsContext, &jsObject));
+	roAssert(jsContext);
+	roVerify(JS_RemoveObjectRoot(jsContext, &jsObject));
 	releaseReference();
 }
 
@@ -57,7 +57,7 @@ void JsBindable::addReference()
 
 void JsBindable::releaseReference()
 {
-	RHASSERT(refCount > 0);
+	roAssert(refCount > 0);
 	--refCount;
 	if(refCount > 0) return;
 	delete this;

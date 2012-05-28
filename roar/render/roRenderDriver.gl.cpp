@@ -10,7 +10,7 @@
 
 #include "../platform/roPlatformHeaders.h"
 #include <gl/gl.h>
-#include "../../src/render/gl/glext.h"
+#include "gl/glext.h"
 #include "platform.win/extensionsfwd.h"
 
 // OpenGL stuffs

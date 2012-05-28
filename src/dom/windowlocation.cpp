@@ -62,15 +62,15 @@ WindowLocation::WindowLocation(Window* w)
 
 void WindowLocation::bind(JSContext* cx, JSObject* parent)
 {
-	RHASSERT(!jsContext);
+	roAssert(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, NULL, parent);
-	RHVERIFY(JS_SetPrivate(cx, *this, this));
-	RHVERIFY(JS_DefineFunctions(cx, *this, methods));
-	RHVERIFY(JS_DefineProperties(cx, *this, properties));
+	roVerify(JS_SetPrivate(cx, *this, this));
+	roVerify(JS_DefineFunctions(cx, *this, methods));
+	roVerify(JS_DefineProperties(cx, *this, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 
-	RHVERIFY(JS_SetReservedSlot(cx, jsObject, 0, *window));
+	roVerify(JS_SetReservedSlot(cx, jsObject, 0, *window));
 }
 
 }	// namespace Dom

@@ -30,12 +30,12 @@ HTMLStyleElement::~HTMLStyleElement()
 
 void HTMLStyleElement::bind(JSContext* cx, JSObject* parent)
 {
-	RHASSERT(!jsContext);
+	roAssert(!jsContext);
 	jsContext = cx;
 	jsObject = JS_NewObject(cx, &jsClass, Element::createPrototype(), parent);
-	RHVERIFY(JS_SetPrivate(cx, *this, this));
-//	RHVERIFY(JS_DefineFunctions(cx, *this, methods));
-//	RHVERIFY(JS_DefineProperties(cx, *this, properties));
+	roVerify(JS_SetPrivate(cx, *this, this));
+//	roVerify(JS_DefineFunctions(cx, *this, methods));
+//	roVerify(JS_DefineProperties(cx, *this, properties));
 	addReference();	// releaseReference() in JsBindable::finalize()
 }
 

@@ -3,8 +3,8 @@
 #include "audioloader.h"
 #include "stb_vorbis.h"
 #include "../common.h"
-#include "../rhlog.h"
 #include "../../roar/base/roFileSystem.h"
+#include "../../roar/base/roLog.h"
 #include "../../roar/base/roTypeCast.h"
 
 using namespace ro;
@@ -149,7 +149,7 @@ void OggLoader::loadHeader()
 	if(buffer->state == Resource::Aborted) goto Abort;
 	if(!stream) st = fileSystem.openFile(buffer->uri(), stream);
 	if(!st) {
-		rhLog("error", "OggLoader: Fail to open file '%s', reason: %s\n", buffer->uri().c_str(), st.c_str());
+		roLog("error", "OggLoader: Fail to open file '%s', reason: %s\n", buffer->uri().c_str(), st.c_str());
 		goto Abort;
 	}
 
@@ -214,7 +214,7 @@ void OggLoader::loadData()
 
 		if(requestQueue.getRequest(audioBufBegin, audioBufEnd))
 		{
-			rhLog("warn", "OggLoader: Currently there are problem on seeking ogg: '%s'\n", buffer->uri().c_str());
+			roLog("warn", "OggLoader: Currently there are problem on seeking ogg: '%s'\n", buffer->uri().c_str());
 
 			const unsigned backupCurPos = stb_vorbis_get_sample_offset(vorbis);
 //			const rhint64 fileSize = fileSystem.size(stream);
