@@ -230,7 +230,7 @@ void Canvas::destroy()
 	vgDestroyContextSH();
 
 	if(roSubSystems)
-		roSubSystems->_currentCanvas = NULL;
+		roSubSystems->currentCanvas = NULL;
 }
 
 // Setup rasterizer state
@@ -246,7 +246,7 @@ static roRDriverRasterizerState _rasterizerState = {
 void Canvas::makeCurrent()
 {
 	roAssert(roSubSystems);
-	if(roSubSystems->_currentCanvas == this)
+	if(roSubSystems->currentCanvas == this)
 		return;
 
 	if(!targetTexture || !targetTexture->handle) {
@@ -269,7 +269,7 @@ void Canvas::makeCurrent()
 	vgSetPaint(_openvg->strokePaint, VG_STROKE_PATH);
 	vgSetPaint(_openvg->fillPaint, VG_FILL_PATH);
 
-	roSubSystems->_currentCanvas = this;
+	roSubSystems->currentCanvas = this;
 }
 
 void Canvas::clearRect(float x, float y, float w, float h)

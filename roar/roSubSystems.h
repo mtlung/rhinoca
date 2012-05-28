@@ -42,8 +42,9 @@ struct SubSystems
 	FontManager* fontMgr;
 	FontPtr defaultFont;
 
-// Private
-	void* _currentCanvas;	/// I use void* here to emphasis this pointer is for comparison only
+	/// You may need set it to NULL when your viewport resize, to force the current canvas to be refreshed
+	/// I use void* here to emphasis this pointer is for comparison only
+	void* currentCanvas;
 };	// SubSystems
 
 // Forward declarations of all build-in loaders

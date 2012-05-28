@@ -157,6 +157,7 @@ void Rhinoca::screenResized()
 {
 	subSystems.renderDriver->changeResolution(width, height);
 	subSystems.renderDriver->setViewport(0, 0, width, height, 0, 1);
+	subSystems.currentCanvas = NULL;
 }
 
 void Rhinoca::collectGarbage()

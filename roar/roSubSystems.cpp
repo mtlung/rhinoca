@@ -81,13 +81,13 @@ void SubSystems::init()
 	initResourceManager(*this);
 	initFont(*this);
 
-	_currentCanvas = NULL;
+	currentCanvas = NULL;
 }
 
 void SubSystems::shutdown()
 {
 	defaultFont = NULL;
-	_currentCanvas = NULL;
+	currentCanvas = NULL;
 
 	delete fontMgr;		fontMgr = NULL;
 	delete resourceMgr;	resourceMgr = NULL;
