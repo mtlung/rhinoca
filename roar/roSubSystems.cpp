@@ -80,11 +80,14 @@ void SubSystems::init()
 	initRenderDriver(*this);
 	initResourceManager(*this);
 	initFont(*this);
+
+	_currentCanvas = NULL;
 }
 
 void SubSystems::shutdown()
 {
 	defaultFont = NULL;
+	_currentCanvas = NULL;
 
 	delete fontMgr;		fontMgr = NULL;
 	delete resourceMgr;	resourceMgr = NULL;

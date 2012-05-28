@@ -141,6 +141,8 @@ void HTMLCanvasElement::createContext(const char* ctxName)
 
 		if(_useRenderTarget)
 			ctx2d->_canvas.initTargetTexture(_width, _height);
+
+		ctx2d->_canvas.clearRect(0, 0, (float)width(), (float)height());
 	}
 }
 
@@ -155,11 +157,8 @@ void HTMLCanvasElement::render(CanvasRenderingContext2D* ctx)
 	CanvasRenderingContext2D* self2d = dynamic_cast<CanvasRenderingContext2D*>(context);
 
 	if(self2d && ctx2d)
-		if(ro::Texture* tex = self2d->_canvas.targetTexture.get()) {
-			ctx2d->_canvas.beginDraw();
+		if(ro::Texture* tex = self2d->_canvas.targetTexture.get())
 			ctx2d->_canvas.drawImage(tex->handle, 0, 0);
-			ctx2d->_canvas.endDraw();
-		}
 }
 
 void HTMLCanvasElement::registerClass(JSContext* cx, JSObject* parent)

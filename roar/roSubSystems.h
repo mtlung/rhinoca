@@ -41,6 +41,9 @@ struct SubSystems
 	CustomInit initFont;
 	FontManager* fontMgr;
 	FontPtr defaultFont;
+
+// Private
+	void* _currentCanvas;	/// I use void* here to emphasis this pointer is for comparison only
 };	// SubSystems
 
 // Forward declarations of all build-in loaders

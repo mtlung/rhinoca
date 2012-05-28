@@ -18,9 +18,7 @@ struct Canvas
 	void init					();
 	bool initTargetTexture		(unsigned width, unsigned height);
 	void destroy				();
-
-	void beginDraw				();
-	void endDraw				();
+	void makeCurrent			();	/// Set render target, view port size etc to the current render context. Normally used internally, but needed if you mix canvas usage with render driver.
 
 	void clearRect				(float x, float y, float w, float h);	/// Clear the rect to transparent black
 
@@ -117,8 +115,8 @@ struct Canvas
 	TexturePtr depthStencilTexture;
 
 // Private
-	void _flushDrawImageBatch();
-	void _drawImageDrawcall(roRDriverTexture* texture, roSize quadCount);
+	void _flushDrawImageBatch	();
+	void _drawImageDrawcall		(roRDriverTexture* texture, roSize quadCount);
 
 	roRDriver* _driver;
 	roRDriverContext* _context;

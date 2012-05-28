@@ -605,7 +605,6 @@ static JSBool strokeRect(JSContext* cx, uintN argc, jsval* vp)
 
 	struct { float x, y, w, h; } s;
 	getFloat(cx, vp, &s.x, 4);
-	self->_canvas.beginDraw();
 	self->_canvas.strokeRect(s.x, s.y, s.w, s.h);
 
 	return JS_TRUE;
@@ -616,7 +615,6 @@ static JSBool fill(JSContext* cx, uintN argc, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
-	self->_canvas.beginDraw();
 	self->_canvas.fill();
 
 	return JS_TRUE;
@@ -823,16 +821,18 @@ void CanvasRenderingContext2D::registerClass(JSContext* cx, JSObject* parent)
 	roVerify(JS_InitClass(cx, parent, NULL, &jsClass, &construct, 0, NULL, NULL, NULL, NULL));
 }
 
-void CanvasRenderingContext2D::setWidth(unsigned width)
+void CanvasRenderingContext2D::setWidth(unsigned w)
 {
+	if(w == width()) return;
 	if(_canvas.targetTexture)
-		_canvas.initTargetTexture(width, height());
+		_canvas.initTargetTexture(w, height());
 }
 
-void CanvasRenderingContext2D::setHeight(unsigned height)
+void CanvasRenderingContext2D::setHeight(unsigned h)
 {
+	if(h == height()) return;
 	if(_canvas.targetTexture)
-		_canvas.initTargetTexture(width(), height);
+		_canvas.initTargetTexture(width(), h);
 }
 
 }	// namespace Dom

@@ -201,6 +201,9 @@ bool Canvas::initTargetTexture(unsigned width, unsigned height)
 	if(!_driver->updateTexture(depthStencilTexture->handle, 0, 0, NULL, 0, NULL))
 		return false;
 
+	// TODO: It would be nice if we can keep the content during resize
+	clearRect(0, 0, (float)width, (float)height);
+
 	return true;
 }
 
@@ -225,6 +228,9 @@ void Canvas::destroy()
 	delete _openvg;
 
 	vgDestroyContextSH();
+
+	if(roSubSystems)
+		roSubSystems->_currentCanvas = NULL;
 }
 
 // Setup rasterizer state
@@ -237,8 +243,12 @@ static roRDriverRasterizerState _rasterizerState = {
 	roRDriverCullMode_None	// We don't cull any polygon for Canvas
 };
 
-void Canvas::beginDraw()
+void Canvas::makeCurrent()
 {
+	roAssert(roSubSystems);
+	if(roSubSystems->_currentCanvas == this)
+		return;
+
 	if(!targetTexture || !targetTexture->handle) {
 		roVerify(_driver->setRenderTargets(NULL, 0, false));
 		_targetWidth = (float)_context->width;
@@ -258,21 +268,24 @@ void Canvas::beginDraw()
 
 	vgSetPaint(_openvg->strokePaint, VG_STROKE_PATH);
 	vgSetPaint(_openvg->fillPaint, VG_FILL_PATH);
-}
 
-void Canvas::endDraw()
-{
+	roSubSystems->_currentCanvas = this;
 }
 
 void Canvas::clearRect(float x, float y, float w, float h)
 {
+	vgClearPath(_openvg->pathSimpleShape, VG_PATH_CAPABILITY_ALL);
+	vguRect(_openvg->pathSimpleShape, x, y, w, h);
+
 	const float black[4] = { 0, 0, 0, 0 };
 	vgSetParameterfv(_openvg->fillPaint, VG_PAINT_COLOR, 4, black);
 
 	int orgBlendMode = vgGeti(VG_BLEND_MODE);
 	vgSeti(VG_BLEND_MODE, VG_BLEND_SRC);
 
-	fillRect(x, y, w, h);
+	makeCurrent();
+	vgLoadIdentity();
+	vgDrawPath(_openvg->pathSimpleShape, VG_FILL_PATH);
 
 	vgSetParameterfv(_openvg->fillPaint, VG_PAINT_COLOR, 4, _currentState.fillColor);
 	vgSeti(VG_BLEND_MODE, orgBlendMode);
@@ -367,6 +380,8 @@ void Canvas::_flushDrawImageBatch()
 
 void Canvas::_drawImageDrawcall(roRDriverTexture* texture, roSize quadCount)
 {
+	makeCurrent();
+
 	// Shader constants
 	struct Constants {
 		Vec4 color;
@@ -387,7 +402,7 @@ void Canvas::_drawImageDrawcall(roRDriverTexture* texture, roSize quadCount)
 	roVerify(_driver->bindShaders(shaders, roCountof(shaders)));
 	roVerify(_driver->bindShaderBuffers(_bufferInputs.typedPtr(), _bufferInputs.size(), NULL));
 
-	// Texutre
+	// Texture
 	_driver->setTextureState(&_textureState, 1, 0);
 	_textureInput.texture = texture;
 	roVerify(_driver->bindShaderTextures(&_textureInput, 1));
@@ -467,13 +482,11 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 		roAssert(_batchedQuadCount == 0);
 
 		roVerify(_driver->updateBuffer(_vBuffer, 0, vertex, sizeof(vertex)));
-		_batchedQuadCount = 1;
 
 		roUint16 index[] = { 0, 1, 2, 1, 2, 3 };
 		roVerify(_driver->updateBuffer(_iBuffer, 0, index, sizeof(index)));
 
 		_drawImageDrawcall(texture, 1);
-		_flushDrawImageBatch();
 	}
 }
 
@@ -731,6 +744,7 @@ void Canvas::stroke()
 		m.m03, m.m13, m.m33,
 	};
 
+	makeCurrent();
 	vgLoadMatrix(mat33);
 	vgDrawPath(_openvg->path, VG_STROKE_PATH);
 }
@@ -747,6 +761,7 @@ void Canvas::strokeRect(float x, float y, float w, float h)
 		m.m03, m.m13, m.m33,
 	};
 
+	makeCurrent();
 	vgLoadMatrix(mat33);
 	vgDrawPath(_openvg->pathSimpleShape, VG_STROKE_PATH);
 }
@@ -844,6 +859,7 @@ void Canvas::fill()
 		m.m03, m.m13, m.m33,
 	};
 
+	makeCurrent();
 	vgLoadMatrix(mat33);
 	vgDrawPath(_openvg->path, VG_FILL_PATH);
 }
@@ -860,6 +876,7 @@ void Canvas::fillRect(float x, float y, float w, float h)
 		m.m03, m.m13, m.m33,
 	};
 
+	makeCurrent();
 	vgLoadMatrix(mat33);
 	vgDrawPath(_openvg->pathSimpleShape, VG_FILL_PATH);
 }
@@ -869,6 +886,7 @@ void Canvas::fillText(const char* utf8Str, float x, float y, float maxWidth)
 	if(!roSubSystems || !roSubSystems->fontMgr) return;
 
 	if(FontPtr font = roSubSystems->fontMgr->getFont(_currentState.fontName.c_str())) {
+		makeCurrent();
 		font->setStyle(_currentState.fontStyle.c_str());
 		font->draw(utf8Str, x, y, maxWidth, *this);
 	}

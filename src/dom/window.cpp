@@ -544,17 +544,15 @@ void Window::render()
 
 	// Clear the virtual canvas first
 	CanvasRenderingContext2D* ctx = dynamic_cast<CanvasRenderingContext2D*>(virtualCanvas->context);
-	ctx->_canvas.beginDraw();
+	ctx->_canvas.makeCurrent();
 
 	// Set background color
 	rhinoca->subSystems.renderDriver->clearStencil(0);
 	rhinoca->subSystems.renderDriver->clearColor(1, 1, 1, 1);
 
-	ctx->_canvas.setGlobalColor(1, 0, 1, 1);
+	ctx->_canvas.setGlobalColor(0, 0, 0, 0.1f);
 	ctx->_canvas.setFont("italic bold 40pt Calibri");
 	ctx->_canvas.fillText("AT Hello World! Lung Man Tat", 0, 100, 0);
-
-	ctx->_canvas.endDraw();
 
 	for(NodeIterator i(document); !i.ended(); i.next()) {
 		i->render(ctx);
