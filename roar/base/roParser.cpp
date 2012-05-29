@@ -68,12 +68,15 @@ bool NumberMatcher::match(Parser* p)
 {
 	const char* c=p->begin;
 
-	for(;; ++c) if(roIsDigit(*c)) break;
+	for(;; ++c) if(!roIsDigit(*c)) break;
 	if(*c == '.') ++c;
-	for(;; ++c) if(roIsDigit(*c)) break;
+	for(;; ++c) if(!roIsDigit(*c)) break;
 
-	if(c > p->begin) p->begin = c;
-	return c > p->begin;
+	if(p->begin == c)
+		return false;
+
+	p->begin = c;
+	return true;
 }
 
 bool QuotedStringMatcher::match(Parser* p)
