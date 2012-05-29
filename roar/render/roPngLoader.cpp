@@ -28,7 +28,6 @@ struct PngLoader : public Task
 	~PngLoader()
 	{
 		if(stream) fileSystem.closeFile(stream);
-		roFree(pixelData);
 		// libpng will handle for null input pointers
 		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 	}
@@ -45,8 +44,7 @@ struct PngLoader : public Task
 	Texture* texture;
 	ResourceManager* manager;
 	unsigned width, height;
-	roBytePtr pixelData;
-	roSize pixelDataSize;
+	Array<png_byte> pixelData;
 	roSize rowBytes;
 	roRDriverTextureFormat pixelDataFormat;
 
@@ -67,12 +65,11 @@ static void info_callback(png_structp png_ptr, png_infop)
 static void row_callback(png_structp png_ptr, png_bytep new_row, png_uint_32 row_num, int pass)
 {
 	PngLoader* impl = reinterpret_cast<PngLoader*>(png_get_progressive_ptr(png_ptr));
-	roAssert(impl->pixelData);
 
 	// Have libpng either combine the new row data with the existing row data
 	// from previous passes (if interlaced) or else just copy the new row
 	// into the main program's image buffer
-	png_progressive_combine_row(png_ptr, (impl->pixelData + row_num * impl->rowBytes).cast<png_byte>(), new_row);
+	png_progressive_combine_row(png_ptr, &impl->pixelData[row_num * impl->rowBytes], new_row);
 
 	// Only change the loading state after a pass is finished
 	if(pass > impl->currentPass) {
@@ -82,16 +79,36 @@ static void row_callback(png_structp png_ptr, png_bytep new_row, png_uint_32 row
 	}
 }
 
+static void _rgbToRgba(roBytePtr src, roBytePtr dst, unsigned width, unsigned height)
+{
+	for(unsigned h=0; h<height; ++h) for(unsigned w=0; w<width; ++w)
+	{
+		dst[0] = src[0];
+		dst[1] = src[1];
+		dst[2] = src[2];
+		dst[3] = roUint8(-1);
+
+		src += 3;
+		dst += 4;
+	}
+}
+
 static void end_callback(png_structp png_ptr, png_infop)
 {
 	PngLoader* impl = reinterpret_cast<PngLoader*>(png_get_progressive_ptr(png_ptr));
 	impl->nextFun = &PngLoader::commit;
+
+	if(impl->rowBytes / impl->width == 3) {
+		Array<png_byte> tmpBuf(impl->height * impl->width * 4);
+		_rgbToRgba(impl->pixelData.bytePtr(), tmpBuf.bytePtr(), impl->width, impl->height);
+		impl->pixelData.swap(tmpBuf);
+	}
 }
 
 PngLoader::PngLoader(Texture* t, ResourceManager* mgr)
 	: stream(NULL), texture(t), manager(mgr)
 	, width(0), height(0)
-	, pixelData(NULL), pixelDataSize(0), rowBytes(0), pixelDataFormat(roRDriverTextureFormat_RGBA)
+	, rowBytes(0), pixelDataFormat(roRDriverTextureFormat_RGBA)
 	, info_ptr(NULL), png_ptr(NULL)
 	, currentPass(0)
 	, nextFun(&PngLoader::processData)
@@ -124,7 +141,7 @@ void PngLoader::loadHeader()
 
 	switch(color_type) {
 	case PNG_COLOR_TYPE_RGB:
-//		pixelDataFormat = Driver::RGB;
+		pixelDataFormat = roRDriverTextureFormat_RGBA;
 		break;
 	case PNG_COLOR_TYPE_RGB_ALPHA:
 		pixelDataFormat = roRDriverTextureFormat_RGBA;
@@ -137,7 +154,7 @@ void PngLoader::loadHeader()
 		break;
 	case PNG_COLOR_TYPE_PALETTE:
 		png_set_palette_to_rgb(png_ptr);
-		pixelDataFormat = roRDriverTextureFormat_RGBA;	// NOTE: I am not quite sure to use RGB or RGBA
+		pixelDataFormat = roRDriverTextureFormat_RGBA;
 		break;
 	default:
 		goto Abort;
@@ -152,9 +169,7 @@ void PngLoader::loadHeader()
 	png_read_update_info(png_ptr, info_ptr);
 	rowBytes = info_ptr->rowbytes;
 
-	roAssert(!pixelData);
-	pixelDataSize = rowBytes * height;
-	pixelData = roMalloc(pixelDataSize);
+	pixelData.resize(rowBytes * height);
 
 	nextFun = &PngLoader::initTexture;
 	return;
@@ -212,7 +227,7 @@ void PngLoader::processData(TaskPool* taskPool)
 
 void PngLoader::commit(TaskPool* taskPool)
 {
-	if(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, 0, pixelData, 0, NULL)) {
+	if(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, 0, pixelData.bytePtr(), 0, NULL)) {
 		texture->state = Resource::Loaded;
 		delete this;
 	}

@@ -25,7 +25,6 @@ public:
 	~BmpLoader()
 	{
 		if(stream) fileSystem.closeFile(stream);
-		roFree(pixelData);
 	}
 
 	override void run(TaskPool* taskPool);
@@ -41,7 +40,7 @@ protected:
 	Texture* texture;
 	ResourceManager* manager;
 	unsigned width, height;
-	roBytePtr pixelData;
+	Array<roUint8> pixelData;
 	roSize pixelDataSize;
 
 	bool flipVertical;
@@ -149,16 +148,13 @@ roEXCP_TRY
 	const roSize rowByte = width * (sizeof(char) * 3);
 	const roSize rowPadding = 4 - ((rowByte + 4) % 4);
 
-	roAssert(!pixelData);
-	pixelDataSize = rowByte * height;
-
 	// If data not ready, give up in this round and do it again in next schedule
 	if(fileSystem.readWillBlock(stream, pixelDataSize + rowPadding * height))
 		return reSchedule();
 
-	pixelData = roMalloc(pixelDataSize);
+	pixelData.resize(rowByte * height);
 
-	if(!pixelData) { st = Status::not_enough_memory; roEXCP_THROW; }
+	if(pixelData.size() != rowByte * height) { st = Status::not_enough_memory; roEXCP_THROW; }
 
 	char paddingBuf[4];
 
@@ -168,7 +164,7 @@ roEXCP_TRY
 		// the vertical scan line order is inverted.
 		const unsigned invertedH = flipVertical ? height - 1 - h : h;
 
-		roBytePtr p = pixelData + (invertedH * rowByte);
+		roBytePtr p = pixelData.bytePtr() + (invertedH * rowByte);
 
 		st = fileSystem.atomicRead(stream, p, rowByte);
 		if(!st) roEXCP_THROW;
@@ -179,10 +175,9 @@ roEXCP_TRY
 	}
 
 	// Convert BGR to RGBA
-	roBytePtr tmpBuffer = roMalloc(width * height * 4);
-	_bgrToRgba(pixelData, tmpBuffer, width, height);
+	Array<roUint8> tmpBuffer(width * height * 4);
+	_bgrToRgba(pixelData.bytePtr(), tmpBuffer.bytePtr(), width, height);
 	roSwap(pixelData, tmpBuffer);
-	roFree(tmpBuffer);
 
 	nextFun = &BmpLoader::commit;
 
@@ -196,7 +191,7 @@ roEXCP_END
 
 void BmpLoader::commit(TaskPool* taskPool)
 {
-	if(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, 0, pixelData, 0, NULL)) {
+	if(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, 0, pixelData.bytePtr(), 0, NULL)) {
 		texture->state = Resource::Loaded;
 		delete this;
 	}

@@ -37,7 +37,7 @@ struct JpegLoader : public Task
 	JpegLoader(Texture* t, ResourceManager* mgr)
 		: stream(NULL), texture(t), manager(mgr)
 		, width(0), height(0)
-		, pixelData(NULL), pixelDataSize(0), rowBytes(0), pixelDataFormat(roRDriverTextureFormat_RGBA)
+		, rowBytes(0), pixelDataFormat(roRDriverTextureFormat_RGBA)
 		, decoder(NULL), jpegStream(NULL)
 		, nextFun(&JpegLoader::loadHeader)
 	{}
@@ -45,7 +45,6 @@ struct JpegLoader : public Task
 	~JpegLoader()
 	{
 		if(stream) fileSystem.closeFile(stream);
-		roFree(pixelData);
 		delete decoder;
 		delete jpegStream;
 	}
@@ -62,8 +61,7 @@ struct JpegLoader : public Task
 	Texture* texture;
 	ResourceManager* manager;
 	unsigned width, height;
-	roBytePtr pixelData;
-	roSize pixelDataSize;
+	Array<roUint8> pixelData;
 	roSize rowBytes;
 	roRDriverTextureFormat pixelDataFormat;
 
@@ -135,26 +133,22 @@ void JpegLoader::loadPixelData(TaskPool* taskPool)
 	Status st;
 
 roEXCP_TRY
-	roAssert(!pixelData);
 	rowBytes = decoder->get_bytes_per_scan_line();
-	pixelDataSize = rowBytes * height;
-	pixelData = roMalloc(pixelDataSize);
-
-	if(!pixelData) { st = Status::not_enough_memory; roEXCP_THROW; }
+	if(!pixelData.resize(rowBytes * height)) { st = Status::not_enough_memory; roEXCP_THROW; }
 
 	void* Pscan_line_ofs = NULL;
 	uint scan_line_len = 0;
 	int c = decoder->get_num_components();
 
-	unsigned char* p = pixelData.cast<unsigned char>();
+	roUint8* p = pixelData.typedPtr();
 	while(true) {
 		int result = decoder->decode(&Pscan_line_ofs, &scan_line_len);
 		if(result == JPGD_OKAY) {
 			memcpy(p, Pscan_line_ofs, scan_line_len);
 
 			// Assign alpha to 1 for incoming is RGB
-			if(c == 3) for(unsigned char* end = p + scan_line_len; p < end; p += 4)
-				p[3] = TypeOf<unsigned char>::valueMax();
+			if(c == 3) for(roUint8* end = p + scan_line_len; p < end; p += 4)
+				p[3] = TypeOf<roUint8>::valueMax();
 			else
 				p += decoder->get_bytes_per_scan_line();
 
@@ -179,7 +173,7 @@ roEXCP_END
 
 void JpegLoader::commit(TaskPool* taskPool)
 {
-	if(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, 0, pixelData, 0, NULL)) {
+	if(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, 0, pixelData.bytePtr(), 0, NULL)) {
 		texture->state = Resource::Loaded;
 		delete this;
 	}
