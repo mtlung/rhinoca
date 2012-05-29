@@ -90,19 +90,22 @@ struct Canvas
 	void clip();									/// Further constrains the clipping region to the given path.
 
 // Attributes
-	unsigned width				() const;
-	unsigned height				() const;
+	unsigned	width			() const;
+	unsigned	height			() const;
 
-	float globalAlpha			() const;
-	void setGlobalAlpha			(float alpha);
+	float		globalAlpha		() const;
+	void		setGlobalAlpha	(float alpha);
 
-	void getglobalColor			(float* rgba);
-	void setGlobalColor			(const float* rgba);
-	void setGlobalColor			(float r, float g, float b, float a);
+	void		getglobalColor	(float* rgba);
+	void		setGlobalColor	(const float* rgba);
+	void		setGlobalColor	(float r, float g, float b, float a);
 
-	void setFont				(const char* style);	/// "20pt Arial" see: http://www.w3.org/TR/css3-fonts/#propdef-font
-	void setTextAlign			(const char* align);	/// Valid values are 'left', 'right' , 'center', 'start' and 'end'
-	void setTextBaseline		(const char* baseLine);	/// Valid values are 'top', 'hanging' , 'middle', 'alphabetic', 'ideographic' and 'bottom'
+	const char*	font			() const;
+	const char*	textAlign		() const;
+	const char*	textBaseline	() const;
+	void		setFont			(const char* style);	/// "20pt Arial" see: http://www.w3.org/TR/css3-fonts/#propdef-font
+	void		setTextAlign	(const char* align);	/// Valid values are 'left', 'right' , 'center', 'start' and 'end'
+	void		setTextBaseline	(const char* baseLine);	/// Valid values are 'top', 'hanging' , 'middle', 'alphabetic', 'ideographic' and 'bottom'
 
 	/// sets how shapes and images are drawn onto the existing bitmap
 	/// See: http://www.whatwg.org/specs/web-apps/current-work/multipage/the-canvas-element.html#compositing

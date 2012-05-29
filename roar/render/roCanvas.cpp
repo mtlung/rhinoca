@@ -183,6 +183,7 @@ void Canvas::init()
 	setStrokeColor(black);
 	setFillColor(black);
 	setIdentity();
+	setFont("10pt \"Arial\"");	// Source: https://developer.mozilla.org/en/Drawing_text_using_a_canvas
 }
 
 bool Canvas::initTargetTexture(unsigned width, unsigned height)
@@ -890,6 +891,8 @@ void Canvas::fillText(const char* utf8Str, float x, float y, float maxWidth)
 		font->setStyle(_currentState.fontStyle.c_str());
 		font->draw(utf8Str, x, y, maxWidth, *this);
 	}
+	else
+		roLog("warn", "Fail to find font resource for typeface:%s\n", _currentState.fontName.c_str());
 }
 
 void Canvas::getFillColor(float* rgba)
@@ -985,16 +988,45 @@ static void fontParserCallback(Parsing::ParserResult* result, Parsing::Parser* p
 	Canvas* canvas = reinterpret_cast<Canvas*>(parser->userdata);
 
 	// Extract the font family, which is important for knowing which font resource to use
-	if(roStrCmp(result->type, "fontFamily") == 0)
+	if(roStrCmp(result->type, "fontFamily") == 0) {
+		if(*result->begin == '"')
+			result->begin++;
+		if(*(result->end - 1) == '"')
+			result->end--;
 		canvas->_currentState.fontName = ConstString(result->begin, result->end - result->begin);
+	}
 }
 
 void Canvas::setFont(const char* style)
 {
 	using namespace Parsing;
 	Parser parser(style, style + roStrLen(style), fontParserCallback, this);
-	ro::Parsing::font(&parser).once();
+	if(!ro::Parsing::font(&parser).once())
+		roLog("warn", "Fail to parse font style:%s\n", style);
 	_currentState.fontStyle = style;
+}
+
+const char*	Canvas::font() const
+{
+	return _currentState.fontStyle.c_str();
+}
+
+void Canvas::setTextAlign(const char* align)
+{
+}
+
+const char*	Canvas::textAlign() const
+{
+	return "";
+}
+
+void Canvas::setTextBaseline(const char* baseLine)
+{
+}
+
+const char*	Canvas::textBaseline() const
+{
+	return "";
 }
 
 struct CompositionMapping { StringHash h; VGBlendMode mode; };

@@ -42,8 +42,8 @@ bool FontFamilyMatcher::match(Parser* p)
 {
 	whiteSpace(p).any();
 	return 
-		anyCharExcept(p, " ,\t\n\r").atLeastOnce() ||
-		doubleQuotedString(p).once();
+		doubleQuotedString(p).once() ||
+		anyCharExcept(p, " ,\t\n\r").atLeastOnce();
 }
 
 Matcher<FontFamilyMatcher> fontFamily(Parser* parser) {

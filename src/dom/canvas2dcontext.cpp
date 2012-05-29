@@ -174,7 +174,7 @@ static JSBool getFont(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	roAssert(false);
-//	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->font().c_str()));
+	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->_canvas.font()));
 	return JS_TRUE;
 }
 
@@ -196,7 +196,7 @@ static JSBool getTextAlign(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 	if(!self) return JS_FALSE;
 
 	roAssert(false);
-//	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->textAlign().c_str()));
+	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->_canvas.textAlign()));
 	return JS_TRUE;
 }
 
@@ -208,8 +208,7 @@ static JSBool setTextAlign(JSContext* cx, JSObject* obj, jsid id, JSBool strict,
 	JsString jss(cx, *vp);
 	if(!jss) return JS_FALSE;
 
-//	roAssert(false);
-//	self->setTextAlign(jss.c_str());
+	self->_canvas.setTextAlign(jss.c_str());
 	return JS_TRUE;
 }
 
@@ -218,8 +217,7 @@ static JSBool getTextBaseLine(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
 	if(!self) return JS_FALSE;
 
-	roAssert(false);
-//	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->textBaseLine().c_str()));
+	*vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, self->_canvas.textBaseline()));
 	return JS_TRUE;
 }
 
@@ -231,8 +229,7 @@ static JSBool setTextBaseLine(JSContext* cx, JSObject* obj, jsid id, JSBool stri
 	JsString jss(cx, *vp);
 	if(!jss) return JS_FALSE;
 
-	roAssert(false);
-//	self->setTextBaseLine(jss.c_str());
+	self->_canvas.setTextBaseline(jss.c_str());
 	return JS_TRUE;
 }
 
@@ -286,7 +283,7 @@ static JSBool beginLayer(JSContext* cx, uintN argc, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
-//	self->beginLayer();
+	self->_canvas.beginDrawImageBatch();
 	return JS_TRUE;
 }
 
@@ -295,7 +292,7 @@ static JSBool endLayer(JSContext* cx, uintN argc, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, vp);
 	if(!self) return JS_FALSE;
 
-//	self->endLayer();
+	self->_canvas.endDrawImageBatch();
 	return JS_TRUE;
 }
 
@@ -311,13 +308,13 @@ static JSBool drawImage(JSContext* cx, uintN argc, jsval* vp)
 	unsigned imgw, imgh;
 
 	if(HTMLImageElement* img = getJsBindableExactTypeNoThrow<HTMLImageElement>(cx, vp, 0)) {
-//		texture = img->texture.get();
+		texture = img->texture.get();
 		filter = img->filter;
 		imgw = img->width();
 		imgh = img->height();
 	}
 	else if(HTMLCanvasElement* otherCanvas = getJsBindable<HTMLCanvasElement>(cx, vp, 0)) {
-//		texture = otherCanvas->texture();
+		texture = otherCanvas->texture();
 //		filter = Driver::SamplerState::MIN_MAG_LINEAR;
 		imgw = otherCanvas->width();
 		imgh = otherCanvas->height();
@@ -833,6 +830,11 @@ void CanvasRenderingContext2D::setHeight(unsigned h)
 	if(h == height()) return;
 	if(_canvas.targetTexture)
 		_canvas.initTargetTexture(width(), h);
+}
+
+ro::Texture* CanvasRenderingContext2D::texture()
+{
+	return _canvas.targetTexture.get();
 }
 
 }	// namespace Dom

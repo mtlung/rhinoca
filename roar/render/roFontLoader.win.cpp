@@ -521,8 +521,13 @@ static void fontParserCallback(ParserResult* result, Parser* parser)
 	FontImpl* impl = reinterpret_cast<_Pair*>(parser->userdata)->impl;
 	FontData* fontData = reinterpret_cast<_Pair*>(parser->userdata)->fontData;
 
-	if(roStrCmp(result->type, "fontFamily") == 0)
+	if(roStrCmp(result->type, "fontFamily") == 0) {
+		if(*result->begin == '"')
+			result->begin++;
+		if(*(result->end - 1) == '"')
+			result->end--;
 		fontData->fontName = ConstString(result->begin, result->end - result->begin);
+	}
 	else if(roStrCmp(result->type, "fontSize") == 0) {
 		int ptSize = 10; char c1, c2;
 		if(sscanf(result->begin, "%d%c%c", &ptSize, &c1, &c2) == 3 && c1 == 'p' && c2 == 't')

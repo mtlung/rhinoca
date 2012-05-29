@@ -35,10 +35,13 @@ public:
 		virtual unsigned height() const = 0;
 		virtual void setWidth(unsigned width) = 0;
 		virtual void setHeight(unsigned height) = 0;
+		virtual ro::Texture* texture() = 0;
 		HTMLCanvasElement* canvas;
 	};	// Context
 
 	Context* context;
+
+	ro::Texture* texture();
 
 	override unsigned width() const { return _width; }
 	override unsigned height() const { return _height; }

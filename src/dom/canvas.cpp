@@ -106,7 +106,7 @@ HTMLCanvasElement::HTMLCanvasElement(Rhinoca* rh)
 HTMLCanvasElement::HTMLCanvasElement(Rhinoca* rh, unsigned width, unsigned height, bool frontBufferOnly)
 	: Element(rh)
 	, context(NULL)
-	, _useRenderTarget(!frontBufferOnly)
+	, _useRenderTarget(true)//(!frontBufferOnly)
 	, _width(width), _height(height)
 {
 }
@@ -186,6 +186,12 @@ Element* HTMLCanvasElement::factoryCreate(Rhinoca* rh, const char* type, XmlPars
 	HTMLCanvasElement* canvas = new HTMLCanvasElement(rh, (unsigned)w, (unsigned)h, frontBufferOnly);
 
 	return canvas;
+}
+
+ro::Texture* HTMLCanvasElement::texture()
+{
+	if(!context) return NULL;
+	return context->texture();
 }
 
 void HTMLCanvasElement::setWidth(unsigned w)

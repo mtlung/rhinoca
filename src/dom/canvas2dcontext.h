@@ -27,6 +27,7 @@ public:
 	override unsigned height() const { return _canvas.width(); }
 	override void setWidth(unsigned width);
 	override void setHeight(unsigned height);
+	override ro::Texture* texture();
 
 	static JSClass jsClass;
 
