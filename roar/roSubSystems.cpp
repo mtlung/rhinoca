@@ -1,7 +1,9 @@
 #include "pch.h"
 #include "roSubSystems.h"
 #include "render/roFont.h"
+#include "base/roMemoryProfiler.h"
 #include "base/roResource.h"
+#include "base/roSocket.h"
 #include "base/roTaskPool.h"
 #include "render/roRenderDriver.h"
 
@@ -74,8 +76,13 @@ SubSystems::~SubSystems()
 		roSubSystems = NULL;
 }
 
+static MemoryProfiler _memoryProfiler;
+
 void SubSystems::init()
 {
+	BsdSocket::initApplication();
+	_memoryProfiler.init(5000);
+
 	initTaskPool(*this);
 	initRenderDriver(*this);
 	initResourceManager(*this);
@@ -100,6 +107,9 @@ void SubSystems::shutdown()
 
 	renderDriver = NULL;
 	renderContext = NULL;
+
+	_memoryProfiler.shutdown();
+	BsdSocket::closeApplication();
 }
 
 }	// namespace ro
