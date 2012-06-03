@@ -5,6 +5,7 @@
 #include "roTypeCast.h"
 #include "../platform/roPlatformHeaders.h"
 #include <ImageHlp.h>
+#include <Winsock2.h>
 
 #pragma comment(lib, "imagehlp.lib")
 
@@ -162,6 +163,8 @@ Status MemoryProfiler::init(roUint16 listeningPort)
 {
 	_tlsIndex = ::TlsAlloc();
 
+	::SymInitialize(::GetCurrentProcess(), NULL, TRUE);
+
 	SockAddr addr(SockAddr::ipAny(), listeningPort);
 
 	if(_listeningSocket.create(BsdSocket::TCP) != 0) return Status::net_error;
@@ -171,6 +174,14 @@ Status MemoryProfiler::init(roUint16 listeningPort)
 
 	if(_acceptorSocket.create(BsdSocket::TCP) != 0) return Status::net_error;
 	while(BsdSocket::inProgress(_listeningSocket.accept(_acceptorSocket))) {
+		MSG msg = { 0 };
+		if(::PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
+			(void)TranslateMessage(&msg);
+			(void)DispatchMessage(&msg);
+
+			if(msg.message == WM_QUIT)
+				return Status::user_abort;
+		}
 		TaskPool::sleep(10);
 	}
 
@@ -203,6 +214,35 @@ Status MemoryProfiler::init(roUint16 listeningPort)
 void MemoryProfiler::tick()
 {
 	// Look for command from the client
+	fd_set fdRead;
+	FD_ZERO(&fdRead);
+	FD_SET(_acceptorSocket.fd(), &fdRead);
+
+	timeval tVal = { 0, 0 };
+	if(select(1, &fdRead, NULL, NULL, &tVal) == 1) {
+		roUint64 stackFrame;
+		if(_acceptorSocket.receive(&stackFrame, sizeof(stackFrame)) == sizeof(stackFrame)) {
+			char buf[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR)];
+			PSYMBOL_INFO symbol = (PSYMBOL_INFO)buf;
+			symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+			symbol->MaxNameLen = MAX_SYM_NAME;
+
+			roUint64 displacement = 0;
+			if(!::SymFromAddr(::GetCurrentProcess(), stackFrame, &displacement, symbol)) {
+				strcpy(symbol->Name, "no symbol");
+				symbol->NameLen = strlen(symbol->Name);
+			}
+
+			ScopeLock lock(_tlsStructsMutex);
+			char cmd = 's';
+			_acceptorSocket.send(&cmd, sizeof(cmd));
+			_acceptorSocket.send(&stackFrame, sizeof(stackFrame));
+			_acceptorSocket.send(&displacement, sizeof(displacement));
+			roUint16 nameLen = num_cast<roUint16>(symbol->NameLen);
+			_acceptorSocket.send(&nameLen, sizeof(nameLen));
+			_acceptorSocket.send(&symbol->Name, nameLen);
+		}
+	}
 }
 
 struct StackTracer
@@ -213,9 +253,7 @@ struct StackTracer
 
 	static roUint8 stackWalk(void** address, roSize maxCount)
 	{
-		roSize reserveForNullTerminator = 1;
-		USHORT frames = ::CaptureStackBackTrace(3, maxCount - reserveForNullTerminator, (void**)address, NULL);
-		address[frames] = 0;
+		USHORT frames = ::CaptureStackBackTrace(5, maxCount, (void**)address, NULL);
 		return num_cast<roUint8>(frames);
 	}
 
@@ -227,13 +265,15 @@ static void _send(TlsStruct* tls, char cmd, void* memAddr, roSize memSize)
 	void* stack[64];
 	roUint64 stack64[64];
 
-	// Put our tls as a thread id, and make it looks like a call-stack entry
-	stack[0] = tls;
-	roUint8 count = StackTracer::stackWalk(&stack[1], roCountof(stack)-1) + 1;
+	roUint8 count = 0;
 
-	// Convert 32 bit address to 64 bits
-	for(roSize i=0; i<=count; ++i)
-		stack64[i] = (roUint64)stack[i];
+	// Right now we only need callstack for the allocation
+	if(cmd == 'a')
+		count = StackTracer::stackWalk(stack, roCountof(stack));
+
+	// Convert 32 bit address to 64 bits, and reverse the order so the root come first
+	for(roSize i=0; i<count; ++i)
+		stack64[i] = (roUint64)stack[count - i];
 
 	#pragma pack(1)
 	struct Block { roUint8 cmd; roUint64 memAddr; roUint64 memSize; roUint16 stackSize; };
@@ -256,7 +296,6 @@ LPVOID WINAPI myHeapAlloc(__in HANDLE hHeap, __in DWORD dwFlags, __in SIZE_T dwB
 	tls->recurseCount++;
 	void* ret = _orgHeapAlloc(hHeap, dwFlags, dwBytes);
 	_send(tls, 'a', ret, dwBytes);
-//	TaskPool::sleep(10);
 	tls->recurseCount--;
 
 	return ret;

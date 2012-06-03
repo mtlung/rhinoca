@@ -22,8 +22,9 @@ struct SubSystems
 	typedef void (*CustomInit)(SubSystems& subSystems);
 
 // Operations
-	void init();
+	Status init();
 	void shutdown();
+	void tick();
 
 // Attributes
 	Array<void*> userData;

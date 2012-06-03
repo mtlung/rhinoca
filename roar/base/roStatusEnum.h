@@ -1,6 +1,7 @@
 // Common status
 roStatusEnum( undefined )
 roStatusEnum( assertion )
+roStatusEnum( user_abort )
 roStatusEnum( not_supported )
 roStatusEnum( not_implemented )
 roStatusEnum( not_enough_memory )

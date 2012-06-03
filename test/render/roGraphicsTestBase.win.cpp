@@ -11,7 +11,8 @@ GraphicsTestBase::GraphicsTestBase()
 
 GraphicsTestBase::~GraphicsTestBase()
 {
-	subSystems.resourceMgr->shutdown();
+	if(subSystems.resourceMgr)
+		subSystems.resourceMgr->shutdown();
 
 	if(driver) {
 		driver->deleteShader(vShader);
@@ -100,16 +101,19 @@ static void _initRenderDriver(ro::SubSystems& subSystems)
 	self.context = subSystems.renderContext = context;
 }
 
-void GraphicsTestBase::initContext(const char* driverStr)
+ro::Status GraphicsTestBase::initContext(const char* driverStr)
 {
+	ro::Status st;
 	subSystems.userData.pushBack(this);
 	subSystems.userData.pushBack((void*)driverStr);
 	subSystems.initRenderDriver = _initRenderDriver;
-	subSystems.init();
+	st = subSystems.init(); if(!st) return st;
 
 	vShader = driver->newShader();
 	gShader = driver->newShader();
 	pShader = driver->newShader();
+
+	return ro::Status::ok;
 }
 
 bool GraphicsTestBase::keepRun()
@@ -123,6 +127,7 @@ bool GraphicsTestBase::keepRun()
 			return false;
 	}
 
+	subSystems.tick();
 	subSystems.taskPool->doSomeTask(1.0f / 100.0f);
 	subSystems.resourceMgr->tick();
 

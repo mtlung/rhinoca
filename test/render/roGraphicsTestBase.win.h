@@ -11,7 +11,7 @@ struct GraphicsTestBase
 
 	void createWindow(int width, int height);
 
-	void initContext(const char* driverStr);
+	ro::Status initContext(const char* driverStr);
 
 	bool keepRun();
 

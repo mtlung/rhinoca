@@ -78,10 +78,11 @@ SubSystems::~SubSystems()
 
 static MemoryProfiler _memoryProfiler;
 
-void SubSystems::init()
+Status SubSystems::init()
 {
+	Status st;
 	BsdSocket::initApplication();
-	_memoryProfiler.init(5000);
+	st = _memoryProfiler.init(5000); if(!st) return st;
 
 	initTaskPool(*this);
 	initRenderDriver(*this);
@@ -89,6 +90,8 @@ void SubSystems::init()
 	initFont(*this);
 
 	currentCanvas = NULL;
+
+	return Status::ok;
 }
 
 void SubSystems::shutdown()
@@ -110,6 +113,11 @@ void SubSystems::shutdown()
 
 	_memoryProfiler.shutdown();
 	BsdSocket::closeApplication();
+}
+
+void SubSystems::tick()
+{
+	_memoryProfiler.tick();
 }
 
 }	// namespace ro
