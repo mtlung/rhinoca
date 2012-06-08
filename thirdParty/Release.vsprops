@@ -10,7 +10,6 @@
 		InlineFunctionExpansion="2"
 		EnableIntrinsicFunctions="true"
 		FavorSizeOrSpeed="1"
-		OmitFramePointers="true"
 		PreprocessorDefinitions="NDEBUG"
 		StringPooling="true"
 		RuntimeLibrary="2"

@@ -384,7 +384,7 @@ ErrorCode BsdSocket::shutDownRead()
 	if(fd() == INVALID_SOCKET || ::shutdown(fd(), SD_RECEIVE) == OK)
 		return lastError = OK;
 
-#ifdef RHINOCA_WINDOWS
+#if roOS_WIN
 	return lastError = getLastError();
 #else
 	return lastError = OK;
@@ -396,7 +396,7 @@ ErrorCode BsdSocket::shutDownWrite()
 	if(fd() == INVALID_SOCKET || ::shutdown(fd(), SD_SEND) == OK)
 		return lastError = OK;
 
-#ifdef RHINOCA_WINDOWS
+#if roOS_WIN
 	return lastError = getLastError();
 #else
 	return lastError = OK;
@@ -408,7 +408,7 @@ ErrorCode BsdSocket::shutDownReadWrite()
 	if(fd() == INVALID_SOCKET || ::shutdown(fd(), SD_BOTH) == OK)
 		return lastError = OK;
 
-#ifdef RHINOCA_WINDOWS
+#if roOS_WIN
 	return lastError = getLastError();
 #else
 	return lastError = OK;
@@ -432,7 +432,7 @@ ErrorCode BsdSocket::close()
 	}
 #endif
 
-#ifdef RHINOCA_WINDOWS
+#if roOS_WIN
 	return lastError = getLastError();
 #else
 	return lastError = OK;

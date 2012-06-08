@@ -4,10 +4,11 @@
 #include "roTaskPool.h"
 #include "roTypeCast.h"
 #include "../platform/roPlatformHeaders.h"
-#include <ImageHlp.h>
+#include <DbgHelp.h>
 #include <Winsock2.h>
+#include <Ntsecapi.h>
 
-#pragma comment(lib, "imagehlp.lib")
+#pragma comment(lib, "DbgHelp.lib")
 
 namespace ro {
 
@@ -15,13 +16,11 @@ static MemoryProfiler* _profiler = NULL;
 
 MemoryProfiler::MemoryProfiler()
 {
-	roAssert(!_profiler);
-	_profiler = this;
 }
 
 MemoryProfiler::~MemoryProfiler()
 {
-	_profiler = NULL;
+	shutdown();
 }
 
 struct ScopeChangeProtection
@@ -87,7 +86,6 @@ struct FunctionPatcher
 
 		// Save original code bytes for exit restoration
 		memcpy(info.origByteCodes, func, JMP_CODE_SIZE);
-		patchInfo.pushBack(info);
 
 		// Write the jump instruction to jump to the replacement function
 		Address patchloc = (Address)func;
@@ -113,17 +111,20 @@ typedef LPVOID (WINAPI *MyHeapAlloc)(HANDLE, DWORD, SIZE_T);
 typedef LPVOID (WINAPI *MyHeapReAlloc)(HANDLE, DWORD, LPVOID, SIZE_T);
 typedef LPVOID (WINAPI *MyHeapFree)(HANDLE, DWORD, LPVOID);
 typedef SIZE_T (WINAPI *MyHeapSize)(HANDLE, DWORD, LPCVOID);
+typedef NTSTATUS(NTAPI *MyLdrLoadDll)(PWCHAR, ULONG, PUNICODE_STRING, PHANDLE);
 
 LPVOID WINAPI myHeapAlloc(HANDLE, DWORD, SIZE_T);
 LPVOID WINAPI myHeapReAlloc(HANDLE, DWORD, LPVOID, SIZE_T);
 LPVOID WINAPI myHeapFree(HANDLE, DWORD, LPVOID);
+NTSTATUS NTAPI myLdrLoadDll(PWCHAR, ULONG, PUNICODE_STRING, PHANDLE);
 
 FunctionPatcher _functionPatcher;
 
-MyHeapAlloc		_orgHeapAlloc;
-MyHeapReAlloc	_orgHeapReAlloc;
-MyHeapFree		_orgHeapFree;
-MyHeapSize		_orgHeapSize;
+MyHeapAlloc		_orgHeapAlloc = NULL;
+MyHeapReAlloc	_orgHeapReAlloc = NULL;
+MyHeapFree		_orgHeapFree = NULL;
+MyHeapSize		_orgHeapSize = NULL;
+MyLdrLoadDll	_orgLdrLoadDll = NULL;
 
 // I want to use __declspec(thread) but seems it cannot be accessed when a new thread is just created.
 struct TlsStruct
@@ -135,7 +136,7 @@ struct TlsStruct
 };	// TlsStruct
 
 DWORD _tlsIndex = 0;
-Mutex _tlsStructsMutex;
+RecursiveMutex _mutex;
 TinyArray<TlsStruct, 64> _tlsStructs;
 
 TlsStruct* _tlsStruct()
@@ -145,7 +146,7 @@ TlsStruct* _tlsStruct()
 	TlsStruct* tls = reinterpret_cast<TlsStruct*>(::TlsGetValue(_tlsIndex));
 
 	if(!tls) {
-		ScopeLock lock(_tlsStructsMutex);
+		ScopeRecursiveLock lock(_mutex);
 
 		// TODO: The current method didn't respect thread destruction
 		roAssert(_tlsStructs.size() < _tlsStructs.capacity());
@@ -161,6 +162,9 @@ TlsStruct* _tlsStruct()
 
 Status MemoryProfiler::init(roUint16 listeningPort)
 {
+	roAssert(!_profiler);
+	_profiler = this;
+
 	_tlsIndex = ::TlsAlloc();
 
 	::SymInitialize(::GetCurrentProcess(), NULL, TRUE);
@@ -188,38 +192,43 @@ Status MemoryProfiler::init(roUint16 listeningPort)
 	if(_acceptorSocket.setBlocking(true) != 0) return Status::net_error;
 
 	{	// Patching heap functions
-		void* pAlloc, *pReAlloc, *pFree;
+		void* pAlloc, *pReAlloc, *pFree, *pLdrLoadDll;
 		if(HMODULE h = GetModuleHandleA("ntdll.dll")) {
 			pAlloc = GetProcAddress(h, "RtlAllocateHeap");
 			pReAlloc = GetProcAddress(h, "RtlReAllocateHeap");
 			pFree = GetProcAddress(h, "RtlFreeHeap");
 			_orgHeapSize = (MyHeapSize)GetProcAddress(h, "RtlSizeHeap");
+			pLdrLoadDll = GetProcAddress(h, "LdrLoadDll");
 		}
 		else {
 			pAlloc = &HeapAlloc;
 			pReAlloc = &HeapReAlloc;
 			pFree = &HeapFree;
 			_orgHeapSize = (MyHeapSize)&HeapSize;
+			pLdrLoadDll = NULL;
 		}
 
 		// Back up the original function and then do patching
 		_orgHeapAlloc = (MyHeapAlloc)_functionPatcher.patch(pAlloc, &myHeapAlloc);
 		_orgHeapReAlloc = (MyHeapReAlloc)_functionPatcher.patch(pReAlloc, &myHeapReAlloc);
 		_orgHeapFree = (MyHeapFree)_functionPatcher.patch(pFree, &myHeapFree);
+		_orgLdrLoadDll = (MyLdrLoadDll)_functionPatcher.patch(pLdrLoadDll, &myLdrLoadDll);
 	}
 
 	return Status::ok;
 }
+
 
 void MemoryProfiler::tick()
 {
 	// Look for command from the client
 	fd_set fdRead;
 	FD_ZERO(&fdRead);
+	#pragma warning(disable : 4389) // warning C4389: '==' : signed/unsigned mismatch
 	FD_SET(_acceptorSocket.fd(), &fdRead);
 
 	timeval tVal = { 0, 0 };
-	if(select(1, &fdRead, NULL, NULL, &tVal) == 1) {
+	while(select(1, &fdRead, NULL, NULL, &tVal) == 1) {
 		roUint64 stackFrame;
 		if(_acceptorSocket.receive(&stackFrame, sizeof(stackFrame)) == sizeof(stackFrame)) {
 			char buf[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR)];
@@ -227,13 +236,13 @@ void MemoryProfiler::tick()
 			symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 			symbol->MaxNameLen = MAX_SYM_NAME;
 
+			ScopeRecursiveLock lock(_mutex);
 			roUint64 displacement = 0;
 			if(!::SymFromAddr(::GetCurrentProcess(), stackFrame, &displacement, symbol)) {
 				strcpy(symbol->Name, "no symbol");
 				symbol->NameLen = strlen(symbol->Name);
 			}
 
-			ScopeLock lock(_tlsStructsMutex);
 			char cmd = 's';
 			_acceptorSocket.send(&cmd, sizeof(cmd));
 			_acceptorSocket.send(&stackFrame, sizeof(stackFrame));
@@ -251,13 +260,11 @@ struct StackTracer
 	{
 	}
 
-	static roUint8 stackWalk(void** address, roSize maxCount)
+	static roUint8 stackWalk(void** address, roUint8 maxCount)
 	{
 		USHORT frames = ::CaptureStackBackTrace(5, maxCount, (void**)address, NULL);
 		return num_cast<roUint8>(frames);
 	}
-
-	static const roSize maxStackFrame = 64;
 };
 
 static void _send(TlsStruct* tls, char cmd, void* memAddr, roSize memSize)
@@ -270,6 +277,8 @@ static void _send(TlsStruct* tls, char cmd, void* memAddr, roSize memSize)
 	// Right now we only need callstack for the allocation
 	if(cmd == 'a')
 		count = StackTracer::stackWalk(stack, roCountof(stack));
+	if(count > 2)
+		count -= 2;
 
 	// Convert 32 bit address to 64 bits, and reverse the order so the root come first
 	for(roSize i=0; i<count; ++i)
@@ -279,7 +288,7 @@ static void _send(TlsStruct* tls, char cmd, void* memAddr, roSize memSize)
 	struct Block { roUint8 cmd; roUint64 memAddr; roUint64 memSize; roUint16 stackSize; };
 	Block block = { cmd, (roUint64)memAddr, memSize, num_cast<roUint16>(sizeof(roUint64) * count) };
 
-	ScopeLock lock(_tlsStructsMutex);
+	ScopeRecursiveLock lock(_mutex);
 	_profiler->_acceptorSocket.send(&block, sizeof(block));
 	_profiler->_acceptorSocket.send(stack64, block.stackSize);
 }
@@ -309,8 +318,6 @@ LPVOID WINAPI myHeapReAlloc(__in HANDLE hHeap, __in DWORD dwFlags, __deref LPVOI
 	if(!tls || tls->recurseCount > 0)
 		return _orgHeapReAlloc(hHeap, dwFlags, lpMem, dwBytes);
 
-	// NOTE: On VC 2005, orgHeapReAlloc() will not invoke HeapAlloc() and HeapFree(),
-	// but it does on VC 2008
 	tls->recurseCount++;
 	roSize orgSize = _orgHeapSize(hHeap, dwFlags, lpMem);
 	void* ret = _orgHeapReAlloc(hHeap, dwFlags, lpMem, dwBytes);
@@ -338,6 +345,15 @@ LPVOID WINAPI myHeapFree(__in HANDLE hHeap, __in DWORD dwFlags, __deref LPVOID l
 	return ret;
 }
 
+NTSTATUS NTAPI myLdrLoadDll(PWCHAR PathToFile, ULONG Flags, PUNICODE_STRING ModuleFileName, PHANDLE ModuleHandle)
+{
+	// Intercept any load module event and refresh the symbol table
+	NTSTATUS ret = _orgLdrLoadDll(PathToFile, Flags, ModuleFileName, ModuleHandle);
+//	ScopeRecursiveLock lock(_mutex);
+	::SymRefreshModuleList(::GetCurrentProcess());
+	return ret;
+}
+
 void MemoryProfiler::shutdown()
 {
 	_functionPatcher.unpatchAll();
@@ -345,6 +361,8 @@ void MemoryProfiler::shutdown()
 	roVerify(_acceptorSocket.shutDownReadWrite() == 0);
 	_acceptorSocket.close();
 	_listeningSocket.close();
+
+	_profiler = NULL;
 }
 
 }	// namespace ro

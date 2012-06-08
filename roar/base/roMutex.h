@@ -104,7 +104,6 @@ struct Cancelable
  */
 struct ScopeLock : public Cancelable, private NonCopyable
 {
-public:
 	explicit ScopeLock(Mutex& m) : Cancelable(), m(&m) { m.lock(); }
 	explicit ScopeLock(Mutex* m) : Cancelable(), m(m) { if(m) m->lock(); else cancel(); }
 	~ScopeLock() { unlockAndCancel(); }
