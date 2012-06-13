@@ -165,7 +165,7 @@ protected:
 
 void FontLoader::run(TaskPool* taskPool)
 {
-	if(font->state == Resource::Aborted && nextFun != &FontLoader::cleanup)
+	if((font->state == Resource::Aborted || !taskPool->keepRun()) && nextFun != &FontLoader::cleanup)
 		nextFun = &FontLoader::requestAbort;
 
 	(this->*nextFun)(taskPool);

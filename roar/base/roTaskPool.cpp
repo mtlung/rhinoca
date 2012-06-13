@@ -21,13 +21,13 @@ public:
 	volatile TaskId id;		///< 0 for invalid id
 	Task* task;				///< Once complete it will set to NULL
 	bool finalized;			///< Attributes like dependency, affinity, parent cannot be set after the task is finalized
-	bool suspended;			///< If suspended, the task cannot be started
 	ThreadId affinity;
 	TaskPool* taskPool;
 	TaskProxy* parent;		///< A task is consider completed only if all it's children are completed.
 	TaskProxy* dependency;	///< This task cannot be start until the depending task completes.
 	TaskId dependencyId;	///< The dependency valid only if dependency->id == dependencyId
 	int openChildCount;		///< When a task completes, it reduces the openChildCount of it's parent. When this figure reaches zero, the work is completed.
+	int suspensionCount;	///< Keep how many times the task is suspended.
 
 	TaskProxy* nextFree;
 	TaskProxy* nextOpen, *prevOpen;
@@ -38,12 +38,12 @@ TaskPool::TaskProxy::TaskProxy()
 	: id(0)
 	, task(NULL)
 	, finalized(false)
-	, suspended(false)
 	, affinity(0)
 	, taskPool(NULL)
 	, parent(NULL)
 	, dependency(NULL), dependencyId(0)
 	, openChildCount(0)
+	, suspensionCount(0)
 	, nextFree(NULL)
 	, nextOpen(NULL), prevOpen(NULL)
 	, nextPending(NULL), prevPending(NULL)
@@ -387,14 +387,15 @@ void TaskPool::suspend(TaskId id)
 {
 	ScopeLock lock(mutex);
 	if(TaskProxy* p = _findProxyById(id))
-		p->suspended = true;
+		p->suspensionCount++;
 }
 
 void TaskPool::resume(TaskId id)
 {
 	ScopeLock lock(mutex);
 	if(TaskProxy* p = _findProxyById(id))
-		p->suspended = false;
+		if(p->suspensionCount > 0)
+			p->suspensionCount--;
 }
 
 void TaskPool::doSomeTask(float timeout)
@@ -552,7 +553,7 @@ void TaskPool::_removePendingTask(TaskProxy* p)
 
 bool TaskPool::_matchAffinity(TaskProxy* p, ThreadId tId)
 {
-	if(p->suspended || !p->finalized)
+	if(p->suspensionCount > 0 || !p->finalized)
 		return false;
 
 	if(p->affinity < 0)	// Only this thread cannot run
@@ -597,7 +598,7 @@ void Task::reSchedule(bool suspend)
 
 	p->task = this;
 	p->taskPool->_addPendingTask(p);
-	p->suspended = suspend;
+	p->suspensionCount += suspend;
 
 #if DEBUG_PRINT
 	printf("%sreSchedule(%d)\n", _debugIndent + _debugMaxIndent - _debugWaitCount, p->id);
@@ -613,7 +614,7 @@ void Task::reSchedule(bool suspend, ThreadId affinity)
 	p->task = this;
 	p->affinity = affinity;
 	p->taskPool->_addPendingTask(p);
-	p->suspended = suspend;
+	p->suspensionCount += suspend;
 
 #if DEBUG_PRINT
 	printf("%sreSchedule(%d)\n", _debugIndent + _debugMaxIndent - _debugWaitCount, p->id);

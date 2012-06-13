@@ -78,6 +78,8 @@ public:
 	void wait(TaskId id);
 
 	/// A task will not be pick up by the TaskPool to run, if it's suspended.
+	/// For more deterministic behavior, a suspension counter is used,
+	/// such that the order of calling of suspend() and resume() is irrelevant.
 	/// @note If the task is already running, it will not preempted.
 	void suspend(TaskId id);
 	void resume(TaskId id);

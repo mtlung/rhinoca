@@ -41,7 +41,7 @@ struct TextLoader : public Task
 
 void TextLoader::run(TaskPool* taskPool)
 {
-	if(text->state == Resource::Aborted)
+	if(text->state == Resource::Aborted || !taskPool->keepRun())
 		nextFun = &TextLoader::abort;
 
 	(this->*nextFun)(taskPool);

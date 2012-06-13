@@ -73,7 +73,7 @@ struct JpegLoader : public Task
 
 void JpegLoader::run(TaskPool* taskPool)
 {
-	if(texture->state == Resource::Aborted)
+	if(texture->state == Resource::Aborted || !taskPool->keepRun())
 		nextFun = &JpegLoader::abort;
 
 	(this->*nextFun)(taskPool);

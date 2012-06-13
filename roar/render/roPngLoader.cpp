@@ -125,7 +125,7 @@ PngLoader::PngLoader(Texture* t, ResourceManager* mgr)
 
 void PngLoader::run(TaskPool* taskPool)
 {
-	if(texture->state == Resource::Aborted)
+	if(texture->state == Resource::Aborted || !taskPool->keepRun())
 		nextFun = &PngLoader::abort;
 
 	(this->*nextFun)(taskPool);
