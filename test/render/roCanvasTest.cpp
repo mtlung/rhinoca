@@ -287,6 +287,7 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 //		auxCanvas.drawImage(texture->handle, 0, 0, 100, 100);
 
 		// Draw auxCanvas to the main canvas
+		canvas.makeCurrent();
 //		driver->clearColor(0.05f, 0.05f, 0.05f, 1);
 		driver->clearColor(1, 1, 1, 1);
 		canvas.setGlobalAlpha(0.99f);
