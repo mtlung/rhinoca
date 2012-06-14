@@ -46,6 +46,10 @@ struct SubSystems
 	/// You may need set it to NULL when your viewport resize, to force the current canvas to be refreshed
 	/// I use void* here to emphasis this pointer is for comparison only
 	void* currentCanvas;
+
+// Frame statistics
+	float maxFrameDuration;
+	float averageFrameDuration;
 };	// SubSystems
 
 // Forward declarations of all build-in loaders

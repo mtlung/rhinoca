@@ -26,16 +26,14 @@ TEST_FIXTURE(CanvasTest, drawImage)
 	canvas.init();
 
 	// Init texture
-	TexturePtr texture = subSystems.resourceMgr->loadAs<Texture>("EdSplash.jpg");
+	TexturePtr texture = subSystems.resourceMgr->loadAs<Texture>("EdSplash.png");
 //	TexturePtr texture = subSystems.resourceMgr->loadAs<Texture>("http://udn.epicgames.com/pub/webbg_udn.jpg");
 //	TexturePtr texture = subSystems.resourceMgr->loadAs<Texture>("http://4.bp.blogspot.com/-1rQdRXHNKAM/T4BU4ndq01I/AAAAAAAAAgc/ZgexwVGnk1U/s1600/Cupisz_Robert_Light_Probe_Interpolation2.jpg");
 	CHECK(texture);
 
 	while(texture && keepRun()) {
 		driver->clearColor(0, 0, 0, 0);
-		canvas.beginDraw();
 		canvas.drawImage(texture->handle, 10, 50, 100, 100);
-		canvas.endDraw();
 		driver->swapBuffers();
 	}
 
@@ -240,12 +238,11 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 	auxCanvas.initTargetTexture(context->width, context->height);
 
 	// Init texture
-	TexturePtr texture = subSystems.resourceMgr->loadAs<Texture>("EdSplash.bmp");
+	TexturePtr texture = subSystems.resourceMgr->loadAs<Texture>("EdSplash.png");
 
 	while(keepRun())
 	{
 		// Draw to auxCanvas
-		auxCanvas.beginDraw();
 		auxCanvas.save();
 
 		driver->clearStencil(0);
@@ -286,23 +283,22 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 		testRadialGradient(auxCanvas);
 
 		auxCanvas.restore();
-		auxCanvas.endDraw();
 
 //		auxCanvas.drawImage(texture->handle, 0, 0, 100, 100);
 
 		// Draw auxCanvas to the main canvas
-		canvas.beginDraw();
 //		driver->clearColor(0.05f, 0.05f, 0.05f, 1);
 		driver->clearColor(1, 1, 1, 1);
 		canvas.setGlobalAlpha(0.99f);
 		canvas.drawImage(auxCanvas.targetTexture->handle, 0, 0);
-		canvas.endDraw();
 
 		driver->swapBuffers();
 	}
 
 	texture = NULL;
 }
+
+#include "../../roar/base/roTextResource.h"
 
 TEST_FIXTURE(CanvasTest, drawText)
 {
@@ -314,41 +310,26 @@ TEST_FIXTURE(CanvasTest, drawText)
 	roUint16 endChi = 0x9FFF;
 	roUint16 codePoint = beginChi;
 
+	TextResourcePtr text = new TextResource("main.cpp");
+	text = subSystems.resourceMgr->loadAs<TextResource>(text.get(), resourceLoadText);
+
 	while(keepRun())
 	{
-		// Draw to auxCanvas
-		canvas.beginDraw();
-
 		driver->clearStencil(0);
 //		driver->clearColor(1, 1, 1, 1);
 		canvas.clearRect(0, 0, (float)context->width, (float)context->height);
 
-		canvas.setGlobalColor(1, 1, 1, 1);
+		canvas.setGlobalColor(1, 1, 1, 0.1f);
 
-		Array<roUint16> wStr;
+		canvas.setFont("italic 10pt / 110% Calibri");
+//		canvas.fillText("AT_-Hello world!", 0, 40, 0);
+		canvas.fillText(text->data.c_str(), 0, 40, 0);
 
-		for(roSize i=0; i<10; ++i) {
-			for(roSize j=0; j<10; ++j) {
-				if(codePoint >= endChi)
-					codePoint = beginChi;
-				wStr.pushBack(++codePoint);
-			}
-			wStr.pushBack(L'\n');
-		}
+//		canvas.setFont("Comic Sans MS");
+//		canvas.fillText("Lung Man Tat", 0, 60, 0);
 
-		String str;
-		str.fromUtf16(wStr.typedPtr(), wStr.size());
-
-		canvas.setFont("Calibri");
-		canvas.fillText("AT_-Hello world!", 0, 40, 0);
-
-		canvas.setFont("Comic Sans MS");
-		canvas.fillText("Lung Man Tat", 0, 60, 0);
-
-		canvas.setFont("DFKai-SB");
-		canvas.fillText(str.c_str(), 0, 100, 0);
-
-		canvas.endDraw();
+//		canvas.setFont("DFKai-SB");
+//		canvas.fillText(str.c_str(), 0, 100, 0);
 
 		driver->swapBuffers();
 	}

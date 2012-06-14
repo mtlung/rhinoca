@@ -5,6 +5,7 @@
 #include "base/roResource.h"
 #include "base/roSocket.h"
 #include "base/roTaskPool.h"
+#include "math/roMath.h"
 #include "render/roRenderDriver.h"
 
 namespace ro {
@@ -63,6 +64,8 @@ SubSystems::SubSystems()
 	, initRenderDriver(_initRenderDriver), renderDriver(NULL), renderContext(NULL)
 	, initResourceManager(_initResourceManager), resourceMgr(NULL)
 	, initFont(_initFont), fontMgr(NULL)
+	, maxFrameDuration(0)
+	, averageFrameDuration(0)
 {
 	if(!roSubSystems)
 		roSubSystems = this;
@@ -82,7 +85,7 @@ Status SubSystems::init()
 {
 	Status st;
 	BsdSocket::initApplication();
-	st = _memoryProfiler.init(5000); if(!st) return st;
+//	st = _memoryProfiler.init(5000); if(!st) return st;
 
 	initTaskPool(*this);
 	initRenderDriver(*this);
@@ -111,13 +114,22 @@ void SubSystems::shutdown()
 	renderDriver = NULL;
 	renderContext = NULL;
 
-	_memoryProfiler.shutdown();
+//	_memoryProfiler.shutdown();
 	BsdSocket::closeApplication();
 }
 
 void SubSystems::tick()
 {
-	_memoryProfiler.tick();
+	if(taskPool)
+		taskPool->doSomeTask(1.0f / 100.0f);
+
+	if(resourceMgr)
+		resourceMgr->tick();
+
+//	_memoryProfiler.tick();
+
+	averageFrameDuration = roStepRunAvg(averageFrameDuration, renderContext->lastFrameDuration, 60);
+	maxFrameDuration = roMaxOf2(maxFrameDuration, renderContext->lastFrameDuration);
 }
 
 }	// namespace ro

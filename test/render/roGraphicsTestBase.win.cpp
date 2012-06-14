@@ -1,11 +1,9 @@
 #include "pch.h"
 #include "roGraphicsTestBase.win.h"
 #include "../../roar/base/roResource.h"
-#include "../../roar/math/roMath.h"
 
 GraphicsTestBase::GraphicsTestBase()
 	: hWnd(0), driver(NULL), context(NULL)
-	, averageFrameDuration(0), maxFrameDuration(0)
 {
 }
 
@@ -128,15 +126,12 @@ bool GraphicsTestBase::keepRun()
 	}
 
 	subSystems.tick();
-	subSystems.taskPool->doSomeTask(1.0f / 100.0f);
-	subSystems.resourceMgr->tick();
 
-	if(context) {
-		averageFrameDuration = roStepRunAvg(averageFrameDuration, context->lastFrameDuration, 60);
-		maxFrameDuration = roMaxOf2(maxFrameDuration, context->lastFrameDuration);
-	}
-
-	printf("\rFPS: %f, frame duration- avg:%fms, max:%fms", 1.0f/averageFrameDuration, averageFrameDuration*1000, maxFrameDuration*1000);
+	printf("\rFPS: %f, frame duration- avg:%fms, max:%fms",
+		1.0f/subSystems.averageFrameDuration,
+		subSystems.averageFrameDuration*1000,
+		subSystems.maxFrameDuration*1000
+	);
 
 	return true;
 }
