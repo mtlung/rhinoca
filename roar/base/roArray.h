@@ -61,7 +61,7 @@ struct IArray
 // Operations
 	bool		isEmpty() const					{ return (_size <= 0); }
 
-	bool		isInRange(int i) const			{ return i > 0 && roSize(i) < size(); }
+	bool		isInRange(int i) const			{ return i >= 0 && roSize(i) < size(); }
 	bool		isInRange(roSize i) const		{ return i < size(); }
 
 	T&			front()							{ roAssert(_size > 0); return _data[0]; }

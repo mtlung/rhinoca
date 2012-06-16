@@ -203,6 +203,18 @@ void ResourceManager::shutdown()
 	}
 }
 
+Resource* ResourceManager::firstResource()
+{
+	return _resources.findMin();
+}
+
+Resource* ResourceManager::nextResource(Resource* current)
+{
+	if(!current)
+		return NULL;
+	return current->next();
+}
+
 void ResourceManager::addExtMapping(ExtMappingFunc extMappingFunc)
 {
 	// Push at the font, so late added mapping function always has a higher priority

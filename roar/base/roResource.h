@@ -14,7 +14,7 @@ struct ResourceManager;
 
 struct Resource
 	: public SharedObject<AtomicInteger>
-	, public MapNode<ConstString, Resource>
+	, private MapNode<ConstString, Resource>
 	, private NonCopyable
 {
 	explicit Resource(const char* uri);
@@ -44,6 +44,9 @@ struct Resource
 	void* scratch;	///! Hold any temporary needed during loading
 
 	unsigned refCount() const;
+
+	friend struct ResourceManager;
+	template<class> friend struct Map;
 };	// Resource
 
 typedef SharedPtr<Resource> ResourcePtr;
@@ -87,6 +90,10 @@ struct ResourceManager
 	void abortAllLoader();
 
 	void shutdown();
+
+// Emulating resources
+	Resource* firstResource();
+	Resource* nextResource(Resource* current);
 
 // Attributes
 	TaskPool* taskPool;

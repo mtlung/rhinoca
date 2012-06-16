@@ -563,7 +563,7 @@ TouchData& Window::allocateTouchData(int identifier)
 {
 	int index = findTouchIndexByIdentifier(identifier);
 
-	if(index >= 0 && index < (int)touches.size())
+	if(touches.isInRange(index))
 		return touches[index];
 
 	// Reuse free slot

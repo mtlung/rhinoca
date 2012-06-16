@@ -10,6 +10,7 @@ struct FontManager;
 struct Resource;
 struct ResourceManager;
 class TaskPool;
+typedef SharedPtr<struct Resource> ResourcePtr;
 typedef SharedPtr<struct Font> FontPtr;
 
 /// Container of most important sub-system
@@ -38,6 +39,7 @@ struct SubSystems
 
 	CustomInit initResourceManager;
 	ResourceManager* resourceMgr;
+	Array<ResourcePtr> systemResource;	/// A list of resource that should always keep in the system (eg. Default Font)
 
 	CustomInit initFont;
 	FontManager* fontMgr;

@@ -82,7 +82,7 @@ static JSBool item(JSContext* cx, uintN argc, jsval* vp)
 	int32 index;
 	if(!JS_ValueToInt32(cx, JS_ARGV0, &index)) return JS_FALSE;
 
-	if(index < 0 || index >= (int)self->touches.size()) {
+	if(!self->touches.isInRange(index)) {
 		JS_RVAL(cx, vp) = JSVAL_NULL;
 		return JS_TRUE;
 	}
@@ -107,7 +107,7 @@ static JSBool identifiedTouch(JSContext* cx, uintN argc, jsval* vp)
 
 	// Scan touch with the same identifier
 	int32 index = rh->domWindow->findTouchIndexByIdentifier(identifier);
-	roAssert(index < (int)touches.size());
+	roAssert(touches.isInRange(index));
 
 	if(index < 0) {
 		JS_RVAL(cx, vp) = JSVAL_NULL;

@@ -56,6 +56,7 @@ static void _initFont(SubSystems& subSystems)
 
 	Resource* r = resourceCreateWin32Font(subSystems.resourceMgr, "win32Font", stringHash("Font"));
 	subSystems.defaultFont = subSystems.resourceMgr->loadAs<Font>(r, resourceLoadWin32Font);
+	subSystems.systemResource.pushBack(subSystems.defaultFont);
 }
 
 SubSystems::SubSystems()
