@@ -253,7 +253,7 @@ Status TinyArray<T,PreAllocCount>::reserve(roSize newSize)
 	bool moved = false;
 
 	// Transit from dynamic to static
-	if(newSize <= PreAllocCount && PreAllocCount < this->_capacity) {
+	if(newSize <= PreAllocCount && (this->_capacity == 0 || PreAllocCount < this->_capacity)) {
 		roMemcpy(this->_buffer, this->_data, sizeof(T) * this->_size);
 		roFree(this->_data);
 		this->_data = (T*)this->_buffer;
@@ -262,6 +262,8 @@ Status TinyArray<T,PreAllocCount>::reserve(roSize newSize)
 	}
 	// Transit from static to dynamic
 	else {
+//		roAssert(this->_capacity == PreAllocCount);
+
 		T* oldPtr = (this->_data == (T*)this->_buffer) ? NULL : this->_data;
 		T* newPtr = roRealloc(oldPtr, this->_capacity, newSize * sizeof(T)).template cast<T>();
 		if(!newPtr) return Status::not_enough_memory;
@@ -276,6 +278,8 @@ Status TinyArray<T,PreAllocCount>::reserve(roSize newSize)
 		this->_data = newPtr;
 		this->_capacity = newSize;
 	}
+
+	roAssert(this->_capacity >= PreAllocCount);
 
 	if(!TypeOf<T>::isPOD() && moved) for(roSize i=0; i<this->_size; ++i)	// Notify the object that it's memory is moved
 		roOnMemMove(this->_data[i], &this->_data[i]);
