@@ -772,7 +772,7 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 	// Cache miss, do create DX buffer
 	roAssert(!impl->dxBuffer);
 
-	desc.ByteWidth = num_cast<UINT>(sizeInBytes);
+	desc.ByteWidth = num_cast<UINT>(roMaxOf2(sizeInBytes, 1u));	// DirectX doesn't like zero size buffer
 
 	D3D11_SUBRESOURCE_DATA data;
 	data.pSysMem = initData;
@@ -1801,6 +1801,8 @@ static void _drawPrimitive(roRDriverPrimitiveType type, roSize offset, roSize ve
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx) return;
+
+	roAssert(offset <= vertexCount);
 
 	// We emulate triangle fan for DX11
 	if(type == roRDriverPrimitiveType_TriangleFan)
