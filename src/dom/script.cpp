@@ -7,6 +7,10 @@
 #include "../../roar/base/roFileSystem.h"
 #include "../../roar/base/roTextResource.h"
 
+namespace ro {
+extern bool resourceLoadText(ResourceManager*, Resource*);
+}
+
 namespace Dom {
 
 JSClass HTMLScriptElement::jsClass = {
@@ -124,8 +128,11 @@ void HTMLScriptElement::setSrc(const char* uri)
 	fixRelativePath(uri, rhinoca->documentUrl.c_str(), path);
 
 	ro::ResourceManager& mgr = *rhinoca->subSystems.resourceMgr;
-	_src = mgr.loadAs<ro::TextResource>(path.c_str());
 
+	ro::TextResourcePtr textResource = new ro::TextResource(path.c_str());
+	_src = mgr.loadAs<ro::TextResource>(textResource.get(), ro::resourceLoadText);
+
+	// TODO: Put into the task pool instead of a blocking one
 	mgr.taskPool->wait(_src->taskLoaded);
 
 	// TODO: Prevent the same script running more than once
