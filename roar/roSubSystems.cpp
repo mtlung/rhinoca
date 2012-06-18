@@ -102,6 +102,7 @@ void SubSystems::shutdown()
 {
 	defaultFont = NULL;
 	currentCanvas = NULL;
+	systemResource.clear();
 
 	delete fontMgr;		fontMgr = NULL;
 	delete resourceMgr;	resourceMgr = NULL;

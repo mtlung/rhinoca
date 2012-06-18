@@ -18,7 +18,9 @@ Resource::Resource(const char* p)
 }
 
 Resource::~Resource()
-{}
+{
+	roAssert(refCount() == 0);
+}
 
 ConstString Resource::uri() const
 {
@@ -198,6 +200,7 @@ void ResourceManager::shutdown()
 
 	for(Resource* r=_resources.findMin(); r;) {
 		Resource* next = r->next();
+		r->removeThis();
 		sharedPtrRelease(r);
 		r = next;
 	}

@@ -12,6 +12,7 @@ Texture::Texture(const char* uri)
 
 Texture::~Texture()
 {
+	roAssert(roRDriverCurrentContext && "Please release all resource before shutdown the system");
 	roRDriverCurrentContext->driver->deleteTexture(handle);
 }
 
