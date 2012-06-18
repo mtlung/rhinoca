@@ -99,8 +99,8 @@ struct roRDriverShaderImpl : public roRDriverShader
 	ComPtr<ID3D11DeviceChild> dxShader;
 	ComPtr<ID3D10Blob> dxShaderBlob;
 
-	TinyArray<InputParam, 4> inputParams;
-	TinyArray<ShaderResourceBinding, 4> shaderResourceBindings;
+	Array<InputParam> inputParams;
+	Array<ShaderResourceBinding> shaderResourceBindings;
 };
 
 struct InputLayout
@@ -120,8 +120,12 @@ struct RenderTarget
 {
 	unsigned hash;
 	float lastUsedTime;
-	TinyArray<ComPtr<ID3D11RenderTargetView>, 4> rtViews;
+	Array<ComPtr<ID3D11RenderTargetView> > rtViews;
 	ComPtr<ID3D11DepthStencilView> depthStencilView;
+
+	friend void roOnMemMove(RenderTarget& self, void* newMemLocation) {
+		::roOnMemMove(self.rtViews, &self.rtViews);
+	}
 };
 
 struct roRDriverContextImpl : public roRDriverContext

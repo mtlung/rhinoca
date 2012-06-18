@@ -68,6 +68,10 @@ struct roRDriverTextureImpl : public roRDriverTexture
 	};
 
 	TinyArray<MapInfo, 1> mapInfo;	// For mapping different mip-level and texture array
+
+	friend void roOnMemMove(roRDriverTextureImpl& self, void* newMemLocation) {
+		::roOnMemMove(self.mapInfo, &self.mapInfo);
+	}
 };	// roRDriverTextureImpl
 
 struct roRDriverShaderProgramImpl : public roRDriverShaderProgram
@@ -76,10 +80,10 @@ struct roRDriverShaderProgramImpl : public roRDriverShaderProgram
 	unsigned hash;	/// Base on the shader pointers
 	GLuint glh;
 	unsigned textureCount;
-	TinyArray<roRDriverShaderImpl*, 8> shaders;	/// When ever a shader is destroyed, one should also remove it from this list
-	TinyArray<ProgramUniform, 8> uniforms;
-	TinyArray<ProgramUniformBlock, 8> uniformBlocks;
-	TinyArray<ProgramAttribute, 8> attributes;
+	Array<roRDriverShaderImpl*> shaders;	/// When ever a shader is destroyed, one should also remove it from this list
+	Array<ProgramUniform> uniforms;
+	Array<ProgramUniformBlock> uniformBlocks;
+	Array<ProgramAttribute> attributes;
 };
 
 struct RenderTarget
@@ -108,12 +112,12 @@ struct roRDriverContextImpl : public roRDriverContext
 
 	void* currentIndexBufSysMemPtr;
 
-	TinyArray<roRDriverShaderProgramImpl, 64> shaderProgramCache;
+	Array<roRDriverShaderProgramImpl> shaderProgramCache;
 	roRDriverShaderProgramImpl* currentShaderProgram;
 
 	// A ring of pixel buffer object
-	TinyArray<GLuint, 4> pixelBufferInUse;
-	TinyArray<GLuint, 4> pixelBufferCache;
+	Array<GLuint> pixelBufferInUse;
+	Array<GLuint> pixelBufferCache;
 	roSize currentPixelBufferIndex;
 
 	Array<roRDriverBufferImpl*> bufferCache;	// We would like to minimize the create/delete of buffer objects

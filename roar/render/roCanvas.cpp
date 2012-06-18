@@ -1058,3 +1058,6 @@ void Canvas::setComposition(const char* operation)
 }
 
 }	// namespace ro
+void roOnMemMove(ro::Gradient& self, void* newMemLocation) {
+	::roOnMemMove(self.stops, &self.stops);
+}

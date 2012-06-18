@@ -94,3 +94,44 @@ TEST_FIXTURE(TinyArrayTest, insert)
 		CHECK_EQUAL(7, v[6]); CHECK_EQUAL(8, v[7]);
 	}
 }
+
+TEST_FIXTURE(TinyArrayTest, arrayOfArray)
+{
+	TinyArray<TinyArray<int, 2>, 1> v;
+	v.incSize(1);
+
+	v[0].pushBack(1);
+	v[0].pushBack(2);	// A static to dynamic transition should occurred
+
+	v.incSize(1);
+
+	CHECK_EQUAL(1, v[0][0]);
+	CHECK_EQUAL(2, v[0][1]);
+}
+
+namespace {
+
+struct MyClass {
+	TinyArray<int, 1> v;
+
+	friend void roOnMemMove(MyClass& c, void* newMemLocation)
+	{
+		::roOnMemMove(c.v, &c.v);
+	}
+};
+
+}	// namespace
+
+TEST_FIXTURE(TinyArrayTest, arrayOfClassWithArray)
+{
+	TinyArray<MyClass, 1> v;
+	v.incSize(1);
+
+	v[0].v.pushBack(1);
+	v[0].v.pushBack(2);
+
+	v.incSize(1);
+
+	CHECK_EQUAL(1, v[0].v[0]);
+	CHECK_EQUAL(2, v[0].v[1]);
+}

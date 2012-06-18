@@ -17,11 +17,12 @@ void roSwap(ro::TinyArray<T,N>& lhs, ro::TinyArray<T,N>& rhs)
 template<class T, roSize N> inline
 void roOnMemMove(ro::TinyArray<T,N>& ary, void* newMemLocation)
 {
-	if(ary._capacity <= N) {	// Array is using it's static buffer
-		ary._data = (T*)ary._buffer;
-		for(roSize i=0; i<ary._size; ++i)
-			roOnMemMove(ary._data[i], &ary._data[i]);
-	}
+	if(ary._isUsingDynamic())
+		return;
+
+	ary._data = (T*)ary._buffer;
+	for(roSize i=0; i<ary._size; ++i)
+		roOnMemMove(ary._data[i], &ary._data[i]);
 }
 
 namespace ro {
@@ -253,7 +254,7 @@ Status TinyArray<T,PreAllocCount>::reserve(roSize newSize)
 	bool moved = false;
 
 	// Transit from dynamic to static
-	if(newSize <= PreAllocCount && (this->_capacity == 0 || PreAllocCount < this->_capacity)) {
+	if(newSize <= PreAllocCount && _isUsingDynamic()) {
 		roMemcpy(this->_buffer, this->_data, sizeof(T) * this->_size);
 		roFree(this->_data);
 		this->_data = (T*)this->_buffer;
@@ -262,15 +263,11 @@ Status TinyArray<T,PreAllocCount>::reserve(roSize newSize)
 	}
 	// Transit from static to dynamic
 	else {
-//		roAssert(this->_capacity == PreAllocCount);
-
 		T* oldPtr = (this->_data == (T*)this->_buffer) ? NULL : this->_data;
 		T* newPtr = roRealloc(oldPtr, this->_capacity, newSize * sizeof(T)).template cast<T>();
 		if(!newPtr) return Status::not_enough_memory;
 
-		moved = this->_data != oldPtr;
-
-		if(this->_capacity == PreAllocCount) {
+		if(oldPtr != newPtr) {
 			roMemcpy(newPtr, this->_buffer, sizeof(T) * this->_size);
 			moved = true;
 		}

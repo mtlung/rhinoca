@@ -154,16 +154,17 @@ template<class T, roSize PreAllocCount>
 struct TinyArray : public IArray<T, TinyArray<T,PreAllocCount> >
 {
 	TinyArray()										{ this->_data = (T*)_buffer; this->_capacity = PreAllocCount; }
-	TinyArray(roSize size)							{ this->resize(size); }
-	TinyArray(roSize size, const T& val)			{ this->resize(size, val); }
-	TinyArray(const TinyArray<T,PreAllocCount>& v)	{ this->_data = (T*)_buffer; this->_capacity = PreAllocCount;  copy(v); }
-	~TinyArray()									{ this->clear(); if(this->_data != (T*)this->_buffer) roFree(this->_data); }
+	TinyArray(roSize size)							{ this->_data = (T*)_buffer; this->_capacity = PreAllocCount; this->resize(size); }
+	TinyArray(roSize size, const T& val)			{ this->_data = (T*)_buffer; this->_capacity = PreAllocCount; this->resize(size, val); }
+	TinyArray(const TinyArray<T,PreAllocCount>& v)	{ this->_data = (T*)_buffer; this->_capacity = PreAllocCount; copy(v); }
+	~TinyArray()									{ this->clear(); if(_isUsingDynamic()) roFree(this->_data); }
 	TinyArray& operator=(const TinyArray& rhs)		{ this->copy(rhs); }
 
 // Operations
 	Status reserve(roSize newSize);
 
 // Private
+	bool _isUsingDynamic() const { return this->_capacity > PreAllocCount; }
 	char _buffer[PreAllocCount * sizeof(T)];
 };	// TinyArray
 

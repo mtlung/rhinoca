@@ -1336,9 +1336,6 @@ static bool _initShaderProgram(roRDriverShaderProgram* self, roRDriverShader** s
 		GLint uniformCount;
 		glGetProgramiv(impl->glh, GL_ACTIVE_UNIFORMS, &uniformCount);
 
-		if(impl->uniforms.capacity() < (unsigned)uniformCount)
-			roLog("verbose", "dynamic memory need for TinyArray in %s %d\n", __FILE__, __LINE__);
-
 		impl->uniforms.resize(uniformCount);
 
 		GLuint texunit = 0;
@@ -1415,9 +1412,6 @@ static bool _initShaderProgram(roRDriverShaderProgram* self, roRDriverShader** s
 	{	// Query shader attributes
 		GLint attributeCount;
 		glGetProgramiv(impl->glh, GL_ACTIVE_ATTRIBUTES, &attributeCount);
-
-		if(impl->attributes.capacity() < (unsigned)attributeCount)
-			roLog("verbose", "dynamic memory need for TinyArray in %s %d\n", __FILE__, __LINE__);
 
 		impl->attributes.resize(attributeCount);
 
