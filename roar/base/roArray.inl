@@ -250,11 +250,14 @@ Status Array<T>::reserve(roSize newCapacity)
 template<class T, roSize PreAllocCount>
 Status TinyArray<T,PreAllocCount>::reserve(roSize newSize)
 {
+	roAssert(this->_capacity >= PreAllocCount || this->_capacity == 0);
+
 	newSize = roMaxOf2(newSize, this->size());
 	bool moved = false;
 
 	// Transit from dynamic to static
-	if(newSize <= PreAllocCount && _isUsingDynamic()) {
+	// NOTE: The check for this->_capacity == 0 make this class "zero memory initialization" friendly
+	if(newSize <= PreAllocCount && (_isUsingDynamic() || this->_capacity == 0)) {
 		roMemcpy(this->_buffer, this->_data, sizeof(T) * this->_size);
 		roFree(this->_data);
 		this->_data = (T*)this->_buffer;
