@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "canvasgradient.h"
 #include "color.h"
+#include "../../roar/render/roCanvas.h"
 
 namespace Dom {
 
@@ -31,11 +32,13 @@ static JSFunctionSpec methods[] = {
 };
 
 CanvasGradient::CanvasGradient()
+	: handle(NULL)
 {
 }
 
 CanvasGradient::~CanvasGradient()
 {
+	ro::Canvas::destroyGradient(handle);
 }
 
 void CanvasGradient::bind(JSContext* cx, JSObject* parent)
@@ -50,16 +53,21 @@ void CanvasGradient::bind(JSContext* cx, JSObject* parent)
 
 void CanvasGradient::createLinear(float xStart, float yStart, float xEnd, float yEnd)
 {
+	if(handle) ro::Canvas::destroyGradient(handle);
+	handle = ro::Canvas::createLinearGradient(xStart, yStart, xEnd, yEnd);
 }
 
 void CanvasGradient::createRadial(float xStart, float yStart, float radiusStart, float xEnd, float yEnd, float radiusEnd)
 {
+	if(handle) ro::Canvas::destroyGradient(handle);
+	handle = ro::Canvas::createRadialGradient(xStart, yStart, radiusStart, xEnd, yEnd, radiusEnd);
 }
 
 void CanvasGradient::addColorStop(float offset, const char* color)
 {
 	Color c;
 	c.parse(color);
+	ro::Canvas::addGradientColorStop(handle, offset, c.r, c.g, c.b, c.a);
 }
 
 }	// namespace Dom

@@ -20,7 +20,9 @@ public:
 
 	void addColorStop(float offset, const char* color);
 
-// Attribbutes
+// Attributes
+	void* handle;
+
 	static JSClass jsClass;
 };	// CanvasGradient
 

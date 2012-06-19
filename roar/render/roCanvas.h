@@ -62,10 +62,10 @@ struct Canvas
 	bool isPointInPath			(float x, float y);
 
 // Gradient
-	void* createLinearGradient	(float xStart, float yStart, float xEnd, float yEnd);
-	void* createRadialGradient	(float xStart, float yStart, float radiusStart, float xEnd, float yEnd, float radiusEnd);
-	void addGradientColorStop	(void* gradient, float offset, float r, float g, float b, float a);
-	void destroyGradient		(void* gradient);
+	static void* createLinearGradient	(float xStart, float yStart, float xEnd, float yEnd);
+	static void* createRadialGradient	(float xStart, float yStart, float radiusStart, float xEnd, float yEnd, float radiusEnd);
+	static void destroyGradient			(void* gradient);
+	static void addGradientColorStop	(void* gradient, float offset, float r, float g, float b, float a);
 
 // Stroke
 	void stroke					();					/// Strokes the subpaths with the current stroke style.
@@ -112,7 +112,7 @@ struct Canvas
 	/// Possible values:
 	/// source-atop, source-in, source-out, source-over (default), destination-atop,
 	/// destination-in, destination-out, destination-over, lighter, copy, xor
-	void setComposition			(const char* operation);
+	void		setComposition	(const char* operation);
 
 	TexturePtr targetTexture;
 	TexturePtr depthStencilTexture;

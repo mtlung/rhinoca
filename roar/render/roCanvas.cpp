@@ -701,6 +701,8 @@ void Canvas::addGradientColorStop(void* gradient, float offset, float r, float g
 	Gradient* grad = reinterpret_cast<Gradient*>(gradient);
 	Gradient::ColorStops& stops = grad->stops;
 
+	if(!gradient) return;
+
 	// We need to adjust the offset for radial fill, to deal with starting radius
 	if(vgGetParameteri(grad->handle, VG_PAINT_TYPE) == VG_PAINT_TYPE_RADIAL_GRADIENT)
 	{
@@ -729,6 +731,7 @@ void Canvas::addGradientColorStop(void* gradient, float offset, float r, float g
 void Canvas::destroyGradient(void* gradient)
 {
 	Gradient* g = reinterpret_cast<Gradient*>(gradient);
+	if(!g) return;
 	vgDestroyPaint(g->handle);
 	_allocator.deleteObj(g);
 }

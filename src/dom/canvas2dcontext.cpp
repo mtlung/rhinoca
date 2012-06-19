@@ -79,7 +79,7 @@ static JSBool setStrokeStyle(JSContext* cx, JSObject* obj, jsid id, JSBool stric
 	if(JSVAL_IS_OBJECT(*vp)) {
 		CanvasGradient* g = getJsBindable<CanvasGradient>(cx, JSVAL_TO_OBJECT(*vp));
 
-		self->_canvas.setStrokeGradient(g);
+		self->_canvas.setStrokeGradient(g->handle);
 	}
 	else {
 		Color c;
@@ -119,7 +119,7 @@ static JSBool setFillStyle(JSContext* cx, JSObject* obj, jsid id, JSBool strict,
 		CanvasGradient* g = getJsBindable<CanvasGradient>(cx, JSVAL_TO_OBJECT(*vp));
 		if(!g) return JS_FALSE;
 
-		self->_canvas.setFillGradient(g);
+		self->_canvas.setFillGradient(g->handle);
 	}
 	else {
 		Color c;
