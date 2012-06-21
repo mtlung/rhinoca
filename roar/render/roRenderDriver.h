@@ -199,7 +199,7 @@ typedef enum roRDriverStencilOp
 	roRDriverStencilOp_Decr,
 	roRDriverStencilOp_IncrWrap,
 	roRDriverStencilOp_DecrWrap,
-};
+} roRDriverStencilOp;
 
 typedef struct roRDriverStencilState
 {

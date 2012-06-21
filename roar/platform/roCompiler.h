@@ -35,7 +35,7 @@
 #if roDEBUG
 #	define roVerify(x) roAssert(x)
 #else
-#	define roVerify(x) (x)
+#	define roVerify(x) (void)(x)
 #endif
 
 #define roIgnoreRet(x) (x)
