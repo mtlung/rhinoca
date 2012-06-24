@@ -36,6 +36,7 @@ struct ContextImpl : public roRDriverContextImpl
 roRDriverContext* _newDriverContext_DX11(roRDriver* driver)
 {
 	ContextImpl* ret = _allocator.newObj<ContextImpl>().unref();
+	if(!ret) return NULL;
 
 	ret->driver = driver;
 	ret->width = ret->height = 0;
@@ -96,9 +97,10 @@ void _deleteDriverContext_DX11(roRDriverContext* self)
 	}
 
 	// Change back to windowed mode before releasing swap chain
-	impl->dxSwapChain->SetFullscreenState(false, NULL);
+	if(impl->dxSwapChain)
+		impl->dxSwapChain->SetFullscreenState(false, NULL);
 
-	_allocator.deleteObj(static_cast<ContextImpl*>(self));
+	_allocator.deleteObj(impl);
 }
 
 void _useDriverContext_DX11(roRDriverContext* self)
@@ -158,7 +160,7 @@ static bool _initRenderTarget(ContextImpl* impl, const DXGI_SWAP_CHAIN_DESC& swa
 	D3D11_DEPTH_STENCIL_VIEW_DESC depthViewDesc;
 	ZeroMemory(&depthViewDesc, sizeof(depthViewDesc));
 	depthViewDesc.Format = depthDesc.Format;
-	depthViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	depthViewDesc.ViewDimension = swapChainDesc.SampleDesc.Count == 1 ? D3D11_DSV_DIMENSION_TEXTURE2D : D3D11_DSV_DIMENSION_TEXTURE2DMS;
 	depthViewDesc.Texture2D.MipSlice = 0;
 
 	ID3D11DepthStencilView* depthStencilView = NULL;
@@ -273,7 +275,7 @@ void _driverSwapBuffers_DX11()
 		float lastUsedTime = _currentContext->inputLayoutCache[i].lastUsedTime;
 
 		if(lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
-			_currentContext->inputLayoutCache.remove(i);
+			_currentContext->inputLayoutCache.removeBySwap(i);
 		else
 			++i;
 	}
@@ -309,7 +311,7 @@ void _driverSwapBuffers_DX11()
 		RenderTarget& rt = _currentContext->renderTargetCache[i];
 
 		if(rt.lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
-			_currentContext->renderTargetCache.remove(i);
+			_currentContext->renderTargetCache.removeBySwap(i);
 		else
 			++i;
 	}
@@ -319,7 +321,7 @@ void _driverSwapBuffers_DX11()
 		float lastUsedTime = _currentContext->blendStateCache[i].lastUsedTime;
 
 		if(lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
-			_currentContext->blendStateCache.remove(i);
+			_currentContext->blendStateCache.removeBySwap(i);
 		else
 			++i;
 	}
@@ -329,7 +331,7 @@ void _driverSwapBuffers_DX11()
 		float lastUsedTime = _currentContext->rasterizerState[i].lastUsedTime;
 
 		if(lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
-			_currentContext->rasterizerState.remove(i);
+			_currentContext->rasterizerState.removeBySwap(i);
 		else
 			++i;
 	}
@@ -339,7 +341,7 @@ void _driverSwapBuffers_DX11()
 		float lastUsedTime = _currentContext->depthStencilStateCache[i].lastUsedTime;
 
 		if(lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
-			_currentContext->depthStencilStateCache.remove(i);
+			_currentContext->depthStencilStateCache.removeBySwap(i);
 		else
 			++i;
 	}
@@ -349,7 +351,7 @@ void _driverSwapBuffers_DX11()
 		float lastUsedTime = _currentContext->bufferCache[i].lastUsedTime;
 
 		if(lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
-			_currentContext->bufferCache.remove(i);
+			_currentContext->bufferCache.removeBySwap(i);
 		else
 			++i;
 	}

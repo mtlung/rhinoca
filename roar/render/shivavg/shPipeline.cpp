@@ -127,7 +127,7 @@ static roRDriverBlendState blendState_SrcOver = {
 };
 
 static roRDriverDepthStencilState stencilState_disabled = {
-	0, true, false,
+	0, true, true, false,
 	roRDriverDepthCompareFunc_Always,
 	1, 1,
 	{ roRDriverDepthCompareFunc_Equal, roRDriverStencilOp_Zero, roRDriverStencilOp_Zero, roRDriverStencilOp_Zero },
@@ -135,7 +135,7 @@ static roRDriverDepthStencilState stencilState_disabled = {
 };
 
 static roRDriverDepthStencilState stencilState_drawOdd = {
-	0, true, true,
+	0, true, true, true,
 	roRDriverDepthCompareFunc_Always,
 	1, 1,
 	{ roRDriverDepthCompareFunc_Equal, roRDriverStencilOp_Zero, roRDriverStencilOp_Zero, roRDriverStencilOp_Zero },
@@ -143,7 +143,7 @@ static roRDriverDepthStencilState stencilState_drawOdd = {
 };
 
 static roRDriverDepthStencilState stencilState_drawNonZero = {
-	0, true, true,
+	0, true, true, true,
 	roRDriverDepthCompareFunc_Always,
 	0, 0xFF,
 	{ roRDriverDepthCompareFunc_NotEqual, roRDriverStencilOp_Zero, roRDriverStencilOp_Zero, roRDriverStencilOp_Zero },
@@ -151,7 +151,7 @@ static roRDriverDepthStencilState stencilState_drawNonZero = {
 };
 
 static roRDriverDepthStencilState stencilState_tesselateTo_OddEven = {
-	0, false, true,
+	0, false, true, true,
 	roRDriverDepthCompareFunc_Always,
 	0, 0xFFFF,
 	{ roRDriverDepthCompareFunc_Always, roRDriverStencilOp_Invert, roRDriverStencilOp_Invert, roRDriverStencilOp_Invert },
@@ -159,7 +159,7 @@ static roRDriverDepthStencilState stencilState_tesselateTo_OddEven = {
 };
 
 static roRDriverDepthStencilState stencilState_tesselateTo_NonZero = {
-	0, false, true,
+	0, false, true, true,
 	roRDriverDepthCompareFunc_Always,
 	0, 0xFFFF,
 	{ roRDriverDepthCompareFunc_Always, roRDriverStencilOp_IncrWrap, roRDriverStencilOp_IncrWrap, roRDriverStencilOp_IncrWrap },
@@ -167,7 +167,7 @@ static roRDriverDepthStencilState stencilState_tesselateTo_NonZero = {
 };
 
 static roRDriverDepthStencilState stencilState_strokeTo = {
-	0, true, true,
+	0, true, true, true,
 	roRDriverDepthCompareFunc_Always,
 	1, 0xFFFF,
 	{ roRDriverDepthCompareFunc_NotEqual, roRDriverStencilOp_Keep, roRDriverStencilOp_Incr, roRDriverStencilOp_Incr },
@@ -175,7 +175,7 @@ static roRDriverDepthStencilState stencilState_strokeTo = {
 };
 
 static roRDriverDepthStencilState stencilState_quadTo = {
-	0, true, true,
+	0, true, true, true,
 	roRDriverDepthCompareFunc_Always,
 	1, 0xFFFF,
 	{ roRDriverDepthCompareFunc_Always, roRDriverStencilOp_Replace, roRDriverStencilOp_Replace, roRDriverStencilOp_Replace },

@@ -82,9 +82,9 @@ TEST_FIXTURE(TextureLoaderTest, load)
 
 	// Bind shader input layout
 	roRDriverShaderBufferInput input[] = {
-		{ vShader, vbuffer, "position", 0, 0, sizeof(float)*6, 0 },
-		{ vShader, vbuffer, "texCoord", 0, sizeof(float)*4, sizeof(float)*6, 0 },
-		{ NULL, ibuffer, NULL, 0, 0, 0, 0 },
+		{ vbuffer, "position", 0, 0, sizeof(float)*6, 0 },
+		{ vbuffer, "texCoord", 0, sizeof(float)*4, sizeof(float)*6, 0 },
+		{ ibuffer, NULL, 0, 0, 0, 0 },
 	};
 
 	while(keepRun()) {

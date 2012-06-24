@@ -146,10 +146,9 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 	{	// For use with stroke
 		// {posx, posy}, {posx, posy}, ...
 		const roRDriverShaderBufferInput input[] = {
-			{ c->vShader, c->vBuffer, "position", 0, 0, sizeof(float)*2, 0 },
-			{ c->vShader, c->vBuffer, "texCoord", 0, 0, sizeof(float)*2, 0 },
-			{ c->vShader, c->uBuffer, "constants", 0, 0, 0, 0 },
-			{ c->pShader, c->uBuffer, "constants", 0, 0, 0, 0 },
+			{ c->vBuffer, "position", 0, 0, sizeof(float)*2, 0 },
+			{ c->vBuffer, "texCoord", 0, 0, sizeof(float)*2, 0 },
+			{ c->uBuffer, "constants", 0, 0, 0, 0 },
 		};
 		roAssert(roCountof(input) == roCountof(c->strokeLayout));
 		for(roSize i=0; i<roCountof(input); ++i)
@@ -159,10 +158,9 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 	{	// For use with primitive without any texture
 		// {posx, posy, SHVector2, ...}, {posx, posy, SHVector2, ...}, ...
 		const roRDriverShaderBufferInput input[] = {
-			{ c->vShader, c->vBuffer, "position", 0, 0, sizeof(SHVertex), 0 },
-			{ c->vShader, c->vBuffer, "texCoord", 0, 0, sizeof(SHVertex), 0 },	// We don't care about uv, so just use the position as uv
-			{ c->vShader, c->uBuffer, "constants", 0, 0, 0, 0 },
-			{ c->pShader, c->uBuffer, "constants", 0, 0, 0, 0 },
+			{ c->vBuffer, "position", 0, 0, sizeof(SHVertex), 0 },
+			{ c->vBuffer, "texCoord", 0, 0, sizeof(SHVertex), 0 },	// We don't care about uv, so just use the position as uv
+			{ c->uBuffer, "constants", 0, 0, 0, 0 },
 		};
 		roAssert(roCountof(input) == roCountof(c->shVertexLayout));
 		for(roSize i=0; i<roCountof(input); ++i)
@@ -172,10 +170,9 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 	{	// For use with single quad of 1 texture coordinate channel
 		// {posx, posy}, {posx, posy}, ... {u, v}, {u, v}, ...
 		const roRDriverShaderBufferInput input[] = {
-			{ c->vShader, c->quadBuffer, "position", 0, 0, sizeof(float)*2, 0 },
-			{ c->vShader, c->quadUvBuffer, "texCoord", 0, 0, sizeof(float)*2, 0 },
-			{ c->vShader, c->uBuffer, "constants", 0, 0, 0, 0 },
-			{ c->pShader, c->uBuffer, "constants", 0, 0, 0, 0 },
+			{ c->quadBuffer, "position", 0, 0, sizeof(float)*2, 0 },
+			{ c->quadUvBuffer, "texCoord", 0, 0, sizeof(float)*2, 0 },
+			{ c->uBuffer, "constants", 0, 0, 0, 0 },
 		};
 		roAssert(roCountof(input) == roCountof(c->quadInputLayout));
 		for(roSize i=0; i<roCountof(input); ++i)
@@ -185,10 +182,9 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 	{	// For use with primitive of 1 texture coordinate channel
 		// {posx, posy, u, v}, {posx, posy, u, v}, ...
 		const roRDriverShaderBufferInput input[] = {
-			{ c->vShader, c->vBuffer, "position", 0, 0, sizeof(float)*2*2, 0 },
-			{ c->vShader, c->vBuffer, "texCoord", 0, sizeof(float)*2, sizeof(float)*2*2, 0 },
-			{ c->vShader, c->uBuffer, "constants", 0, 0, 0, 0 },
-			{ c->pShader, c->uBuffer, "constants", 0, 0, 0, 0 },
+			{ c->vBuffer, "position", 0, 0, sizeof(float)*2*2, 0 },
+			{ c->vBuffer, "texCoord", 0, sizeof(float)*2, sizeof(float)*2*2, 0 },
+			{ c->uBuffer, "constants", 0, 0, 0, 0 },
 		};
 		roAssert(roCountof(input) == roCountof(c->tex1VertexLayout));
 		for(roSize i=0; i<roCountof(input); ++i)

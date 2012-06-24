@@ -128,10 +128,10 @@ typedef struct
   roRDriverBuffer*      uBuffer;
   roRDriverShader*      vShader;
   roRDriverShader*      pShader;
-  roRDriverShaderBufferInput  strokeLayout[4];
-  roRDriverShaderBufferInput  shVertexLayout[4];
-  roRDriverShaderBufferInput  quadInputLayout[4];
-  roRDriverShaderBufferInput  tex1VertexLayout[4];
+  roRDriverShaderBufferInput  strokeLayout[3];
+  roRDriverShaderBufferInput  shVertexLayout[3];
+  roRDriverShaderBufferInput  quadInputLayout[3];
+  roRDriverShaderBufferInput  tex1VertexLayout[3];
 
   roRDriverTexture*		whiteTexture;
 } VGContext;

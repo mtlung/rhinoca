@@ -353,8 +353,8 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 	// Generate the hash value if not yet
 	if(state->hash == 0) {
 		state->hash = (void*)_hash(
-			&state->enableDepth,
-			sizeof(roRDriverDepthStencilState) - offsetof(roRDriverDepthStencilState, roRDriverDepthStencilState::enableDepth)
+			&state->enableDepthTest,
+			sizeof(roRDriverDepthStencilState) - offsetof(roRDriverDepthStencilState, roRDriverDepthStencilState::enableDepthTest)
 		);
 	}
 
@@ -366,7 +366,7 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 
 	ctx->currentDepthStencilStateHash = state->hash;
 
-	if(!state->enableDepth) {
+	if(!state->enableDepthTest) {
 		glDisable(GL_DEPTH_TEST);
 	}
 	else {
@@ -376,6 +376,8 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 			glDepthFunc(_compareFunc[state->depthFunc]);
 		}
 	}
+
+	glDepthMask(state->enableDepthWrite);
 
 	if(!state->enableStencil) {
 		glDisable(GL_STENCIL_TEST);
@@ -1637,19 +1639,18 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 	{
 		roRDriverShaderBufferInput* i = &inputs[attri];
 		roRDriverBufferImpl* buffer = static_cast<roRDriverBufferImpl*>(i->buffer);
-		roRDriverShaderImpl* shader = static_cast<roRDriverShaderImpl*>(i->shader);
-		if(!i || !i->buffer || !shader) continue;
+		if(!i || !i->buffer) continue;
 		if(buffer->type != roRDriverBufferType_Vertex) continue;	// VAO only consider vertex buffer
 
 		struct BlockToHash {
 			void* systemBuf;
-			GLuint shader, vbo;
+			GLuint vbo;
 			unsigned stride, offset;
 		};
 
 		BlockToHash block = {
 			buffer->systemBuf,
-			shader->glh, buffer->glh,
+			buffer->glh,
 			i->stride, i->offset
 		};
 

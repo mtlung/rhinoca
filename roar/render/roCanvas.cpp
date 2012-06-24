@@ -128,11 +128,10 @@ void Canvas::init()
 
 	// Bind shader buffer input
 	const roRDriverShaderBufferInput input[] = {
-		{ _vShader, _vBuffer, "position", 0, 0, sizeof(float)*6, 0 },
-		{ _vShader, _vBuffer, "texCoord", 0, sizeof(float)*4, sizeof(float)*6, 0 },
-		{ _vShader, _uBuffer, "constants", 0, 0, 0, 0 },
-		{ _pShader, _uBuffer, "constants", 0, 0, 0, 0 },
-		{ NULL,		_iBuffer, "", 0, 0, 0, 0 },
+		{ _vBuffer, "position", 0, 0, sizeof(float)*6, 0 },
+		{ _vBuffer, "texCoord", 0, sizeof(float)*4, sizeof(float)*6, 0 },
+		{ _uBuffer, "constants", 0, 0, 0, 0 },
+		{ _iBuffer, "", 0, 0, 0, 0 },
 	};
 	roAssert(roCountof(input) == _bufferInputs.size());
 	for(roSize i=0; i<roCountof(input); ++i)

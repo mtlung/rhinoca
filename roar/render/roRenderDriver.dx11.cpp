@@ -510,8 +510,8 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 	// Generate the hash value if not yet
 	if(state->hash == 0) {
 		state->hash = (void*)_hash(
-			&state->enableDepth,
-			sizeof(roRDriverDepthStencilState) - roOffsetof(roRDriverDepthStencilState, roRDriverDepthStencilState::enableDepth)
+			&state->enableDepthTest,
+			sizeof(roRDriverDepthStencilState) - roOffsetof(roRDriverDepthStencilState, roRDriverDepthStencilState::enableDepthTest)
 		);
 	}
 
@@ -537,8 +537,8 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 		ZeroMemory(&desc, sizeof(desc));
 
 		// Set up the description of the stencil state.
-		desc.DepthEnable = state->enableDepth;
-		desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+		desc.DepthEnable = state->enableDepthTest;
+		desc.DepthWriteMask = state->enableDepthWrite ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
 		desc.DepthFunc = _comparisonFuncs[state->depthFunc];
 
 		desc.StencilEnable = state->enableStencil;
@@ -894,7 +894,7 @@ static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, const voi
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!ctx || !impl) return false;
 	if(impl->isMapped) return false;
-	if(offsetInBytes + sizeInBytes > self->sizeInBytes) return false;
+	if(offsetInBytes + sizeInBytes > impl->capacity) return false;
 	if(impl->usage == roRDriverDataUsage_Static) return false;
 
 	if(!data || sizeInBytes == 0) return true;
@@ -1398,7 +1398,7 @@ static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const c
 		return false;
 	}
 
-	ID3D10Blob* shaderBlob = NULL, * errorMessage = NULL;
+	ID3D10Blob* shaderBlob = NULL, *errorMessage = NULL;
 	const char* shaderProfile = _getShaderTarget(ctx->dxDevice, type);
 
 	HRESULT hr = D3DX11CompileFromMemory(
@@ -1545,25 +1545,29 @@ bool _setUniformBuffer(unsigned nameHash, roRDriverBuffer* buffer, roRDriverShad
 		ctx->dxDeviceContext->CopySubresourceRegion(tmpBuf->dxBuffer, 0, 0, 0, 0, bufferImpl->dxBuffer, 0, &srcBox);
 	}
 
-	roRDriverShaderImpl* shader = (roRDriverShaderImpl*)input->shader;
-
 	// Search for the constant buffer with the matching name
-	if(shader) for(unsigned j=0; j<shader->shaderResourceBindings.size(); ++j) {
-		ShaderResourceBinding& b = shader->shaderResourceBindings[j];
-		if(b.nameHash == nameHash) {
-			if(shader->type == roRDriverShaderType_Vertex)
-				ctx->dxDeviceContext->VSSetConstantBuffers(b.bindPoint, 1, &tmpBuf->dxBuffer.ptr);
-			else if(shader->type == roRDriverShaderType_Pixel)
-				ctx->dxDeviceContext->PSSetConstantBuffers(b.bindPoint, 1, &tmpBuf->dxBuffer.ptr);
-			else if(shader->type == roRDriverShaderType_Geometry)
-				ctx->dxDeviceContext->GSSetConstantBuffers(b.bindPoint, 1, &tmpBuf->dxBuffer.ptr);
-			break;
-		}
-	}
+	for(unsigned i=0; i<ctx->currentShaders.size(); ++i) {
+		roRDriverShaderImpl* shader = ctx->currentShaders[i];
+		if(!shader)
+			continue;
 
-	if(input->offset > 0) {
-		_deleteBuffer(ctx->constBufferInUse[shader->type]);
-		ctx->constBufferInUse[shader->type] = tmpBuf;
+		for(unsigned j=0; j<shader->shaderResourceBindings.size(); ++j) {
+			ShaderResourceBinding& b = shader->shaderResourceBindings[j];
+			if(b.nameHash == nameHash) {
+				if(shader->type == roRDriverShaderType_Vertex)
+					ctx->dxDeviceContext->VSSetConstantBuffers(b.bindPoint, 1, &tmpBuf->dxBuffer.ptr);
+				else if(shader->type == roRDriverShaderType_Pixel)
+					ctx->dxDeviceContext->PSSetConstantBuffers(b.bindPoint, 1, &tmpBuf->dxBuffer.ptr);
+				else if(shader->type == roRDriverShaderType_Geometry)
+					ctx->dxDeviceContext->GSSetConstantBuffers(b.bindPoint, 1, &tmpBuf->dxBuffer.ptr);
+				break;
+			}
+		}
+
+		if(input->offset > 0) {
+			_deleteBuffer(ctx->constBufferInUse[shader->type]);
+			ctx->constBufferInUse[shader->type] = tmpBuf;
+		}
 	}
 
 	return true;
@@ -1641,10 +1645,13 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 
 			if(inputLayoutCacheFound) continue;
 
-			roRDriverShaderImpl* shader = static_cast<roRDriverShaderImpl*>(input->shader);
-			if(!shader) continue;
+			roRDriverShaderImpl* shader = ctx->currentShaders[buffer->type];
+			for(unsigned j=0; j<ctx->currentShaders.size(); ++j) {
+				if(ctx->currentShaders[j] && ctx->currentShaders[j]->type == roRDriverShaderType_Vertex)
+					shader = ctx->currentShaders[j];
+			}
 
-			if(!ctx->currentShaders[buffer->type]) {
+			if(!shader) {
 				roLog("error", "Call bindShaders() before calling bindShaderBuffers()\n"); 
 				return false;
 			}
@@ -1666,10 +1673,19 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 			if(!inputParam)
 				continue;
 
+			static const unsigned elementSize = 4;	// Vertex data element are always 32 bits
+			UINT stride = input->stride == 0 ? inputParam->elementCount * elementSize : input->stride;
+
+			unsigned elementCount = inputParam->elementCount;
+			// In case the user supply less data then what requested by the shader
+			// For example, in shader we want float4 as vertex position, but we only supply Vec3
+			if(stride < elementCount * elementSize)
+				elementCount = stride / elementSize;
+
 			D3D11_INPUT_ELEMENT_DESC inputDesc;
 			inputDesc.SemanticName = input->name;
 			inputDesc.SemanticIndex = 0;
-			inputDesc.Format = _inputFormatMapping[inputParam->type * 5 + inputParam->elementCount];
+			inputDesc.Format = _inputFormatMapping[inputParam->type * 5 + elementCount];
 			inputDesc.InputSlot = slotCounter++;
 			inputDesc.AlignedByteOffset = input->offset;
 			inputDesc.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
@@ -1679,8 +1695,6 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 			inputLayout->shader = shader->dxShaderBlob;
 
 			// Info for IASetVertexBuffers
-			UINT stride = input->stride == 0 ? inputParam->elementCount * sizeof(float) : input->stride;
-
 			inputLayout->strides.pushBack(stride);
 			inputLayout->offsets.pushBack(0);
 		}
@@ -1725,8 +1739,12 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 
 	ctx->dxDeviceContext->IASetInputLayout(inputLayout->layout);
 
+	// If more inputs are specified than the shader needed, other valid inputs will be ignored by DirectX
 	roAssert(vertexBuffers.size() == inputLayout->strides.size());
 	roAssert(vertexBuffers.size() == inputLayout->offsets.size());
+
+	if(vertexBuffers.size() < inputLayout->strides.size())
+		return false;
 
 	if(vertexBuffers.isEmpty())
 		return false;

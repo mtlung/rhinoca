@@ -68,7 +68,9 @@ void rgDriverApplyDefaultState(roRDriverContext* self)
 	{	// Give the context a default depth stencil state
 		roRDriverDepthStencilState state = {
 			0,
-			false, true,
+			false,	// Depth test
+			true,	// Depth write
+			true,	// Stencil
 			roRDriverDepthCompareFunc_Less,
 			0, (unsigned short)-1,
 			{	roRDriverDepthCompareFunc_Always,

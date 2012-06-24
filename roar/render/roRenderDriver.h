@@ -110,7 +110,6 @@ typedef struct roRDriverShaderTextureInput
 
 typedef struct roRDriverShaderBufferInput
 {
-	roRDriverShader* shader;
 	roRDriverBuffer* buffer;
 	const char* name;
 	unsigned nameHash;		/// after name is changed, reset it to zero will cause it to be re-calculated
@@ -211,7 +210,8 @@ typedef struct roRDriverStencilState
 typedef struct roRDriverDepthStencilState
 {
 	void* hash;		/// Set it to 0 whenever the state is changed
-	unsigned short enableDepth;
+	unsigned char enableDepthTest;
+	unsigned char enableDepthWrite;
 	unsigned short enableStencil;
 	roRDriverCompareFunc depthFunc;
 
@@ -251,7 +251,7 @@ typedef enum roRDriverPrimitiveType
 	roRDriverPrimitiveType_LineStrip,
 	roRDriverPrimitiveType_TriangleList,
 	roRDriverPrimitiveType_TriangleStrip,
-	roRDriverPrimitiveType_TriangleFan	// NOTE: Not supported on DX11
+	roRDriverPrimitiveType_TriangleFan	// NOTE: Emulated on DX11, may be slow
 } roRDriverPrimitiveType;
 
 // Default states:
