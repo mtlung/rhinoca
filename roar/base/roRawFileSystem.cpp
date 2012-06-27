@@ -73,19 +73,18 @@ CheckProgress:
 
 		impl->overlap.Offset += transferred;
 		impl->readInProgress = false;
-		impl->bufOffset = impl->readable;
 		impl->readable += transferred;
 		return impl->st = Status::ok, false;
 	}
 
 	DWORD bytesToRead = clamp_cast<unsigned int>(size);
-	roSize bufSize = roMaxOf2(impl->readable + (roSize)bytesToRead, (roSize)1024);
+	roSize bufSize = roMaxOf2(impl->bufOffset + impl->readable + (roSize)bytesToRead, (roSize)1024);
 	if(bufSize > impl->bufSize) {
 		impl->buf = _allocator.realloc(impl->buf, impl->bufSize, bufSize);
 		impl->bufSize = bufSize;
 	}
 
-	if(::ReadFile(impl->file, impl->buf + impl->readable, bytesToRead, NULL, &impl->overlap)) {
+	if(::ReadFile(impl->file, impl->buf + impl->bufOffset + impl->readable, bytesToRead, NULL, &impl->overlap)) {
 		impl->readInProgress = true;
 		goto CheckProgress;
 	}
@@ -125,6 +124,9 @@ Status rawFileSystemRead(void* file, void* buffer, roUint64 size, roUint64& byte
 
 	impl->bufOffset += bytesToMove;
 	impl->readable -= bytesToMove;
+
+	if(impl->readable == 0)
+		impl->bufOffset = 0;
 
 	bytesRead = bytesToMove;
 	return impl->st;
