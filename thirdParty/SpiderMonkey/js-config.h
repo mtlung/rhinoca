@@ -45,8 +45,8 @@
 
 /* Some mozilla code uses JS-friend APIs that depend on JS_TRACER and
    JS_METHODJIT being correct. */
-#define JS_TRACER 1
-#define JS_METHODJIT 1
+//#define JS_TRACER 1
+//#define JS_METHODJIT 1
 
 #ifdef _MSC_VER
 #	define JS_HAVE___INTN 1

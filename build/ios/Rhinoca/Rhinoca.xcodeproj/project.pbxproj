@@ -105,6 +105,20 @@
 			remoteGlobalIDString = D2AAC07D0554694100DB518D;
 			remoteInfo = SpiderMonkey;
 		};
+		9CEC6CF1159B75C80094850B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9CEC6CED159B75C80094850B /* Roar.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 9CE75C4015454CF70023D472;
+			remoteInfo = Roar;
+		};
+		9CEC6CF3159B75DC0094850B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9CEC6CED159B75C80094850B /* Roar.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 9CE75C3F15454CF70023D472;
+			remoteInfo = Roar;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -186,6 +200,7 @@
 		9CC7E1EC13F839D900435C60 /* cssstylesheet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cssstylesheet.h; path = ../../../src/dom/cssstylesheet.h; sourceTree = "<group>"; };
 		9CCBEE75137C192100C0BF4F /* rhinoca.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = rhinoca.mm; path = ../../../src/rhinoca.mm; sourceTree = "<group>"; };
 		9CD888701382E07A003751E2 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
+		9CEC6CED159B75C80094850B /* Roar.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Roar.xcodeproj; path = /Users/ricky/projects/rhinoca/build/ios/Launcher/../Roar/Roar/Roar.xcodeproj; sourceTree = "<absolute>"; };
 		9CED2E91138C0B5400ACEF92 /* nodelist.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = nodelist.cpp; path = ../../../src/dom/nodelist.cpp; sourceTree = "<group>"; };
 		9CED2E92138C0B5400ACEF92 /* nodelist.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = nodelist.h; path = ../../../src/dom/nodelist.h; sourceTree = "<group>"; };
 		AA747D9E0F9514B9006C5449 /* Rhinoca_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Rhinoca_Prefix.pch; sourceTree = SOURCE_ROOT; };
@@ -217,8 +232,9 @@
 		0867D691FE84028FC02AAC07 /* Rhinoca */ = {
 			isa = PBXGroup;
 			children = (
-				9CD888701382E07A003751E2 /* OpenAL.framework */,
+				9CEC6CED159B75C80094850B /* Roar.xcodeproj */,
 				182F564C130397F9003805A7 /* SpiderMonkey.xcodeproj */,
+				9CD888701382E07A003751E2 /* OpenAL.framework */,
 				08FB77AEFE84172EC02AAC07 /* Classes */,
 				32C88DFF0371C24200C91783 /* Other Sources */,
 				0867D69AFE84028FC02AAC07 /* Frameworks */,
@@ -345,6 +361,14 @@
 			name = "Other Sources";
 			sourceTree = "<group>";
 		};
+		9CEC6CEE159B75C80094850B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9CEC6CF2159B75C80094850B /* libRoar.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		9CF4B718137D69190025CF8E /* audio */ = {
 			isa = PBXGroup;
 			children = (
@@ -418,6 +442,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				9CEC6CF4159B75DC0094850B /* PBXTargetDependency */,
 				182F56531303980A003805A7 /* PBXTargetDependency */,
 			);
 			name = Rhinoca;
@@ -448,6 +473,10 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
+					ProductGroup = 9CEC6CEE159B75C80094850B /* Products */;
+					ProjectRef = 9CEC6CED159B75C80094850B /* Roar.xcodeproj */;
+				},
+				{
 					ProductGroup = 182F564D130397F9003805A7 /* Products */;
 					ProjectRef = 182F564C130397F9003805A7 /* SpiderMonkey.xcodeproj */;
 				},
@@ -465,6 +494,13 @@
 			fileType = archive.ar;
 			path = libSpiderMonkey.a;
 			remoteRef = 182F5650130397F9003805A7 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9CEC6CF2159B75C80094850B /* libRoar.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libRoar.a;
+			remoteRef = 9CEC6CF1159B75C80094850B /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -521,6 +557,11 @@
 			isa = PBXTargetDependency;
 			name = SpiderMonkey;
 			targetProxy = 182F56521303980A003805A7 /* PBXContainerItemProxy */;
+		};
+		9CEC6CF4159B75DC0094850B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = Roar;
+			targetProxy = 9CEC6CF3159B75DC0094850B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 

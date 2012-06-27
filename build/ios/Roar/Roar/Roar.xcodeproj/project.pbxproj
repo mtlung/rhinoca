@@ -1,0 +1,680 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		9C18547F1593CA5E00081A16 /* pch.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854501593CA5E00081A16 /* pch.h */; };
+		9C1854831593CA5E00081A16 /* roCanvas.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854551593CA5E00081A16 /* roCanvas.cpp */; };
+		9C1854841593CA5E00081A16 /* roCanvas.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854561593CA5E00081A16 /* roCanvas.h */; };
+		9C1854851593CA5E00081A16 /* roFont.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854571593CA5E00081A16 /* roFont.cpp */; };
+		9C1854861593CA5E00081A16 /* roFont.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854581593CA5E00081A16 /* roFont.h */; };
+		9C18548A1593CA5E00081A16 /* roRenderDriver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C18545C1593CA5E00081A16 /* roRenderDriver.cpp */; };
+		9C18548D1593CA5E00081A16 /* roRenderDriver.gl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854601593CA5E00081A16 /* roRenderDriver.gl.cpp */; };
+		9C18548F1593CA5E00081A16 /* roRenderDriver.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854631593CA5E00081A16 /* roRenderDriver.h */; };
+		9C1854901593CA5E00081A16 /* roSprite.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854641593CA5E00081A16 /* roSprite.cpp */; };
+		9C1854911593CA5E00081A16 /* roSprite.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854651593CA5E00081A16 /* roSprite.h */; };
+		9C1854921593CA5E00081A16 /* roTexture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854661593CA5E00081A16 /* roTexture.cpp */; };
+		9C1854931593CA5E00081A16 /* roTexture.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854671593CA5E00081A16 /* roTexture.h */; };
+		9C1854941593CA5E00081A16 /* openvg.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854691593CA5E00081A16 /* openvg.h */; };
+		9C1854951593CA5E00081A16 /* shArrayBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C18546A1593CA5E00081A16 /* shArrayBase.h */; };
+		9C1854961593CA5E00081A16 /* shArrays.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C18546B1593CA5E00081A16 /* shArrays.cpp */; };
+		9C1854971593CA5E00081A16 /* shArrays.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C18546C1593CA5E00081A16 /* shArrays.h */; };
+		9C1854981593CA5E00081A16 /* shContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C18546D1593CA5E00081A16 /* shContext.cpp */; };
+		9C1854991593CA5E00081A16 /* shContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C18546E1593CA5E00081A16 /* shContext.h */; };
+		9C18549A1593CA5E00081A16 /* shDefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C18546F1593CA5E00081A16 /* shDefs.h */; };
+		9C18549B1593CA5E00081A16 /* shGeometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854701593CA5E00081A16 /* shGeometry.cpp */; };
+		9C18549C1593CA5E00081A16 /* shGeometry.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854711593CA5E00081A16 /* shGeometry.h */; };
+		9C18549D1593CA5E00081A16 /* shImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854721593CA5E00081A16 /* shImage.cpp */; };
+		9C18549E1593CA5E00081A16 /* shImage.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854731593CA5E00081A16 /* shImage.h */; };
+		9C18549F1593CA5E00081A16 /* shPaint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854741593CA5E00081A16 /* shPaint.cpp */; };
+		9C1854A01593CA5E00081A16 /* shPaint.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854751593CA5E00081A16 /* shPaint.h */; };
+		9C1854A11593CA5E00081A16 /* shParams.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854761593CA5E00081A16 /* shParams.cpp */; };
+		9C1854A21593CA5E00081A16 /* shPath.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854771593CA5E00081A16 /* shPath.cpp */; };
+		9C1854A31593CA5E00081A16 /* shPath.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854781593CA5E00081A16 /* shPath.h */; };
+		9C1854A41593CA5E00081A16 /* shPipeline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854791593CA5E00081A16 /* shPipeline.cpp */; };
+		9C1854A51593CA5E00081A16 /* shVectors.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C18547A1593CA5E00081A16 /* shVectors.cpp */; };
+		9C1854A61593CA5E00081A16 /* shVectors.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C18547B1593CA5E00081A16 /* shVectors.h */; };
+		9C1854A71593CA5E00081A16 /* shVgu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C18547C1593CA5E00081A16 /* shVgu.cpp */; };
+		9C1854A81593CA5E00081A16 /* vgu.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C18547D1593CA5E00081A16 /* vgu.h */; };
+		9C1854B51593CB0A00081A16 /* pch.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854AA1593CB0A00081A16 /* pch.h */; };
+		9C1854B61593CB0A00081A16 /* roCompiler.gcc.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854AB1593CB0A00081A16 /* roCompiler.gcc.h */; };
+		9C1854B71593CB0A00081A16 /* roCompiler.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854AC1593CB0A00081A16 /* roCompiler.h */; };
+		9C1854BA1593CB0A00081A16 /* roCpu.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854AF1593CB0A00081A16 /* roCpu.h */; };
+		9C1854BB1593CB0A00081A16 /* roOS.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854B01593CB0A00081A16 /* roOS.h */; };
+		9C1854BC1593CB0A00081A16 /* roOS.iOS.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854B11593CB0A00081A16 /* roOS.iOS.h */; };
+		9C1854BD1593CB0A00081A16 /* roOS.unix.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854B21593CB0A00081A16 /* roOS.unix.h */; };
+		9C1854BF1593CB0A00081A16 /* roPlatformHeaders.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854B41593CB0A00081A16 /* roPlatformHeaders.h */; };
+		9C1854F81593CB2900081A16 /* pch.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854C11593CB2900081A16 /* pch.h */; };
+		9C1854F91593CB2900081A16 /* roAlgorithm.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854C21593CB2900081A16 /* roAlgorithm.h */; };
+		9C1854FA1593CB2900081A16 /* roArray.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854C31593CB2900081A16 /* roArray.h */; };
+		9C1854FB1593CB2900081A16 /* roAtomic.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854C51593CB2900081A16 /* roAtomic.h */; };
+		9C1854FC1593CB2900081A16 /* roByteOrder.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854C61593CB2900081A16 /* roByteOrder.h */; };
+		9C1854FD1593CB2900081A16 /* roBytePtr.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854C71593CB2900081A16 /* roBytePtr.h */; };
+		9C1854FE1593CB2900081A16 /* roCachedVal.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854C81593CB2900081A16 /* roCachedVal.h */; };
+		9C1854FF1593CB2900081A16 /* roFileSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854C91593CB2900081A16 /* roFileSystem.cpp */; };
+		9C1855001593CB2900081A16 /* roFileSystem.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854CA1593CB2900081A16 /* roFileSystem.h */; };
+		9C1855011593CB2900081A16 /* roHttpFileSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854CB1593CB2900081A16 /* roHttpFileSystem.cpp */; };
+		9C1855021593CB2900081A16 /* roHttpFileSystem.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854CC1593CB2900081A16 /* roHttpFileSystem.h */; };
+		9C1855031593CB2900081A16 /* roLinkList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854CD1593CB2900081A16 /* roLinkList.cpp */; };
+		9C1855041593CB2900081A16 /* roLinkList.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854CE1593CB2900081A16 /* roLinkList.h */; };
+		9C1855051593CB2900081A16 /* roLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854CF1593CB2900081A16 /* roLog.cpp */; };
+		9C1855061593CB2900081A16 /* roLog.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854D01593CB2900081A16 /* roLog.h */; };
+		9C1855071593CB2900081A16 /* roMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854D11593CB2900081A16 /* roMap.cpp */; };
+		9C1855081593CB2900081A16 /* roMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854D21593CB2900081A16 /* roMap.h */; };
+		9C1855091593CB2900081A16 /* roMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854D31593CB2900081A16 /* roMemory.cpp */; };
+		9C18550A1593CB2900081A16 /* roMemory.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854D41593CB2900081A16 /* roMemory.h */; };
+		9C18550D1593CB2900081A16 /* roMutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854D71593CB2900081A16 /* roMutex.cpp */; };
+		9C18550E1593CB2900081A16 /* roMutex.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854D81593CB2900081A16 /* roMutex.h */; };
+		9C18550F1593CB2900081A16 /* roNonCopyable.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854D91593CB2900081A16 /* roNonCopyable.h */; };
+		9C1855101593CB2900081A16 /* roObjectTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854DA1593CB2900081A16 /* roObjectTable.h */; };
+		9C1855111593CB2900081A16 /* roParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854DB1593CB2900081A16 /* roParser.cpp */; };
+		9C1855121593CB2900081A16 /* roParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854DC1593CB2900081A16 /* roParser.h */; };
+		9C1855131593CB2900081A16 /* roRawFileSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854DD1593CB2900081A16 /* roRawFileSystem.cpp */; };
+		9C1855141593CB2900081A16 /* roRawFileSystem.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854DE1593CB2900081A16 /* roRawFileSystem.h */; };
+		9C1855151593CB2900081A16 /* roResource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854DF1593CB2900081A16 /* roResource.cpp */; };
+		9C1855161593CB2900081A16 /* roResource.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854E01593CB2900081A16 /* roResource.h */; };
+		9C1855171593CB2900081A16 /* roSerializer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854E11593CB2900081A16 /* roSerializer.cpp */; };
+		9C1855181593CB2900081A16 /* roSerializer.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854E21593CB2900081A16 /* roSerializer.h */; };
+		9C1855191593CB2900081A16 /* roSharedPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854E31593CB2900081A16 /* roSharedPtr.h */; };
+		9C18551A1593CB2900081A16 /* roSocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854E41593CB2900081A16 /* roSocket.cpp */; };
+		9C18551B1593CB2900081A16 /* roSocket.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854E51593CB2900081A16 /* roSocket.h */; };
+		9C18551C1593CB2900081A16 /* roStatus.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854E61593CB2900081A16 /* roStatus.h */; };
+		9C18551D1593CB2900081A16 /* roStatusEnum.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854E71593CB2900081A16 /* roStatusEnum.h */; };
+		9C18551E1593CB2900081A16 /* roStopWatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854E81593CB2900081A16 /* roStopWatch.cpp */; };
+		9C18551F1593CB2900081A16 /* roStopWatch.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854E91593CB2900081A16 /* roStopWatch.h */; };
+		9C1855201593CB2900081A16 /* roString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854EA1593CB2900081A16 /* roString.cpp */; };
+		9C1855211593CB2900081A16 /* roString.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854EB1593CB2900081A16 /* roString.h */; };
+		9C1855221593CB2900081A16 /* roStringHash.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854EC1593CB2900081A16 /* roStringHash.h */; };
+		9C1855231593CB2900081A16 /* roStringUtility.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854ED1593CB2900081A16 /* roStringUtility.cpp */; };
+		9C1855241593CB2900081A16 /* roStringUtility.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854EE1593CB2900081A16 /* roStringUtility.h */; };
+		9C1855251593CB2900081A16 /* roTaskPool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854F01593CB2900081A16 /* roTaskPool.cpp */; };
+		9C1855261593CB2900081A16 /* roTaskPool.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854F11593CB2900081A16 /* roTaskPool.h */; };
+		9C1855271593CB2900081A16 /* roTextResource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854F21593CB2900081A16 /* roTextResource.cpp */; };
+		9C1855281593CB2900081A16 /* roTextResource.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854F31593CB2900081A16 /* roTextResource.h */; };
+		9C1855291593CB2900081A16 /* roTypeCast.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854F41593CB2900081A16 /* roTypeCast.h */; };
+		9C18552A1593CB2900081A16 /* roTypeOf.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854F51593CB2900081A16 /* roTypeOf.h */; };
+		9C18552B1593CB2900081A16 /* roUtility.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854F61593CB2900081A16 /* roUtility.cpp */; };
+		9C18552C1593CB2900081A16 /* roUtility.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854F71593CB2900081A16 /* roUtility.h */; };
+		9C1855371593CB4400081A16 /* pch.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C18552E1593CB4400081A16 /* pch.h */; };
+		9C1855381593CB4400081A16 /* roMath.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C18552F1593CB4400081A16 /* roMath.cpp */; };
+		9C1855391593CB4400081A16 /* roMath.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1855301593CB4400081A16 /* roMath.h */; };
+		9C18553A1593CB4400081A16 /* roMatrix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1855311593CB4400081A16 /* roMatrix.cpp */; };
+		9C18553B1593CB4400081A16 /* roMatrix.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1855321593CB4400081A16 /* roMatrix.h */; };
+		9C18553C1593CB4400081A16 /* roVector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1855341593CB4400081A16 /* roVector.cpp */; };
+		9C18553D1593CB4400081A16 /* roVector.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1855351593CB4400081A16 /* roVector.h */; };
+		9CE75C4415454CF70023D472 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE75C4315454CF70023D472 /* Foundation.framework */; };
+		9CE75C4A15454CF70023D472 /* Roar.m in Sources */ = {isa = PBXBuildFile; fileRef = 9CE75C4915454CF70023D472 /* Roar.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		9C1854501593CA5E00081A16 /* pch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pch.h; sourceTree = "<group>"; };
+		9C1854551593CA5E00081A16 /* roCanvas.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roCanvas.cpp; sourceTree = "<group>"; };
+		9C1854561593CA5E00081A16 /* roCanvas.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roCanvas.h; sourceTree = "<group>"; };
+		9C1854571593CA5E00081A16 /* roFont.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roFont.cpp; sourceTree = "<group>"; };
+		9C1854581593CA5E00081A16 /* roFont.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roFont.h; sourceTree = "<group>"; };
+		9C18545C1593CA5E00081A16 /* roRenderDriver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roRenderDriver.cpp; sourceTree = "<group>"; };
+		9C1854601593CA5E00081A16 /* roRenderDriver.gl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roRenderDriver.gl.cpp; sourceTree = "<group>"; };
+		9C1854611593CA5E00081A16 /* roRenderDriver.gl.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = roRenderDriver.gl.inl; sourceTree = "<group>"; };
+		9C1854631593CA5E00081A16 /* roRenderDriver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roRenderDriver.h; sourceTree = "<group>"; };
+		9C1854641593CA5E00081A16 /* roSprite.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roSprite.cpp; sourceTree = "<group>"; };
+		9C1854651593CA5E00081A16 /* roSprite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roSprite.h; sourceTree = "<group>"; };
+		9C1854661593CA5E00081A16 /* roTexture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roTexture.cpp; sourceTree = "<group>"; };
+		9C1854671593CA5E00081A16 /* roTexture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roTexture.h; sourceTree = "<group>"; };
+		9C1854691593CA5E00081A16 /* openvg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openvg.h; sourceTree = "<group>"; };
+		9C18546A1593CA5E00081A16 /* shArrayBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shArrayBase.h; sourceTree = "<group>"; };
+		9C18546B1593CA5E00081A16 /* shArrays.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = shArrays.cpp; sourceTree = "<group>"; };
+		9C18546C1593CA5E00081A16 /* shArrays.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shArrays.h; sourceTree = "<group>"; };
+		9C18546D1593CA5E00081A16 /* shContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = shContext.cpp; sourceTree = "<group>"; };
+		9C18546E1593CA5E00081A16 /* shContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shContext.h; sourceTree = "<group>"; };
+		9C18546F1593CA5E00081A16 /* shDefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shDefs.h; sourceTree = "<group>"; };
+		9C1854701593CA5E00081A16 /* shGeometry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = shGeometry.cpp; sourceTree = "<group>"; };
+		9C1854711593CA5E00081A16 /* shGeometry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shGeometry.h; sourceTree = "<group>"; };
+		9C1854721593CA5E00081A16 /* shImage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = shImage.cpp; sourceTree = "<group>"; };
+		9C1854731593CA5E00081A16 /* shImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shImage.h; sourceTree = "<group>"; };
+		9C1854741593CA5E00081A16 /* shPaint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = shPaint.cpp; sourceTree = "<group>"; };
+		9C1854751593CA5E00081A16 /* shPaint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shPaint.h; sourceTree = "<group>"; };
+		9C1854761593CA5E00081A16 /* shParams.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = shParams.cpp; sourceTree = "<group>"; };
+		9C1854771593CA5E00081A16 /* shPath.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = shPath.cpp; sourceTree = "<group>"; };
+		9C1854781593CA5E00081A16 /* shPath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shPath.h; sourceTree = "<group>"; };
+		9C1854791593CA5E00081A16 /* shPipeline.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = shPipeline.cpp; sourceTree = "<group>"; };
+		9C18547A1593CA5E00081A16 /* shVectors.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = shVectors.cpp; sourceTree = "<group>"; };
+		9C18547B1593CA5E00081A16 /* shVectors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shVectors.h; sourceTree = "<group>"; };
+		9C18547C1593CA5E00081A16 /* shVgu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = shVgu.cpp; sourceTree = "<group>"; };
+		9C18547D1593CA5E00081A16 /* vgu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = vgu.h; sourceTree = "<group>"; };
+		9C1854AA1593CB0A00081A16 /* pch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pch.h; sourceTree = "<group>"; };
+		9C1854AB1593CB0A00081A16 /* roCompiler.gcc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roCompiler.gcc.h; sourceTree = "<group>"; };
+		9C1854AC1593CB0A00081A16 /* roCompiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roCompiler.h; sourceTree = "<group>"; };
+		9C1854AF1593CB0A00081A16 /* roCpu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roCpu.h; sourceTree = "<group>"; };
+		9C1854B01593CB0A00081A16 /* roOS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roOS.h; sourceTree = "<group>"; };
+		9C1854B11593CB0A00081A16 /* roOS.iOS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roOS.iOS.h; sourceTree = "<group>"; };
+		9C1854B21593CB0A00081A16 /* roOS.unix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roOS.unix.h; sourceTree = "<group>"; };
+		9C1854B41593CB0A00081A16 /* roPlatformHeaders.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roPlatformHeaders.h; sourceTree = "<group>"; };
+		9C1854C11593CB2900081A16 /* pch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pch.h; sourceTree = "<group>"; };
+		9C1854C21593CB2900081A16 /* roAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roAlgorithm.h; sourceTree = "<group>"; };
+		9C1854C31593CB2900081A16 /* roArray.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roArray.h; sourceTree = "<group>"; };
+		9C1854C41593CB2900081A16 /* roArray.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = roArray.inl; sourceTree = "<group>"; };
+		9C1854C51593CB2900081A16 /* roAtomic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roAtomic.h; sourceTree = "<group>"; };
+		9C1854C61593CB2900081A16 /* roByteOrder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roByteOrder.h; sourceTree = "<group>"; };
+		9C1854C71593CB2900081A16 /* roBytePtr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roBytePtr.h; sourceTree = "<group>"; };
+		9C1854C81593CB2900081A16 /* roCachedVal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roCachedVal.h; sourceTree = "<group>"; };
+		9C1854C91593CB2900081A16 /* roFileSystem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roFileSystem.cpp; sourceTree = "<group>"; };
+		9C1854CA1593CB2900081A16 /* roFileSystem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roFileSystem.h; sourceTree = "<group>"; };
+		9C1854CB1593CB2900081A16 /* roHttpFileSystem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roHttpFileSystem.cpp; sourceTree = "<group>"; };
+		9C1854CC1593CB2900081A16 /* roHttpFileSystem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roHttpFileSystem.h; sourceTree = "<group>"; };
+		9C1854CD1593CB2900081A16 /* roLinkList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roLinkList.cpp; sourceTree = "<group>"; };
+		9C1854CE1593CB2900081A16 /* roLinkList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roLinkList.h; sourceTree = "<group>"; };
+		9C1854CF1593CB2900081A16 /* roLog.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roLog.cpp; sourceTree = "<group>"; };
+		9C1854D01593CB2900081A16 /* roLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roLog.h; sourceTree = "<group>"; };
+		9C1854D11593CB2900081A16 /* roMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roMap.cpp; sourceTree = "<group>"; };
+		9C1854D21593CB2900081A16 /* roMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roMap.h; sourceTree = "<group>"; };
+		9C1854D31593CB2900081A16 /* roMemory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roMemory.cpp; sourceTree = "<group>"; };
+		9C1854D41593CB2900081A16 /* roMemory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roMemory.h; sourceTree = "<group>"; };
+		9C1854D71593CB2900081A16 /* roMutex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roMutex.cpp; sourceTree = "<group>"; };
+		9C1854D81593CB2900081A16 /* roMutex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roMutex.h; sourceTree = "<group>"; };
+		9C1854D91593CB2900081A16 /* roNonCopyable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roNonCopyable.h; sourceTree = "<group>"; };
+		9C1854DA1593CB2900081A16 /* roObjectTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roObjectTable.h; sourceTree = "<group>"; };
+		9C1854DB1593CB2900081A16 /* roParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roParser.cpp; sourceTree = "<group>"; };
+		9C1854DC1593CB2900081A16 /* roParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roParser.h; sourceTree = "<group>"; };
+		9C1854DD1593CB2900081A16 /* roRawFileSystem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roRawFileSystem.cpp; sourceTree = "<group>"; };
+		9C1854DE1593CB2900081A16 /* roRawFileSystem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roRawFileSystem.h; sourceTree = "<group>"; };
+		9C1854DF1593CB2900081A16 /* roResource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roResource.cpp; sourceTree = "<group>"; };
+		9C1854E01593CB2900081A16 /* roResource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roResource.h; sourceTree = "<group>"; };
+		9C1854E11593CB2900081A16 /* roSerializer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roSerializer.cpp; sourceTree = "<group>"; };
+		9C1854E21593CB2900081A16 /* roSerializer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roSerializer.h; sourceTree = "<group>"; };
+		9C1854E31593CB2900081A16 /* roSharedPtr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roSharedPtr.h; sourceTree = "<group>"; };
+		9C1854E41593CB2900081A16 /* roSocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roSocket.cpp; sourceTree = "<group>"; };
+		9C1854E51593CB2900081A16 /* roSocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roSocket.h; sourceTree = "<group>"; };
+		9C1854E61593CB2900081A16 /* roStatus.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roStatus.h; sourceTree = "<group>"; };
+		9C1854E71593CB2900081A16 /* roStatusEnum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roStatusEnum.h; sourceTree = "<group>"; };
+		9C1854E81593CB2900081A16 /* roStopWatch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roStopWatch.cpp; sourceTree = "<group>"; };
+		9C1854E91593CB2900081A16 /* roStopWatch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roStopWatch.h; sourceTree = "<group>"; };
+		9C1854EA1593CB2900081A16 /* roString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roString.cpp; sourceTree = "<group>"; };
+		9C1854EB1593CB2900081A16 /* roString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roString.h; sourceTree = "<group>"; };
+		9C1854EC1593CB2900081A16 /* roStringHash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roStringHash.h; sourceTree = "<group>"; };
+		9C1854ED1593CB2900081A16 /* roStringUtility.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roStringUtility.cpp; sourceTree = "<group>"; };
+		9C1854EE1593CB2900081A16 /* roStringUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roStringUtility.h; sourceTree = "<group>"; };
+		9C1854EF1593CB2900081A16 /* roStringUtility.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = roStringUtility.inl; sourceTree = "<group>"; };
+		9C1854F01593CB2900081A16 /* roTaskPool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roTaskPool.cpp; sourceTree = "<group>"; };
+		9C1854F11593CB2900081A16 /* roTaskPool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roTaskPool.h; sourceTree = "<group>"; };
+		9C1854F21593CB2900081A16 /* roTextResource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roTextResource.cpp; sourceTree = "<group>"; };
+		9C1854F31593CB2900081A16 /* roTextResource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roTextResource.h; sourceTree = "<group>"; };
+		9C1854F41593CB2900081A16 /* roTypeCast.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roTypeCast.h; sourceTree = "<group>"; };
+		9C1854F51593CB2900081A16 /* roTypeOf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roTypeOf.h; sourceTree = "<group>"; };
+		9C1854F61593CB2900081A16 /* roUtility.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roUtility.cpp; sourceTree = "<group>"; };
+		9C1854F71593CB2900081A16 /* roUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roUtility.h; sourceTree = "<group>"; };
+		9C18552E1593CB4400081A16 /* pch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pch.h; sourceTree = "<group>"; };
+		9C18552F1593CB4400081A16 /* roMath.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roMath.cpp; sourceTree = "<group>"; };
+		9C1855301593CB4400081A16 /* roMath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roMath.h; sourceTree = "<group>"; };
+		9C1855311593CB4400081A16 /* roMatrix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roMatrix.cpp; sourceTree = "<group>"; };
+		9C1855321593CB4400081A16 /* roMatrix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roMatrix.h; sourceTree = "<group>"; };
+		9C1855331593CB4400081A16 /* roMatrix.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = roMatrix.inl; sourceTree = "<group>"; };
+		9C1855341593CB4400081A16 /* roVector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roVector.cpp; sourceTree = "<group>"; };
+		9C1855351593CB4400081A16 /* roVector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roVector.h; sourceTree = "<group>"; };
+		9C1855361593CB4400081A16 /* roVector.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = roVector.inl; sourceTree = "<group>"; };
+		9CE75C4015454CF70023D472 /* libRoar.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRoar.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		9CE75C4315454CF70023D472 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		9CE75C4715454CF70023D472 /* Roar-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Roar-Prefix.pch"; sourceTree = "<group>"; };
+		9CE75C4815454CF70023D472 /* Roar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Roar.h; sourceTree = "<group>"; };
+		9CE75C4915454CF70023D472 /* Roar.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Roar.m; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9CE75C3D15454CF70023D472 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9CE75C4415454CF70023D472 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		9C18544D1593CA5E00081A16 /* render */ = {
+			isa = PBXGroup;
+			children = (
+				9C1854501593CA5E00081A16 /* pch.h */,
+				9C1854551593CA5E00081A16 /* roCanvas.cpp */,
+				9C1854561593CA5E00081A16 /* roCanvas.h */,
+				9C1854571593CA5E00081A16 /* roFont.cpp */,
+				9C1854581593CA5E00081A16 /* roFont.h */,
+				9C18545C1593CA5E00081A16 /* roRenderDriver.cpp */,
+				9C1854601593CA5E00081A16 /* roRenderDriver.gl.cpp */,
+				9C1854611593CA5E00081A16 /* roRenderDriver.gl.inl */,
+				9C1854631593CA5E00081A16 /* roRenderDriver.h */,
+				9C1854641593CA5E00081A16 /* roSprite.cpp */,
+				9C1854651593CA5E00081A16 /* roSprite.h */,
+				9C1854661593CA5E00081A16 /* roTexture.cpp */,
+				9C1854671593CA5E00081A16 /* roTexture.h */,
+				9C1854681593CA5E00081A16 /* shivavg */,
+			);
+			name = render;
+			path = ../../../../../roar/render;
+			sourceTree = "<group>";
+		};
+		9C1854681593CA5E00081A16 /* shivavg */ = {
+			isa = PBXGroup;
+			children = (
+				9C1854691593CA5E00081A16 /* openvg.h */,
+				9C18546A1593CA5E00081A16 /* shArrayBase.h */,
+				9C18546B1593CA5E00081A16 /* shArrays.cpp */,
+				9C18546C1593CA5E00081A16 /* shArrays.h */,
+				9C18546D1593CA5E00081A16 /* shContext.cpp */,
+				9C18546E1593CA5E00081A16 /* shContext.h */,
+				9C18546F1593CA5E00081A16 /* shDefs.h */,
+				9C1854701593CA5E00081A16 /* shGeometry.cpp */,
+				9C1854711593CA5E00081A16 /* shGeometry.h */,
+				9C1854721593CA5E00081A16 /* shImage.cpp */,
+				9C1854731593CA5E00081A16 /* shImage.h */,
+				9C1854741593CA5E00081A16 /* shPaint.cpp */,
+				9C1854751593CA5E00081A16 /* shPaint.h */,
+				9C1854761593CA5E00081A16 /* shParams.cpp */,
+				9C1854771593CA5E00081A16 /* shPath.cpp */,
+				9C1854781593CA5E00081A16 /* shPath.h */,
+				9C1854791593CA5E00081A16 /* shPipeline.cpp */,
+				9C18547A1593CA5E00081A16 /* shVectors.cpp */,
+				9C18547B1593CA5E00081A16 /* shVectors.h */,
+				9C18547C1593CA5E00081A16 /* shVgu.cpp */,
+				9C18547D1593CA5E00081A16 /* vgu.h */,
+			);
+			path = shivavg;
+			sourceTree = "<group>";
+		};
+		9C1854A91593CB0A00081A16 /* platform */ = {
+			isa = PBXGroup;
+			children = (
+				9C1854AA1593CB0A00081A16 /* pch.h */,
+				9C1854AB1593CB0A00081A16 /* roCompiler.gcc.h */,
+				9C1854AC1593CB0A00081A16 /* roCompiler.h */,
+				9C1854AF1593CB0A00081A16 /* roCpu.h */,
+				9C1854B01593CB0A00081A16 /* roOS.h */,
+				9C1854B11593CB0A00081A16 /* roOS.iOS.h */,
+				9C1854B21593CB0A00081A16 /* roOS.unix.h */,
+				9C1854B41593CB0A00081A16 /* roPlatformHeaders.h */,
+			);
+			name = platform;
+			path = ../../../../../roar/platform;
+			sourceTree = "<group>";
+		};
+		9C1854C01593CB2900081A16 /* base */ = {
+			isa = PBXGroup;
+			children = (
+				9C1854C11593CB2900081A16 /* pch.h */,
+				9C1854C21593CB2900081A16 /* roAlgorithm.h */,
+				9C1854C31593CB2900081A16 /* roArray.h */,
+				9C1854C41593CB2900081A16 /* roArray.inl */,
+				9C1854C51593CB2900081A16 /* roAtomic.h */,
+				9C1854C61593CB2900081A16 /* roByteOrder.h */,
+				9C1854C71593CB2900081A16 /* roBytePtr.h */,
+				9C1854C81593CB2900081A16 /* roCachedVal.h */,
+				9C1854C91593CB2900081A16 /* roFileSystem.cpp */,
+				9C1854CA1593CB2900081A16 /* roFileSystem.h */,
+				9C1854CB1593CB2900081A16 /* roHttpFileSystem.cpp */,
+				9C1854CC1593CB2900081A16 /* roHttpFileSystem.h */,
+				9C1854CD1593CB2900081A16 /* roLinkList.cpp */,
+				9C1854CE1593CB2900081A16 /* roLinkList.h */,
+				9C1854CF1593CB2900081A16 /* roLog.cpp */,
+				9C1854D01593CB2900081A16 /* roLog.h */,
+				9C1854D11593CB2900081A16 /* roMap.cpp */,
+				9C1854D21593CB2900081A16 /* roMap.h */,
+				9C1854D31593CB2900081A16 /* roMemory.cpp */,
+				9C1854D41593CB2900081A16 /* roMemory.h */,
+				9C1854D71593CB2900081A16 /* roMutex.cpp */,
+				9C1854D81593CB2900081A16 /* roMutex.h */,
+				9C1854D91593CB2900081A16 /* roNonCopyable.h */,
+				9C1854DA1593CB2900081A16 /* roObjectTable.h */,
+				9C1854DB1593CB2900081A16 /* roParser.cpp */,
+				9C1854DC1593CB2900081A16 /* roParser.h */,
+				9C1854DD1593CB2900081A16 /* roRawFileSystem.cpp */,
+				9C1854DE1593CB2900081A16 /* roRawFileSystem.h */,
+				9C1854DF1593CB2900081A16 /* roResource.cpp */,
+				9C1854E01593CB2900081A16 /* roResource.h */,
+				9C1854E11593CB2900081A16 /* roSerializer.cpp */,
+				9C1854E21593CB2900081A16 /* roSerializer.h */,
+				9C1854E31593CB2900081A16 /* roSharedPtr.h */,
+				9C1854E41593CB2900081A16 /* roSocket.cpp */,
+				9C1854E51593CB2900081A16 /* roSocket.h */,
+				9C1854E61593CB2900081A16 /* roStatus.h */,
+				9C1854E71593CB2900081A16 /* roStatusEnum.h */,
+				9C1854E81593CB2900081A16 /* roStopWatch.cpp */,
+				9C1854E91593CB2900081A16 /* roStopWatch.h */,
+				9C1854EA1593CB2900081A16 /* roString.cpp */,
+				9C1854EB1593CB2900081A16 /* roString.h */,
+				9C1854EC1593CB2900081A16 /* roStringHash.h */,
+				9C1854ED1593CB2900081A16 /* roStringUtility.cpp */,
+				9C1854EE1593CB2900081A16 /* roStringUtility.h */,
+				9C1854EF1593CB2900081A16 /* roStringUtility.inl */,
+				9C1854F01593CB2900081A16 /* roTaskPool.cpp */,
+				9C1854F11593CB2900081A16 /* roTaskPool.h */,
+				9C1854F21593CB2900081A16 /* roTextResource.cpp */,
+				9C1854F31593CB2900081A16 /* roTextResource.h */,
+				9C1854F41593CB2900081A16 /* roTypeCast.h */,
+				9C1854F51593CB2900081A16 /* roTypeOf.h */,
+				9C1854F61593CB2900081A16 /* roUtility.cpp */,
+				9C1854F71593CB2900081A16 /* roUtility.h */,
+			);
+			name = base;
+			path = ../../../../../roar/base;
+			sourceTree = "<group>";
+		};
+		9C18552D1593CB4400081A16 /* math */ = {
+			isa = PBXGroup;
+			children = (
+				9C18552E1593CB4400081A16 /* pch.h */,
+				9C18552F1593CB4400081A16 /* roMath.cpp */,
+				9C1855301593CB4400081A16 /* roMath.h */,
+				9C1855311593CB4400081A16 /* roMatrix.cpp */,
+				9C1855321593CB4400081A16 /* roMatrix.h */,
+				9C1855331593CB4400081A16 /* roMatrix.inl */,
+				9C1855341593CB4400081A16 /* roVector.cpp */,
+				9C1855351593CB4400081A16 /* roVector.h */,
+				9C1855361593CB4400081A16 /* roVector.inl */,
+			);
+			name = math;
+			path = ../../../../../roar/math;
+			sourceTree = "<group>";
+		};
+		9CE75C3515454CF70023D472 = {
+			isa = PBXGroup;
+			children = (
+				9CE75C4515454CF70023D472 /* Roar */,
+				9CE75C4215454CF70023D472 /* Frameworks */,
+				9CE75C4115454CF70023D472 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9CE75C4115454CF70023D472 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9CE75C4015454CF70023D472 /* libRoar.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		9CE75C4215454CF70023D472 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				9CE75C4315454CF70023D472 /* Foundation.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		9CE75C4515454CF70023D472 /* Roar */ = {
+			isa = PBXGroup;
+			children = (
+				9C1854C01593CB2900081A16 /* base */,
+				9C18552D1593CB4400081A16 /* math */,
+				9C1854A91593CB0A00081A16 /* platform */,
+				9C18544D1593CA5E00081A16 /* render */,
+				9CE75C4815454CF70023D472 /* Roar.h */,
+				9CE75C4915454CF70023D472 /* Roar.m */,
+				9CE75C4615454CF70023D472 /* Supporting Files */,
+			);
+			path = Roar;
+			sourceTree = "<group>";
+		};
+		9CE75C4615454CF70023D472 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				9CE75C4715454CF70023D472 /* Roar-Prefix.pch */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		9CE75C3E15454CF70023D472 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9C18547F1593CA5E00081A16 /* pch.h in Headers */,
+				9C1854841593CA5E00081A16 /* roCanvas.h in Headers */,
+				9C1854861593CA5E00081A16 /* roFont.h in Headers */,
+				9C18548F1593CA5E00081A16 /* roRenderDriver.h in Headers */,
+				9C1854911593CA5E00081A16 /* roSprite.h in Headers */,
+				9C1854931593CA5E00081A16 /* roTexture.h in Headers */,
+				9C1854941593CA5E00081A16 /* openvg.h in Headers */,
+				9C1854951593CA5E00081A16 /* shArrayBase.h in Headers */,
+				9C1854971593CA5E00081A16 /* shArrays.h in Headers */,
+				9C1854991593CA5E00081A16 /* shContext.h in Headers */,
+				9C18549A1593CA5E00081A16 /* shDefs.h in Headers */,
+				9C18549C1593CA5E00081A16 /* shGeometry.h in Headers */,
+				9C18549E1593CA5E00081A16 /* shImage.h in Headers */,
+				9C1854A01593CA5E00081A16 /* shPaint.h in Headers */,
+				9C1854A31593CA5E00081A16 /* shPath.h in Headers */,
+				9C1854A61593CA5E00081A16 /* shVectors.h in Headers */,
+				9C1854A81593CA5E00081A16 /* vgu.h in Headers */,
+				9C1854B51593CB0A00081A16 /* pch.h in Headers */,
+				9C1854B61593CB0A00081A16 /* roCompiler.gcc.h in Headers */,
+				9C1854B71593CB0A00081A16 /* roCompiler.h in Headers */,
+				9C1854BA1593CB0A00081A16 /* roCpu.h in Headers */,
+				9C1854BB1593CB0A00081A16 /* roOS.h in Headers */,
+				9C1854BC1593CB0A00081A16 /* roOS.iOS.h in Headers */,
+				9C1854BD1593CB0A00081A16 /* roOS.unix.h in Headers */,
+				9C1854BF1593CB0A00081A16 /* roPlatformHeaders.h in Headers */,
+				9C1854F81593CB2900081A16 /* pch.h in Headers */,
+				9C1854F91593CB2900081A16 /* roAlgorithm.h in Headers */,
+				9C1854FA1593CB2900081A16 /* roArray.h in Headers */,
+				9C1854FB1593CB2900081A16 /* roAtomic.h in Headers */,
+				9C1854FC1593CB2900081A16 /* roByteOrder.h in Headers */,
+				9C1854FD1593CB2900081A16 /* roBytePtr.h in Headers */,
+				9C1854FE1593CB2900081A16 /* roCachedVal.h in Headers */,
+				9C1855001593CB2900081A16 /* roFileSystem.h in Headers */,
+				9C1855021593CB2900081A16 /* roHttpFileSystem.h in Headers */,
+				9C1855041593CB2900081A16 /* roLinkList.h in Headers */,
+				9C1855061593CB2900081A16 /* roLog.h in Headers */,
+				9C1855081593CB2900081A16 /* roMap.h in Headers */,
+				9C18550A1593CB2900081A16 /* roMemory.h in Headers */,
+				9C18550E1593CB2900081A16 /* roMutex.h in Headers */,
+				9C18550F1593CB2900081A16 /* roNonCopyable.h in Headers */,
+				9C1855101593CB2900081A16 /* roObjectTable.h in Headers */,
+				9C1855121593CB2900081A16 /* roParser.h in Headers */,
+				9C1855141593CB2900081A16 /* roRawFileSystem.h in Headers */,
+				9C1855161593CB2900081A16 /* roResource.h in Headers */,
+				9C1855181593CB2900081A16 /* roSerializer.h in Headers */,
+				9C1855191593CB2900081A16 /* roSharedPtr.h in Headers */,
+				9C18551B1593CB2900081A16 /* roSocket.h in Headers */,
+				9C18551C1593CB2900081A16 /* roStatus.h in Headers */,
+				9C18551D1593CB2900081A16 /* roStatusEnum.h in Headers */,
+				9C18551F1593CB2900081A16 /* roStopWatch.h in Headers */,
+				9C1855211593CB2900081A16 /* roString.h in Headers */,
+				9C1855221593CB2900081A16 /* roStringHash.h in Headers */,
+				9C1855241593CB2900081A16 /* roStringUtility.h in Headers */,
+				9C1855261593CB2900081A16 /* roTaskPool.h in Headers */,
+				9C1855281593CB2900081A16 /* roTextResource.h in Headers */,
+				9C1855291593CB2900081A16 /* roTypeCast.h in Headers */,
+				9C18552A1593CB2900081A16 /* roTypeOf.h in Headers */,
+				9C18552C1593CB2900081A16 /* roUtility.h in Headers */,
+				9C1855371593CB4400081A16 /* pch.h in Headers */,
+				9C1855391593CB4400081A16 /* roMath.h in Headers */,
+				9C18553B1593CB4400081A16 /* roMatrix.h in Headers */,
+				9C18553D1593CB4400081A16 /* roVector.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		9CE75C3F15454CF70023D472 /* Roar */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9CE75C4D15454CF70023D472 /* Build configuration list for PBXNativeTarget "Roar" */;
+			buildPhases = (
+				9CE75C3C15454CF70023D472 /* Sources */,
+				9CE75C3D15454CF70023D472 /* Frameworks */,
+				9CE75C3E15454CF70023D472 /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Roar;
+			productName = Roar;
+			productReference = 9CE75C4015454CF70023D472 /* libRoar.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9CE75C3715454CF70023D472 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0420;
+			};
+			buildConfigurationList = 9CE75C3A15454CF70023D472 /* Build configuration list for PBXProject "Roar" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 9CE75C3515454CF70023D472;
+			productRefGroup = 9CE75C4115454CF70023D472 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				9CE75C3F15454CF70023D472 /* Roar */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		9CE75C3C15454CF70023D472 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9CE75C4A15454CF70023D472 /* Roar.m in Sources */,
+				9C1854831593CA5E00081A16 /* roCanvas.cpp in Sources */,
+				9C1854851593CA5E00081A16 /* roFont.cpp in Sources */,
+				9C18548A1593CA5E00081A16 /* roRenderDriver.cpp in Sources */,
+				9C18548D1593CA5E00081A16 /* roRenderDriver.gl.cpp in Sources */,
+				9C1854901593CA5E00081A16 /* roSprite.cpp in Sources */,
+				9C1854921593CA5E00081A16 /* roTexture.cpp in Sources */,
+				9C1854961593CA5E00081A16 /* shArrays.cpp in Sources */,
+				9C1854981593CA5E00081A16 /* shContext.cpp in Sources */,
+				9C18549B1593CA5E00081A16 /* shGeometry.cpp in Sources */,
+				9C18549D1593CA5E00081A16 /* shImage.cpp in Sources */,
+				9C18549F1593CA5E00081A16 /* shPaint.cpp in Sources */,
+				9C1854A11593CA5E00081A16 /* shParams.cpp in Sources */,
+				9C1854A21593CA5E00081A16 /* shPath.cpp in Sources */,
+				9C1854A41593CA5E00081A16 /* shPipeline.cpp in Sources */,
+				9C1854A51593CA5E00081A16 /* shVectors.cpp in Sources */,
+				9C1854A71593CA5E00081A16 /* shVgu.cpp in Sources */,
+				9C1854FF1593CB2900081A16 /* roFileSystem.cpp in Sources */,
+				9C1855011593CB2900081A16 /* roHttpFileSystem.cpp in Sources */,
+				9C1855031593CB2900081A16 /* roLinkList.cpp in Sources */,
+				9C1855051593CB2900081A16 /* roLog.cpp in Sources */,
+				9C1855071593CB2900081A16 /* roMap.cpp in Sources */,
+				9C1855091593CB2900081A16 /* roMemory.cpp in Sources */,
+				9C18550D1593CB2900081A16 /* roMutex.cpp in Sources */,
+				9C1855111593CB2900081A16 /* roParser.cpp in Sources */,
+				9C1855131593CB2900081A16 /* roRawFileSystem.cpp in Sources */,
+				9C1855151593CB2900081A16 /* roResource.cpp in Sources */,
+				9C1855171593CB2900081A16 /* roSerializer.cpp in Sources */,
+				9C18551A1593CB2900081A16 /* roSocket.cpp in Sources */,
+				9C18551E1593CB2900081A16 /* roStopWatch.cpp in Sources */,
+				9C1855201593CB2900081A16 /* roString.cpp in Sources */,
+				9C1855231593CB2900081A16 /* roStringUtility.cpp in Sources */,
+				9C1855251593CB2900081A16 /* roTaskPool.cpp in Sources */,
+				9C1855271593CB2900081A16 /* roTextResource.cpp in Sources */,
+				9C18552B1593CB2900081A16 /* roUtility.cpp in Sources */,
+				9C1855381593CB4400081A16 /* roMath.cpp in Sources */,
+				9C18553A1593CB4400081A16 /* roMatrix.cpp in Sources */,
+				9C18553C1593CB4400081A16 /* roVector.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		9CE75C4B15454CF70023D472 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_VERSION = "";
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		9CE75C4C15454CF70023D472 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				COPY_PHASE_STRIP = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_VERSION = "";
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		9CE75C4E15454CF70023D472 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DSTROOT = /tmp/Roar.dst;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Roar/Roar-Prefix.pch";
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		9CE75C4F15454CF70023D472 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DSTROOT = /tmp/Roar.dst;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Roar/Roar-Prefix.pch";
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9CE75C3A15454CF70023D472 /* Build configuration list for PBXProject "Roar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9CE75C4B15454CF70023D472 /* Debug */,
+				9CE75C4C15454CF70023D472 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9CE75C4D15454CF70023D472 /* Build configuration list for PBXNativeTarget "Roar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9CE75C4E15454CF70023D472 /* Debug */,
+				9CE75C4F15454CF70023D472 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 9CE75C3715454CF70023D472 /* Project object */;
+}

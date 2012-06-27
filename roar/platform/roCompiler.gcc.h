@@ -1,3 +1,5 @@
+#include <stddef.h>
+
 #define	roCOMPILER_GCC 1
 
 typedef char roInt8;
@@ -43,7 +45,7 @@ typedef unsigned short roUtf16;
 #endif
 
 // Force inline
-#define roFORCEINLINE __forceinline
+#define roFORCEINLINE inline __forceinline
 
 // Printf style compiler check
 #define roPRINTF_FORMAT_PARAM

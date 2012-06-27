@@ -9,9 +9,17 @@
 #include "../base/roTypeCast.h"
 
 #include "../platform/roPlatformHeaders.h"
-#include <gl/gl.h>
-#include "gl/glext.h"
-#include "platform.win/extensionsfwd.h"
+
+#if roCOMPILER_VC
+#	include <gl/gl.h>
+#	include "gl/glext.h"
+#	include "platform.win/extensionsfwd.h"
+#elif roOS_iOS
+#	import <OpenGLES/ES1/gl.h>
+#	import <OpenGLES/ES1/glext.h>
+#	import <OpenGLES/ES2/gl.h>
+#	import <OpenGLES/ES2/glext.h>
+#endif
 
 // OpenGL stuffs
 // Instancing:				http://sol.gfxile.net/instancing.html
@@ -70,7 +78,7 @@ namespace {
 static void _setViewport(unsigned x, unsigned y, unsigned width, unsigned height, float zmin, float zmax)
 {
 	glViewport((GLint)x, (GLint)y, (GLsizei)width, (GLsizei)height);
-	glDepthRange(zmin, zmax);
+	glDepthRangef(zmin, zmax);
 }
 
 static void _setScissorRect(unsigned x, unsigned y, unsigned width, unsigned height)
@@ -90,7 +98,7 @@ static void _clearColor(float r, float g, float b, float a)
 static void _clearDepth(float z)
 {
 	// See: http://www.opengl.org/sdk/docs/man/xhtml/glClearDepth.xml
-	glClearDepth(z);
+	glClearDepthf(z);
 	glClear(GL_DEPTH_BUFFER_BIT);
 }
 
@@ -110,7 +118,7 @@ static void _adjustDepthRangeMatrix(float* mat44)
 static bool _setRenderTargets(roRDriverTexture** textures, roSize targetCount, bool useDepthStencil)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
-	if(!ctx) false;
+	if(!ctx) return false;
 
 	if(!textures || targetCount == 0) {
 		// Bind default frame buffer

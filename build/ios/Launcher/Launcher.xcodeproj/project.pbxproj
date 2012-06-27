@@ -25,6 +25,7 @@
 		9C871A9F13AE0248009F1382 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C871A9E13AE0248009F1382 /* AudioToolbox.framework */; };
 		9C990DCE1406908500E72D24 /* biolab in Resources */ = {isa = PBXBuildFile; fileRef = 9C990DCD1406908500E72D24 /* biolab */; };
 		9CD888731382E0C1003751E2 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CD888721382E0C1003751E2 /* OpenAL.framework */; };
+		9CEC6CEA159B75AC0094850B /* libRoar.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE75C5515454CF80023D472 /* libRoar.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -54,6 +55,13 @@
 			containerPortal = 9CE75C5015454CF70023D472 /* Roar.xcodeproj */;
 			proxyType = 2;
 			remoteGlobalIDString = 9CE75C4015454CF70023D472;
+			remoteInfo = Roar;
+		};
+		9CEC6CEB159B75B00094850B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9CE75C5015454CF70023D472 /* Roar.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 9CE75C3F15454CF70023D472;
 			remoteInfo = Roar;
 		};
 /* End PBXContainerItemProxy section */
@@ -92,6 +100,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9CEC6CEA159B75AC0094850B /* libRoar.a in Frameworks */,
 				187BCBBF12FAAC2F0042FDB1 /* libRhinoca.a in Frameworks */,
 				182F5542130390E6003805A7 /* libSpiderMonkey.a in Frameworks */,
 				1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */,
@@ -226,6 +235,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				9CEC6CEC159B75B00094850B /* PBXTargetDependency */,
 				187BCB9312FAA7330042FDB1 /* PBXTargetDependency */,
 			);
 			name = Launcher;
@@ -332,6 +342,11 @@
 			isa = PBXTargetDependency;
 			name = Rhinoca;
 			targetProxy = 187BCB9212FAA7330042FDB1 /* PBXContainerItemProxy */;
+		};
+		9CEC6CEC159B75B00094850B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = Roar;
+			targetProxy = 9CEC6CEB159B75B00094850B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 

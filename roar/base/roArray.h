@@ -141,7 +141,7 @@ struct Array : public IArray<T, Array<T> >
 {
 	Array() {}
 	Array(roSize size)					{ this->resize(size); }
-	Array(roSize size, const T& val)	{ resize(size, val); }
+	Array(roSize size, const T& val)	{ this->resize(size, val); }
 	Array(const Array<T>& src)			{ this->copy(src); }
 	~Array()							{ this->clear(); roFree(this->_data); }
 	Array&	operator=(const Array& rhs) { this->copy(rhs); return *this; }

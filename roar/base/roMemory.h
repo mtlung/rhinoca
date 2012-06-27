@@ -23,7 +23,7 @@ template<class T>
 struct AutoPtr
 {
 	AutoPtr(T* p, DefaultAllocator& a);
-	AutoPtr(const AutoPtr& rhs)				{ _p = rhs.unref(); _allocator = rhs._allocator; }
+	AutoPtr(const AutoPtr& rhs)				: _p(const_cast<AutoPtr&>(rhs).unref()), _allocator(rhs._allocator) {}
 	~AutoPtr()								{ deleteObject(); }
 
 	void		ref(T* p)					{ deleteObject(); _p = p; }
