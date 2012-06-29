@@ -41,7 +41,7 @@ struct PngLoader : public Task
 	void abort(TaskPool* taskPool);
 
 	void* stream;
-	Texture* texture;
+	TexturePtr texture;
 	ResourceManager* manager;
 	unsigned width, height;
 	Array<png_byte> pixelData;

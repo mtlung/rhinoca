@@ -1,6 +1,7 @@
 #include "base/roArray.h"
 #include "base/roSharedPtr.h"
 
+struct roAudioDriver;
 struct roRDriver;
 struct roRDriverContext;
 
@@ -33,14 +34,21 @@ struct SubSystems
 	CustomInit initTaskPool;
 	TaskPool* taskPool;
 
+	// Audio driver
+	CustomInit initAudioDriver;
+	roAudioDriver* audioDriver;
+
+	// Render driver
 	CustomInit initRenderDriver;
 	roRDriver* renderDriver;
 	roRDriverContext* renderContext;
 
+	// Resource management
 	CustomInit initResourceManager;
 	ResourceManager* resourceMgr;
 	Array<ResourcePtr> systemResource;	/// A list of resource that should always keep in the system (eg. Default Font)
 
+	// Font
 	CustomInit initFont;
 	FontManager* fontMgr;
 	FontPtr defaultFont;

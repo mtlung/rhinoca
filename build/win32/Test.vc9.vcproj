@@ -52,6 +52,7 @@
 				PrecompiledHeaderThrough="pch.h"
 				WarningLevel="4"
 				DebugInformationFormat="3"
+				DisableSpecificWarnings="4100;4480;4512;4800; 4996;"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -402,6 +403,14 @@
 			</File>
 			<File
 				RelativePath="..\..\test\render\roTextureLoaderTest.cpp"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="audio"
+			>
+			<File
+				RelativePath="..\..\test\audio\roAudioTest.cpp"
 				>
 			</File>
 		</Filter>

@@ -224,8 +224,6 @@ ElementStyle::~ElementStyle()
 {
 }
 
-static int _min(int a, int b) { return a < b ? a : b; }
-
 void ElementStyle::updateTransformation()
 {
 	_localToWorld = localTransformation();

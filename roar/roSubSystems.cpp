@@ -6,6 +6,7 @@
 #include "base/roSocket.h"
 #include "base/roTaskPool.h"
 #include "math/roMath.h"
+#include "audio/roAudioDriver.h"
 #include "render/roRenderDriver.h"
 
 namespace ro {
@@ -62,6 +63,7 @@ static void _initFont(SubSystems& subSystems)
 SubSystems::SubSystems()
 	: userData(NULL)
 	, initTaskPool(_initTaskPool), taskPool(NULL)
+	, audioDriver(NULL)
 	, initRenderDriver(_initRenderDriver), renderDriver(NULL), renderContext(NULL)
 	, initResourceManager(_initResourceManager), resourceMgr(NULL)
 	, initFont(_initFont), fontMgr(NULL)
@@ -95,6 +97,9 @@ Status SubSystems::init()
 
 	currentCanvas = NULL;
 
+	audioDriver = roNewAudioDriver();
+	if(!roInitAudioDriver(audioDriver, "")) return Status::undefined;
+
 	return Status::ok;
 }
 
@@ -115,6 +120,9 @@ void SubSystems::shutdown()
 
 	renderDriver = NULL;
 	renderContext = NULL;
+
+	roDeleteAudioDriver(audioDriver);
+	audioDriver = NULL;
 
 //	_memoryProfiler.shutdown();
 	BsdSocket::closeApplication();

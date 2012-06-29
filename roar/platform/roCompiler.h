@@ -58,5 +58,9 @@
 
 // Offset of
 #define roOffsetof(s, m) (roSize)((roPtrInt)&(((s*)0)->m))
+#define roMemberHost(s, m, pm) (s*)((char*)pm - roOffsetof(s, m))
+
+// Namespace forward declaration
+namespace ro {}
 
 #endif	// __roCompiler_h__

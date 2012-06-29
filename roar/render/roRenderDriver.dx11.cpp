@@ -1883,7 +1883,7 @@ struct roRDriverImpl : public roRDriver
 	String _driverName;
 };	// roRDriver
 
-static void _rhDeleteRenderDriver_DX11(roRDriver* self)
+static void _deleteRenderDriver_DX11(roRDriver* self)
 {
 	_allocator.deleteObj(static_cast<roRDriverImpl*>(self));
 }
@@ -1894,7 +1894,7 @@ roRDriver* _roNewRenderDriver_DX11(const char* driverStr, const char*)
 {
 	roRDriverImpl* ret = _allocator.newObj<roRDriverImpl>().unref();
 	memset(ret, 0, sizeof(*ret));
-	ret->destructor = &_rhDeleteRenderDriver_DX11;
+	ret->destructor = &_deleteRenderDriver_DX11;
 	ret->_driverName = driverStr;
 	ret->driverName = ret->_driverName.c_str();
 

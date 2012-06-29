@@ -19,6 +19,8 @@
 #	import <OpenGLES/ES1/glext.h>
 #	import <OpenGLES/ES2/gl.h>
 #	import <OpenGLES/ES2/glext.h>
+#	define glDepthRange glDepthRangef
+#	define glClearDepth glClearDepthf
 #endif
 
 // OpenGL stuffs
@@ -78,7 +80,7 @@ namespace {
 static void _setViewport(unsigned x, unsigned y, unsigned width, unsigned height, float zmin, float zmax)
 {
 	glViewport((GLint)x, (GLint)y, (GLsizei)width, (GLsizei)height);
-	glDepthRangef(zmin, zmax);
+	glDepthRange(zmin, zmax);
 }
 
 static void _setScissorRect(unsigned x, unsigned y, unsigned width, unsigned height)
@@ -98,7 +100,7 @@ static void _clearColor(float r, float g, float b, float a)
 static void _clearDepth(float z)
 {
 	// See: http://www.opengl.org/sdk/docs/man/xhtml/glClearDepth.xml
-	glClearDepthf(z);
+	glClearDepth(z);
 	glClear(GL_DEPTH_BUFFER_BIT);
 }
 

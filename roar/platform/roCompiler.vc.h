@@ -12,6 +12,8 @@ typedef unsigned __int64 roUint64;
 typedef char roUtf8;
 typedef unsigned __int16 roUtf16;
 
+typedef unsigned char roByte;
+
 #ifdef _M_IX86
 #	define roCPU_x86 1
 	typedef __w64 unsigned int _roSize;

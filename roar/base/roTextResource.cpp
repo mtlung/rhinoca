@@ -32,7 +32,7 @@ struct TextLoader : public Task
 	void abort(TaskPool* taskPool);
 
 	void* stream;
-	TextResource* text;
+	TextResourcePtr text;
 	ResourceManager* manager;
 
 	String data;

@@ -49,8 +49,9 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
-				WarningLevel="3"
+				WarningLevel="4"
 				DebugInformationFormat="4"
+				DisableSpecificWarnings="4100;4480;4512;4800; 4996;"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"

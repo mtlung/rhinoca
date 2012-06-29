@@ -111,14 +111,6 @@ Element* HTMLScriptElement::factoryCreate(Rhinoca* rh, const char* type, XmlPars
 	return roStrCaseCmp(type, _tagName) == 0 ? new HTMLScriptElement(rh) : NULL;
 }
 
-static void appendFileToString(void* file, ro::String& str)
-{
-	char buf[128];
-	rhuint64 readCount;
-	while(ro::fileSystem.read(file, buf, sizeof(buf), readCount))
-		str.append(buf, (size_t)readCount);
-}
-
 void HTMLScriptElement::setSrc(const char* uri)
 {
 	// We only allow to set the source once

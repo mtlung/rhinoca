@@ -14,6 +14,8 @@ typedef unsigned long long roUint64;
 typedef char roUtf8;
 typedef unsigned short roUtf16;
 
+typedef unsigned char roByte;
+
 #define roSize size_t
 
 // Our own debug macro
