@@ -31,6 +31,7 @@ struct Mp3Loader : public AudioLoader
 	~Mp3Loader()
 	{
 		if(mpg) mpg123_delete(mpg);
+		if(stream) fileSystem.closeFile(stream);
 	}
 
 	override void run(TaskPool* taskPool);
@@ -149,10 +150,15 @@ roEXCP_TRY
 
 	roAssert(!pcmRequestShadow.isEmpty());
 
+	unsigned requestPcmPos = pcmRequestShadow.front();
+	curPcmPos = mpg123_tell(mpg);
+
 	// Perform seek if necessary
-	if(curPcmPos != pcmRequestShadow.front()) {
+	// NOTE: Seems the seek operation is not pcm offset perfect!
+	// After several seek operation, some slight dis-joint audio may able to hear
+	if(curPcmPos != requestPcmPos) {
 		off_t fileSeekPos = 0;
-		off_t resultingOffset = mpg123_feedseek(mpg, pcmRequestShadow.front(), SEEK_SET, &fileSeekPos);
+		off_t resultingOffset = mpg123_feedseek(mpg, requestPcmPos, SEEK_SET, &fileSeekPos);
 		if(resultingOffset < 0)
 			roEXCP_THROW;
 
@@ -177,13 +183,13 @@ roEXCP_TRY
 	roByte buf[_dataChunkSize];
 	roUint64 readCount = 0;
 
-	if(mpgRet == MPG123_NEED_MORE || mpgInternalSize <= _dataChunkSize) {
+	if(mpgInternalSize < _dataChunkSize) {
 		st = fileSystem.read(stream, buf, _dataChunkSize, readCount);
-		if(!st) roEXCP_THROW;
+		if(!st && st != Status::file_ended) roEXCP_THROW;
 	}
 
 	// Perform MP3 decoding
-	pcmData.resize(1024 * 16);
+	pcmData.resize(1024 * 128);
 	size_t decodeBytes = 0;
 	mpgRet = mpg123_decode(mpg, buf, num_cast<size_t>(readCount), pcmData.typedPtr(), pcmData.sizeInByte(), &decodeBytes);
 
@@ -195,29 +201,27 @@ roEXCP_TRY
 		roEXCP_THROW;
 	}
 
-	if(decodeBytes > 0) {
-		curPcmPos = mpg123_tell(mpg);
-	}
-	else if(readCount > 0)
-		reSchedule(false);
+	if(readCount == 0)
+		readCount = 0;
+
+	if(decodeBytes <= 0 && readCount > 0)
+		return reSchedule(false);
 
 	// Condition for EOF
-	if(mpgRet == MPG123_DONE || (mpgRet == MPG123_NEED_MORE && readCount == 0)) {
+	if(mpgRet == MPG123_DONE || (mpgRet == MPG123_NEED_MORE && st == Status::file_ended)) {
 		curPcmPos = mpg123_tell(mpg);
 		format.totalSamples = format.estimatedSamples = curPcmPos;
-//		nextFun = &Mp3Loader::checkRequest;
-//		return reSchedule(false, taskPool->mainThreadId());
 	}
 
 	roAssert(decodeBytes <= pcmData.sizeInByte());
 	pcmData.resize(decodeBytes);
+	nextFun = &Mp3Loader::commitData;
 
 roEXCP_CATCH
 	roLog("error", "Mp3Loader: Fail to load '%s', reason: %s\n", audioBuffer->uri().c_str(), st.c_str());
 	nextFun = &Mp3Loader::abort;
 
 roEXCP_END
-	nextFun = &Mp3Loader::commitData;
 	return reSchedule(false, taskPool->mainThreadId());
 }
 
@@ -226,7 +230,11 @@ void Mp3Loader::commitData(TaskPool* taskPool)
 	audioBuffer->format = format;
 
 	unsigned pcmPos = pcmRequestShadow.front();
-	audioBuffer->addSubBuffer(pcmPos, pcmData.bytePtr(), pcmData.sizeInByte());
+
+	if(pcmPos != curPcmPos)
+		pcmPos = pcmPos;
+
+	audioBuffer->addSubBuffer(curPcmPos, pcmData.bytePtr(), pcmData.sizeInByte());
 
 	// Remove the processed entry form the request list
 	pcmRequest.removeByKey(pcmPos);

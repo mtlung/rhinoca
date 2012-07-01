@@ -138,8 +138,13 @@ void SubSystems::tick()
 
 //	_memoryProfiler.tick();
 
-	averageFrameDuration = roStepRunAvg(averageFrameDuration, renderContext->lastFrameDuration, 60);
-	maxFrameDuration = roMaxOf2(maxFrameDuration, renderContext->lastFrameDuration);
+	if(audioDriver)
+		audioDriver->tick(audioDriver);
+
+	if(renderContext) {
+		averageFrameDuration = roStepRunAvg(averageFrameDuration, renderContext->lastFrameDuration, 60);
+		maxFrameDuration = roMaxOf2(maxFrameDuration, renderContext->lastFrameDuration);
+	}
 }
 
 }	// namespace ro

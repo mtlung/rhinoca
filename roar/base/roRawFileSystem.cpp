@@ -71,7 +71,13 @@ CheckProgress:
 			return impl->st = Status::file_ended, false;
 		}
 
-		impl->overlap.Offset += transferred;
+		LARGE_INTEGER largeInt;
+		largeInt.LowPart = impl->overlap.Offset;
+		largeInt.HighPart = impl->overlap.OffsetHigh;
+		largeInt.QuadPart += transferred;
+
+		impl->overlap.Offset = largeInt.LowPart;
+		impl->overlap.OffsetHigh = largeInt.HighPart;
 		impl->readInProgress = false;
 		impl->readable += transferred;
 		return impl->st = Status::ok, false;
@@ -177,8 +183,13 @@ Status rawFileSystemSeek(void* file, roUint64 offset, FileSystem::SeekOrigin ori
 		return Status::invalid_parameter;
 	}
 
+	impl->overlap.Internal = impl->overlap.InternalHigh = 0;
 	impl->overlap.Offset = absOffset.LowPart;
 	impl->overlap.OffsetHigh = absOffset.HighPart;
+
+	impl->bufOffset = 0;
+	impl->readable = 0;
+
 	return Status::ok;
 }
 

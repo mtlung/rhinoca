@@ -24,19 +24,14 @@ typedef struct roAudioDriver
 
 	void (*playSoundSource)(roADriverSoundSource* self);	/// Implies rewind
 	bool (*soundSourceIsPlaying)(roADriverSoundSource* self);
-	void (*pauseSoundSource)(roADriverSoundSource* self);
-	void (*resumeSoundSource)(roADriverSoundSource* self);
 	void (*stopSoundSource)(roADriverSoundSource* self);
+	void (*soundSourceSetLoop)(roADriverSoundSource* self, bool loop);
+	void (*soundSourceSetPause)(roADriverSoundSource* self, bool pause);
 
 	float (*soundSourceTellPos)(roADriverSoundSource* self);
 	void (*soundSourceSeekPos)(roADriverSoundSource* self, float time);
 
 	void (*setSoundSourcePriority)(roADriverSoundSource* self, roSize priority);
-
-// Feeding custom audio data (they are thread safe)
-/*	bool (*isRequestQueueEmpty)();
-	void (*popRequestQueue)(roUint64* id, roUtf8** uri);
-	void (*processSoundData)(roUint64 id, const roBytePtr data, roSize bytes);*/
 
 // Others
 	void (*setMaxPlayingSound)(roSize count);

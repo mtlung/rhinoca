@@ -158,9 +158,9 @@ void AudioBuffer::addSubBuffer(unsigned pcmPosition, const char* data, roSize si
 	roSize i, j;
 	// Find the correct index to insert
 	for(i=0, j=0; i<subBuffers.size(); ++i) {
-		roSize j = roMinOf2(i + 1, subBuffers.size()-1);
+		j = roMinOf2(i + 1, subBuffers.size()-1);
 
-		if(subBuffers[i].posBegin >= pcmPosition && pcmPosition < subBuffers[j].posBegin)
+		if(subBuffers[i].posBegin <= pcmPosition && pcmPosition < subBuffers[j].posBegin)
 			break;
 	}
 
@@ -181,7 +181,7 @@ void AudioBuffer::addSubBuffer(unsigned pcmPosition, const char* data, roSize si
 	SubBuffer subBuffer = { pcmBegin, pcmEnd, 1, 0 };
 	alGenBuffers(1, &subBuffer.handle);
 	alBufferData(subBuffer.handle, _getAlFormat(format), data, sizeInByte, format.samplesPerSecond);
-	subBuffers.insert(j, subBuffer);
+	subBuffers.insert(roMinOf2(i + 1, subBuffers.size()), subBuffer);
 }
 
 AudioBuffer::SubBuffer* AudioBuffer::findSubBuffer(unsigned pcmPosition)
@@ -213,9 +213,14 @@ struct SoundSource : public roADriverSoundSource, ro::ListNode<SoundSource>
 	bool isPlay;
 	bool isPause;
 	bool isLoop;
-	unsigned queuedPosBegin;
-	unsigned queuedPosEnd;
-	Array<ALuint> queuedSubBuffers;
+
+	unsigned nextQueuePos;
+
+	struct QueuedSubBuffer {
+		ALuint handle;
+		unsigned posBegin, posEnd;
+	};
+	Array<QueuedSubBuffer> queuedSubBuffers;
 };
 
 SoundSource::SoundSource()
@@ -223,7 +228,7 @@ SoundSource::SoundSource()
 	, isPlay(false)
 	, isPause(true)	// NOTE: Paused by default
 	, isLoop(false)
-	, queuedPosBegin(0), queuedPosEnd(0)
+	, nextQueuePos(0)
 {
 	alGenSources(1, &handle);
 }
@@ -320,25 +325,48 @@ static bool _soundSourceIsPlaying(roADriverSoundSource* self)
 	return impl->isPlay;
 }
 
-static void _pauseSoundSource(roADriverSoundSource* self)
-{
-	SoundSource* impl = static_cast<SoundSource*>(self);
-	if(!impl) return;
-	impl->isPause = true;
-}
-
-static void _resumeSoundSource(roADriverSoundSource* self)
-{
-	SoundSource* impl = static_cast<SoundSource*>(self);
-	if(!impl) return;
-	impl->isPause = false;
-}
-
 static void _stopSoundSource(roADriverSoundSource* self)
 {
 	SoundSource* impl = static_cast<SoundSource*>(self);
 	if(!impl) return;
 	impl->isPlay = false;
+	alSourceStop(impl->handle);
+}
+
+static void _soundSourceSetLoop(roADriverSoundSource* self, bool loop)
+{
+	SoundSource* impl = static_cast<SoundSource*>(self);
+	if(!impl) return;
+	impl->isLoop = loop;
+}
+
+void _soundSourceSetPause(roADriverSoundSource* self, bool pause)
+{
+	SoundSource* impl = static_cast<SoundSource*>(self);
+	if(!impl) return;
+	impl->isPause = pause;
+}
+
+static ALint _soundSourceTellPcmPos(roADriverSoundSource* self)
+{
+	SoundSource* impl = static_cast<SoundSource*>(self);
+	if(!impl) return 0;
+	if(!impl->audioBuffer) return 0;
+
+	ALint offset;
+	alGetSourcei(impl->handle, AL_SAMPLE_OFFSET, &offset);
+	offset += impl->queuedSubBuffers.isEmpty() ? impl->nextQueuePos : impl->queuedSubBuffers.front().posBegin;
+
+	// If OpenAL just consumed all the queued buffers, it's position will be zero,
+	// but we don't want to present it as end of the sample rather than zero
+	if(offset == 0) {
+		ALint state;
+		alGetSourcei(impl->handle, AL_SOURCE_STATE, &state);
+		if(state == AL_STOPPED)
+			offset = impl->nextQueuePos;
+	}
+
+	return offset;
 }
 
 static float _soundSourceTellPos(roADriverSoundSource* self)
@@ -353,9 +381,7 @@ static float _soundSourceTellPos(roADriverSoundSource* self)
 	if(format.samplesPerSecond == 0)
 		return 0;
 
-	ALint offset;
-	alGetSourcei(impl->handle, AL_SAMPLE_OFFSET, &offset);
-	offset += impl->queuedPosBegin;
+	ALint offset = _soundSourceTellPcmPos(self);
 
 	int seconds = offset / format.samplesPerSecond;
 	float fraction = float(offset % format.samplesPerSecond) / format.samplesPerSecond;
@@ -375,6 +401,7 @@ static void _soundSourceSeekPos(roADriverSoundSource* self, float time)
 	if(format.samplesPerSecond == 0)
 		return;
 
+	time = roMaxOf2(0.0f, time);
 	const unsigned samplePos = unsigned(time * format.samplesPerSecond);
 
 	// Ignore request that's beyond the audio length
@@ -384,11 +411,14 @@ static void _soundSourceSeekPos(roADriverSoundSource* self, float time)
 	// Remove all queued buffers and reset the play position to beginning
 	// Call alSourceStop() such that unqueueBuffer() can get effect
 	alSourceStop(impl->handle);
+	for(roSize i=0; i<impl->queuedSubBuffers.size(); ++i)
+		alSourceUnqueueBuffers(impl->handle, 1, &impl->queuedSubBuffers[i].handle);
+	impl->queuedSubBuffers.clear();
 
 	// Call alSourceRewind() to make the sound go though the AL_INITIAL state
-	alSourceRewind(impl->handle);
-	impl->queuedPosBegin = samplePos;
-	impl->queuedPosEnd = samplePos;
+//	alSourceRewind(impl->handle);
+
+	impl->nextQueuePos = samplePos;
 }
 
 static void _tick(roAudioDriver* self)
@@ -417,9 +447,9 @@ static void _tick(roAudioDriver* self)
 		// Request the number of OpenAL Buffers have been processed (played) on the Source
 		ALint buffersProcessed = 0;
 		alGetSourcei(sound.handle, AL_BUFFERS_PROCESSED, &buffersProcessed);
-		roAssert(buffersProcessed <= sound.queuedSubBuffers.size());
+		roAssert(buffersProcessed <= (ALint)sound.queuedSubBuffers.size());
 		while(buffersProcessed) {
-			alSourceUnqueueBuffers(sound.handle, 1, &sound.queuedSubBuffers.front());
+			alSourceUnqueueBuffers(sound.handle, 1, &sound.queuedSubBuffers.front().handle);
 			sound.queuedSubBuffers.remove(0);
 			--buffersProcessed;
 		}
@@ -427,21 +457,25 @@ static void _tick(roAudioDriver* self)
 		// Just very few buffer remains, queue up more
 		if(sound.queuedSubBuffers.size() < 3) {
 			// Look for loaded buffers
-			if(AudioBuffer::SubBuffer* subBuffer = sound.audioBuffer->findSubBuffer(sound.queuedPosEnd)) {
+			if(AudioBuffer::SubBuffer* subBuffer = sound.audioBuffer->findSubBuffer(sound.nextQueuePos)) {
 				// TODO: Handle the case where subBuffer->posBegin didn't align with the requesting position
-				if(subBuffer->posBegin != sound.queuedPosEnd) {
+				if(subBuffer->posBegin != sound.nextQueuePos) {
 				}
 
 				alSourceQueueBuffers(sound.handle, 1, &subBuffer->handle);
-				sound.queuedSubBuffers.pushBack(subBuffer->handle);
-				sound.queuedPosEnd += subBuffer->posEnd - subBuffer->posBegin;
+				SoundSource::QueuedSubBuffer queueItem = { subBuffer->handle, subBuffer->posBegin, subBuffer->posEnd };
+				sound.queuedSubBuffers.pushBack(queueItem);
+				sound.nextQueuePos = subBuffer->posEnd;
 			}
+			else {
+				AudioLoader* loader = sound.audioBuffer->loader;
+				if(!loader)
+					continue;
 
-			AudioLoader* loader = sound.audioBuffer->loader;
-			if(!loader)
-				continue;
-
-			loader->requestPcm(sound.queuedPosEnd);
+				unsigned totalSamples = sound.audioBuffer->format.totalSamples;
+				if(totalSamples == 0 || sound.nextQueuePos < totalSamples)
+					loader->requestPcm(sound.nextQueuePos);
+			}
 		}
 
 		{	// State update
@@ -466,16 +500,13 @@ static void _tick(roAudioDriver* self)
 				if(sound.isPlay)
 					alSourcePlay(sound.handle);
 
-//				if( sound.audioBuffer->format.totalSamples != 0 &&
-//					audiodevice_getSoundCurrentSample(this, &sound) >= sound.audioBuffer->format.totalSamples)
+				if( sound.audioBuffer->format.totalSamples != 0 &&
+					_soundSourceTellPcmPos(&sound) >= (ALint)sound.audioBuffer->format.totalSamples)
 				{
 					// Now the audio reach it's end
-					alSourceRewind(sound.handle);
-					sound.queuedPosEnd = 0;
+//					alSourceRewind(sound.handle);
+					sound.nextQueuePos = 0;
 				}
-
-				if(sound.isPause)
-					alSourcePause(sound.handle);
 
 				if(!sound.isLoop && sound.audioBuffer->format.totalSamples != 0) {
 					sound.isPlay = false;
@@ -503,9 +534,9 @@ roAudioDriver* roNewAudioDriver()
 	ret->deleteSoundSource = _deleteSoundSource;
 	ret->playSoundSource = _playSoundSource;
 	ret->soundSourceIsPlaying = _soundSourceIsPlaying;
-	ret->pauseSoundSource = _pauseSoundSource;
-	ret->resumeSoundSource = _resumeSoundSource;
 	ret->stopSoundSource = _stopSoundSource;
+	ret->soundSourceSetLoop = _soundSourceSetLoop;
+	ret->soundSourceSetPause = _soundSourceSetPause;
 	ret->soundSourceTellPos = _soundSourceTellPos;
 	ret->soundSourceSeekPos = _soundSourceSeekPos;
 	ret->tick = _tick;
