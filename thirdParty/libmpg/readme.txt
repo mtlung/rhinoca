@@ -1,4 +1,4 @@
-The mpg123 library v1.13
+The mpg123 library v1.14.3
 http://www.mpg123.de/
 
 /thridParty/libmpg/ contains the basic source code to compile

@@ -202,6 +202,9 @@ static ssize_t plain_fullread(mpg123_handle *fr,unsigned char *buf, ssize_t coun
 {
 	ssize_t ret,cnt=0;
 
+#ifdef EXTRA_DEBUG
+	debug1("plain fullread of %"SSIZE_P, (size_p)count);
+#endif
 	/*
 		There used to be a check for expected file end here (length value or ID3 flag).
 		This is not needed:
@@ -1038,8 +1041,10 @@ static int default_init(mpg123_handle *fr)
 
 	fr->rdat.read  = fr->rdat.r_read  != NULL ? fr->rdat.r_read  : posix_read;
 	fr->rdat.lseek = fr->rdat.r_lseek != NULL ? fr->rdat.r_lseek : posix_lseek;
+#ifndef NO_ICY
 	/* ICY streams of any sort shall not be seekable. */
 	if(fr->p.icy_interval > 0) fr->rdat.lseek = nix_lseek;
+#endif
 
 	fr->rdat.filelen = get_fileinfo(fr);
 	fr->rdat.filepos = 0;
@@ -1093,6 +1098,7 @@ static int default_init(mpg123_handle *fr)
 
 void open_bad(mpg123_handle *mh)
 {
+	debug("open_bad");
 #ifndef NO_ICY
 	clear_icy(&mh->icy);
 #endif
@@ -1101,6 +1107,7 @@ void open_bad(mpg123_handle *mh)
 #ifndef NO_FEEDER
 	bc_init(&mh->rdat.buffer);
 #endif
+	mh->rdat.filelen = -1;
 }
 
 int open_feed(mpg123_handle *fr)
@@ -1123,6 +1130,8 @@ int open_feed(mpg123_handle *fr)
 	fr->rd = &readers[READER_FEED];
 	fr->rdat.flags = 0;
 	if(fr->rd->init(fr) < 0) return -1;
+
+	debug("feed reader init successful");
 	return 0;
 #endif /* NO_FEEDER */
 }

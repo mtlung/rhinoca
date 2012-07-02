@@ -276,6 +276,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\gapless.h"
+				>
+			</File>
+			<File
 				RelativePath=".\getbits.h"
 				>
 			</File>

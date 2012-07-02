@@ -14,10 +14,7 @@
 #define INDEX_SIZE 1000
 
 /* also gapless playback! */
-#define GAPLESS 1
-/* #ifdef GAPLESS
-#undef GAPLESS
-#endif */
+//#define GAPLESS 1
 
 /* #define DEBUG
 #define EXTRA_DEBUG */
