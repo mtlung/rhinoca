@@ -20,7 +20,7 @@ struct Mp3Loader : public AudioLoader
 		mpg = mpg123_new(NULL, NULL);
 		roAssert(mpg);
 //		mpg123_param(mpg, MPG123_VERBOSE, 4, 0);
-		roVerify(mpg123_param(mpg, MPG123_FLAGS, MPG123_FUZZY | MPG123_SEEKBUFFER | MPG123_GAPLESS, 0) == MPG123_OK);
+		roVerify(mpg123_param(mpg, MPG123_FLAGS, MPG123_FUZZY | MPG123_SEEKBUFFER/* | MPG123_GAPLESS*/, 0) == MPG123_OK);
 
 		// Let the seek index auto-grow and contain an entry for every frame
 		roVerify(mpg123_param(mpg, MPG123_INDEX_SIZE, -1, 0) == MPG123_OK);
@@ -165,11 +165,11 @@ roEXCP_TRY
 		st = fileSystem.seek(stream, fileSeekPos, FileSystem::SeekOrigin_Begin);
 		if(!st) roEXCP_THROW;
 
+		curPcmPos = resultingOffset;
+
 		// Check for IO ready state once again
 		if(fileSystem.readWillBlock(stream, _dataChunkSize))
 			return reSchedule();
-
-		curPcmPos = resultingOffset;
 	}
 
 	// Query the size of the mpg123's internal buffer, 
@@ -201,11 +201,11 @@ roEXCP_TRY
 		roEXCP_THROW;
 	}
 
-	if(readCount == 0)
-		readCount = 0;
-
 	if(decodeBytes <= 0 && readCount > 0)
 		return reSchedule(false);
+
+	// If the "GAPLESS" option in mpg123 has been turned on, this assert may fail
+	roAssert(curPcmPos + decodeBytes / format.blockAlignment == mpg123_tell(mpg));
 
 	// Condition for EOF
 	if(mpgRet == MPG123_DONE || (mpgRet == MPG123_NEED_MORE && st == Status::file_ended)) {
