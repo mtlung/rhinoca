@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "roSubSystems.h"
 #include "render/roFont.h"
+#include "base/roCpuProfiler.h"
 #include "base/roMemoryProfiler.h"
 #include "base/roResource.h"
 #include "base/roSocket.h"
@@ -82,12 +83,14 @@ SubSystems::~SubSystems()
 		roSubSystems = NULL;
 }
 
+static CpuProfiler _cpuProfiler;
 static MemoryProfiler _memoryProfiler;
 
 Status SubSystems::init()
 {
 	Status st;
 	BsdSocket::initApplication();
+	st = _cpuProfiler.init(); if(!st) return st;
 //	st = _memoryProfiler.init(5000); if(!st) return st;
 
 	initTaskPool(*this);
@@ -124,26 +127,37 @@ void SubSystems::shutdown()
 	roDeleteAudioDriver(audioDriver);
 	audioDriver = NULL;
 
+	_cpuProfiler.shutdown();
 //	_memoryProfiler.shutdown();
 	BsdSocket::closeApplication();
 }
 
 void SubSystems::tick()
 {
-	if(taskPool)
-		taskPool->doSomeTask(1.0f / 100.0f);
+	{
+		CpuProfilerScope cpuProfilerScope("SubSystems::tick");
 
-	if(resourceMgr)
-		resourceMgr->tick();
+		if(taskPool)
+			taskPool->doSomeTask(1.0f / 100.0f);
 
-//	_memoryProfiler.tick();
+		if(resourceMgr)
+			resourceMgr->tick();
 
-	if(audioDriver)
-		audioDriver->tick(audioDriver);
+	//	_memoryProfiler.tick();
 
-	if(renderContext) {
-		averageFrameDuration = roStepRunAvg(averageFrameDuration, renderContext->lastFrameDuration, 60);
-		maxFrameDuration = roMaxOf2(maxFrameDuration, renderContext->lastFrameDuration);
+		if(audioDriver)
+			audioDriver->tick(audioDriver);
+
+		if(renderContext) {
+			averageFrameDuration = roStepRunAvg(averageFrameDuration, renderContext->lastFrameDuration, 60);
+			maxFrameDuration = roMaxOf2(maxFrameDuration, renderContext->lastFrameDuration);
+		}
+	}
+
+	_cpuProfiler.tick();
+	if(_cpuProfiler.timeSinceLastReset() >= 1) {
+		String s = _cpuProfiler.report();
+		_cpuProfiler.reset();
 	}
 }
 

@@ -355,6 +355,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roCpuProfiler.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roCpuProfiler.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roFileSystem.cpp"
 				>
 			</File>
@@ -751,7 +759,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\audio\roOggLoader.openal.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\audio\roWaveLoader.openal.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\audio\stb_vorbis.cpp"
 				>
 			</File>
 		</Filter>

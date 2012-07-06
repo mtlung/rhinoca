@@ -2,6 +2,7 @@
 #include "roRenderDriver.h"
 
 #include "../base/roArray.h"
+#include "../base/roCpuProfiler.h"
 #include "../base/roLog.h"
 #include "../base/roMemory.h"
 #include "../base/roStopWatch.h"
@@ -267,6 +268,8 @@ void _driverSwapBuffers_DX11()
 		roAssert(false && "Please call roRDriver->useContext");
 		return;
 	}
+
+	CpuProfilerScope cpuProfilerScope("roRenderDriver::swapBuffer");
 
 	static const float removalTimeOut = 5;
 

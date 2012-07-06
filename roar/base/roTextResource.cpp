@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "roTextResource.h"
 #include "roByteOrder.h"
+#include "roCpuProfiler.h"
 #include "roFileSystem.h"
 #include "roLog.h"
 #include "roTypeCast.h"
@@ -49,6 +50,8 @@ void TextLoader::run(TaskPool* taskPool)
 
 void TextLoader::load(TaskPool* taskPool)
 {
+	CpuProfilerScope cpuProfilerScope("TextLoader::load");
+
 	Status st = Status::ok;
 
 roEXCP_TRY

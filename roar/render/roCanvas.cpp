@@ -4,6 +4,7 @@
 #include "shivavg/openvg.h"
 #include "shivavg/vgu.h"
 #include "shivavg/shContext.h"
+#include "../base/roCpuProfiler.h"
 #include "../base/roLog.h"
 #include "../base/roParser.h"
 #include "../base/roStringHash.h"
@@ -416,6 +417,8 @@ void Canvas::_drawImageDrawcall(roRDriverTexture* texture, roSize quadCount)
 // TODO: There are still rooms for optimization
 void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float srcw, float srch, float dstx, float dsty, float dstw, float dsth)
 {
+	CpuProfilerScope cpuProfilerScope("Canvas::drawImage");
+
 	if(!texture || !texture->width || !texture->height || globalAlpha() <= 0) return;
 
 	const float z = 0;
@@ -740,6 +743,8 @@ void Canvas::destroyGradient(void* gradient)
 
 void Canvas::stroke()
 {
+	CpuProfilerScope cpuProfilerScope("Canvas::stroke");
+
 	const Mat4& m = _currentState.transform;
 	float mat33[] = {
 		m.m00, m.m10, m.m20,
@@ -855,6 +860,8 @@ void Canvas::setStrokeGradient(void* gradient)
 
 void Canvas::fill()
 {
+	CpuProfilerScope cpuProfilerScope("Canvas::fill");
+
 	const Mat4& m = _currentState.transform;
 	float mat33[] = {
 		m.m00, m.m10, m.m20,
@@ -869,6 +876,8 @@ void Canvas::fill()
 
 void Canvas::fillRect(float x, float y, float w, float h)
 {
+	CpuProfilerScope cpuProfilerScope("Canvas::fillRect");
+
 	vgClearPath(_openvg->pathSimpleShape, VG_PATH_CAPABILITY_ALL);
 	vguRect(_openvg->pathSimpleShape, x, y, w, h);
 
@@ -886,6 +895,8 @@ void Canvas::fillRect(float x, float y, float w, float h)
 
 void Canvas::fillText(const char* utf8Str, float x, float y, float maxWidth)
 {
+	CpuProfilerScope cpuProfilerScope("Canvas::fillText");
+
 	if(!roSubSystems || !roSubSystems->fontMgr) return;
 
 	if(FontPtr font = roSubSystems->fontMgr->getFont(_currentState.fontName.c_str())) {

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "roTexture.h"
 #include "roRenderDriver.h"
+#include "../base/roCpuProfiler.h"
 #include "../base/roFileSystem.h"
 #include "../base/roLog.h"
 #include "../base/roMemory.h"
@@ -139,6 +140,8 @@ static void _bgrToRgba(roBytePtr src, roBytePtr dst, unsigned width, unsigned he
 
 void BmpLoader::loadPixelData(TaskPool* taskPool)
 {
+	CpuProfilerScope cpuProfilerScope("BmpLoader::loadPixelData");
+
 	Status st;
 
 roEXCP_TRY

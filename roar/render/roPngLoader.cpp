@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "roTexture.h"
 #include "roRenderDriver.h"
+#include "../base/roCpuProfiler.h"
 #include "../base/roFileSystem.h"
 #include "../base/roLog.h"
 #include "../base/roMemory.h"
@@ -194,6 +195,8 @@ void PngLoader::initTexture(TaskPool* taskPool)
 
 void PngLoader::processData(TaskPool* taskPool)
 {
+	CpuProfilerScope cpuProfilerScope("PngLoader::processData");
+
 	char buff[1024*8];
 
 	if(setjmp(png_jmpbuf(png_ptr)))

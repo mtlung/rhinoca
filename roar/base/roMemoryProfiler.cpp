@@ -12,16 +12,9 @@
 
 namespace ro {
 
+namespace {
+
 static MemoryProfiler* _profiler = NULL;
-
-MemoryProfiler::MemoryProfiler()
-{
-}
-
-MemoryProfiler::~MemoryProfiler()
-{
-	shutdown();
-}
 
 struct ScopeChangeProtection
 {
@@ -113,11 +106,6 @@ typedef LPVOID (WINAPI *MyHeapFree)(HANDLE, DWORD, LPVOID);
 typedef SIZE_T (WINAPI *MyHeapSize)(HANDLE, DWORD, LPCVOID);
 typedef NTSTATUS(NTAPI *MyLdrLoadDll)(PWCHAR, ULONG, PUNICODE_STRING, PHANDLE);
 
-LPVOID WINAPI myHeapAlloc(HANDLE, DWORD, SIZE_T);
-LPVOID WINAPI myHeapReAlloc(HANDLE, DWORD, LPVOID, SIZE_T);
-LPVOID WINAPI myHeapFree(HANDLE, DWORD, LPVOID);
-NTSTATUS NTAPI myLdrLoadDll(PWCHAR, ULONG, PUNICODE_STRING, PHANDLE);
-
 FunctionPatcher _functionPatcher;
 
 MyHeapAlloc		_orgHeapAlloc = NULL;
@@ -158,6 +146,22 @@ TlsStruct* _tlsStruct()
 	}
 
 	return tls;
+}
+
+}	// namespace
+
+LPVOID WINAPI myHeapAlloc(HANDLE, DWORD, SIZE_T);
+LPVOID WINAPI myHeapReAlloc(HANDLE, DWORD, LPVOID, SIZE_T);
+LPVOID WINAPI myHeapFree(HANDLE, DWORD, LPVOID);
+NTSTATUS NTAPI myLdrLoadDll(PWCHAR, ULONG, PUNICODE_STRING, PHANDLE);
+
+MemoryProfiler::MemoryProfiler()
+{
+}
+
+MemoryProfiler::~MemoryProfiler()
+{
+	shutdown();
 }
 
 Status MemoryProfiler::init(roUint16 listeningPort)

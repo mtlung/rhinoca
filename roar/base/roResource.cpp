@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "roResource.h"
+#include "roCpuProfiler.h"
 #include "roLog.h"
 #include "roMemory.h"
 
@@ -44,6 +45,8 @@ ResourceManager::~ResourceManager()
 
 ResourcePtr ResourceManager::load(const char* uri)
 {
+	CpuProfilerScope cpuProfilerScope("ResourceManager::load");
+
 	ScopeLock lock(_mutex);
 
 	Resource* r = _resources.find(uri);
@@ -102,6 +105,8 @@ ResourcePtr ResourceManager::load(const char* uri)
 
 ResourcePtr ResourceManager::load(Resource* r, LoadFunc loadFunc)
 {
+	CpuProfilerScope cpuProfilerScope("ResourceManager::load");
+
 	if(!r || !loadFunc) return NULL;
 
 	ScopeLock lock(_mutex);

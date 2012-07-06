@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "roTexture.h"
 #include "roRenderDriver.h"
+#include "../base/roCpuProfiler.h"
 #include "../base/roFileSystem.h"
 #include "../base/roLog.h"
 #include "../base/roMemory.h"
@@ -130,6 +131,8 @@ void JpegLoader::initTexture(TaskPool* taskPool)
 
 void JpegLoader::loadPixelData(TaskPool* taskPool)
 {
+	CpuProfilerScope cpuProfilerScope("JpegLoader::loadPixelData");
+
 	Status st;
 
 roEXCP_TRY

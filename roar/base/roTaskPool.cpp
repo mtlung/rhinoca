@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "roTaskPool.h"
+#include "roCpuProfiler.h"
 #include "roMemory.h"
-#include "roStopWatch.h"
 #include "../platform/roPlatformHeaders.h"
 
 // Inspired by BitSquid engine:
@@ -146,6 +146,8 @@ TaskPool::~TaskPool()
 
 void TaskPool::sleep(int ms)
 {
+	CpuProfilerScope cpuProfilerScope("TaskPool::sleep");
+
 #ifdef roUSE_PTHREAD
 	::usleep(useconds_t(ms * 1000));
 #else
@@ -400,6 +402,8 @@ void TaskPool::resume(TaskId id)
 
 void TaskPool::doSomeTask(float timeout)
 {
+	CpuProfilerScope cpuProfilerScope("TaskPool::doSomeTask");
+
 	ScopeLock lock(mutex);
 
 	TaskProxy* p = _pendingTasksHead->nextPending;
