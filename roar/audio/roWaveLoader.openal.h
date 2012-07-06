@@ -127,6 +127,8 @@ void WaveLoader::commitHeader(TaskPool* taskPool)
 
 void WaveLoader::loadData(TaskPool* taskPool)
 {
+	CpuProfilerScope cpuProfilerScope("WaveLoader::loadData");
+
 	Status st;
 
 roEXCP_TRY

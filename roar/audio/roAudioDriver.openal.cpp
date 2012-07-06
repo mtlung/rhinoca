@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "roAudioDriver.h"
+#include "../base/roCpuProfiler.h"
 #include "../base/roFileSystem.h"
 #include "../base/roLinkList.h"
 #include "../base/roLog.h"
@@ -258,6 +259,7 @@ struct roAudioDriverImpl : public roAudioDriver
 
 #include "roWaveLoader.openal.h"
 #include "roMp3Loader.openal.h"
+#include "roOggLoader.openal.h"
 
 static void _registerAudioLoaders()
 {
@@ -274,6 +276,7 @@ static void _registerAudioLoaders()
 	registeredResourceMgr = roSubSystems->resourceMgr;
 	roSubSystems->resourceMgr->addExtMapping(extMappingWav);
 	roSubSystems->resourceMgr->addExtMapping(extMappingMp3);
+	roSubSystems->resourceMgr->addExtMapping(extMappingOgg);
 }
 
 static roADriverSoundSource* _newSoundSource(roAudioDriver* self, const roUtf8* uri, const roUtf8* typeHint, bool streaming)
@@ -490,6 +493,8 @@ static void _tick(roAudioDriver* self)
 {
 	roAudioDriverImpl* impl = static_cast<roAudioDriverImpl*>(self);
 	if(!impl) return;
+
+	CpuProfilerScope cpuProfilerScope("roAudioDriver::tick");
 
 	// Loop for the active sound list
 	SoundSource::Active* next = NULL;
