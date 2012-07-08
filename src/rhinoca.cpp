@@ -4,9 +4,7 @@
 #include "context.h"
 #include "../roar/base/roHttpFileSystem.h"
 #include "../roar/base/roLog.h"
-#include "../roar/base/roSocket.h"
 #include "../roar/render/roRenderDriver.h"
-#include "audio/audiodevice.h"
 #include <stdarg.h>	// For va_list
 #include <string.h>
 #include <sys/stat.h>
@@ -23,10 +21,6 @@ JSRuntime* jsrt = NULL;
 void rhinoca_init()
 {
 	jsrt = JS_NewRuntime(8L * 1024L * 1024L);
-
-	roVerify(BsdSocket::initApplication() == 0);
-
-	audiodevice_init();
 }
 
 void rhinoca_close()
@@ -36,10 +30,6 @@ void rhinoca_close()
 
 	jsrt = NULL;
 //	vgDestroyContextSH();
-
-	roVerify(BsdSocket::closeApplication() == 0);
-
-	audiodevice_close();
 }
 
 Rhinoca* rhinoca_create(RhinocaRenderContext* renderContext)

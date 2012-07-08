@@ -2,12 +2,10 @@
 #define __CONTEXT_H__
 
 #include "dom/window.h"
-#include "../roar/base/roResource.h"
+#include "dom/node.h"
 #include "../roar/roSubSystems.h"
 
 extern JSRuntime* jsrt;
-
-struct AudioDevice;
 
 struct Rhinoca
 {
@@ -43,9 +41,10 @@ public:
 
 	RhinocaRenderContext* renderContex;
 
-	AudioDevice* audioDevice;
-
 	ro::SubSystems subSystems;
+
+	ro::LinkList<Dom::Node> renderTickList;
+	ro::LinkList<Dom::Node> audioTickList;
 
 	void* lastCanvas;	/// To determine if we have changed our canvas
 

@@ -5,7 +5,6 @@
 #include "platform.h"
 #include "rhinoca.h"
 #include "xmlparser.h"
-#include "audio/audiodevice.h"
 #include "dom/body.h"
 #include "dom/element.h"
 #include "dom/event.h"
@@ -96,7 +95,6 @@ Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 	, domWindow(NULL)
 	, width(0), height(0)
 	, renderContex(rc)
-	, audioDevice(NULL)
 	, _gcFrameIntervalCounter(_gcFrameInterval)
 {
 	jsContext = JS_NewContext(jsrt, 8192);
@@ -110,8 +108,6 @@ Rhinoca::Rhinoca(RhinocaRenderContext* rc)
 	subSystems.userData.pushBack((void*)"GL");
 	subSystems.initRenderDriver = _initRenderDriver;
 	subSystems.init();
-
-	audioDevice = audiodevice_create();
 
 	Dom::registerFactories();
 
@@ -127,21 +123,18 @@ Rhinoca::~Rhinoca()
 	closeDocument();
 
 	JS_DestroyContext(jsContext);
-
-	audiodevice_destroy(audioDevice);
 }
 
 void Rhinoca::update()
 {
+	subSystems.tick();
+
 	if(domWindow)
 		domWindow->update();
 
-	subSystems.resourceMgr->tick();
-	subSystems.resourceMgr->collectInfrequentlyUsed();
-
-	audiodevice_update(audioDevice);
-
-	subSystems.taskPool->doSomeTask(1.0f / 60);
+	for(Dom::Node* n = audioTickList.begin(); n != audioTickList.end(); n = n->next()) {
+		n->tick(0);
+	}
 
 	if(domWindow) {
 		domWindow->render();

@@ -20,7 +20,7 @@ struct Mp3Loader : public AudioLoader
 		mpg = mpg123_new(NULL, NULL);
 		roAssert(mpg);
 //		mpg123_param(mpg, MPG123_VERBOSE, 4, 0);
-		roVerify(mpg123_param(mpg, MPG123_FLAGS, MPG123_FUZZY | MPG123_SEEKBUFFER/* | MPG123_GAPLESS*/, 0) == MPG123_OK);
+		roVerify(mpg123_param(mpg, MPG123_FLAGS, MPG123_FUZZY | MPG123_SEEKBUFFER, 0) == MPG123_OK);
 
 		// Let the seek index auto-grow and contain an entry for every frame
 		roVerify(mpg123_param(mpg, MPG123_INDEX_SIZE, -1, 0) == MPG123_OK);
@@ -123,6 +123,10 @@ void Mp3Loader::commitHeader(TaskPool* taskPool)
 {
 	audioBuffer->format = format;
 	nextFun = &Mp3Loader::checkRequest;
+
+	// Explicity make a starting request
+	requestPcm(0);
+
 	return reSchedule(false, taskPool->mainThreadId());
 }
 
@@ -158,7 +162,7 @@ roEXCP_TRY
 		off_t fileSeekPos = 0;
 		off_t resultingOffset = mpg123_feedseek(mpg, requestPcmPos, SEEK_SET, &fileSeekPos);
 
-		roAssert(resultingOffset <= requestPcmPos);
+		roAssert(num_cast<unsigned>(resultingOffset) <= requestPcmPos);
 
 		if(resultingOffset < 0)
 			roEXCP_THROW;
@@ -206,7 +210,7 @@ roEXCP_TRY
 		return reSchedule(false);
 
 	// If the "GAPLESS" option in mpg123 has been turned on, this assert may fail
-	roAssert(curPcmPos + decodeBytes / format.blockAlignment == mpg123_tell(mpg));
+	roAssert(curPcmPos + decodeBytes / format.blockAlignment == num_cast<unsigned>(mpg123_tell(mpg)));
 
 	// Condition for EOF
 	if(mpgRet == MPG123_DONE || (mpgRet == MPG123_NEED_MORE && st == Status::file_ended)) {
@@ -217,6 +221,9 @@ roEXCP_TRY
 	roAssert(decodeBytes <= pcmData.sizeInByte());
 	pcmData.resize(decodeBytes);
 	nextFun = &Mp3Loader::commitData;
+
+	if(!taskPool->isDone(audioBuffer->taskReady))
+		return;
 
 roEXCP_CATCH
 	roLog("error", "Mp3Loader: Fail to load '%s', reason: %s\n", audioBuffer->uri().c_str(), st.c_str());
@@ -262,7 +269,8 @@ bool resourceLoadMp3(ResourceManager* mgr, Resource* resource)
 
 	TaskPool* taskPool = mgr->taskPool;
 	Mp3Loader* loaderTask = new Mp3Loader(audioBuffer, mgr);
-	audioBuffer->taskReady = audioBuffer->taskLoaded = taskPool->addFinalized(loaderTask, 0, 0, ~taskPool->mainThreadId());
+	audioBuffer->taskReady = taskPool->addFinalized(loaderTask, 0, 0, ~taskPool->mainThreadId());	// Load header
+	audioBuffer->taskLoaded = taskPool->addFinalized(loaderTask, 0, audioBuffer->taskReady, ~taskPool->mainThreadId());	// All load completes
 
 	return true;
 }

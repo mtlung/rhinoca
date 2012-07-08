@@ -29,6 +29,11 @@ struct WaveLoader : public AudioLoader
 		, nextFun(&WaveLoader::loadHeader)
 	{}
 
+	~WaveLoader()
+	{
+		if(stream) fileSystem.closeFile(stream);
+	}
+
 	override void run(TaskPool* taskPool);
 
 	void loadHeader(TaskPool* taskPool);

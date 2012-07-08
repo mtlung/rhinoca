@@ -1,13 +1,12 @@
 #include "pch.h"
 #include "audio.h"
 #include "document.h"
-#include "../audio/audiodevice.h"
 #include "../context.h"
 #include "../path.h"
 #include "../xmlparser.h"
+#include "../../roar/audio/roAudioDriver.h"
 
 using namespace ro;
-using namespace Audio;
 
 namespace Dom {
 
@@ -17,24 +16,6 @@ JSClass HTMLAudioElement::jsClass = {
 	JS_EnumerateStub, JS_ResolveStub,
 	JS_ConvertStub, JsBindable::finalize, JSCLASS_NO_OPTIONAL_MEMBERS
 };
-
-static void triggerLoadEvent(HTMLAudioElement* self, AudioBuffer::State state)
-{
-	Dom::Event* ev = new Dom::Event;
-	ev->type = (state == AudioBuffer::Aborted) ? "error" : "canplaythrough";
-	ev->bubbles = false;
-	ev->target = self;
-	ev->bind(self->jsContext, NULL);
-	self->dispatchEvent(ev);
-}
-
-static void onLoadCallback(TaskPool* taskPool, void* userData)
-{
-	HTMLAudioElement* self = reinterpret_cast<HTMLAudioElement*>(userData);
-	AudioBuffer* b = audiodevice_getSoundBuffer(self->_device, self->_sound);
-	triggerLoadEvent(self, b ? b->state : AudioBuffer::Aborted);
-	self->releaseGcRoot();
-}
 
 static JSBool getLoop(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
@@ -69,7 +50,7 @@ static JSBool construct(JSContext* cx, uintN argc, jsval* vp)
 
 	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
 
-	HTMLAudioElement* audio = new HTMLAudioElement(rh, rh->audioDevice, rh->subSystems.resourceMgr);
+	HTMLAudioElement* audio = new HTMLAudioElement(rh);
 	audio->bind(cx, NULL);
 
 	if(argc > 0)
@@ -83,14 +64,16 @@ static JSFunctionSpec methods[] = {
 	{0}
 };
 
-HTMLAudioElement::HTMLAudioElement(Rhinoca* rh, AudioDevice* device, ResourceManager* mgr)
-	: HTMLMediaElement(rh), _sound(NULL), _device(device), _resourceManager(mgr)
+HTMLAudioElement::HTMLAudioElement(Rhinoca* rh)
+	: HTMLMediaElement(rh), _sound(NULL)
 {
 }
 
 HTMLAudioElement::~HTMLAudioElement()
 {
-	audioSound_destroy(_sound);
+	roAssert(roSubSystems && roSubSystems->audioDriver);
+	if(roAudioDriver* audioDriver = roSubSystems ? roSubSystems->audioDriver : NULL)
+		audioDriver->deleteSoundSource(_sound, true);	// NOTE: We want to audio continue to play even the audio node is garbage collected.
 }
 
 void HTMLAudioElement::bind(JSContext* cx, JSObject* parent)
@@ -114,7 +97,7 @@ static ro::ConstString _tagName = "AUDIO";
 Element* HTMLAudioElement::factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser)
 {
 	HTMLAudioElement* audio = roStrCaseCmp(type, _tagName) == 0 ?
-		new HTMLAudioElement(rh, rh->audioDevice, rh->subSystems.resourceMgr) : NULL;
+		new HTMLAudioElement(rh) : NULL;
 	if(!audio) return NULL;
 
 	return audio;
@@ -125,30 +108,38 @@ const ro::ConstString& HTMLAudioElement::tagName() const
 	return _tagName;
 }
 
+static void triggerLoadEvent(HTMLAudioElement* self, bool aborted)
+{
+	Dom::Event* ev = new Dom::Event;
+	ev->type = aborted ? "error" : "canplaythrough";
+	ev->bubbles = false;
+	ev->target = self;
+	ev->bind(self->jsContext, NULL);
+	self->dispatchEvent(ev);
+}
+
 void HTMLAudioElement::setSrc(const char* uri)
 {
 	Path path;
 	fixRelativePath(uri, rhinoca->documentUrl.c_str(), path);
 
-	if(_sound) audioSound_destroy(_sound);
-	_sound = audiodevice_createSound(_device, uri, _resourceManager);
+	if(!roSubSystems) goto Abort;
+	if(!roSubSystems->taskPool) goto Abort;
+	if(!roSubSystems->audioDriver) goto Abort;
+
+	roAudioDriver* audioDriver = roSubSystems->audioDriver;
+
+	if(_sound) audioDriver->deleteSoundSource(_sound, false);
+	_sound = audioDriver->newSoundSource(audioDriver, uri, "", true);
 	_src = uri;
 
 	if(!_sound) goto Abort;
 
-	if(AudioBuffer* b = audiodevice_getSoundBuffer(_device, _sound)) {
-		// Prevent HTMLImageElement begging GC before the callback finished.
-		addGcRoot();
-		// Register callbacks
-		_resourceManager->taskPool->addCallback(b->taskReady, onLoadCallback, this, TaskPool::threadId());
-	}
-	else
-		goto Abort;
-
+	rhinoca->audioTickList.pushBack(*this);
 	return;
 
 Abort:
-	triggerLoadEvent(this, AudioBuffer::Aborted);
+	triggerLoadEvent(this, true);
 }
 
 const char* HTMLAudioElement::src() const
@@ -158,51 +149,69 @@ const char* HTMLAudioElement::src() const
 
 void HTMLAudioElement::play()
 {
-	if(_sound)
-		audiodevice_playSound(_device, _sound);
+	if(!roSubSystems || !roSubSystems->audioDriver) return;
+	roSubSystems->audioDriver->playSoundSource(_sound);
+	roSubSystems->audioDriver->soundSourceSetPause(_sound, false);
 }
 
 void HTMLAudioElement::pause()
 {
-	if(_sound)
-		audiodevice_pauseSound(_device, _sound);
+	if(!roSubSystems || !roSubSystems->audioDriver) return;
+	roSubSystems->audioDriver->soundSourceSetPause(_sound, true);
 }
 
 Node* HTMLAudioElement::cloneNode(bool recursive)
 {
-	HTMLAudioElement* ret = new HTMLAudioElement(rhinoca, _device, _resourceManager);
+	HTMLAudioElement* ret = new HTMLAudioElement(rhinoca);
 	ret->bind(jsContext, NULL);
 	ret->setSrc(src());
 	ret->setLoop(loop());
 	return ret;
 }
 
+void HTMLAudioElement::tick(float dt)
+{
+	if(!roSubSystems) return;
+	if(!roSubSystems->taskPool) return;
+	if(!roSubSystems->audioDriver) return;
+
+	roAudioDriver* audioDriver = roSubSystems->audioDriver;
+
+	if(audioDriver->soundSourceReady(_sound)) {
+		bool aborted = audioDriver->soundSourceAborted(_sound);
+		Dom::Event* ev = new Dom::Event;
+		ev->type = aborted ? "error" : "canplaythrough";
+		ev->bubbles = false;
+		ev->target = this;
+		ev->bind(jsContext, NULL);
+		dispatchEvent(ev);
+
+		removeThis();	// No longer need to tick
+	}
+}
+
 double HTMLAudioElement::currentTime() const
 {
-	if(_sound)
-		return audiodevice_getSoundCurrentTime(_device, _sound);
-	else
-		return 0;
+	if(!roSubSystems || !roSubSystems->audioDriver) return 0;
+	return roSubSystems->audioDriver->soundSourceTellPos(_sound);
 }
 
 void HTMLAudioElement::setCurrentTime(double time)
 {
-	if(_sound)
-		audiodevice_setSoundCurrentTime(_device, _sound, (float)time);
-}
-
-void HTMLAudioElement::setLoop(bool loop)
-{
-	if(_sound)
-		audiodevice_setSoundLoop(_device, _sound, loop);
+	if(!roSubSystems || !roSubSystems->audioDriver) return;
+	roSubSystems->audioDriver->soundSourceSeekPos(_sound, (float)time);
 }
 
 bool HTMLAudioElement::loop() const
 {
-	if(_sound)
-		return audiodevice_getSoundLoop(_device, _sound);
-	else
-		return false;
+	if(!roSubSystems || !roSubSystems->audioDriver) return 0;
+	return roSubSystems->audioDriver->soundSourceGetLoop(_sound);
+}
+
+void HTMLAudioElement::setLoop(bool loop)
+{
+	if(!roSubSystems || !roSubSystems->audioDriver) return;
+	return roSubSystems->audioDriver->soundSourceSetLoop(_sound, loop);
 }
 
 }	// namespace Dom

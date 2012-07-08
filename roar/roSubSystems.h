@@ -1,3 +1,6 @@
+#ifndef __roSubSystems_h__
+#define __roSubSystems_h__
+
 #include "base/roArray.h"
 #include "base/roSharedPtr.h"
 
@@ -71,3 +74,5 @@ extern bool resourceLoadPng(ResourceManager*, Resource*);
 }	// namespace ro
 
 extern ro::SubSystems* roSubSystems;
+
+#endif	// __roSubSystems_h__

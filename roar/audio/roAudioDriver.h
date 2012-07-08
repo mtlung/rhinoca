@@ -19,17 +19,24 @@ typedef struct roAudioDriver
 
 // Sound source
 	roADriverSoundSource* (*newSoundSource)(roAudioDriver* self, const roUtf8* uri, const roUtf8* typeHint, bool streaming);
-	void (*deleteSoundSource)(roADriverSoundSource* self);
+	void (*deleteSoundSource)(roADriverSoundSource* self, bool delayTillPlaybackFinish);
 	void (*preloadSoundSource)(roADriverSoundSource* self);
 
 	void (*playSoundSource)(roADriverSoundSource* self);	/// Implies rewind
 	bool (*soundSourceIsPlaying)(roADriverSoundSource* self);
 	void (*stopSoundSource)(roADriverSoundSource* self);
+
+	bool (*soundSourceGetLoop)(roADriverSoundSource* self);
 	void (*soundSourceSetLoop)(roADriverSoundSource* self, bool loop);
+
 	void (*soundSourceSetPause)(roADriverSoundSource* self, bool pause);
 
 	float (*soundSourceTellPos)(roADriverSoundSource* self);
 	void (*soundSourceSeekPos)(roADriverSoundSource* self, float time);
+
+	bool (*soundSourceReady)(roADriverSoundSource* self);
+	bool (*soundSourceAborted)(roADriverSoundSource* self);
+	bool (*soundSourceFullyLoaded)(roADriverSoundSource* self);
 
 	void (*setSoundSourcePriority)(roADriverSoundSource* self, roSize priority);
 

@@ -3,8 +3,7 @@
 
 #include "media.h"
 
-struct AudioSound;
-struct AudioDevice;
+struct roADriverSoundSource;
 
 namespace ro {
 struct ResourceManager;
@@ -15,7 +14,7 @@ namespace Dom {
 class HTMLAudioElement : public HTMLMediaElement
 {
 public:
-	HTMLAudioElement(Rhinoca* rh, AudioDevice* device, ro::ResourceManager* mgr);
+	HTMLAudioElement(Rhinoca* rh);
 	~HTMLAudioElement();
 
 // Operations
@@ -28,6 +27,8 @@ public:
 	override void pause();
 
 	override Node* cloneNode(bool recursive);
+
+	override void tick(float dt);
 
 // Attributes
 	override const ro::ConstString& tagName() const;
@@ -43,9 +44,7 @@ public:
 	override bool loop() const;
 	override void setLoop(bool loop);
 
-	AudioSound* _sound;
-	AudioDevice* _device;
-	ro::ResourceManager* _resourceManager;
+	roADriverSoundSource* _sound;
 };	// HTMLAudioElement
 
 }	// namespace Dom

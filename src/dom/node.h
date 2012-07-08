@@ -4,6 +4,7 @@
 #include "event.h"
 #include "../rhinoca.h"
 #include "../jsbindable.h"
+#include "../../roar/base/roLinkList.h"
 
 namespace Dom {
 
@@ -13,7 +14,7 @@ class CanvasRenderingContext2D;
 
 /// Reference: http://www.w3schools.com/dom/dom_node.asp
 /// Reference: https://developer.mozilla.org/en/Gecko_DOM_Reference
-class Node : public JsBindable, public EventTarget
+class Node : public JsBindable, public EventTarget, public ro::ListNode<Node>
 {
 public:
 	explicit Node(Rhinoca* rh);
@@ -52,6 +53,8 @@ public:
 
 	/// Render this node to the window
 	virtual void render(CanvasRenderingContext2D* virtualCanvas) {}
+
+	virtual void tick(float dt) {}
 
 protected:
 	override JSObject* getJSObject() { return jsObject; }

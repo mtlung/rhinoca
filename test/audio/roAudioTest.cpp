@@ -51,5 +51,5 @@ TEST_FIXTURE(AudioTest, soundSource)
 		subSystems.tick();
 	}
 
-	driver->deleteSoundSource(sound);
+	driver->deleteSoundSource(sound, false);
 }

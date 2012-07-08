@@ -215,6 +215,7 @@ struct SoundSource : public roADriverSoundSource, ro::ListNode<SoundSource>
 	bool isPlay;
 	bool isPause;
 	bool isLoop;
+	bool deleteWhenFinish;
 
 	unsigned nextQueuePos;
 
@@ -230,6 +231,7 @@ SoundSource::SoundSource()
 	, isPlay(false)
 	, isPause(true)	// NOTE: Paused by default
 	, isLoop(false)
+	, deleteWhenFinish(false)
 	, nextQueuePos(0)
 {
 	alGenSources(1, &handle);
@@ -293,12 +295,15 @@ static roADriverSoundSource* _newSoundSource(roAudioDriver* self, const roUtf8* 
 	return ret.unref();
 }
 
-static void _deleteSoundSource(roADriverSoundSource* self)
+static void _deleteSoundSource(roADriverSoundSource* self, bool delayTillPlaybackFinish)
 {
 	SoundSource* impl = static_cast<SoundSource*>(self);
 	if(!impl) return;
 
-	_allocator.deleteObj(impl);
+	if(impl->isPlay && delayTillPlaybackFinish)
+		impl->deleteWhenFinish = true;
+	else
+		_allocator.deleteObj(impl);
 }
 
 static void _soundSourceSeekPos(roADriverSoundSource* self, float time);
@@ -333,6 +338,16 @@ static void _stopSoundSource(roADriverSoundSource* self)
 	if(!impl) return;
 	impl->isPlay = false;
 	alSourceStop(impl->handle);
+
+	if(impl->deleteWhenFinish)
+		_deleteSoundSource(impl, false);
+}
+
+static bool _soundSourceGetLoop(roADriverSoundSource* self)
+{
+	SoundSource* impl = static_cast<SoundSource*>(self);
+	if(!impl) return false;
+	return impl->isLoop;
 }
 
 static void _soundSourceSetLoop(roADriverSoundSource* self, bool loop)
@@ -423,26 +438,59 @@ static void _soundSourceSeekPos(roADriverSoundSource* self, float time)
 	impl->nextQueuePos = samplePos;
 }
 
+bool _soundSourceReady(roADriverSoundSource* self)
+{
+	SoundSource* impl = static_cast<SoundSource*>(self);
+	if(!impl) return false;
+	if(!impl->audioBuffer) return false;
+
+	if(!roSubSystems || !roSubSystems->taskPool) {
+		roAssert(false);
+		return false;
+	}
+
+	return roSubSystems->taskPool->isDone(impl->audioBuffer->taskReady);
+}
+
+bool _soundSourceAborted(roADriverSoundSource* self)
+{
+	SoundSource* impl = static_cast<SoundSource*>(self);
+	if(!impl) return false;
+	if(!impl->audioBuffer) return true;
+	return impl->audioBuffer->state == Resource::Aborted;
+}
+
+bool _soundSourceFullyLoaded(roADriverSoundSource* self)
+{
+	SoundSource* impl = static_cast<SoundSource*>(self);
+	if(!impl) return false;
+	if(!impl->audioBuffer) return false;
+
+	if(!roSubSystems || !roSubSystems->taskPool) {
+		roAssert(false);
+		return false;
+	}
+
+	return roSubSystems->taskPool->isDone(impl->audioBuffer->taskLoaded);
+}
+
 static void _tick(roAudioDriver* self)
 {
 	roAudioDriverImpl* impl = static_cast<roAudioDriverImpl*>(self);
 	if(!impl) return;
 
 	// Loop for the active sound list
-	for(SoundSource::Active* n = impl->activeSoundList.begin(); n != impl->activeSoundList.end(); )
+	SoundSource::Active* next = NULL;
+	for(SoundSource::Active* n = impl->activeSoundList.begin(); n != impl->activeSoundList.end(); n=next)
 	{
 		SoundSource& sound = *(roMemberHost(SoundSource, activeListNode, n));
-		SoundSource::Active* next = n->next();
+		next = n->next();
 
 		// Remove in-active sound from the active list
-		if(!sound.isPlay) {
-			sound.removeThis();
-			n = next;
-			continue;
-		}
-
-		if(!sound.audioBuffer) {
-			roAssert(false);
+		if(	!sound.isPlay ||
+			!sound.audioBuffer)	// Load failed
+		{
+			n->removeThis();
 			continue;
 		}
 
@@ -471,12 +519,11 @@ static void _tick(roAudioDriver* self)
 			}
 			else {
 				AudioLoader* loader = sound.audioBuffer->loader;
-				if(!loader)
-					continue;
-
-				unsigned totalSamples = sound.audioBuffer->format.totalSamples;
-				if(totalSamples == 0 || sound.nextQueuePos < totalSamples)
-					loader->requestPcm(sound.nextQueuePos);
+				if(loader) {
+					unsigned totalSamples = sound.audioBuffer->format.totalSamples;
+					if(totalSamples == 0 || sound.nextQueuePos < totalSamples)
+						loader->requestPcm(sound.nextQueuePos);
+				}
 			}
 		}
 
@@ -506,13 +553,15 @@ static void _tick(roAudioDriver* self)
 					_soundSourceTellPcmPos(&sound) >= (ALint)sound.audioBuffer->format.totalSamples)
 				{
 					// Now the audio reach it's end
-//					alSourceRewind(sound.handle);
 					sound.nextQueuePos = 0;
 				}
 
 				if(!sound.isLoop && sound.audioBuffer->format.totalSamples != 0) {
 					sound.isPlay = false;
 					sound.activeListNode.removeThis();
+
+					if(sound.deleteWhenFinish)
+						_deleteSoundSource(&sound, false);
 				}
 
 				break;
@@ -520,8 +569,6 @@ static void _tick(roAudioDriver* self)
 				break;
 			}
 		}
-
-		n = next;
 	}
 }
 
@@ -537,10 +584,14 @@ roAudioDriver* roNewAudioDriver()
 	ret->playSoundSource = _playSoundSource;
 	ret->soundSourceIsPlaying = _soundSourceIsPlaying;
 	ret->stopSoundSource = _stopSoundSource;
+	ret->soundSourceGetLoop = _soundSourceGetLoop;
 	ret->soundSourceSetLoop = _soundSourceSetLoop;
 	ret->soundSourceSetPause = _soundSourceSetPause;
 	ret->soundSourceTellPos = _soundSourceTellPos;
 	ret->soundSourceSeekPos = _soundSourceSeekPos;
+	ret->soundSourceReady = _soundSourceReady;
+	ret->soundSourceAborted = _soundSourceAborted;
+	ret->soundSourceFullyLoaded = _soundSourceFullyLoaded;
 	ret->tick = _tick;
 
 	return ret.unref();
