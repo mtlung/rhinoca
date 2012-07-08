@@ -164,6 +164,8 @@ void AudioBuffer::addSubBuffer(unsigned pcmPosition, const char* data, roSize si
 			break;
 	}
 
+	i = roMinOf2(i, subBuffers.size()-1);
+
 	// Trim begin
 	if(subBuffers.isInRange(i) && pcmBegin < subBuffers[i].posEnd) {
 		roSize sizeToTrim = format.blockAlignment * (subBuffers[i].posEnd - pcmBegin);

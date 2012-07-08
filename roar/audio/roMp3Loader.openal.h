@@ -154,11 +154,12 @@ roEXCP_TRY
 	curPcmPos = mpg123_tell(mpg);
 
 	// Perform seek if necessary
-	// NOTE: Seems the seek operation is not pcm offset perfect!
-	// After several seek operation, some slight dis-joint audio may able to hear
 	if(curPcmPos != requestPcmPos) {
 		off_t fileSeekPos = 0;
 		off_t resultingOffset = mpg123_feedseek(mpg, requestPcmPos, SEEK_SET, &fileSeekPos);
+
+		roAssert(resultingOffset <= requestPcmPos);
+
 		if(resultingOffset < 0)
 			roEXCP_THROW;
 
@@ -230,9 +231,6 @@ void Mp3Loader::commitData(TaskPool* taskPool)
 	audioBuffer->format = format;
 
 	unsigned pcmPos = pcmRequestShadow.front();
-
-	if(pcmPos != curPcmPos)
-		pcmPos = pcmPos;
 
 	audioBuffer->addSubBuffer(curPcmPos, pcmData.bytePtr(), pcmData.sizeInByte());
 
