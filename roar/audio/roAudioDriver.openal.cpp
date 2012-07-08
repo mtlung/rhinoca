@@ -343,6 +343,18 @@ static void _stopSoundSource(roADriverSoundSource* self)
 		_deleteSoundSource(impl, false);
 }
 
+static void _soundSourceStopAll(roAudioDriver* self)
+{
+	roAudioDriverImpl* impl = static_cast<roAudioDriverImpl*>(self);
+	if(!impl) return;
+
+	for(SoundSource* n = impl->soundList.begin(); n != impl->soundList.end(); ) {
+		SoundSource* next = n->next();
+		_stopSoundSource(n);
+		n = next;
+	}
+}
+
 static bool _soundSourceGetLoop(roADriverSoundSource* self)
 {
 	SoundSource* impl = static_cast<SoundSource*>(self);
@@ -584,6 +596,7 @@ roAudioDriver* roNewAudioDriver()
 	ret->playSoundSource = _playSoundSource;
 	ret->soundSourceIsPlaying = _soundSourceIsPlaying;
 	ret->stopSoundSource = _stopSoundSource;
+	ret->soundSourceStopAll = _soundSourceStopAll;
 	ret->soundSourceGetLoop = _soundSourceGetLoop;
 	ret->soundSourceSetLoop = _soundSourceSetLoop;
 	ret->soundSourceSetPause = _soundSourceSetPause;

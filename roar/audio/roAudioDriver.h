@@ -25,6 +25,7 @@ typedef struct roAudioDriver
 	void (*playSoundSource)(roADriverSoundSource* self);	/// Implies rewind
 	bool (*soundSourceIsPlaying)(roADriverSoundSource* self);
 	void (*stopSoundSource)(roADriverSoundSource* self);
+	void (*soundSourceStopAll)(roAudioDriver* self);
 
 	bool (*soundSourceGetLoop)(roADriverSoundSource* self);
 	void (*soundSourceSetLoop)(roADriverSoundSource* self, bool loop);

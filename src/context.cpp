@@ -17,6 +17,7 @@
 #include "../roar/base/roFileSystem.h"
 #include "../roar/base/roLog.h"
 #include "../roar/base/roTypeCast.h"
+#include "../roar/audio/roAudioDriver.h"
 #include "../roar/render/roRenderDriver.h"
 
 #ifdef RHINOCA_IOS
@@ -356,6 +357,9 @@ void Rhinoca::closeDocument()
 
 	// Clear all tasks before the VM shutdown, since any task would use the VM
 //	subSystems.taskPool->waitAll();
+
+	if(subSystems.audioDriver)
+		subSystems.audioDriver->soundSourceStopAll(subSystems.audioDriver);
 
 	roVerify(JS_RemoveObjectRoot(jsContext, &jsConsole));
 	jsConsole = NULL;
