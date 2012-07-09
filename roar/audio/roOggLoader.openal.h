@@ -1,161 +1,5 @@
 #include "stb_vorbis.h"
-
-struct RingBuffer
-{
-	RingBuffer() : _rBufIdx(0), _wBufIdx(1), _rPos(0), _wPos(0) {}
-
-	roByte* write(roSize maxSizeToWrite)
-	{
-		roAssert(_wPos == _wBuf().size() && "Call commitWrite() for each write()");
-		_wBuf().incSize(maxSizeToWrite);
-		return &_wBuf()[_wPos];
-	}
-
-	void commitWrite(roSize written)
-	{
-		roAssert(_wPos + written <= _wBuf().size());
-		_wPos += written;
-		_wBuf().resize(_wPos);
-	}
-
-	roByte* read(roSize& maxSizeToRead)
-	{
-		if(_rBuf().size() - _rPos == 0) {
-			roSwap(_rBufIdx, _wBufIdx);
-			_rPos = _wPos = 0;
-			_wBuf().clear();
-		}
-
-		maxSizeToRead = _rBuf().size() - _rPos;
-		if(!maxSizeToRead)
-			return NULL;
-
-		return &_rBuf()[_rPos];
-	}
-
-	void commitRead(roSize read)
-	{
-		roAssert(_rPos + read <= _rBuf().size());
-		_rPos += read;
-	}
-
-	Array<roByte>& _rBuf() { return _buffers[_rBufIdx]; }
-	Array<roByte>& _wBuf() { return _buffers[_wBufIdx]; }
-
-	roSize _rBufIdx, _wBufIdx;
-	roSize _rPos, _wPos;
-	Array<roByte> _buffers[2];	/// Two buffers, one for read and one for write
-};
-
-struct RingBuffer2
-{
-	RingBuffer2()
-		: readPos(0), writePos(0)
-	{}
-
-	roByte* write(roSize maxSizeToWrite)
-	{
-		roAssert(writePos == buffer.size() && "Call commitWrite() for each write()");
-		buffer.incSize(maxSizeToWrite);
-		return &buffer[writePos];
-	}
-
-	void commitWrite(roSize written)
-	{
-		roAssert(writePos + written <= buffer.size());
-		writePos += written;
-		buffer.resize(writePos);
-	}
-
-	roByte* read(roSize& maxSizeToRead)
-	{
-		maxSizeToRead = writePos - readPos;
-		return &buffer[readPos];
-	}
-
-	void commitRead(roSize read)
-	{
-		roAssert(readPos + read <= writePos);
-		readPos += read;
-	}
-
-	void clear()
-	{
-		buffer.clear();
-		readPos = writePos = 0;
-	}
-
-	void collectUnusedSpace()
-	{
-		// Move remaining data at the back to the font space
-		roSize sizeToMove = writePos - readPos;
-		if(sizeToMove)
-			memmove(&buffer[0], &buffer[readPos], sizeToMove);
-		buffer.resize(sizeToMove);
-		readPos = 0;
-		writePos = sizeToMove;
-	}
-
-	Array<roByte> buffer;
-	roSize readPos, writePos;
-};	// RingBuffer
-
-struct RingBuffer3
-{
-	RingBuffer3()
-		: buffer(NULL)
-		, readPos(0), writePos(0), endPos(0)
-	{}
-
-	~RingBuffer3()
-	{
-		free(buffer);
-	}
-
-	roByte* write(roSize maxSizeToWrite)
-	{
-		if(writePos + maxSizeToWrite >= endPos) {
-			buffer = (roByte*)realloc(buffer, endPos + maxSizeToWrite);
-			endPos += maxSizeToWrite;
-		}
-		return buffer + writePos;
-	}
-
-	void commitWrite(roSize written)
-	{
-		roAssert(writePos + written <= endPos);
-		writePos += written;
-	}
-
-	roByte* read(roSize& maxSizeToRead)
-	{
-		maxSizeToRead = writePos - readPos;
-		return buffer + readPos;
-	}
-
-	void commitRead(roSize read)
-	{
-		roAssert(readPos + read <= writePos);
-		readPos += read;
-	}
-
-	void clear()
-	{
-		readPos = writePos = 0;
-	}
-
-	void collectUnusedSpace()
-	{
-		// Move remaining data at the back to the font space
-		roSize sizeToMove = writePos - readPos;
-		memcpy(buffer, buffer + readPos, sizeToMove);
-		readPos = 0;
-		writePos = sizeToMove;
-	}
-
-	roByte* buffer;
-	roSize readPos, writePos, endPos;
-};	// RingBuffer3
+#include "../base/roRingBuffer.h"
 
 struct OggLoader : public AudioLoader
 {
@@ -163,6 +7,7 @@ struct OggLoader : public AudioLoader
 		: AudioLoader(b, mgr)
 		, vorbis(NULL)
 		, curPcmPos(0)
+		, bytesForHeader(0), samplePerByte(0)
 		, nextFun(&OggLoader::loadHeader)
 	{
 	}
@@ -186,9 +31,13 @@ struct OggLoader : public AudioLoader
 	stb_vorbis_info vorbisInfo;
 
 	unsigned curPcmPos;
-	RingBuffer3 ringBuffer;
+	RingBuffer ringBuffer;
 	Array<roByte> pcmData;
 	Array<unsigned> pcmRequestShadow;
+
+	// Variables for sample per byte estimation, which in turn is used for seeking.
+	roSize bytesForHeader;
+	float samplePerByte;
 
 	void (OggLoader::*nextFun)(TaskPool*);
 };
@@ -205,7 +54,7 @@ void OggLoader::run(TaskPool* taskPool)
 
 void OggLoader::loadHeader(TaskPool* taskPool)
 {
-	Status st;
+	Status st = Status::ok;
 
 roEXCP_TRY
 	if(!stream) st = fileSystem.openFile(audioBuffer->uri(), stream);
@@ -227,15 +76,17 @@ roEXCP_TRY
 	int error, byteUsed = 0;
 	vorbis = stb_vorbis_open_pushdata(buf, bytesRead, &byteUsed, &error, NULL);
 
-	if(error == VORBIS_need_more_data)
+	if(error == VORBIS_need_more_data) {
+		ringBuffer.flushWrite();
 		return reSchedule();
+	}
 	else if(!vorbis || error != 0)
 		roEXCP_THROW;
 
 	// Reading of header success
 	ringBuffer.commitRead(byteUsed);
-	ringBuffer.collectUnusedSpace();
 	vorbisInfo = stb_vorbis_get_info(vorbis);
+	bytesForHeader = byteUsed;
 
 	format.channels = vorbisInfo.channels;
 	format.samplesPerSecond = vorbisInfo.sample_rate;
@@ -281,12 +132,25 @@ void OggLoader::processRequest(TaskPool* taskPool)
 roEXCP_TRY
 	if(!stream) { st = Status::pointer_is_null; roEXCP_THROW; }
 
-	if(fileSystem.readWillBlock(stream, _dataChunkSize))
-		return reSchedule();
-
 	roAssert(!pcmRequestShadow.isEmpty());
 
 	unsigned requestPcmPos = pcmRequestShadow.front();
+
+	int posTmp = stb_vorbis_get_sample_offset(vorbis);
+
+	if(posTmp != -1 && posTmp != requestPcmPos) {
+		samplePerByte *= float(posTmp) / requestPcmPos;
+		roSize fileSeekPos = bytesForHeader + unsigned(float(requestPcmPos) / samplePerByte);
+		fileSystem.seek(stream, fileSeekPos, FileSystem::SeekOrigin_Begin);
+		stb_vorbis_flush_pushdata(vorbis);
+		ringBuffer.clear();
+	}
+
+	if(posTmp != -1)
+		curPcmPos = posTmp;
+
+	if(fileSystem.readWillBlock(stream, _dataChunkSize))
+		return reSchedule();
 
 	// Read from stream and put to ring buffer
 	roByte* buf = ringBuffer.write(_dataChunkSize);
@@ -317,8 +181,10 @@ roEXCP_TRY
 		byteUsed = stb_vorbis_decode_frame_pushdata(vorbis, buf, readCount, NULL, &outputs, &sampleCount);
 
 		// Not enough data in the buffer to construct a single frame, skip to next turn
-		if(!byteUsed)
+		if(!byteUsed) {
+			ringBuffer.flushWrite();
 			break;
+		}
 
 		ringBuffer.commitRead(byteUsed);
 
@@ -330,10 +196,9 @@ roEXCP_TRY
 		pcmData.incSize(sampleCount * numChannels * 2);
 		stb_vorbis_channels_short_interleaved(numChannels, (short*)&pcmData[offset], vorbisInfo.channels, outputs, 0, sampleCount);
 
-		curPcmPos += sampleCount;
+//		curPcmPos += sampleCount;
+		samplePerByte = samplePerByte * 0.9f + float(sampleCount) / readCount;
 	}
-
-	ringBuffer.collectUnusedSpace();
 
 	// Condition for EOF
 /*	if(mpgRet == MPG123_DONE || (mpgRet == MPG123_NEED_MORE && st == Status::file_ended)) {

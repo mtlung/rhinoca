@@ -155,12 +155,13 @@ void Mp3Loader::processRequest(TaskPool* taskPool)
 roEXCP_TRY
 	if(!stream) { st = Status::pointer_is_null; roEXCP_THROW; }
 
+	roAssert(!pcmRequestShadow.isEmpty());
+
 	if(fileSystem.readWillBlock(stream, _dataChunkSize))
 		return reSchedule();
 
-	roAssert(!pcmRequestShadow.isEmpty());
-
 	unsigned requestPcmPos = pcmRequestShadow.front();
+
 	curPcmPos = mpg123_tell(mpg);
 
 	// Perform seek if necessary

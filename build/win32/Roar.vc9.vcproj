@@ -459,6 +459,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roRingBuffer.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roSerializer.cpp"
 				>
 			</File>
