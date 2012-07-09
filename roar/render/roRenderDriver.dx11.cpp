@@ -1820,14 +1820,12 @@ static void _drawPrimitive(roRDriverPrimitiveType type, roSize offset, roSize ve
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx) return;
 
-	roAssert(offset <= vertexCount);
-
 	// We emulate triangle fan for DX11
 	if(type == roRDriverPrimitiveType_TriangleFan)
 	{
 		roAssert(vertexCount < TypeOf<roUint16>::valueMax());
 
-		roSize indexCount = (vertexCount - offset - 2) * 3;
+		roSize indexCount = (vertexCount - 2) * 3;
 		roRDriverBufferImpl* idxBuffer = (roRDriverBufferImpl*)ctx->triangleFanIndexBuffer;
 
 		if(ctx->triangleFanIndexBufferSize < indexCount)
@@ -1848,7 +1846,7 @@ static void _drawPrimitive(roRDriverPrimitiveType type, roSize offset, roSize ve
 
 		ctx->dxDeviceContext->IASetIndexBuffer(idxBuffer->dxBuffer, DXGI_FORMAT_R16_UINT, 0);
 		ctx->dxDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ctx->dxDeviceContext->DrawIndexed(num_cast<UINT>(indexCount), 0, 0);
+		ctx->dxDeviceContext->DrawIndexed(num_cast<UINT>(indexCount), 0, offset);
 	}
 	else {
 		ctx->dxDeviceContext->IASetPrimitiveTopology(_primitiveTypeMappings[type]);
