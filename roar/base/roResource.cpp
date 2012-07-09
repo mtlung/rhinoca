@@ -45,7 +45,7 @@ ResourceManager::~ResourceManager()
 
 ResourcePtr ResourceManager::load(const char* uri)
 {
-	CpuProfilerScope cpuProfilerScope("ResourceManager::load");
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 	ScopeLock lock(_mutex);
 
@@ -105,7 +105,7 @@ ResourcePtr ResourceManager::load(const char* uri)
 
 ResourcePtr ResourceManager::load(Resource* r, LoadFunc loadFunc)
 {
-	CpuProfilerScope cpuProfilerScope("ResourceManager::load");
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 	if(!r || !loadFunc) return NULL;
 

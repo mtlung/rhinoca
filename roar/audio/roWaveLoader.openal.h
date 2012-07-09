@@ -127,7 +127,7 @@ void WaveLoader::commitHeader(TaskPool* taskPool)
 
 void WaveLoader::loadData(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope("WaveLoader::loadData");
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 	Status st;
 

@@ -195,7 +195,7 @@ void PngLoader::initTexture(TaskPool* taskPool)
 
 void PngLoader::processData(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope("PngLoader::processData");
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 	char buff[1024*8];
 

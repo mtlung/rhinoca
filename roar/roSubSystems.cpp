@@ -135,7 +135,7 @@ void SubSystems::shutdown()
 void SubSystems::tick()
 {
 	{
-		CpuProfilerScope cpuProfilerScope("SubSystems::tick");
+		CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 		if(taskPool)
 			taskPool->doSomeTask(1.0f / 100.0f);

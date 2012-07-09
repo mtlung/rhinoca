@@ -14,7 +14,7 @@ class CanvasRenderingContext2D;
 
 /// Reference: http://www.w3schools.com/dom/dom_node.asp
 /// Reference: https://developer.mozilla.org/en/Gecko_DOM_Reference
-class Node : public JsBindable, public EventTarget, public ro::ListNode<Node>
+class Node : public JsBindable, public EventTarget
 {
 public:
 	explicit Node(Rhinoca* rh);
@@ -78,6 +78,10 @@ public:
 	Node* previousSibling();
 
 	bool hasChildNodes() const;
+
+	/// Only those node which need to tick every frame will put into the 'tick list'
+	struct TickEntry : public ro::ListNode<Node::TickEntry> {
+	} tickListNode;
 
 	static JSClass jsClass;
 };	// Node

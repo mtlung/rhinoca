@@ -13,6 +13,7 @@
 #include "windowscreen.h"
 #include "../common.h"
 #include "../context.h"
+#include "../../roar/base/roCpuProfiler.h"
 
 using namespace ro;
 
@@ -494,6 +495,8 @@ void Window::dispatchEvent(Event* e)
 
 void Window::update()
 {
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+
 	rhuint64 usSince1970 = microSecondsSince1970();
 
 	// Invoke animation request callbacks
@@ -534,6 +537,8 @@ void Window::update()
 
 void Window::render()
 {
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+
 	if(!document) return;
 
 	// Resize the virtual canvas if needed
@@ -550,9 +555,9 @@ void Window::render()
 	rhinoca->subSystems.renderDriver->clearStencil(0);
 	rhinoca->subSystems.renderDriver->clearColor(1, 1, 1, 1);
 
-	ctx->_canvas.setGlobalColor(0, 0, 0, 0.1f);
-	ctx->_canvas.setFont("italic bold 40pt Calibri");
-	ctx->_canvas.fillText("AT Hello World! Lung Man Tat", 0, 100, 0);
+//	ctx->_canvas.setGlobalColor(0, 0, 0, 0.1f);
+//	ctx->_canvas.setFont("italic bold 40pt Calibri");
+//	ctx->_canvas.fillText("AT Hello World! Lung Man Tat", 0, 100, 0);
 
 	for(NodeIterator i(document); !i.ended(); i.next()) {
 		i->render(ctx);
@@ -585,7 +590,7 @@ TouchData& Window::allocateTouchData(int identifier)
 int Window::findTouchIndexByIdentifier(int identifier) const
 {
 	for(unsigned i=0; i<touches.size(); ++i) {
-		roAssert(touches[i].index == i);
+		roAssert(touches[i].index == (int)i);
 		if(touches[i].identifier == identifier)
 			return i;
 	}

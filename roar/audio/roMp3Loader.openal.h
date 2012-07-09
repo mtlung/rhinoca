@@ -19,13 +19,17 @@ struct Mp3Loader : public AudioLoader
 	{
 		mpg = mpg123_new(NULL, NULL);
 		roAssert(mpg);
+
 //		mpg123_param(mpg, MPG123_VERBOSE, 4, 0);
 		roVerify(mpg123_param(mpg, MPG123_FLAGS, MPG123_FUZZY | MPG123_SEEKBUFFER, 0) == MPG123_OK);
 
 		// Let the seek index auto-grow and contain an entry for every frame
 		roVerify(mpg123_param(mpg, MPG123_INDEX_SIZE, -1, 0) == MPG123_OK);
 
-		roVerify(mpg123_open_feed(mpg) == MPG123_OK);
+		if(mpg123_open_feed(mpg) != MPG123_OK) {
+			roAssert(false);
+			nextFun = &Mp3Loader::abort;
+		}
 	}
 
 	~Mp3Loader()
@@ -144,6 +148,8 @@ void Mp3Loader::checkRequest(TaskPool* taskPool)
 
 void Mp3Loader::processRequest(TaskPool* taskPool)
 {
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+
 	Status st;
 
 roEXCP_TRY

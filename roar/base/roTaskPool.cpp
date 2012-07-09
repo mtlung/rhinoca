@@ -146,7 +146,7 @@ TaskPool::~TaskPool()
 
 void TaskPool::sleep(int ms)
 {
-	CpuProfilerScope cpuProfilerScope("TaskPool::sleep");
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 #ifdef roUSE_PTHREAD
 	::usleep(useconds_t(ms * 1000));
@@ -402,7 +402,7 @@ void TaskPool::resume(TaskId id)
 
 void TaskPool::doSomeTask(float timeout)
 {
-	CpuProfilerScope cpuProfilerScope("TaskPool::doSomeTask");
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 	ScopeLock lock(mutex);
 

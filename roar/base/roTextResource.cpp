@@ -50,7 +50,7 @@ void TextLoader::run(TaskPool* taskPool)
 
 void TextLoader::load(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope("TextLoader::load");
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 	Status st = Status::ok;
 

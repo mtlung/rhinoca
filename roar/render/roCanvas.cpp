@@ -417,7 +417,7 @@ void Canvas::_drawImageDrawcall(roRDriverTexture* texture, roSize quadCount)
 // TODO: There are still rooms for optimization
 void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float srcw, float srch, float dstx, float dsty, float dstw, float dsth)
 {
-	CpuProfilerScope cpuProfilerScope("Canvas::drawImage");
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 	if(!texture || !texture->width || !texture->height || globalAlpha() <= 0) return;
 
@@ -743,7 +743,7 @@ void Canvas::destroyGradient(void* gradient)
 
 void Canvas::stroke()
 {
-	CpuProfilerScope cpuProfilerScope("Canvas::stroke");
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 	const Mat4& m = _currentState.transform;
 	float mat33[] = {
@@ -860,7 +860,7 @@ void Canvas::setStrokeGradient(void* gradient)
 
 void Canvas::fill()
 {
-	CpuProfilerScope cpuProfilerScope("Canvas::fill");
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 	const Mat4& m = _currentState.transform;
 	float mat33[] = {
@@ -876,7 +876,7 @@ void Canvas::fill()
 
 void Canvas::fillRect(float x, float y, float w, float h)
 {
-	CpuProfilerScope cpuProfilerScope("Canvas::fillRect");
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 	vgClearPath(_openvg->pathSimpleShape, VG_PATH_CAPABILITY_ALL);
 	vguRect(_openvg->pathSimpleShape, x, y, w, h);
@@ -895,7 +895,7 @@ void Canvas::fillRect(float x, float y, float w, float h)
 
 void Canvas::fillText(const char* utf8Str, float x, float y, float maxWidth)
 {
-	CpuProfilerScope cpuProfilerScope("Canvas::fillText");
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 	if(!roSubSystems || !roSubSystems->fontMgr) return;
 

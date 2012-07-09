@@ -43,8 +43,8 @@ public:
 
 	ro::SubSystems subSystems;
 
-	ro::LinkList<Dom::Node> renderTickList;
-	ro::LinkList<Dom::Node> audioTickList;
+	ro::LinkList<Dom::Node::TickEntry> renderTickList;
+	ro::LinkList<Dom::Node::TickEntry> audioTickList;
 
 	void* lastCanvas;	/// To determine if we have changed our canvas
 

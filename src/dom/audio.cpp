@@ -135,7 +135,7 @@ void HTMLAudioElement::setSrc(const char* uri)
 
 	if(!_sound) goto Abort;
 
-	rhinoca->audioTickList.pushBack(*this);
+	rhinoca->audioTickList.pushBack(tickListNode);
 	return;
 
 Abort:
@@ -186,7 +186,8 @@ void HTMLAudioElement::tick(float dt)
 		ev->bind(jsContext, NULL);
 		dispatchEvent(ev);
 
-		removeThis();	// No longer need to tick
+		// No longer need to tick
+		tickListNode.removeThis();
 	}
 }
 

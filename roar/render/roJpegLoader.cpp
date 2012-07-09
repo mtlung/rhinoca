@@ -131,7 +131,7 @@ void JpegLoader::initTexture(TaskPool* taskPool)
 
 void JpegLoader::loadPixelData(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope("JpegLoader::loadPixelData");
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 	Status st;
 

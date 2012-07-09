@@ -19,6 +19,7 @@
 #include "../roar/base/roTypeCast.h"
 #include "../roar/audio/roAudioDriver.h"
 #include "../roar/render/roRenderDriver.h"
+#include "../roar/base/roCpuProfiler.h"
 
 #ifdef RHINOCA_IOS
 #	include "context_ios.h"
@@ -130,17 +131,24 @@ void Rhinoca::update()
 {
 	subSystems.tick();
 
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+
 	if(domWindow)
 		domWindow->update();
 
-	for(Dom::Node* n = audioTickList.begin(); n != audioTickList.end(); n = n->next()) {
-		n->tick(0);
+	for(Dom::Node::TickEntry* n = audioTickList.begin(); n != audioTickList.end(); )
+	{
+		Dom::Node::TickEntry* next = n->next();
+		Dom::Node& node = *(roMemberHost(Dom::Node, tickListNode, n));
+		node.tick(0);
+		n = next;
 	}
 
 	if(domWindow) {
 		domWindow->render();
 
 		if(--_gcFrameIntervalCounter == 0) {
+			CpuProfilerScope cpuProfilerScope("JS_MaybeGC");
 			_gcFrameIntervalCounter = _gcFrameInterval;
 			JS_MaybeGC(jsContext);
 		}
@@ -156,6 +164,7 @@ void Rhinoca::screenResized()
 
 void Rhinoca::collectGarbage()
 {
+	CpuProfilerScope cpuProfilerScope("JS_GC");
 	JS_GC(jsContext);
 }
 

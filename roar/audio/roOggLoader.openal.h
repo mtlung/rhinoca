@@ -274,7 +274,7 @@ void OggLoader::checkRequest(TaskPool* taskPool)
 
 void OggLoader::processRequest(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope("OggLoader::processRequest");
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 	Status st;
 

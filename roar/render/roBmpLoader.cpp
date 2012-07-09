@@ -140,7 +140,7 @@ static void _bgrToRgba(roBytePtr src, roBytePtr dst, unsigned width, unsigned he
 
 void BmpLoader::loadPixelData(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope("BmpLoader::loadPixelData");
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 	Status st;
 
