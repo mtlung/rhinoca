@@ -433,8 +433,9 @@ void TaskPool::doSomeTask(float timeout)
 			if(timeout > 0 && watch.getDouble() > beginTime + timeout)
 				return;
 
-			ScopeUnlock unlock(mutex);
-			sleep(0);
+			{	ScopeUnlock unlock(mutex);
+				sleep(0);
+			}
 
 			// Hunt for most depending job, to prevent job starvation.
 			p = (p->dependency && (p->dependency->id == p->dependencyId)) ? p->dependency : next;

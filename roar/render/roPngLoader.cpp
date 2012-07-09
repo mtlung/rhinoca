@@ -230,14 +230,23 @@ void PngLoader::processData(TaskPool* taskPool)
 
 void PngLoader::commit(TaskPool* taskPool)
 {
+roEXCP_TRY
+	// All the header and pixel data may be finished in one go, we might need to call initTexture as well.
+	if(texture->handle->format == 0)
+		if(!roRDriverCurrentContext->driver->initTexture(texture->handle, width, height, 1, pixelDataFormat, roRDriverTextureFlag_None))
+			roEXCP_THROW;
+
 	if(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, 0, pixelData.bytePtr(), 0, NULL)) {
 		texture->state = Resource::Loaded;
 		delete this;
 	}
-	else {
-		nextFun = &PngLoader::abort;
-		return reSchedule(false, taskPool->mainThreadId());
-	}
+	else
+		roEXCP_THROW;
+
+roEXCP_CATCH
+	nextFun = &PngLoader::abort;
+	return reSchedule(false, taskPool->mainThreadId());
+roEXCP_END
 }
 
 void PngLoader::abort(TaskPool* taskPool)

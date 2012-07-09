@@ -258,9 +258,12 @@ void Mp3Loader::commitData(TaskPool* taskPool)
 void Mp3Loader::abort(TaskPool* taskPool)
 {
 	audioBuffer->state = Resource::Aborted;
-	roAssert(audioBuffer->loader == this);
-	audioBuffer->loader = NULL;
-	delete this;
+
+	if(taskPool->isDone(audioBuffer->taskReady)) {
+		roAssert(audioBuffer->loader == this);
+		audioBuffer->loader = NULL;
+		delete this;
+	}
 }
 
 Resource* resourceCreateMp3(ResourceManager* mgr, const char* uri)
