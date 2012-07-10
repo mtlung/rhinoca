@@ -515,13 +515,20 @@ void Canvas::endDrawImageBatch()
 
 // ----------------------------------------------------------------------
 
-float* Canvas::lockPixelData()
+roUint8* Canvas::lockPixelData()
 {
-	return NULL;
+	if(!targetTexture)
+		return NULL;
+
+	return (roUint8*)_driver->mapTexture(targetTexture->handle, roRDriverMapUsage_ReadWrite, 0, 0);
 }
 
 void Canvas::unlockPixelData()
 {
+	if(!targetTexture)
+		return;
+
+	_driver->unmapTexture(targetTexture->handle, 0, 0);
 }
 
 

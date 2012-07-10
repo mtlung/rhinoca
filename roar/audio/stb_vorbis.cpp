@@ -1,6 +1,12 @@
 #include "pch.h"
 #include "stb_vorbis.h"
 
+#ifdef _MSC_VER
+#	pragma warning(disable : 4244) // conversion from 'xx' to 'yy', possible loss of data
+#	pragma warning(disable : 4245) // conversion from 'xx' to 'yy', signed/unsigned mismatch
+#	pragma warning(disable : 4505) // unreferenced local function has been removed
+#endif
+
 //////////////////////////////////////////////////////////////////////////////
 
 // global configuration settings (e.g. set these in the project/makefile),

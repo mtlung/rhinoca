@@ -242,7 +242,7 @@ static JSBool setUseImgDimension(JSContext* cx, JSObject* obj, jsid id, JSBool s
 	if(!JS_ValueToBoolean(cx, *vp, &b))
 		return JS_FALSE;
 
-	roAssert(false);
+//	roAssert(false);
 //	self->useImgDimension = b;
 	return JS_TRUE;
 }
@@ -636,13 +636,16 @@ static JSBool createImageData(JSContext* cx, uintN argc, jsval* vp)
 
 	ImageData* imgData = getJsBindable<ImageData>(cx, vp, 0);
 
-/*	if(imgData)
-		imgData = self->createImageData(cx, imgData);
+	if(imgData) {
+		imgData->init(cx, imgData->width, imgData->height);
+	}
 	else if(argc >= 2) {
 		int32 sw, sh;
-		if(JS_ValueToInt32(cx, JS_ARGV0, &sw) && JS_ValueToInt32(cx, JS_ARGV1, &sh))
-			imgData = self->createImageData(cx, sw, sh);
-	}*/
+		if(JS_ValueToInt32(cx, JS_ARGV0, &sw) && JS_ValueToInt32(cx, JS_ARGV1, &sh)) {
+			imgData = new ImageData;
+			imgData->init(cx, sw, sh);
+		}
+	}
 
 	return imgData ? JS_TRUE : JS_FALSE;
 }
@@ -657,10 +660,22 @@ static JSBool getImageData(JSContext* cx, uintN argc, jsval* vp)
 	roVerify(JS_ValueToInt32(cx, JS_ARGV1, &y));
 	roVerify(JS_ValueToInt32(cx, JS_ARGV2, &w));
 	roVerify(JS_ValueToInt32(cx, JS_ARGV3, &h));
-//	ImageData* imgData = self->getImageData(cx, x, y, w, h);
 
-//	JS_RVAL(cx, vp) = *imgData;
+	ImageData* imgData = new ImageData;
+	imgData->init(cx, w, h);
+	JS_RVAL(cx, vp) = *imgData;
 
+	roUint8* srcPixels = self->_canvas.lockPixelData();
+	if(!srcPixels)
+		return JS_FALSE;
+
+	roTextureBlit(
+		4,
+		(char*)srcPixels, x, y, w, h, self->_canvas.width() * 4,
+		(char*)imgData->rawData(), 0, 0, w, h, w * 4
+	);
+
+	self->_canvas.unlockPixelData();
 	return JS_TRUE;
 }
 
@@ -688,8 +703,17 @@ static JSBool putImageData(JSContext* cx, uintN argc, jsval* vp)
 		roVerify(JS_ValueToInt32(cx, JS_ARGV6, &dirtyHeight));
 	}
 
-//	self->putImageData(imgData, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight);
+	roUint8* dstPixels = self->_canvas.lockPixelData();
+	if(!dstPixels)
+		return JS_FALSE;
 
+	roTextureBlit(
+		4,
+		(char*)imgData->rawData(), dirtyX, dirtyY, dirtyWidth, dirtyHeight, imgData->width * 4,
+		(char*)dstPixels, dx, dy, self->_canvas.width(), self->_canvas.height(), self->_canvas.width() * 4
+	);
+
+	self->_canvas.unlockPixelData();
 	return JS_TRUE;
 }
 

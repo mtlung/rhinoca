@@ -282,24 +282,6 @@ static void _initWinFont(FontData& fontData, HDC hdc)
 	fontData.kerningPairs.condense();
 }
 
-// Copy a texture from one memory to another memory
-// TODO: Move to texture utilities
-static void _texBlit(
-	unsigned bytePerPixel,
-	const char* srcPtr, unsigned srcX, unsigned srcY, unsigned srcWidth, unsigned srcHeight, unsigned srcRowBytes,
-	      char* dstPtr, unsigned dstX, unsigned dstY, unsigned dstWidth, unsigned dstHeight, unsigned dstRowBytes)
-{
-	const char* pSrc = srcPtr;
-	char* pDst = dstPtr;
-	for(unsigned sy=srcY, dy=dstY; sy < srcY + srcHeight && dy < dstY + dstHeight; ++sy, ++dy) {
-		pSrc = srcPtr + srcRowBytes * sy + srcX * bytePerPixel;
-		pDst = dstPtr + dstRowBytes * dy + dstX * bytePerPixel;
-
-		unsigned rowLen = roMinOf2(srcWidth - srcX, dstWidth - dstX);
-		roMemcpy(pDst, pSrc, rowLen * bytePerPixel);
-	}
-}
-
 void FontLoader::processRequest(TaskPool* taskPool)
 {
 	ro::Array<char> glyhpBitmapBuf;
@@ -424,7 +406,7 @@ void FontLoader::processRequest(TaskPool* taskPool)
 
 		// Copy the outline bitmap to the texture atlas
 		unsigned rowLen = roAlignCeiling(glyphMetrics.gmBlackBoxX, 4u);
-		if(!glyhpBitmapBuf.isEmpty()) _texBlit(1,
+		if(!glyhpBitmapBuf.isEmpty()) roTextureBlit(1,
 			glyhpBitmapBuf.bytePtr(), 0, 0, glyphMetrics.gmBlackBoxX, glyphMetrics.gmBlackBoxY, rowLen,
 			reply->bitmapBuf.bytePtr(), fontData->dstX, fontData->dstY, texDimension, texDimension, texDimension * 1);
 

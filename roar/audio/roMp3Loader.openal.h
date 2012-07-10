@@ -67,7 +67,7 @@ static const unsigned _dataChunkSize = 1024 * 16;
 
 void Mp3Loader::loadHeader(TaskPool* taskPool)
 {
-	Status st;
+	Status st = Status::ok;
 
 roEXCP_TRY
 	if(!stream) st = fileSystem.openFile(audioBuffer->uri(), stream);
@@ -115,7 +115,7 @@ roEXCP_TRY
 	roAssert(false);
 
 roEXCP_CATCH
-	roLog("error", "WaveLoader: Fail to load '%s', reason: %s\n", audioBuffer->uri().c_str(), st.c_str());
+	roLog("error", "Mp3Loader: Fail to load '%s', reason: %s\n", audioBuffer->uri().c_str(), st.c_str());
 	nextFun = &Mp3Loader::abort;
 
 roEXCP_END
@@ -221,8 +221,8 @@ roEXCP_TRY
 
 	// Condition for EOF
 	if(mpgRet == MPG123_DONE || (mpgRet == MPG123_NEED_MORE && st == Status::file_ended)) {
-		curPcmPos = mpg123_tell(mpg);
-		format.totalSamples = format.estimatedSamples = curPcmPos;
+		format.totalSamples = format.estimatedSamples = mpg123_tell(mpg);
+		curPcmPos;
 	}
 
 	roAssert(decodeBytes <= pcmData.sizeInByte());

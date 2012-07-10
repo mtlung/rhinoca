@@ -25,4 +25,11 @@ typedef ro::SharedPtr<Texture> TexturePtr;
 
 }	// namespace ro
 
+void roTextureBlit(
+	unsigned bytePerPixel,
+	const char* srcPtr, unsigned srcX, unsigned srcY, unsigned srcWidth, unsigned srcHeight, unsigned srcRowBytes,
+	      char* dstPtr, unsigned dstX, unsigned dstY, unsigned dstWidth, unsigned dstHeight, unsigned dstRowBytes
+);
+
+
 #endif	// __render_roTexture_h__

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "ImageData.h"
+#include "../../roar/base/roUtility.h"
 
 #define XP_WIN
 #include "../../thirdParty/SpiderMonkey/jstypedarray.h"
@@ -78,6 +79,8 @@ void ImageData::init(JSContext* cx, unsigned w, unsigned h, const unsigned char*
 	roAssert(!array);
 	array = js_CreateTypedArray(cx, js::TypedArray::TYPE_UINT8_CLAMPED, w * h * 4);
 	roVerify(JS_SetReservedSlot(cx, *this, 0, OBJECT_TO_JSVAL(array)));
+
+	roZeroMemory(this->rawData(), length());
 }
 
 rhbyte* ImageData::rawData()

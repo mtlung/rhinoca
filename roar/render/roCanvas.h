@@ -36,7 +36,7 @@ struct Canvas
 	void endDrawImageBatch		();
 
 // Pixel manipulation
-	float* lockPixelData		();
+	roUint8* lockPixelData		();
 	void unlockPixelData		();
 
 // Transforms
