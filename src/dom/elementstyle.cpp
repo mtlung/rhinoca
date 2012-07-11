@@ -266,10 +266,8 @@ void ElementStyle::render(CanvasRenderingContext2D* ctx)
 
 		float sx = (float)-backgroundPositionX;
 		float sy = (float)-backgroundPositionY;
-//		float sw = (float)_min(width(), backgroundImage->virtualWidth);
-//		float sh = (float)_min(height(), backgroundImage->virtualHeight);
-		float sw = (float)width();
-		float sh = (float)height();
+		float sw = (float)roMinOf2(width(), backgroundImage->width);
+		float sh = (float)roMinOf2(height(), backgroundImage->height);
 
 		ctx->_canvas.drawImage(
 			backgroundImage->handle,

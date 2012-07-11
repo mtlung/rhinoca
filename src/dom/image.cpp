@@ -284,12 +284,12 @@ unsigned HTMLImageElement::height() const
 
 unsigned HTMLImageElement::naturalWidth() const
 {
-	return texture ? texture->width() : 0;
+	return texture ? texture->width : 0;
 }
 
 unsigned HTMLImageElement::naturalHeight() const
 {
-	return texture ? texture->height() : 0;
+	return texture ? texture->height : 0;
 }
 
 void HTMLImageElement::setWidth(unsigned w)

@@ -6,6 +6,7 @@ namespace ro {
 
 Texture::Texture(const char* uri)
 	: Resource(uri)
+	, width(0), height(0)
 	, handle(NULL)
 {
 }
@@ -16,12 +17,12 @@ Texture::~Texture()
 	roRDriverCurrentContext->driver->deleteTexture(handle);
 }
 
-unsigned Texture::width() const
+unsigned Texture::actualWidth() const
 {
 	return handle ? handle->width : 0;
 }
 
-unsigned Texture::height() const
+unsigned Texture::actualHeight() const
 {
 	return handle ? handle->height : 0;
 }

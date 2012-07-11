@@ -323,12 +323,12 @@ static JSBool drawImage(JSContext* cx, uintN argc, jsval* vp)
 	if(!texture) return JS_FALSE;
 
 //	if(!self->useImgDimension) {
-//		imgw = texture->virtualWidth;
-//		imgh = texture->virtualHeight;
+//		imgw = texture->width;
+//		imgh = texture->height;
 //	}
 
-	const float scalex = 1;//float(texture->virtualWidth) / imgw;
-	const float scaley = 1;//float(texture->virtualHeight) / imgh;
+	const float scalex = float(texture->width) / imgw;
+	const float scaley = float(texture->height) / imgh;
 
 	struct {
 		float sx, sy, sw, sh;	// Source x, y, width and height
@@ -338,20 +338,16 @@ static JSBool drawImage(JSContext* cx, uintN argc, jsval* vp)
 	switch(argc) {
 	case 3:
 		s.sx = s.sy = 0;
-		s.sw = (float)texture->width();
-		s.sh = (float)texture->height();
-//		s.sw = (float)texture->virtualWidth;
-//		s.sh = (float)texture->virtualHeight;
+		s.sw = (float)texture->width;
+		s.sh = (float)texture->height;
 		s.dw = (float)imgw;
 		s.dh = (float)imgh;
 		getFloat(cx, vp, 1, &s.dx, argc-1);
 		break;
 	case 5:
 		s.sx = s.sy = 0;
-		s.sw = (float)texture->width();
-		s.sh = (float)texture->height();
-//		s.sw = (float)texture->virtualWidth;
-//		s.sh = (float)texture->virtualHeight;
+		s.sw = (float)texture->width;
+		s.sh = (float)texture->height;
 		getFloat(cx, vp, 1, &s.dx, argc-1);
 		break;
 	case 9:

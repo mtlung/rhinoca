@@ -15,8 +15,13 @@ struct Texture : public ro::Resource
 // Attributes
 	override ConstString resourceType() const { return "Texture"; }
 
-	unsigned width() const;
-	unsigned height() const;
+	/// Logical width/height, useful in 2D rendering
+	unsigned width;
+	unsigned height;
+
+	/// Width/height from the raw texture data
+	unsigned actualWidth() const;
+	unsigned actualHeight() const;
 
 	roRDriverTexture* handle;
 };	// Texture
