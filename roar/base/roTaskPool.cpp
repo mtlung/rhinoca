@@ -125,6 +125,8 @@ TaskPool::~TaskPool()
 	while(_openTasks)
 		_wait(_openTasks, tId);
 
+	condVar.broadcastNoLock();
+
 	for(roSize i=0; i<_threadCount; ++i) {
 		ScopeUnlock unlock(condVar);
 
@@ -161,7 +163,9 @@ void _run(TaskPool* pool)
 	while(pool->keepRun()) {
 		pool->doSomeTask(0);
 
-		pool->condVar.wait();
+		ScopeLock lock(pool->condVar);
+		if(pool->_keepRun)
+			pool->condVar.waitNoLock();
 	}
 }
 

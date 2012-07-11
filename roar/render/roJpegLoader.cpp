@@ -178,6 +178,8 @@ roEXCP_END
 
 void JpegLoader::commit(TaskPool* taskPool)
 {
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+
 	if(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, 0, pixelData.bytePtr(), 0, NULL)) {
 		texture->state = Resource::Loaded;
 		delete this;

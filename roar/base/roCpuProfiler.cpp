@@ -36,9 +36,10 @@ struct CallstackNode
 	roSize recursionCount;
 	roSize callCount;
 	roSize callDepth() const;
-	float inclusiveTime;
 	float selfTime() const;
+	float inclusiveTime() const;
 
+	float _inclusiveTime;
 	StopWatch stopWatch;
 	mutable RecursiveMutex mutex;
 };	// CallstackNode
@@ -46,7 +47,7 @@ struct CallstackNode
 CallstackNode::CallstackNode(const char name[], CallstackNode* parent)
 	: name(name)
 	, parent(parent), firstChild(NULL), sibling(NULL)
-	, recursionCount(0), callCount(0), inclusiveTime(0)
+	, recursionCount(0), callCount(0), _inclusiveTime(0)
 {}
 
 CallstackNode::~CallstackNode()
@@ -107,7 +108,7 @@ void CallstackNode::begin()
 void CallstackNode::end()
 {
 	if(recursionCount == 0)
-		inclusiveTime += stopWatch.getFloat();
+		_inclusiveTime += stopWatch.getFloat();
 }
 
 void CallstackNode::reset()
@@ -116,7 +117,8 @@ void CallstackNode::reset()
 	{	// Race with CpuProfiler::begin(), CpuProfiler::end()
 		ScopeRecursiveLock lock(mutex);
 		callCount = 0;
-		inclusiveTime = 0;
+		_inclusiveTime = 0;
+		stopWatch.reset();
 		n1 = firstChild;
 		n2 = sibling;
 	}
@@ -143,11 +145,22 @@ float CallstackNode::selfTime() const
 	const CallstackNode* n = static_cast<CallstackNode*>(firstChild);
 	while(n) {
 		ScopeRecursiveLock lock(n->mutex);
-		sum += n->inclusiveTime;
+		sum += n->inclusiveTime();
 		n = n->sibling;
 	}
 
-	return inclusiveTime - sum;
+	return _inclusiveTime - sum;
+}
+
+float CallstackNode::inclusiveTime() const
+{
+	if(recursionCount == 0)
+		return _inclusiveTime;
+
+	// If the recursion count is not zero, means the profil scope
+	// hasn't finish yet, at the moment we try to generate the report.
+	// This happens in multi-thread situation.
+	return _inclusiveTime + stopWatch.getFloat();
 }
 
 CallstackNode* CallstackNode::traverse(CallstackNode* n)
@@ -320,20 +333,18 @@ String CpuProfiler::report(roSize nameLength, float skipMargin) const
 		ScopeRecursiveLock lock(n->mutex);
 
 		// Skip node that have total time less than 1%
-//		if(n->inclusiveTime / _frameCount * percent >= skipMargin)
+//		if(n->_inclusiveTime / _frameCount * percent >= skipMargin)
 		{
 			float selfTime = n->selfTime();
-
-			if(n->parent && !n->parent->parent)
-				selfTime = selfTime;
+			float inclusiveTime = n->inclusiveTime();
 
 			std::streamsize callDepth = std::streamsize(n->callDepth());
 			ss	<< setw(callDepth) << ""
 				<< setw(std::streamsize(nameLength - callDepth)) << n->name
 				<< setprecision(3)
-				<< setw(percentWidth)	<< (n->inclusiveTime / _frameCount * percent)
+				<< setw(percentWidth)	<< (inclusiveTime / _frameCount * percent)
 				<< setw(percentWidth)	<< (selfTime / _frameCount * percent)
-				<< setw(floatWidth)		<< (n->callCount == 0 ? 0 : n->inclusiveTime / n->callCount)
+				<< setw(floatWidth)		<< (n->callCount == 0 ? 0 : inclusiveTime / n->callCount)
 				<< setw(floatWidth)		<< (n->callCount == 0 ? 0 : selfTime / n->callCount)
 				<< setprecision(2)
 				<< setw(floatWidth-2)	<< (float(n->callCount) / _frameCount)
@@ -387,12 +398,14 @@ void CpuProfiler::_end()
 	// Race with CpuProfiler::reset(), CpuProfiler::defaultReport()
 	ScopeRecursiveLock lock(node->mutex);
 
+	roAssert(node->recursionCount > 0);
 	node->recursionCount--;
-	node->end();
 
 	// Only back to the parent when the current node is not inside a recursive function
-	if(node->recursionCount == 0)
+	if(node->recursionCount == 0) {
+		node->end();
 		tls->setCurrentNode(node->parent);
+	}
 }
 
 }	// namespace ro
