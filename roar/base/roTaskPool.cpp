@@ -119,14 +119,14 @@ TaskPool::TaskPool()
 TaskPool::~TaskPool()
 {
 	ThreadId tId = threadId();
-	ScopeLock lock(mutex);
+	ScopeLock lock(condVar);
 
 	_keepRun = false;
 	while(_openTasks)
 		_wait(_openTasks, tId);
 
 	for(roSize i=0; i<_threadCount; ++i) {
-		ScopeUnlock unlock(mutex);
+		ScopeUnlock unlock(condVar);
 
 #ifdef roUSE_PTHREAD
 		pthread_t h = reinterpret_cast<pthread_t>(_threadHandles[i]);
@@ -161,8 +161,7 @@ void _run(TaskPool* pool)
 	while(pool->keepRun()) {
 		pool->doSomeTask(0);
 
-		// TODO: Use condition variable
-		TaskPool::sleep(1);
+		pool->condVar.wait();
 	}
 }
 
@@ -194,7 +193,7 @@ void TaskPool::init(roSize threadCount)
 
 TaskId TaskPool::beginAdd(Task* task, ThreadId affinity)
 {
-	ScopeLock lock(mutex);
+	ScopeLock lock(condVar);
 
 	TaskProxy* proxy = taskList.alloc();
 	proxy->taskPool = this;
@@ -214,7 +213,7 @@ TaskId TaskPool::beginAdd(Task* task, ThreadId affinity)
 
 void TaskPool::addChild(TaskId parent, TaskId child)
 {
-	ScopeLock lock(mutex);
+	ScopeLock lock(condVar);
 
 	TaskProxy* parentProxy = _findProxyById(parent);
 	TaskProxy* childProxy = _findProxyById(child);
@@ -232,7 +231,7 @@ void TaskPool::addChild(TaskId parent, TaskId child)
 
 void TaskPool::dependsOn(TaskId src, TaskId on)
 {
-	ScopeLock lock(mutex);
+	ScopeLock lock(condVar);
 
 	TaskProxy* srcProxy = _findProxyById(src);
 	TaskProxy* onProxy = _findProxyById(on);
@@ -245,7 +244,7 @@ void TaskPool::dependsOn(TaskId src, TaskId on)
 
 void TaskPool::finishAdd(TaskId id)
 {
-	ScopeLock lock(mutex);
+	ScopeLock lock(condVar);
 
 	if(TaskProxy* p = _findProxyById(id)) {
 		roAssert(!p->finalized && "Please call finishAdd() only once");
@@ -256,7 +255,7 @@ void TaskPool::finishAdd(TaskId id)
 
 TaskId TaskPool::addFinalized(Task* task, TaskId parent, TaskId dependency, ThreadId affinity)
 {
-	ScopeLock lock(mutex);
+	ScopeLock lock(condVar);
 
 	TaskProxy* proxy = taskList.alloc();
 	proxy->taskPool = this;
@@ -306,7 +305,7 @@ ThreadId TaskPool::threadId()
 void TaskPool::wait(TaskId id)
 {
 	ThreadId tId = threadId();
-	ScopeLock lock(mutex);
+	ScopeLock lock(condVar);
 	if(TaskProxy* p = _findProxyById(id))
 		_wait(p, tId);
 }
@@ -314,7 +313,7 @@ void TaskPool::wait(TaskId id)
 void TaskPool::waitAll()
 {
 	ThreadId tId = threadId();
-	ScopeLock lock(mutex);
+	ScopeLock lock(condVar);
 
 	while(_openTasks)
 		_wait(_openTasks, tId);
@@ -328,7 +327,7 @@ static const char _debugIndent[_debugMaxIndent+1] = "          ";
 
 void TaskPool::_wait(TaskProxy* p, ThreadId tId)
 {
-	roAssert(mutex.isLocked());
+	roAssert(condVar.isLocked());
 	if(!p) return;
 
 #if DEBUG_PRINT
@@ -367,8 +366,8 @@ void TaskPool::_wait(TaskProxy* p, ThreadId tId)
 				_doTask(p2, tId);
 			else {
 				// If no more task can do we sleep for a while
-				// NOTE: Must release mutex to avoid dead lock
-				ScopeUnlock unlock(mutex);
+				// NOTE: Must release condVar to avoid dead lock
+				ScopeUnlock unlock(condVar);
 				TaskPool::sleep(0);
 			}
 		}
@@ -382,20 +381,20 @@ void TaskPool::_wait(TaskProxy* p, ThreadId tId)
 
 bool TaskPool::isDone(TaskId id)
 {
-	ScopeLock lock(mutex);
+	ScopeLock lock(condVar);
 	return _findProxyById(id) == NULL;
 }
 
 void TaskPool::suspend(TaskId id)
 {
-	ScopeLock lock(mutex);
+	ScopeLock lock(condVar);
 	if(TaskProxy* p = _findProxyById(id))
 		p->suspensionCount++;
 }
 
 void TaskPool::resume(TaskId id)
 {
-	ScopeLock lock(mutex);
+	ScopeLock lock(condVar);
 	if(TaskProxy* p = _findProxyById(id))
 		if(p->suspensionCount > 0)
 			p->suspensionCount--;
@@ -405,7 +404,7 @@ void TaskPool::doSomeTask(float timeout)
 {
 	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
-	ScopeLock lock(mutex);
+	ScopeLock lock(condVar);
 
 	TaskProxy* p = _pendingTasksHead->nextPending;
 
@@ -446,7 +445,7 @@ void TaskPool::doSomeTask(float timeout)
 // NOTE: Recursive and re-entrant
 void TaskPool::_doTask(TaskProxy* p, ThreadId tId)
 {
-	roAssert(mutex.isLocked());
+	roAssert(condVar.isLocked());
 	
 	if(!p || !p->task) return;
 
@@ -471,7 +470,7 @@ void TaskPool::_doTask(TaskProxy* p, ThreadId tId)
 
 	task->_proxy = p;
 
-	{	ScopeUnlock unlock(mutex);
+	{	ScopeUnlock unlock(condVar);
 		task->run(this);
 		task = NULL;	// The task may be deleted, never use the pointer up to this point
 	}
@@ -488,7 +487,7 @@ void TaskPool::_doTask(TaskProxy* p, ThreadId tId)
 
 TaskPool::TaskProxy* TaskPool::_findProxyById(TaskId id)
 {
-	roAssert(mutex.isLocked());
+	roAssert(condVar.isLocked());
 
 	if(!_openTasks) return NULL;
 	
@@ -509,7 +508,7 @@ void TaskPool::_retainTask(TaskProxy* p)
 
 void TaskPool::_releaseTask(TaskProxy* p)
 {
-	roAssert(mutex.isLocked());
+	roAssert(condVar.isLocked());
 	roAssert(p->finalized);
 	p->openChildCount--;
 	if(p->openChildCount == 0 && !p->task)
@@ -518,7 +517,7 @@ void TaskPool::_releaseTask(TaskProxy* p)
 
 void TaskPool::_removeOpenTask(TaskProxy* p)
 {
-	roAssert(mutex.isLocked());
+	roAssert(condVar.isLocked());
 	roAssert(!p->task);
 	if(p->prevOpen) p->prevOpen->nextOpen = p->nextOpen;
 	if(p->nextOpen) p->nextOpen->prevOpen = p->prevOpen;
@@ -528,7 +527,7 @@ void TaskPool::_removeOpenTask(TaskProxy* p)
 
 void TaskPool::_addPendingTask(TaskProxy* p)
 {
-	roAssert(mutex.isLocked());
+	roAssert(condVar.isLocked());
 
 	static const bool addOnTail = true;
 
@@ -546,12 +545,14 @@ void TaskPool::_addPendingTask(TaskProxy* p)
 		end->nextPending = p;
 		_pendingTasksTail->prevPending = p;
 	}
+
 	++_pendingTaskCount;
+	condVar.signalNoLock();
 }
 
 void TaskPool::_removePendingTask(TaskProxy* p)
 {
-	roAssert(mutex.isLocked());
+	roAssert(condVar.isLocked());
 	if(p->prevPending) p->prevPending->nextPending = p->nextPending;
 	if(p->nextPending) p->nextPending->prevPending = p->prevPending;
 	p->prevPending = p->nextPending = NULL;
@@ -602,7 +603,7 @@ void Task::reSchedule(bool suspend)
 {
 	TaskPool::TaskProxy* p = reinterpret_cast<TaskPool::TaskProxy*>(this->_proxy);
 
-	ScopeLock lock(p->taskPool->mutex);
+	ScopeLock lock(p->taskPool->condVar);
 
 	p->task = this;
 	p->taskPool->_addPendingTask(p);
@@ -617,7 +618,7 @@ void Task::reSchedule(bool suspend, ThreadId affinity)
 {
 	TaskPool::TaskProxy* p = reinterpret_cast<TaskPool::TaskProxy*>(this->_proxy);
 
-	ScopeLock lock(p->taskPool->mutex);
+	ScopeLock lock(p->taskPool->condVar);
 
 	p->task = this;
 	p->affinity = affinity;

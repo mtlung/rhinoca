@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "roCondVar.h"
+#include "roCpuProfiler.h"
 #include "../platform/roPlatformHeaders.h"
 
 namespace ro {
@@ -23,10 +24,22 @@ CondVar::~CondVar()
 	if(h[1]) { roVerify(::CloseHandle(h[1]) != 0); h[1] = NULL; }
 }
 
+void CondVar::signal()
+{
+	ScopeLock lock(*this);
+	signalNoLock();
+}
+
 void CondVar::signalNoLock()
 {
 	roAssert(_locked);
 	roVerify(::SetEvent(h[0]) != 0);
+}
+
+void CondVar::broadcast()
+{
+	ScopeLock lock(*this);
+	broadcastNoLock();
 }
 
 void CondVar::broadcastNoLock()
@@ -34,6 +47,12 @@ void CondVar::broadcastNoLock()
 	roAssert(_locked);
 	roVerify(::SetEvent(h[1]) != 0);
 	mBroadcastCount = mWaitCount;
+}
+
+void CondVar::wait()
+{
+	ScopeLock lock(*this);
+	waitNoLock(INFINITE);
 }
 
 void CondVar::waitNoLock()
@@ -45,6 +64,8 @@ void CondVar::waitNoLock()
 #pragma warning(disable: 4702)
 bool CondVar::waitNoLock(roUint32 milliseconds)
 {
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+
 	roAssert(_locked);
 	++mWaitCount;
 

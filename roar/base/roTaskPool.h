@@ -170,7 +170,6 @@ protected:
 
 	ThreadId _mainThreadId;
 
-	mutable Mutex mutex;
 	mutable CondVar condVar;
 };	// TaskPool
 
