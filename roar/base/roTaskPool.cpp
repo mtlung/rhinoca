@@ -104,6 +104,7 @@ TaskPool::TaskPool()
 	: _keepRun(true)
 	, _openTasks(NULL)
 	, _pendingTasksHead(NULL), _pendingTasksTail(NULL)
+	, _pendingTaskCount(0)
 	, _threadCount(0)
 	, _threadHandles(NULL)
 	, _mainThreadId(TaskPool::threadId())
@@ -416,29 +417,28 @@ void TaskPool::doSomeTask(float timeout)
 	const double beginTime = watch.getDouble();
 	ThreadId tId = threadId();
 
+	// A counter for preventing endless looping of the mixed p->nextPending/p->dependency chasing
+	roSize loopCount = 0;
 	while(p && p != _pendingTasksTail) {
-		TaskProxy* next = p->nextPending;
-
-		if(_matchAffinity(p, tId) && !_hasOutstandingDependency(p))
+		if(_matchAffinity(p, tId) && !_hasOutstandingDependency(p) && p->task)
 		{
-			// NOTE: After _doTask(), the 'next' pointer becomes invalid
 			_doTask(p, tId);
 
 			// NOTE: Each time _doTask() is invoked, we start to search task
 			// at the beginning, to avoid the problem of 'next' become invalid,
 			// may be in-efficient, but easier to implement.
 			p = _pendingTasksHead->nextPending;
+			loopCount = 0;
 		}
 		else {
-			if(timeout > 0 && watch.getDouble() > beginTime + timeout)
+			if(timeout > 0 && watch.getFloat() > beginTime + timeout)
 				return;
 
-			{	ScopeUnlock unlock(mutex);
-				sleep(0);
-			}
-
 			// Hunt for most depending job, to prevent job starvation.
-			p = (p->dependency && (p->dependency->id == p->dependencyId)) ? p->dependency : next;
+			p = (p->dependency && (p->dependency->id == p->dependencyId)) ? p->dependency : p->nextPending;
+
+			if(++loopCount > _pendingTaskCount)
+				break;
 		}
 	}
 }
@@ -546,6 +546,7 @@ void TaskPool::_addPendingTask(TaskProxy* p)
 		end->nextPending = p;
 		_pendingTasksTail->prevPending = p;
 	}
+	++_pendingTaskCount;
 }
 
 void TaskPool::_removePendingTask(TaskProxy* p)
@@ -554,6 +555,8 @@ void TaskPool::_removePendingTask(TaskProxy* p)
 	if(p->prevPending) p->prevPending->nextPending = p->nextPending;
 	if(p->nextPending) p->nextPending->prevPending = p->prevPending;
 	p->prevPending = p->nextPending = NULL;
+	roAssert(_pendingTaskCount > 0);
+	--_pendingTaskCount;
 }
 
 bool TaskPool::_matchAffinity(TaskProxy* p, ThreadId tId)

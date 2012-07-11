@@ -1,7 +1,7 @@
 #ifndef __roTaskPool_h__
 #define __roTaskPool_h__
 
-#include "roMutex.h"
+#include "roCondVar.h"
 
 namespace ro {
 
@@ -163,6 +163,7 @@ protected:
 	TaskProxy* _openTasks;			///< Tasks which are not completed yet.
 	TaskProxy* _pendingTasksHead;	///< Tasks which are not assigned to any worker yet, head of link list.
 	TaskProxy* _pendingTasksTail;	///< Tasks which are not assigned to any worker yet, tail of link list.
+	roSize _pendingTaskCount;
 
 	roSize _threadCount;
 	roSize* _threadHandles;
@@ -170,6 +171,7 @@ protected:
 	ThreadId _mainThreadId;
 
 	mutable Mutex mutex;
+	mutable CondVar condVar;
 };	// TaskPool
 
 }	// namespace ro
