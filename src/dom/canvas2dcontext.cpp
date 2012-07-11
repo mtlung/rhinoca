@@ -305,7 +305,7 @@ static JSBool drawImage(JSContext* cx, uintN argc, jsval* vp)
 	ro::Texture* texture = NULL;
 
 	int filter;
-	unsigned imgw, imgh;
+	unsigned imgw = 0, imgh = 0;
 
 	if(HTMLImageElement* img = getJsBindableExactTypeNoThrow<HTMLImageElement>(cx, vp, 0)) {
 		texture = img->texture.get();

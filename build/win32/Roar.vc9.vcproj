@@ -355,6 +355,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roCondVar.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roCondVar.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roCpuProfiler.cpp"
 				>
 			</File>
