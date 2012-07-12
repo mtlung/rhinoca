@@ -2,6 +2,7 @@
 #include "roSubSystems.h"
 #include "render/roFont.h"
 #include "base/roCpuProfiler.h"
+#include "base/roLog.h"
 #include "base/roMemoryProfiler.h"
 #include "base/roResource.h"
 #include "base/roSocket.h"
@@ -134,29 +135,28 @@ void SubSystems::shutdown()
 
 void SubSystems::tick()
 {
-	{
-		CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
-		if(taskPool)
-			taskPool->doSomeTask(1.0f / 100.0f);
+	if(taskPool)
+		taskPool->doSomeTask(1.0f / 100.0f);
 
-		if(resourceMgr)
-			resourceMgr->tick();
+	if(resourceMgr)
+		resourceMgr->tick();
 
-	//	_memoryProfiler.tick();
+//	_memoryProfiler.tick();
 
-		if(audioDriver)
-			audioDriver->tick(audioDriver);
+	if(audioDriver)
+		audioDriver->tick(audioDriver);
 
-		if(renderContext) {
-			averageFrameDuration = roStepRunAvg(averageFrameDuration, renderContext->lastFrameDuration, 60);
-			maxFrameDuration = roMaxOf2(maxFrameDuration, renderContext->lastFrameDuration);
-		}
+	if(renderContext) {
+		averageFrameDuration = roStepRunAvg(averageFrameDuration, renderContext->lastFrameDuration, 60);
+		maxFrameDuration = roMaxOf2(maxFrameDuration, renderContext->lastFrameDuration);
 	}
 
 	_cpuProfiler.tick();
-	if(_cpuProfiler.timeSinceLastReset() >= 1) {
+	if(_cpuProfiler.timeSinceLastReset() >= 3) {
 		String s = _cpuProfiler.report();
+		roLog("verbose", "%s\n", s.c_str());
 		_cpuProfiler.reset();
 	}
 }

@@ -149,7 +149,7 @@ float CallstackNode::selfTime() const
 		n = n->sibling;
 	}
 
-	return _inclusiveTime - sum;
+	return inclusiveTime() - sum;
 }
 
 float CallstackNode::inclusiveTime() const
