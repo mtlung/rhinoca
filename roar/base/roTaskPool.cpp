@@ -106,6 +106,7 @@ TaskPool::TaskPool()
 	, _pendingTasksHead(NULL), _pendingTasksTail(NULL)
 	, _pendingTaskCount(0)
 	, _threadCount(0)
+	, _workerWaitCount(0)
 	, _threadHandles(NULL)
 	, _mainThreadId(TaskPool::threadId())
 {
@@ -125,7 +126,7 @@ TaskPool::~TaskPool()
 	while(_openTasks)
 		_wait(_openTasks, tId);
 
-	condVar.broadcastNoLock();
+	condVar.broadcast();
 
 	for(roSize i=0; i<_threadCount; ++i) {
 		ScopeUnlock unlock(condVar);
@@ -164,8 +165,11 @@ void _run(TaskPool* pool)
 		pool->doSomeTask(0);
 
 		ScopeLock lock(pool->condVar);
-		if(pool->_keepRun)
+		if(pool->_keepRun) {
+			++pool->_workerWaitCount;
 			pool->condVar.waitNoLock();
+			--pool->_workerWaitCount;
+		}
 	}
 }
 
@@ -487,6 +491,12 @@ void TaskPool::_doTask(TaskProxy* p, ThreadId tId)
 		_releaseTask(parent);
 
 	_releaseTask(p);
+
+	if(_workerWaitCount > 0) {
+		// NOTE: After a task has finished, wake up all workers so they have a chance
+		// to notice about the dependency update
+		condVar.signal();
+	}
 }
 
 TaskPool::TaskProxy* TaskPool::_findProxyById(TaskId id)
@@ -551,7 +561,12 @@ void TaskPool::_addPendingTask(TaskProxy* p)
 	}
 
 	++_pendingTaskCount;
-	condVar.signalNoLock();
+
+	if(_workerWaitCount > 0) {
+		// NOTE: We need to do broadcast rather than signal, because we don't know
+		// which worker to wake up such that it match the affinity define in the task
+		condVar.signal();
+	}
 }
 
 void TaskPool::_removePendingTask(TaskProxy* p)

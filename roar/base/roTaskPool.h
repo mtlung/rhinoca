@@ -166,6 +166,7 @@ protected:
 	roSize _pendingTaskCount;
 
 	roSize _threadCount;
+	roSize _workerWaitCount;
 	roSize* _threadHandles;
 
 	ThreadId _mainThreadId;
