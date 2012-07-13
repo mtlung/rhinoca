@@ -495,7 +495,7 @@ void TaskPool::_doTask(TaskProxy* p, ThreadId tId)
 	if(_workerWaitCount > 0) {
 		// NOTE: After a task has finished, wake up all workers so they have a chance
 		// to notice about the dependency update
-		condVar.signal();
+		condVar.broadcast();
 	}
 }
 
@@ -565,7 +565,7 @@ void TaskPool::_addPendingTask(TaskProxy* p)
 	if(_workerWaitCount > 0) {
 		// NOTE: We need to do broadcast rather than signal, because we don't know
 		// which worker to wake up such that it match the affinity define in the task
-		condVar.signal();
+		condVar.broadcast();
 	}
 }
 

@@ -2,6 +2,7 @@
 #include "color.h"
 #include "../common.h"
 #include "../../roar/base/roStringUtility.h"
+#include <stdio.h>
 
 namespace Dom {
 

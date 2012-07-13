@@ -112,7 +112,7 @@ public:
 
 		// NOTE: Special care for the <script> tag, which it's text element may contains '<' and '>' characters
 		// Move until </script> found
-		if(mCurrentNodeType == Event::BeginElement && strcmp(mElementName, "script") == 0) {
+		if(mCurrentNodeType == Event::BeginElement && roStrCaseCmp(mElementName, "script") == 0) {
 			char tmp[] = "</script>";
 			size_t tmpIdx = 0;
 			while(true)	{
@@ -385,7 +385,7 @@ public:
 			return NULL;
 
 		for(Attributes::const_iterator i=mAttributes.begin(); i!=mAttributes.end(); ++i)
-			if(::strcmp(name, i->name) == 0)
+			if(::roStrCaseCmp(name, i->name) == 0)
 				return i->value;
 		return NULL;
 	}

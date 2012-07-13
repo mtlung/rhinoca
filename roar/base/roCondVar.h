@@ -2,6 +2,7 @@
 #define __roCondVar_h__
 
 #include "roMutex.h"
+#include "../platform/roOS.h"
 
 namespace ro {
 
@@ -31,31 +32,31 @@ struct CondVar : public Mutex
 	///		-Some other thread invokes the SignalAll() method for this CondVar.
 	/// \note The implementation (especially on windows) is subject to "Spurious wakeup",
 	/// see http://en.wikipedia.org/wiki/Spurious_wakeup for details.
-	void wait			();
-	void waitNoLock		();
+	void wait		();
+	void waitNoLock	();
 
 	/// Wait with timeout.
 	/// return True if signaled otherwise false when timeout.
-	bool wait			(unsigned timeoutInMs);
-	bool waitNoLock		(unsigned timeoutInMs);
+	bool wait		(unsigned timeoutInMs);
+	bool waitNoLock	(unsigned timeoutInMs);
 
 	/// Wakes up one waiting thread.
 	/// If any threads are waiting on this condition then one is selected for
 	/// waking up. That thread must then re-acquire the lock before returning from await.
-	void signal			();
-	void signalNoLock	();
+	void signal		();
 
 	/// Wakes up all waiting threads.
 	/// If any threads are waiting on this condition then they are all woken up.
 	/// Each thread must re-acquire the lock before it can return from await.
-	void broadcast		();
-	void broadcastNoLock();
+	void broadcast	();
 
 // Private
-#if roCOMPILER_VC
+#if roOS_WIN_MIN_SUPPORTED >= roOS_WIN_VISTA
+	roPtrInt _cd;		// Win32 condition variable
+#elif roCOMPILER_VC
 	void* h[2];     // h[0]:signal, h[1]:broadcast
-	int mWaitCount;
-	int mBroadcastCount;
+	int _waitCount;
+	int _broadcastCount;
 #elif roUSE_PTHREAD
 	bool _waitNoLock(useconds_t microseconds);
 	pthread_cond_t c;

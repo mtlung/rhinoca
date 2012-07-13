@@ -5,10 +5,51 @@
 
 namespace ro {
 
-#if roCOMPILER_VC
+#if roOS_WIN_MIN_SUPPORTED >= roOS_WIN_VISTA
 
 CondVar::CondVar()
-	: mWaitCount(0), mBroadcastCount(0)
+{
+	// If you see this static assert, please check the size of the CONDITION_VARIABLE
+	roStaticAssert(sizeof(_cd) == sizeof(CONDITION_VARIABLE));
+
+	::InitializeConditionVariable(PCONDITION_VARIABLE(&_cd));
+}
+
+CondVar::~CondVar()
+{
+	// No win API to destroy condition variable... ??
+}
+
+void CondVar::signal()
+{
+	::WakeConditionVariable(PCONDITION_VARIABLE(&_cd));
+}
+
+void CondVar::broadcast()
+{
+	::WakeAllConditionVariable(PCONDITION_VARIABLE(&_cd));
+}
+
+bool CondVar::waitNoLock(roUint32 milliseconds)
+{
+#if roDEBUG
+	roAssert(_locked);
+	_locked = false;
+#endif
+
+	bool ret = ::SleepConditionVariableCS(PCONDITION_VARIABLE(&_cd), (LPCRITICAL_SECTION)&_mutex, milliseconds);
+
+#if roDEBUG
+	_locked = true;
+#endif
+
+	return ret;
+}
+
+#elif roCOMPILER_VC
+
+CondVar::CondVar()
+	: _waitCount(0), _broadcastCount(0)
 {
 	// Create auto-reset
 	h[0] = ::CreateEvent(NULL, false, false, NULL);
@@ -26,38 +67,13 @@ CondVar::~CondVar()
 
 void CondVar::signal()
 {
-	ScopeLock lock(*this);
-	signalNoLock();
-}
-
-void CondVar::signalNoLock()
-{
-	roAssert(_locked);
 	roVerify(::SetEvent(h[0]) != 0);
 }
 
 void CondVar::broadcast()
 {
-	ScopeLock lock(*this);
-	broadcastNoLock();
-}
-
-void CondVar::broadcastNoLock()
-{
-	roAssert(_locked);
 	roVerify(::SetEvent(h[1]) != 0);
-	mBroadcastCount = mWaitCount;
-}
-
-void CondVar::wait()
-{
-	ScopeLock lock(*this);
-	waitNoLock(INFINITE);
-}
-
-void CondVar::waitNoLock()
-{
-	waitNoLock(INFINITE);
+	_broadcastCount = _waitCount;
 }
 
 #pragma warning(push)
@@ -67,22 +83,22 @@ bool CondVar::waitNoLock(roUint32 milliseconds)
 	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 	roAssert(_locked);
-	++mWaitCount;
+	++_waitCount;
 
 wait:
 	Mutex::unlock();
 	DWORD ret = ::WaitForMultipleObjects(2, h, false, milliseconds);
 	Mutex::lock();
-	--mWaitCount;
+	--_waitCount;
 
 	switch(ret) {
-	case WAIT_OBJECT_0:	return true;
 	case WAIT_TIMEOUT:	return false;
+	case WAIT_OBJECT_0:	return true;
 	case WAIT_OBJECT_0+1:
-		--mBroadcastCount;
-		if(mBroadcastCount <= 0) {
+		--_broadcastCount;
+		if(_broadcastCount <= 0) {
 			roVerify(::ResetEvent(h[1]) != 0);
-			if(mBroadcastCount < 0)
+			if(_broadcastCount < 0)
 				goto wait;
 		}
 		return true;
@@ -109,19 +125,13 @@ CondVar::~CondVar()
 	roVerify(::pthread_cond_destroy(&c) == 0);
 }
 
-void CondVar::signalNoLock()
+void CondVar::signal()
 {
-#ifndef NDEBUG
-	roAssert(_locked);
-#endif
 	::pthread_cond_signal(&c);
 }
 
-void CondVar::broadcastNoLock()
+void CondVar::broadcast()
 {
-#ifndef NDEBUG
-	roAssert(_locked);
-#endif
 	::pthread_cond_broadcast(&c);
 }
 
@@ -175,5 +185,16 @@ bool CondVar::waitNoLock(roUint32 milliseconds)
 #else
 #	error
 #endif
+
+void CondVar::wait()
+{
+	ScopeLock lock(*this);
+	waitNoLock(INFINITE);
+}
+
+void CondVar::waitNoLock()
+{
+	waitNoLock(INFINITE);
+}
 
 }	// namespace ro

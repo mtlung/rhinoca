@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "path.h"
 #include "../roar/base/roArray.h"
+#include "../roar/platform/roPlatformHeaders.h"
 
 #ifndef _MSC_VER
 #	include <unistd.h>	// for getcwd()
