@@ -4,6 +4,10 @@
 #include "../roar/platform/roOS.h"
 #include "rhinoca.h"
 
-#define XP_WIN
+#ifdef _DEBUG
+#	define DEBUG
+#endif
+
+//#define XP_WIN
 //#include "../thirdParty/SpiderMonkey/jsapi.h"
-#undef XP_WIN
+//#undef XP_WIN

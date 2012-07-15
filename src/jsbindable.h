@@ -79,19 +79,25 @@ static T* getJsBindable(JSContext* cx, jsval* vp)
 template<class T>
 static T* getJsBindable(JSContext* cx, jsval* vp, unsigned paramIdx)
 {
-	return  static_cast<T*>(getJsBindable(cx, JSVAL_TO_OBJECT(JS_ARGV(cx, vp)[paramIdx]), &T::jsClass, JS_ARGV(cx, vp)));
+	jsval param = JS_ARGV(cx, vp)[paramIdx];
+	if(!JSVAL_IS_OBJECT(param)) return NULL;
+	return  static_cast<T*>(getJsBindable(cx, JSVAL_TO_OBJECT(param), &T::jsClass, JS_ARGV(cx, vp)));
 }
 
 template<class T>
 static T* getJsBindableNoThrow(JSContext* cx, jsval* vp, unsigned paramIdx)
 {
-	return getJsBindable<T>(cx, JSVAL_TO_OBJECT(JS_ARGV(cx, vp)[paramIdx]));
+	jsval param = JS_ARGV(cx, vp)[paramIdx];
+	if(!JSVAL_IS_OBJECT(param)) return NULL;
+	return getJsBindable<T>(cx, JSVAL_TO_OBJECT(param));
 }
 
 template<class T>
 static T* getJsBindableExactTypeNoThrow(JSContext* cx, jsval* vp, unsigned paramIdx)
 {
-	return getJsBindableExactType<T>(cx, JSVAL_TO_OBJECT(JS_ARGV(cx, vp)[paramIdx]));
+	jsval param = JS_ARGV(cx, vp)[paramIdx];
+	if(!JSVAL_IS_OBJECT(param)) return NULL;
+	return getJsBindableExactType<T>(cx, JSVAL_TO_OBJECT(param));
 }
 
 class JsString
