@@ -114,8 +114,6 @@ void BmpLoader::initTexture(TaskPool* taskPool)
 {
 	if(roRDriverCurrentContext->driver->initTexture(texture->handle, width, height, 1, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_None))
 	{
-		texture->width = width;
-		texture->height = height;
 		nextFun = &BmpLoader::loadPixelData;
 		return reSchedule(false, ~taskPool->mainThreadId());
 	}

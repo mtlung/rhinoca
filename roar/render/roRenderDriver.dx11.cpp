@@ -1265,7 +1265,7 @@ static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, unsigned a
 	return true;
 }
 
-static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsigned mipIndex, unsigned aryIndex)
+static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsigned mipIndex, unsigned aryIndex, unsigned& rowBytes)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
@@ -1313,8 +1313,8 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 		break;	// Map successfully
 	}
 
-	// Currently for simplicity we assume no row alignment
-	roAssert(mapped.RowPitch == impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes);
+	roAssert(mapped.RowPitch >= impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes);
+	rowBytes = mapped.RowPitch;
 
 	staging->mapped = true;
 	impl->isMapped = true;

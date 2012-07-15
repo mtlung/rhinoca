@@ -293,7 +293,8 @@ TEST_FIXTURE(GraphicsDriverTest, textureUpdate)
 
 		{	// Update the texture using mapTexture
 			const roRDriverMapUsage usage = roRDriverMapUsage_ReadWrite;
-			void* writePtr = driver->mapTexture(texture, usage, 0, 0);
+			unsigned rowBytes = 0;
+			void* writePtr = driver->mapTexture(texture, usage, 0, 0, rowBytes);
 			CHECK(writePtr);
 
 			if(writePtr) {

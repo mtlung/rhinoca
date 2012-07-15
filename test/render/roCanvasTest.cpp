@@ -299,6 +299,43 @@ TEST_FIXTURE(CanvasTest, drawToCanvas)
 	texture = NULL;
 }
 
+TEST_FIXTURE(CanvasTest, drawPixel)
+{
+	createWindow(200, 200);
+	initContext(driverStr[driverIndex]);
+	canvas.init();
+
+	Canvas auxCanvas;
+	auxCanvas.init();
+	auxCanvas.initTargetTexture(context->width, context->height);
+
+	while(keepRun())
+	{
+		canvas.clearRect(0, 0, (float)context->width, (float)context->height);
+
+		roSize rowBytes = 0;
+		roUint8* pixels = auxCanvas.lockPixelWrite(rowBytes);
+
+		for(roSize i=0; i<auxCanvas.height(); ++i) for(roSize j=0; j<auxCanvas.width(); ++j) {
+			const float freq = 3.14159265358979323f / 200;
+			roUint8 r = roUint8(128 * sinf(i * freq) + 127);
+			roUint8 g = roUint8(128 * sinf(j * freq) + 127);
+			roUint8 b = roUint8(128 * cosf(i * freq) + 127);
+
+			const roUint8 color[4] = { r, g, b, 255 };
+			roSize y = auxCanvas.targetTexture->handle->isYAxisUp ? auxCanvas.height() - i : i;
+			roSize offset = y * rowBytes + j * 4;
+			(int&)(pixels[offset]) = (int&)color;
+		}
+
+		auxCanvas.unlockPixelData();
+
+		canvas.drawImage(auxCanvas.targetTexture->handle, 0, 0);
+
+		driver->swapBuffers();
+	}
+}
+
 #include "../../roar/base/roTextResource.h"
 
 TEST_FIXTURE(CanvasTest, drawText)
@@ -320,7 +357,7 @@ TEST_FIXTURE(CanvasTest, drawText)
 //		driver->clearColor(1, 1, 1, 1);
 		canvas.clearRect(0, 0, (float)context->width, (float)context->height);
 
-		canvas.setGlobalColor(1, 1, 1, 0.1f);
+		canvas.setGlobalColor(1, 1, 1, 1);
 
 		canvas.setFont("italic 10pt / 110% Calibri");
 //		canvas.fillText("AT_-Hello world!", 0, 40, 0);

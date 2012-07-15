@@ -183,8 +183,6 @@ void PngLoader::initTexture(TaskPool* taskPool)
 {
 	if(roRDriverCurrentContext->driver->initTexture(texture->handle, width, height, 1, pixelDataFormat, roRDriverTextureFlag_None))
 	{
-		texture->width = width;
-		texture->height = height;
 		nextFun = &PngLoader::processData;
 		return reSchedule(false, ~taskPool->mainThreadId());
 	}
@@ -237,9 +235,6 @@ roEXCP_TRY
 	if(texture->handle->format == 0)
 		if(!roRDriverCurrentContext->driver->initTexture(texture->handle, width, height, 1, pixelDataFormat, roRDriverTextureFlag_None))
 			roEXCP_THROW;
-
-	texture->width = width;
-	texture->height = height;
 
 	if(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, 0, pixelData.bytePtr(), 0, NULL)) {
 		texture->state = Resource::Loaded;

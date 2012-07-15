@@ -16,25 +16,31 @@ struct Texture : public ro::Resource
 	override ConstString resourceType() const { return "Texture"; }
 
 	/// Logical width/height, useful in 2D rendering
-	unsigned width;
-	unsigned height;
+	unsigned width() const;
+	unsigned height() const;
+	void setWidth(unsigned w);
+	void setHeight(unsigned h);
 
 	/// Width/height from the raw texture data
 	unsigned actualWidth() const;
 	unsigned actualHeight() const;
 
 	roRDriverTexture* handle;
+
+// Private
+	unsigned _width;
+	unsigned _height;
 };	// Texture
 
 typedef ro::SharedPtr<Texture> TexturePtr;
 
 }	// namespace ro
 
+/// srcY and dstY are assumed to be Y-down
 void roTextureBlit(
-	unsigned bytePerPixel,
-	const char* srcPtr, unsigned srcX, unsigned srcY, unsigned srcWidth, unsigned srcHeight, unsigned srcRowBytes,
-	      char* dstPtr, unsigned dstX, unsigned dstY, unsigned dstWidth, unsigned dstHeight, unsigned dstRowBytes
+	unsigned bytePerPixel, unsigned dirtyWidth, unsigned dirtyHeight,
+	const char* srcPtr, unsigned srcX, unsigned srcY, unsigned srcHeight, unsigned srcRowBytes, bool srcYUp,
+	      char* dstPtr, unsigned dstX, unsigned dstY, unsigned dstHeight, unsigned dstRowBytes, bool dstYUp
 );
-
 
 #endif	// __render_roTexture_h__

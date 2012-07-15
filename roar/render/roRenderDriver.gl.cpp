@@ -793,6 +793,7 @@ static roRDriverTexture* _newTexture()
 {
 	roRDriverTextureImpl* ret = _allocator.newObj<roRDriverTextureImpl>().unref();
 	memset(ret, 0, sizeof(*ret));
+	ret->isYAxisUp = true;
 	return ret;
 }
 
@@ -989,7 +990,7 @@ static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, unsigned a
 	return true;
 }
 
-static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsigned mipIndex, unsigned aryIndex)
+static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsigned mipIndex, unsigned aryIndex, unsigned& rowBytes)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
@@ -1091,6 +1092,8 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 			glBindTexture(impl->glTarget, 0);
 		}
 	}
+
+	rowBytes = impl->width * mapping->glPixelSize;
 
 	checkError();
 	return ret;

@@ -327,8 +327,8 @@ static JSBool drawImage(JSContext* cx, uintN argc, jsval* vp)
 //		imgh = texture->height;
 //	}
 
-	const float scalex = float(texture->width) / imgw;
-	const float scaley = float(texture->height) / imgh;
+	const float scalex = float(texture->width()) / imgw;
+	const float scaley = float(texture->height()) / imgh;
 
 	struct {
 		float sx, sy, sw, sh;	// Source x, y, width and height
@@ -338,16 +338,16 @@ static JSBool drawImage(JSContext* cx, uintN argc, jsval* vp)
 	switch(argc) {
 	case 3:
 		s.sx = s.sy = 0;
-		s.sw = (float)texture->width;
-		s.sh = (float)texture->height;
+		s.sw = (float)texture->width();
+		s.sh = (float)texture->height();
 		s.dw = (float)imgw;
 		s.dh = (float)imgh;
 		getFloat(cx, vp, 1, &s.dx, argc-1);
 		break;
 	case 5:
 		s.sx = s.sy = 0;
-		s.sw = (float)texture->width;
-		s.sh = (float)texture->height;
+		s.sw = (float)texture->width();
+		s.sh = (float)texture->height();
 		getFloat(cx, vp, 1, &s.dx, argc-1);
 		break;
 	case 9:
@@ -640,6 +640,7 @@ static JSBool createImageData(JSContext* cx, uintN argc, jsval* vp)
 		if(JS_ValueToInt32(cx, JS_ARGV0, &sw) && JS_ValueToInt32(cx, JS_ARGV1, &sh)) {
 			imgData = new ImageData;
 			imgData->init(cx, sw, sh);
+			JS_RVAL(cx, vp) = *imgData;
 		}
 	}
 
@@ -661,14 +662,22 @@ static JSBool getImageData(JSContext* cx, uintN argc, jsval* vp)
 	imgData->init(cx, w, h);
 	JS_RVAL(cx, vp) = *imgData;
 
-	roUint8* srcPixels = self->_canvas.lockPixelData();
+	roSize rowBytes = 0;
+	const roUint8* srcPixels = self->_canvas.lockPixelRead(rowBytes);
 	if(!srcPixels)
 		return JS_FALSE;
 
+	bool srcYUp = self->_canvas.targetTexture->handle->isYAxisUp;
+	bool dstYUp = false;	// HTML5 canvas use Y down
+
+	// Clamp width/height to the smaller one
+	w = roMinOf2(w, (int32)self->_canvas.width() - x);
+	h = roMinOf2(h, (int32)self->_canvas.height() - y);
+
 	roTextureBlit(
-		4,
-		(char*)srcPixels, x, y, w, h, self->_canvas.width() * 4,
-		(char*)imgData->rawData(), 0, 0, w, h, w * 4
+		4, w, h,
+		(char*)srcPixels, x, y, self->_canvas.height(), rowBytes, srcYUp,
+		(char*)imgData->rawData(), 0, 0, imgData->height, w * 4, dstYUp
 	);
 
 	self->_canvas.unlockPixelData();
@@ -699,14 +708,22 @@ static JSBool putImageData(JSContext* cx, uintN argc, jsval* vp)
 		roVerify(JS_ValueToInt32(cx, JS_ARGV6, &dirtyHeight));
 	}
 
-	roUint8* dstPixels = self->_canvas.lockPixelData();
+	roSize rowBytes = 0;
+	roUint8* dstPixels = self->_canvas.lockPixelWrite(rowBytes);
 	if(!dstPixels)
 		return JS_FALSE;
 
+	bool srcYUp = false;	// HTML5 canvas use Y down
+	bool dstYUp = self->_canvas.targetTexture->handle->isYAxisUp;
+
+	// Clamp width/height to the smaller one
+	dirtyWidth = roMinOf2(imgData->width - dirtyX, self->_canvas.width() - dx);
+	dirtyHeight = roMinOf2(imgData->height - dirtyY, self->_canvas.height() - dy);
+
 	roTextureBlit(
-		4,
-		(char*)imgData->rawData(), dirtyX, dirtyY, dirtyWidth, dirtyHeight, imgData->width * 4,
-		(char*)dstPixels, dx, dy, self->_canvas.width(), self->_canvas.height(), self->_canvas.width() * 4
+		4, dirtyWidth, dirtyHeight,
+		(char*)imgData->rawData(), dirtyX, dirtyY, imgData->height, imgData->width * 4, srcYUp,
+		(char*)dstPixels, dx, dy, self->_canvas.height(), rowBytes, dstYUp
 	);
 
 	self->_canvas.unlockPixelData();

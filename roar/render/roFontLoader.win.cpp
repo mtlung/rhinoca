@@ -200,9 +200,10 @@ void FontLoader::checkRequest(TaskPool* taskPool)
 			}
 
 			// Zero the pixels
+			unsigned rowBytes = 0;
 			roUint8* texPtr = (roUint8*)roRDriverCurrentContext->driver->mapTexture(
-				texture->handle, roRDriverMapUsage_Write, 0, 0);
-			roZeroMemory(texPtr, texDimension * texDimension * 1);
+				texture->handle, roRDriverMapUsage_Write, 0, 0, rowBytes);
+			roZeroMemory(texPtr, rowBytes * texDimension);
 			roRDriverCurrentContext->driver->unmapTexture(texture->handle, 0, 0);
 
 			fontData->textures.pushBack(texture);
@@ -210,12 +211,16 @@ void FontLoader::checkRequest(TaskPool* taskPool)
 
 		// Fill in the texture
 		TexturePtr tex = fontData->textures[reply.texIndex];
+		unsigned rowBytes = 0;
 		roUint8* texPtr = (roUint8*)roRDriverCurrentContext->driver->mapTexture(
-			tex->handle, roRDriverMapUsage_ReadWrite, 0, 0);
+			tex->handle, roRDriverMapUsage_ReadWrite, 0, 0, rowBytes);
 
 		// "Adds" the loaded glyphs to the texture
-		for(roSize j=0; j<reply.bitmapBuf.size(); ++j, ++texPtr)
-			*texPtr += reply.bitmapBuf[j];
+		for(roSize y=0; y<tex->height(); ++y) {
+			for(roSize x=0; x<tex->width(); ++x)
+				*(texPtr + x) += reply.bitmapBuf[y * tex->width() + x];
+			texPtr += rowBytes;
+		}
 
 		roRDriverCurrentContext->driver->unmapTexture(tex->handle, 0, 0);
 	}
@@ -406,9 +411,9 @@ void FontLoader::processRequest(TaskPool* taskPool)
 
 		// Copy the outline bitmap to the texture atlas
 		unsigned rowLen = roAlignCeiling(glyphMetrics.gmBlackBoxX, 4u);
-		if(!glyhpBitmapBuf.isEmpty()) roTextureBlit(1,
-			glyhpBitmapBuf.bytePtr(), 0, 0, glyphMetrics.gmBlackBoxX, glyphMetrics.gmBlackBoxY, rowLen,
-			reply->bitmapBuf.bytePtr(), fontData->dstX, fontData->dstY, texDimension, texDimension, texDimension * 1);
+		if(!glyhpBitmapBuf.isEmpty()) roTextureBlit(1, glyphMetrics.gmBlackBoxX, glyphMetrics.gmBlackBoxY,
+			glyhpBitmapBuf.bytePtr(), 0, 0, glyphMetrics.gmBlackBoxY, rowLen, false,
+			reply->bitmapBuf.bytePtr(), fontData->dstX, fontData->dstY, texDimension, texDimension * 1, false);
 
 		g->texIndex = fontData->currentTextureIdx;
 		g->texOffsetX = fontData->dstX;
