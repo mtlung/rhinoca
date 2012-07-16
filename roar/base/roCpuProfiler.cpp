@@ -184,23 +184,14 @@ static CpuProfiler* _profiler = NULL;
 
 struct TlsStruct
 {
-	TlsStruct(const char* name="thread")
+	TlsStruct()
 		: recurseCount(0)
-		, _currentNode(NULL), _threadName(name)
+		, _currentNode(NULL)
 	{}
 
 	CallstackNode* currentNode()
 	{
-		// If node is null, means a new thread is started
-		if(!_currentNode) {
-			CallstackNode* rootNode = reinterpret_cast<CallstackNode*>(_profiler->_rootNode);
-			roAssert(rootNode);
-			recurseCount++;
-			_currentNode = rootNode->getChildByName(_threadName.c_str());
-			recurseCount--;
-		}
-
-		return _currentNode;
+		return _currentNode ? _currentNode : reinterpret_cast<CallstackNode*>(_profiler->_rootNode);
 	}
 
 	CallstackNode* setCurrentNode(CallstackNode* node) {
@@ -208,7 +199,6 @@ struct TlsStruct
 	}
 
 	roSize recurseCount;
-	String _threadName;
 	CallstackNode* _currentNode;
 };	// TlsStruct
 
@@ -273,9 +263,12 @@ Status CpuProfiler::init()
 	_profiler = this;
 	_frameCount = 0;
 	_tlsIndex = ::TlsAlloc();
-	_rootNode = new CallstackNode("root");
+	_rootNode = new CallstackNode("ROOT");
 
 	reset();
+
+	// NOTE: We assume CpuProfiler::init() will be invoked in the main thread
+	_begin("MAIN THREAD");
 
 	return Status::ok;
 }
@@ -337,6 +330,11 @@ String CpuProfiler::report(roSize nameLength, float skipMargin) const
 		{
 			float selfTime = n->selfTime();
 			float inclusiveTime = n->inclusiveTime();
+
+			if(n == _rootNode) {
+				inclusiveTime = -selfTime;
+				selfTime = 0;
+			}
 
 			std::streamsize callDepth = std::streamsize(n->callDepth());
 			ss	<< setw(callDepth) << ""

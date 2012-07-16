@@ -161,6 +161,9 @@ void TaskPool::sleep(int ms)
 
 void _run(TaskPool* pool)
 {
+	String s("WORKER THREAD");	// NOTE: This make sure every thread have it's own copy of the scope name
+	CpuProfilerScope cpuProfilerScope(s.c_str());
+
 	while(pool->keepRun()) {
 		pool->doSomeTask(0);
 
