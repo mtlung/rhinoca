@@ -150,9 +150,6 @@ void HTMLCanvasElement::render(CanvasRenderingContext2D* ctx)
 {
 	Element::render(ctx);
 
-	Window* window = ownerDocument()->window();
-	HTMLCanvasElement* vc = window->virtualCanvas;
-
 	CanvasRenderingContext2D* ctx2d = dynamic_cast<CanvasRenderingContext2D*>(ctx);
 	CanvasRenderingContext2D* self2d = dynamic_cast<CanvasRenderingContext2D*>(context);
 

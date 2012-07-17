@@ -227,8 +227,8 @@ static JSBool getTouches(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 	TouchList* list = new TouchList;
 	list->bind(cx, *self);
 
-	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
-	ro::Array<TouchData>& _touches = rh->domWindow->touches;
+//	Rhinoca* rh = reinterpret_cast<Rhinoca*>(JS_GetContextPrivate(cx));
+//	ro::Array<TouchData>& _touches = rh->domWindow->touches;
 
 	switch(JSID_TO_INT(id)) {
 	case touches:

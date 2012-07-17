@@ -74,6 +74,7 @@ static JSBool setCurrentTime(JSContext* cx, JSObject* obj, jsid id, JSBool stric
 
 static JSPropertySpec properties[] = {
 	{"src", 0, JsBindable::jsPropFlags, getSrc, setSrc},
+	{"readyState", 0, JsBindable::jsPropFlags, getReadyState, JS_StrictPropertyStub},
 	{"autoplay", 0, JsBindable::jsPropFlags, getAutoplay, setAutoplay},
 	{"currentTime", 0, JsBindable::jsPropFlags, getCurrentTime, setCurrentTime},
 	{0}
@@ -102,8 +103,6 @@ static JSBool load(JSContext* cx, uintN argc, jsval* vp)
 
 static JSBool canPlayType(JSContext* cx, uintN argc, jsval* vp)
 {
-	HTMLMediaElement* self = getJsBindable<HTMLMediaElement>(cx, vp);
-
 	JsString jss(cx, JS_ARGV0);
 	if(!jss) return JS_FALSE;
 

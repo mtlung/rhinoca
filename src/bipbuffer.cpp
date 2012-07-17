@@ -35,7 +35,7 @@ bool BipBuffer::reallocBuffer(unsigned buffersize)
 	if(buffersize <= 0 || !_realloc)
 		return false;
 
-	if(_buffer = (unsigned char*)_realloc(_buffer, buffersize)) {
+	if((_buffer = (unsigned char*)_realloc(_buffer, buffersize)) != NULL) {
 		_bufLen = buffersize;
 		return true;
 	}

@@ -417,7 +417,7 @@ bool UrlMatcher::match(Parser* p)
 		whiteSpace(p).any() &&
 		string(p, "url").once() &&
 		(	whiteSpace(p).atLeastOnce() ||
-			(hasParenthesis = character(p, '(').once())
+			((hasParenthesis = character(p, '(').once()) == true)
 		) &&
 		whiteSpace(p).any() &&
 		(	quotedString(p).once(&result) ||

@@ -120,8 +120,8 @@ static JSBool styleSetHeight(JSContext* cx, JSObject* obj, jsid id, JSBool stric
 
 static JSBool styleGetTransform(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 {
-	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
 	// TODO: Implementation
+//	ElementStyle* self = getJsBindable<ElementStyle>(cx, obj);
 	*vp = INT_TO_JSVAL(1);
 	return JS_TRUE;
 }

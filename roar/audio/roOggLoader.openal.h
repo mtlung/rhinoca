@@ -139,7 +139,7 @@ roEXCP_TRY
 
 	int posTmp = stb_vorbis_get_sample_offset(vorbis);
 
-	if(posTmp != -1 && posTmp != requestPcmPos) {
+	if(posTmp != -1 && unsigned(posTmp) != requestPcmPos) {
 		samplePerByte *= float(posTmp) / requestPcmPos;
 		roSize fileSeekPos = bytesForHeader + unsigned(float(requestPcmPos) / samplePerByte);
 		fileSystem.seek(stream, fileSeekPos, FileSystem::SeekOrigin_Begin);
