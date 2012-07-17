@@ -64,7 +64,8 @@ roEXCP_TRY
 		return reSchedule();
 
 	// Read from stream and put to ring buffer
-	roByte* buf = ringBuffer.write(_dataChunkSize);
+	roByte* buf = NULL;
+	st = ringBuffer.write(_dataChunkSize, buf); if(!st) roEXCP_THROW;
 	roUint64 readCount = 0;
 	st = fileSystem.read(stream, buf, _dataChunkSize, readCount);
 	if(!st) roEXCP_THROW;
@@ -153,7 +154,8 @@ roEXCP_TRY
 		return reSchedule();
 
 	// Read from stream and put to ring buffer
-	roByte* buf = ringBuffer.write(_dataChunkSize);
+	roByte* buf = NULL;
+	st = ringBuffer.write(_dataChunkSize, buf); if(!st) roEXCP_THROW;
 	roUint64 bytesRead = 0;
 	st = fileSystem.read(stream, buf, _dataChunkSize, bytesRead);
 	if(!st) roEXCP_THROW;
@@ -193,7 +195,7 @@ roEXCP_TRY
 
 		// By default stb_vorbis load data as float, we need to convert to uint16 before submitting to audio device
 		roSize offset = pcmData.size();
-		pcmData.incSize(sampleCount * numChannels * 2);
+		pcmData.incSizeNoInit(sampleCount * numChannels * 2);
 		stb_vorbis_channels_short_interleaved(numChannels, (short*)&pcmData[offset], vorbisInfo.channels, outputs, 0, sampleCount);
 
 //		curPcmPos += sampleCount;
@@ -207,7 +209,7 @@ roEXCP_TRY
 	}
 
 	roAssert(decodeBytes <= pcmData.sizeInByte());
-	pcmData.resize(decodeBytes);*/
+	pcmData.resizeNoInit(decodeBytes);*/
 	nextFun = &OggLoader::commitData;
 
 roEXCP_CATCH

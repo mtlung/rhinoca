@@ -80,6 +80,24 @@ Status IArray<T,S>::incSize(roSize newSize, const T& fill)
 }
 
 template<class T, class S>
+Status IArray<T,S>::resizeNoInit(roSize newSize)
+{
+	if(newSize > _capacity) {
+		Status st = _typedThis().reserve(roMaxOf2(newSize, _size*3/2));	// Extend the size by 1.5x
+		if(!st) return st;
+	}
+
+	_size = newSize;
+	return Status::ok;
+}
+
+template<class T, class S>
+Status IArray<T,S>::incSizeNoInit(roSize newSize)
+{
+	return _typedThis().resizeNoInit(_size + newSize);
+}
+
+template<class T, class S>
 void IArray<T,S>::clear()
 {
 	_typedThis().resize(0);

@@ -201,7 +201,7 @@ roEXCP_TRY
 	}
 
 	// Perform MP3 decoding
-	pcmData.resize(1024 * 128);
+	pcmData.resizeNoInit(1024 * 128);
 	size_t decodeBytes = 0;
 	mpgRet = mpg123_decode(mpg, buf, num_cast<size_t>(readCount), pcmData.typedPtr(), pcmData.sizeInByte(), &decodeBytes);
 
@@ -226,7 +226,7 @@ roEXCP_TRY
 	}
 
 	roAssert(decodeBytes <= pcmData.sizeInByte());
-	pcmData.resize(decodeBytes);
+	pcmData.resizeNoInit(decodeBytes);
 	nextFun = &Mp3Loader::commitData;
 
 	if(!taskPool->isDone(audioBuffer->taskReady))

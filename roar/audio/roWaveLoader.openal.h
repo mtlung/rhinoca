@@ -90,7 +90,7 @@ roEXCP_TRY
 		}
 		else if(roStrCaseCmp(chunkId, "DATA") == 0)
 		{
-			pcmData.resize(chunkSize);
+			pcmData.resizeNoInit(chunkSize);
 
 			AudioBuffer::Format f = {
 				formatEx.format.channels,

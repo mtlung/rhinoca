@@ -170,7 +170,7 @@ void PngLoader::loadHeader()
 	png_read_update_info(png_ptr, info_ptr);
 	rowBytes = info_ptr->rowbytes;
 
-	pixelData.resize(rowBytes * height);
+	pixelData.resizeNoInit(rowBytes * height);
 
 	nextFun = &PngLoader::initTexture;
 	return;

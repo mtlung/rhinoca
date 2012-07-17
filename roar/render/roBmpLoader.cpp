@@ -155,7 +155,7 @@ roEXCP_TRY
 	if(fileSystem.readWillBlock(stream, pixelDataSize + rowPadding * height))
 		return reSchedule();
 
-	pixelData.resize(rowByte * height);
+	pixelData.resizeNoInit(rowByte * height);
 
 	if(pixelData.size() != rowByte * height) { st = Status::not_enough_memory; roEXCP_THROW; }
 

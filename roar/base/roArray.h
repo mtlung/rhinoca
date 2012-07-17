@@ -79,6 +79,10 @@ struct IArray
 
 	Status		resize(roSize newSize, const T& fill=T());
 	Status		incSize(roSize size, const T& fill=T());
+
+	Status		resizeNoInit(roSize newSize);	///< For optimization purpose on something like raw byte buffer, use with care
+	Status		incSizeNoInit(roSize size);		///< For optimization purpose on something like raw byte buffer, use with care
+
 	void		clear();
 	void		condense();
 

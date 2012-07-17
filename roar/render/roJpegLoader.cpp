@@ -137,7 +137,7 @@ void JpegLoader::loadPixelData(TaskPool* taskPool)
 
 roEXCP_TRY
 	rowBytes = decoder->get_bytes_per_scan_line();
-	if(!pixelData.resize(rowBytes * height)) { st = Status::not_enough_memory; roEXCP_THROW; }
+	if(!pixelData.resizeNoInit(rowBytes * height)) { st = Status::not_enough_memory; roEXCP_THROW; }
 
 	void* Pscan_line_ofs = NULL;
 	uint scan_line_len = 0;
