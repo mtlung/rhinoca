@@ -111,7 +111,7 @@ bool RecursiveMutex::tryLock()
 
 #else
 
-Mutex::Mutex(int spinCount)
+Mutex::Mutex(unsigned spinCount)
 {
 #if roDEBUG
 	_locked = false;
@@ -159,7 +159,7 @@ bool Mutex::tryLock()
 	}
 }
 
-RecursiveMutex::RecursiveMutex(int spinCount)
+RecursiveMutex::RecursiveMutex(unsigned spinCount)
 {
 	// TODO: Support spin lock on Posix
 	(void)spinCount;

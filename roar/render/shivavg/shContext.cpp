@@ -506,7 +506,7 @@ VG_API_CALL void vgClear(VGint x, VGint y, VGint width, VGint height)
  * Returns the matrix currently selected via VG_MATRIX_MODE
  *-----------------------------------------------------------*/
 
-SHMatrix3x3* shCurrentMatrix(VGContext *c)
+static SHMatrix3x3* shCurrentMatrix(VGContext *c)
 {
 	switch(c->matrixMode) {
 	case VG_MATRIX_PATH_USER_TO_SURFACE:

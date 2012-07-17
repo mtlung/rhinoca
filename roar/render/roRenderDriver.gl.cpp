@@ -15,12 +15,18 @@
 #	include "gl/glext.h"
 #	include "platform.win/extensionsfwd.h"
 #elif roOS_iOS
+#	define RG_GLES
 #	import <OpenGLES/ES1/gl.h>
 #	import <OpenGLES/ES1/glext.h>
 #	import <OpenGLES/ES2/gl.h>
 #	import <OpenGLES/ES2/glext.h>
 #	define glDepthRange glDepthRangef
 #	define glClearDepth glClearDepthf
+#	define GL_MIN GL_MIN_EXT
+#	define GL_MAX GL_MAX_EXT
+#	define GL_CLAMP_TO_BORDER GL_CLAMP_TO_EDGE
+#	define glGenVertexArrays glGenVertexArraysOES
+#	define glBindVertexArray glBindVertexArrayOES
 #endif
 
 // OpenGL stuffs
@@ -175,8 +181,14 @@ static bool _setRenderTargets(roRDriverTexture** textures, roSize targetCount, b
 				roAssert(false);
 				roLog("warn", "roRDriver setRenderTargets detected multiple depth textures were specified, only the first one will be used\n");
 			}
-			else
+			else {
+#if !defined(RG_GLES)
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, tex->glh, 0);
+#else
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, tex->glh, 0);
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, tex->glh, 0);
+#endif
+			}
 
 			checkError();
 			hasDepthAttachment = true;
@@ -364,7 +376,7 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 	if(state->hash == 0) {
 		state->hash = (void*)_hash(
 			&state->enableDepthTest,
-			sizeof(roRDriverDepthStencilState) - offsetof(roRDriverDepthStencilState, roRDriverDepthStencilState::enableDepthTest)
+			sizeof(roRDriverDepthStencilState) - roOffsetof(roRDriverDepthStencilState, roRDriverDepthStencilState::enableDepthTest)
 		);
 	}
 
@@ -426,7 +438,7 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 
 static const StaticArray<GLenum, 5> _magFilter = { GLenum(-1), GL_NEAREST, GL_LINEAR, GL_NEAREST, GL_LINEAR };
 static const StaticArray<GLenum, 5> _minFilter = { GLenum(-1), GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_LINEAR };
-static const StaticArray<GLenum, 5> _textureAddressMode = { GLenum(-1), GL_REPEAT, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER, GL_MIRRORED_REPEAT_ARB };
+static const StaticArray<GLenum, 5> _textureAddressMode = { GLenum(-1), GL_REPEAT, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER, GL_MIRRORED_REPEAT };
 
 // For OpenGl sampler object, see: http://www.geeks3d.com/20110908/opengl-3-3-sampler-objects-control-your-texture-units/
 // and http://www.opengl.org/registry/specs/ARB/sampler_objects.txt
@@ -435,6 +447,7 @@ static void _setTextureState(roRDriverTextureState* states, roSize stateCount, u
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	if(!ctx || !states || stateCount == 0) return;
 
+#if !defined(RG_GLES)
 	for(unsigned i=0; i<stateCount; ++i)
 	{
 		roRDriverTextureState& state = states[i];
@@ -443,7 +456,7 @@ static void _setTextureState(roRDriverTextureState* states, roSize stateCount, u
 		if(state.hash == 0) {
 			state.hash = (void*)_hash(
 				&state.filter,
-				sizeof(roRDriverTextureState) - offsetof(roRDriverTextureState, roRDriverTextureState::filter)
+				sizeof(roRDriverTextureState) - roOffsetof(roRDriverTextureState, roRDriverTextureState::filter)
 			);
 		}
 
@@ -482,6 +495,8 @@ static void _setTextureState(roRDriverTextureState* states, roSize stateCount, u
 
 		glBindSampler(startingTextureUnit + i, glh);
 	}
+#else
+#endif
 }
 
 // ----------------------------------------------------------------------
@@ -524,7 +539,7 @@ static roRDriverBuffer* _newBuffer()
 	}
 
 	roRDriverBufferImpl* ret = _allocator.newObj<roRDriverBufferImpl>().unref();
-	memset(ret, 0, sizeof(*ret));
+	roZeroMemory(ret, sizeof(*ret));
 	return ret;
 }
 
@@ -558,7 +573,7 @@ static bool _initBufferSpecificLocation(roRDriverBufferImpl* impl, roRDriverBuff
 	if(systemMemory) {
 		impl->systemBuf = _allocator.realloc(impl->systemBuf, impl->sizeInBytes, sizeInBytes);
 		if(initData)
- 			memcpy(impl->systemBuf, initData, sizeInBytes);
+ 			roMemcpy(impl->systemBuf, initData, sizeInBytes);
 
 		if(impl->glh) {
 			impl->isMapped = false;	// Calling glDeleteBuffers also implies glUnmapBuffer
@@ -622,7 +637,7 @@ static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, const voi
 			_allocator.realloc(impl->systemBuf, self->sizeInBytes, sizeInBytes);
 			self->sizeInBytes = sizeInBytes;
 		}
- 		memcpy(((char*)impl->systemBuf) + offsetInBytes, data, sizeInBytes);
+ 		roMemcpy(((char*)impl->systemBuf) + offsetInBytes, data, sizeInBytes);
 	}
  	else {
 		checkError();
@@ -664,7 +679,7 @@ static void* _mapBuffer(roRDriverBuffer* self, roRDriverMapUsage usage, roSize o
 
 		// The write discard optimization
 		if(!(usage & roRDriverMapUsage_Read))
-			glBufferData(t, impl->sizeInBytes, NULL, GL_STREAM_COPY);
+			glBufferData(t, impl->sizeInBytes, NULL, GL_STREAM_DRAW);
 
 #if !defined(RG_GLES)
 		// glMapBufferRange only available for GL3 or above
@@ -776,6 +791,7 @@ static bool _switchBufferMode(roRDriverBufferImpl* impl)
 
 TextureFormatMapping _textureFormatMappings[] = {
 	{ roRDriverTextureFormat(0),			0, 0, 0, 0 },
+#if !defined(RG_GLES)
 	{ roRDriverTextureFormat_RGBA,			4, GL_RGBA8, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV },	// NOTE: Endianness
 	{ roRDriverTextureFormat_L,				1, GL_LUMINANCE8, GL_LUMINANCE, GL_UNSIGNED_BYTE },
 	{ roRDriverTextureFormat_A,				1, GL_ALPHA, GL_ALPHA, GL_UNSIGNED_BYTE },
@@ -787,12 +803,25 @@ TextureFormatMapping _textureFormatMappings[] = {
 //	{ roRDriverTextureFormat_PVRTC4,		1, GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG, 0, 0 },
 	{ roRDriverTextureFormat_DXT1,			0, 0, 0, 0 },
 	{ roRDriverTextureFormat_DXT5,			0, 0, 0, 0 },
+#else
+	{ roRDriverTextureFormat_RGBA,			4, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE },
+	{ roRDriverTextureFormat_L,				1, GL_LUMINANCE, GL_LUMINANCE, GL_UNSIGNED_BYTE },
+	{ roRDriverTextureFormat_A,				1, GL_ALPHA, GL_ALPHA, GL_UNSIGNED_BYTE },
+	{ roRDriverTextureFormat_Depth,			0, 0, 0, 0 },
+	{ roRDriverTextureFormat_DepthStencil,	4, GL_DEPTH24_STENCIL8_OES, GL_DEPTH_STENCIL_OES, GL_UNSIGNED_INT_24_8_OES },
+	{ roRDriverTextureFormat_PVRTC2,		0, 0, 0, 0 },
+	{ roRDriverTextureFormat_PVRTC4,		0, 0, 0, 0 },
+//	{ roRDriverTextureFormat_PVRTC2,		2, GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG, 0, 0 },
+//	{ roRDriverTextureFormat_PVRTC4,		1, GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG, 0, 0 },
+	{ roRDriverTextureFormat_DXT1,			0, 0, 0, 0 },
+	{ roRDriverTextureFormat_DXT5,			0, 0, 0, 0 },
+#endif
 };
 
 static roRDriverTexture* _newTexture()
 {
 	roRDriverTextureImpl* ret = _allocator.newObj<roRDriverTextureImpl>().unref();
-	memset(ret, 0, sizeof(*ret));
+	roZeroMemory(ret, sizeof(*ret));
 	ret->isYAxisUp = true;
 	return ret;
 }
@@ -994,7 +1023,7 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
-	if(!ctx || !impl) return false;
+	if(!ctx || !impl) return NULL;
 	if(!impl->format) return NULL;
 
 	bool isCubeMap = false;
@@ -1016,6 +1045,7 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 	roRDriverTextureImpl::MapInfo& mapInfo = impl->mapInfo[bufferIndex];
 	mapInfo.usage = usage;
 
+#if !defined(RG_GLES)
 	if(_usePbo && !mapInfo.glPbo)
 	{
 		mapInfo.glPbo = _getPbo(ctx);
@@ -1073,7 +1103,9 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 
 		ctx->pixelBufferInUse.pushBack(mapInfo.glPbo);
 	}
-	else if(!mapInfo.systemBuf) {
+	else
+#endif
+	if(!mapInfo.systemBuf) {
 		roSize sizeInBytes = impl->formatMapping->glPixelSize * impl->width * impl->height;
 		mapInfo.systemBuf = _allocator.malloc(sizeInBytes);
 		ret = mapInfo.systemBuf;
@@ -1092,8 +1124,9 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 			glBindTexture(impl->glTarget, 0);
 		}
 	}
-
-	rowBytes = impl->width * mapping->glPixelSize;
+	else {
+		roAssert(false);
+	}
 
 	checkError();
 	return ret;
@@ -1111,6 +1144,7 @@ static void _unmapTexture(roRDriverTexture* self, unsigned mipIndex, unsigned ar
 
 	roRDriverTextureImpl::MapInfo& mapInfo = impl->mapInfo[bufferIndex];
 
+#if !defined(RG_GLES)
 	if(_usePbo && mapInfo.glPbo)
 	{
 		checkError();
@@ -1162,10 +1196,15 @@ static void _unmapTexture(roRDriverTexture* self, unsigned mipIndex, unsigned ar
 		ctx->pixelBufferInUse.removeByKey(mapInfo.glPbo);
 		mapInfo.glPbo = 0;
 	}
-	else if(mapInfo.systemBuf) {
+	else
+#endif
+	if(mapInfo.systemBuf) {
 		_updateTexture(self, mipIndex, aryIndex, mapInfo.systemBuf, 0, NULL);
 		_allocator.free(mapInfo.systemBuf);
 		mapInfo.systemBuf = NULL;
+	}
+	else {
+		roAssert(false);
 	}
 }
 
@@ -1185,7 +1224,7 @@ static const StaticArray<GLenum, 5> _shaderTypes = {
 static roRDriverShader* _newShader()
 {
 	roRDriverShaderImpl* ret = _allocator.newObj<roRDriverShaderImpl>().unref();
-	memset(ret, 0, sizeof(*ret));
+	roZeroMemory(ret, sizeof(*ret));
 	return ret;
 }
 
@@ -1812,7 +1851,7 @@ static void _rhDeleteRenderDriver_GL(roRDriver* self)
 roRDriver* _roNewRenderDriver_GL(const char* driverStr, const char*)
 {
 	roRDriverImpl* ret = _allocator.newObj<roRDriverImpl>().unref();
-	memset(ret, 0, sizeof(*ret));
+	roZeroMemory(ret, sizeof(*ret));
 	ret->destructor = &_rhDeleteRenderDriver_GL;
 	ret->_driverName = driverStr;
 	ret->driverName = ret->_driverName.c_str();

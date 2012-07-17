@@ -28,7 +28,6 @@
 		9C18549A1593CA5E00081A16 /* shDefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C18546F1593CA5E00081A16 /* shDefs.h */; };
 		9C18549B1593CA5E00081A16 /* shGeometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854701593CA5E00081A16 /* shGeometry.cpp */; };
 		9C18549C1593CA5E00081A16 /* shGeometry.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854711593CA5E00081A16 /* shGeometry.h */; };
-		9C18549D1593CA5E00081A16 /* shImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854721593CA5E00081A16 /* shImage.cpp */; };
 		9C18549E1593CA5E00081A16 /* shImage.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854731593CA5E00081A16 /* shImage.h */; };
 		9C18549F1593CA5E00081A16 /* shPaint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1854741593CA5E00081A16 /* shPaint.cpp */; };
 		9C1854A01593CA5E00081A16 /* shPaint.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1854751593CA5E00081A16 /* shPaint.h */; };
@@ -106,6 +105,7 @@
 		9C18553B1593CB4400081A16 /* roMatrix.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1855321593CB4400081A16 /* roMatrix.h */; };
 		9C18553C1593CB4400081A16 /* roVector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1855341593CB4400081A16 /* roVector.cpp */; };
 		9C18553D1593CB4400081A16 /* roVector.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1855351593CB4400081A16 /* roVector.h */; };
+		9C672F0715AB6137001BBF8D /* roRingBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C672F0615AB6137001BBF8D /* roRingBuffer.h */; };
 		9CE75C4415454CF70023D472 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE75C4315454CF70023D472 /* Foundation.framework */; };
 		9CE75C4A15454CF70023D472 /* Roar.m in Sources */ = {isa = PBXBuildFile; fileRef = 9CE75C4915454CF70023D472 /* Roar.m */; };
 /* End PBXBuildFile section */
@@ -133,7 +133,6 @@
 		9C18546F1593CA5E00081A16 /* shDefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shDefs.h; sourceTree = "<group>"; };
 		9C1854701593CA5E00081A16 /* shGeometry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = shGeometry.cpp; sourceTree = "<group>"; };
 		9C1854711593CA5E00081A16 /* shGeometry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shGeometry.h; sourceTree = "<group>"; };
-		9C1854721593CA5E00081A16 /* shImage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = shImage.cpp; sourceTree = "<group>"; };
 		9C1854731593CA5E00081A16 /* shImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shImage.h; sourceTree = "<group>"; };
 		9C1854741593CA5E00081A16 /* shPaint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = shPaint.cpp; sourceTree = "<group>"; };
 		9C1854751593CA5E00081A16 /* shPaint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shPaint.h; sourceTree = "<group>"; };
@@ -215,6 +214,7 @@
 		9C1855341593CB4400081A16 /* roVector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roVector.cpp; sourceTree = "<group>"; };
 		9C1855351593CB4400081A16 /* roVector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roVector.h; sourceTree = "<group>"; };
 		9C1855361593CB4400081A16 /* roVector.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = roVector.inl; sourceTree = "<group>"; };
+		9C672F0615AB6137001BBF8D /* roRingBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roRingBuffer.h; sourceTree = "<group>"; };
 		9CE75C4015454CF70023D472 /* libRoar.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRoar.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		9CE75C4315454CF70023D472 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		9CE75C4715454CF70023D472 /* Roar-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Roar-Prefix.pch"; sourceTree = "<group>"; };
@@ -268,7 +268,6 @@
 				9C18546F1593CA5E00081A16 /* shDefs.h */,
 				9C1854701593CA5E00081A16 /* shGeometry.cpp */,
 				9C1854711593CA5E00081A16 /* shGeometry.h */,
-				9C1854721593CA5E00081A16 /* shImage.cpp */,
 				9C1854731593CA5E00081A16 /* shImage.h */,
 				9C1854741593CA5E00081A16 /* shPaint.cpp */,
 				9C1854751593CA5E00081A16 /* shPaint.h */,
@@ -333,6 +332,7 @@
 				9C1854DE1593CB2900081A16 /* roRawFileSystem.h */,
 				9C1854DF1593CB2900081A16 /* roResource.cpp */,
 				9C1854E01593CB2900081A16 /* roResource.h */,
+				9C672F0615AB6137001BBF8D /* roRingBuffer.h */,
 				9C1854E11593CB2900081A16 /* roSerializer.cpp */,
 				9C1854E21593CB2900081A16 /* roSerializer.h */,
 				9C1854E31593CB2900081A16 /* roSharedPtr.h */,
@@ -494,6 +494,7 @@
 				9C1855391593CB4400081A16 /* roMath.h in Headers */,
 				9C18553B1593CB4400081A16 /* roMatrix.h in Headers */,
 				9C18553D1593CB4400081A16 /* roVector.h in Headers */,
+				9C672F0715AB6137001BBF8D /* roRingBuffer.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -557,7 +558,6 @@
 				9C1854961593CA5E00081A16 /* shArrays.cpp in Sources */,
 				9C1854981593CA5E00081A16 /* shContext.cpp in Sources */,
 				9C18549B1593CA5E00081A16 /* shGeometry.cpp in Sources */,
-				9C18549D1593CA5E00081A16 /* shImage.cpp in Sources */,
 				9C18549F1593CA5E00081A16 /* shPaint.cpp in Sources */,
 				9C1854A11593CA5E00081A16 /* shParams.cpp in Sources */,
 				9C1854A21593CA5E00081A16 /* shPath.cpp in Sources */,

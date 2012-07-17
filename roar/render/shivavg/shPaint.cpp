@@ -758,7 +758,7 @@ int shDrawRadialGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
 				max2.x,max2.y,	maxOffset,maxOffset,
 				min2.x,min2.y,	minOffset,minOffset
 			};
-			memcpy(pBuf, vertex, sizeof(vertex));
+			roMemcpy(pBuf, vertex, sizeof(vertex));
 			pBuf += sizeof(vertex);
 		}
 

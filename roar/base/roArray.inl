@@ -190,7 +190,7 @@ void IArray<T,S>::remove(roSize idx)
 
 	_data[idx].~T();
 	if(idx < _size - 1) {
-		memmove(&_data[idx], &_data[idx+1], sizeof(T) * (_size - idx - 1));
+		roMemmov(&_data[idx], &_data[idx+1], sizeof(T) * (_size - idx - 1));
 		if(!TypeOf<T>::isPOD()) for(roSize i=idx; i<_size-1; ++i)	// Notify the object that it's memory is moved
 			roOnMemMove(_data[i], &_data[i]);
 	}
