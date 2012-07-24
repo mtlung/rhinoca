@@ -30,7 +30,7 @@ void			roToUpper		(char* str);
 bool			roIsDigit		(char ch);
 bool			roIsAlpha		(char ch);
 
-inline void		roStrReverse	(char* str, roSize len);
+void			roStrReverse	(char* str, roSize len);
 
 
 // ----------------------------------------------------------------------
@@ -59,6 +59,22 @@ roUint8		roStrToUint8	(const char* str, roUint8 defaultValue);
 roUint16	roStrToUint16	(const char* str, roUint16 defaultValue);
 roUint32	roStrToUint32	(const char* str, roUint32 defaultValue);
 roUint64	roStrToUint64	(const char* str, roUint64 defaultValue);
+
+
+// ----------------------------------------------------------------------
+// Different data types to string
+
+roSize		roToString		(char* str, roSize maxStrLen, bool val, const char* option=NULL);	/// Returns number of bytes written, excluding '\0', returns 0 for failure
+roSize		roToString		(char* str, roSize maxStrLen, float val, const char* option=NULL);
+roSize		roToString		(char* str, roSize maxStrLen, double val, const char* option=NULL);
+roSize		roToString		(char* str, roSize maxStrLen, roInt8 val, const char* option=NULL);
+roSize		roToString		(char* str, roSize maxStrLen, roInt16 val, const char* option=NULL);
+roSize		roToString		(char* str, roSize maxStrLen, roInt32 val, const char* option=NULL);
+roSize		roToString		(char* str, roSize maxStrLen, roInt64 val, const char* option=NULL);
+roSize		roToString		(char* str, roSize maxStrLen, roUint8 val, const char* option=NULL);
+roSize		roToString		(char* str, roSize maxStrLen, roUint16 val, const char* option=NULL);
+roSize		roToString		(char* str, roSize maxStrLen, roUint32 val, const char* option=NULL);
+roSize		roToString		(char* str, roSize maxStrLen, roUint64 val, const char* option=NULL);
 
 
 // ----------------------------------------------------------------------

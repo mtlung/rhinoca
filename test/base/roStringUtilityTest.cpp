@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "../../roar/base/roStringUtility.h"
 #include "../../roar/base/roTypeOf.h"
+#include <float.h>
 
 struct StringUtilityTest {};
 
@@ -50,4 +51,39 @@ TEST_FIXTURE(StringUtilityTest, integer64)
 	CHECK_EQUAL(0u,		roStrToUint64("-1", 0));
 	CHECK_EQUAL(maxU64,	roStrToUint64(" 18446744073709551615", 0));
 	CHECK_EQUAL(0u,		roStrToUint64(" 18446744073709551616", 0));
+}
+
+TEST_FIXTURE(StringUtilityTest, toString)
+{
+	// Get the required size of the buffer
+	CHECK_EQUAL(3u, roToString(NULL, 0, 123));
+	CHECK_EQUAL(4u, roToString(NULL, 0, -123));
+	CHECK_EQUAL(4u, roToString(NULL, 0, 1.23f));
+	CHECK_EQUAL(4u, roToString(NULL, 0, 1.23));
+
+	// Buffer of various size
+	char buf[128];
+	CHECK_EQUAL(0u, roToString(buf, 0, 123));
+	CHECK_EQUAL(0u, roToString(buf, 1, 123));
+	CHECK_EQUAL(0u, roToString(buf, 2, 123));
+	CHECK_EQUAL(3u, roToString(buf, 3, 123));
+	CHECK_EQUAL(3u, roToString(buf, 4, 123));
+	CHECK_EQUAL(3u, roToString(buf, 5, 123));
+	CHECK_EQUAL(0, roStrCmp(buf, "123"));
+
+	CHECK_EQUAL(0u, roToString(buf, 0, -123));
+	CHECK_EQUAL(0u, roToString(buf, 1, -123));
+	CHECK_EQUAL(0u, roToString(buf, 2, -123));
+	CHECK_EQUAL(0u, roToString(buf, 3, -123));
+	CHECK_EQUAL(4u, roToString(buf, 4, -123));
+	CHECK_EQUAL(4u, roToString(buf, 5, -123));
+	CHECK_EQUAL(4u, roToString(buf, 6, -123));
+	CHECK_EQUAL(0, roStrCmp(buf, "-123"));
+
+	CHECK_EQUAL(0u, roToString(buf, 1, 1.23f));
+	CHECK_EQUAL(0u, roToString(buf, 2, 1.23f));
+	CHECK_EQUAL(4u, roToString(buf, 4, 1.23f));
+	CHECK_EQUAL(4u, roToString(buf, 8, 1.23f));
+
+	CHECK(roToString(buf, roCountof(buf), DBL_MAX) > 0);
 }

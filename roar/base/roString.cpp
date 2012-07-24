@@ -102,6 +102,16 @@ void String::condense()
 	resize(roStrLen(_cstr));
 }
 
+String& String::append(char c)
+{
+	_cstr = _allocator.realloc(_length ? _cstr : NULL, _length + 1, _length + 1 + 1);
+	_cstr[_length] = c;
+	_length += 1;
+	_cstr[_length] = '\0';
+
+	return *this;
+}
+
 String& String::append(const char* str, roSize count)
 {
 	if(count > 0) {

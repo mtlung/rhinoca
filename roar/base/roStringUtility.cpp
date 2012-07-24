@@ -261,6 +261,143 @@ roUint64 roStrToUint64(const char* str, roUint64 defaultValue) {
 
 // ----------------------------------------------------------------------
 
+roSize roToString(char* str, roSize maxStrLen, bool val, const char* option)
+{
+	if(!str)
+		return 1;
+
+	if(maxStrLen < 2)
+		return 0;
+	str[0] = val ? '1' : '0';
+	str[1] = '\0';
+	return 1;
+}
+
+roSize roToString(char* str, roSize maxStrLen, float val, const char* option)
+{
+	int ret = 0;
+#if roCOMPILER_VC
+	ret = _snprintf(str, maxStrLen, "%g", val);
+#else
+#endif
+
+	return roMaxOf2(ret, 0);
+}
+
+roSize roToString(char* str, roSize maxStrLen, double val, const char* option)
+{
+	int ret = 0;
+#if roCOMPILER_VC
+	ret = _snprintf(str, maxStrLen, "%lg", val);
+#else
+#endif
+
+	return roMaxOf2(ret, 0);
+}
+
+roSize roToString(char* str, roSize maxStrLen, roInt8 val, const char* option)
+{
+	return roToString(str, maxStrLen, roInt64(val));
+}
+
+roSize roToString(char* str, roSize maxStrLen, roInt16 val, const char* option)
+{
+	return roToString(str, maxStrLen, roInt64(val));
+}
+
+roSize roToString(char* str, roSize maxStrLen, roInt32 val, const char* option)
+{
+	return roToString(str, maxStrLen, roInt64(val));
+}
+
+roSize roToString(char* str, roSize maxStrLen, roInt64 val, const char* option)
+{
+	roSize written = 0;
+
+	if(!str) {
+		if(val < 0) ++written;
+		do {
+			++written;
+			val /= 10;
+		} while(val);
+		return written;
+	}
+	else {
+		roSize max = maxStrLen;
+		if(val < 0) {
+			if(written >= max)
+				return 0;
+			str[written++] = '-';
+			val = -val;
+		}
+
+		roSize strIdx = written;
+
+		do {
+			if(written >= max)
+				return 0;
+
+			str[written++] = '0' + (val % 10);
+			val /= 10;
+		} while(val);
+		roStrReverse(str + strIdx, *str == '-' ? written - 1 : written);
+
+		// Write the terminator only when there is space left, as if in printf
+		if(written < maxStrLen)
+			str[written] = '\0';
+
+		return written;
+	}
+}
+
+roSize roToString(char* str, roSize maxStrLen, roUint8 val, const char* option)
+{
+	return roToString(str, maxStrLen, roUint64(val));
+}
+
+roSize roToString(char* str, roSize maxStrLen, roUint16 val, const char* option)
+{
+	return roToString(str, maxStrLen, roUint64(val));
+}
+
+roSize roToString(char* str, roSize maxStrLen, roUint32 val, const char* option)
+{
+	return roToString(str, maxStrLen, roUint64(val));
+}
+
+roSize roToString(char* str, roSize maxStrLen, roUint64 val, const char* option)
+{
+	roSize written = 0;
+
+	if(!str) {
+		do {
+			++written;
+			val /= 10;
+		} while(val);
+		return written;
+	}
+	else {
+		roSize max = maxStrLen;
+		do {
+			if(written >= max)
+				return 0;
+
+			str[written++] = '0' + (val % 10);
+			val /= 10;
+		} while(val);
+		roStrReverse(str, written);
+
+		// Write the terminator only when there is space left, as if in printf
+		if(written < maxStrLen)
+			str[written] = '\0';
+
+		return written;
+	}
+}
+
+
+// ----------------------------------------------------------------------
+
 int roUtf8ToUtf16Char(roUtf16& out, const roUtf8* utf8, roSize len)
 {
 	if(len < 1) return 0;

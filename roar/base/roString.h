@@ -24,6 +24,7 @@ struct String
 // Operations
 	Status		resize		(roSize size);
 	void		condense	();
+	String&		append		(char c);
 	String&		append		(const char* str, roSize count);
 	String&		assign		(const char* str, roSize count);
 
