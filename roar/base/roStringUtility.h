@@ -64,17 +64,17 @@ roUint64	roStrToUint64	(const char* str, roUint64 defaultValue);
 // ----------------------------------------------------------------------
 // Different data types to string
 
-roSize		roToString		(char* str, roSize maxStrLen, bool val, const char* option=NULL);	/// Returns number of bytes written, excluding '\0', returns 0 for failure
-roSize		roToString		(char* str, roSize maxStrLen, float val, const char* option=NULL);
-roSize		roToString		(char* str, roSize maxStrLen, double val, const char* option=NULL);
-roSize		roToString		(char* str, roSize maxStrLen, roInt8 val, const char* option=NULL);
-roSize		roToString		(char* str, roSize maxStrLen, roInt16 val, const char* option=NULL);
-roSize		roToString		(char* str, roSize maxStrLen, roInt32 val, const char* option=NULL);
-roSize		roToString		(char* str, roSize maxStrLen, roInt64 val, const char* option=NULL);
-roSize		roToString		(char* str, roSize maxStrLen, roUint8 val, const char* option=NULL);
-roSize		roToString		(char* str, roSize maxStrLen, roUint16 val, const char* option=NULL);
-roSize		roToString		(char* str, roSize maxStrLen, roUint32 val, const char* option=NULL);
-roSize		roToString		(char* str, roSize maxStrLen, roUint64 val, const char* option=NULL);
+roSize		roToString		(char* str, roSize strBufSize, bool val, const char* option=NULL);	/// Returns number of bytes written, excluding '\0', returns 0 for failure
+roSize		roToString		(char* str, roSize strBufSize, float val, const char* option=NULL);
+roSize		roToString		(char* str, roSize strBufSize, double val, const char* option=NULL);
+roSize		roToString		(char* str, roSize strBufSize, roInt8 val, const char* option=NULL);
+roSize		roToString		(char* str, roSize strBufSize, roInt16 val, const char* option=NULL);
+roSize		roToString		(char* str, roSize strBufSize, roInt32 val, const char* option=NULL);
+roSize		roToString		(char* str, roSize strBufSize, roInt64 val, const char* option=NULL);
+roSize		roToString		(char* str, roSize strBufSize, roUint8 val, const char* option=NULL);
+roSize		roToString		(char* str, roSize strBufSize, roUint16 val, const char* option=NULL);
+roSize		roToString		(char* str, roSize strBufSize, roUint32 val, const char* option=NULL);
+roSize		roToString		(char* str, roSize strBufSize, roUint64 val, const char* option=NULL);
 
 
 // ----------------------------------------------------------------------

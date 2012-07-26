@@ -257,6 +257,16 @@ Status String::toUtf16(roUint16* dst, roSize& dstLen)
 	return roUtf8ToUtf16(dst, dstLen, c_str(), roSize(-1));
 }
 
+bool String::operator==(const char* rhs) const
+{
+	return roStrCmp(c_str(), rhs) == 0;
+}
+
+bool String::operator==(const String& rhs) const
+{
+	return roStrCmp(c_str(), rhs.c_str()) == 0;
+}
+
 
 // ----------------------------------------------------------------------
 

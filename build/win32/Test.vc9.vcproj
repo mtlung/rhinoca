@@ -370,6 +370,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\test\base\roStringFormatTest.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\test\base\roStringUtilityTest.cpp"
 				>
 			</File>

@@ -515,6 +515,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roStringFormat.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roStringFormat.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roStringHash.h"
 				>
 			</File>

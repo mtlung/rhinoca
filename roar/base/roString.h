@@ -46,6 +46,9 @@ struct String
 	Status		fromUtf16	(const roUint16* src, roSize maxSrcLen=roSize(-1));
 	Status		toUtf16		(roUint16* dst, roSize& dstLen);
 
+	bool		operator==	(const char* rhs) const;
+	bool		operator==	(const String& rhs) const;
+
 // Attributes
 	roSize		size		() const	{ return _length; }
 	bool		isEmpty		() const	{ return _length == 0; }
