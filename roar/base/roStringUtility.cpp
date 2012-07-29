@@ -279,7 +279,7 @@ roSize roToString(char* str, roSize strBufSize, float val, const char* option)
 {
 	int ret = 0;
 #if roCOMPILER_VC
-	ret = _snprintf(str, strBufSize, "%g", val);
+	ret = _snprintf(str, strBufSize, "%.3g", val);
 #else
 #endif
 
@@ -290,7 +290,7 @@ roSize roToString(char* str, roSize strBufSize, double val, const char* option)
 {
 	int ret = 0;
 #if roCOMPILER_VC
-	ret = _snprintf(str, strBufSize, "%lg", val);
+	ret = _snprintf(str, strBufSize, "%.3lg", val);
 #else
 #endif
 

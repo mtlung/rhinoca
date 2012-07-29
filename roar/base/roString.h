@@ -23,13 +23,19 @@ struct String
 
 // Operations
 	Status		resize		(roSize size);
+	Status		reserve		(roSize sizeNotCountingNull);
 	void		condense	();
-	String&		append		(char c);
-	String&		append		(const char* str, roSize count);
-	String&		assign		(const char* str, roSize count);
+	Status		append		(char c);
+	Status		append		(char c, roSize repeat);
+	Status		append		(const char* str);
+	Status		append		(const char* str, roSize count);
+	Status		assign		(const char* str, roSize count);
+	Status		insert		(roSize idx, char c);
+	Status		insert		(roSize idx, const char* str);
+	Status		insert		(roSize idx, const char* str, roSize count);
 
 	void		clear		();
-	String&		erase		(roSize offset, roSize count=npos);
+	void		erase		(roSize offset, roSize count=npos);
 
 	roSize		find		(char c, roSize offset=0) const;
 	roSize		find		(const char* str, roSize offset=0) const;
@@ -41,8 +47,6 @@ struct String
 	String&		operator+=	(const char* str);
 	String&		operator+=	(const String& str);
 
-	void		format		(const char* format, ...);
-	void		appendFormat(const char* format, ...);
 	Status		fromUtf16	(const roUint16* src, roSize maxSrcLen=roSize(-1));
 	Status		toUtf16		(roUint16* dst, roSize& dstLen);
 
@@ -50,20 +54,24 @@ struct String
 	bool		operator==	(const String& rhs) const;
 
 // Attributes
-	roSize		size		() const	{ return _length; }
-	bool		isEmpty		() const	{ return _length == 0; }
+	roSize		size		() const	{ return _size(); }
+	bool		isEmpty		() const	{ return _size() == 0; }
 
-	char*		c_str		()			{ return _cstr; }
-	const char*	c_str		() const	{ return _cstr; }
+	char*		c_str		()			{ return _str(); }
+	const char*	c_str		() const	{ return _str(); }
 
-	char& operator[]		(roSize index) { roAssert(index < _length); return _cstr[index]; }
-	char operator[]			(roSize index) const { roAssert(index < _length); return _cstr[index]; }
+	char& operator[]		(roSize index) { roAssert(index < _size()); return _str()[index]; }
+	char operator[]			(roSize index) const { roAssert(index < _size()); return _str()[index]; }
 
 	static const roSize npos = roSize(-1);
 
 // Private
-	char* _cstr;
-	roSize _length;
+	char* _cstr;	///< The size and capacity will encoded inside the string buffer
+
+	char* _str() const;
+	roSize& _size() const;
+	roSize& _capacity() const;
+	Status _reserve(roSize size, bool forceRealloc);
 };	// String
 
 
@@ -132,7 +140,6 @@ struct ConstString
 inline void roSwap(ro::String& lsh, ro::String& rhs)
 {
 	roSwap(lsh._cstr, rhs._cstr);
-	roSwap(lsh._length, rhs._length);
 }
 
 inline void roSwap(ro::ConstString& lsh, ro::ConstString& rhs)

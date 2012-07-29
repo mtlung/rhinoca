@@ -32,7 +32,7 @@ TEST_FIXTURE(AlgorithmTest, lowerBound)
 TEST_FIXTURE(AlgorithmTest, partition)
 {
 	struct Pred { static bool lessThan5(const int& x) {
-		return x < 4;
+		return x < 5;
 	}};
 	
 	{	int v[]			= { 7, 1, 8, 4, 5, 0, 2, 2, 3 };
@@ -48,8 +48,8 @@ TEST_FIXTURE(AlgorithmTest, partition)
 	}
 
 	{	int v[]			= { 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 };
-		int expected[]	= { 9, 8, 0, 3, 4, 5, 3, 2, 1, 0 };
-		CHECK_EQUAL(5, *roPartition(v, v + roCountof(v), Pred::lessThan5));
+		int expected[]	= { 4, 3, 2, 1, 0, 9, 8, 7, 6, 5 };
+		CHECK_EQUAL(9, *roPartition(v, v + roCountof(v), Pred::lessThan5));
 		CHECK(roEqual(v, v + roCountof(v), expected));
 	}
 

@@ -1,11 +1,10 @@
 #include "pch.h"
 #include "roCpuProfiler.h"
 #include "roArray.h"
+#include "roStringFormat.h"
 #include "roTaskPool.h"
 #include "roTypeCast.h"
 #include "../platform/roPlatformHeaders.h"
-#include <sstream>
-#include <iomanip>
 
 namespace ro {
 
@@ -38,8 +37,10 @@ struct CallstackNode
 	roSize callDepth() const;
 	float selfTime() const;
 	float inclusiveTime() const;
+	float peakCallTime() const;
 
 	float _inclusiveTime;
+	float _peakCallTime;
 	StopWatch stopWatch;
 	mutable RecursiveMutex mutex;
 };	// CallstackNode
@@ -48,6 +49,7 @@ CallstackNode::CallstackNode(const char name[], CallstackNode* parent)
 	: name(name)
 	, parent(parent), firstChild(NULL), sibling(NULL)
 	, recursionCount(0), callCount(0), _inclusiveTime(0)
+	, _peakCallTime(0)
 {}
 
 CallstackNode::~CallstackNode()
@@ -107,8 +109,12 @@ void CallstackNode::begin()
 
 void CallstackNode::end()
 {
-	if(recursionCount == 0)
-		_inclusiveTime += stopWatch.getFloat();
+	if(recursionCount == 0) {
+		float elasped = stopWatch.getFloat();
+		_inclusiveTime += elasped;
+
+		_peakCallTime = roMaxOf2(_peakCallTime, elasped);
+	}
 }
 
 void CallstackNode::reset()
@@ -118,6 +124,7 @@ void CallstackNode::reset()
 		ScopeRecursiveLock lock(mutex);
 		callCount = 0;
 		_inclusiveTime = 0;
+		_peakCallTime = 0;
 		stopWatch.reset();
 		n1 = firstChild;
 		n2 = sibling;
@@ -161,6 +168,15 @@ float CallstackNode::inclusiveTime() const
 	// hasn't finish yet, at the moment we try to generate the report.
 	// This happens in multi-thread situation.
 	return _inclusiveTime + stopWatch.getFloat();
+}
+
+float CallstackNode::peakCallTime() const
+{
+	if(recursionCount == 0)
+		return _peakCallTime;
+
+	float elasped = stopWatch.getFloat();
+	return roMaxOf2(_peakCallTime, elasped);
 }
 
 CallstackNode* CallstackNode::traverse(CallstackNode* n)
@@ -299,23 +315,20 @@ float CpuProfiler::timeSinceLastReset() const
 
 String CpuProfiler::report(roSize nameLength, float skipMargin) const
 {
-	using namespace std;
-	ostringstream ss;
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 	float fps_ = fps();
-	ss << "FPS: " << static_cast<size_t>(fps_) << endl;
 
-	const std::streamsize percentWidth = 12;
-	const std::streamsize floatWidth = 12;
+	String str;
+	strFormat(str, "FPS: {}\n", static_cast<size_t>(fps_));
 
-	ss.flags(ios_base::left);
-	ss	<< setw(std::streamsize(nameLength)) << "Name"
-		<< setw(percentWidth)	<< "TT/F %"
-		<< setw(percentWidth)	<< "ST/F %"
-		<< setw(floatWidth)		<< "TT/C"
-		<< setw(floatWidth)		<< "ST/C"
-		<< setw(floatWidth)		<< "C/F"
-		<< endl;
+	String name = "Name";
+	strPaddingRight(name, ' ', nameLength);
+
+	const char* format = "{}{pr12 }{pr12 }{pr12 }{pr12 }{pr12 }{pr12 }\n";
+	strFormat(str, format,
+		name.c_str(), "TT/F %", "ST/F %", "TT/C", "ST/C", "Peak TT", "C/F"
+	);
 
 	CallstackNode* n = reinterpret_cast<CallstackNode*>(_rootNode);
 	float percent = 100 * fps_;
@@ -336,23 +349,28 @@ String CpuProfiler::report(roSize nameLength, float skipMargin) const
 				selfTime = 0;
 			}
 
-			std::streamsize callDepth = std::streamsize(n->callDepth());
-			ss	<< setw(callDepth) << ""
-				<< setw(std::streamsize(nameLength - callDepth)) << n->name
-				<< setprecision(3)
-				<< setw(percentWidth)	<< (inclusiveTime / _frameCount * percent)
-				<< setw(percentWidth)	<< (selfTime / _frameCount * percent)
-				<< setw(floatWidth)		<< (n->callCount == 0 ? 0 : inclusiveTime / n->callCount)
-				<< setw(floatWidth)		<< (n->callCount == 0 ? 0 : selfTime / n->callCount)
-				<< setprecision(2)
-				<< setw(floatWidth-2)	<< (float(n->callCount) / _frameCount)
-				<< endl;
+			roSize callDepth = n->callDepth();
+
+			name.resize(0);
+			name.append(' ', callDepth);
+			name.append(n->name);
+			strPaddingRight(name, ' ', nameLength);
+
+			strFormat(str, format,
+				name,
+				inclusiveTime / _frameCount * percent,
+				selfTime / _frameCount * percent,
+				n->callCount == 0 ? 0 : inclusiveTime / n->callCount,
+				n->callCount == 0 ? 0 : selfTime / n->callCount,
+				n->peakCallTime(),
+				float(n->callCount) / _frameCount
+			);
 		}
 
 		n = CallstackNode::traverse(n);
 	} while(n);
 
-	return ss.str().c_str();
+	return str;
 }
 
 void CpuProfiler::shutdown()

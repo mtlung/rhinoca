@@ -5,6 +5,7 @@
 #include "roSocket.h"
 #include "roStopWatch.h"
 #include "roString.h"
+#include "roStringFormat.h"
 #include "roStringUtility.h"
 #include "roTaskPool.h"
 #include "roTypeCast.h"
@@ -146,19 +147,21 @@ static bool _parseUri(const char* uri, SockAddr& addr, Array<char>& host, String
 	}
 
 	const char getFmt[] =
-		"GET %s HTTP/1.1\r\n"
-		"Host: %s\r\n"	// Required for http 1.1
+		"GET {} HTTP/1.1\r\n"
+		"Host: {}\r\n"	// Required for http 1.1
 		"User-Agent: The Roar Engine\r\n"
 //		"Range: bytes=0-64\r\n"
 		"\r\n";
 
-	requestStr.format(getFmt, path.begin(), host.begin());
+	requestStr.clear();
+	strFormat(requestStr, getFmt, path.begin(), host.begin());
 
 	return true;
 }
 
 static Status _makeConnection(HttpStream& s, const char* uri)
 {
+	s.buffer = NULL;
 	s.state = State_SendRequest;
 	s.chunked = false;
 	s.chunkSizeToRead = TypeOf<roSize>::valueMax();

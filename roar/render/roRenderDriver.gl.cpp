@@ -1128,6 +1128,8 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 		roAssert(false);
 	}
 
+	rowBytes = impl->width * mapping->glPixelSize;
+
 	checkError();
 	return ret;
 }

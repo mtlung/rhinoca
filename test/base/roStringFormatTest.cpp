@@ -6,7 +6,39 @@ using namespace ro;
 
 struct StringFormatTest {};
 
-TEST_FIXTURE(StringFormatTest, basic)
+TEST_FIXTURE(StringFormatTest, padding)
+{
+	String str;
+	str = "123";
+	strPaddingLeft(str, ' ', 0);
+	CHECK(str == "123");
+
+	str = "123";
+	strPaddingLeft(str, ' ', 3);
+	CHECK(str == "123");
+
+	str = "123";
+	strPaddingLeft(str, ' ', 10);
+	CHECK(str == "       123");
+
+	str = "123";
+	strPaddingRight(str, ' ', 0);
+	CHECK(str == "123");
+
+	str = "123";
+	strPaddingRight(str, ' ', 3);
+	CHECK(str == "123");
+
+	str.insert(0, '0');
+
+	str.insert(1, "abc", 3);
+
+	str = "123";
+	strPaddingRight(str, ' ', 10);
+	CHECK(str == "123       ");
+}
+
+TEST_FIXTURE(StringFormatTest, printf)
 {
 	String str;
 
@@ -39,4 +71,17 @@ TEST_FIXTURE(StringFormatTest, basic)
 
 	str.clear(); strFormat(str, "{} {}", String("Hello world!"), 456);
 	CHECK(str == "Hello world! 456");
+}
+
+TEST_FIXTURE(StringFormatTest, printf_padding)
+{
+	String str;
+
+	// Padding left, total length 5, pad with ' '
+	str.clear(); strFormat(str, "{pl5 }", TypeOf<roInt8>::valueMax());
+	CHECK(str == "  127");
+
+	// Padding right, total length 5, pad with '-'
+	str.clear(); strFormat(str, "{pr5-}", TypeOf<roInt8>::valueMax());
+	CHECK(str == "127--");
 }

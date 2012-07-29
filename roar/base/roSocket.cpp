@@ -2,6 +2,7 @@
 #include "roSocket.h"
 #include "roAtomic.h"
 #include "roString.h"
+#include "roStringFormat.h"
 #include "roUtility.h"
 #include "roTypeCast.h"
 #include <stdio.h>
@@ -168,7 +169,8 @@ void SockAddr::setIp(roUint32 ip)
 
 void SockAddr::asString(String& str) const
 {
-	str.format("%u.%u.%u%u:%u",
+	str.clear();
+	strFormat(str, "{}.{}.{}{}:{}",
 		(roUint8)asSockAddr().sa_data[2],
 		(roUint8)asSockAddr().sa_data[3],
 		(roUint8)asSockAddr().sa_data[4],

@@ -3,8 +3,33 @@
 #include "roStringUtility.h"
 #include "roArray.h"
 #include <stdarg.h>
+#include <stdio.h>
 
 namespace ro {
+
+void strPaddingLeft(String& str, roUtf8 c, roSize totalLen)
+{
+	if(str.size() >= totalLen)
+		return;
+
+	roSize movCount = str.size();
+	roSize padCount = totalLen - movCount;
+
+	str.resize(totalLen);
+	roMemmov(str.c_str() + padCount, str.c_str(), movCount);
+
+	for(roSize i=0; i<padCount; ++i)
+		str[i] = c;
+}
+
+void strPaddingRight(String& str, roUtf8 c, roSize totalLen)
+{
+	if(str.size() >= totalLen)
+		return;
+
+	for(roSize i=totalLen - str.size(); i--;)
+		str.append(c);
+}
 
 void _strFormat_int8(String& str, roInt8 val, const roUtf8* options)
 {
@@ -30,9 +55,18 @@ void _strFormat_int64(String& str, roInt64 val, const roUtf8* options)
 {
 	roSize bytes = roToString(NULL, 0, val, options);
 	roAssert(bytes > 0);
+
+	roSize padLen = 0;
+	roUtf8 padding;
+	if(sscanf(options, "pl%u%c", &padLen, &padding) == 2 && padLen > bytes)
+		str.append(padding, padLen - bytes);
+
 	roSize offset = str.size();
 	str.resize(str.size() + bytes);
 	roToString(&str[offset], str.size() - offset + 1, val, options);
+
+	if(sscanf(options, "pr%u%c", &padLen, &padding) == 2 && padLen > bytes)
+		str.append(padding, padLen - bytes);
 }
 
 void _strFormat_int64ptr(String& str, roInt64* val, const roUtf8* options)
@@ -64,9 +98,18 @@ void _strFormat_uint64(String& str, roUint64 val, const roUtf8* options)
 {
 	roSize bytes = roToString(NULL, 0, val, options);
 	roAssert(bytes > 0);
+
+	roSize padLen = 0;
+	roUtf8 padding;
+	if(sscanf(options, "pl%u%c", &padLen, &padding) == 2 && padLen > bytes)
+		str.append(padding, padLen - bytes);
+
 	roSize offset = str.size();
 	str.resize(str.size() + bytes);
 	roToString(&str[offset], str.size() - offset + 1, val, options);
+
+	if(sscanf(options, "pr%u%c", &padLen, &padding) == 2 && padLen > bytes)
+		str.append(padding, padLen - bytes);
 }
 
 void _strFormat_uint64ptr(String& str, roUint64* val, const roUtf8* options)
@@ -74,14 +117,60 @@ void _strFormat_uint64ptr(String& str, roUint64* val, const roUtf8* options)
 	if(val) _strFormat_uint64(str, *val, options);
 }
 
+void _strFormat_float(String& str, float val, const roUtf8* options)
+{
+	_strFormat_double(str, val, options);
+}
+
+void _strFormat_floatptr(String& str, float* val, const roUtf8* options)
+{
+	if(val) _strFormat_float(str, *val, options);
+}
+
+void _strFormat_double(String& str, double val, const roUtf8* options)
+{
+	roSize bytes = roToString(NULL, 0, val, options);
+	roAssert(bytes > 0);
+
+	roSize padLen = 0;
+	roUtf8 padding;
+	if(sscanf(options, "pl%u%c", &padLen, &padding) == 2 && padLen > bytes)
+		str.append(padding, padLen - bytes);
+
+	roSize offset = str.size();
+	str.resize(str.size() + bytes);
+	roToString(&str[offset], str.size() - offset + 1, val, options);
+
+	if(sscanf(options, "pr%u%c", &padLen, &padding) == 2 && padLen > bytes)
+		str.append(padding, padLen - bytes);
+}
+
+void _strFormat_doubleptr(String& str, double* val, const roUtf8* options)
+{
+	if(val) _strFormat_double(str, *val, options);
+}
+
 void _strFormat_utf8(String& str, const roUtf8* val, const roUtf8* options)
 {
-	if(val) str += val;
+	if(!val) return;
+
+	roSize len = roStrLen(val);
+
+	roSize padLen = 0;
+	roUtf8 padding;
+	if(sscanf(options, "pl%u%c", &padLen, &padding) == 2 && padLen > len)
+		str.append(padding, padLen - len);
+
+	str += val;
+
+	if(sscanf(options, "pr%u%c", &padLen, &padding) == 2 && padLen > len)
+		str.append(padding, padLen - len);
 }
 
 void _strFormat_str(String& str, const String* val, const roUtf8* options)
 {
-	if(val) str += *val;
+	if(!val) return;
+	_strFormat_utf8(str, val->c_str(), options);
 }
 
 typedef bool (*FUNC)(String& str, const void* param, const roUtf8* options);

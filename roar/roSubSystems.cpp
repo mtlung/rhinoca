@@ -16,7 +16,7 @@ namespace ro {
 static void _initTaskPool(SubSystems& subSystems)
 {
 	subSystems.taskPool = new TaskPool;
-	subSystems.taskPool->init(2);
+	subSystems.taskPool->init(1);
 }
 
 static void _initRenderDriver(SubSystems& subSystems)
@@ -129,7 +129,7 @@ void SubSystems::shutdown()
 	audioDriver = NULL;
 
 	_cpuProfiler.shutdown();
-//	_memoryProfiler.shutdown();
+	_memoryProfiler.shutdown();
 	BsdSocket::closeApplication();
 }
 
@@ -143,7 +143,7 @@ void SubSystems::tick()
 	if(resourceMgr)
 		resourceMgr->tick();
 
-//	_memoryProfiler.tick();
+	_memoryProfiler.tick();
 
 	if(audioDriver)
 		audioDriver->tick(audioDriver);

@@ -5,6 +5,9 @@
 
 namespace ro {
 
+void strPaddingLeft			(String& str, roUtf8 c, roSize totalLen);
+void strPaddingRight		(String& str, roUtf8 c, roSize totalLen);
+
 void _strFormat_float		(String& str, float val, const roUtf8* options);
 void _strFormat_double		(String& str, double val, const roUtf8* options);
 void _strFormat_int8		(String& str, roInt8 val, const roUtf8* options);
@@ -36,6 +39,24 @@ inline void* _strFormatFunc(roInt32 val) {
 inline void* _strFormatFunc(roInt64 val) {
 	return sizeof(val) > sizeof(void*) ? (void*)_strFormat_int64ptr : (void*)_strFormat_int64;
 }
+inline void* _strFormatFunc(roUint8 val) {
+	return (void*)_strFormat_uint8;
+}
+inline void* _strFormatFunc(roUint16 val) {
+	return (void*)_strFormat_uint16;
+}
+inline void* _strFormatFunc(roUint32 val) {
+	return sizeof(val) > sizeof(void*) ? (void*)_strFormat_uint32ptr : (void*)_strFormat_uint32;
+}
+inline void* _strFormatFunc(roUint64 val) {
+	return sizeof(val) > sizeof(void*) ? (void*)_strFormat_uint64ptr : (void*)_strFormat_uint64;
+}
+inline void* _strFormatFunc(float val) {
+	return sizeof(val) > sizeof(void*) ? (void*)_strFormat_floatptr : (void*)_strFormat_float;
+}
+inline void* _strFormatFunc(double val) {
+	return sizeof(val) > sizeof(void*) ? (void*)_strFormat_doubleptr : (void*)_strFormat_double;
+}
 inline void* _strFormatFunc(const roUtf8* val) {
 	return (void*)_strFormat_utf8;
 }
@@ -55,6 +76,27 @@ inline const void* _strFormatArg(const roInt32& val) {
 inline const void* _strFormatArg(const roInt64& val) {
 	return sizeof(val) > sizeof(void*) ? &val : (void*)val;
 }
+inline const void* _strFormatArg(roUint8 val) {
+	return (void*)val;
+}
+inline const void* _strFormatArg(roUint16 val) {
+	return (void*)val;
+}
+inline const void* _strFormatArg(const roUint32& val) {
+	return sizeof(val) > sizeof(void*) ? &val : (void*)val;
+}
+inline const void* _strFormatArg(const roUint64& val) {
+	return sizeof(val) > sizeof(void*) ? &val : (void*)val;
+}
+inline const void* _strFormatArg(const float& val) {
+	return sizeof(val) > sizeof(void*) ? &val : (void*)(*(int*)(&val));
+}
+inline const void* _strFormatArg(const double& val) {
+	return sizeof(val) > sizeof(void*) ? &val : (void*)(*(int*)(&val));
+}
+inline const void* _strFormatArg(roUtf8* val) {
+	return (void*)val;
+}
 inline const void* _strFormatArg(const roUtf8* val) {
 	return (void*)val;
 }
@@ -65,6 +107,12 @@ inline const void* _strFormatArg(const T& val) {
 
 #define _EXPAND(x) _strFormatFunc(x), _strFormatArg(x)
 
+/// C# like string formatting
+/// strFormat(str, "{}, {}, {}", 1, 1.2, "hello"); -> "1, 1.2, Hello"
+///
+/// Option string can be specified inside {}
+/// strFormat(str, "{lp5 }", 123); -> "  123"	// Pad on left with ' ' until len = 5
+/// strFormat(str, "{rp5-}", 123); -> "123--"	// Pad on right with '-' until len = 5
 roStatus _strFormat(String& str, const roUtf8* format, roSize argCount, ...);
 
 template<class T1>

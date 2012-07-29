@@ -15,58 +15,35 @@
 namespace ro {
 
 static DefaultAllocator _allocator;
-static const char* _emptyString = "";
+static const char _emptyString[16] = { 0 };	// Extended size to let debug visualizer show correctly
+static roSize _zero = 0;
 
 String::String()
 	: _cstr(const_cast<char*>(_emptyString))
-	, _length(0)
 {
 }
 
 String::String(const char* str)
+	: _cstr(const_cast<char*>(_emptyString))
 {
-	_length = roStrLen(str);
-
-	if(_length) {
-		_cstr = _allocator.malloc(_length + 1);
-		roVerify(roStrnCpy(_cstr, str, _length) == _cstr);
-		_cstr[_length] = '\0';
-	}
-	else
-		_cstr = const_cast<char*>(_emptyString);
+	roVerify(assign(str, roStrLen(str)));
 }
 
 String::String(const char* str, roSize count)
+	: _cstr(const_cast<char*>(_emptyString))
 {
-	roAssert(count <= roStrLen(str));
-	_length = count;
-
-	if(_length) {
-		_cstr = _allocator.malloc(_length + 1);
-		roVerify(roStrnCpy(_cstr, str, _length) == _cstr);
-		_cstr[_length] = '\0';
-	}
-	else
-		_cstr = const_cast<char*>(_emptyString);
+	roVerify(assign(str, count));
 }
 
 String::String(const String& str)
+	: _cstr(const_cast<char*>(_emptyString))
 {
-	_length = str._length;
-
-	if(_length) {
-		_cstr = _allocator.malloc(_length + 1);
-		roVerify(roStrnCpy(_cstr, str._cstr, _length) == _cstr);
-		_cstr[_length] = '\0';
-	}
-	else
-		_cstr = const_cast<char*>(_emptyString);
+	roVerify(assign(str._str(), str.size()));
 }
 
 String::~String()
 {
-	if(_length > 0)
-		_allocator.free(_cstr);
+	clear();
 }
 
 String& String::operator=(const char* str)
@@ -83,93 +60,174 @@ String& String::operator=(const String& str)
 	return *this;
 }
 
+char* String::_str() const
+{
+	if(!_cstr)
+		return NULL;
+	if(_cstr == _emptyString)
+		return (char*)_emptyString;
+	return _cstr + sizeof(roSize) * 2;
+}
+
+roSize& String::_size() const
+{
+	return _cstr ? *((roSize*)_cstr) : (roSize&)_zero;
+}
+
+roSize& String::_capacity() const
+{
+	return _cstr ? *(((roSize*)_cstr) + 1) : (roSize&)_zero;
+}
+
+Status String::_reserve(roSize size, bool forceRealloc)
+{
+	roSize currentCap = _capacity();
+	roSize currentSize = _size();
+	roSize desiredBytes = sizeof(roSize) * 2 + roSize(size * 1.5) + 1;
+
+	if(currentCap < desiredBytes || forceRealloc) {
+		char* newPtr = _allocator.realloc(currentCap ? _cstr : NULL, currentCap, desiredBytes);
+		if(!newPtr) return Status::not_enough_memory;
+		_cstr = newPtr;
+		_capacity() = desiredBytes;
+		_size() = currentSize;
+	}
+
+	return Status::ok;
+}
+
+Status String::reserve(roSize size)
+{
+	return _reserve(size, false);
+}
+
 Status String::resize(roSize size)
 {
-	if(size == 0)
+	if(size == 0) {
 		clear();
-	else if(size != _length) {
-		char* newPtr = _allocator.realloc(_length ? _cstr : NULL, _length + 1, size + 1);
-		if(!newPtr) return Status::not_enough_memory;
-		_length = size;
-		_cstr = newPtr;
-		_cstr[_length] = '\0';
+		return Status::ok;
 	}
+
+	Status st = reserve(size); if(!st) return st;
+	_size() = size;
+	_str()[size] = '\0';
+
 	return Status::ok;
 }
 
 void String::condense()
 {
-	resize(roStrLen(_cstr));
+	roSize minSize = roMinOf2(roStrLen(_str()), size());
+	_reserve(minSize, true);
+	resize(minSize);
 }
 
-String& String::append(char c)
+Status String::append(char c)
 {
-	_cstr = _allocator.realloc(_length ? _cstr : NULL, _length + 1, _length + 1 + 1);
-	_cstr[_length] = c;
-	_length += 1;
-	_cstr[_length] = '\0';
-
-	return *this;
+	return append(c, 1);
 }
 
-String& String::append(const char* str, roSize count)
+Status String::append(char c, roSize repeat)
 {
-	if(count > 0) {
-		if(str[count - 1] == '\0') --count;	// Don't copy the null terminator, we will explicitly put one
-		_cstr = _allocator.realloc(_length ? _cstr : NULL, _length + 1, _length + count + 1);
-		memcpy(_cstr + _length, str, count);
-		_length += count;
-		_cstr[_length] = '\0';
-	}
+	roSize currentSize = _size();
+	Status st = resize(currentSize + repeat); if(!st) return st;
 
-	return *this;
+	char* p = _str() + currentSize;
+	for(roSize i=0; i<repeat; ++i)
+		p[i] = c;
+
+	return Status::ok;
 }
 
-String& String::assign(const char* str, roSize count)
+Status String::append(const char* str)
 {
-	clear();
-	return append(str, count);
+	return insert(size(), str);
 }
 
-void String::clear()
+Status String::append(const char* str, roSize count)
 {
-	if(_length > 0)
-		_allocator.free(_cstr);
-	_cstr = const_cast<char*>(_emptyString);
-	_length = 0;
+	return insert(size(), str, count);
 }
 
-String& String::erase(roSize offset, roSize count)
+Status String::assign(const char* str, roSize count)
 {
-	if(_length == 0)
-		return *this;
+	roAssert(count <= roStrLen(str));
 
-	roAssert(offset < _length);
-	if(count > _length - offset)
-		count = _length - offset;
-
-	if(const roSize newLen = _length - count) {
-		char* a = _cstr + offset;
-		char* b = a + count;
-		memmove(a, b, num_cast<roSize>(_cstr + _length - b));
-		resize(newLen);
+	if(count) {
+		Status st = resize(count); if(!st) return st;
+		char* p = _str();
+		roVerify(roStrnCpy(p, str, count) == p);
 	}
 	else
 		clear();
 
-	return *this;
+	return Status::ok;
+}
+
+Status String::insert(roSize idx, char c)
+{
+	return insert(idx, &c, 1);
+}
+
+Status String::insert(roSize idx, const char* str)
+{
+	return insert(idx, str, roStrLen(str));
+}
+
+Status String::insert(roSize idx, const char* str, roSize count)
+{
+	if(idx > size())
+		return Status::invalid_parameter;
+
+	roSize movCount = size() - idx;
+	resize(size() + count);
+	char* p = c_str();
+	roMemmov(p + idx + count, p + idx, movCount);
+	roMemcpy(p + idx, str, count);
+
+	return Status::ok;
+}
+
+void String::clear()
+{
+	if(_capacity())
+		_allocator.free(_cstr);
+	_cstr = const_cast<char*>(_emptyString);
+}
+
+void String::erase(roSize offset, roSize count)
+{
+	roSize currentSize = _size();
+	if(currentSize == 0)
+		return;
+
+	roAssert(offset < currentSize);
+	if(count > currentSize - offset)
+		count = currentSize - offset;
+
+	if(const roSize newLen = currentSize - count) {
+		char* p = _str();
+		char* a = p + offset;
+		char* b = a + count;
+		memmove(a, b, num_cast<roSize>(p + currentSize - b));
+		resize(newLen);
+	}
+	else
+		clear();
 }
 
 roSize String::find(char c, roSize offset) const
 {
-	const char* ret = roStrChr(_cstr + offset, c);
-	return ret ? ret - _cstr : npos;
+	const char* p = _str();
+	const char* ret = roStrChr(p + offset, c);
+	return ret ? ret - p : npos;
 }
 
 roSize String::find(const char* str, roSize offset) const
 {
-	const char* ret = roStrStr(_cstr + offset, str);
-	return ret ? ret - _cstr : npos;
+	const char* p = _str();
+	const char* ret = roStrStr(p + offset, str);
+	return ret ? ret - p : npos;
 }
 
 roSize String::rfind(char c, roSize offset) const
@@ -180,65 +238,41 @@ roSize String::rfind(char c, roSize offset) const
 
 roSize String::rfind(const char* str, roSize offset) const
 {
-	roSize l1 = roMinOf2(offset, _length);
+	roSize l1 = roMinOf2(offset, _size());
 	roSize l2 = roStrLen(str);
 
 	if(l2 > l1) return npos;
 
-	for(char* s = _cstr + l1 - l2; s >= _cstr; --s)
+	const char* p = _str();
+	for(char* s = _str() + l1 - l2; s >= p; --s)
 		if(roStrnCmp(s, str, l2) == 0)
-			return num_cast<roSize>(s - _cstr);
+			return num_cast<roSize>(s - p);
 	return npos;
 }
 
 String String::substr(roSize offset, roSize count) const
 {
+	const char* p = _str();
 	if(count == npos)
-		return String(_cstr + offset);
-	return String(_cstr + offset, count);
+		return String(p + offset);
+	return String(p + offset, count);
 }
 
 String& String::operator+=(const char* str)
 {
 	if(const roSize len = roStrLen(str)) {
-		const roSize oldLen = _length;
-		resize(_length + len);
+		const roSize oldLen = _size();
+		resize(oldLen + len);
+		char* p = _str();
 		for(roSize i=0; i<len; ++i)
-			_cstr[oldLen + i] = str[i];
+			p[oldLen + i] = str[i];
 	}
 	return *this;
 }
 
 String& String::operator+=(const String& str)
 {
-	return *this += str.c_str();
-}
-
-void String::format(const char* format, ...)
-{
-	if(!format) return;
-
-	va_list vl;
-	va_start(vl, format);
-
-	roSize size = vsnprintf(NULL, 0, format, vl);
-	resize(size);
-
-	vsprintf(_cstr, format, vl);
-}
-
-void String::appendFormat(const char* format, ...)
-{
-	if(!format) return;
-
-	va_list vl;
-	va_start(vl, format);
-
-	roSize oldSize = _length;
-	roSize size = vsnprintf(NULL, 0, format, vl);
-	resize(_length + size);
-
-	vsprintf(_cstr + oldSize, format, vl);
+	return *this += str._str();
 }
 
 Status String::fromUtf16(const roUint16* src, roSize maxSrcLen)
@@ -247,24 +281,24 @@ Status String::fromUtf16(const roUint16* src, roSize maxSrcLen)
 	Status st = roUtf16ToUtf8(NULL, len, src, maxSrcLen); if(!st) return st;
 
 	resize(len);
-	st = roUtf16ToUtf8(_cstr, len, src, maxSrcLen); if(!st) return st;
+	st = roUtf16ToUtf8(_str(), len, src, maxSrcLen); if(!st) return st;
 
 	return Status::ok;
 }
 
 Status String::toUtf16(roUint16* dst, roSize& dstLen)
 {
-	return roUtf8ToUtf16(dst, dstLen, c_str(), roSize(-1));
+	return roUtf8ToUtf16(dst, dstLen, _str(), roSize(-1));
 }
 
 bool String::operator==(const char* rhs) const
 {
-	return roStrCmp(c_str(), rhs) == 0;
+	return roStrCmp(_str(), rhs) == 0;
 }
 
 bool String::operator==(const String& rhs) const
 {
-	return roStrCmp(c_str(), rhs.c_str()) == 0;
+	return roStrCmp(_str(), rhs._str()) == 0;
 }
 
 
