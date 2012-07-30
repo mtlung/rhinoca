@@ -2,6 +2,7 @@
 #include "roRenderDriver.h"
 
 #include "../base/roArray.h"
+#include "../base/roCpuProfiler.h"
 #include "../base/roLog.h"
 #include "../base/roMemory.h"
 #include "../base/roString.h"
@@ -1267,6 +1268,8 @@ static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, unsigned a
 
 static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsigned mipIndex, unsigned aryIndex, unsigned& rowBytes)
 {
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!ctx || !impl) return false;
@@ -1326,6 +1329,8 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 
 static void _unmapTexture(roRDriverTexture* self, unsigned mipIndex, unsigned aryIndex)
 {
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!ctx || !impl || !impl->isMapped) return;

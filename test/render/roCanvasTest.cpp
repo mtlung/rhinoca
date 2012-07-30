@@ -316,6 +316,11 @@ TEST_FIXTURE(CanvasTest, drawPixel)
 		roSize rowBytes = 0;
 		roUint8* pixels = auxCanvas.lockPixelWrite(rowBytes);
 
+		if(!pixels) {
+			CHECK(false);
+			continue;
+		}
+
 		for(roSize i=0; i<auxCanvas.height(); ++i) for(roSize j=0; j<auxCanvas.width(); ++j) {
 			const float freq = 3.14159265358979323f / 200;
 			roUint8 r = roUint8(128 * sinf(i * freq) + 127);
@@ -323,7 +328,7 @@ TEST_FIXTURE(CanvasTest, drawPixel)
 			roUint8 b = roUint8(128 * cosf(i * freq) + 127);
 
 			const roUint8 color[4] = { r, g, b, 255 };
-			roSize y = auxCanvas.targetTexture->handle->isYAxisUp ? auxCanvas.height() - i : i;
+			roSize y = auxCanvas.targetTexture->handle->isYAxisUp ? auxCanvas.height() - i - 1 : i;
 			roSize offset = y * rowBytes + j * 4;
 			(int&)(pixels[offset]) = (int&)color;
 		}
