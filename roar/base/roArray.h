@@ -20,6 +20,12 @@ struct StaticArray
 	enum { N = N_ };
 	T data[N];		///< Fixed-size array of elements of type T
 
+	T*				begin()				{ return data; }
+	const T*		begin() const		{ return data; }
+
+	T*				end()				{ return data + N; }
+	const T*		end() const			{ return data + N; }
+
 	T&				operator[](roSize i)		{ roAssert(i < N); return data[i]; }
 	const T&		operator[](roSize i) const	{ roAssert(i < N); return data[i]; }
 

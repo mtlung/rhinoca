@@ -80,9 +80,12 @@ void _deleteDriverContext_DX11(roRDriverContext* self)
 
 	impl->driver->deleteBuffer(impl->triangleFanIndexBuffer);
 
-	for(roSize i=0; i<impl->constBufferInUse.size(); ++i)
-		impl->driver->deleteBuffer(impl->constBufferInUse[i]);
-	impl->constBufferInUse.assign(NULL);
+	for(roSize i=0; i<impl->constBufferInUse.size(); ++i) {
+		// The same buffer may be used in multiple shader, only do the deletion for the last one
+		if(roOccurrence(impl->constBufferInUse.begin(), impl->constBufferInUse.end(), impl->constBufferInUse[i]) == 1)
+			impl->driver->deleteBuffer(impl->constBufferInUse[i]);
+		impl->constBufferInUse[i] = NULL;
+	}
 
 	for(roSize i=0; i<impl->stagingBufferCache.size(); ++i) {
 		roAssert(!impl->stagingBufferCache[i].mapped);

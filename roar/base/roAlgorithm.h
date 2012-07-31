@@ -13,6 +13,9 @@ template<class T, class K>	T*		roLowerBound(T* ary, roSize count, const K& key, 
 template<class T>			T*		roUpperBound(T* ary, roSize count, const T& key);
 template<class T, class K>	T*		roUpperBound(T* ary, roSize count, const K& key, bool(*less)(const K&, const T&));
 
+// Counting
+template<class T>			roSize	roOccurrence(T* begin, T* end, const T& key);
+
 //
 template<class T>			bool	roEqual(T* begin, T* end, T* begin2);
 template<class T, class P>	bool	roEqual(T* begin, T* end, T* begin2, P p);
@@ -138,6 +141,15 @@ T* roUpperBound(T* ary, roSize count, const K& key, bool(*less)(const K&, const 
 			count = count2;
 	}
 	return ary == end ? NULL : ary;
+}
+
+template<class T>
+roSize roOccurrence(T* begin, T* end, const T& key)
+{
+	roSize occurrence = 0;
+	for(T* i=begin; i<end; ++i)
+		occurrence += (*i == key);
+	return occurrence;
 }
 
 template<class T>

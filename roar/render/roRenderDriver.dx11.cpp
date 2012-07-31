@@ -1570,7 +1570,9 @@ bool _setUniformBuffer(unsigned nameHash, roRDriverBuffer* buffer, roRDriverShad
 		}
 
 		if(input->offset > 0) {
-			_deleteBuffer(ctx->constBufferInUse[shader->type]);
+			// The same temp buffer may be used in multiple shader, only do the deletion for the last one
+			if(roOccurrence(ctx->constBufferInUse.begin(), ctx->constBufferInUse.end(), ctx->constBufferInUse[shader->type]) == 1)
+				_deleteBuffer(ctx->constBufferInUse[shader->type]);
 			ctx->constBufferInUse[shader->type] = tmpBuf;
 		}
 	}
