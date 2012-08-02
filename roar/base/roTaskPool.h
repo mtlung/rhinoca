@@ -171,6 +171,8 @@ protected:
 
 	ThreadId _mainThreadId;
 
+	float _avgTaskPerSecond;		///< We keep some statistic for making doSomeTask() more efficient
+
 	mutable CondVar condVar;
 };	// TaskPool
 

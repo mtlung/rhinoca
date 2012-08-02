@@ -209,4 +209,36 @@ void StopWatch::resume()
 	_startTime = ticksSinceProgramStatup();
 }
 
+CountDownTimer::CountDownTimer(float timeOutInSecs)
+{
+	_beginTime = _stopWatch.getFloat();
+	_endTime = _beginTime + timeOutInSecs;
+	_numQuery = 0;
+	_nextCheckAt = 0;
+}
+
+bool CountDownTimer::isExpired()
+{
+	++_numQuery;
+	return _stopWatch.getFloat() >= _endTime;
+}
+
+bool CountDownTimer::isExpired(float& hint)
+{
+	if(++_numQuery < _nextCheckAt)
+		return false;
+
+	float current = _stopWatch.getFloat();
+	float queryPerSec = _numQuery / (current - _beginTime);
+
+	// Update the hint
+	if(hint > queryPerSec)
+		hint = hint * 0.9f + queryPerSec * 0.1f;	// Rise up the hint slowly
+	else
+		hint = hint * 0.5f + queryPerSec * 0.5f;	// Put down the hint fast
+
+	_nextCheckAt = _numQuery + roSize(hint * (_endTime - _beginTime) * 0.2f);
+	return current >= _endTime;
+}
+
 }	// namespace ro

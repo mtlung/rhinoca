@@ -33,6 +33,25 @@ struct StopWatch
 	bool _pause;
 };	// StopWatch
 
+/// Utility to keep track a time out
+struct CountDownTimer
+{
+	CountDownTimer(float timeOutInSecs);
+
+	bool isExpired();
+
+	/// If we give some hint to CountDownTimer, we can reduce the invocation to StopWatch query
+	/// The hint is the average time gap between each expected expiration query.
+	bool isExpired(float& hint);
+
+// Private
+	float _beginTime;
+	float _endTime;
+	roSize _numQuery;
+	roSize _nextCheckAt;
+	StopWatch _stopWatch;
+};	// CountDownTimer
+
 }	// namespace ro
 
 /// A handy tool to debug which code block contribute to a frame spike

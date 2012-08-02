@@ -109,6 +109,7 @@ TaskPool::TaskPool()
 	, _workerWaitCount(0)
 	, _threadHandles(NULL)
 	, _mainThreadId(TaskPool::threadId())
+	, _avgTaskPerSecond(0)
 {
 	_pendingTasksHead = _allocator.newObj<TaskProxy>().unref();
 	_pendingTasksTail = _allocator.newObj<TaskProxy>().unref();
@@ -423,8 +424,7 @@ void TaskPool::doSomeTask(float timeout)
 	if(p == _pendingTasksTail)
 		return;
 
-	StopWatch watch;
-	const double beginTime = watch.getDouble();
+	CountDownTimer countDown(timeout);
 	ThreadId tId = threadId();
 
 	// A counter for preventing endless looping of the mixed p->nextPending/p->dependency chasing
@@ -439,16 +439,19 @@ void TaskPool::doSomeTask(float timeout)
 			// may be in-efficient, but easier to implement.
 			p = _pendingTasksHead->nextPending;
 			loopCount = 0;
+
+			if(timeout > 0 && countDown.isExpired(_avgTaskPerSecond))
+				return;
 		}
 		else {
-			if(timeout > 0 && watch.getFloat() > beginTime + timeout)
-				return;
-
 			// Hunt for most depending job, to prevent job starvation.
 			p = (p->dependency && (p->dependency->id == p->dependencyId)) ? p->dependency : p->nextPending;
 
-			if(++loopCount > _pendingTaskCount)
+			if(++loopCount > _pendingTaskCount) {
+				if(_workerWaitCount > 0)
+					condVar.broadcast();
 				break;
+			}
 		}
 	}
 }

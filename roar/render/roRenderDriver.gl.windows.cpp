@@ -193,6 +193,7 @@ bool _initDriverContext_GL(roRDriverContext* self, void* platformSpecificWindow)
 
 	// Create a newer driver if necessary
 	// Reference: http://www.opengl.org/wiki/Tutorial:_OpenGL_3.1_The_First_Triangle_%28C%2B%2B/Win%29#Rendering_Context_Creation
+	// Reference: http://www.seas.upenn.edu/~pcozzi/OpenGLInsights/OpenGLInsights-ARB_debug_output.pdf
 	if(wglCreateContextAttribsARB && v1 <= impl->majorVersion && v2 < impl->minorVersion) {
 		const int attribs[] = {
 			WGL_CONTEXT_MAJOR_VERSION_ARB, impl->majorVersion,
