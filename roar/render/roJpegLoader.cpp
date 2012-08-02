@@ -38,7 +38,8 @@ struct JpegLoader : public Task
 	JpegLoader(Texture* t, ResourceManager* mgr)
 		: stream(NULL), texture(t), manager(mgr)
 		, width(0), height(0)
-		, rowBytes(0), pixelDataFormat(roRDriverTextureFormat_RGBA)
+		, pixelDataFormat(roRDriverTextureFormat_RGBA)
+		, mappedPtr(NULL), mappedRowBytes(0)
 		, decoder(NULL), jpegStream(NULL)
 		, nextFun(&JpegLoader::loadHeader)
 	{}
@@ -62,9 +63,10 @@ struct JpegLoader : public Task
 	TexturePtr texture;
 	ResourceManager* manager;
 	unsigned width, height;
-	Array<roUint8> pixelData;
-	roSize rowBytes;
 	roRDriverTextureFormat pixelDataFormat;
+
+	roByte* mappedPtr;
+	roSize mappedRowBytes;
 
 	Pjpeg_decoder decoder;
 	Stream* jpegStream;
@@ -74,8 +76,12 @@ struct JpegLoader : public Task
 
 void JpegLoader::run(TaskPool* taskPool)
 {
-	if(texture->state == Resource::Aborted || !taskPool->keepRun())
+	if(texture->state == Resource::Aborted || !taskPool->keepRun()) {
 		nextFun = &JpegLoader::abort;
+
+		if(taskPool->threadId() != taskPool->mainThreadId())
+			return reSchedule(false, taskPool->mainThreadId());
+	}
 
 	(this->*nextFun)(taskPool);
 }
@@ -117,16 +123,25 @@ roEXCP_END
 
 void JpegLoader::initTexture(TaskPool* taskPool)
 {
-	if(roRDriverCurrentContext->driver->initTexture(texture->handle, width, height, 1, pixelDataFormat, roRDriverTextureFlag_None))
-	{
-		nextFun = &JpegLoader::loadPixelData;
-		return reSchedule(false, ~taskPool->mainThreadId());
+roEXCP_TRY
+	if(!roRDriverCurrentContext->driver->initTexture(texture->handle, width, height, 1, pixelDataFormat, roRDriverTextureFlag_None)) {
+		roLog("error", "JpegLoader: Fail to initTexture '%s'\n", texture->uri().c_str());
+		roEXCP_THROW;
 	}
-	else
-	{
-		nextFun = &JpegLoader::abort;
-		return reSchedule(false, taskPool->mainThreadId());
-	}
+
+	roAssert(!mappedPtr);
+	mappedPtr = (roByte*)roRDriverCurrentContext->driver->mapTexture(texture->handle, roRDriverMapUsage_Write, 0, 0, mappedRowBytes);
+
+	if(!mappedPtr || !mappedRowBytes)
+		roEXCP_THROW;
+
+	nextFun = &JpegLoader::loadPixelData;
+	return reSchedule(false, ~taskPool->mainThreadId());
+
+roEXCP_CATCH
+	nextFun = &JpegLoader::abort;
+	return reSchedule(false, taskPool->mainThreadId());
+roEXCP_END
 }
 
 void JpegLoader::loadPixelData(TaskPool* taskPool)
@@ -136,24 +151,24 @@ void JpegLoader::loadPixelData(TaskPool* taskPool)
 	Status st;
 
 roEXCP_TRY
-	rowBytes = decoder->get_bytes_per_scan_line();
-	if(!pixelData.resizeNoInit(rowBytes * height)) { st = Status::not_enough_memory; roEXCP_THROW; }
-
 	void* Pscan_line_ofs = NULL;
 	uint scan_line_len = 0;
 	int c = decoder->get_num_components();
 
-	roUint8* p = pixelData.typedPtr();
+	roUint8* p = mappedPtr;
+	if(!p)
+		roEXCP_THROW;
+
 	while(true) {
 		int result = decoder->decode(&Pscan_line_ofs, &scan_line_len);
 		if(result == JPGD_OKAY) {
 			memcpy(p, Pscan_line_ofs, scan_line_len);
 
 			// Assign alpha to 1 for incoming is RGB
-			if(c == 3) for(roUint8* end = p + scan_line_len; p < end; p += 4)
+			if(c == 3) for(roUint8* end = p + mappedRowBytes; p < end; p += 4)
 				p[3] = TypeOf<roUint8>::valueMax();
 			else
-				p += decoder->get_bytes_per_scan_line();
+				p += mappedRowBytes;
 
 			continue;
 		}
@@ -178,7 +193,8 @@ void JpegLoader::commit(TaskPool* taskPool)
 {
 	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
-	if(roRDriverCurrentContext->driver->updateTexture(texture->handle, 0, 0, pixelData.bytePtr(), 0, NULL)) {
+	if(mappedPtr) {
+		roRDriverCurrentContext->driver->unmapTexture(texture->handle, 0, 0);
 		texture->state = Resource::Loaded;
 		delete this;
 	}
@@ -190,6 +206,10 @@ void JpegLoader::commit(TaskPool* taskPool)
 
 void JpegLoader::abort(TaskPool* taskPool)
 {
+	if(mappedPtr)
+		roRDriverCurrentContext->driver->unmapTexture(texture->handle, 0, 0);
+
+	mappedPtr = NULL;
 	texture->state = Resource::Aborted;
 	delete this;
 }

@@ -39,7 +39,7 @@ Status rawFileSystemOpenFile(const char* uri, void*& outFile)
 		wstr[len] = 0;
 	}
 
-	HANDLE h = CreateFileW((wchar_t*)wstr.typedPtr(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+	HANDLE h = CreateFileW((wchar_t*)wstr.typedPtr(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
 	if(h == INVALID_HANDLE_VALUE) {
 		if(GetLastError() == ERROR_FILE_NOT_FOUND)
 			return Status::file_not_found;

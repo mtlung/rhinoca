@@ -69,6 +69,7 @@ SubSystems::SubSystems()
 	, initRenderDriver(_initRenderDriver), renderDriver(NULL), renderContext(NULL)
 	, initResourceManager(_initResourceManager), resourceMgr(NULL)
 	, initFont(_initFont), fontMgr(NULL)
+	, frameNumber(0)
 	, maxFrameDuration(0)
 	, averageFrameDuration(0)
 {
@@ -103,6 +104,10 @@ Status SubSystems::init()
 
 	audioDriver = roNewAudioDriver();
 	if(!roInitAudioDriver(audioDriver, "")) return Status::undefined;
+
+	frameNumber = 0;
+	maxFrameDuration = 0;
+	averageFrameDuration = 0;
 
 	return Status::ok;
 }
@@ -149,6 +154,7 @@ void SubSystems::tick()
 		audioDriver->tick(audioDriver);
 
 	if(renderContext) {
+		++frameNumber;
 		averageFrameDuration = roStepRunAvg(averageFrameDuration, renderContext->lastFrameDuration, 60);
 		maxFrameDuration = roMaxOf2(maxFrameDuration, renderContext->lastFrameDuration);
 	}

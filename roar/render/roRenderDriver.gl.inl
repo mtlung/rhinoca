@@ -64,6 +64,7 @@ struct roRDriverTextureImpl : public roRDriverTexture
 	struct MapInfo {
 		GLuint glPbo;
 		char* systemBuf;
+		roByte* mappedPtr;	// It indicate if the mapping operation is really success or not
 		roRDriverMapUsage usage;
 	};
 

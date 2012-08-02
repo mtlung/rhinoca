@@ -61,6 +61,7 @@ struct SubSystems
 	void* currentCanvas;
 
 // Frame statistics
+	roSize frameNumber;
 	float maxFrameDuration;
 	float averageFrameDuration;
 };	// SubSystems

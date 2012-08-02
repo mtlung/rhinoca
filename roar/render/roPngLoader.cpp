@@ -126,8 +126,12 @@ PngLoader::PngLoader(Texture* t, ResourceManager* mgr)
 
 void PngLoader::run(TaskPool* taskPool)
 {
-	if(texture->state == Resource::Aborted || !taskPool->keepRun())
+	if(texture->state == Resource::Aborted || !taskPool->keepRun()) {
 		nextFun = &PngLoader::abort;
+
+		if(taskPool->threadId() != taskPool->mainThreadId())
+			return reSchedule(false, taskPool->mainThreadId());
+	}
 
 	(this->*nextFun)(taskPool);
 }
@@ -181,16 +185,17 @@ Abort:
 
 void PngLoader::initTexture(TaskPool* taskPool)
 {
-	if(roRDriverCurrentContext->driver->initTexture(texture->handle, width, height, 1, pixelDataFormat, roRDriverTextureFlag_None))
-	{
-		nextFun = &PngLoader::processData;
-		return reSchedule(false, ~taskPool->mainThreadId());
-	}
-	else
-	{
-		nextFun = &PngLoader::abort;
-		return reSchedule(false, taskPool->mainThreadId());
-	}
+roEXCP_TRY
+	if(!roRDriverCurrentContext->driver->initTexture(texture->handle, width, height, 1, pixelDataFormat, roRDriverTextureFlag_None))
+		roEXCP_THROW;
+
+	nextFun = &PngLoader::processData;
+	return reSchedule(false, ~taskPool->mainThreadId());
+
+roEXCP_CATCH
+	nextFun = &PngLoader::abort;
+	return reSchedule(false, taskPool->mainThreadId());
+roEXCP_END
 }
 
 void PngLoader::processData(TaskPool* taskPool)

@@ -53,8 +53,12 @@ protected:
 
 void BmpLoader::run(TaskPool* taskPool)
 {
-	if(texture->state == Resource::Aborted || !taskPool->keepRun())
+	if(texture->state == Resource::Aborted || !taskPool->keepRun()) {
 		nextFun = &BmpLoader::abort;
+
+		if(taskPool->threadId() != taskPool->mainThreadId())
+			return reSchedule(false, taskPool->mainThreadId());
+	}
 
 	(this->*nextFun)(taskPool);
 }
