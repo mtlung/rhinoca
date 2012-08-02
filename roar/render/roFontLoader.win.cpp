@@ -2,6 +2,7 @@
 #include "roFont.h"
 #include "roCanvas.h"
 #include "../base/roArray.h"
+#include "../base/roCpuProfiler.h"
 #include "../base/roLog.h"
 #include "../base/roParser.h"
 #include "../base/roTypeCast.h"
@@ -165,6 +166,8 @@ protected:
 
 void FontLoader::run(TaskPool* taskPool)
 {
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+
 	if((font->state == Resource::Aborted || !taskPool->keepRun()) && nextFun != &FontLoader::cleanup)
 		nextFun = &FontLoader::requestAbort;
 

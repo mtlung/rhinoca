@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "event.h"
 #include "../context.h"
+#include "../../roar/base/roCpuProfiler.h"
 #include "../../roar/base/roStringHash.h"
 
 using namespace ro;
@@ -308,6 +309,8 @@ bool EventTarget::_dispatchEventNoCaptureBubble(Event* evt, JSObject* self)
 
 JSBool EventTarget::dispatchEvent(Event* ev, JSObject* self)
 {
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+
 	// Build the event propagation list
 	// See http://docstore.mik.ua/orelly/webprog/dhtml/ch06_05.htm
 	TinyArray<EventTarget*, 64> list(1, this);

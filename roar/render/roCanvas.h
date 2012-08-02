@@ -133,8 +133,8 @@ struct Canvas
 	roRDriverShaderTextureInput _textureInput;
 	StaticArray<roRDriverShaderBufferInput, 4> _bufferInputs;
 
-	float _targetWidth;
-	float _targetHeight;
+	unsigned _targetWidth;
+	unsigned _targetHeight;
 
 	// For image draw batching
 	bool _isBatchMode;

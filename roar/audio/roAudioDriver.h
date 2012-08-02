@@ -48,7 +48,7 @@ typedef struct roAudioDriver
 } roAudioDriver;
 
 roAudioDriver* roNewAudioDriver();
-bool roInitAudioDriver(roAudioDriver* self, const char* options);
+void roInitAudioDriver(roAudioDriver* self, const char* options);
 void roDeleteAudioDriver(roAudioDriver* self);
 
 #ifdef __cplusplus

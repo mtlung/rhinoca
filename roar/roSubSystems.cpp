@@ -103,7 +103,7 @@ Status SubSystems::init()
 	currentCanvas = NULL;
 
 	audioDriver = roNewAudioDriver();
-	if(!roInitAudioDriver(audioDriver, "")) return Status::undefined;
+	roInitAudioDriver(audioDriver, "");
 
 	frameNumber = 0;
 	maxFrameDuration = 0;

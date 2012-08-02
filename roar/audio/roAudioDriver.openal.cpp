@@ -244,14 +244,30 @@ SoundSource::~SoundSource()
 	alDeleteSources(1, &handle);
 }
 
-struct roAudioDriverImpl : public roAudioDriver
+struct roAudioDriverImpl : public roAudioDriver, public Task
 {
+	roAudioDriverImpl()
+		: taskReady(0)
+		, alContext(NULL)
+	{}
+
+	~roAudioDriverImpl();
+
+	void init();
+
 	void makeCurrent()
 	{
+		TaskPool* taskPool = roSubSystems ? roSubSystems->taskPool : NULL;
+		if(taskPool)
+			taskPool->wait(taskReady);
+
 		roAssert(alContext);
 		alcMakeContextCurrent(alContext);
 	}
 
+	override void run(TaskPool* taskPool);
+
+	TaskId taskReady;
 	ALCcontext* alContext;
 	LinkList<SoundSource> soundList;
 	LinkList<SoundSource::Active> activeSoundList;
@@ -642,20 +658,47 @@ void _alDeviceClose()
 	_alcDevice = NULL;
 }
 
-bool roInitAudioDriver(roAudioDriver* self, const char* options)
+void roAudioDriverImpl::run(TaskPool* taskPool)
 {
-	roAudioDriverImpl* impl = static_cast<roAudioDriverImpl*>(self);
-	if(!impl) return false;
+	if(taskPool->keepRun())
+		init();
+}
 
-	if(impl->alContext)
-		return true;
+void roAudioDriverImpl::init()
+{
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 	_alDeviceInit();
-	impl->alContext = alcCreateContext(_alcDevice, NULL);
+	alContext = alcCreateContext(_alcDevice, NULL);
 	_checkAndPrintError("roInitAudioDriver failed: ");
-	roAssert(impl->alContext);
+	roAssert(alContext);
+}
 
-	return impl->alContext != NULL;
+void roInitAudioDriver(roAudioDriver* self, const char* options)
+{
+	roAudioDriverImpl* impl = static_cast<roAudioDriverImpl*>(self);
+	if(!impl) return;
+
+	TaskPool* taskPool = roSubSystems ? roSubSystems->taskPool : NULL;
+	if(!taskPool) {
+		impl->init();
+		return;
+	}
+
+	if(impl->taskReady)
+		return;
+
+	impl->taskReady = taskPool->addFinalized(impl, 0, 0, ~taskPool->mainThreadId());
+}
+
+roAudioDriverImpl::~roAudioDriverImpl()
+{
+	soundList.destroyAll();
+
+	if(alContext) {
+		alcDestroyContext(alContext);
+		_alDeviceClose();
+	}
 }
 
 void roDeleteAudioDriver(roAudioDriver* self)
@@ -663,12 +706,9 @@ void roDeleteAudioDriver(roAudioDriver* self)
 	roAudioDriverImpl* impl = static_cast<roAudioDriverImpl*>(self);
 	if(!impl) return;
 
-	impl->soundList.destroyAll();
-
-	if(impl->alContext) {
-		alcDestroyContext(impl->alContext);
-		_alDeviceClose();
-	}
+	TaskPool* taskPool = roSubSystems ? roSubSystems->taskPool : NULL;
+	if(taskPool)
+		taskPool->wait(impl->taskReady);
 
 	_allocator.deleteObj(impl);
 }

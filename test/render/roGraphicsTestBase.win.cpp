@@ -139,7 +139,7 @@ bool GraphicsTestBase::keepRun()
 void GraphicsTestBase::resize(unsigned width, unsigned height)
 {
 	if(!driver) return;
-	driver->changeResolution(width, height);
+	roVerify(driver->changeResolution(width, height));
 	driver->setViewport(0, 0, context->width, context->height, 0, 1);
 }
 

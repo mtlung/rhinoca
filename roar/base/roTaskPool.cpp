@@ -609,7 +609,7 @@ void TaskPool::addCallback(TaskId id, Callback callback, void* userData, ThreadI
 	class CallbackTask : public Task
 	{
 	public:
-		virtual void run(TaskPool* taskPool)
+		override void run(TaskPool* taskPool)
 		{
 			callback(taskPool, userData);
 			_allocator.deleteObj(this);

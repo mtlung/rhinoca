@@ -1,6 +1,9 @@
 #include "pch.h"
 #include "roGraphicsTestBase.win.h"
 #include "../../roar/render/roTexture.h"
+#include "../../roar/base/roFileSystem.h"
+#include "../../roar/base/roCpuProfiler.h"
+#include "../../roar/render/roCanvas.h"
 
 using namespace ro;
 
@@ -105,4 +108,55 @@ TEST_FIXTURE(TextureLoaderTest, load)
 
 	driver->deleteBuffer(vbuffer);
 	driver->deleteBuffer(ibuffer);
+}
+
+TEST_FIXTURE(TextureLoaderTest, stressTest)
+{
+	createWindow(800, 600);
+	initContext(driverStr[driverIndex]);
+
+	Canvas canvas;
+	canvas.init();
+
+	Array<ResourcePtr> resources;
+
+	String rootPath = "D:\\Photos\\2002-12\\";
+	void* dir = ro::fileSystem.openDir(rootPath.c_str());
+
+	bool allListed = false;
+
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+
+	while(keepRun()) {
+		CpuProfilerScope cpuProfilerScope("Main loop");
+
+		// Check if any of the texture are loaded
+		for(roSize i=0; i<resources.size(); ++i) {
+			TexturePtr tex = dynamic_cast<Texture*>(resources[i].get());
+			if(!tex)
+				continue;
+			if(resources[i]->state == Resource::Loaded) {
+				canvas.drawImage(tex->handle,
+					0, 0, tex->width(), tex->height(),
+					0, 0, context->width, context->height);
+				resources.removeBySwap(i);
+				driver->swapBuffers();
+				break;
+			}
+		}
+
+		if(allListed)
+			continue;
+
+		const roUtf8* fileName = ro::fileSystem.dirName(dir);
+		if(!fileName)
+			break;
+
+		String path = rootPath;
+		path += fileName;
+
+		resources.pushBack(subSystems.resourceMgr->load(path.c_str()));
+		if(!ro::fileSystem.nextDir(dir))
+			allListed = true;
+	}
 }

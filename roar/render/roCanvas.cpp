@@ -246,24 +246,32 @@ static roRDriverRasterizerState _rasterizerState = {
 
 void Canvas::makeCurrent()
 {
-	roAssert(roSubSystems);
-	if(roSubSystems->currentCanvas == this)
-		return;
-
+	bool targetSizeChanged = false;
 	if(!targetTexture || !targetTexture->handle) {
-		roVerify(_driver->setRenderTargets(NULL, 0, false));
-		_targetWidth = (float)_context->width;
-		_targetHeight = (float)_context->height;
+		if(roSubSystems->currentCanvas != this)
+			roVerify(_driver->setRenderTargets(NULL, 0, false));
+
+		targetSizeChanged = _targetWidth != _context->width || _targetHeight != _context->height;
+		_targetWidth = _context->width;
+		_targetHeight = _context->height;
 	}
 	else {
-		roRDriverTexture* tex[] = { targetTexture->handle, depthStencilTexture->handle };
-		roVerify(_driver->setRenderTargets(tex, roCountof(tex), false));
-		_targetWidth = (float)targetTexture->handle->width;
-		_targetHeight = (float)targetTexture->handle->height;
+		if(roSubSystems->currentCanvas != this) {
+			roRDriverTexture* tex[] = { targetTexture->handle, depthStencilTexture->handle };
+			roVerify(_driver->setRenderTargets(tex, roCountof(tex), false));
+		}
+
+		targetSizeChanged = _targetWidth != targetTexture->handle->width || _targetHeight != targetTexture->handle->height;
+		_targetWidth = targetTexture->handle->width;
+		_targetHeight = targetTexture->handle->height;
 	}
 
+	roAssert(roSubSystems);
+	if(roSubSystems->currentCanvas == this && !targetSizeChanged)
+		return;
+
 	vgResizeSurfaceSH((VGint)_targetWidth, (VGint)_targetHeight);
-	_orthoMat = makeOrthoMat4(0, _targetWidth, 0, _targetHeight, 0, 1);
+	_orthoMat = makeOrthoMat4(0, (float)_targetWidth, 0, (float)_targetHeight, 0, 1);
 	_driver->adjustDepthRangeMatrix(_orthoMat.data);
 	_driver->setRasterizerState(&_rasterizerState);
 
@@ -964,11 +972,11 @@ void Canvas::setFillGradient(void* gradient)
 // ----------------------------------------------------------------------
 
 unsigned Canvas::width() const {
-	return (unsigned)_targetWidth;
+	return _targetWidth;
 }
 
 unsigned Canvas::height() const {
-	return (unsigned)_targetHeight;
+	return _targetHeight;
 }
 
 float Canvas::globalAlpha() const {
