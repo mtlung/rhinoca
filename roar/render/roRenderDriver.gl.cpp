@@ -654,6 +654,8 @@ static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, const voi
 	return true;
 }
 
+static void _unmapBuffer(roRDriverBuffer* self);
+
 // Reference: http://www.opengl.org/wiki/Buffer_Object#Mapping
 static void* _mapBuffer(roRDriverBuffer* self, roRDriverMapUsage usage, roSize offsetInBytes, roSize sizeInBytes)
 {
@@ -707,6 +709,9 @@ static void* _mapBuffer(roRDriverBuffer* self, roRDriverMapUsage usage, roSize o
 	impl->mapUsage = usage;
 	impl->mapOffset = offsetInBytes;
 	impl->mapSize = sizeInBytes;
+
+	if(!ret)
+		_unmapBuffer(self);
 
 	return ret;
 }

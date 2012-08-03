@@ -231,8 +231,9 @@ bool _initDriverContext_DX11(roRDriverContext* self, void* platformSpecificWindo
 		NULL,		// Software rasterizer
 #if roDEBUG
 		D3D11_CREATE_DEVICE_DEBUG |
+		D3D11_CREATE_DEVICE_PREVENT_INTERNAL_THREADING_OPTIMIZATIONS |
 #endif
-		D3D11_CREATE_DEVICE_PREVENT_INTERNAL_THREADING_OPTIMIZATIONS,
+		D3D11_CREATE_DEVICE_SINGLETHREADED,
 		NULL, 0,	// Feature level
 		D3D11_SDK_VERSION,
 		&swapChainDesc,

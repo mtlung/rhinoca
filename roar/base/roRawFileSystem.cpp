@@ -3,6 +3,7 @@
 #include "roArray.h"
 #include "roString.h"
 #include "roTypeCast.h"
+#include "roCpuProfiler.h"
 #include "../platform/roPlatformHeaders.h"
 #include <stdio.h>
 #include <sys/stat.h>
@@ -113,6 +114,7 @@ Status rawFileSystemRead(void* file, void* buffer, roUint64 size, roUint64& byte
 	roAssert(impl); if(!impl) return Status::invalid_parameter;
 
 	while(impl->readable < size) {
+		CpuProfilerScope cpuProfilerScope("rawFileSystemRead waiting");
 		if(rawFileSystemReadWillBlock(file, size)) continue;	// TODO: Do something else instead of dry loop?
 
 		if(impl->st == Status::file_ended && impl->readable > 0) {

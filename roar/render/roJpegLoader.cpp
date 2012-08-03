@@ -76,6 +76,8 @@ struct JpegLoader : public Task
 
 void JpegLoader::run(TaskPool* taskPool)
 {
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+
 	if(texture->state == Resource::Aborted || !taskPool->keepRun()) {
 		nextFun = &JpegLoader::abort;
 
@@ -88,6 +90,8 @@ void JpegLoader::run(TaskPool* taskPool)
 
 void JpegLoader::loadHeader(TaskPool* taskPool)
 {
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+
 	Status st;
 
 roEXCP_TRY
@@ -123,6 +127,8 @@ roEXCP_END
 
 void JpegLoader::initTexture(TaskPool* taskPool)
 {
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+
 roEXCP_TRY
 	if(!roRDriverCurrentContext->driver->initTexture(texture->handle, width, height, 1, pixelDataFormat, roRDriverTextureFlag_None)) {
 		roLog("error", "JpegLoader: Fail to initTexture '%s'\n", texture->uri().c_str());
@@ -164,12 +170,13 @@ roEXCP_TRY
 		if(result == JPGD_OKAY) {
 			memcpy(p, Pscan_line_ofs, scan_line_len);
 
-			// Assign alpha to 1 for incoming is RGB
-			if(c == 3) for(roUint8* end = p + mappedRowBytes; p < end; p += 4)
-				p[3] = TypeOf<roUint8>::valueMax();
-			else
-				p += mappedRowBytes;
+			roUint8* end = p + mappedRowBytes;
 
+			// Assign alpha to 1 for incoming is RGB
+			if(c == 3) for(; p < end; p += 4)
+				p[3] = TypeOf<roUint8>::valueMax();
+
+			p = end;
 			continue;
 		}
 		else if(result == JPGD_DONE)

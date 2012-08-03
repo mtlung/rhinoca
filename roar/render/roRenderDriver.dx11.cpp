@@ -838,14 +838,21 @@ static StagingBuffer* _getStagingBuffer(roRDriverContextImpl* ctx, roSize size, 
 				}
 			}
 
-			if(!ret)
-				ret = &ctx->stagingBufferCache.pushBack();
+			ret = &ctx->stagingBufferCache.pushBack();
 
-			ret->dxBuffer = stagingBuffer;
 			ret->size = size;
+			roAssert(!ret->mapped);
+			ret->lastUsedTime = 0;
+			ret->dxBuffer = stagingBuffer;
 		}
 
-		ret->mapped = false;
+		// If the staging buffer still in use, keep try to search
+		if(ret->mapped) {
+			ret = NULL;
+			++ctx->stagingBufferCacheSearchIndex;
+			continue;
+		}
+
 		ret->lastUsedTime = ctx->lastSwapTime;
 
 		if(mapOption == 0)
@@ -906,9 +913,10 @@ static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, const voi
 		roAssert(mapped.pData);
 		roMemcpy(mapped.pData, data, sizeInBytes);
 		ctx->dxDeviceContext->Unmap(staging->dxBuffer, 0);
+		roAssert(staging->mapped);
+		staging->mapped = false;
 		D3D11_BOX srcBox = { 0, 0, 0, num_cast<UINT>(sizeInBytes), 1, 1 };
 		ctx->dxDeviceContext->CopySubresourceRegion(impl->dxBuffer, 0, num_cast<UINT>(offsetInBytes), 0, 0, staging->dxBuffer, 0, &srcBox);
-		staging->mapped = false;
 		return true;
 	}
 
@@ -936,6 +944,7 @@ static void* _mapBuffer(roRDriverBuffer* self, roRDriverMapUsage usage, roSize o
 
 	roAssert(impl->dxStagingIdx == -1);
 	ctx->dxDeviceContext->Unmap(staging->dxBuffer, 0);
+	roAssert(staging->mapped);
 	staging->mapped = false;
 
 	// Prepare for read
@@ -988,17 +997,18 @@ static void _unmapBuffer(roRDriverBuffer* self)
 	if(!impl->dxBuffer ||  impl->dxStagingIdx < 0)
 		return;
 
-	StagingBuffer* dxStaging = &ctx->stagingBufferCache[impl->dxStagingIdx];
-	roAssert(dxStaging->dxBuffer);
+	StagingBuffer* staging = &ctx->stagingBufferCache[impl->dxStagingIdx];
+	roAssert(staging->dxBuffer);
 
-	ctx->dxDeviceContext->Unmap(dxStaging->dxBuffer, 0);
+	ctx->dxDeviceContext->Unmap(staging->dxBuffer, 0);
+	roAssert(staging->mapped);
+	staging->mapped = false;
 
 	if(impl->mapUsage & roRDriverMapUsage_Write) {
 		D3D11_BOX srcBox = { 0, 0, 0, num_cast<UINT>(impl->mapSize), 1, 1 };
-		ctx->dxDeviceContext->CopySubresourceRegion(impl->dxBuffer, 0, num_cast<UINT>(impl->mapOffset), 0, 0, dxStaging->dxBuffer, 0, &srcBox);
+		ctx->dxDeviceContext->CopySubresourceRegion(impl->dxBuffer, 0, num_cast<UINT>(impl->mapOffset), 0, 0, staging->dxBuffer, 0, &srcBox);
 	}
 
-	dxStaging->mapped = false;
 	impl->dxStagingIdx = -1;
 	impl->isMapped = false;
 	impl->mapSize = 0;
@@ -1167,14 +1177,21 @@ static StagingTexture* _getStagingTexture(roRDriverContextImpl* ctx, roRDriverTe
 				}
 			}
 
-			if(!ret)
-				ret = &ctx->stagingTextureCache.pushBack();
+			ret = &ctx->stagingTextureCache.pushBack();
 
-			ret->dxTexture = stagingTexture;
 			ret->hash = hash;
+			roAssert(!ret->mapped);
+			ret->lastUsedTime = 0;
+			ret->dxTexture = stagingTexture;
 		}
 
-		ret->mapped = false;
+		// If the staging buffer still in use, keep try to search
+		if(ret->mapped) {
+			ret = NULL;
+			++ctx->stagingTextureCacheSearchIndex;
+			continue;
+		}
+
 		ret->lastUsedTime = ctx->lastSwapTime;
 
 		if(mapOption == 0)
@@ -1252,6 +1269,7 @@ static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, unsigned a
 			memcpy(pDst, pSrc, rowSizeInBytes);
 
 		ctx->dxDeviceContext->Unmap(staging->dxTexture, 0);
+		roAssert(staging->mapped);
 		staging->mapped = false;
 
 		// Preform async upload using CopySubresourceRegion
@@ -1285,6 +1303,7 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 
 	roAssert(impl->dxStagingIdx == -1);
 	ctx->dxDeviceContext->Unmap(staging->dxTexture, 0);
+	roAssert(staging->mapped);
 	staging->mapped = false;
 
 	// Prepare for read
@@ -1319,6 +1338,8 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 	roAssert(mapped.RowPitch >= impl->width * _textureFormatMappings[impl->format].pixelSizeInBytes);
 	rowBytes = mapped.RowPitch;
 
+	roAssert(mapped.pData);
+	roAssert(!staging->mapped);
 	staging->mapped = true;
 	impl->isMapped = true;
 	impl->mapUsage = usage;
@@ -1338,15 +1359,16 @@ static void _unmapTexture(roRDriverTexture* self, unsigned mipIndex, unsigned ar
 	if(!impl->dxTexture || impl->dxStagingIdx < 0)
 		return;
 
-	StagingTexture* dxStaging = &ctx->stagingTextureCache[impl->dxStagingIdx];
-	roAssert(dxStaging->dxTexture);
+	StagingTexture* staging = &ctx->stagingTextureCache[impl->dxStagingIdx];
+	roAssert(staging->dxTexture);
 
-	ctx->dxDeviceContext->Unmap(dxStaging->dxTexture, mipIndex);
+	ctx->dxDeviceContext->Unmap(staging->dxTexture, mipIndex);
+	roAssert(staging->mapped);
+	staging->mapped = false;
 
 	if(impl->mapUsage & roRDriverMapUsage_Write)
-		ctx->dxDeviceContext->CopyResource(impl->dxTexture, dxStaging->dxTexture);
+		ctx->dxDeviceContext->CopyResource(impl->dxTexture, staging->dxTexture);
 
-	dxStaging->mapped = false;
 	impl->dxStagingIdx = -1;
 	impl->isMapped = false;
 }

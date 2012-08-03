@@ -32,6 +32,7 @@ struct ShaderResourceBinding
 
 struct StagingBuffer
 {
+	StagingBuffer() : size(0), mapped(false), lastUsedTime(0) {}
 	unsigned size:31;
 	unsigned mapped:1;
 	float lastUsedTime;
@@ -40,6 +41,7 @@ struct StagingBuffer
 
 struct StagingTexture
 {
+	StagingTexture() : hash(0), mapped(false), lastUsedTime(0) {}
 	unsigned hash;
 	unsigned mapped;
 	float lastUsedTime;
