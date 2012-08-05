@@ -9,10 +9,10 @@ std::string ToNarrowString(const wchar_t* wstr)
 	std::string ret;
 
 	// Get the required character count of the destination string (\0 not included)
-	unsigned count = ::wcstombs(NULL, wstr, INT_MAX);
+	size_t count = ::wcstombs(NULL, wstr, INT_MAX);
 
 	// Check for error
-	if(count == unsigned(-1))
+	if(count == size_t(-1))
 		return "";
 	if(count != 0)
 	{

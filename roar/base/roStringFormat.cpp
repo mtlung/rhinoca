@@ -186,7 +186,7 @@ roStatus _strFormatImpl(String& str, const roUtf8* format, FormatArg* args, roSi
 	roSize argIdx = 0;
 
 	// Scan for matching '{' '}'
-	roSize i = 0;
+	int i = 0;
 	int pos = -1;
 	for(const roUtf8* c = format; *c; ++c, ++i) {
 		if(*c == '{') {

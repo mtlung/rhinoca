@@ -1028,7 +1028,7 @@ static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, unsigned a
 static void _unmapTexture(roRDriverTexture* self, unsigned mipIndex, unsigned aryIndex);
 
 // Reference: http://www.seas.upenn.edu/~pcozzi/OpenGLInsights/OpenGLInsights-AsynchronousBufferTransfers.pdf
-static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsigned mipIndex, unsigned aryIndex, unsigned& rowBytes)
+static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsigned mipIndex, unsigned aryIndex, roSize& rowBytes)
 {
 	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 

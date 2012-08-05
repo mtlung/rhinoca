@@ -773,7 +773,7 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 	// Cache miss, do create DX buffer
 	roAssert(!impl->dxBuffer);
 
-	desc.ByteWidth = num_cast<UINT>(roMaxOf2(sizeInBytes, 1u));	// DirectX doesn't like zero size buffer
+	desc.ByteWidth = num_cast<UINT>(roMaxOf2(sizeInBytes, roSize(1)));	// DirectX doesn't like zero size buffer
 
 	D3D11_SUBRESOURCE_DATA data;
 	data.pSysMem = initData;
@@ -1284,7 +1284,7 @@ static bool _updateTexture(roRDriverTexture* self, unsigned mipIndex, unsigned a
 	return true;
 }
 
-static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsigned mipIndex, unsigned aryIndex, unsigned& rowBytes)
+static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsigned mipIndex, unsigned aryIndex, roSize& rowBytes)
 {
 	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
@@ -1875,7 +1875,7 @@ static void _drawPrimitive(roRDriverPrimitiveType type, roSize offset, roSize ve
 
 		ctx->dxDeviceContext->IASetIndexBuffer(idxBuffer->dxBuffer, DXGI_FORMAT_R16_UINT, 0);
 		ctx->dxDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ctx->dxDeviceContext->DrawIndexed(num_cast<UINT>(indexCount), 0, offset);
+		ctx->dxDeviceContext->DrawIndexed(num_cast<UINT>(indexCount), 0, num_cast<INT>(offset));
 	}
 	else {
 		ctx->dxDeviceContext->IASetPrimitiveTopology(_primitiveTypeMappings[type]);

@@ -203,7 +203,7 @@ void FontLoader::checkRequest(TaskPool* taskPool)
 			}
 
 			// Zero the pixels
-			unsigned rowBytes = 0;
+			roSize rowBytes = 0;
 			roUint8* texPtr = (roUint8*)roRDriverCurrentContext->driver->mapTexture(
 				texture->handle, roRDriverMapUsage_Write, 0, 0, rowBytes);
 			roZeroMemory(texPtr, rowBytes * texDimension);
@@ -214,7 +214,7 @@ void FontLoader::checkRequest(TaskPool* taskPool)
 
 		// Fill in the texture
 		TexturePtr tex = fontData->textures[reply.texIndex];
-		unsigned rowBytes = 0;
+		roSize rowBytes = 0;
 		roUint8* texPtr = (roUint8*)roRDriverCurrentContext->driver->mapTexture(
 			tex->handle, roRDriverMapUsage_ReadWrite, 0, 0, rowBytes);
 

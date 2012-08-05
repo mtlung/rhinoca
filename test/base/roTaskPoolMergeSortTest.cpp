@@ -10,19 +10,19 @@ static const bool benchmark = false;
 static const rhuint testSize = benchmark ? 10000000 : 1000;
 
 /// scratch is a memory buffer having the same size as data
-static void merge(int* data, int* scratch, int left, int leftEnd, int right, int rightEnd)
+static void merge(int* data, int* scratch, roSize left, roSize leftEnd, roSize right, roSize rightEnd)
 {
 	// The merge operation is much faster with a scratch memory buffer
 	if(scratch) {
-		int begin = left;
-		int end = rightEnd;
-		for(int i=begin; i<end; ++i) {
+		roSize begin = left;
+		roSize end = rightEnd;
+		for(roSize i=begin; i<end; ++i) {
 			if(right >= rightEnd || (left < leftEnd && data[left] <= data[right]))
 				scratch[i] = data[left++];
 			else
 				scratch[i] = data[right++];
 		}
-		for(int i=begin; i<end; ++i)
+		for(roSize i=begin; i<end; ++i)
 			data[i] = scratch[i];
 	}
 	// Otherwise we fallback to a memmove solution
@@ -37,15 +37,15 @@ static void merge(int* data, int* scratch, int left, int leftEnd, int right, int
 	}
 }
 
-static void mergeSortSingleThread(int* data, int* scratch, int begin, int end)
+static void mergeSortSingleThread(int* data, int* scratch, roSize begin, roSize end)
 {
-	int middle = (end - begin) / 2;
+	roSize middle = (end - begin) / 2;
 	if(middle == 0) return;
 
-	int left = begin;
-	int leftEnd = begin + middle;
-	int right = leftEnd;
-	int rightEnd = end;
+	roSize left = begin;
+	roSize leftEnd = begin + middle;
+	roSize right = leftEnd;
+	roSize rightEnd = end;
 
 	mergeSortSingleThread(data, scratch, left, leftEnd);
 
@@ -72,20 +72,20 @@ TEST(TaskPoolSingleThreadMergeSortTest)
 		CHECK(data[i-1] <= data[i]);
 }
 
-static void mergeSortMultiThread(int* data, int* scratch, int begin, int end, TaskPool& taskPool, int workCount=1)
+static void mergeSortMultiThread(int* data, int* scratch, roSize begin, roSize end, TaskPool& taskPool, roSize workCount=1)
 {
-	int middle = (end - begin) / 2;
+	roSize middle = (end - begin) / 2;
 	if(middle == 0) return;
 
-	int left = begin;
-	int leftEnd = begin + middle;
-	int right = leftEnd;
-	int rightEnd = end;
+	roSize left = begin;
+	roSize leftEnd = begin + middle;
+	roSize right = leftEnd;
+	roSize rightEnd = end;
 
 	class MergeSortTask : public Task
 	{
 	public:
-		MergeSortTask(int* data, int* scratch, int begin, int end, int workCount)
+		MergeSortTask(int* data, int* scratch, roSize begin, roSize end, roSize workCount)
 			: _data(data), _scratch(scratch), _begin(begin), _end(end), _workCount(workCount)
 		{}
 
@@ -95,13 +95,14 @@ static void mergeSortMultiThread(int* data, int* scratch, int begin, int end, Ta
 			delete this;
 		}
 
-		int *_data, *_scratch, _begin, _end, _workCount;
+		int *_data, *_scratch;
+		roSize _begin, _end, _workCount;
 	};
 
 	class MergeTask : public Task
 	{
 	public:
-		MergeTask(int* data, int* scratch, int left, int leftEnd, int right, int rightEnd)
+		MergeTask(int* data, int* scratch, roSize left, roSize leftEnd, roSize right, roSize rightEnd)
 			: _data(data), _scratch(scratch), _left(left), _leftEnd(leftEnd), _right(right), _rightEnd(rightEnd)
 		{}
 
@@ -111,7 +112,8 @@ static void mergeSortMultiThread(int* data, int* scratch, int begin, int end, Ta
 			delete this;
 		}
 
-		int *_data, *_scratch, _left, _leftEnd, _right, _rightEnd;
+		int *_data, *_scratch;
+		roSize _left, _leftEnd, _right, _rightEnd;
 	};
 
 	class DepdencyTask : public Task

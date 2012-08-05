@@ -12,8 +12,7 @@
 #	include <OpenAL/al.h>
 #	include <OpenAL/alc.h>
 #else
-#	include "../../thirdparty/OpenAL/al.h"
-#	include "../../thirdparty/OpenAL/alc.h"
+#	include "roAudioDriver.openal.windows.h"
 #endif
 
 /*	Some useful links about OpenAL:
@@ -24,10 +23,6 @@
 	Jump to particular position:
 	http://stackoverflow.com/questions/434599/openal-how-does-one-jump-to-a-particular-offset-more-than-once
  */
-
-#if roCOMPILER_VC
-#	pragma comment(lib, "OpenAL32")
-#endif
 
 using namespace ro;
 
@@ -154,7 +149,7 @@ static ALenum _getAlFormat(const AudioBuffer::Format& format)
 void AudioBuffer::addSubBuffer(unsigned pcmPosition, const char* data, roSize sizeInByte)
 {
 	unsigned pcmBegin = pcmPosition;
-	unsigned pcmEnd = pcmPosition + sizeInByte / format.blockAlignment;
+	unsigned pcmEnd = num_cast<unsigned>(pcmPosition + sizeInByte / format.blockAlignment);
 
 	roSize i, j;
 	// Find the correct index to insert
@@ -183,7 +178,7 @@ void AudioBuffer::addSubBuffer(unsigned pcmPosition, const char* data, roSize si
 
 	SubBuffer subBuffer = { pcmBegin, pcmEnd, 1, 0 };
 	alGenBuffers(1, &subBuffer.handle);
-	alBufferData(subBuffer.handle, _getAlFormat(format), data, sizeInByte, format.samplesPerSecond);
+	alBufferData(subBuffer.handle, _getAlFormat(format), data, num_cast<ALsizei>(sizeInByte), format.samplesPerSecond);
 	subBuffers.insert(roMinOf2(i + 1, subBuffers.size()), subBuffer);
 }
 
@@ -639,6 +634,11 @@ void _alDeviceInit()
 	if(_initCount > 0)
 		return;
 
+#if roOS_WIN
+	if(!_initOpenAL())
+		return;
+#endif
+
 	roAssert(!_alcDevice);
 	_alcDevice = alcOpenDevice(NULL);
 
@@ -656,6 +656,10 @@ void _alDeviceClose()
 	alcMakeContextCurrent(NULL);
 	alcCloseDevice(_alcDevice);
 	_alcDevice = NULL;
+
+#if roOS_WIN
+	_unloadOpenAL();
+#endif
 }
 
 void roAudioDriverImpl::run(TaskPool* taskPool)

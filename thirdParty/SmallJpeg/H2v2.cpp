@@ -25,9 +25,7 @@
 //------------------------------------------------------------------------------
 #include "jpegdecoder.h"
 
-#define USE_MMX
-
-#ifdef USE_MMX
+#ifdef SUPPORT_MMX
 #	include <mmintrin.h>
 #endif
 

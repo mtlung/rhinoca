@@ -244,7 +244,7 @@ void MemoryProfiler::tick()
 			roUint64 displacement = 0;
 			if(!::SymFromAddr(::GetCurrentProcess(), stackFrame, &displacement, symbol)) {
 				strcpy(symbol->Name, "no symbol");
-				symbol->NameLen = strlen(symbol->Name);
+				symbol->NameLen = num_cast<ULONG>(strlen(symbol->Name));
 			}
 
 			char cmd = 's';

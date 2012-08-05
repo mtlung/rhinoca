@@ -77,7 +77,7 @@ roEXCP_TRY
 	roSize bytesRead = num_cast<roSize>(readCount);
 	buf = ringBuffer.read(bytesRead);
 	int error, byteUsed = 0;
-	vorbis = stb_vorbis_open_pushdata(buf, bytesRead, &byteUsed, &error, NULL);
+	vorbis = stb_vorbis_open_pushdata(buf, num_cast<int>(bytesRead), &byteUsed, &error, NULL);
 
 	if(error == VORBIS_need_more_data) {
 		ringBuffer.flushWrite();
@@ -182,7 +182,7 @@ roEXCP_TRY
 	{
 		buf = ringBuffer.read(readCount);
 
-		byteUsed = stb_vorbis_decode_frame_pushdata(vorbis, buf, readCount, NULL, &outputs, &sampleCount);
+		byteUsed = stb_vorbis_decode_frame_pushdata(vorbis, buf, num_cast<int>(readCount), NULL, &outputs, &sampleCount);
 
 		// Not enough data in the buffer to construct a single frame, skip to next turn
 		if(!byteUsed) {

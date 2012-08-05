@@ -127,12 +127,6 @@ bool GraphicsTestBase::keepRun()
 
 	subSystems.tick();
 
-	printf("\rFPS: %f, frame duration- avg:%fms, max:%fms",
-		1.0f/subSystems.averageFrameDuration,
-		subSystems.averageFrameDuration*1000,
-		subSystems.maxFrameDuration*1000
-	);
-
 	return true;
 }
 

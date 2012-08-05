@@ -38,9 +38,9 @@ typedef ro::SharedPtr<Texture> TexturePtr;
 
 /// srcY and dstY are assumed to be Y-down
 void roTextureBlit(
-	unsigned bytePerPixel, unsigned dirtyWidth, unsigned dirtyHeight,
-	const char* srcPtr, unsigned srcX, unsigned srcY, unsigned srcHeight, unsigned srcRowBytes, bool srcYUp,
-	      char* dstPtr, unsigned dstX, unsigned dstY, unsigned dstHeight, unsigned dstRowBytes, bool dstYUp
+	roSize bytePerPixel, unsigned dirtyWidth, unsigned dirtyHeight,
+	const char* srcPtr, unsigned srcX, unsigned srcY, unsigned srcHeight, roSize srcRowBytes, bool srcYUp,
+	      char* dstPtr, unsigned dstX, unsigned dstY, unsigned dstHeight, roSize dstRowBytes, bool dstYUp
 );
 
 #endif	// __render_roTexture_h__

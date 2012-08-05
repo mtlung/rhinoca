@@ -55,9 +55,9 @@ unsigned Texture::actualHeight() const
 
 /// Copy a texture from one memory to another memory
 void roTextureBlit(
-	unsigned bytePerPixel, unsigned dirtyWidth, unsigned dirtyHeight,
-	const char* srcPtr, unsigned srcX, unsigned srcY, unsigned srcHeight, unsigned srcRowBytes, bool srcYUp,
-		  char* dstPtr, unsigned dstX, unsigned dstY, unsigned dstHeight, unsigned dstRowBytes, bool dstYUp)
+	roSize bytePerPixel, unsigned dirtyWidth, unsigned dirtyHeight,
+	const char* srcPtr, unsigned srcX, unsigned srcY, unsigned srcHeight, roSize srcRowBytes, bool srcYUp,
+		  char* dstPtr, unsigned dstX, unsigned dstY, unsigned dstHeight, roSize dstRowBytes, bool dstYUp)
 {
 	const char* pSrc = srcPtr;
 	char* pDst = dstPtr;

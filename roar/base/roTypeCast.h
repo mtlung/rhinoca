@@ -18,6 +18,13 @@ inline Target clamp_cast(Source x)
 	return ret;
 }
 
+/// This cast treat the source as a block of memory
+template<class Target, class Source>
+inline Target mem_cast(Source x)
+{
+	roStaticAssert(sizeof(Target) == sizeof(Source));
+	return *(Target*)(&x);
+}
 
 // ----------------------------------------------------------------------
 

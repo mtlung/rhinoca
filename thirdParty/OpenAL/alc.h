@@ -180,6 +180,8 @@ typedef void ALCvoid;
 #define ALC_CAPTURE_SAMPLES                      0x312
 
 
+#if !defined(ALC_NO_PROTOTYPES)
+
 /*
  * Context Management
  */
@@ -246,6 +248,8 @@ ALC_API void            ALC_APIENTRY alcCaptureStop( ALCdevice *device );
 
 ALC_API void            ALC_APIENTRY alcCaptureSamples( ALCdevice *device, ALCvoid *buffer, ALCsizei samples );
 
+#else /* ALC_NO_PROTOTYPES */
+
 /*
  * Pointer-to-function types, useful for dynamically getting ALC entry points.
  */
@@ -269,6 +273,8 @@ typedef ALCboolean     (ALC_APIENTRY *LPALCCAPTURECLOSEDEVICE)( ALCdevice *devic
 typedef void           (ALC_APIENTRY *LPALCCAPTURESTART)( ALCdevice *device );
 typedef void           (ALC_APIENTRY *LPALCCAPTURESTOP)( ALCdevice *device );
 typedef void           (ALC_APIENTRY *LPALCCAPTURESAMPLES)( ALCdevice *device, ALCvoid *buffer, ALCsizei samples );
+
+#endif /* ALC_NO_PROTOTYPES */
 
 #if defined(TARGET_OS_MAC) && TARGET_OS_MAC
  #pragma export off

@@ -301,7 +301,7 @@ typedef struct roRDriver
 	void (*deleteTexture)(roRDriverTexture* self);
 	bool (*initTexture)(roRDriverTexture* self, unsigned width, unsigned height, unsigned maxMipLevels, roRDriverTextureFormat format, roRDriverTextureFlag flags);
 	bool (*updateTexture)(roRDriverTexture* self, unsigned mipIndex, unsigned aryIndex, const void* data, roSize rowPaddingInBytes, roSize* bytesRead);
-	void* (*mapTexture)(roRDriverTexture* self, roRDriverMapUsage usage, unsigned mipIndex, unsigned aryIndex, unsigned& rowBytes);
+	void* (*mapTexture)(roRDriverTexture* self, roRDriverMapUsage usage, unsigned mipIndex, unsigned aryIndex, roSize& rowBytes);
 	void (*unmapTexture)(roRDriverTexture* self, unsigned mipIndex, unsigned aryIndex);
 	void (*generateMipMap)(roRDriverTexture* self);
 
