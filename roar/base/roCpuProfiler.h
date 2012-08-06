@@ -23,7 +23,7 @@ struct CpuProfiler
 	float fps() const;
 	float timeSinceLastReset() const;
 
-	String report(roSize nameLength=64, float skipMargin=1) const;
+	String report(roSize nameLength=52, float skipMargin=1) const;
 
 // Private
 	void _begin(const char name[]);

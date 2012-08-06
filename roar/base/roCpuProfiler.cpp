@@ -37,10 +37,10 @@ struct CallstackNode
 	roSize callDepth() const;
 	float selfTime() const;
 	float inclusiveTime() const;
-	float peakCallTime() const;
+	float peakInclusiveTime() const;	// NOTE: Under then current system, it's hard to do peak self time
 
 	float _inclusiveTime;
-	float _peakCallTime;
+	float _peakInclusiveTime;
 	StopWatch stopWatch;
 	mutable RecursiveMutex mutex;
 };	// CallstackNode
@@ -49,7 +49,7 @@ CallstackNode::CallstackNode(const char name[], CallstackNode* parent)
 	: name(name)
 	, parent(parent), firstChild(NULL), sibling(NULL)
 	, recursionCount(0), callCount(0), _inclusiveTime(0)
-	, _peakCallTime(0)
+	, _peakInclusiveTime(0)
 {}
 
 CallstackNode::~CallstackNode()
@@ -113,7 +113,7 @@ void CallstackNode::end()
 		float elasped = stopWatch.getFloat();
 		_inclusiveTime += elasped;
 
-		_peakCallTime = roMaxOf2(_peakCallTime, elasped);
+		_peakInclusiveTime = roMaxOf2(_peakInclusiveTime, elasped);
 	}
 }
 
@@ -124,7 +124,7 @@ void CallstackNode::reset()
 		ScopeRecursiveLock lock(mutex);
 		callCount = 0;
 		_inclusiveTime = 0;
-		_peakCallTime = 0;
+		_peakInclusiveTime = 0;
 		stopWatch.reset();
 		n1 = firstChild;
 		n2 = sibling;
@@ -164,19 +164,19 @@ float CallstackNode::inclusiveTime() const
 	if(recursionCount == 0)
 		return _inclusiveTime;
 
-	// If the recursion count is not zero, means the profil scope
+	// If the recursion count is not zero, means the profile scope
 	// hasn't finish yet, at the moment we try to generate the report.
 	// This happens in multi-thread situation.
 	return _inclusiveTime + stopWatch.getFloat();
 }
 
-float CallstackNode::peakCallTime() const
+float CallstackNode::peakInclusiveTime() const
 {
 	if(recursionCount == 0)
-		return _peakCallTime;
+		return _peakInclusiveTime;
 
 	float elasped = stopWatch.getFloat();
-	return roMaxOf2(_peakCallTime, elasped);
+	return roMaxOf2(_peakInclusiveTime, elasped);
 }
 
 CallstackNode* CallstackNode::traverse(CallstackNode* n)
@@ -327,11 +327,14 @@ String CpuProfiler::report(roSize nameLength, float skipMargin) const
 
 	const char* format = "{}{pr12 }{pr12 }{pr12 }{pr12 }{pr12 }{pr12 }\n";
 	strFormat(str, format,
-		name.c_str(), "TT/F %", "ST/F %", "TT/C", "ST/C", "Peak TT", "C/F"
+		name.c_str(), "TT/F %", "ST/F %", "TT/C", "ST/C", "Peak TT/C", "C/F"
 	);
 
 	CallstackNode* n = reinterpret_cast<CallstackNode*>(_rootNode);
 	float percent = 100 * fps_;
+
+	// Keep track the stack to print a nice tree structure
+	TinyArray<CallstackNode*, 16> indentNodes;
 
 	if(_frameCount) do
 	{
@@ -350,19 +353,34 @@ String CpuProfiler::report(roSize nameLength, float skipMargin) const
 			}
 
 			roSize callDepth = n->callDepth();
+			indentNodes.resize(roMaxOf2(callDepth + 1, indentNodes.size()), NULL);
+			indentNodes[callDepth] = n;
 
-			name.resize(0);
-			name.append(' ', callDepth);
+			// Print out the tree structure
+			name.clear();
+			for(roSize i=0; i<callDepth; ++i)
+			{
+				if(indentNodes.isInRange(i+1) && indentNodes[i+1]->sibling) {
+					if(i == callDepth - 1)
+						name.append('\xC3');	// Char 195: |-
+					else
+						name.append('\xB3');	// Char 179: |
+				}
+				else if(indentNodes[i] == n->parent)
+					name.append('\xC0');		// Char 192: |_
+				else
+					name.append(' ');
+			}
 			name.append(n->name);
-			strPaddingRight(name, ' ', nameLength);
 
+			strPaddingRight(name, '\xFA', nameLength);	// Char 250: *
 			strFormat(str, format,
 				name,
 				inclusiveTime / _frameCount * percent,
 				selfTime / _frameCount * percent,
 				n->callCount == 0 ? 0 : inclusiveTime / n->callCount,
 				n->callCount == 0 ? 0 : selfTime / n->callCount,
-				n->peakCallTime(),
+				n->peakInclusiveTime(),
 				float(n->callCount) / _frameCount
 			);
 		}
