@@ -5,27 +5,21 @@
 
 #if RHINOCA_APPLE
 #	include <mach/mach_time.h>
-#elif roOS_WIN32
+#elif roOS_WIN
 #	define USE_RDTSC 1
 #endif
 
 #if USE_RDTSC
-#	if roCOMPILER_VC
-#		define RDTSC(low, high)	\
-		__asm rdtsc				\
-		__asm mov low, eax		\
-		__asm mov high, edx
-#	elif roCOMPILER_GCC
-#		define RDTSC(low, high)	\
-		__asm__ __volatile__("rdtsc" : "=a" (low), "=d" (high))
-#	else
-#	endif
 
 // mftbu in PowerPC: http://lists.apple.com/archives/mac-games-dev/2002/May/msg00244.html
 inline roUint64 rdtsc() {
+#	if roCOMPILER_VC
+	return __rdtsc();
+#else
 	roUint32 l, h;
-	RDTSC(l, h);
+	__asm__ __volatile__("rdtsc" : "=a" (low), "=d" (high))
 	return (roUint64(h) << 32) + l;
+#endif
 }
 
 #endif
@@ -79,7 +73,10 @@ static roUint64 getQueryPerformanceFrequency()
 	else
 		return 0;
 #else
-	return 0;
+	LARGE_INTEGER ret;
+	roVerify(::QueryPerformanceFrequency(&ret));
+
+	return ret.QuadPart;
 #endif
 }
 

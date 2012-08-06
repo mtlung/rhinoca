@@ -34,10 +34,10 @@ inline void* _strFormatFunc(roInt16 val) {
 	return (void*)_strFormat_int16;
 }
 inline void* _strFormatFunc(roInt32 val) {
-	return sizeof(val) > sizeof(void*) ? (void*)_strFormat_int32ptr : (void*)_strFormat_int32;
+	return sizeof(val) != sizeof(void*) ? (void*)_strFormat_int32ptr : (void*)_strFormat_int32;
 }
 inline void* _strFormatFunc(roInt64 val) {
-	return sizeof(val) > sizeof(void*) ? (void*)_strFormat_int64ptr : (void*)_strFormat_int64;
+	return sizeof(val) != sizeof(void*) ? (void*)_strFormat_int64ptr : (void*)_strFormat_int64;
 }
 inline void* _strFormatFunc(roUint8 val) {
 	return (void*)_strFormat_uint8;
@@ -46,16 +46,16 @@ inline void* _strFormatFunc(roUint16 val) {
 	return (void*)_strFormat_uint16;
 }
 inline void* _strFormatFunc(roUint32 val) {
-	return sizeof(val) > sizeof(void*) ? (void*)_strFormat_uint32ptr : (void*)_strFormat_uint32;
+	return sizeof(val) != sizeof(void*) ? (void*)_strFormat_uint32ptr : (void*)_strFormat_uint32;
 }
 inline void* _strFormatFunc(roUint64 val) {
-	return sizeof(val) > sizeof(void*) ? (void*)_strFormat_uint64ptr : (void*)_strFormat_uint64;
+	return sizeof(val) != sizeof(void*) ? (void*)_strFormat_uint64ptr : (void*)_strFormat_uint64;
 }
 inline void* _strFormatFunc(float val) {
-	return sizeof(val) > sizeof(void*) ? (void*)_strFormat_floatptr : (void*)_strFormat_float;
+	return sizeof(val) != sizeof(void*) ? (void*)_strFormat_floatptr : (void*)_strFormat_float;
 }
 inline void* _strFormatFunc(double val) {
-	return sizeof(val) > sizeof(void*) ? (void*)_strFormat_doubleptr : (void*)_strFormat_double;
+	return sizeof(val) != sizeof(void*) ? (void*)_strFormat_doubleptr : (void*)_strFormat_double;
 }
 inline void* _strFormatFunc(const roUtf8* val) {
 	return (void*)_strFormat_utf8;
@@ -71,10 +71,10 @@ inline const void* _strFormatArg(roInt16 val) {
 	return (void*)val;
 }
 inline const void* _strFormatArg(const roInt32& val) {
-	return sizeof(val) > sizeof(void*) ? &val : (void*)val;
+	return sizeof(val) != sizeof(void*) ? &val : (void*)val;
 }
 inline const void* _strFormatArg(const roInt64& val) {
-	return sizeof(val) > sizeof(void*) ? &val : (void*)val;
+	return sizeof(val) != sizeof(void*) ? &val : (void*)val;
 }
 inline const void* _strFormatArg(roUint8 val) {
 	return (void*)val;
@@ -83,16 +83,16 @@ inline const void* _strFormatArg(roUint16 val) {
 	return (void*)val;
 }
 inline const void* _strFormatArg(const roUint32& val) {
-	return sizeof(val) > sizeof(void*) ? &val : (void*)val;
+	return sizeof(val) != sizeof(void*) ? &val : (void*)val;
 }
 inline const void* _strFormatArg(const roUint64& val) {
-	return sizeof(val) > sizeof(void*) ? &val : (void*)val;
+	return sizeof(val) != sizeof(void*) ? &val : (void*)val;
 }
 inline const void* _strFormatArg(const float& val) {
-	return sizeof(val) > sizeof(void*) ? &val : (void*)(*(int*)(&val));
+	return sizeof(val) != sizeof(void*) ? &val : (void*)(*(int*)(&val));
 }
 inline const void* _strFormatArg(const double& val) {
-	return sizeof(val) > sizeof(void*) ? &val : (void*)(*(int*)(&val));
+	return sizeof(val) != sizeof(void*) ? &val : (void*)(*(int*)(&val));
 }
 inline const void* _strFormatArg(roUtf8* val) {
 	return (void*)val;
@@ -153,6 +153,16 @@ roStatus strFormat(String& str, const roUtf8* format, const T1& t1, const T2& t2
 template<class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8>
 roStatus strFormat(String& str, const roUtf8* format, const T1& t1, const T2& t2, const T3& t3, const T4& t4, const T5& t5, const T6& t6, const T7& t7, const T8& t8) {
 	return _strFormat(str, format, 8, _EXPAND(t1), _EXPAND(t2), _EXPAND(t3), _EXPAND(t4), _EXPAND(t5), _EXPAND(t6), _EXPAND(t7), _EXPAND(t8));
+}
+
+template<class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8, class T9>
+roStatus strFormat(String& str, const roUtf8* format, const T1& t1, const T2& t2, const T3& t3, const T4& t4, const T5& t5, const T6& t6, const T7& t7, const T8& t8, const T9& t9) {
+	return _strFormat(str, format, 9, _EXPAND(t1), _EXPAND(t2), _EXPAND(t3), _EXPAND(t4), _EXPAND(t5), _EXPAND(t6), _EXPAND(t7), _EXPAND(t8), _EXPAND(t9));
+}
+
+template<class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8, class T9, class T10>
+roStatus strFormat(String& str, const roUtf8* format, const T1& t1, const T2& t2, const T3& t3, const T4& t4, const T5& t5, const T6& t6, const T7& t7, const T8& t8, const T9& t9, const T10& t10) {
+	return _strFormat(str, format, 10, _EXPAND(t1), _EXPAND(t2), _EXPAND(t3), _EXPAND(t4), _EXPAND(t5), _EXPAND(t6), _EXPAND(t7), _EXPAND(t8), _EXPAND(t9), _EXPAND(t10));
 }
 
 #undef _EXPAND
