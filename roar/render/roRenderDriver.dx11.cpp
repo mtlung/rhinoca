@@ -6,6 +6,7 @@
 #include "../base/roLog.h"
 #include "../base/roMemory.h"
 #include "../base/roString.h"
+#include "../base/roStringFormat.h"
 #include "../base/roStringHash.h"
 #include "../base/roTypeCast.h"
 
@@ -13,6 +14,7 @@
 #include <D3Dcompiler.h>
 #include <D3DX11async.h>
 #include <stddef.h>	// For offsetof
+#include <stdio.h>	// For sscanf
 
 // DirectX stuffs
 // DX11 tutorial:					http://www.rastertek.com/tutindex.html
@@ -43,7 +45,7 @@ static DefaultAllocator _allocator;
 
 static unsigned _hashAppend(unsigned hash, unsigned dataToAppend)
 {
-	return dataToAppend + (hash << 6) + (hash << 16) - hash; 
+	return dataToAppend + (hash << 6) + (hash << 16) - hash;
 }
 
 static unsigned _hash(const void* data, roSize len)
@@ -713,7 +715,7 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 	roAssert(!impl->isMapped);
 	if(sizeInBytes == 0) initData = NULL;
 
-	UINT cpuAccessFlag = 
+	UINT cpuAccessFlag =
 		(usage == roRDriverDataUsage_Static || usage == roRDriverDataUsage_Dynamic)
 		? 0
 		: D3D11_CPU_ACCESS_WRITE;
@@ -1472,7 +1474,7 @@ static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const c
 
 	// Query the resource binding point
 	// See: http://stackoverflow.com/questions/3198904/d3d10-hlsl-how-do-i-bind-a-texture-to-a-global-texture2d-via-reflection
-	ComPtr<ID3D11ShaderReflection> reflector; 
+	ComPtr<ID3D11ShaderReflection> reflector;
 	D3DReflect(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&reflector.ptr);
 
     D3D11_SHADER_DESC shaderDesc;
@@ -1485,8 +1487,17 @@ static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const c
 		if(FAILED(hr))
 			break;
 
-		InputParam ip = { stringLowerCaseHash(paramDesc.SemanticName, 0), _countBits(paramDesc.Mask), paramDesc.ComponentType };	// TODO: Fix me
+		// Combine the semantic index with the semantic name
+		String semanticName;
+		strFormat(semanticName, "{}{}", paramDesc.SemanticName, paramDesc.SemanticIndex);
+		InputParam ip = { stringLowerCaseHash(semanticName.c_str(), 0), _countBits(paramDesc.Mask), paramDesc.ComponentType };
 		impl->inputParams.pushBack(ip);
+
+		// For the semantic index == 0, it's a special case that we also consider the semantic name without the index number
+		if(paramDesc.SemanticIndex == 0) {
+			InputParam ip = { stringLowerCaseHash(paramDesc.SemanticName, 0), _countBits(paramDesc.Mask), paramDesc.ComponentType };
+			impl->inputParams.pushBack(ip);
+		}
 	}
 
 	for(unsigned i=0; i<shaderDesc.BoundResources; ++i)
@@ -1545,7 +1556,7 @@ bool _bindShaders(roRDriverShader** shaders, roSize shaderCount)
 		else if(type == roRDriverShaderType_Pixel)
 			ctx->dxDeviceContext->PSSetShader(NULL, NULL, 0);
 		else if(type == roRDriverShaderType_Geometry)
-			ctx->dxDeviceContext->GSSetShader(NULL, NULL, 0);		
+			ctx->dxDeviceContext->GSSetShader(NULL, NULL, 0);
 		else
 			roAssert(false);
 	}
@@ -1681,7 +1692,7 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 			}
 
 			if(!shader) {
-				roLog("error", "Call bindShaders() before calling bindShaderBuffers()\n"); 
+				roLog("error", "Call bindShaders() before calling bindShaderBuffers()\n");
 				return false;
 			}
 
@@ -1711,9 +1722,16 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 			if(stride < elementCount * elementSize)
 				elementCount = stride / elementSize;
 
+			// Split the semantic index form the name
+			// POSITION1 -> POSITION, 1
+			String semanticName = input->name;
+			int semanticIndex = 0;
+			roVerify(sscanf(semanticName.c_str(), "%[^0-9]%d", semanticName.c_str(), &semanticIndex) > 0);
+			inputLayout->semanticNames.pushBack(semanticName.c_str());
+
 			D3D11_INPUT_ELEMENT_DESC inputDesc;
-			inputDesc.SemanticName = input->name;
-			inputDesc.SemanticIndex = 0;
+			inputDesc.SemanticName = inputLayout->semanticNames.back().c_str();	// NOTE: It's a ConstString so the c_str() should keep constant
+			inputDesc.SemanticIndex = semanticIndex;
 			inputDesc.Format = _inputFormatMapping[inputParam->type * 5 + elementCount];
 			inputDesc.InputSlot = slotCounter++;
 			inputDesc.AlignedByteOffset = input->offset;

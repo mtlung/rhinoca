@@ -112,7 +112,7 @@ typedef struct roRDriverShaderTextureInput
 typedef struct roRDriverShaderBufferInput
 {
 	roRDriverBuffer* buffer;
-	const char* name;
+	const char* name;		/// In GL it's the shader variable name, in DX it's the semantic name (with semantic index ie. position1)
 	unsigned nameHash;		/// after name is changed, reset it to zero will cause it to be re-calculated
 	unsigned offset;
 	unsigned stride;

@@ -114,6 +114,7 @@ struct InputLayout
 	ComPtr<ID3D10Blob> shader;
 	Array<D3D11_INPUT_ELEMENT_DESC> inputDescs;
 
+	Array<ConstString> semanticNames;	// Necessary to keep inputDesc.SemanticName always valid
 	Array<UINT> strides;
 	Array<UINT> offsets;
 };
