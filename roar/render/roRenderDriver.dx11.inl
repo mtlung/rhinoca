@@ -20,14 +20,14 @@ template<typename T> struct ComPtr
 struct InputParam
 {
 	StringHash nameHash;		// Hash value for the input semantic
-	unsigned elementCount;
-	D3D10_REGISTER_COMPONENT_TYPE type;
+	roUint32 elementCount;
+	roInt32 type;	// D3D10_REGISTER_COMPONENT_TYPE
 };
 
 struct ShaderResourceBinding
 {
 	StringHash nameHash;		// Hash value for the shader resource
-	unsigned bindPoint;
+	roUint32 bindPoint;
 };
 
 struct StagingBuffer
@@ -96,25 +96,26 @@ struct roRDriverTextureImpl : public roRDriverTexture
 
 struct roRDriverShaderImpl : public roRDriverShader
 {
-	roRDriverShaderImpl() : dxShader(NULL), dxShaderBlob(NULL) {}
+	roRDriverShaderImpl() : dxShader(NULL) {}
 
 	ComPtr<ID3D11DeviceChild> dxShader;
-	ComPtr<ID3D10Blob> dxShaderBlob;
 
+	Array<roByte> shaderBlob;
 	Array<InputParam> inputParams;
 	Array<ShaderResourceBinding> shaderResourceBindings;
 };
 
 struct InputLayout
 {
+	InputLayout() : hash(0), lastUsedTime(0), shaderBlob(NULL) {}
 	unsigned hash;
 	float lastUsedTime;
 
+	Array<roByte>* shaderBlob;
+
 	ComPtr<ID3D11InputLayout> layout;
-	ComPtr<ID3D10Blob> shader;
 	Array<D3D11_INPUT_ELEMENT_DESC> inputDescs;
 
-	Array<ConstString> semanticNames;	// Necessary to keep inputDesc.SemanticName always valid
 	Array<UINT> strides;
 	Array<UINT> offsets;
 };

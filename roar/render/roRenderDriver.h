@@ -308,7 +308,9 @@ typedef struct roRDriver
 // Shader
 	roRDriverShader* (*newShader)();
 	void (*deleteShader)(roRDriverShader* self);
-	bool (*initShader)(roRDriverShader* self, roRDriverShaderType type, const char** sources, roSize sourceCount);
+	bool (*initShader)(roRDriverShader* self, roRDriverShaderType type, const char** sources, roSize sourceCount, roByte** outBlob, roSize* outBlobSize);
+	bool (*initShaderFromBlob)(roRDriverShader* self, roRDriverShaderType type, const roByte* blob, roSize blobSize);
+	void (*deleteShaderBlob)(roByte* blob);
 
 	bool (*bindShaders)(roRDriverShader** shaders, roSize shaderCount);
 	bool (*bindShaderTextures)(roRDriverShaderTextureInput* inputs, roSize inputCount);

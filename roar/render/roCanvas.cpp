@@ -112,8 +112,8 @@ void Canvas::init()
 		"}"
 	};
 
-	roVerify(_driver->initShader(_vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
-	roVerify(_driver->initShader(_pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
+	roVerify(_driver->initShader(_vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1, NULL, NULL));
+	roVerify(_driver->initShader(_pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1, NULL, NULL));
 
 	// Create vertex buffer
 	_vBuffer = _driver->newBuffer();

@@ -82,6 +82,8 @@ struct IArray
 	void		swap(IArray& rhs)				{ roSwap(_size, rhs._size); roSwap(_capacity, rhs._capacity); roSwap(_data, rhs._data); }
 
 	Status		copy(const Super& src);
+	Status		assign(const T* srcBegin, roSize count);
+	Status		assign(const T* srcBegin, const T* srcEnd);
 
 	Status		resize(roSize newSize, const T& fill=T());
 	Status		incSize(roSize size, const T& fill=T());
@@ -95,6 +97,7 @@ struct IArray
 	T&			pushBack(const T& val=T());
 	T&			pushBackBySwap(const T& val);
 	T&			insert(roSize idx, const T& val);
+	T&			insert(roSize idx, const T* srcBegin, roSize count);
 	T&			insert(roSize idx, const T* srcBegin, const T* srcEnd);
 	T&			insertSorted(const T& val);
 	T&			insertSorted(const T& val, bool(*less)(const T&, const T&));

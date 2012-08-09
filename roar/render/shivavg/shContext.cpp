@@ -123,8 +123,8 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 	if(roStrCaseCmp(d->driverName, "dx11") == 0)
 		driverIndex = 1;
 
-	roVerify(d->initShader(c->vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
-	roVerify(d->initShader(c->pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
+	roVerify(d->initShader(c->vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1, NULL, NULL));
+	roVerify(d->initShader(c->pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1, NULL, NULL));
 
 	c->quadBuffer = d->newBuffer();
 	c->quadUvBuffer = d->newBuffer();

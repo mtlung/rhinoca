@@ -72,7 +72,7 @@ TEST_FIXTURE(TinyArrayTest, insert)
 	{	Array<int> v;
 
 		// Insert nothing
-		v.insert(0, NULL, NULL);
+		v.insert(0, (int*)NULL, (int*)NULL);
 
 		// Insert range at beginning
 		int r1[] = { 5, 6 };

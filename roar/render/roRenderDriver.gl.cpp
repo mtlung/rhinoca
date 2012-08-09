@@ -1286,12 +1286,16 @@ static void _deleteShader(roRDriverShader* self)
 	_allocator.deleteObj(static_cast<roRDriverShaderImpl*>(self));
 }
 
-static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const char** sources, roSize sourceCount)
+static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const char** sources, roSize sourceCount, roByte** outBlob, roSize* outBlobSize)
 {
 	roRDriverShaderImpl* impl = static_cast<roRDriverShaderImpl*>(self);
 	if(!impl || sourceCount == 0) return false;
 
 	checkError();
+
+	// Disallow re-init
+	if(impl->glh)
+		return false;
 
 	self->type = type;
 	impl->glh = glCreateShader(_shaderTypes[type]);
@@ -1320,6 +1324,16 @@ static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const c
 	checkError();
 
 	return true;
+}
+
+bool _initShaderFromBlob(roRDriverShader* self, roRDriverShaderType type, const roByte* blob, roSize blobSize)
+{
+	return false;
+}
+
+static void _deleteShaderBlob(roByte* blob)
+{
+	_allocator.free(blob);
 }
 
 static ProgramUniform* _findProgramUniform(roRDriverContextImpl* ctx, roRDriverShaderProgramImpl* impl, unsigned nameHash)
@@ -1919,6 +1933,8 @@ roRDriver* _roNewRenderDriver_GL(const char* driverStr, const char*)
 	ret->newShader = _newShader;
 	ret->deleteShader = _deleteShader;
 	ret->initShader = _initShader;
+	ret->initShaderFromBlob = _initShaderFromBlob;
+	ret->deleteShaderBlob = _deleteShaderBlob;
 
 	ret->bindShaders = _bindShaders;
 	ret->bindShaderTextures = _bindShaderTexture;

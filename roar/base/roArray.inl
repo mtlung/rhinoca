@@ -49,6 +49,22 @@ Status IArray<T,S>::copy(const S& src)
 }
 
 template<class T, class S>
+Status IArray<T,S>::assign(const T* srcBegin, roSize count)
+{
+	clear();
+	insert(0, srcBegin, count);
+	return Status::ok;
+}
+
+template<class T, class S>
+Status IArray<T,S>::assign(const T* srcBegin, const T* srcEnd)
+{
+	clear();
+	insert(0, srcBegin, srcEnd);
+	return Status::ok;
+}
+
+template<class T, class S>
 Status IArray<T,S>::resize(roSize newSize, const T& fill)
 {
 	if(newSize > _capacity) {
@@ -134,6 +150,12 @@ T& IArray<T,S>::insert(roSize idx, const T& val)
 
 	_data[idx] = val;
 	return _data[idx];
+}
+
+template<class T, class S>
+T& IArray<T,S>::insert(roSize idx, const T* srcBegin, roSize count)
+{
+	return insert(idx, srcBegin, srcBegin + count);
 }
 
 template<class T, class S>
@@ -269,6 +291,9 @@ template<class T, roSize PreAllocCount>
 Status TinyArray<T,PreAllocCount>::reserve(roSize newSize)
 {
 	roAssert(this->_capacity >= PreAllocCount || this->_capacity == 0);
+
+	if(newSize <= this->_capacity)
+		return Status::ok;
 
 	newSize = roMaxOf2(newSize, this->size());
 	bool moved = false;

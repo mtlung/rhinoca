@@ -41,4 +41,5 @@ void _unloadOpenAL()
 {
 	if(_hOpenAL)
 		roVerify(::FreeLibrary(_hOpenAL) > 0);
+	_hOpenAL = 0;
 }

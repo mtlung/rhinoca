@@ -58,8 +58,8 @@ TEST_FIXTURE(TextureLoaderTest, load)
 		"}"
 	};
 
-	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
-	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1, NULL, NULL));
+	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1, NULL, NULL));
 
 	roRDriverShader* shaders[] = { vShader, pShader };
 
@@ -120,7 +120,7 @@ TEST_FIXTURE(TextureLoaderTest, stressTest)
 
 	Array<ResourcePtr> resources;
 
-	String rootPath = "D:\\Photos\\2002-12\\";
+	String rootPath = "D:\\tmp\\117___07\\";
 	void* dir = ro::fileSystem.openDir(rootPath.c_str());
 
 	bool allListed = false;
@@ -137,10 +137,11 @@ TEST_FIXTURE(TextureLoaderTest, stressTest)
 				continue;
 			if(resources[i]->state == Resource::Loaded) {
 				canvas.drawImage(tex->handle,
-					0, 0, tex->width(), tex->height(),
-					0, 0, context->width, context->height);
+					0, 0, (float)tex->width(), (float)tex->height(),
+					0, 0, (float)context->width, (float)context->height);
 				resources.removeBySwap(i);
 				driver->swapBuffers();
+				subSystems.resourceMgr->collectInfrequentlyUsed();
 				break;
 			}
 		}
@@ -159,4 +160,6 @@ TEST_FIXTURE(TextureLoaderTest, stressTest)
 		if(!ro::fileSystem.nextDir(dir))
 			allListed = true;
 	}
+
+	ro::fileSystem.closeDir(dir);
 }

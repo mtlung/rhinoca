@@ -139,8 +139,8 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 	initContext(driverStr[driverIndex]);
 
 	// Init shader
-	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
-	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1, NULL, NULL));
+	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1, NULL, NULL));
 
 	roRDriverShader* shaders[] = { vShader, pShader };
 
@@ -236,8 +236,8 @@ TEST_FIXTURE(GraphicsDriverTest, textureUpdate)
 		"}"
 	};
 
-	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
-	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1, NULL, NULL));
+	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1, NULL, NULL));
 
 	roRDriverShader* shaders[] = { vShader, pShader };
 
@@ -336,13 +336,13 @@ TEST_FIXTURE(GraphicsDriverTest, _texture)
 		"attribute vec4 vertex;"
 		"varying vec2 texCoord;"
 		"void main(void){texCoord=(vertex+1)/2;gl_Position=vertex;}";
-	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc, 1));
+	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc, 1, NULL, NULL));
 
 	const char* pShaderSrc =
 		"uniform sampler2D u_tex;"
 		"varying vec2 texCoord;"
 		"void main(void){gl_FragColor=texture2D(u_tex, texCoord);}";
-	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc, 1));
+	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc, 1, NULL, NULL));
 
 	roRDriverShader* shaders[] = { vShader, pShader };
 
@@ -430,8 +430,8 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 	initContext(driverStr[driverIndex]);
 
 	// Init shader
-	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
-	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1, NULL, NULL));
+	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1, NULL, NULL));
 
 	roRDriverShader* shaders[] = { vShader, pShader };
 
@@ -517,8 +517,8 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 		"float4 main(float4 pos : SV_POSITION) : SV_Target { return _color; }"
 	};
 
-	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
-	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1, NULL, NULL));
+	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1, NULL, NULL));
 
 	roRDriverShader* shaders[] = { vShader, pShader };
 
@@ -641,9 +641,9 @@ TEST_FIXTURE(GraphicsDriverTest, GeometryShader)
 	initContext(driverStr[driverIndex]);
 
 	// Init shader
-	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1));
-	CHECK(driver->initShader(gShader, roRDriverShaderType_Geometry, &gShaderSrc[driverIndex], 1));
-	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1));
+	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1, NULL, NULL));
+	CHECK(driver->initShader(gShader, roRDriverShaderType_Geometry, &gShaderSrc[driverIndex], 1, NULL, NULL));
+	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1, NULL, NULL));
 
 	roRDriverShader* shaders[] = { vShader, gShader, pShader };
 
@@ -698,6 +698,126 @@ TEST_FIXTURE(GraphicsDriverTest, GeometryShader)
 	}
 
 	driver->deleteBuffer(vbuffer);
+	driver->deleteBuffer(ibuffer);
+	driver->deleteBuffer(ubuffer);
+}
+
+TEST_FIXTURE(GraphicsDriverTest, shaderBinary)
+{
+	createWindow(200, 200);
+	initContext(driverStr[driverIndex]);
+
+	// Init shader
+	static const char* vShaderSrc[] = 
+	{
+		// GLSL
+		"attribute vec4 position;"
+		"void main(void) { gl_Position = position; }",
+
+		// HLSL
+		"float4 main(float4 pos : position) : SV_POSITION { return pos; }"
+	};
+
+	static const char* pShaderSrc[] = 
+	{
+		// GLSL
+		"uniform vec4 color;"
+		"void main(void) { gl_FragColor = color; }",
+
+		// HLSL
+		"cbuffer color { float4 _color; }"
+		"float4 main(float4 pos : SV_POSITION) : SV_Target { return _color; }"
+	};
+
+	// Create the shader and get their binary representation
+	roByte* vShaderBlob = NULL;
+	roSize vShaderBlobSize = 0;
+	CHECK(driver->initShader(vShader, roRDriverShaderType_Vertex, &vShaderSrc[driverIndex], 1, &vShaderBlob, &vShaderBlobSize));
+
+	roByte* pShaderBlob = NULL;
+	roSize pShaderBlobSize = 0;
+	CHECK(driver->initShader(pShader, roRDriverShaderType_Pixel, &pShaderSrc[driverIndex], 1, &pShaderBlob, &pShaderBlobSize));
+
+	// Destroy the shaders and re-create them using the blob
+	driver->deleteShader(vShader);
+	driver->deleteShader(pShader);
+	vShader = driver->newShader();
+	pShader = driver->newShader();
+
+	CHECK(driver->initShaderFromBlob(vShader, roRDriverShaderType_Vertex, vShaderBlob, vShaderBlobSize));
+	CHECK(driver->initShaderFromBlob(pShader, roRDriverShaderType_Pixel, pShaderBlob, pShaderBlobSize));
+	driver->deleteShaderBlob(vShaderBlob);
+	driver->deleteShaderBlob(pShaderBlob);
+	vShaderBlob = pShaderBlob = NULL;
+
+	roRDriverShader* shaders[] = { vShader, pShader };
+
+	// Create vertex buffer
+	float vertex1[][4] = { {-1,1,0,1}, {-1,-0.5f,0,1}, {0.5f,-0.5f,0,1}, {0.5f,1,0,1} };
+	roRDriverBuffer* vbuffer1 = driver->newBuffer();
+	CHECK(driver->initBuffer(vbuffer1, roRDriverBufferType_Vertex, roRDriverDataUsage_Static, vertex1, sizeof(vertex1)));
+
+	float vertex2[][4] = { {-0.5f,0.5f,0,1}, {-0.5f,-1,0,1}, {1,-1,0,1}, {1,0.5f,0,1} };
+	roRDriverBuffer* vbuffer2 = driver->newBuffer();
+	CHECK(driver->initBuffer(vbuffer2, roRDriverBufferType_Vertex, roRDriverDataUsage_Static, vertex2, sizeof(vertex2)));
+
+	// Create index buffer
+	rhuint16 index[][3] = { {0, 1, 2}, {0, 2, 3} };
+	roRDriverBuffer* ibuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ibuffer, roRDriverBufferType_Index, roRDriverDataUsage_Static, index, sizeof(index)));
+
+	// Create uniform buffer
+	roRDriverBuffer* ubuffer = driver->newBuffer();
+	CHECK(driver->initBuffer(ubuffer, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, NULL, sizeof(float)*4));
+
+	// Set the blend state
+	roRDriverBlendState blend = {
+		0, true,
+		roRDriverBlendOp_Add, roRDriverBlendOp_Add,
+		roRDriverBlendValue_SrcAlpha, roRDriverBlendValue_InvSrcAlpha,
+		roRDriverBlendValue_One, roRDriverBlendValue_Zero,
+		roRDriverColorWriteMask_EnableAll
+	};
+
+	while(keepRun())
+	{
+		driver->clearColor(0, 0, 0, 0);
+		driver->setBlendState(&blend);
+		CHECK(driver->bindShaders(shaders, roCountof(shaders)));
+
+		{	// Draw the first quad
+			float color[] = { 1, 1, 0, 0.5f };
+			driver->updateBuffer(ubuffer, 0, color, sizeof(color));
+
+			roRDriverShaderBufferInput input[] = {
+				{ vbuffer1, "position", 0, 0, 0, 0 },
+				{ ibuffer, NULL, 0, 0, 0, 0 },
+				{ ubuffer, "color", 0, 0, 0, 0 },
+			};
+			CHECK(driver->bindShaderBuffers(input, roCountof(input), NULL));
+
+			driver->drawTriangleIndexed(0, 6, 0);
+		}
+
+		{	// Draw the second quad
+			float color[] = { 1, 0, 0, 0.5f };
+			driver->updateBuffer(ubuffer, 0, color, sizeof(color));
+
+			roRDriverShaderBufferInput input[] = {
+				{ vbuffer2, "position", 0, 0, 0, 0 },
+				{ ibuffer, NULL, 0, 0, 0, 0 },
+				{ ubuffer, "color", 0, 0, 0, 0 },
+			};
+			CHECK(driver->bindShaderBuffers(input, roCountof(input), NULL));
+
+			driver->drawTriangleIndexed(0, 6, 0);
+		}
+
+		driver->swapBuffers();
+	}
+
+	driver->deleteBuffer(vbuffer1);
+	driver->deleteBuffer(vbuffer2);
 	driver->deleteBuffer(ibuffer);
 	driver->deleteBuffer(ubuffer);
 }

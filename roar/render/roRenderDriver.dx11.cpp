@@ -43,14 +43,14 @@ static DefaultAllocator _allocator;
 // ----------------------------------------------------------------------
 // Common stuffs
 
-static unsigned _hashAppend(unsigned hash, unsigned dataToAppend)
+static roUint32 _hashAppend(roUint32 hash, roUint32 dataToAppend)
 {
 	return dataToAppend + (hash << 6) + (hash << 16) - hash;
 }
 
-static unsigned _hash(const void* data, roSize len)
+static roUint32 _hash(const void* data, roSize len)
 {
-	unsigned h = 0;
+	roUint32 h = 0;
 	const char* data_ = reinterpret_cast<const char*>(data);
 	for(roSize i=0; i<len; ++i)
 		h = data_[i] + (h << 6) + (h << 16) - h;
@@ -223,7 +223,7 @@ static bool _setRenderTargets(roRDriverTexture** textures, roSize targetCount, b
 	}
 
 	// Make hash value
-	unsigned hash = _hash(textures, sizeof(*textures) * targetCount);
+	roUint32 hash = _hash(textures, sizeof(*textures) * targetCount);
 	ctx->currentRenderTargetViewHash = hash;
 
 	// Find render target cache
@@ -1416,7 +1416,12 @@ static unsigned _countBits(int v)
 	return c;
 }
 
-static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const char** sources, roSize sourceCount)
+static void _deleteShaderBlob(roByte* blob)
+{
+	_allocator.free(blob);
+}
+
+static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const char** sources, roSize sourceCount, roByte** outBlob, roSize* outBlobSize)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	roRDriverShaderImpl* impl = static_cast<roRDriverShaderImpl*>(self);
@@ -1426,6 +1431,10 @@ static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const c
 		roLog("error", "DX11 driver only support compiling a single source\n");
 		return false;
 	}
+
+	// Disallow re-init
+	if(impl->dxShader)
+		return false;
 
 	ID3D10Blob* shaderBlob = NULL, *errorMessage = NULL;
 	const char* shaderProfile = _getShaderTarget(ctx->dxDevice, type);
@@ -1451,8 +1460,6 @@ static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const c
 		return false;
 	}
 
-	self->type = type;
-
 	void* p = shaderBlob->GetBufferPointer();
 	SIZE_T size = shaderBlob->GetBufferSize();
 
@@ -1465,8 +1472,6 @@ static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const c
 	else
 		roAssert(false);
 
-	impl->dxShaderBlob = shaderBlob;
-
 	if(FAILED(hr)) {
 		roLog("error", "Fail to create shader\n");
 		return false;
@@ -1475,10 +1480,10 @@ static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const c
 	// Query the resource binding point
 	// See: http://stackoverflow.com/questions/3198904/d3d10-hlsl-how-do-i-bind-a-texture-to-a-global-texture2d-via-reflection
 	ComPtr<ID3D11ShaderReflection> reflector;
-	D3DReflect(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&reflector.ptr);
+	D3DReflect(p, size, IID_ID3D11ShaderReflection, (void**)&reflector.ptr);
 
-    D3D11_SHADER_DESC shaderDesc;
-    reflector->GetDesc(&shaderDesc);
+	D3D11_SHADER_DESC shaderDesc;
+	reflector->GetDesc(&shaderDesc);
 
 	for(unsigned i=0; i<shaderDesc.InputParameters; ++i)
 	{
@@ -1510,6 +1515,105 @@ static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const c
 		ShaderResourceBinding cb = { stringHash(desc.Name, 0), desc.BindPoint };
 		impl->shaderResourceBindings.pushBack(cb);
 	}
+
+	if(outBlob || outBlobSize)
+	{
+		// Our blob format, which also include some shader reflection information:
+		// Size of original buf (4 bytes)
+		// Original blob (size bytes)
+		// Param count (4 bytes)
+		// Param data (4 * 3 bytes each)
+		// Resource binding count (4 bytes)
+		// Resource binding data (4 * 2 bytes each)
+		// TODO: Handle endian problem
+		TinyArray<roByte, 128> tmpBuffer;
+		roStaticAssert(sizeof(InputParam) == sizeof(roUint32) * 3);
+
+		roUint32 paramCount = num_cast<roUint32>(impl->inputParams.size());
+		tmpBuffer.insert(tmpBuffer.size(), (roByte*)&paramCount, sizeof(paramCount));
+		tmpBuffer.insert(tmpBuffer.size(), impl->inputParams.bytePtr().cast<roByte>(), impl->inputParams.sizeInByte());
+
+		roUint32 resourceBindingCount = num_cast<roUint32>(impl->shaderResourceBindings.size());
+		tmpBuffer.insert(tmpBuffer.size(), (roByte*)&resourceBindingCount, sizeof(resourceBindingCount));
+		tmpBuffer.insert(tmpBuffer.size(), impl->shaderResourceBindings.bytePtr().cast<roByte>(), impl->shaderResourceBindings.sizeInByte());
+
+		roAssert(outBlob && outBlobSize);
+		*outBlobSize = sizeof(roUint32) + size + tmpBuffer.sizeInByte();
+		*outBlob = _allocator.malloc(*outBlobSize).cast<roByte>();
+
+		*((roUint32*)(*outBlob)) = roUint32(size);
+		roMemcpy(*outBlob + sizeof(roUint32), p, size);
+		roMemcpy(*outBlob + sizeof(roUint32) + size, tmpBuffer.bytePtr(), tmpBuffer.sizeInByte());
+	}
+
+	impl->type = type;
+	impl->shaderBlob.assign((roByte*)p, size);
+
+	return true;
+}
+
+bool _initShaderFromBlob(roRDriverShader* self, roRDriverShaderType type, const roByte* blob, roSize blobSize)
+{
+	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
+	roRDriverShaderImpl* impl = static_cast<roRDriverShaderImpl*>(self);
+	if(!ctx || !impl || !blob || blobSize == 0) return false;
+
+	HRESULT hr = -1;
+
+	const roByte* blobEnd = blob + blobSize;
+	roUint32 originalBlobSize = *((roUint32*)blob);
+
+	blob += sizeof(roUint32);
+	if(blob >= blobEnd) return false;
+
+	// Disallow re-init
+	if(impl->dxShader)
+		return false;
+
+	roByte* originalBlob = (roByte*)blob;
+	if(type == roRDriverShaderType_Vertex)
+		hr = ctx->dxDevice->CreateVertexShader(originalBlob, originalBlobSize, NULL, (ID3D11VertexShader**)&impl->dxShader);
+	else if(type == roRDriverShaderType_Geometry)
+		hr = ctx->dxDevice->CreateGeometryShader(originalBlob, originalBlobSize, NULL, (ID3D11GeometryShader**)&impl->dxShader);
+	else if(type == roRDriverShaderType_Pixel)
+		hr = ctx->dxDevice->CreatePixelShader(originalBlob, originalBlobSize, NULL, (ID3D11PixelShader**)&impl->dxShader);
+	else
+		roAssert(false);
+
+	if(FAILED(hr)) {
+		roLog("error", "Fail to create shader\n");
+		return false;
+	}
+
+	blob += originalBlobSize;
+	if(blob >= blobEnd) return false;
+
+	roUint32 paramCount = *((roUint32*)blob);
+	blob += sizeof(roUint32);
+	if(blob > blobEnd) return false;
+
+	impl->inputParams.resize(paramCount);
+	if(paramCount) {
+		roMemcpy(impl->inputParams.bytePtr(), blob, impl->inputParams.sizeInByte());
+		blob += impl->inputParams.sizeInByte();
+		if(blob >= blobEnd) return false;
+	}
+
+	roUint32 resourceBindingCount = *((roUint32*)blob);
+	blob += sizeof(roUint32);
+	if(blob > blobEnd) return false;
+
+	impl->shaderResourceBindings.resize(resourceBindingCount);
+	if(resourceBindingCount) {
+		roMemcpy(impl->shaderResourceBindings.bytePtr(), blob, impl->shaderResourceBindings.sizeInByte());
+		blob += impl->shaderResourceBindings.sizeInByte();
+	}
+
+	if(blob != blobEnd)
+		return false;
+
+	impl->type = type;
+	impl->shaderBlob.assign(originalBlob, originalBlobSize);
 
 	return true;
 }
@@ -1665,6 +1769,8 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 	ctx->bindedIndexCount = 0;
 	unsigned slotCounter = 0;
 	TinyArray<ID3D11Buffer*, 8> vertexBuffers;
+	TinyArray<ConstString, 16> semanticNames;
+	semanticNames.reserve(inputCount);	// Make sure the continer will never perform allocation anymore
 
 	// Loop for each inputs and do the necessary binding
 	for(unsigned i=0; i<inputCount; ++i)
@@ -1726,11 +1832,11 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 			// POSITION1 -> POSITION, 1
 			String semanticName = input->name;
 			int semanticIndex = 0;
-			roVerify(sscanf(semanticName.c_str(), "%[^0-9]%d", semanticName.c_str(), &semanticIndex) > 0);
-			inputLayout->semanticNames.pushBack(semanticName.c_str());
+			roVerify(sscanf(input->name, "%[^0-9]%d", semanticName.c_str(), &semanticIndex) > 0);
+			semanticNames.pushBack(semanticName.c_str());
 
 			D3D11_INPUT_ELEMENT_DESC inputDesc;
-			inputDesc.SemanticName = inputLayout->semanticNames.back().c_str();	// NOTE: It's a ConstString so the c_str() should keep constant
+			inputDesc.SemanticName = semanticNames.back().c_str();
 			inputDesc.SemanticIndex = semanticIndex;
 			inputDesc.Format = _inputFormatMapping[inputParam->type * 5 + elementCount];
 			inputDesc.InputSlot = slotCounter++;
@@ -1739,7 +1845,9 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 			inputDesc.InstanceDataStepRate = 0;
 
 			inputLayout->inputDescs.pushBack(inputDesc);
-			inputLayout->shader = shader->dxShaderBlob;
+
+			roAssert(!inputLayout->shaderBlob || inputLayout->shaderBlob == &shader->shaderBlob);
+			inputLayout->shaderBlob = &shader->shaderBlob;
 
 			// Info for IASetVertexBuffers
 			inputLayout->strides.pushBack(stride);
@@ -1768,15 +1876,16 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 
 	// Create input layout
 	if(!inputLayoutCacheFound && !inputLayout->inputDescs.isEmpty()) {
-		ID3D10Blob* shaderBlob = inputLayout->shader;
-		if(!shaderBlob)
+		if(!inputLayout->shaderBlob)
 			return false;
 
 		HRESULT hr = ctx->dxDevice->CreateInputLayout(
 			&inputLayout->inputDescs.front(), num_cast<UINT>(inputLayout->inputDescs.size()),
-			shaderBlob->GetBufferPointer(), num_cast<UINT>(shaderBlob->GetBufferSize()),
+			inputLayout->shaderBlob->bytePtr(), num_cast<UINT>(inputLayout->shaderBlob->sizeInByte()),
 			&inputLayout->layout.ptr
 		);
+
+		inputLayout->shaderBlob = NULL;
 
 		if(FAILED(hr)) {
 			roLog("error", "Fail to CreateInputLayout\n");
@@ -1985,6 +2094,8 @@ roRDriver* _roNewRenderDriver_DX11(const char* driverStr, const char*)
 	ret->newShader = _newShader;
 	ret->deleteShader = _deleteShader;
 	ret->initShader = _initShader;
+	ret->initShaderFromBlob = _initShaderFromBlob;
+	ret->deleteShaderBlob = _deleteShaderBlob;
 
 	ret->bindShaders = _bindShaders;
 	ret->bindShaderTextures = _bindShaderTexture;
