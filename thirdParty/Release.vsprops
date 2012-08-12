@@ -13,6 +13,5 @@
 		PreprocessorDefinitions="NDEBUG"
 		StringPooling="true"
 		RuntimeLibrary="2"
-		EnableEnhancedInstructionSet="2"
 	/>
 </VisualStudioPropertySheet>
