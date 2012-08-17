@@ -119,7 +119,7 @@
 				PrecompiledHeaderThrough="pch.h"
 				WarningLevel="4"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4800; 4996"
+				DisableSpecificWarnings="4100;4480;4512;4800; 4996;"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -187,7 +187,7 @@
 				PrecompiledHeaderThrough="pch.h"
 				WarningLevel="4"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4800; 4996"
+				DisableSpecificWarnings="4100;4480;4512;4800; 4996;"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -254,7 +254,7 @@
 				PrecompiledHeaderThrough="pch.h"
 				WarningLevel="4"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4800; 4996"
+				DisableSpecificWarnings="4100;4480;4512;4800; 4996;"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -796,6 +796,18 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="input"
+			>
+			<File
+				RelativePath="..\..\roar\input\roInputDriver.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\input\roInputDriver.windows.cpp"
+				>
+			</File>
+		</Filter>
 		<File
 			RelativePath="..\..\roar\pch.cpp"
 			>
@@ -838,6 +850,10 @@
 		</File>
 		<File
 			RelativePath="..\..\roar\roSubSystems.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\roar\roSubSystems.windows.cpp"
 			>
 		</File>
 	</Files>

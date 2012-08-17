@@ -15,8 +15,6 @@ struct GraphicsTestBase
 
 	bool keepRun();
 
-	void resize(unsigned width, unsigned height);
-
 	HWND hWnd;
 	roRDriver* driver;
 	roRDriverContext* context;

@@ -35,8 +35,12 @@ static LRESULT CALLBACK wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 {
 	GraphicsTestBase* test = reinterpret_cast<GraphicsTestBase*>(::GetWindowLongPtr(hWnd, GWLP_USERDATA));
 	if(uMsg == WM_CLOSE) PostQuitMessage(0);
-	if(uMsg == WM_SIZE)
-		test->resize(LOWORD(lParam), HIWORD(lParam));
+
+	if(test) {
+		void* eventData[4] = { hWnd, (void*)uMsg, (void*)wParam, (void*)lParam };
+		test->subSystems.processEvents(eventData, roCountof(eventData));
+	}
+
 	return ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
@@ -78,7 +82,7 @@ void GraphicsTestBase::createWindow(int width, int height)
 		NULL, NULL,
 		hModule,
 		NULL
-		);
+	);
 
 	::SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG>(this));
 	::ShowWindow(hWnd, true);
@@ -128,13 +132,6 @@ bool GraphicsTestBase::keepRun()
 	subSystems.tick();
 
 	return true;
-}
-
-void GraphicsTestBase::resize(unsigned width, unsigned height)
-{
-	if(!driver) return;
-	roVerify(driver->changeResolution(width, height));
-	driver->setViewport(0, 0, context->width, context->height, 0, 1);
 }
 
 const wchar_t* GraphicsTestBase::windowClass = L"Rhinoca unit test";

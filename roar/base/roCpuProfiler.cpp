@@ -226,7 +226,7 @@ TinyArray<TlsStruct, 64> _tlsStructs;
 
 CpuProfilerScope::CpuProfilerScope(const char name[])
 {
-	if(_profiler) {
+	if(_profiler && _profiler->enable) {
 		_name = name;
 		_profiler->_begin(name);
 	}
@@ -241,7 +241,8 @@ CpuProfilerScope::~CpuProfilerScope()
 }
 
 CpuProfiler::CpuProfiler()
-	: _rootNode(NULL)
+	: enable(true)
+	, _rootNode(NULL)
 	, _frameCount(0)
 {
 }
@@ -291,7 +292,8 @@ Status CpuProfiler::init()
 
 void CpuProfiler::tick()
 {
-	++_frameCount;
+	if(enable)
+		++_frameCount;
 }
 
 void CpuProfiler::reset()

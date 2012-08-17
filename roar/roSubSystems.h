@@ -5,6 +5,7 @@
 #include "base/roSharedPtr.h"
 
 struct roAudioDriver;
+struct roInputDriver;
 struct roRDriver;
 struct roRDriverContext;
 
@@ -27,9 +28,10 @@ struct SubSystems
 	typedef void (*CustomInit)(SubSystems& subSystems);
 
 // Operations
-	Status init();
-	void shutdown();
-	void tick();
+	Status	init			();
+	void	shutdown		();
+	void	tick			();
+	void	processEvents	(void** platformSPecificData, roSize numData);
 
 // Attributes
 	Array<void*> userData;
@@ -40,6 +42,9 @@ struct SubSystems
 	// Audio driver
 	CustomInit initAudioDriver;
 	roAudioDriver* audioDriver;
+
+	// Input driver
+	roInputDriver* inputDriver;
 
 	// Render driver
 	CustomInit initRenderDriver;
@@ -59,6 +64,8 @@ struct SubSystems
 	/// You may need set it to NULL when your viewport resize, to force the current canvas to be refreshed
 	/// I use void* here to emphasis this pointer is for comparison only
 	void* currentCanvas;
+
+	void enableCpuProfiler(bool b);
 
 // Frame statistics
 	roSize frameNumber;

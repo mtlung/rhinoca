@@ -25,6 +25,9 @@ struct CpuProfiler
 
 	String report(roSize nameLength=52, float skipMargin=1) const;
 
+// Attributes
+	bool enable;
+
 // Private
 	void _begin(const char name[]);
 	void _end();

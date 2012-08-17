@@ -134,6 +134,11 @@ roRDriverContext* _getCurrentContext_GL()
 	return _currentContext;
 }
 
+static void APIENTRY _debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, GLvoid* userParam)
+{
+	roAssert(false);
+}
+
 static void initGlFunc()
 {
 	// Initialize Opengl functions
@@ -150,6 +155,11 @@ static void initGlFunc()
 		#undef GET_FUNC_PTR
 
 		_oglFunctionInited = true;
+	}
+
+	if(glDebugMessageCallbackARB)
+	{
+		glDebugMessageCallbackARB(&_debugCallback, NULL);
 	}
 }
 
@@ -194,11 +204,12 @@ bool _initDriverContext_GL(roRDriverContext* self, void* platformSpecificWindow)
 	// Create a newer driver if necessary
 	// Reference: http://www.opengl.org/wiki/Tutorial:_OpenGL_3.1_The_First_Triangle_%28C%2B%2B/Win%29#Rendering_Context_Creation
 	// Reference: http://www.seas.upenn.edu/~pcozzi/OpenGLInsights/OpenGLInsights-ARB_debug_output.pdf
+	// https://sites.google.com/site/opengltutorialsbyaks/introduction-to-opengl-4-1---tutorial-05
 	if(wglCreateContextAttribsARB && v1 <= impl->majorVersion && v2 < impl->minorVersion) {
 		const int attribs[] = {
 			WGL_CONTEXT_MAJOR_VERSION_ARB, impl->majorVersion,
 			WGL_CONTEXT_MINOR_VERSION_ARB, impl->minorVersion,
-			WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+			WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB | WGL_CONTEXT_DEBUG_BIT_ARB,
 			0
 		};
 

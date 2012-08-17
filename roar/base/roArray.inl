@@ -232,13 +232,28 @@ void IArray<T,S>::removeBySwap(roSize idx)
 }
 
 template<class T, class S>
-void IArray<T,S>::removeByKey(const T& key)
+bool IArray<T,S>::removeByKey(const T& key)
 {
 	T* v = _typedThis().find(key);
-	if(!v) return;
+	if(!v) return false;
 
 	roAssert(v >= begin() && v < end());
 	_typedThis().remove(v - begin());
+	return true;
+}
+
+template<class T, class S>
+bool IArray<T,S>::removeAllByKey(const T& key)
+{
+	bool ret = false;
+	for(roSize i=0; i<this->_size; ++i) {
+		if(_data[i] == key) {
+			_typedThis().remove(i);
+			ret = true;
+		}
+	}
+
+	return ret;
 }
 
 template<class T, class S>

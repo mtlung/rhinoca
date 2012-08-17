@@ -128,6 +128,7 @@
 				PrecompiledHeaderThrough="pch.h"
 				WarningLevel="4"
 				DebugInformationFormat="3"
+				DisableSpecificWarnings="4100;4480;4512;4800; 4996;"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -203,6 +204,7 @@
 				PrecompiledHeaderThrough="pch.h"
 				WarningLevel="3"
 				DebugInformationFormat="3"
+				DisableSpecificWarnings="4100;4480;4512;4800; 4996;"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -280,6 +282,7 @@
 				PrecompiledHeaderThrough="pch.h"
 				WarningLevel="3"
 				DebugInformationFormat="3"
+				DisableSpecificWarnings="4100;4480;4512;4800; 4996;"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -415,6 +418,14 @@
 			>
 			<File
 				RelativePath="..\..\test\audio\roAudioTest.cpp"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="input"
+			>
+			<File
+				RelativePath="..\..\test\input\roInputTest.cpp"
 				>
 			</File>
 		</Filter>

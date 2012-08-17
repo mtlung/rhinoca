@@ -9,6 +9,7 @@
 #include "base/roTaskPool.h"
 #include "math/roMath.h"
 #include "audio/roAudioDriver.h"
+#include "input/roInputDriver.h"
 #include "render/roRenderDriver.h"
 
 namespace ro {
@@ -16,7 +17,7 @@ namespace ro {
 static void _initTaskPool(SubSystems& subSystems)
 {
 	subSystems.taskPool = new TaskPool;
-	subSystems.taskPool->init(1);
+	subSystems.taskPool->init(2);
 }
 
 static void _initRenderDriver(SubSystems& subSystems)
@@ -66,6 +67,7 @@ SubSystems::SubSystems()
 	: userData(NULL)
 	, initTaskPool(_initTaskPool), taskPool(NULL)
 	, audioDriver(NULL)
+	, inputDriver(NULL)
 	, initRenderDriver(_initRenderDriver), renderDriver(NULL), renderContext(NULL)
 	, initResourceManager(_initResourceManager), resourceMgr(NULL)
 	, initFont(_initFont), fontMgr(NULL)
@@ -105,6 +107,9 @@ Status SubSystems::init()
 	audioDriver = roNewAudioDriver();
 	roInitAudioDriver(audioDriver, "");
 
+	inputDriver = roNewInputDriver();
+	roInitInputDriver(inputDriver, "");
+
 	frameNumber = 0;
 	maxFrameDuration = 0;
 	averageFrameDuration = 0;
@@ -133,6 +138,9 @@ void SubSystems::shutdown()
 	roDeleteAudioDriver(audioDriver);
 	audioDriver = NULL;
 
+	roDeleteInputDriver(inputDriver);
+	inputDriver = NULL;
+
 	_cpuProfiler.shutdown();
 	_memoryProfiler.shutdown();
 	BsdSocket::closeApplication();
@@ -150,6 +158,9 @@ void SubSystems::tick()
 
 	_memoryProfiler.tick();
 
+	if(inputDriver)
+		inputDriver->tick(inputDriver);
+
 	if(audioDriver)
 		audioDriver->tick(audioDriver);
 
@@ -159,12 +170,19 @@ void SubSystems::tick()
 		maxFrameDuration = roMaxOf2(maxFrameDuration, renderContext->lastFrameDuration);
 	}
 
-	_cpuProfiler.tick();
-	if(_cpuProfiler.timeSinceLastReset() >= 3) {
-		String s = _cpuProfiler.report();
-		roLog("verbose", "%s\n", s.c_str());
-		_cpuProfiler.reset();
+	if(_cpuProfiler.enable) {
+		_cpuProfiler.tick();
+		if(_cpuProfiler.timeSinceLastReset() >= 3) {
+			String s = _cpuProfiler.report();
+			roLog("verbose", "%s\n", s.c_str());
+			_cpuProfiler.reset();
+		}
 	}
+}
+
+void SubSystems::enableCpuProfiler(bool b)
+{
+	_cpuProfiler.enable = b;
 }
 
 }	// namespace ro

@@ -105,7 +105,8 @@ struct IArray
 	void		popBack();
 	void		remove(roSize i);
 	void		removeBySwap(roSize i);
-	void		removeByKey(const T& key);
+	bool		removeByKey(const T& key);		///< Returns false if the key not found
+	bool		removeAllByKey(const T& key);
 
 	T*			find(const T& key);
 	const T*	find(const T& key) const;
