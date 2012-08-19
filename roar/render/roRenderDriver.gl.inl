@@ -105,6 +105,13 @@ struct DepthStencilBuffer
 	float lastUsedTime;
 };
 
+struct GLCapability
+{
+	GLint maxTextureSize;
+	GLfloat minAnisotropic;
+	GLfloat maxAnisotropic;
+};
+
 struct roRDriverContextImpl : public roRDriverContext
 {
 	void* currentBlendStateHash;
@@ -138,4 +145,6 @@ struct roRDriverContextImpl : public roRDriverContext
 	Array<DepthStencilBuffer> depthStencilBufferCache;
 
 	roSize bindedIndexCount;	// For debug purpose
+
+	GLCapability glCapability;
 };

@@ -8,6 +8,7 @@
 #include "../base/roString.h"
 #include "../base/roStringHash.h"
 #include "../base/roTypeCast.h"
+#include "../math/roMath.h"
 
 #include "../platform/roPlatformHeaders.h"
 
@@ -488,6 +489,7 @@ static void _setTextureState(roRDriverTextureState* states, roSize stateCount, u
 			glSamplerParameteri(glh, GL_TEXTURE_WRAP_T, _textureAddressMode[state.v]);
 			glSamplerParameteri(glh, GL_TEXTURE_MAG_FILTER, _magFilter[state.filter]);
 			glSamplerParameteri(glh, GL_TEXTURE_MIN_FILTER, _minFilter[state.filter]);
+			state.maxAnisotropy = (unsigned)roClamp((float)state.maxAnisotropy, ctx->glCapability.minAnisotropic, ctx->glCapability.maxAnisotropic);
 			glSamplerParameterf(glh, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)state.maxAnisotropy);
 
 			ctx->textureStateCache[freeCacheSlot].glh = glh;

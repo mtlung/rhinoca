@@ -1727,7 +1727,7 @@ static const StaticArray<DXGI_FORMAT, 20> _inputFormatMapping = {
 	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_R32_FLOAT,	DXGI_FORMAT_R32G32_FLOAT,	DXGI_FORMAT_R32G32B32_FLOAT,DXGI_FORMAT_R32G32B32A32_FLOAT,	// D3D10_REGISTER_COMPONENT_FLOAT32
 };
 
-bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, unsigned*)
+bool _bindShaderBuffers(roRDriverShaderBufferInput* inputs, roSize inputCount, unsigned*)
 {
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_DX11());
 	if(!ctx || !inputs || inputCount == 0) return false;
@@ -1779,19 +1779,19 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 		if(!input) continue;
 
 		roRDriverBufferImpl* buffer = static_cast<roRDriverBufferImpl*>(input->buffer);
-		if(!buffer) continue;
+		roRDriverBufferType bufferType = buffer ? buffer->type : roRDriverBufferType_Vertex;
 
 		// Gather information for creating input layout and binding vertex buffer
-		if(buffer->type == roRDriverBufferType_Vertex)
+		if(bufferType == roRDriverBufferType_Vertex)
 		{
 			// NOTE: The order of the dxBuffer pointers in vertexBuffers is important,
 			// luckily how we make inputHash help us guarantee a matching input layout cache
 			// will be found for this particular order of dxBuffer supplied.
-			vertexBuffers.pushBack(buffer->dxBuffer);
+			vertexBuffers.pushBack(buffer ? buffer->dxBuffer : ComPtr<ID3D11Buffer>());
 
 			if(inputLayoutCacheFound) continue;
 
-			roRDriverShaderImpl* shader = ctx->currentShaders[buffer->type];
+			roRDriverShaderImpl* shader = ctx->currentShaders[bufferType];
 			for(unsigned j=0; j<ctx->currentShaders.size(); ++j) {
 				if(ctx->currentShaders[j] && ctx->currentShaders[j]->type == roRDriverShaderType_Vertex)
 					shader = ctx->currentShaders[j];
@@ -1852,6 +1852,9 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 			// Info for IASetVertexBuffers
 			inputLayout->strides.pushBack(stride);
 			inputLayout->offsets.pushBack(0);
+		}
+		else if(!buffer) {
+			continue;
 		}
 		// Bind uniform buffer
 		else if(buffer->type == roRDriverBufferType_Uniform)
@@ -2099,7 +2102,7 @@ roRDriver* _roNewRenderDriver_DX11(const char* driverStr, const char*)
 
 	ret->bindShaders = _bindShaders;
 	ret->bindShaderTextures = _bindShaderTexture;
-	ret->bindShaderBuffers = _bindShaderUniform;
+	ret->bindShaderBuffers = _bindShaderBuffers;
 //	ret->bindShaderInputCached = _bindShaderInputCached;
 
 	ret->drawTriangle = _drawTriangle;

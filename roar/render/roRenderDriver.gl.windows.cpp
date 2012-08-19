@@ -232,6 +232,11 @@ bool _initDriverContext_GL(roRDriverContext* self, void* platformSpecificWindow)
 
 	initGlFunc();
 
+	// Get capability
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &impl->glCapability.maxTextureSize);
+	impl->glCapability.minAnisotropic = 1;
+	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &impl->glCapability.maxAnisotropic);
+
 	// Disable v-sync
 	wglSwapIntervalEXT(0);
 
