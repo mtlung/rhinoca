@@ -377,10 +377,10 @@ void TaskPool::_wait(TaskProxy* p, ThreadId tId)
 			if(p2 && p2 != _pendingTasksTail)
 				_doTask(p2, tId);
 			else {
-				// If no more task can do we sleep for a while
-				// NOTE: Must release condVar to avoid dead lock
-				ScopeUnlock unlock(condVar);
-				TaskPool::sleep(0);
+				// If no more task can do, we wait
+				++_workerWaitCount;
+				condVar.waitNoLock();
+				--_workerWaitCount;
 			}
 		}
 	}
