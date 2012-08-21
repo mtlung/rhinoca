@@ -184,6 +184,15 @@ void ResourceManager::collectInfrequentlyUsed()
 	}
 }
 
+void ResourceManager::abortLoad(Resource* r)
+{
+	if(!r) return;
+
+	r->state = Resource::Aborted;
+	taskPool->resume(r->taskLoaded);
+	taskPool->wait(r->taskLoaded);
+}
+
 void ResourceManager::abortAllLoader()
 {
 	// NOTE: Separate into 2 passes can make sure all loading task are set to abort

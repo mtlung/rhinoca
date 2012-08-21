@@ -434,7 +434,10 @@ void CpuProfiler::_end()
 	// Race with CpuProfiler::reset(), CpuProfiler::defaultReport()
 	ScopeRecursiveLock lock(node->mutex);
 
-	roAssert(node->recursionCount > 0);
+	// NOTE: Is is possible that _end() is called without a prior _begin() because of the 'enable' option
+	if(node->recursionCount == 0)
+		return;
+
 	node->recursionCount--;
 
 	// Only back to the parent when the current node is not inside a recursive function

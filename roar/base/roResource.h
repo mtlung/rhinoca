@@ -86,6 +86,8 @@ struct ResourceManager
 	/// Check for infrequently used resource and unload them
 	void collectInfrequentlyUsed();
 
+	void abortLoad(Resource* r);
+
 	/// Abort all loading operation, allow a faster shut down of the engine
 	void abortAllLoader();
 

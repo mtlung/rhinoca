@@ -442,7 +442,9 @@ static int CALLBACK _enumFamCallBack(const LOGFONTW* lplf, const TEXTMETRICW* lp
 {
 	String str;
 	roVerify(str.fromUtf16((const roUtf16*)lplf->lfFaceName));
-	roSubSystems->fontMgr->registerFontTypeface(str.c_str(), "win32Font");
+
+	if(roSubSystems->fontMgr)
+		roSubSystems->fontMgr->registerFontTypeface(str.c_str(), "win32Font");
 
 	return TRUE;
 }

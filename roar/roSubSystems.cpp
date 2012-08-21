@@ -92,10 +92,14 @@ static MemoryProfiler _memoryProfiler;
 
 Status SubSystems::init()
 {
+	shutdown();
+
 	Status st;
 	BsdSocket::initApplication();
 	st = _cpuProfiler.init(); if(!st) return st;
 //	st = _memoryProfiler.init(5000); if(!st) return st;
+
+	_cpuProfiler.enable = false;
 
 	initTaskPool(*this);
 	initRenderDriver(*this);
@@ -121,6 +125,10 @@ void SubSystems::shutdown()
 {
 	defaultFont = NULL;
 	currentCanvas = NULL;
+
+	// Early out all system resource loading process
+	if(resourceMgr)
+		resourceMgr->abortAllLoader();
 	systemResource.clear();
 
 	delete fontMgr;		fontMgr = NULL;

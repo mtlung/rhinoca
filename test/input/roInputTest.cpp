@@ -2,7 +2,6 @@
 #include "../render/roGraphicsTestBase.win.h"
 #include "../../roar/input/roInputDriver.h"
 #include "../../roar/base/roStringHash.h"
-#include "../../roar/roSubSystems.h"
 
 using namespace ro;
 
@@ -14,7 +13,6 @@ TEST_FIXTURE(InputTest, mouse)
 {
 	createWindow(200, 200);
 	subSystems.init();
-	subSystems.enableCpuProfiler(false);
 
 	roInputDriver* driver = subSystems.inputDriver;
 
