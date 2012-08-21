@@ -541,14 +541,6 @@
 			</File>
 		</Filter>
 		<File
-			RelativePath="..\..\src\bipbuffer.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\bipbuffer.h"
-			>
-		</File>
-		<File
 			RelativePath="..\..\src\common.h"
 			>
 		</File>

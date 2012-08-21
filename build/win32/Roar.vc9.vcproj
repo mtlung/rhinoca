@@ -808,6 +808,18 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="gui"
+			>
+			<File
+				RelativePath="..\..\roar\gui\roImGui.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\gui\roImGui.h"
+				>
+			</File>
+		</Filter>
 		<File
 			RelativePath="..\..\roar\pch.cpp"
 			>

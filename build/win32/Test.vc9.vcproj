@@ -429,6 +429,14 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="gui"
+			>
+			<File
+				RelativePath="..\..\test\gui\roImGuiTest.cpp"
+				>
+			</File>
+		</Filter>
 		<File
 			RelativePath="..\..\test\main.cpp"
 			>
