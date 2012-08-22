@@ -24,10 +24,18 @@ TEST_FIXTURE(ImGuiTest, button)
 
 	Canvas canvas;
 	canvas.init();
+	canvas.setGlobalColor(1, 0, 0, 1);
 
 	while(keepRun()) {
+		canvas.setGlobalColor(1, 1, 0, 1);
+		canvas.clearRect(0, 0, (float)context->width, (float)context->height);
+
 		imGuiBegin(canvas);
-			imGuiLabel("Hello world!");
+			imGuiLabel(imGuiRect(0, 40), "Hello world!");
 		imGuiEnd();
 	}
 }
+
+/*
+
+*/
