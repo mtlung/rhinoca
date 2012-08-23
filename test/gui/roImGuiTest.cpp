@@ -27,12 +27,16 @@ TEST_FIXTURE(ImGuiTest, button)
 	canvas.setGlobalColor(1, 0, 0, 1);
 
 	while(keepRun()) {
+		driver->clearColor(0, 0, 0, 0);
+
 		canvas.setGlobalColor(1, 1, 0, 1);
 		canvas.clearRect(0, 0, (float)context->width, (float)context->height);
 
 		imGuiBegin(canvas);
 			imGuiLabel(imGuiRect(0, 40), "Hello world!");
 		imGuiEnd();
+
+		driver->swapBuffers();
 	}
 }
 

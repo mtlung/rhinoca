@@ -8,6 +8,8 @@
 
 namespace ro {
 
+struct TextMetrics;
+
 /// HTML 5 compatible canvas
 struct Canvas
 {
@@ -91,11 +93,7 @@ struct Canvas
 	void clip();									/// Further constrains the clipping region to the given path.
 
 // Text metrics
-	struct TextMetrics
-	{
-	};
-
-	TextMetrics	measureText		(const roUtf8* str); 
+	void		measureText		(const roUtf8* str, float maxWidth, TextMetrics& metrics);
 
 // Attributes
 	unsigned	width			() const;
@@ -169,6 +167,7 @@ struct Canvas
 		int compisitionOperation;
 		ConstString fontName;
 		ConstString fontStyle;
+		ConstString textAlignment;
 		ro::Mat4 transform;
 	};
 	State _currentState;

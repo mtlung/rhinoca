@@ -8,6 +8,27 @@ namespace ro {
 
 struct Canvas;
 
+/// Information about a block of text
+struct TextMetrics
+{
+	TextMetrics();
+
+	unsigned	numUtfChar;
+	unsigned	numGlyph;
+	unsigned	lines;	/// Number of lines, after considering word wrap
+	float		width;
+	float		height;
+};
+
+enum TextAlignment
+{
+	TextAlignment_Center,
+	TextAlignment_Start,	/// Start of the text will align to the anchor point
+	TextAlignment_End,		/// End of the text will align to the anchor point
+	TextAlignment_Left,		/// Align the left of the string to the anchor point, ignoring whether the text is left-right or right-left
+	TextAlignment_Right,	/// Align the right of the string to the anchor point, ignoring whether the text is left-right or right-left
+};
+
 /// A Font resource contain a set of typeface
 struct Font : public ro::Resource
 {
@@ -23,8 +44,11 @@ struct Font : public ro::Resource
 	///	font-size : 40px | 1.875em,
 	virtual bool setStyle(const char* styleStr) { return false; }
 
+	/// Will fail if the font is not yet loaded, you may need to loop until it success
+	virtual roStatus measure(const roUtf8* str, roSize maxStrLen, float maxWidth, bool breakAtNewLine, TextMetrics& metrics) { return roStatus::not_implemented; }
+
 	/// Draw to the roRDriverCurrentContext, with it current selected render target
-	virtual void draw(const char* utf8Str, float x, float y, float maxWidth, Canvas& canvas) {}
+	virtual void draw(const roUtf8* str, float x, float y, float maxWidth, const ConstString& alignment, Canvas& canvas) {}
 
 // Attributes
 	override ConstString resourceType() const { return "Font"; }

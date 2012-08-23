@@ -6,6 +6,13 @@
 
 namespace ro {
 
+TextMetrics::TextMetrics()
+	: numUtfChar(0), numGlyph(0)
+	, lines(0)
+	, width(0), height(0)
+{
+}
+
 Font::Font(const char* uri)
 	: Resource(uri)
 {

@@ -927,10 +927,18 @@ void Canvas::fillText(const char* utf8Str, float x, float y, float maxWidth)
 	if(FontPtr font = roSubSystems->fontMgr->getFont(_currentState.fontName.c_str())) {
 		makeCurrent();
 		font->setStyle(_currentState.fontStyle.c_str());
-		font->draw(utf8Str, x, y, maxWidth, *this);
+		font->draw(utf8Str, x, y, maxWidth, _currentState.textAlignment, *this);
 	}
 	else
 		roLog("warn", "Fail to find font resource for typeface:%s\n", _currentState.fontName.c_str());
+}
+
+void Canvas::measureText(const roUtf8* str, float maxWidth, TextMetrics& metrics)
+{
+	if(FontPtr font = roSubSystems->fontMgr->getFont(_currentState.fontName.c_str()))
+		font->measure(str, roSize(-1), maxWidth, false, metrics);
+	else
+		metrics = TextMetrics();
 }
 
 void Canvas::getFillColor(float* rgba)
@@ -1051,11 +1059,12 @@ const char*	Canvas::font() const
 
 void Canvas::setTextAlign(const char* align)
 {
+	_currentState.textAlignment = align;
 }
 
 const char*	Canvas::textAlign() const
 {
-	return "";
+	return _currentState.textAlignment.c_str();
 }
 
 void Canvas::setTextBaseline(const char* baseLine)

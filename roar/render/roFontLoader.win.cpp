@@ -11,6 +11,9 @@
 #include "../base/roStopWatch.h"
 #include <stdio.h>
 
+// Some resource of fonts on windows:
+// http://www.catch22.net/tuts/editor11.asp
+
 namespace ro {
 
 namespace {
@@ -100,7 +103,9 @@ struct FontImpl : public Font
 
 	override bool setStyle(const char* styleStr);
 
-	override void draw(const char* utf8Str, float x, float y, float maxWidth, Canvas&);
+	override roStatus measure(const roUtf8* str, roSize maxStrLen, float maxWidth, bool breakAtNewLine, TextMetrics& metrics);
+
+	override void draw(const roUtf8* str, float x, float y, float maxWidth, const ConstString& alignment, Canvas&);
 
 	HDC hdc;	/// It is used when drawing text
 
@@ -571,12 +576,110 @@ bool FontImpl::setStyle(const char* styleStr)
 	return true;
 }
 
-void FontImpl::draw(const char* utf8Str, float x_, float y_, float maxWidth, Canvas& c)
+template<class T>
+struct RecordMaxValue
+{
+	RecordMaxValue(const T& v) : val(v), max(v) {}
+	RecordMaxValue& operator=(const T& v) { val = v; if(val > max) max = val; return *this; }
+	operator T&() { return val; }
+	operator const T&() const { return val; }
+
+	T val, max;
+};
+
+roStatus FontImpl::measure(const roUtf8* str, roSize maxStrLen, float maxWidth, bool breakAtNewLine, TextMetrics& metrics)
+{
+	roStatus st;
+
+	if(typefaces.isEmpty())
+		return roStatus::not_initialized;
+
+	FontData& fontData = typefaces[currnetFontForDraw];
+
+	float x_ = 0, y_ = 0;
+	RecordMaxValue<float> x = x_, y = y_;
+
+	// Pointer to the last and the current glyph
+	Glyph* g1 = NULL, *g2 = NULL;
+
+	bool someGlyphNotLoaded = false;
+
+	roSize len = roStrLen(str);
+	for(roUint16 w; len; g1 = g2)
+	{
+		int utf8Consumed = roUtf8ToUtf16Char(w, str, len);
+		if(utf8Consumed < 1) break;	// Invalid utf8 string encountered
+
+		str += utf8Consumed;
+		len -= utf8Consumed;
+		metrics.numGlyph += 1;
+		metrics.numUtfChar += utf8Consumed;
+		g2 = NULL;
+
+		// Handling of special characters
+		if(w == L'\r') {
+			x = x_;
+			continue;
+		}
+		if(w == L'\n') {
+			x = x_;
+			y += fontData.tm.tmHeight;
+			++metrics.lines;
+
+			if(breakAtNewLine)
+				break;
+			else
+				continue;
+		}
+
+		// Search for the glyph by the given code point
+		g2 = roLowerBound(fontData.glyphs.typedPtr(), fontData.glyphs.size(), w, &Pred::glyphLess);
+
+		if(g2 && g2->codePoint == w) {
+			// Calculate kerning
+			if(g1 && !fontData.kerningPairs.isEmpty()) {
+				struct Pred { static bool kerningLowerBound(const KerningPair& k, const roUint16& c) {
+					return k.second < c;
+				}};
+
+				KerningPair* k = roLowerBound(&fontData.kerningPairs[g1->kerningIndex], g1->kerningCount, w, &Pred::kerningLowerBound);
+				if(k && k->second == w)
+					x += k->offset;
+			}
+
+			x += g2->advanceX;
+			y += g2->advanceY;
+		}
+		else {
+			someGlyphNotLoaded = true;
+			Request req = { fontData.fontHash, w };
+			requestMainThread.pushBack(req);
+		}
+	}
+
+	if(metrics.lines == 0 && metrics.numGlyph > 0)
+		metrics.lines = 1;
+
+	metrics.width = x.max;
+	metrics.height = y.max;
+
+	if(someGlyphNotLoaded)
+		return roStatus::not_loaded;
+
+	return roStatus::ok;
+}
+
+void FontImpl::draw(const roUtf8* str, float x_, float y_, float maxWidth, const ConstString& alignment, Canvas& c)
 {
 	if(typefaces.isEmpty())
 		return;
 
 	FontData& fontData = typefaces[currnetFontForDraw];
+
+/*	TextMetrics metrics;
+	if(measure(str, maxWidth, metrics)) {
+		if
+	}*/
 
 	float x = x_, y = y_;
 
@@ -585,13 +688,13 @@ void FontImpl::draw(const char* utf8Str, float x_, float y_, float maxWidth, Can
 
 	c.beginDrawImageBatch();
 
-	roSize len = roStrLen(utf8Str);
+	roSize len = roStrLen(str);
 	for(roUint16 w; len; g1 = g2)
 	{
-		int utf8Consumed = roUtf8ToUtf16Char(w, utf8Str, len);
+		int utf8Consumed = roUtf8ToUtf16Char(w, str, len);
 		if(utf8Consumed < 1) break;	// Invalid utf8 string encountered
 
-		utf8Str += utf8Consumed;
+		str += utf8Consumed;
 		len -= utf8Consumed;
 		g2 = NULL;
 
