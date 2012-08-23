@@ -122,6 +122,10 @@ TEST_FIXTURE(TextureLoaderTest, stressTest)
 
 	String rootPath = "D:\\tmp\\117___07\\";
 	void* dir = ro::fileSystem.openDir(rootPath.c_str());
+	CHECK("Open directory failed" && dir);
+
+	if(!dir)
+		return;
 
 	bool allListed = false;
 

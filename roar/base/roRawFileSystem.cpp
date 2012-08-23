@@ -353,6 +353,7 @@ void rawFileSystemUntakeBuffer(void* file, roBytePtr buf)
 
 struct OpenDirContext
 {
+	OpenDirContext() : handle(INVALID_HANDLE_VALUE) {}
 	~OpenDirContext() {
 		if(handle != INVALID_HANDLE_VALUE)
 			::FindClose(handle);

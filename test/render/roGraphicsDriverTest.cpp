@@ -622,8 +622,12 @@ TEST_FIXTURE(GraphicsDriverTest, GeometryShader)
 		"}",
 
 		// HLSL
+		// Reference: http://matthewbozarth.svnrepository.com/2dspring08/trac.cgi/wiki/GeometryShaderTutorial
 		"cbuffer color { float4 _color; };"
-		"float4 main(float4 pos:SV_POSITION):SV_Target{return _color;}"
+		"struct VS_OUTPUT { float4 position : SV_POSITION; };"
+		"[maxvertexcount(6)]"
+		"void main(triangle VS_OUTPUT input[3] : SV_POSITION, inout TriangleStream<VS_OUTPUT> triStream)"
+		"{ triStream.Append(input[0]); triStream.Append(input[1]); triStream.Append(input[2]); triStream.RestartStrip(); }"
 	};
 
 	static const char* pShaderSrc[] = 
