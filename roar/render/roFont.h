@@ -13,9 +13,6 @@ struct TextMetrics
 {
 	TextMetrics();
 
-	unsigned	numUtfChar;
-	unsigned	numGlyph;
-	unsigned	lines;	/// Number of lines, after considering word wrap
 	float		width;
 	float		height;
 };
@@ -45,10 +42,10 @@ struct Font : public ro::Resource
 	virtual bool setStyle(const char* styleStr) { return false; }
 
 	/// Will fail if the font is not yet loaded, you may need to loop until it success
-	virtual roStatus measure(const roUtf8* str, roSize maxStrLen, float maxWidth, bool breakAtNewLine, TextMetrics& metrics) { return roStatus::not_implemented; }
+	virtual roStatus measure(const roUtf8* str, roSize maxStrLen, float maxWidth, TextMetrics& metrics) { return roStatus::not_implemented; }
 
 	/// Draw to the roRDriverCurrentContext, with it current selected render target
-	virtual void draw(const roUtf8* str, float x, float y, float maxWidth, const ConstString& alignment, Canvas& canvas) {}
+	virtual void draw(const roUtf8* str, roSize maxStrLen, float x, float y, float maxWidth, const ConstString& alignment, Canvas& canvas) {}
 
 // Attributes
 	override ConstString resourceType() const { return "Font"; }

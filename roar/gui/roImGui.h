@@ -18,8 +18,13 @@ struct imGuiRect {
 void imGuiBegin(Canvas& canvas);
 void imGuiEnd();
 
+// Widgets
 void imGuiLabel(const imGuiRect& rect, const roUtf8* text);
 bool imGuiButton(const imGuiRect& rect, const roUtf8* text, bool enabled=true);
+
+// Text options
+void imGuiSetTextAlign(const char* align);
+void imGuiSetTextColor(float r, float g, float b, float a);
 
 }	// namespace ro
 

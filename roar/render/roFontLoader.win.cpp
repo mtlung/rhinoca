@@ -103,9 +103,9 @@ struct FontImpl : public Font
 
 	override bool setStyle(const char* styleStr);
 
-	override roStatus measure(const roUtf8* str, roSize maxStrLen, float maxWidth, bool breakAtNewLine, TextMetrics& metrics);
+	override roStatus measure(const roUtf8* str, roSize maxStrLen, float maxWidth, TextMetrics& metrics);
 
-	override void draw(const roUtf8* str, float x, float y, float maxWidth, const ConstString& alignment, Canvas&);
+	override void draw(const roUtf8* str, roSize maxStrLen, float x, float y, float maxWidth, const ConstString& alignment, Canvas&);
 
 	HDC hdc;	/// It is used when drawing text
 
@@ -587,7 +587,7 @@ struct RecordMaxValue
 	T val, max;
 };
 
-roStatus FontImpl::measure(const roUtf8* str, roSize maxStrLen, float maxWidth, bool breakAtNewLine, TextMetrics& metrics)
+roStatus FontImpl::measure(const roUtf8* str, roSize maxStrLen, float maxWidth, TextMetrics& metrics)
 {
 	roStatus st;
 
@@ -604,7 +604,7 @@ roStatus FontImpl::measure(const roUtf8* str, roSize maxStrLen, float maxWidth, 
 
 	bool someGlyphNotLoaded = false;
 
-	roSize len = roStrLen(str);
+	roSize len = roMinOf2(roStrLen(str), maxStrLen);
 	for(roUint16 w; len; g1 = g2)
 	{
 		int utf8Consumed = roUtf8ToUtf16Char(w, str, len);
@@ -612,8 +612,6 @@ roStatus FontImpl::measure(const roUtf8* str, roSize maxStrLen, float maxWidth, 
 
 		str += utf8Consumed;
 		len -= utf8Consumed;
-		metrics.numGlyph += 1;
-		metrics.numUtfChar += utf8Consumed;
 		g2 = NULL;
 
 		// Handling of special characters
@@ -624,12 +622,8 @@ roStatus FontImpl::measure(const roUtf8* str, roSize maxStrLen, float maxWidth, 
 		if(w == L'\n') {
 			x = x_;
 			y += fontData.tm.tmHeight;
-			++metrics.lines;
 
-			if(breakAtNewLine)
-				break;
-			else
-				continue;
+			continue;
 		}
 
 		// Search for the glyph by the given code point
@@ -657,9 +651,6 @@ roStatus FontImpl::measure(const roUtf8* str, roSize maxStrLen, float maxWidth, 
 		}
 	}
 
-	if(metrics.lines == 0 && metrics.numGlyph > 0)
-		metrics.lines = 1;
-
 	metrics.width = x.max;
 	metrics.height = y.max;
 
@@ -669,26 +660,59 @@ roStatus FontImpl::measure(const roUtf8* str, roSize maxStrLen, float maxWidth, 
 	return roStatus::ok;
 }
 
-void FontImpl::draw(const roUtf8* str, float x_, float y_, float maxWidth, const ConstString& alignment, Canvas& c)
+struct GlyphCache
+{
+	float x, y;
+	Glyph* glyph;
+	roRDriverTexture* tex;
+};
+
+static void _draw(const GlyphCache* cache, roSize count, float boundingWidth, const ConstString& alignment, Canvas& canvas)
+{
+	float offsetX = 0;
+
+	if(alignment.lowerCaseHash() == stringHash("center"))
+		offsetX -= boundingWidth / 2;
+	if(alignment.lowerCaseHash() == stringHash("end"))
+		offsetX -= boundingWidth;
+	if(alignment.lowerCaseHash() == stringHash("right"))
+		offsetX -= boundingWidth;
+
+	for(roSize i=0; i<count; ++i) {
+		const GlyphCache& c = cache[i];
+		const Glyph& g = *cache[i].glyph;
+
+		float x = c.x + offsetX;
+
+		if(x + g.texSizeX < 0)
+			continue;
+		if(x >= canvas.width())
+			break;
+
+		canvas.drawImage(
+			c.tex, g.texOffsetX, g.texOffsetY, g.texSizeX, g.texSizeY,
+			x, c.y, g.texSizeX, g.texSizeY
+		);
+	}
+}
+
+void FontImpl::draw(const roUtf8* str, roSize maxStrLen, float x_, float y_, float maxWidth, const ConstString& alignment, Canvas& canvas)
 {
 	if(typefaces.isEmpty())
 		return;
 
-	FontData& fontData = typefaces[currnetFontForDraw];
+	TinyArray<GlyphCache, 256> caches;
 
-/*	TextMetrics metrics;
-	if(measure(str, maxWidth, metrics)) {
-		if
-	}*/
+	FontData& fontData = typefaces[currnetFontForDraw];
 
 	float x = x_, y = y_;
 
 	// Pointer to the last and the current glyph
 	Glyph* g1 = NULL, *g2 = NULL;
 
-	c.beginDrawImageBatch();
+	canvas.beginDrawImageBatch();
 
-	roSize len = roStrLen(str);
+	roSize len = roMinOf2(roStrLen(str), maxStrLen);
 	for(roUint16 w; len; g1 = g2)
 	{
 		int utf8Consumed = roUtf8ToUtf16Char(w, str, len);
@@ -705,8 +729,11 @@ void FontImpl::draw(const roUtf8* str, float x_, float y_, float maxWidth, const
 		}
 		if(w == L'\n') {
 			// Text getting out of our canvas, no need to continue
-			if(y > c.height())
+			if(y > canvas.height())
 				break;
+
+			_draw(caches.begin(), caches.size(), x - x_, alignment, canvas);
+			caches.clear();
 
 			x = x_;
 			y += fontData.tm.tmHeight;
@@ -718,7 +745,7 @@ void FontImpl::draw(const roUtf8* str, float x_, float y_, float maxWidth, const
 
 		if(g2 && g2->codePoint == w) {
 			// Calculate kerning
-			if(g1 && !fontData.kerningPairs.isEmpty()) {
+			if(g1 && fontData.kerningPairs.isInRange(g1->kerningIndex)) {
 				struct Pred { static bool kerningLowerBound(const KerningPair& k, const roUint16& c) {
 					return k.second < c;
 				}};
@@ -728,13 +755,11 @@ void FontImpl::draw(const roUtf8* str, float x_, float y_, float maxWidth, const
 					x += k->offset;
 			}
 
-			roRDriverTexture* tex = fontData.textures[g2->texIndex]->handle;
-			float srcx = g2->texOffsetX,	srcy = g2->texOffsetY;
-			float srcw = g2->texSizeX,		srch = g2->texSizeY;
-			float dstx = x + g2->originX,	dsty = y - g2->originY;
-
-			if(dstx < c.width())
-				c.drawImage(tex, srcx, srcy, srcw, srch, dstx, dsty, srcw, srch);
+			GlyphCache cache = {
+				x + g2->originX, y - g2->originY, g2,
+				fontData.textures[g2->texIndex]->handle
+			};
+			caches.pushBack(cache);
 
 			x += g2->advanceX;
 			y += g2->advanceY;
@@ -745,7 +770,11 @@ void FontImpl::draw(const roUtf8* str, float x_, float y_, float maxWidth, const
 		}
 	}
 
-	c.endDrawImageBatch();
+	// Flush the remaining glyph caches
+	_draw(caches.begin(), caches.size(), x - x_, alignment, canvas);
+	caches.clear();
+
+	canvas.endDrawImageBatch();
 
 	if(!requestMainThread.isEmpty())
 		roSubSystems->taskPool->resume(taskLoaded);
