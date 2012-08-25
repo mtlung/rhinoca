@@ -13,8 +13,9 @@ struct TextMetrics
 {
 	TextMetrics();
 
-	float		width;
-	float		height;
+	float	width;
+	float	height;
+	float	lineSpacing;
 };
 
 enum TextAlignment
@@ -45,7 +46,7 @@ struct Font : public ro::Resource
 	virtual roStatus measure(const roUtf8* str, roSize maxStrLen, float maxWidth, TextMetrics& metrics) { return roStatus::not_implemented; }
 
 	/// Draw to the roRDriverCurrentContext, with it current selected render target
-	virtual void draw(const roUtf8* str, roSize maxStrLen, float x, float y, float maxWidth, const ConstString& alignment, Canvas& canvas) {}
+	virtual void draw(const roUtf8* str, roSize maxStrLen, float x, float y, float maxWidth, Canvas& canvas) {}
 
 // Attributes
 	override ConstString resourceType() const { return "Font"; }

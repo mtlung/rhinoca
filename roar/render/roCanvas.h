@@ -168,6 +168,7 @@ struct Canvas
 		ConstString fontName;
 		ConstString fontStyle;
 		ConstString textAlignment;
+		ConstString textBaseline;
 		ro::Mat4 transform;
 	};
 	State _currentState;

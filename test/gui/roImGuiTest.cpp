@@ -33,6 +33,7 @@ TEST_FIXTURE(ImGuiTest, button)
 		imGuiBegin(canvas);
 			imGuiSetTextColor(1, 1, 0, 1);
 			imGuiLabel(imGuiRect(0, 40), "Hello world! I am Ricky Lung");
+			imGuiButton(imGuiRect(0, 60), "Button1 g y");
 		imGuiEnd();
 
 		driver->swapBuffers();

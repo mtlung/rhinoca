@@ -70,6 +70,7 @@ FontData::FontData()
 	, currentTextureIdx(0)
 	, dstX(0), dstY(0)
 {
+	roZeroMemory(&tm, sizeof(tm));
 }
 
 struct Request
@@ -105,7 +106,7 @@ struct FontImpl : public Font
 
 	override roStatus measure(const roUtf8* str, roSize maxStrLen, float maxWidth, TextMetrics& metrics);
 
-	override void draw(const roUtf8* str, roSize maxStrLen, float x, float y, float maxWidth, const ConstString& alignment, Canvas&);
+	override void draw(const roUtf8* str, roSize maxStrLen, float x, float y, float maxWidth, Canvas&);
 
 	HDC hdc;	/// It is used when drawing text
 
@@ -584,6 +585,9 @@ struct RecordMaxValue
 	operator T&() { return val; }
 	operator const T&() const { return val; }
 
+	template<class U>
+	T& operator+=(const U& rhs) { val += rhs; if(val > max) max = val; return *this; }
+
 	T val, max;
 };
 
@@ -598,6 +602,7 @@ roStatus FontImpl::measure(const roUtf8* str, roSize maxStrLen, float maxWidth, 
 
 	float x_ = 0, y_ = 0;
 	RecordMaxValue<float> x = x_, y = y_;
+	y.max = (float)fontData.tm.tmHeight;
 
 	// Pointer to the last and the current glyph
 	Glyph* g1 = NULL, *g2 = NULL;
@@ -653,6 +658,7 @@ roStatus FontImpl::measure(const roUtf8* str, roSize maxStrLen, float maxWidth, 
 
 	metrics.width = x.max;
 	metrics.height = y.max;
+	metrics.lineSpacing = float(fontData.tm.tmHeight + fontData.tm.tmInternalLeading + fontData.tm.tmExternalLeading);
 
 	if(someGlyphNotLoaded)
 		return roStatus::not_loaded;
@@ -667,22 +673,35 @@ struct GlyphCache
 	roRDriverTexture* tex;
 };
 
-static void _draw(const GlyphCache* cache, roSize count, float boundingWidth, const ConstString& alignment, Canvas& canvas)
+static void _draw(FontData& fontData, const GlyphCache* cache, roSize count, float boundingWidth, Canvas& canvas)
 {
 	float offsetX = 0;
+	float offsetY = 0;
 
-	if(alignment.lowerCaseHash() == stringHash("center"))
+	StringHash alignment = stringLowerCaseHash(canvas.textAlign());
+	StringHash baseline = stringLowerCaseHash(canvas.textBaseline());
+
+	if(alignment == stringHash("center"))
 		offsetX -= boundingWidth / 2;
-	if(alignment.lowerCaseHash() == stringHash("end"))
+	else if(alignment == stringHash("end"))
 		offsetX -= boundingWidth;
-	if(alignment.lowerCaseHash() == stringHash("right"))
+	else if(alignment == stringHash("right"))
 		offsetX -= boundingWidth;
+
+	// Reference: http://flylib.com/books/en/3.217.1.179/1/
+	if(baseline == stringHash("top"))
+		offsetY += fontData.tm.tmAscent;
+	else if(baseline == stringHash("bottom"))
+		offsetY -= fontData.tm.tmDescent;
+	else if(baseline == stringHash("middle"))
+		offsetY += fontData.tm.tmAscent / 2;	// TODO: It's not correct
 
 	for(roSize i=0; i<count; ++i) {
 		const GlyphCache& c = cache[i];
 		const Glyph& g = *cache[i].glyph;
 
 		float x = c.x + offsetX;
+		float y = c.y + offsetY;
 
 		if(x + g.texSizeX < 0)
 			continue;
@@ -691,12 +710,12 @@ static void _draw(const GlyphCache* cache, roSize count, float boundingWidth, co
 
 		canvas.drawImage(
 			c.tex, g.texOffsetX, g.texOffsetY, g.texSizeX, g.texSizeY,
-			x, c.y, g.texSizeX, g.texSizeY
+			x, y, g.texSizeX, g.texSizeY
 		);
 	}
 }
 
-void FontImpl::draw(const roUtf8* str, roSize maxStrLen, float x_, float y_, float maxWidth, const ConstString& alignment, Canvas& canvas)
+void FontImpl::draw(const roUtf8* str, roSize maxStrLen, float x_, float y_, float maxWidth, Canvas& canvas)
 {
 	if(typefaces.isEmpty())
 		return;
@@ -732,7 +751,7 @@ void FontImpl::draw(const roUtf8* str, roSize maxStrLen, float x_, float y_, flo
 			if(y > canvas.height())
 				break;
 
-			_draw(caches.begin(), caches.size(), x - x_, alignment, canvas);
+			_draw(fontData, caches.begin(), caches.size(), x - x_, canvas);
 			caches.clear();
 
 			x = x_;
@@ -771,7 +790,7 @@ void FontImpl::draw(const roUtf8* str, roSize maxStrLen, float x_, float y_, flo
 	}
 
 	// Flush the remaining glyph caches
-	_draw(caches.begin(), caches.size(), x - x_, alignment, canvas);
+	_draw(fontData, caches.begin(), caches.size(), x - x_, canvas);
 	caches.clear();
 
 	canvas.endDrawImageBatch();

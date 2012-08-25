@@ -8,6 +8,7 @@ namespace ro {
 
 TextMetrics::TextMetrics()
 	: width(0), height(0)
+	, lineSpacing(0)
 {
 }
 

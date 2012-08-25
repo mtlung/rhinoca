@@ -927,7 +927,7 @@ void Canvas::fillText(const char* utf8Str, float x, float y, float maxWidth)
 	if(FontPtr font = roSubSystems->fontMgr->getFont(_currentState.fontName.c_str())) {
 		makeCurrent();
 		font->setStyle(_currentState.fontStyle.c_str());
-		font->draw(utf8Str, roSize(-1), x, y, maxWidth, _currentState.textAlignment, *this);
+		font->draw(utf8Str, roSize(-1), x, y, maxWidth, *this);
 	}
 	else
 		roLog("warn", "Fail to find font resource for typeface:%s\n", _currentState.fontName.c_str());
@@ -1069,11 +1069,12 @@ const char*	Canvas::textAlign() const
 
 void Canvas::setTextBaseline(const char* baseLine)
 {
+	_currentState.textBaseline = baseLine;
 }
 
 const char*	Canvas::textBaseline() const
 {
-	return "";
+	return _currentState.textBaseline.c_str();
 }
 
 struct CompositionMapping { StringHash h; VGBlendMode mode; };
