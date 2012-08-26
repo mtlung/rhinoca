@@ -440,11 +440,11 @@ void roInputDriverImpl::_popWinEvents()
 		case WM_LBUTTONUP:
 		case WM_MBUTTONUP:
 		case WM_RBUTTONUP:
-			if(e.uMsg == WM_LBUTTONDOWN)
+			if(e.uMsg == WM_LBUTTONUP)
 				mouseButton = 0;
-			if(e.uMsg == WM_MBUTTONDOWN)
+			if(e.uMsg == WM_MBUTTONUP)
 				mouseButton = 1;
-			if(e.uMsg == WM_RBUTTONDOWN)
+			if(e.uMsg == WM_RBUTTONUP)
 				mouseButton = 2;
 
 			if(mouseButtonCaptured) return;

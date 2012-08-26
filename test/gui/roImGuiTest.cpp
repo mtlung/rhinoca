@@ -9,7 +9,7 @@ struct ImGuiTest : public GraphicsTestBase
 {
 };
 
-static const unsigned driverIndex = 0;
+static const unsigned driverIndex = 1;
 
 static const char* driverStr[] = 
 {
@@ -26,18 +26,23 @@ TEST_FIXTURE(ImGuiTest, button)
 	canvas.init();
 	canvas.setGlobalColor(1, 0, 0, 1);
 
+	CHECK(imGuiInit());
+
 	while(keepRun()) {
-		driver->clearColor(0, 0, 0, 0);
-		canvas.clearRect(0, 0, (float)context->width, (float)context->height);
+		driver->clearColor(68.0f/256, 68.0f/256, 68.0f/256, 1);
 
 		imGuiBegin(canvas);
 			imGuiSetTextColor(1, 1, 0, 1);
-			imGuiLabel(imGuiRect(0, 40), "Hello world! I am Ricky Lung");
-			imGuiButton(imGuiRect(0, 60), "Button1 g y");
+			imGuiLabel(imGuiRect(0, 20), "Hello world! I am Ricky Lung");
+			imGuiButton(imGuiRect(5, 60, 90, 30), "OK");
+			imGuiButton(imGuiRect(105, 60, 90, 30), "Cancel");
+			imGuiButton(imGuiRect(5, 100), "Auto sized");
 		imGuiEnd();
 
 		driver->swapBuffers();
 	}
+
+	imGuiClose();
 }
 
 /*

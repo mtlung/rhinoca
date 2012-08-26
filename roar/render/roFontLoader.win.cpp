@@ -700,8 +700,8 @@ static void _draw(FontData& fontData, const GlyphCache* cache, roSize count, flo
 		const GlyphCache& c = cache[i];
 		const Glyph& g = *cache[i].glyph;
 
-		float x = c.x + offsetX;
-		float y = c.y + offsetY;
+		float x = (float)int(c.x + offsetX);	// NOTE: We ensure x and y are in integer
+		float y = (float)int(c.y + offsetY);
 
 		if(x + g.texSizeX < 0)
 			continue;
