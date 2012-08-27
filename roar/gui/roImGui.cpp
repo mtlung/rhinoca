@@ -2,7 +2,7 @@
 #include "roImGui.h"
 #include "../input/roInputDriver.h"
 #include "../render/roCanvas.h"
-//#include "../render/roFont.h"
+#include "../render/roFont.h"
 #include "../math/roVector.h"
 #include "../roSubSystems.h"
 #include <float.h>
@@ -23,7 +23,7 @@ struct Skin
 	Vec2 texCheckboxSize;
 
 	TexturePtr texButton[2];
-	TexturePtr texCheckbox[2];
+	StaticArray<TexturePtr, 4> texCheckbox;
 };
 
 roStatus Skin::init()
@@ -36,8 +36,10 @@ roStatus Skin::init()
 	texButton[0] = mgr->loadAs<Texture>("imGui/button.png");
 	texButton[1] = mgr->loadAs<Texture>("imGui/button_.png");
 
-	texCheckbox[0] = mgr->loadAs<Texture>("imGui/checkbox.png");
-	texCheckbox[1] = mgr->loadAs<Texture>("imGui/checkbox_.png");
+	texCheckbox[0] = mgr->loadAs<Texture>("imGui/checkbox-0.png");
+	texCheckbox[1] = mgr->loadAs<Texture>("imGui/checkbox-1.png");
+	texCheckbox[2] = mgr->loadAs<Texture>("imGui/checkbox-2.png");
+	texCheckbox[3] = mgr->loadAs<Texture>("imGui/checkbox-3.png");
 
 	return roStatus::ok;
 }
@@ -45,7 +47,7 @@ roStatus Skin::init()
 void Skin::close()
 {
 	texButton[0] = texButton[1] = NULL;
-	texCheckbox[0] = texCheckbox[1] = NULL;
+	texCheckbox.assign(NULL);
 }
 
 void Skin::tick()
@@ -306,20 +308,22 @@ bool imGuiCheckBox(imGuiRect rect, const roUtf8* text, bool& state)
 	contentRect.h = roMaxOf2(contentRect.h, _states.skin.texCheckboxSize.y);
 	rect = _calMarginRect(rect, contentRect);
 
+	bool hover = _inRect(rect, _states.mousex, _states.mousey);
+	bool focus = _hasFocus(rect);
+
 	Canvas& c = *_states.canvas;
 
 	float skin = 3;	// Spacing in the skin. TODO: Load from data
 	c.setGlobalColor(1, 1, 1, 1);
 
 	// Draw the box
-	roRDriverTexture* tex = _states.skin.texCheckbox[state ? 1 : 0]->handle;
+	roRDriverTexture* tex = _states.skin.texCheckbox[(hover ? 2 : 0) + (state ? 1 : 0)]->handle;
 	c.drawImage(
 		tex, 0, 0, _states.skin.texCheckboxSize.x, _states.skin.texCheckboxSize.y,
 		_round(rect.x + _states.margin), _round(rect.y + rect.h / 2 - _states.skin.texCheckboxSize.y / 2), _states.skin.texCheckboxSize.x, _states.skin.texCheckboxSize.y
 	);
 
 	// Draw the text
-	bool focus = _hasFocus(rect);
 	float buttonDownOffset = focus ? 1.0f : 0;
 	c.fillText(text, (rect.x + rect.w / 2) + _states.skin.texCheckboxSize.x / 2 + _states.margin / 2, rect.y + rect.h / 2 + buttonDownOffset, -1);
 
