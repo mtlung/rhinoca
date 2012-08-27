@@ -28,15 +28,20 @@ TEST_FIXTURE(ImGuiTest, button)
 
 	CHECK(imGuiInit());
 
+	bool showDetails = false;
+
 	while(keepRun()) {
 		driver->clearColor(68.0f/256, 68.0f/256, 68.0f/256, 1);
 
 		imGuiBegin(canvas);
 			imGuiSetTextColor(1, 1, 0, 1);
 			imGuiLabel(imGuiRect(0, 20), "Hello world! I am Ricky Lung");
-			imGuiButton(imGuiRect(5, 60, 90, 30), "OK");
-			imGuiButton(imGuiRect(105, 60, 90, 30), "Cancel");
-			imGuiButton(imGuiRect(5, 100), "Auto sized");
+			imGuiCheckBox(imGuiRect(5, 60), "Show details", showDetails);
+			if(showDetails) {
+				imGuiButton(imGuiRect(5, 100, 90, 30), "OK");
+				imGuiButton(imGuiRect(105, 100, 90, 30), "Cancel");
+				imGuiButton(imGuiRect(5, 150), "Auto sized");
+			}
 		imGuiEnd();
 
 		driver->swapBuffers();

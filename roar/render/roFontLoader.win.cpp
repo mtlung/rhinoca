@@ -694,7 +694,7 @@ static void _draw(FontData& fontData, const GlyphCache* cache, roSize count, flo
 	else if(baseline == stringHash("bottom"))
 		offsetY -= fontData.tm.tmDescent;
 	else if(baseline == stringHash("middle"))
-		offsetY += fontData.tm.tmAscent / 2;	// TODO: It's not correct
+		offsetY += (fontData.tm.tmAscent - fontData.tm.tmInternalLeading) / 2;
 
 	for(roSize i=0; i<count; ++i) {
 		const GlyphCache& c = cache[i];

@@ -26,6 +26,7 @@ void imGuiEnd();
 void imGuiLabel(imGuiRect rect, const roUtf8* text);
 bool imGuiButton(imGuiRect rect, const roUtf8* text, bool enabled=true);
 bool imGuiButtonLogic(imGuiRect rect);
+bool imGuiCheckBox(imGuiRect rect, const roUtf8* text, bool& state);
 
 // options
 void imGuiSetMargin(float margin);
