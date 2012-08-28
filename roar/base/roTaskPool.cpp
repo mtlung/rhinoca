@@ -154,7 +154,7 @@ void TaskPool::sleep(int ms)
 	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 #ifdef roUSE_PTHREAD
-	::usleep(useconds_t(ms * 1000));
+	usleep(useconds_t(ms * 1000));
 #else
 	::Sleep(DWORD(ms));
 #endif

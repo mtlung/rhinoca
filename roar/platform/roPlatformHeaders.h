@@ -36,6 +36,10 @@
 #	define WIN32_LEAN_AND_MEAN
 
 #	include <windows.h>
+
+#elif roOS_iOS
+#	include <unistd.h>
 #endif
+
 
 #endif	// __roPlatformHeaders_h__

@@ -3,7 +3,7 @@
 #include "../platform/roPlatformHeaders.h"
 #include <math.h>
 
-#if RHINOCA_APPLE
+#if roOS_iOS
 #	include <mach/mach_time.h>
 #elif roOS_WIN
 #	define USE_RDTSC 1
@@ -26,7 +26,7 @@ inline roUint64 rdtsc() {
 
 namespace ro {
 
-#if roOS_WIN || RHINOCA_APPLE
+#if roOS_WIN || roOS_iOS
 
 // Number of unit in one second.
 static roUint64 getQueryPerformanceFrequency()
@@ -64,7 +64,7 @@ static roUint64 getQueryPerformanceFrequency()
 	}
 
 	return roUint64(ret.QuadPart * ratio);
-#elif defined(RHINOCA_APPLE)
+#elif roOS_iOS
 	// Reference: http://www.macresearch.org/tutorial_performance_and_time
 	// Reference: http://developer.apple.com/mac/library/qa/qa2004/qa1398.html
 	mach_timebase_info_data_t info;
@@ -115,7 +115,7 @@ roUint64 ticksSinceProgramStatup()
 	ret = rdtsc();
 #elif roOS_WIN
 	::QueryPerformanceCounter((LARGE_INTEGER*)(&ret));
-#elif RHINOCA_APPLE
+#elif roOS_iOS
 	ret = mach_absolute_time();
 #else
 	timeval tv;

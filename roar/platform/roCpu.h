@@ -27,6 +27,11 @@
 
 #if roCPU_ARM
 #	define roCPU_LP32			1
+#	if defined(__BIG_ENDIAN__)
+#		define roCPU_BIG_ENDIAN 1
+#	elif defined(__LITTLE_ENDIAN__)
+#		define roCPU_LITTLE_ENDIAN 1
+#	endif
 #	define roCPU_SUPPORT_MEMORY_MISALIGNED	8
 #endif
 

@@ -149,22 +149,22 @@ bool SockAddr::parse(const char* addressAndPort)
 
 roUint16 SockAddr::port() const
 {
-	return ::ntohs(*(roUint16*)asSockAddr().sa_data);
+	return ntohs(*(roUint16*)asSockAddr().sa_data);
 }
 
 void SockAddr::setPort(roUint16 port)
 {
-	*(roUint16*)(asSockAddr().sa_data) = ::htons(port);
+	*(roUint16*)(asSockAddr().sa_data) = htons(port);
 }
 
 roUint32 SockAddr::ip() const
 {
-	return ::ntohl(*(roUint32*)(asSockAddr().sa_data + sizeof(roUint16)));
+	return ntohl(*(roUint32*)(asSockAddr().sa_data + sizeof(roUint16)));
 }
 
 void SockAddr::setIp(roUint32 ip)
 {
-	*(roUint32*)(asSockAddr().sa_data + sizeof(roUint16)) = ::htonl(ip);
+	*(roUint32*)(asSockAddr().sa_data + sizeof(roUint16)) = htonl(ip);
 }
 
 void SockAddr::asString(String& str) const
@@ -202,8 +202,9 @@ roUint32 SockAddr::ipLoopBack()
 {
 	static roUint32 ret = 0;
 
-	if(roOS_WIN)
+#if roOS_WIN
 		ret = 2130706433;
+#endif
 
 	if(ret == 0) {
 		SockAddr addr;

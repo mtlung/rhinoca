@@ -169,8 +169,8 @@ bool extMappingText(const char* uri, void*& createFunc, void*& loadFunc)
 
 	for(roSize i=0; i<roCountof(extensions); ++i) {
 		if(uriExtensionMatch(uri, extensions[i])) {
-			createFunc = resourceCreateText;
-			loadFunc = resourceLoadText;
+			createFunc = (void*)resourceCreateText;
+			loadFunc = (void*)resourceLoadText;
 		}
 	}
 

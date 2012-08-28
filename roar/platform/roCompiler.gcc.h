@@ -1,22 +1,23 @@
 #include <stddef.h>
+#include <stdint.h>
 
 #define	roCOMPILER_GCC 1
 
-typedef char roInt8;
-typedef short roInt16;
-typedef int roInt32;
-typedef long long roInt64;
-typedef unsigned char roUint8;
-typedef unsigned short roUint16;
-typedef unsigned int roUint32;
-typedef unsigned long long roUint64;
+typedef int8_t roInt8;
+typedef int16_t roInt16;
+typedef int32_t roInt32;
+typedef int64_t roInt64;
+typedef uint8_t roUint8;
+typedef uint16_t roUint16;
+typedef uint32_t roUint32;
+typedef uint64_t roUint64;
 
 typedef char roUtf8;
 typedef unsigned short roUtf16;
 
 typedef unsigned char roByte;
 
-#define roSize size_t
+typedef size_t roSize;
 
 // Our own debug macro
 #ifdef _DEBUG

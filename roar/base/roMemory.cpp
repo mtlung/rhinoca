@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "roMemory.h"
-#include <malloc.h>
+#include <stdlib.h>
 
 roBytePtr roMalloc(roSize size)
 {
