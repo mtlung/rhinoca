@@ -17,8 +17,6 @@ typedef unsigned short roUtf16;
 
 typedef unsigned char roByte;
 
-typedef size_t roSize;
-
 // Our own debug macro
 #ifdef _DEBUG
 #	define roDEBUG 1

@@ -12,7 +12,7 @@ struct Serializer
 {
 	Serializer();
 
-	void		setBuf	(ByteArray* buf);
+	void	setBuf	(ByteArray* buf);
 	Status	ioRaw	(roBytePtr p, roSize size);
 
 	template<class T> Status io(T& value)		{ return serializeIo(*this, value); }
@@ -32,7 +32,7 @@ struct Deserializer
 {
 	Deserializer();
 
-	void		setBuf	(ByteArray* buf);
+	void	setBuf	(ByteArray* buf);
 	Status	ioRaw	(roBytePtr p, roSize size);
 
 	template<class T> Status io(T& value)		{ return serializeIo(*this, value); }

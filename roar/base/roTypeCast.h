@@ -3,29 +3,6 @@
 
 #include "roTypeOf.h"
 
-template<class Target, class Source>
-inline Target num_cast(Source x)
-{
-	roAssert(roCastAssert(x, Target()));
-	return static_cast<Target>(x);
-}
-
-template<class Target, class Source>
-inline Target clamp_cast(Source x)
-{
-	Target ret;
-	roClampCast(x, ret);
-	return ret;
-}
-
-/// This cast treat the source as a block of memory
-template<class Target, class Source>
-inline Target mem_cast(Source x)
-{
-	roStaticAssert(sizeof(Target) == sizeof(Source));
-	return *(Target*)(&x);
-}
-
 // ----------------------------------------------------------------------
 
 inline bool roCastAssert(roUint64 from, roUint32)	{ return from <= ro::TypeOf<roUint32>::valueMax(); }
@@ -131,5 +108,29 @@ inline void roClampCast(roInt8 from, roInt64& to)		{ to = (roInt64)from; }
 inline void roClampCast(roInt8 from, roInt32& to)		{ to = (roInt32)from; }
 inline void roClampCast(roInt8 from, roInt16& to)		{ to = (roInt16)from; }
 inline void roClampCast(roInt8 from, roInt8& to)		{ to = (roInt8)from; }
+
+template<class Target, class Source>
+inline Target num_cast(Source x)
+{
+	roAssert(roCastAssert(x, Target()));
+	return static_cast<Target>(x);
+}
+
+template<class Target, class Source>
+inline Target clamp_cast(Source x)
+{
+	Target ret;
+	roClampCast(x, ret);
+	return ret;
+}
+
+/// This cast treat the source as a block of memory
+template<class Target, class Source>
+inline Target mem_cast(Source x)
+{
+	roStaticAssert(sizeof(Target) == sizeof(Source));
+	return *(Target*)(&x);
+}
+
 
 #endif	// __roTypeCast_h__

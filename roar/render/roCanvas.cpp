@@ -481,7 +481,7 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 		// Check if larger vertex buffer is needed
 		if(_vBuffer->sizeInBytes <= (_batchedQuadCount + 1) * sizeof(vertex)) {
 			_driver->unmapBuffer(_vBuffer);
-			roSize larger = roMaxOf2(_vBuffer->sizeInBytes * 2, (_batchedQuadCount + 1) * sizeof(vertex));
+			roSize larger = roMaxOf2(_vBuffer->sizeInBytes * 2, (_batchedQuadCount + 1) * roSize(sizeof(vertex)));
 			roVerify(_driver->resizeBuffer(_vBuffer, larger));
 			_mappedVBuffer = (char*)_driver->mapBuffer(_vBuffer, roRDriverMapUsage_ReadWrite, 0, _vBuffer->sizeInBytes);
 		}

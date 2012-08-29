@@ -603,21 +603,25 @@ bool TaskPool::_hasOutstandingDependency(TaskPool::TaskProxy* p)
 		p->dependency->id == p->dependencyId;	// Check if task finished
 }
 
+namespace {
+	
+class CallbackTask : public Task
+{
+public:
+	override void run(TaskPool* taskPool)
+	{
+		callback(taskPool, userData);
+		_allocator.deleteObj(this);
+	}
+	void* userData;
+	TaskPool::Callback callback;
+};
+	
+}	// namespace
+
 // NOTE: This function is purely build on top of other public interface of TaskPool ^.^
 void TaskPool::addCallback(TaskId id, Callback callback, void* userData, ThreadId affinity)
 {
-	class CallbackTask : public Task
-	{
-	public:
-		override void run(TaskPool* taskPool)
-		{
-			callback(taskPool, userData);
-			_allocator.deleteObj(this);
-		}
-		void* userData;
-		TaskPool::Callback callback;
-	};
-
 	CallbackTask* t = _allocator.newObj<CallbackTask>().unref();
 	t->callback = callback;
 	t->userData = userData;

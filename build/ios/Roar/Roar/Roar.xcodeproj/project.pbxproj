@@ -106,6 +106,8 @@
 		9C18553C1593CB4400081A16 /* roVector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1855341593CB4400081A16 /* roVector.cpp */; };
 		9C18553D1593CB4400081A16 /* roVector.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C1855351593CB4400081A16 /* roVector.h */; };
 		9C672F0715AB6137001BBF8D /* roRingBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C672F0615AB6137001BBF8D /* roRingBuffer.h */; };
+		9C90DA5215EA91A900E9EBC8 /* roImGui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C90DA5015EA91A900E9EBC8 /* roImGui.cpp */; };
+		9C90DA5315EA91A900E9EBC8 /* roImGui.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C90DA5115EA91A900E9EBC8 /* roImGui.h */; };
 		9CE75C4415454CF70023D472 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE75C4315454CF70023D472 /* Foundation.framework */; };
 		9CE75C4A15454CF70023D472 /* Roar.m in Sources */ = {isa = PBXBuildFile; fileRef = 9CE75C4915454CF70023D472 /* Roar.m */; };
 /* End PBXBuildFile section */
@@ -215,6 +217,8 @@
 		9C1855351593CB4400081A16 /* roVector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roVector.h; sourceTree = "<group>"; };
 		9C1855361593CB4400081A16 /* roVector.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = roVector.inl; sourceTree = "<group>"; };
 		9C672F0615AB6137001BBF8D /* roRingBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roRingBuffer.h; sourceTree = "<group>"; };
+		9C90DA5015EA91A900E9EBC8 /* roImGui.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = roImGui.cpp; sourceTree = "<group>"; };
+		9C90DA5115EA91A900E9EBC8 /* roImGui.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roImGui.h; sourceTree = "<group>"; };
 		9CE75C4015454CF70023D472 /* libRoar.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRoar.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		9CE75C4315454CF70023D472 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		9CE75C4715454CF70023D472 /* Roar-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Roar-Prefix.pch"; sourceTree = "<group>"; };
@@ -378,6 +382,16 @@
 			path = ../../../../../roar/math;
 			sourceTree = "<group>";
 		};
+		9C90DA4F15EA91A900E9EBC8 /* gui */ = {
+			isa = PBXGroup;
+			children = (
+				9C90DA5015EA91A900E9EBC8 /* roImGui.cpp */,
+				9C90DA5115EA91A900E9EBC8 /* roImGui.h */,
+			);
+			name = gui;
+			path = ../../../../../roar/gui;
+			sourceTree = "<group>";
+		};
 		9CE75C3515454CF70023D472 = {
 			isa = PBXGroup;
 			children = (
@@ -407,6 +421,7 @@
 			isa = PBXGroup;
 			children = (
 				9C1854C01593CB2900081A16 /* base */,
+				9C90DA4F15EA91A900E9EBC8 /* gui */,
 				9C18552D1593CB4400081A16 /* math */,
 				9C1854A91593CB0A00081A16 /* platform */,
 				9C18544D1593CA5E00081A16 /* render */,
@@ -495,6 +510,7 @@
 				9C18553B1593CB4400081A16 /* roMatrix.h in Headers */,
 				9C18553D1593CB4400081A16 /* roVector.h in Headers */,
 				9C672F0715AB6137001BBF8D /* roRingBuffer.h in Headers */,
+				9C90DA5315EA91A900E9EBC8 /* roImGui.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -524,7 +540,7 @@
 		9CE75C3715454CF70023D472 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0420;
+				LastUpgradeCheck = 0440;
 			};
 			buildConfigurationList = 9CE75C3A15454CF70023D472 /* Build configuration list for PBXProject "Roar" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -585,6 +601,7 @@
 				9C1855381593CB4400081A16 /* roMath.cpp in Sources */,
 				9C18553A1593CB4400081A16 /* roMatrix.cpp in Sources */,
 				9C18553C1593CB4400081A16 /* roVector.cpp in Sources */,
+				9C90DA5215EA91A900E9EBC8 /* roImGui.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

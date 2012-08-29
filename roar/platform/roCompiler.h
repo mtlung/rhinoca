@@ -12,6 +12,7 @@
 #ifdef __APPLE__
 #	include <Availability.h>
 #	include <TargetConditionals.h>
+#	define roOS_APPLE 1
 #	if TARGET_OS_IPHONE
 #		define roOS_iOS 1
 #	endif
@@ -43,13 +44,12 @@
 #define roStaticAssert(x) typedef char __static_assert_t[(x)]
 
 // Types for 32/64 bits compatibility
-#ifndef roSize
-#	define roSize size_t
-#endif
+template<int> struct _sizetSelector {};
+template<> struct _sizetSelector<4> { typedef roInt32 _signed; typedef roUint32 _unsigned; };
+template<> struct _sizetSelector<8> { typedef roInt64 _signed; typedef roUint64 _unsigned; };
 
-#ifndef roPtrInt
-#	define roPtrInt ptrdiff_t
-#endif
+typedef _sizetSelector<sizeof(void*)>::_unsigned roSize;
+typedef _sizetSelector<sizeof(void*)>::_signed roPtrInt;
 
 // Force inline
 #ifndef roFORCEINLINE

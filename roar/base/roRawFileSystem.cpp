@@ -276,7 +276,7 @@ Status rawFileSystemRead(void* file, void* buffer, roUint64 size, roUint64& byte
 	roAssert(impl); if(!impl) return Status::invalid_parameter;
 	if(!impl->file) return Status::file_not_open;
 
-	bytesRead = num_cast<roUint64>(fread(buffer, 1, clamp_cast<size_t>(size), impl->file));
+	bytesRead = num_cast<roUint64>(fread(buffer, 1, clamp_cast<roSize>(size), impl->file));
 	return bytesRead > 0 ? Status::ok : Status::file_ended;
 }
 
