@@ -22,8 +22,9 @@ struct Skin
 	Vec2 texButtonSize;
 	Vec2 texCheckboxSize;
 
-	TexturePtr texButton[2];
+	StaticArray<TexturePtr, 2> texButton;
 	StaticArray<TexturePtr, 4> texCheckbox;
+	StaticArray<TexturePtr, 6> texScrollPanel;
 };
 
 roStatus Skin::init()
@@ -41,13 +42,17 @@ roStatus Skin::init()
 	texCheckbox[2] = mgr->loadAs<Texture>("imGui/checkbox-2.png");
 	texCheckbox[3] = mgr->loadAs<Texture>("imGui/checkbox-3.png");
 
+	texScrollPanel.assign(NULL);
+	texScrollPanel[0] = mgr->loadAs<Texture>("imGui/panel-border.png");
+
 	return roStatus::ok;
 }
 
 void Skin::close()
 {
-	texButton[0] = texButton[1] = NULL;
+	texButton.assign(NULL);
 	texCheckbox.assign(NULL);
+	texScrollPanel.assign(NULL);
 }
 
 void Skin::tick()
@@ -185,74 +190,47 @@ static float _round(float x)
 
 // Draw functions
 
-void _drawButton(const imGuiRect& rect, const roUtf8* text, bool enabled, bool hover, bool down)
+void _drawBorder(roRDriverTexture* tex, const imGuiRect& rect, float borderWidth)
 {
+	if(!tex) return;
 	Canvas& c = *_states.canvas;
-
-	float skin = 3;	// Spacing in the skin. TODO: Load from data
-
 	c.setGlobalColor(1, 1, 1, 1);
 
-	roRDriverTexture* tex = _states.skin.texButton[hover ? 1 : 0]->handle;
+	float texw = (float)tex->width;
+	float texh = (float)tex->height;
+	float srcx[3] = { 0,		borderWidth,			texw - borderWidth				};	// From left to right
+	float dstx[3] = { rect.x,	rect.x + borderWidth,	rect.x + rect.w - borderWidth	};	//
+	float srcy[3] = { 0,		borderWidth,			texh - borderWidth				};	// From top to bottom
+	float dsty[3] = { rect.y,	rect.y + borderWidth,	rect.y + rect.h - borderWidth	};	//
+	float srcw[3] = { borderWidth,	texw - 2 * borderWidth,		borderWidth };
+	float dstw[3] = { borderWidth,	rect.w - borderWidth * 2,	borderWidth };
+	float srch[3] = { borderWidth,	texh - 2 * borderWidth,		borderWidth };
+	float dsth[3] = { borderWidth,	rect.h - borderWidth * 2,	borderWidth };
+
+	static const roSize ix_[8] = { 0, 1, 2, 0, 1, 2, 0, 2 };
+	static const roSize iy_[8] = { 0, 0, 0, 2, 2, 2, 1, 1 };
 
 	c.beginDrawImageBatch();
 
-	float srcx, srcy, srcw, srch;
-	float dstx, dsty, dstw, dsth;
+	for(roSize i=0; i<roCountof(ix_); ++i) {
+		roSize ix = ix_[i];
+		roSize iy = iy_[i];
+		c.drawImage(tex, srcx[ix], srcy[iy], srcw[ix], srch[iy], dstx[ix], dsty[iy], dstw[ix], dsth[iy]);
+	}
 
-	// Left-top corner
-	srcx = srcy = 0;
-	srcw = srch = skin;
-	dstx = rect.x; dsty = rect.y;
-	dstw = dsth = skin;
-	c.drawImage(tex, srcx, srcy, srcw, srch, dstx, dsty, dstw, dsth);
+	c.endDrawImageBatch();
+}
 
-	// Left side
-	srcy = skin;
-	srch = 15;
-	dsty += skin;
-	dsth = rect.h - 2 * skin;
-	c.drawImage(tex, srcx, srcy, srcw, srch, dstx, dsty, dstw, dsth);
+void _drawButton(const imGuiRect& rect, const roUtf8* text, bool enabled, bool hover, bool down)
+{
+	Canvas& c = *_states.canvas;
+	c.setGlobalColor(1, 1, 1, 1);
 
-	// Left-bottom corner
-	srcy = 20;
-	srch = skin;
-	dsty = rect.y + rect.h - skin;
-	dsth = skin;
-	c.drawImage(tex, srcx, srcy, srcw, srch, dstx, dsty, dstw, dsth);
+	float skin = 3;	// Spacing in the skin. TODO: Load from data
 
-	// Right-top corner
-	srcx = 6; srcy = 0;
-	srcw = srch = skin;
-	dstx = rect.x + rect.w - skin; dsty = rect.y;
-	dstw = dsth = skin;
-	c.drawImage(tex, srcx, srcy, srcw, srch, dstx, dsty, dstw, dsth);
+	roRDriverTexture* tex = _states.skin.texButton[hover ? 1 : 0]->handle;
 
-	// Right side
-	srcy = skin;
-	srch = 15;
-	dsty += skin;
-	dsth = rect.h - 2 * skin;
-	c.drawImage(tex, srcx, srcy, srcw, srch, dstx, dsty, dstw, dsth);
-
-	// Right-bottom corner
-	srcy = 20;
-	srch = skin;
-	dsty = rect.y + rect.h - skin;
-	dsth = skin;
-	c.drawImage(tex, srcx, srcy, srcw, srch, dstx, dsty, dstw, dsth);
-
-	// Top side
-	srcx = skin; srcy = 0;
-	srcw = skin; srch = skin;
-	dstx = rect.x + skin; dsty = rect.y;
-	dstw = rect.w - 2 * skin;
-	c.drawImage(tex, srcx, srcy, srcw, srch, dstx, dsty, dstw, dsth);
-
-	// Bottom side
-	srcy = 20;
-	dsty = rect.y + rect.h - skin;
-	c.drawImage(tex, srcx, srcy, srcw, srch, dstx, dsty, dstw, dsth);
+	_drawBorder(tex, rect, 3);
 
 	// Middle part
 	c.drawImage(
@@ -260,7 +238,6 @@ void _drawButton(const imGuiRect& rect, const roUtf8* text, bool enabled, bool h
 		skin + rect.x, skin + rect.y, rect.w - skin * 2, rect.h - skin * 2
 	);
 
-	c.endDrawImageBatch();
 
 	float buttonDownOffset = down ? 1.0f : 0;
 	c.fillText(text, rect.x + rect.w / 2, rect.y + rect.h / 2 + buttonDownOffset, -1);
@@ -312,8 +289,6 @@ bool imGuiCheckBox(imGuiRect rect, const roUtf8* text, bool& state)
 	bool focus = _hasFocus(rect);
 
 	Canvas& c = *_states.canvas;
-
-	float skin = 3;	// Spacing in the skin. TODO: Load from data
 	c.setGlobalColor(1, 1, 1, 1);
 
 	// Draw the box
@@ -332,6 +307,19 @@ bool imGuiCheckBox(imGuiRect rect, const roUtf8* text, bool& state)
 		state = !state;
 
 	return clicked;
+}
+
+void imGuiBeginScrollPanel(imGuiRect rect, float* scollx, float* scolly)
+{
+	Canvas& c = *_states.canvas;
+	c.setGlobalColor(1, 1, 1, 1);
+
+	// Draw the border
+	_drawBorder(_states.skin.texScrollPanel[0]->handle, rect, 2);
+}
+
+void imGuiEndScrollPanel()
+{
 }
 
 }	// namespace ro

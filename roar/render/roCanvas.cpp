@@ -976,6 +976,9 @@ void Canvas::setFillGradient(void* gradient)
 	vgSetPaint(grad->handle, VG_FILL_PATH);
 }
 
+void Canvas::clip()
+{
+}
 
 // ----------------------------------------------------------------------
 

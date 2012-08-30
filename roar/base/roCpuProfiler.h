@@ -34,7 +34,7 @@ struct CpuProfiler
 
 	void* _rootNode;
 	roSize _frameCount;
-	StopWatch stopWatch;
+	StopWatch _stopWatch;
 };	// CpuProfiler
 
 struct CpuProfilerScope

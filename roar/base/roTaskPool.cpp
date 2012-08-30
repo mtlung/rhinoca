@@ -414,8 +414,6 @@ void TaskPool::resume(TaskId id)
 
 void TaskPool::doSomeTask(float timeout)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
-
 	ScopeLock lock(condVar);
 
 	TaskProxy* p = _pendingTasksHead->nextPending;

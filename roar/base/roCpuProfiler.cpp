@@ -41,15 +41,15 @@ struct CallstackNode
 
 	float _inclusiveTime;
 	float _peakInclusiveTime;
-	StopWatch stopWatch;
+	mutable StopWatch _stopWatch;
 	mutable RecursiveMutex mutex;
 };	// CallstackNode
 
 CallstackNode::CallstackNode(const char name[], CallstackNode* parent)
 	: name(name)
 	, parent(parent), firstChild(NULL), sibling(NULL)
-	, recursionCount(0), callCount(0), _inclusiveTime(0)
-	, _peakInclusiveTime(0)
+	, recursionCount(0), callCount(0)
+	, _inclusiveTime(0), _peakInclusiveTime(0)
 {}
 
 CallstackNode::~CallstackNode()
@@ -102,7 +102,7 @@ void CallstackNode::begin()
 {
 	// Start the timer for the first call, ignore all later recursive call
 	if(recursionCount == 0)
-		stopWatch.reset();
+		_stopWatch.reset();
 
 	++callCount;
 }
@@ -110,7 +110,7 @@ void CallstackNode::begin()
 void CallstackNode::end()
 {
 	if(recursionCount == 0) {
-		float elasped = stopWatch.getFloat();
+		float elasped = _stopWatch.getFloat();
 		_inclusiveTime += elasped;
 
 		_peakInclusiveTime = roMaxOf2(_peakInclusiveTime, elasped);
@@ -125,7 +125,7 @@ void CallstackNode::reset()
 		callCount = 0;
 		_inclusiveTime = 0;
 		_peakInclusiveTime = 0;
-		stopWatch.reset();
+		_stopWatch.reset();
 		n1 = firstChild;
 		n2 = sibling;
 	}
@@ -167,7 +167,7 @@ float CallstackNode::inclusiveTime() const
 	// If the recursion count is not zero, means the profile scope
 	// hasn't finish yet, at the moment we try to generate the report.
 	// This happens in multi-thread situation.
-	return _inclusiveTime + stopWatch.getFloat();
+	return _inclusiveTime + _stopWatch.getFloat();
 }
 
 float CallstackNode::peakInclusiveTime() const
@@ -175,7 +175,7 @@ float CallstackNode::peakInclusiveTime() const
 	if(recursionCount == 0)
 		return _peakInclusiveTime;
 
-	float elasped = stopWatch.getFloat();
+	float elasped = _stopWatch.getFloat();
 	return roMaxOf2(_peakInclusiveTime, elasped);
 }
 
@@ -200,14 +200,21 @@ static CpuProfiler* _profiler = NULL;
 
 struct TlsStruct
 {
-	TlsStruct()
+	TlsStruct(const char* name="THREAD")
 		: recurseCount(0)
-		, _currentNode(NULL)
+		, _currentNode(NULL), _threadName(name)
 	{}
 
 	CallstackNode* currentNode()
 	{
-		return _currentNode ? _currentNode : reinterpret_cast<CallstackNode*>(_profiler->_rootNode);
+		if(_currentNode)
+			return _currentNode;
+
+		// If node is null, means a new thread is started
+		_currentNode = reinterpret_cast<CallstackNode*>(_profiler->_rootNode);
+		_profiler->_begin(_threadName.c_str());
+
+		return _currentNode;
 	}
 
 	CallstackNode* setCurrentNode(CallstackNode* node) {
@@ -215,6 +222,7 @@ struct TlsStruct
 	}
 
 	roSize recurseCount;
+	String _threadName;	// We use a string variable here so every thread name are in unique memory
 	CallstackNode* _currentNode;
 };	// TlsStruct
 
@@ -285,7 +293,10 @@ Status CpuProfiler::init()
 	reset();
 
 	// NOTE: We assume CpuProfiler::init() will be invoked in the main thread
-	_begin("MAIN THREAD");
+	_tlsStruct()->_threadName = "MAIN THREAD";	// Customize the name for main thread
+
+	// Make sure the main thread appear first on the report
+	reinterpret_cast<CallstackNode*>(_rootNode)->getChildByName(_tlsStruct()->_threadName.c_str());
 
 	return Status::ok;
 }
@@ -299,7 +310,7 @@ void CpuProfiler::tick()
 void CpuProfiler::reset()
 {
 	_frameCount = 0;
-	stopWatch.reset();
+	_stopWatch.reset();
 
 	if(_rootNode)
 		reinterpret_cast<CallstackNode*>(_rootNode)->reset();
@@ -307,12 +318,12 @@ void CpuProfiler::reset()
 
 float CpuProfiler::fps() const
 {
-	return _frameCount / stopWatch.getFloat();
+	return _frameCount / _stopWatch.getFloat();
 }
 
 float CpuProfiler::timeSinceLastReset() const
 {
-	return (float)stopWatch.getFloat();
+	return (float)_stopWatch.getFloat();
 }
 
 String CpuProfiler::report(roSize nameLength, float skipMargin) const
@@ -343,21 +354,21 @@ String CpuProfiler::report(roSize nameLength, float skipMargin) const
 		// Race with ThreadedCpuProfiler::begin() and ThreadedCpuProfiler::end()
 		ScopeRecursiveLock lock(n->mutex);
 
+		roSize callDepth = n->callDepth();
+		indentNodes.resize(roMaxOf2(callDepth + 1, indentNodes.size()), NULL);
+		indentNodes[callDepth] = n;
+
+		float selfTime = n->selfTime();
+		float inclusiveTime = n->inclusiveTime();
+
+		if(n == _rootNode) {
+			inclusiveTime = -selfTime;
+			selfTime = 0;
+		}
+
 		// Skip node that have total time less than 1%
-//		if(n->_inclusiveTime / _frameCount * percent >= skipMargin)
+		if(inclusiveTime / _frameCount * percent >= skipMargin)
 		{
-			float selfTime = n->selfTime();
-			float inclusiveTime = n->inclusiveTime();
-
-			if(n == _rootNode) {
-				inclusiveTime = -selfTime;
-				selfTime = 0;
-			}
-
-			roSize callDepth = n->callDepth();
-			indentNodes.resize(roMaxOf2(callDepth + 1, indentNodes.size()), NULL);
-			indentNodes[callDepth] = n;
-
 			// Print out the tree structure
 			name.clear();
 			for(roSize i=0; i<callDepth; ++i)
