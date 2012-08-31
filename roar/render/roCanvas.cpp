@@ -184,6 +184,14 @@ void Canvas::init()
 	setFillColor(black);
 	setIdentity();
 	setFont("10pt \"Arial\"");	// Source: https://developer.mozilla.org/en/Drawing_text_using_a_canvas
+
+	// Setup rasterizer state
+	_rasterizerState.hash = 0;
+	_rasterizerState.scissorEnable = false;
+	_rasterizerState.smoothLineEnable = false;
+	_rasterizerState.multisampleEnable = false;
+	_rasterizerState.isFrontFaceClockwise = false;
+	_rasterizerState.cullMode = roRDriverCullMode_None;
 }
 
 bool Canvas::initTargetTexture(unsigned width, unsigned height)
@@ -234,16 +242,6 @@ void Canvas::destroy()
 		roSubSystems->currentCanvas = NULL;
 }
 
-// Setup rasterizer state
-static roRDriverRasterizerState _rasterizerState = {
-	0,
-	false,		// scissorEnable
-	false,		// smoothLineEnable
-	false,		// multisampleEnable
-	false,		// isFrontFaceClockwise
-	roRDriverCullMode_None	// We don't cull any polygon for Canvas
-};
-
 void Canvas::makeCurrent()
 {
 	bool targetSizeChanged = false;
@@ -266,6 +264,8 @@ void Canvas::makeCurrent()
 		_targetHeight = targetTexture->handle->height;
 	}
 
+	_driver->setRasterizerState(&_rasterizerState);
+
 	roAssert(roSubSystems);
 	if(roSubSystems->currentCanvas == this && !targetSizeChanged)
 		return;
@@ -273,7 +273,6 @@ void Canvas::makeCurrent()
 	vgResizeSurfaceSH((VGint)_targetWidth, (VGint)_targetHeight);
 	_orthoMat = makeOrthoMat4(0, (float)_targetWidth, 0, (float)_targetHeight, 0, 1);
 	_driver->adjustDepthRangeMatrix(_orthoMat.data);
-	_driver->setRasterizerState(&_rasterizerState);
 
 	vgSetPaint(_openvg->strokePaint, VG_STROKE_PATH);
 	vgSetPaint(_openvg->fillPaint, VG_FILL_PATH);
@@ -976,8 +975,23 @@ void Canvas::setFillGradient(void* gradient)
 	vgSetPaint(grad->handle, VG_FILL_PATH);
 }
 
+void Canvas::clipRect(float x, float y, float w, float h)
+{
+	_rasterizerState.hash = 0;
+	_rasterizerState.scissorEnable = true;
+	_driver->setScissorRect(int(x), int(y), int(w), int(h));
+}
+
 void Canvas::clip()
 {
+	// TODO: Implement
+	roAssert(false);
+}
+
+void Canvas::resetClip()
+{
+	_rasterizerState.hash = 0;
+	_rasterizerState.scissorEnable = false;
 }
 
 // ----------------------------------------------------------------------

@@ -44,6 +44,7 @@ roStatus Skin::init()
 
 	texScrollPanel.assign(NULL);
 	texScrollPanel[0] = mgr->loadAs<Texture>("imGui/panel-border.png");
+	texScrollPanel[1] = mgr->loadAs<Texture>("imGui/scrollbar-bar-0.png");
 
 	return roStatus::ok;
 }
@@ -64,6 +65,13 @@ void Skin::tick()
 		Vec2((float)texCheckbox[0]->width(), (float)texCheckbox[0]->height()) : Vec2(0.0f);
 }
 
+struct PanelState
+{
+	imGuiRect rect;
+	float* scollx;
+	float* scolly;
+};
+
 struct imGuiStates
 {
 	imGuiStates() : canvas(NULL) {}
@@ -78,6 +86,8 @@ struct imGuiStates
 	bool mouseUp, mouseDown;
 
 	Skin skin;
+
+	Array<PanelState> panelStateStack;
 };
 
 }	// namespace
@@ -314,12 +324,35 @@ void imGuiBeginScrollPanel(imGuiRect rect, float* scollx, float* scolly)
 	Canvas& c = *_states.canvas;
 	c.setGlobalColor(1, 1, 1, 1);
 
-	// Draw the border
-	_drawBorder(_states.skin.texScrollPanel[0]->handle, rect, 2);
+	PanelState state = { rect, scollx, scolly };
+	_states.panelStateStack.pushBack(state);
+
+	c.clipRect(rect.x, rect.y, rect.w/2, rect.h);
 }
 
 void imGuiEndScrollPanel()
 {
+	Canvas& c = *_states.canvas;
+	const PanelState& panelState = _states.panelStateStack.back();
+
+	c.resetClip();
+
+	const imGuiRect& rect = panelState.rect;
+
+	// Draw the border
+	_drawBorder(_states.skin.texScrollPanel[0]->handle, panelState.rect, 2);
+
+	// Draw the scroll bar
+	if(panelState.scolly)
+	{
+		roRDriverTexture* tex = _states.skin.texScrollPanel[1]->handle;
+		c.drawImage(tex,
+			0, 6, tex->width, 2,
+			rect.x, rect.y, tex->width, rect.h
+		);
+	}
+
+	_states.panelStateStack.popBack();
 }
 
 }	// namespace ro

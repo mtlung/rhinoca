@@ -90,7 +90,9 @@ struct Canvas
 	void setFillColor			(float r, float g, float b, float a);
 	void setFillGradient		(void* gradient);
 
-	void clip();									/// Further constrains the clipping region to the given path.
+	void clipRect				(float x, float y, float w, float h);
+	void clip					();					/// Further constrains the clipping region to the given path.
+	void resetClip				();
 
 // Text metrics
 	void		measureText		(const roUtf8* str, float maxWidth, TextMetrics& metrics);
@@ -135,6 +137,7 @@ struct Canvas
 	roRDriverShader* _vShader;
 	roRDriverShader* _pShader;
 	roRDriverTextureState _textureState;
+	roRDriverRasterizerState _rasterizerState;
 	roRDriverShaderTextureInput _textureInput;
 	StaticArray<roRDriverShaderBufferInput, 4> _bufferInputs;
 
