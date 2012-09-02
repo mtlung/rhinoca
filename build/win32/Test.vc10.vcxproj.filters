@@ -3,7 +3,6 @@
   <ItemGroup>
     <ClCompile Include="..\..\test\main.cpp" />
     <ClCompile Include="..\..\test\pch.cpp" />
-    <ClCompile Include="..\..\test\resourcetest.cpp" />
     <ClCompile Include="..\..\test\render\roGraphicsDriverTest.cpp">
       <Filter>render</Filter>
     </ClCompile>
@@ -31,12 +30,21 @@
     <ClCompile Include="..\..\test\base\roMapTest.cpp">
       <Filter>base</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\test\render\roSpriteTest.cpp">
+    <ClCompile Include="..\..\test\render\roGraphicsTestBase.win.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\render\roTextureLoaderTest.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\render\roCanvasTest.cpp">
       <Filter>render</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\test\pch.h" />
+    <ClInclude Include="..\..\test\render\roGraphicsTestBase.win.h">
+      <Filter>render</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="render">

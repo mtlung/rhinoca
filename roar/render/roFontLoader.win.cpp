@@ -273,7 +273,7 @@ static void _initWinFont(FontData& fontData, HDC hdc)
 	);
 
 	::SelectObject(hdc, fontData.hFont);
-	::GetTextMetricsW(hdc, &fontData.tm);
+	::GetTextMetricsW(hdc, (LPTEXTMETRICW)&fontData.tm);
 
 	// Get the kerning table
 	DWORD pairCount = ::GetKerningPairsW(hdc, 0, NULL);

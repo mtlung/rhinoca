@@ -19,12 +19,12 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -38,10 +38,10 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\lib\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">tmp/$(ProjectName)/$(Configuration)\</IntDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\lib\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">tmp/$(ProjectName)/$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../../lib/$(PlatformName)/</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">tmp/$(ProjectName)/$(PlatformName)/$(ConfigurationName)/</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../../lib/$(PlatformName)/</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">tmp/$(ProjectName)/$(PlatformName)/$(ConfigurationName)/</IntDir>
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
@@ -78,12 +78,6 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\audio\audiobuffer.cpp" />
-    <ClCompile Include="..\..\src\audio\audiodevice.openal.cpp" />
-    <ClCompile Include="..\..\src\audio\mp3loader.cpp" />
-    <ClCompile Include="..\..\src\audio\oggloader.cpp" />
-    <ClCompile Include="..\..\src\audio\stb_vorbis.cpp" />
-    <ClCompile Include="..\..\src\audio\waveloader.cpp" />
     <ClCompile Include="..\..\src\dom\audio.cpp" />
     <ClCompile Include="..\..\src\dom\body.cpp" />
     <ClCompile Include="..\..\src\dom\canvas.cpp" />
@@ -115,52 +109,18 @@
     <ClCompile Include="..\..\src\dom\window.cpp" />
     <ClCompile Include="..\..\src\dom\windowlocation.cpp" />
     <ClCompile Include="..\..\src\dom\windowscreen.cpp" />
-    <ClCompile Include="..\..\src\loader.cpp" />
-    <ClCompile Include="..\..\src\parser.cpp" />
-    <ClCompile Include="..\..\src\render\bmploader.cpp" />
-    <ClCompile Include="..\..\src\render\driver.cpp" />
-    <ClCompile Include="..\..\src\render\font.cpp" />
-    <ClCompile Include="..\..\src\render\jpegloader.cpp" />
-    <ClCompile Include="..\..\src\render\pngloader.cpp" />
-    <ClCompile Include="..\..\src\render\rgutility.cpp" />
-    <ClCompile Include="..\..\src\render\textrenderer.cpp" />
-    <ClCompile Include="..\..\src\render\truetypefont.cpp" />
-    <ClCompile Include="..\..\src\render\win32\driverwin32.cpp" />
-    <ClCompile Include="..\..\src\render\framebuffer.cpp" />
-    <ClCompile Include="..\..\src\render\renderqueue.cpp" />
-    <ClCompile Include="..\..\src\render\texture.cpp" />
-    <ClCompile Include="..\..\src\render\shivavg\shArrays.cpp" />
-    <ClCompile Include="..\..\src\render\shivavg\shContext.cpp" />
-    <ClCompile Include="..\..\src\render\shivavg\shExtensions.cpp" />
-    <ClCompile Include="..\..\src\render\shivavg\shGeometry.cpp" />
-    <ClCompile Include="..\..\src\render\shivavg\shImage.cpp" />
-    <ClCompile Include="..\..\src\render\shivavg\shPaint.cpp" />
-    <ClCompile Include="..\..\src\render\shivavg\shParams.cpp" />
-    <ClCompile Include="..\..\src\render\shivavg\shPath.cpp" />
-    <ClCompile Include="..\..\src\render\shivavg\shPipeline.cpp" />
-    <ClCompile Include="..\..\src\render\shivavg\shVectors.cpp" />
-    <ClCompile Include="..\..\src\render\shivavg\shVgu.cpp" />
-    <ClCompile Include="..\..\src\common.cpp" />
     <ClCompile Include="..\..\src\context.cpp" />
     <ClCompile Include="..\..\src\jsbindable.cpp" />
-    <ClCompile Include="..\..\src\mat44.cpp" />
     <ClCompile Include="..\..\src\memory.cpp" />
     <ClCompile Include="..\..\src\path.cpp" />
     <ClCompile Include="..\..\src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\src\resource.cpp" />
     <ClCompile Include="..\..\src\rhinoca.cpp" />
-    <ClCompile Include="..\..\src\rhlog.cpp" />
-    <ClCompile Include="..\..\src\textresource.cpp" />
     <ClCompile Include="..\..\src\xmlparser.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\audio\audiobuffer.h" />
-    <ClInclude Include="..\..\src\audio\audiodevice.h" />
-    <ClInclude Include="..\..\src\audio\audioloader.h" />
-    <ClInclude Include="..\..\src\audio\stb_vorbis.h" />
     <ClInclude Include="..\..\src\dom\audio.h" />
     <ClInclude Include="..\..\src\dom\body.h" />
     <ClInclude Include="..\..\src\dom\canvas.h" />
@@ -192,44 +152,14 @@
     <ClInclude Include="..\..\src\dom\window.h" />
     <ClInclude Include="..\..\src\dom\windowlocation.h" />
     <ClInclude Include="..\..\src\dom\windowscreen.h" />
-    <ClInclude Include="..\..\src\loader.h" />
-    <ClInclude Include="..\..\src\parser.h" />
-    <ClInclude Include="..\..\src\render\driver.h" />
-    <ClInclude Include="..\..\src\render\driverdetail.h" />
-    <ClInclude Include="..\..\src\render\font.h" />
-    <ClInclude Include="..\..\src\render\framebuffer.h" />
-    <ClInclude Include="..\..\src\render\render.h" />
-    <ClInclude Include="..\..\src\render\renderqueue.h" />
-    <ClInclude Include="..\..\src\render\rgutility.h" />
-    <ClInclude Include="..\..\src\render\textrenderer.h" />
-    <ClInclude Include="..\..\src\render\texture.h" />
-    <ClInclude Include="..\..\src\render\truetypefont.h" />
-    <ClInclude Include="..\..\src\render\vg\openvg.h" />
-    <ClInclude Include="..\..\src\render\shivavg\shArrayBase.h" />
-    <ClInclude Include="..\..\src\render\shivavg\shArrays.h" />
-    <ClInclude Include="..\..\src\render\shivavg\shContext.h" />
-    <ClInclude Include="..\..\src\render\shivavg\shDefs.h" />
-    <ClInclude Include="..\..\src\render\shivavg\shExtensions.h" />
-    <ClInclude Include="..\..\src\render\shivavg\shGeometry.h" />
-    <ClInclude Include="..\..\src\render\shivavg\shImage.h" />
-    <ClInclude Include="..\..\src\render\shivavg\shPaint.h" />
-    <ClInclude Include="..\..\src\render\shivavg\shPath.h" />
-    <ClInclude Include="..\..\src\render\shivavg\shVectors.h" />
-    <ClInclude Include="..\..\src\render\vg\vgu.h" />
     <ClInclude Include="..\..\src\common.h" />
     <ClInclude Include="..\..\src\context.h" />
     <ClInclude Include="..\..\src\context_win.h" />
     <ClInclude Include="..\..\src\jsbindable.h" />
-    <ClInclude Include="..\..\src\mat44.h" />
     <ClInclude Include="..\..\src\path.h" />
     <ClInclude Include="..\..\src\pch.h" />
     <ClInclude Include="..\..\src\platform.h" />
-    <ClInclude Include="..\..\src\resource.h" />
     <ClInclude Include="..\..\src\rhinoca.h" />
-    <ClInclude Include="..\..\src\rhlog.h" />
-    <ClInclude Include="..\..\src\textresource.h" />
-    <ClInclude Include="..\..\src\vec3.h" />
-    <ClInclude Include="..\..\src\vector.h" />
     <ClInclude Include="..\..\src\xmlparser.h" />
   </ItemGroup>
   <ItemGroup>

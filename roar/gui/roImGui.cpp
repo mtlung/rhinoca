@@ -11,6 +11,14 @@ namespace ro {
 
 namespace {
 
+static void _mergeRect(imGuiRect& rect1, const imGuiRect& rect2)
+{
+	rect1.w = roMaxOf2(rect1.x + rect1.w, rect2.x + rect2.w);
+	rect1.h = roMaxOf2(rect1.y + rect1.h, rect2.y + rect2.h);
+	rect1.x = roMinOf2(rect1.x, rect2.x);
+	rect1.y = roMinOf2(rect1.y, rect2.y);
+}
+
 struct Skin
 {
 	roStatus init();
@@ -43,8 +51,9 @@ roStatus Skin::init()
 	texCheckbox[3] = mgr->loadAs<Texture>("imGui/checkbox-3.png");
 
 	texScrollPanel.assign(NULL);
-	texScrollPanel[0] = mgr->loadAs<Texture>("imGui/panel-border.png");
-	texScrollPanel[1] = mgr->loadAs<Texture>("imGui/scrollbar-bar-0.png");
+	texScrollPanel[0] = mgr->loadAs<Texture>("imGui/panel-border-0.png");
+	texScrollPanel[1] = mgr->loadAs<Texture>("imGui/scrollbar-bar-bg.png");
+	texScrollPanel[2] = mgr->loadAs<Texture>("imGui/scrollbar-bar-0.png");
 
 	return roStatus::ok;
 }
@@ -87,6 +96,7 @@ struct imGuiStates
 
 	Skin skin;
 
+	Array<imGuiRect> rectStack;		// For deter
 	Array<PanelState> panelStateStack;
 };
 
@@ -131,10 +141,14 @@ void imGuiBegin(Canvas& canvas)
 	canvas.save();
 	canvas.setTextAlign("center");
 	canvas.setTextBaseline("middle");
+
+	imGuiBeginScrollPanel(imGuiRect(0, 0, canvas.width(), canvas.height()), NULL, NULL);
 }
 
 void imGuiEnd()
 {
+	imGuiEndScrollPanel();
+
 	_states.canvas->restore();
 	_states.canvas = NULL;
 
@@ -200,7 +214,7 @@ static float _round(float x)
 
 // Draw functions
 
-void _drawBorder(roRDriverTexture* tex, const imGuiRect& rect, float borderWidth)
+void _draw3x3(roRDriverTexture* tex, const imGuiRect& rect, float borderWidth, bool drawMiddle = true)
 {
 	if(!tex) return;
 	Canvas& c = *_states.canvas;
@@ -228,6 +242,12 @@ void _drawBorder(roRDriverTexture* tex, const imGuiRect& rect, float borderWidth
 		c.drawImage(tex, srcx[ix], srcy[iy], srcw[ix], srch[iy], dstx[ix], dsty[iy], dstw[ix], dsth[iy]);
 	}
 
+	if(drawMiddle) c.drawImage(
+		tex,
+		borderWidth, borderWidth, tex->width - borderWidth * 2, tex->height - borderWidth * 2,
+		borderWidth + rect.x, borderWidth + rect.y, rect.w - borderWidth * 2, rect.h - borderWidth * 2
+	);
+
 	c.endDrawImageBatch();
 }
 
@@ -236,18 +256,9 @@ void _drawButton(const imGuiRect& rect, const roUtf8* text, bool enabled, bool h
 	Canvas& c = *_states.canvas;
 	c.setGlobalColor(1, 1, 1, 1);
 
-	float skin = 3;	// Spacing in the skin. TODO: Load from data
-
 	roRDriverTexture* tex = _states.skin.texButton[hover ? 1 : 0]->handle;
 
-	_drawBorder(tex, rect, 3);
-
-	// Middle part
-	c.drawImage(
-		tex, skin, skin, skin, 15,
-		skin + rect.x, skin + rect.y, rect.w - skin * 2, rect.h - skin * 2
-	);
-
+	_draw3x3(tex, rect, 3);
 
 	float buttonDownOffset = down ? 1.0f : 0;
 	c.fillText(text, rect.x + rect.w / 2, rect.y + rect.h / 2 + buttonDownOffset, -1);
@@ -268,6 +279,7 @@ bool imGuiButton(imGuiRect rect, const roUtf8* text, bool enabled)
 
 	imGuiRect textRect = _calTextRect(imGuiRect(rect.x, rect.y), text);
 	rect = _calMarginRect(rect, textRect);
+	_mergeRect(_states.rectStack.back(), rect);
 
 	bool hover = _inRect(rect, _states.mousex, _states.mousey);
 	bool focus = _hasFocus(rect);
@@ -294,6 +306,7 @@ bool imGuiCheckBox(imGuiRect rect, const roUtf8* text, bool& state)
 	contentRect.w += _states.skin.texCheckboxSize.x + _states.margin;
 	contentRect.h = roMaxOf2(contentRect.h, _states.skin.texCheckboxSize.y);
 	rect = _calMarginRect(rect, contentRect);
+	_mergeRect(_states.rectStack.back(), rect);
 
 	bool hover = _inRect(rect, _states.mousex, _states.mousey);
 	bool focus = _hasFocus(rect);
@@ -327,7 +340,12 @@ void imGuiBeginScrollPanel(imGuiRect rect, float* scollx, float* scolly)
 	PanelState state = { rect, scollx, scolly };
 	_states.panelStateStack.pushBack(state);
 
-	c.clipRect(rect.x, rect.y, rect.w/2, rect.h);
+	if(!_states.rectStack.isEmpty())
+		_mergeRect(_states.rectStack.back(), rect);
+
+	_states.rectStack.pushBack(rect);
+
+	c.clipRect(rect.x, rect.y, rect.w, rect.h);
 }
 
 void imGuiEndScrollPanel()
@@ -339,17 +357,35 @@ void imGuiEndScrollPanel()
 
 	const imGuiRect& rect = panelState.rect;
 
+	float border = 2;
+
 	// Draw the border
-	_drawBorder(_states.skin.texScrollPanel[0]->handle, panelState.rect, 2);
+	_draw3x3(_states.skin.texScrollPanel[0]->handle, panelState.rect, border, false);
+
+	imGuiRect virtualRect = _states.rectStack.back();
+	_mergeRect(virtualRect, panelState.rect);
 
 	// Draw the scroll bar
 	if(panelState.scolly)
 	{
+		// Background
 		roRDriverTexture* tex = _states.skin.texScrollPanel[1]->handle;
 		c.drawImage(tex,
-			0, 6, tex->width, 2,
-			rect.x, rect.y, tex->width, rect.h
+			0, 0, tex->width, rect.h - border * 2,
+			rect.x + rect.w - tex->width - border, rect.y + border, tex->width, rect.h - border * 2
 		);
+
+		// The bar
+		float barHeight = panelState.rect.h * panelState.rect.h / virtualRect.h;
+		tex = _states.skin.texScrollPanel[2]->handle;
+
+		imGuiRect barRect(
+			rect.x + rect.w - tex->width - border,
+			rect.y + border,
+			tex->width,
+			barHeight
+		);
+		_draw3x3(tex, barRect, 2);
 	}
 
 	_states.panelStateStack.popBack();

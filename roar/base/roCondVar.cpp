@@ -39,7 +39,7 @@ bool CondVar::waitNoLock(roUint32 milliseconds)
 	_locked = false;
 #endif
 
-	bool ret = ::SleepConditionVariableCS(PCONDITION_VARIABLE(&_cd), (LPCRITICAL_SECTION)&_mutex, milliseconds);
+	bool ret = (::SleepConditionVariableCS(PCONDITION_VARIABLE(&_cd), (LPCRITICAL_SECTION)&_mutex, milliseconds) == TRUE);
 
 #if roDEBUG
 	_locked = true;
