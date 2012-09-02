@@ -28,7 +28,7 @@ bool imGuiButton(imGuiRect rect, const roUtf8* text, bool enabled=true);
 bool imGuiButtonLogic(imGuiRect rect);
 bool imGuiCheckBox(imGuiRect rect, const roUtf8* text, bool& state);
 
-void imGuiBeginScrollPanel(imGuiRect rect, float* scollx, float* scolly);
+void imGuiBeginScrollPanel(imGuiRect rect, float* scollx, float* scolly, bool drawBorder=true);
 void imGuiEndScrollPanel();
 
 // options

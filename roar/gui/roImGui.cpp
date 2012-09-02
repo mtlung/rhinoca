@@ -13,10 +13,12 @@ namespace {
 
 static void _mergeRect(imGuiRect& rect1, const imGuiRect& rect2)
 {
-	rect1.w = roMaxOf2(rect1.x + rect1.w, rect2.x + rect2.w);
-	rect1.h = roMaxOf2(rect1.y + rect1.h, rect2.y + rect2.h);
+	float xmax = roMaxOf2(rect1.x + rect1.w, rect2.x + rect2.w);
+	float ymax = roMaxOf2(rect1.y + rect1.h, rect2.y + rect2.h);
 	rect1.x = roMinOf2(rect1.x, rect2.x);
 	rect1.y = roMinOf2(rect1.y, rect2.y);
+	rect1.w = xmax - rect1.x;
+	rect1.h = ymax - rect1.y;
 }
 
 struct Skin
@@ -79,6 +81,7 @@ struct PanelState
 	imGuiRect rect;
 	float* scollx;
 	float* scolly;
+	bool drawBorder;
 };
 
 struct imGuiStates
@@ -142,7 +145,7 @@ void imGuiBegin(Canvas& canvas)
 	canvas.setTextAlign("center");
 	canvas.setTextBaseline("middle");
 
-	imGuiBeginScrollPanel(imGuiRect(0, 0, canvas.width(), canvas.height()), NULL, NULL);
+	imGuiBeginScrollPanel(imGuiRect(0, 0, canvas.width(), canvas.height()), NULL, NULL, false);
 }
 
 void imGuiEnd()
@@ -332,12 +335,12 @@ bool imGuiCheckBox(imGuiRect rect, const roUtf8* text, bool& state)
 	return clicked;
 }
 
-void imGuiBeginScrollPanel(imGuiRect rect, float* scollx, float* scolly)
+void imGuiBeginScrollPanel(imGuiRect rect, float* scollx, float* scolly, bool drawBorder)
 {
 	Canvas& c = *_states.canvas;
 	c.setGlobalColor(1, 1, 1, 1);
 
-	PanelState state = { rect, scollx, scolly };
+	PanelState state = { rect, scollx, scolly, drawBorder };
 	_states.panelStateStack.pushBack(state);
 
 	if(!_states.rectStack.isEmpty())
@@ -360,7 +363,8 @@ void imGuiEndScrollPanel()
 	float border = 2;
 
 	// Draw the border
-	_draw3x3(_states.skin.texScrollPanel[0]->handle, panelState.rect, border, false);
+	if(panelState.drawBorder)
+		_draw3x3(_states.skin.texScrollPanel[0]->handle, panelState.rect, border, false);
 
 	imGuiRect virtualRect = _states.rectStack.back();
 	_mergeRect(virtualRect, panelState.rect);
@@ -376,7 +380,7 @@ void imGuiEndScrollPanel()
 		);
 
 		// The bar
-		float barHeight = panelState.rect.h * panelState.rect.h / virtualRect.h;
+		float barHeight = panelState.rect.h * panelState.rect.h / virtualRect.h - border * 2;
 		tex = _states.skin.texScrollPanel[2]->handle;
 
 		imGuiRect barRect(
@@ -389,6 +393,7 @@ void imGuiEndScrollPanel()
 	}
 
 	_states.panelStateStack.popBack();
+	_states.rectStack.popBack();
 }
 
 }	// namespace ro
