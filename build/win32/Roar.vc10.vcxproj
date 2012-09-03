@@ -11,6 +11,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\roar\audio\roAudioDriver.h" />
+    <ClInclude Include="..\..\roar\audio\roAudioDriver.openal.windows.h" />
+    <ClInclude Include="..\..\roar\audio\roMp3Loader.openal.h" />
+    <ClInclude Include="..\..\roar\audio\roOggLoader.openal.h" />
+    <ClInclude Include="..\..\roar\audio\roWaveLoader.openal.h" />
     <ClInclude Include="..\..\roar\base\roAlgorithm.h" />
     <ClInclude Include="..\..\roar\base\roArray.h" />
     <ClInclude Include="..\..\roar\base\roAtomic.h" />
@@ -78,6 +83,8 @@
     <ClInclude Include="..\..\roar\roSubSystems.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\roar\audio\roAudioDriver.openal.cpp" />
+    <ClCompile Include="..\..\roar\audio\stb_vorbis.cpp" />
     <ClCompile Include="..\..\roar\base\roCondVar.cpp" />
     <ClCompile Include="..\..\roar\base\roCpuProfiler.cpp" />
     <ClCompile Include="..\..\roar\base\roFileSystem.cpp" />
