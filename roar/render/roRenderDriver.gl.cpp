@@ -96,7 +96,7 @@ static void _setScissorRect(unsigned x, unsigned y, unsigned width, unsigned hei
 	// Get the current viewport first, to make y-axis pointing down
 	GLint viewPort[4];
 	glGetIntegerv(GL_VIEWPORT, viewPort);
-	glScissor(x, viewPort[2] - height - y, width, height);
+	glScissor(x, viewPort[3] - height - y, width, height);
 }
 
 static void _clearColor(float r, float g, float b, float a)
