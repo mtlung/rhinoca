@@ -167,6 +167,8 @@ struct Canvas
 		float globalColor[4];
 		float strokeColor[4];
 		float fillColor[4];
+		float clipRect[4];
+		bool enableClip;
 		int compisitionOperation;
 		ConstString fontName;
 		ConstString fontStyle;

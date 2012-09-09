@@ -192,6 +192,8 @@ void Canvas::init()
 	_rasterizerState.multisampleEnable = false;
 	_rasterizerState.isFrontFaceClockwise = false;
 	_rasterizerState.cullMode = roRDriverCullMode_None;
+
+	resetClip();
 }
 
 bool Canvas::initTargetTexture(unsigned width, unsigned height)
@@ -322,6 +324,13 @@ void Canvas::restore()
 
 	setStrokeColor(_currentState.strokeColor);
 	setFillColor(_currentState.fillColor);
+
+	float rect[4];
+	roMemcpy(rect, &_currentState.clipRect, sizeof(rect));
+	if(_currentState.enableClip)
+		clipRect(rect[0], rect[1], rect[2], rect[3]);
+	else
+		resetClip();
 
 	vgSeti(VG_BLEND_MODE, _currentState.compisitionOperation);
 }
@@ -979,6 +988,11 @@ void Canvas::clipRect(float x, float y, float w, float h)
 {
 	_rasterizerState.hash = 0;
 	_rasterizerState.scissorEnable = true;
+
+	float rect[4] = { x, y, w, h };
+	roMemcpy(_currentState.clipRect, rect, sizeof(rect));
+	_currentState.enableClip = true;
+
 	_driver->setScissorRect(int(x), int(y), int(w), int(h));
 }
 
@@ -986,10 +1000,13 @@ void Canvas::clip()
 {
 	// TODO: Implement
 	roAssert(false);
+
+	_currentState.enableClip = true;
 }
 
 void Canvas::resetClip()
 {
+	_currentState.enableClip = false;
 	_rasterizerState.hash = 0;
 	_rasterizerState.scissorEnable = false;
 }
