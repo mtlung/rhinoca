@@ -21,6 +21,12 @@ static void _mergeRect(imGuiRect& rect1, const imGuiRect& rect2)
 	rect1.h = ymax - rect1.y;
 }
 
+static void _mergeExtend(imGuiRect& rect1, const imGuiRect& rect2)
+{
+	rect1.w = roMaxOf2(rect1.w, rect2.x + rect2.w);
+	rect1.h = roMaxOf2(rect1.h, rect2.y + rect2.h);
+}
+
 struct Skin
 {
 	roStatus init();
@@ -56,6 +62,7 @@ roStatus Skin::init()
 	texScrollPanel[0] = mgr->loadAs<Texture>("imGui/panel-border-0.png");
 	texScrollPanel[1] = mgr->loadAs<Texture>("imGui/scrollbar-bar-bg.png");
 	texScrollPanel[2] = mgr->loadAs<Texture>("imGui/scrollbar-bar-0.png");
+	texScrollPanel[3] = mgr->loadAs<Texture>("imGui/scrollbar-arrow-0.png");
 
 	return roStatus::ok;
 }
@@ -76,31 +83,49 @@ void Skin::tick()
 		Vec2((float)texCheckbox[0]->width(), (float)texCheckbox[0]->height()) : Vec2(0.0f);
 }
 
-struct PanelState
-{
-	imGuiRect rect;
-	float* scollx;
-	float* scolly;
-	bool drawBorder;
-};
-
 struct imGuiStates
 {
-	imGuiStates() : canvas(NULL) {}
+	struct MouseState {
+		float mousex, mousey, mousez;
+		float mouseClickx, mouseClicky;
+		bool mouseUp, mouseDown;
+	};
+
+	imGuiStates() { roZeroMemory(this, sizeof(*this)); }
+
+	float mousex() { return mouseCaptured ? mouseCapturedState.mousex : mouseState.mousex + offsetx; }
+	float mousey() { return mouseCaptured ? mouseCapturedState.mousey : mouseState.mousey + offsety; }
+	float& mousez() { return mouseCaptured ? mouseCapturedState.mousey : mouseState.mousez; }
+	float mouseClickx() { return mouseCaptured ? mouseCapturedState.mouseClickx : mouseState.mouseClickx + offsetx; }
+	float mouseClicky() { return mouseCaptured ? mouseCapturedState.mouseClicky : mouseState.mouseClicky + offsety; }
+	bool& mouseUp() { return mouseCaptured ? mouseCapturedState.mouseUp : mouseState.mouseUp; }
+	bool& mouseDown() { return mouseCaptured ? mouseCapturedState.mouseDown : mouseState.mouseDown; }
+
+	void setMousex(float v) { if(mouseCaptured) mouseCapturedState.mousex = v; else mouseState.mousex = v; }
+	void setMousey(float v) { if(mouseCaptured) mouseCapturedState.mousey = v; else mouseState.mousey = v; }
+	void setMouseClickx(float v) { if(mouseCaptured) mouseCapturedState.mouseClickx = v; else mouseState.mouseClickx = v; }
+	void setMouseClicky(float v) { if(mouseCaptured) mouseCapturedState.mouseClicky = v; else mouseState.mouseClicky = v; }
 
 	unsigned areaId;
 	unsigned widgetId;
 	Canvas* canvas;
 
 	float margin;
-	float mousex, mousey;
-	float mouseClickX, mouseClickY;
-	bool mouseUp, mouseDown;
+
+	bool mouseCaptured;
+	MouseState mouseState;
+	MouseState mouseCapturedState;
+	float offsetx, offsety;
 
 	Skin skin;
 
-	Array<imGuiRect> rectStack;		// For deter
-	Array<PanelState> panelStateStack;
+	void* hoveringObject;
+	void* lastFrameHoveringObject;
+
+	imGuiPanelState rootPanel;
+
+	Array<imGuiRect> clipRectStack;
+	Array<imGuiPanelState*> panelStateStack;
 };
 
 }	// namespace
@@ -113,6 +138,9 @@ roStatus imGuiInit()
 	st = _states.skin.init(); if(!st) return st;
 
 	imGuiSetMargin(5);
+
+	_states.hoveringObject = NULL;
+	_states.lastFrameHoveringObject = NULL;
 
 	return roStatus::ok;
 }
@@ -131,34 +159,45 @@ void imGuiBegin(Canvas& canvas)
 
 	roInputDriver* inputDriver = roSubSystems->inputDriver;
 
-	_states.mousex = inputDriver->mouseAxis(inputDriver, stringHash("mouse x"));
-	_states.mousey = inputDriver->mouseAxis(inputDriver, stringHash("mouse y"));
-	_states.mouseUp = inputDriver->mouseButtonUp(inputDriver, 0, false);
-	_states.mouseDown = inputDriver->mouseButtonDown(inputDriver, 0, false);
+	roAssert(!_states.mouseCaptured);
+	_states.setMousex(inputDriver->mouseAxis(inputDriver, stringHash("mouse x")));
+	_states.setMousey(inputDriver->mouseAxis(inputDriver, stringHash("mouse y")));
+	_states.mousez() = inputDriver->mouseAxisDelta(inputDriver, stringHash("mouse z"));
+	_states.mouseUp() = inputDriver->mouseButtonUp(inputDriver, 0, false);
+	_states.mouseDown() = inputDriver->mouseButtonDown(inputDriver, 0, false);
+	_states.offsetx = 0;
+	_states.offsety = 0;
 
-	if(_states.mouseDown) {
-		_states.mouseClickX = _states.mousex;
-		_states.mouseClickY = _states.mousey;
+	if(_states.mouseDown()) {
+		_states.setMouseClickx(_states.mousex());
+		_states.setMouseClicky(_states.mousey());
 	}
 
-	canvas.save();
 	canvas.setTextAlign("center");
 	canvas.setTextBaseline("middle");
 
-	imGuiBeginScrollPanel(imGuiRect(0, 0, canvas.width(), canvas.height()), NULL, NULL, false);
+	_states.rootPanel.showBorder = false;
+	_states.rootPanel.scrollable = false;
+	_states.rootPanel.rect = imGuiRect(0, 0, (float)canvas.width(), (float)canvas.height());
+	imGuiBeginScrollPanel(_states.rootPanel);
 }
 
 void imGuiEnd()
 {
 	imGuiEndScrollPanel();
 
-	_states.canvas->restore();
 	_states.canvas = NULL;
 
-	if(_states.mouseUp) {
-		_states.mouseClickX = FLT_MAX;
-		_states.mouseClickY = FLT_MAX;
+	_states.lastFrameHoveringObject = _states.hoveringObject;
+
+	if(_states.mouseUp()) {
+		_states.setMouseClickx(FLT_MAX);
+		_states.setMouseClicky(FLT_MAX);
 	}
+}
+
+void imGuiLayout(imGuiRect& rect)
+{
 }
 
 void imGuiSetMargin(float margin)
@@ -198,21 +237,54 @@ static imGuiRect _calMarginRect(const imGuiRect& prefered, const imGuiRect& cont
 	return ret;
 }
 
-static bool _inRect(const imGuiRect& rect, float x, float y)
+static bool _isHover(const imGuiRect& rect)
+{
+	float x = _states.mousex();
+	float y = _states.mousey();
+	return imGuiInRect(rect, x, y) && imGuiInClipRect(x, y);
+}
+
+static bool _isHot(const imGuiRect& rect)
+{
+	float x = _states.mouseClickx();
+	float y = _states.mouseClicky();
+	return imGuiInRect(rect, x, y) && imGuiInClipRect(x, y);
+}
+
+static float _round(float x)
+{
+	return float(int(x));
+}
+
+bool imGuiInRect(const imGuiRect& rect, float x, float y)
 {
 	return
 		rect.x < x && x < rect.x + rect.w &&
 		rect.y < y && y < rect.y + rect.h;
 }
 
-static bool _hasFocus(const imGuiRect& rect)
+bool imGuiInClipRect(float x, float y)
 {
-	return _inRect(rect, _states.mouseClickX, _states.mouseClickY);
+	if(_states.clipRectStack.isEmpty())
+		return true;
+	return imGuiInRect(_states.clipRectStack.back(), x - _states.offsetx, y - _states.offsety);
 }
 
-static float _round(float x)
+void imGuiBeginClip(const imGuiRect& rect)
 {
-	return float(int(x));
+	Canvas& c = *_states.canvas;
+	_states.clipRectStack.pushBack(rect);
+	c.save();
+	c.clipRect(rect.x, rect.y, rect.w, rect.h);
+}
+
+void imGuiEndClip()
+{
+	Canvas& c = *_states.canvas;
+	imGuiRect rect = _states.clipRectStack.back();
+	c.restore();
+//	c.clipRect(rect.x, rect.y, rect.w, rect.h);
+	_states.clipRectStack.popBack();
 }
 
 // Draw functions
@@ -276,30 +348,6 @@ void imGuiLabel(imGuiRect rect, const roUtf8* text)
 	_states.canvas->fillText(text, rect.x + rect.w / 2, rect.y + rect.h / 2, -1);
 }
 
-bool imGuiButton(imGuiRect rect, const roUtf8* text, bool enabled)
-{
-	if(!text) text = "";
-
-	imGuiRect textRect = _calTextRect(imGuiRect(rect.x, rect.y), text);
-	rect = _calMarginRect(rect, textRect);
-	_mergeRect(_states.rectStack.back(), rect);
-
-	bool hover = _inRect(rect, _states.mousex, _states.mousey);
-	bool focus = _hasFocus(rect);
-
-	_drawButton(rect, text, enabled, hover, focus);
-
-	return imGuiButtonLogic(rect);
-}
-
-bool imGuiButtonLogic(imGuiRect rect)
-{
-	bool hover = _inRect(rect, _states.mousex, _states.mousey);
-	bool focus = _hasFocus(rect);
-
-	return hover && focus && _states.mouseUp;
-}
-
 bool imGuiCheckBox(imGuiRect rect, const roUtf8* text, bool& state)
 {
 	if(!text) text = "";
@@ -309,10 +357,10 @@ bool imGuiCheckBox(imGuiRect rect, const roUtf8* text, bool& state)
 	contentRect.w += _states.skin.texCheckboxSize.x + _states.margin;
 	contentRect.h = roMaxOf2(contentRect.h, _states.skin.texCheckboxSize.y);
 	rect = _calMarginRect(rect, contentRect);
-	_mergeRect(_states.rectStack.back(), rect);
+	_mergeExtend(_states.panelStateStack.back()->_virtualRect, rect);
 
-	bool hover = _inRect(rect, _states.mousex, _states.mousey);
-	bool focus = _hasFocus(rect);
+	bool hover = _isHover(rect);
+	bool hot = _isHot(rect);
 
 	Canvas& c = *_states.canvas;
 	c.setGlobalColor(1, 1, 1, 1);
@@ -325,75 +373,229 @@ bool imGuiCheckBox(imGuiRect rect, const roUtf8* text, bool& state)
 	);
 
 	// Draw the text
-	float buttonDownOffset = focus ? 1.0f : 0;
+	float buttonDownOffset = hot ? 1.0f : 0;
 	c.fillText(text, (rect.x + rect.w / 2) + _states.skin.texCheckboxSize.x / 2 + _states.margin / 2, rect.y + rect.h / 2 + buttonDownOffset, -1);
 
-	bool clicked = imGuiButtonLogic(rect);
+	imGuiButtonState buttonState;
+	buttonState.rect = rect;
+	bool clicked = imGuiButtonLogic(buttonState);
 	if(clicked)
 		state = !state;
 
 	return clicked;
 }
 
-void imGuiBeginScrollPanel(imGuiRect rect, float* scollx, float* scolly, bool drawBorder)
+bool imGuiButton(imGuiButtonState& state, const roUtf8* text)
+{
+	if(!text) text = "";
+
+	imGuiRect rect = state.rect;
+	imGuiRect textRect = _calTextRect(imGuiRect(rect.x, rect.y), text);
+	rect = _calMarginRect(rect, textRect);
+	_mergeExtend(_states.panelStateStack.back()->_virtualRect, rect);
+
+	bool clicked = imGuiButtonLogic(state);
+
+	_drawButton(rect, text, state.isEnable, state.isHover, _isHot(rect));
+
+	return clicked;
+}
+
+bool imGuiButtonLogic(imGuiButtonState& state)
+{
+	state.isHover = _isHover(state.rect);
+	bool hot = _isHot(state.rect);
+
+	return state.isHover && hot && _states.mouseUp();
+}
+
+imGuiScrollBarState::imGuiScrollBarState()
+{
+	pageSize = 0;
+	value = 0;
+	valueMax = 0;
+	smallStep = 0.1f;
+	largeStep = 0.2f;
+}
+
+void imGuiScrollBar(imGuiScrollBarState& state)
+{
+	imGuiScrollBarLogic(state);
+
+	Canvas& c = *_states.canvas;
+	const imGuiRect& rect = state.rect;
+
+	c.setGlobalColor(1, 1, 1, 1);
+
+	// Background
+	roRDriverTexture* texBg = _states.skin.texScrollPanel[1]->handle;
+	c.drawImage(
+		texBg,
+		rect.x, rect.y, texBg->width, rect.h,
+		rect.x, rect.y, rect.w, rect.h
+	);
+
+	// The up button
+	roRDriverTexture* texBut= _states.skin.texScrollPanel[3]->handle;
+	imGuiRect& rectBut1 = state.arrowButton1.rect;
+	c.drawImage(
+		texBut,
+		0, 0, texBut->width, texBut->height / 2,
+		rectBut1.x, rectBut1.y, rectBut1.w, rectBut1.h
+	);
+
+	// The down button
+	imGuiRect& rectBut2 = state.arrowButton2.rect;
+	c.drawImage(
+		texBut,
+		0, texBut->height / 2, texBut->width, texBut->height / 2,
+		rectBut2.x, rectBut2.y, rectBut2.w, rectBut2.h
+	);
+
+	// The bar
+	roRDriverTexture* texBar = _states.skin.texScrollPanel[2]->handle;
+	_draw3x3(texBar, state.barButton.rect, 2);
+}
+
+void imGuiScrollBarLogic(imGuiScrollBarState& state)
+{
+	const imGuiRect& rect = state.rect;
+
+	// Update buttons
+	roRDriverTexture* texBut= _states.skin.texScrollPanel[3]->handle;
+
+	imGuiRect& rectBut1 = state.arrowButton1.rect;
+	rectBut1 = imGuiRect(rect.x, rect.y, rect.w, texBut->height / 2);
+	state.arrowButton1.isHover = _isHover(rectBut1);
+
+	imGuiRect& rectBut2 = state.arrowButton2.rect;
+	rectBut2 = imGuiRect(rect.x, rect.y + rect.h - texBut->height/2, rect.w, texBut->height / 2);
+	state.arrowButton2.isHover = _isHover(rectBut2);
+
+	// Update bar rect
+    float slideSize = rect.h - rectBut1.h - rectBut2.h;
+	float barSize = roMaxOf2((state.pageSize * slideSize) / (state.valueMax + state.pageSize), 10.f);
+    float barPos = ((slideSize - barSize) * state.value) / state.valueMax;
+
+	roRDriverTexture* texBar = _states.skin.texScrollPanel[2]->handle;
+	state.barButton.rect = imGuiRect(
+		rect.x,
+		rect.y + rectBut1.h + barPos,
+		rect.w,
+		barSize
+	);
+	state.barButton.isHover = _isHover(state.barButton.rect);
+}
+
+imGuiWigetState::imGuiWigetState()
+{
+	isEnable = false;
+	isHover = false;
+}
+
+imGuiButtonState::imGuiButtonState()
+{
+}
+
+imGuiPanelState::imGuiPanelState()
+{
+	showBorder = true;
+	scrollable = true;
+}
+
+void imGuiBeginScrollPanel(imGuiPanelState& state)
 {
 	Canvas& c = *_states.canvas;
 	c.setGlobalColor(1, 1, 1, 1);
 
-	PanelState state = { rect, scollx, scolly, drawBorder };
-	_states.panelStateStack.pushBack(state);
+	const imGuiRect& rect = state.rect;
 
-	if(!_states.rectStack.isEmpty())
-		_mergeRect(_states.rectStack.back(), rect);
+	if(!_states.panelStateStack.isEmpty())
+		_mergeExtend(_states.panelStateStack.back()->_virtualRect, rect);
 
-	_states.rectStack.pushBack(rect);
+	_states.panelStateStack.pushBack(&state);
 
-	c.clipRect(rect.x, rect.y, rect.w, rect.h);
+	if(state._clientRect.w == 0 || state._clientRect.h == 0)
+		state._clientRect = state.rect;
+
+	state.isHover = _isHover(state.rect);
+	if(state.isHover)
+		_states.hoveringObject = &state;
+
+	// Detect mouse scroll
+	if(_states.lastFrameHoveringObject == &state && state.scrollable) {
+		state.scrollBary.value -= _states.mousez() * 10;
+		state.scrollBary.value = roClamp(state.scrollBary.value, 0.f, state.scrollBary.valueMax);
+	}
+
+	// Initialize the virtual bound
+	imGuiRect& virtualRect = state._virtualRect;
+	virtualRect.x = rect.x + state.scrollBarx.value;
+	virtualRect.y = rect.y - state.scrollBary.value;
+	virtualRect.w = 0;
+	virtualRect.h = 0;
+
+	_states.offsetx -= virtualRect.x;
+	_states.offsety -= virtualRect.y;
+
+	imGuiBeginClip(state._clientRect);
+	c.translate(virtualRect.x, virtualRect.y);
 }
 
 void imGuiEndScrollPanel()
 {
 	Canvas& c = *_states.canvas;
-	const PanelState& panelState = _states.panelStateStack.back();
+	imGuiPanelState& panelState = *_states.panelStateStack.back();
 
-	c.resetClip();
+	imGuiEndClip();
 
-	const imGuiRect& rect = panelState.rect;
+	_states.mouseCaptured = false;
 
 	float border = 2;
+	const imGuiRect& rect = panelState.rect;
+	imGuiRect& virtualRect = panelState._virtualRect;
 
-	// Draw the border
-	if(panelState.drawBorder)
-		_draw3x3(_states.skin.texScrollPanel[0]->handle, panelState.rect, border, false);
+	_states.offsetx += virtualRect.x;
+	_states.offsety += virtualRect.y;
 
-	imGuiRect virtualRect = _states.rectStack.back();
-	_mergeRect(virtualRect, panelState.rect);
-
-	// Draw the scroll bar
-	if(panelState.scolly)
-	{
-		// Background
-		roRDriverTexture* tex = _states.skin.texScrollPanel[1]->handle;
-		c.drawImage(tex,
-			0, 0, tex->width, rect.h - border * 2,
-			rect.x + rect.w - tex->width - border, rect.y + border, tex->width, rect.h - border * 2
-		);
-
-		// The bar
-		float barHeight = panelState.rect.h * panelState.rect.h / virtualRect.h - border * 2;
-		tex = _states.skin.texScrollPanel[2]->handle;
-
-		imGuiRect barRect(
-			rect.x + rect.w - tex->width - border,
-			rect.y + border,
-			tex->width,
-			barHeight
-		);
-		_draw3x3(tex, barRect, 2);
+	// Determine whether we need to show scroll bars
+	bool showScrollBarx = false;
+	bool showScrollBary = false;
+	float scrollBarWidthx = (float)_states.skin.texScrollPanel[2]->width();
+	float scrollBarWidthy = (float)_states.skin.texScrollPanel[2]->width();
+	if(virtualRect.w > rect.w || virtualRect.h > rect.h) {
+		showScrollBary = virtualRect.h > rect.h;
+		showScrollBarx = virtualRect.w > (rect.w - scrollBarWidthy);
 	}
 
+	// Update the client area
+	imGuiRect& clientRect = panelState._clientRect;
+	clientRect = rect;
+	clientRect.x += panelState.showBorder ? border : 0;
+	clientRect.w -= panelState.showBorder ? border * 2 : 0;
+	clientRect.y += panelState.showBorder ? border : 0;
+	clientRect.h -= panelState.showBorder ? border * 2 : 0;
+	clientRect.w -= showScrollBary ? scrollBarWidthy : 0;
+	clientRect.h -= showScrollBarx ? scrollBarWidthx : 0;
+
+	// Draw the border
+	if(panelState.showBorder)
+		_draw3x3(_states.skin.texScrollPanel[0]->handle, panelState.rect, border, false);
+
+	// Draw the vertical scroll bar
+	float barWidth = 16;
+	panelState.scrollBary.rect = imGuiRect(
+		rect.x + rect.w - barWidth - border,
+		rect.y + border,
+		barWidth,
+		rect.h - border * 2
+	);
+	panelState.scrollBary.pageSize = (rect.h - border * 2) - (showScrollBarx ? scrollBarWidthx : 0);
+	panelState.scrollBary.valueMax = roMaxOf2(virtualRect.h - panelState.scrollBary.pageSize, 0.f);
+	if(showScrollBary)
+		imGuiScrollBar(panelState.scrollBary);
+
 	_states.panelStateStack.popBack();
-	_states.rectStack.popBack();
 }
 
 }	// namespace ro

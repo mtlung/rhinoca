@@ -19,7 +19,7 @@ static const char* driverStr[] =
 
 TEST_FIXTURE(ImGuiTest, button)
 {
-	createWindow(200, 200);
+	createWindow(300, 300);
 	initContext(driverStr[driverIndex]);
 
 	Canvas canvas;
@@ -28,23 +28,35 @@ TEST_FIXTURE(ImGuiTest, button)
 
 	CHECK(imGuiInit());
 
-	bool showDetails = false;
-	float scollx = 0;
-	float scolly = 0;
+	bool showDetails = true;
+	imGuiPanelState panel[2];
+	panel[0].rect = imGuiRect(2, 2, 220, 220);
+	panel[1].rect = imGuiRect(80, 80, 200-4, 200-4);
+
+	imGuiButtonState buttons[3];
+	buttons[0].rect = imGuiRect(5, 100, 90, 30);
+	buttons[1].rect = imGuiRect(105, 100, 90, 30);
+	buttons[2].rect = imGuiRect(5, 180);
+
+	imGuiScrollBarState scrollbar1;
+	scrollbar1.rect = imGuiRect(5, 5, 16, 100);
 
 	while(keepRun()) {
 		driver->clearColor(68.0f/256, 68.0f/256, 68.0f/256, 1);
 
 		imGuiBegin(canvas);
 			imGuiSetTextColor(1, 1, 0, 1);
-			imGuiBeginScrollPanel(imGuiRect(2, 2, 200-4, 200-4), &scollx, &scolly);
+//			imGuiScrollBar(scrollbar1);
+			imGuiBeginScrollPanel(panel[0]);
+			imGuiBeginScrollPanel(panel[1]);
 				imGuiLabel(imGuiRect(0, 20), "Hello world! I am Ricky Lung");
 				imGuiCheckBox(imGuiRect(5, 60), "Show details", showDetails);
 				if(showDetails) {
-					imGuiButton(imGuiRect(5, 100, 90, 30), "OK");
-					imGuiButton(imGuiRect(105, 100, 90, 30), "Cancel");
-					imGuiButton(imGuiRect(5, 150), "Auto sized");
+					imGuiButton(buttons[0], "OK");
+					imGuiButton(buttons[1], "Cancel");
+					imGuiButton(buttons[2], "Auto sized");
 				}
+			imGuiEndScrollPanel();
 			imGuiEndScrollPanel();
 		imGuiEnd();
 
@@ -53,7 +65,3 @@ TEST_FIXTURE(ImGuiTest, button)
 
 	imGuiClose();
 }
-
-/*
-
-*/

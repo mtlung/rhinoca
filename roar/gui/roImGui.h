@@ -21,14 +21,56 @@ void imGuiClose();
 void imGuiBegin(Canvas& canvas);
 void imGuiEnd();
 
+// States
+struct imGuiWigetState {
+	imGuiWigetState();
+	imGuiRect rect;
+	bool isEnable;
+	bool isHover;
+};
 
-// Widgets
+// Common
+bool imGuiInRect(const imGuiRect& rect, float x, float y);
+
+bool imGuiInClipRect(float x, float y);
+void imGuiBeginClip(const imGuiRect& rect);	// Clip away any drawing and inputs outside this rect until imGuiEndClip() is called.
+void imGuiEndClip();
+
+// Label
 void imGuiLabel(imGuiRect rect, const roUtf8* text);
-bool imGuiButton(imGuiRect rect, const roUtf8* text, bool enabled=true);
-bool imGuiButtonLogic(imGuiRect rect);
+
+// Check box
 bool imGuiCheckBox(imGuiRect rect, const roUtf8* text, bool& state);
 
-void imGuiBeginScrollPanel(imGuiRect rect, float* scollx, float* scolly, bool drawBorder=true);
+// Button
+struct imGuiButtonState : public imGuiWigetState {
+	imGuiButtonState();
+};
+bool imGuiButton(imGuiButtonState& state, const roUtf8* text);
+bool imGuiButtonLogic(imGuiButtonState& state);
+
+// Scroll bar
+struct imGuiScrollBarState : public imGuiWigetState {
+	imGuiScrollBarState();
+	imGuiButtonState arrowButton1, arrowButton2;
+	imGuiButtonState barButton;
+	float pageSize;
+	float value, valueMax;
+	float smallStep, largeStep;
+};
+void imGuiScrollBar(imGuiScrollBarState& state);
+void imGuiScrollBarLogic(imGuiScrollBarState& state);
+
+// Panel
+struct imGuiPanelState : public imGuiWigetState {
+	imGuiPanelState();
+	bool showBorder;
+	bool scrollable;
+	imGuiScrollBarState scrollBarx, scrollBary;
+	imGuiRect _clientRect;
+	imGuiRect _virtualRect;
+};
+void imGuiBeginScrollPanel(imGuiPanelState& state);
 void imGuiEndScrollPanel();
 
 // options
