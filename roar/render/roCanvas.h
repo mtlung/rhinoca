@@ -90,8 +90,9 @@ struct Canvas
 	void setFillColor			(float r, float g, float b, float a);
 	void setFillGradient		(void* gradient);
 
-	void clipRect				(float x, float y, float w, float h);
-	void clip					();					/// Further constrains the clipping region to the given path.
+	void clipRect				(float x, float y, float w, float h);	/// Further constrains the clipping region with the given rect.
+	void getClipRect			(float* rect);
+	void clip					();										/// Further constrains the clipping region to the given path.
 	void resetClip				();
 
 // Text metrics

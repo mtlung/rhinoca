@@ -989,11 +989,29 @@ void Canvas::clipRect(float x, float y, float w, float h)
 	_rasterizerState.hash = 0;
 	_rasterizerState.scissorEnable = true;
 
+	// Take intersection with the current clip rect
+	float right1 = x + w;
+	float bottom1 = y + h;
+	float right2 = _currentState.clipRect[0] + _currentState.clipRect[2];
+	float bottom2 = _currentState.clipRect[1] + _currentState.clipRect[3];
+	float right = roMinOf2(right1, right2);
+	float bottom = roMinOf2(bottom1, bottom2);
+	x = roMaxOf2(x, _currentState.clipRect[0]);
+	y = roMaxOf2(y, _currentState.clipRect[1]);
+	w = right - x;
+	h = bottom - y;
+
 	float rect[4] = { x, y, w, h };
 	roMemcpy(_currentState.clipRect, rect, sizeof(rect));
 	_currentState.enableClip = true;
 
 	_driver->setScissorRect(int(x), int(y), int(w), int(h));
+}
+
+void Canvas::getClipRect(float* rect)
+{
+	if(rect)
+		roMemcpy(rect, _currentState.clipRect, sizeof(_currentState.clipRect));
 }
 
 void Canvas::clip()
@@ -1006,9 +1024,14 @@ void Canvas::clip()
 
 void Canvas::resetClip()
 {
-	_currentState.enableClip = false;
 	_rasterizerState.hash = 0;
 	_rasterizerState.scissorEnable = false;
+
+	_currentState.enableClip = false;
+	_currentState.clipRect[0] = 0;
+	_currentState.clipRect[1] = 0;
+	_currentState.clipRect[2] = (float)width();
+	_currentState.clipRect[3] = (float)height();
 }
 
 // ----------------------------------------------------------------------

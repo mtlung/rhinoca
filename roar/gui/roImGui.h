@@ -33,7 +33,7 @@ struct imGuiWigetState {
 bool imGuiInRect(const imGuiRect& rect, float x, float y);
 
 bool imGuiInClipRect(float x, float y);
-void imGuiBeginClip(const imGuiRect& rect);	// Clip away any drawing and inputs outside this rect until imGuiEndClip() is called.
+void imGuiBeginClip(imGuiRect rect);	// Clip away any drawing and inputs outside this rect until imGuiEndClip() is called.
 void imGuiEndClip();
 
 // Label
@@ -58,15 +58,17 @@ struct imGuiScrollBarState : public imGuiWigetState {
 	float value, valueMax;
 	float smallStep, largeStep;
 };
-void imGuiScrollBar(imGuiScrollBarState& state);
-void imGuiScrollBarLogic(imGuiScrollBarState& state);
+void imGuiVScrollBar(imGuiScrollBarState& state);
+void imGuiHScrollBar(imGuiScrollBarState& state);
+void imGuiVScrollBarLogic(imGuiScrollBarState& state);
+void imGuiHScrollBarLogic(imGuiScrollBarState& state);
 
 // Panel
 struct imGuiPanelState : public imGuiWigetState {
 	imGuiPanelState();
 	bool showBorder;
 	bool scrollable;
-	imGuiScrollBarState scrollBarx, scrollBary;
+	imGuiScrollBarState hScrollBar, vScrollBar;
 	imGuiRect _clientRect;
 	imGuiRect _virtualRect;
 };
