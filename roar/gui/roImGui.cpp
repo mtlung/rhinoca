@@ -40,7 +40,7 @@ struct Skin
 
 	StaticArray<TexturePtr, 2> texButton;
 	StaticArray<TexturePtr, 4> texCheckbox;
-	StaticArray<TexturePtr, 7> texScrollPanel;
+	StaticArray<TexturePtr, 9> texScrollPanel;
 };
 
 roStatus Skin::init()
@@ -63,9 +63,11 @@ roStatus Skin::init()
 	texScrollPanel[1] = mgr->loadAs<Texture>("imGui/vscrollbar-bar-bg.png");
 	texScrollPanel[2] = mgr->loadAs<Texture>("imGui/vscrollbar-bar-0.png");
 	texScrollPanel[3] = mgr->loadAs<Texture>("imGui/vscrollbar-arrow-0.png");
-	texScrollPanel[4] = mgr->loadAs<Texture>("imGui/hscrollbar-bar-bg.png");
-	texScrollPanel[5] = mgr->loadAs<Texture>("imGui/hscrollbar-bar-0.png");
-	texScrollPanel[6] = mgr->loadAs<Texture>("imGui/hscrollbar-arrow-0.png");
+	texScrollPanel[4] = mgr->loadAs<Texture>("imGui/vscrollbar-arrow-1.png");
+	texScrollPanel[5] = mgr->loadAs<Texture>("imGui/hscrollbar-bar-bg.png");
+	texScrollPanel[6] = mgr->loadAs<Texture>("imGui/hscrollbar-bar-0.png");
+	texScrollPanel[7] = mgr->loadAs<Texture>("imGui/hscrollbar-arrow-0.png");
+	texScrollPanel[8] = mgr->loadAs<Texture>("imGui/hscrollbar-arrow-1.png");
 
 	return roStatus::ok;
 }
@@ -422,8 +424,8 @@ imGuiScrollBarState::imGuiScrollBarState()
 	pageSize = 0;
 	value = 0;
 	valueMax = 0;
-	smallStep = 0.1f;
-	largeStep = 0.2f;
+	smallStep = 5.f;
+	largeStep = 10.f;
 }
 
 void imGuiVScrollBar(imGuiScrollBarState& state)
@@ -444,8 +446,9 @@ void imGuiVScrollBar(imGuiScrollBarState& state)
 	);
 
 	// The up button
-	roRDriverTexture* texBut= _states.skin.texScrollPanel[3]->handle;
 	imGuiRect& rectBut1 = state.arrowButton1.rect;
+	bool isUpButtonHot = _isHot(rectBut1);
+	roRDriverTexture* texBut = _states.skin.texScrollPanel[isUpButtonHot ? 4 : 3]->handle;
 	c.drawImage(
 		texBut,
 		0, 0, (float)texBut->width, texBut->height / 2.f,
@@ -454,6 +457,8 @@ void imGuiVScrollBar(imGuiScrollBarState& state)
 
 	// The down button
 	imGuiRect& rectBut2 = state.arrowButton2.rect;
+	bool isDownButtonHot = _isHot(rectBut2);
+	texBut = _states.skin.texScrollPanel[isDownButtonHot ? 4 : 3]->handle;
 	c.drawImage(
 		texBut,
 		0, texBut->height / 2.f, (float)texBut->width, texBut->height / 2.f,
@@ -475,7 +480,7 @@ void imGuiHScrollBar(imGuiScrollBarState& state)
 	c.setGlobalColor(1, 1, 1, 1);
 
 	// Background
-	roRDriverTexture* texBg = _states.skin.texScrollPanel[4]->handle;
+	roRDriverTexture* texBg = _states.skin.texScrollPanel[5]->handle;
 	c.drawImage(
 		texBg,
 		rect.x, rect.y, rect.w, (float)texBg->height,
@@ -483,8 +488,9 @@ void imGuiHScrollBar(imGuiScrollBarState& state)
 	);
 
 	// The left button
-	roRDriverTexture* texBut= _states.skin.texScrollPanel[6]->handle;
 	imGuiRect& rectBut1 = state.arrowButton1.rect;
+	bool isLeftButtonHot = _isHot(rectBut1);
+	roRDriverTexture* texBut = _states.skin.texScrollPanel[isLeftButtonHot ? 8 : 7]->handle;
 	c.drawImage(
 		texBut,
 		0, 0, texBut->width / 2.f, (float)texBut->height,
@@ -493,6 +499,8 @@ void imGuiHScrollBar(imGuiScrollBarState& state)
 
 	// The right button
 	imGuiRect& rectBut2 = state.arrowButton2.rect;
+	bool isRightButtonHot = _isHot(rectBut2);
+	texBut = _states.skin.texScrollPanel[isRightButtonHot ? 8 : 7]->handle;
 	c.drawImage(
 		texBut,
 		texBut->width / 2.f, 0, texBut->width / 2.f, (float)texBut->height,
@@ -500,7 +508,7 @@ void imGuiHScrollBar(imGuiScrollBarState& state)
 	);
 
 	// The bar
-	roRDriverTexture* texBar = _states.skin.texScrollPanel[5]->handle;
+	roRDriverTexture* texBar = _states.skin.texScrollPanel[6]->handle;
 	_draw3x3(texBar, state.barButton.rect, 2);
 }
 
@@ -518,6 +526,12 @@ void imGuiVScrollBarLogic(imGuiScrollBarState& state)
 	imGuiRect& rectBut2 = state.arrowButton2.rect;
 	rectBut2 = imGuiRect(rect.x, rect.y + rect.h - texBut->height / 2.f, rect.w, texBut->height / 2.f);
 	state.arrowButton2.isHover = _isHover(rectBut2);
+
+	if(imGuiButtonLogic(state.arrowButton1))
+		state.value -= state.smallStep;
+	if(imGuiButtonLogic(state.arrowButton2))
+		state.value += state.smallStep;
+	state.value = roClamp(state.value, 0.f, state.valueMax);
 
 	// Update bar rect
     float slideSize = rect.h - rectBut1.h - rectBut2.h;
@@ -538,7 +552,7 @@ void imGuiHScrollBarLogic(imGuiScrollBarState& state)
 	const imGuiRect& rect = state.rect;
 
 	// Update buttons
-	roRDriverTexture* texBut = _states.skin.texScrollPanel[6]->handle;
+	roRDriverTexture* texBut = _states.skin.texScrollPanel[7]->handle;
 
 	imGuiRect& rectBut1 = state.arrowButton1.rect;
 	rectBut1 = imGuiRect(rect.x, rect.y, texBut->width / 2.f, rect.h);
@@ -547,6 +561,12 @@ void imGuiHScrollBarLogic(imGuiScrollBarState& state)
 	imGuiRect& rectBut2 = state.arrowButton2.rect;
 	rectBut2 = imGuiRect(rect.x + rect.w - texBut->width / 2.f, rect.y, texBut->width / 2.f, rect.h);
 	state.arrowButton2.isHover = _isHover(rectBut2);
+
+	if(imGuiButtonLogic(state.arrowButton1))
+		state.value -= state.smallStep;
+	if(imGuiButtonLogic(state.arrowButton2))
+		state.value += state.smallStep;
+	state.value = roClamp(state.value, 0.f, state.valueMax);
 
 	// Update bar rect
 	float slideSize = rect.w - rectBut1.w - rectBut2.w;
@@ -598,14 +618,15 @@ void imGuiBeginScrollPanel(imGuiPanelState& state)
 		_states.hoveringObject = &state;
 
 	// Detect mouse scroll
-	if(_states.lastFrameHoveringObject == &state && state.scrollable) {
+	if(_states.lastFrameHoveringObject == &state && state.scrollable)
 		state.vScrollBar.value -= _states.mousez() * 10;
-		state.vScrollBar.value = roClamp(state.vScrollBar.value, 0.f, state.vScrollBar.valueMax);
-	}
+
+	state.vScrollBar.value = roClamp(state.vScrollBar.value, 0.f, state.vScrollBar.valueMax);
+	state.hScrollBar.value = roClamp(state.hScrollBar.value, 0.f, state.hScrollBar.valueMax);
 
 	// Initialize the virtual bound
 	imGuiRect& virtualRect = state._virtualRect;
-	virtualRect.x = rect.x + state.hScrollBar.value;
+	virtualRect.x = rect.x - state.hScrollBar.value;
 	virtualRect.y = rect.y - state.vScrollBar.value;
 	virtualRect.w = 0;
 	virtualRect.h = 0;
@@ -636,7 +657,7 @@ void imGuiEndScrollPanel()
 	bool showVScrollBar = false;
 	bool showHScrollBar = false;
 	float vScrollBarThickness = (float)_states.skin.texScrollPanel[2]->width();
-	float hScrollBarThickness = (float)_states.skin.texScrollPanel[5]->height();
+	float hScrollBarThickness = (float)_states.skin.texScrollPanel[6]->height();
 	if(virtualRect.w > rect.w || virtualRect.h > rect.h) {
 		showVScrollBar = virtualRect.h > rect.h;
 		showHScrollBar = virtualRect.w > (rect.w - vScrollBarThickness);
