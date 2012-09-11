@@ -36,13 +36,16 @@ struct StopWatch
 /// Utility to keep track a time out
 struct CountDownTimer
 {
-	CountDownTimer(float timeOutInSecs);
+	explicit CountDownTimer(float timeOutInSecs);
 
 	bool isExpired();
 
 	/// If we give some hint to CountDownTimer, we can reduce the invocation to StopWatch query
 	/// The hint is the average time gap between each expected expiration query.
 	bool isExpired(float& hint);
+
+	void pause() { _stopWatch.pause(); }
+	void resume() { _stopWatch.resume(); }
 
 // Private
 	float _beginTime;
@@ -52,23 +55,26 @@ struct CountDownTimer
 	StopWatch _stopWatch;
 };	// CountDownTimer
 
-}	// namespace ro
+/// Give you event at a fixed period
+struct PeriodicTimer
+{
+	explicit PeriodicTimer(float period=0);
 
-/// A handy tool to debug which code block contribute to a frame spike
-#define roDetectFrameSpike(nameForDebug) \
-static float _frameSpikeTime = 0; \
-struct _FrameSPikeDetector { \
-	float& _maxTime; const char* _name; ro::StopWatch _sw; \
-	_FrameSPikeDetector(float& maxTime, const char* n) : _maxTime(maxTime), _name(n) {} \
-	void operator=(const _FrameSPikeDetector&){} \
-	~_FrameSPikeDetector() { \
-		float t = _sw.getFloat(); \
-		if(t > _maxTime) { \
-			_maxTime = t; \
-			printf("\rFrame spike in %s, %fs\n", _name, _maxTime); \
-		} \
-	} \
-}; \
-_FrameSPikeDetector _frameSpikeDetector(_frameSpikeTime, nameForDebug);
+	/// If you invoke isTriggered() longer than the period, it will return true immediately.
+	/// In other words, you will not missing any event.
+	bool isTriggered();
+
+	void reset();
+	void reset(float period);
+	void pause() { _stopWatch.pause(); }
+	void resume() { _stopWatch.resume(); }
+
+// Private
+	float _period;
+	float _getEventTime;	///< Increment on ever call to isTriggered()
+	StopWatch _stopWatch;
+};	// PeriodicTimer
+
+}	// namespace ro
 
 #endif	// __roStopWatch_h__

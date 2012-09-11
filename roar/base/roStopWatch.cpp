@@ -195,8 +195,8 @@ void StopWatch::resetToLastGet()
 void StopWatch::pause()
 {
 	if(_pause) return;
-	_pause = true;
 	_pauseAccumulate = getDouble();
+	_pause = true;
 }
 
 void StopWatch::resume()
@@ -236,6 +236,33 @@ bool CountDownTimer::isExpired(float& hint)
 
 	_nextCheckAt = _numQuery + roSize(hint * (_endTime - _beginTime) * 0.2f);
 	return current >= _endTime;
+}
+
+PeriodicTimer::PeriodicTimer(float period)
+{
+	reset(period);
+}
+
+void PeriodicTimer::reset()
+{
+	reset(_period);
+}
+
+void PeriodicTimer::reset(float period)
+{
+	_period = period;
+	_stopWatch.reset();
+	_getEventTime = _stopWatch.getFloat();
+}
+
+bool PeriodicTimer::isTriggered()
+{
+	float now = _stopWatch.getFloat();
+	if(now > _getEventTime) {
+		_getEventTime += _period;
+		return true;
+	}
+	return false;
 }
 
 }	// namespace ro

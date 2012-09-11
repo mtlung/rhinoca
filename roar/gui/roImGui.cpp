@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "roImGui.h"
+#include "../base/roStopWatch.h"
 #include "../input/roInputDriver.h"
 #include "../render/roCanvas.h"
 #include "../render/roFont.h"
@@ -10,16 +11,6 @@
 namespace ro {
 
 namespace {
-
-static void _mergeRect(imGuiRect& rect1, const imGuiRect& rect2)
-{
-	float xmax = roMaxOf2(rect1.x + rect1.w, rect2.x + rect2.w);
-	float ymax = roMaxOf2(rect1.y + rect1.h, rect2.y + rect2.h);
-	rect1.x = roMinOf2(rect1.x, rect2.x);
-	rect1.y = roMinOf2(rect1.y, rect2.y);
-	rect1.w = xmax - rect1.x;
-	rect1.h = ymax - rect1.y;
-}
 
 static void _mergeExtend(imGuiRect& rect1, const imGuiRect& rect2)
 {
@@ -92,15 +83,18 @@ struct imGuiStates
 {
 	struct MouseState {
 		float mousex, mousey, mousez;
+		float mousedx, mousedy;
 		float mouseClickx, mouseClicky;
 		bool mouseUp, mouseDown;
 	};
 
-	imGuiStates() { roZeroMemory(this, sizeof(*this)); }
+	imGuiStates();
 
 	float mousex() { return mouseCaptured ? mouseCapturedState.mousex : mouseState.mousex + offsetx; }
 	float mousey() { return mouseCaptured ? mouseCapturedState.mousey : mouseState.mousey + offsety; }
 	float& mousez() { return mouseCaptured ? mouseCapturedState.mousey : mouseState.mousez; }
+	float& mousedx() { return mouseCaptured ? mouseCapturedState.mousedx : mouseState.mousedx; }
+	float& mousedy() { return mouseCaptured ? mouseCapturedState.mousedy : mouseState.mousedy; }
 	float mouseClickx() { return mouseCaptured ? mouseCapturedState.mouseClickx : mouseState.mouseClickx + offsetx; }
 	float mouseClicky() { return mouseCaptured ? mouseCapturedState.mouseClicky : mouseState.mouseClicky + offsety; }
 	bool& mouseUp() { return mouseCaptured ? mouseCapturedState.mouseUp : mouseState.mouseUp; }
@@ -111,8 +105,6 @@ struct imGuiStates
 	void setMouseClickx(float v) { if(mouseCaptured) mouseCapturedState.mouseClickx = v; else mouseState.mouseClickx = v; }
 	void setMouseClicky(float v) { if(mouseCaptured) mouseCapturedState.mouseClicky = v; else mouseState.mouseClicky = v; }
 
-	unsigned areaId;
-	unsigned widgetId;
 	Canvas* canvas;
 
 	float margin;
@@ -122,8 +114,14 @@ struct imGuiStates
 	MouseState mouseCapturedState;
 	float offsetx, offsety;
 
+	bool mousePulse;
+	PeriodicTimer mousePulseTimer;
+
 	Skin skin;
 
+	void* hotObject;
+	void* lastFrameHotObject;
+	void* potentialHotObject;
 	void* hoveringObject;
 	void* lastFrameHoveringObject;
 
@@ -131,6 +129,19 @@ struct imGuiStates
 
 	Array<imGuiPanelState*> panelStateStack;
 };
+
+imGuiStates::imGuiStates()
+{
+	canvas = NULL;
+	margin = 0;
+	roZeroMemory(&mouseState, sizeof(mouseState));
+	roZeroMemory(&mouseCapturedState, sizeof(mouseCapturedState));
+	offsetx = offsety = 0;
+	mousePulse = false;
+	hoveringObject = NULL;
+	hoveringObject = NULL;
+	lastFrameHoveringObject = NULL;
+}
 
 }	// namespace
 
@@ -143,8 +154,13 @@ roStatus imGuiInit()
 
 	imGuiSetMargin(5);
 
+	_states.hotObject = NULL;
+	_states.lastFrameHotObject = NULL;
+	_states.potentialHotObject = NULL;
 	_states.hoveringObject = NULL;
 	_states.lastFrameHoveringObject = NULL;
+	_states.mousePulseTimer.reset(0.1f);
+	_states.mousePulseTimer.pause();
 
 	return roStatus::ok;
 }
@@ -166,16 +182,31 @@ void imGuiBegin(Canvas& canvas)
 	roAssert(!_states.mouseCaptured);
 	_states.setMousex(inputDriver->mouseAxis(inputDriver, stringHash("mouse x")));
 	_states.setMousey(inputDriver->mouseAxis(inputDriver, stringHash("mouse y")));
+	_states.mousedx() = inputDriver->mouseAxisDelta(inputDriver, stringHash("mouse x"));
+	_states.mousedy() = inputDriver->mouseAxisDelta(inputDriver, stringHash("mouse y"));
 	_states.mousez() = inputDriver->mouseAxisDelta(inputDriver, stringHash("mouse z"));
 	_states.mouseUp() = inputDriver->mouseButtonUp(inputDriver, 0, false);
 	_states.mouseDown() = inputDriver->mouseButtonDown(inputDriver, 0, false);
 	_states.offsetx = 0;
 	_states.offsety = 0;
 
+	_states.mousePulse = 
+		_states.mousePulseTimer.isTriggered() &&
+		_states.mousePulseTimer._stopWatch.getFloat() > 0.4f;
+
 	if(_states.mouseDown()) {
+		_states.mousePulseTimer.resume();
 		_states.setMouseClickx(_states.mousex());
 		_states.setMouseClicky(_states.mousey());
 	}
+
+	if(_states.mouseUp()) {
+		_states.hotObject = NULL;
+		_states.mousePulseTimer.reset();
+		_states.mousePulseTimer.pause();
+	}
+
+	_states.potentialHotObject = NULL;
 
 	canvas.setTextAlign("center");
 	canvas.setTextBaseline("middle");
@@ -192,11 +223,18 @@ void imGuiEnd()
 
 	_states.canvas = NULL;
 
+	_states.lastFrameHotObject = _states.hotObject;
 	_states.lastFrameHoveringObject = _states.hoveringObject;
+
+	if(!_states.hotObject)
+		_states.hotObject = _states.potentialHotObject;
+
+//	printf("%x\n", _states.hotObject);
 
 	if(_states.mouseUp()) {
 		_states.setMouseClickx(FLT_MAX);
 		_states.setMouseClicky(FLT_MAX);
+		_states.hotObject = NULL;
 	}
 }
 
@@ -253,6 +291,16 @@ static bool _isHot(const imGuiRect& rect)
 	float x = _states.mouseClickx();
 	float y = _states.mouseClicky();
 	return imGuiInRect(rect, x, y) && imGuiInClipRect(x, y);
+}
+
+static bool _isClicked(const imGuiRect& rect)
+{
+	return _isHover(rect) && _isHot(rect) && _states.mouseUp();
+}
+
+static bool _isRepeatedClick(const imGuiRect& rect)
+{
+	return _states.mousePulse && _isHot(rect);
 }
 
 static float _round(float x)
@@ -416,6 +464,9 @@ bool imGuiButtonLogic(imGuiButtonState& state)
 	state.isHover = _isHover(state.rect);
 	bool hot = _isHot(state.rect);
 
+	if(hot)
+		_states.potentialHotObject = &state;
+
 	return state.isHover && hot && _states.mouseUp();
 }
 
@@ -425,7 +476,7 @@ imGuiScrollBarState::imGuiScrollBarState()
 	value = 0;
 	valueMax = 0;
 	smallStep = 5.f;
-	largeStep = 10.f;
+	largeStep = smallStep * 5;
 }
 
 void imGuiVScrollBar(imGuiScrollBarState& state)
@@ -515,32 +566,48 @@ void imGuiHScrollBar(imGuiScrollBarState& state)
 void imGuiVScrollBarLogic(imGuiScrollBarState& state)
 {
 	const imGuiRect& rect = state.rect;
+	imGuiRect& rectButU = state.arrowButton1.rect;
+	imGuiRect& rectButD = state.arrowButton2.rect;
+	float slideSize = rect.h - rectButU.h - rectButD.h;
+	float barSize = roMaxOf2((state.pageSize * slideSize) / (state.valueMax + state.pageSize), 10.f);
 
 	// Update buttons
 	roRDriverTexture* texBut = _states.skin.texScrollPanel[3]->handle;
 
-	imGuiRect& rectBut1 = state.arrowButton1.rect;
-	rectBut1 = imGuiRect(rect.x, rect.y, rect.w, texBut->height / 2.f);
-	state.arrowButton1.isHover = _isHover(rectBut1);
+	rectButU = imGuiRect(rect.x, rect.y, rect.w, texBut->height / 2.f);
+	state.arrowButton1.isHover = _isHover(rectButU);
 
-	imGuiRect& rectBut2 = state.arrowButton2.rect;
-	rectBut2 = imGuiRect(rect.x, rect.y + rect.h - texBut->height / 2.f, rect.w, texBut->height / 2.f);
-	state.arrowButton2.isHover = _isHover(rectBut2);
+	rectButD = imGuiRect(rect.x, rect.y + rect.h - texBut->height / 2.f, rect.w, texBut->height / 2.f);
+	state.arrowButton2.isHover = _isHover(rectButD);
 
-	if(imGuiButtonLogic(state.arrowButton1))
+	// Handle arrow button click
+	if(imGuiButtonLogic(state.arrowButton1) || _isRepeatedClick(rectButU))
 		state.value -= state.smallStep;
-	if(imGuiButtonLogic(state.arrowButton2))
+	if(imGuiButtonLogic(state.arrowButton2) || _isRepeatedClick(rectButD))
 		state.value += state.smallStep;
+
+	// Handle bar background click
+	imGuiRect rectBg(rect.x, rect.y + rectButU.h, rect.w, rect.h - rectButU.h - rectButD.h);
+	if(_states.lastFrameHotObject != &state.barButton && (_isClicked(rectBg) || _isRepeatedClick(rectBg)))
+	{
+		if(_states.mouseClicky() < (rect.y + rect.h / 2))
+			state.value -= state.largeStep;
+		else
+			state.value += state.largeStep;
+	}
+
+	// Handle bar button drag
+	imGuiButtonLogic(state.barButton);
+	if(_states.hotObject == &state.barButton)
+		state.value += (_states.mousedy() * state.valueMax / (slideSize - barSize));
+
 	state.value = roClamp(state.value, 0.f, state.valueMax);
 
 	// Update bar rect
-    float slideSize = rect.h - rectBut1.h - rectBut2.h;
-	float barSize = roMaxOf2((state.pageSize * slideSize) / (state.valueMax + state.pageSize), 10.f);
     float barPos = ((slideSize - barSize) * state.value) / state.valueMax;
-
 	state.barButton.rect = imGuiRect(
 		rect.x,
-		rect.y + rectBut1.h + barPos,
+		rect.y + rectButU.h + barPos,
 		rect.w,
 		barSize
 	);
@@ -550,31 +617,47 @@ void imGuiVScrollBarLogic(imGuiScrollBarState& state)
 void imGuiHScrollBarLogic(imGuiScrollBarState& state)
 {
 	const imGuiRect& rect = state.rect;
+	imGuiRect& rectButL = state.arrowButton1.rect;
+	imGuiRect& rectButR = state.arrowButton2.rect;
+	float slideSize = rect.w - rectButL.w - rectButR.w;
+	float barSize = roMaxOf2((state.pageSize * slideSize) / (state.valueMax + state.pageSize), 10.f);
 
 	// Update buttons
 	roRDriverTexture* texBut = _states.skin.texScrollPanel[7]->handle;
 
-	imGuiRect& rectBut1 = state.arrowButton1.rect;
-	rectBut1 = imGuiRect(rect.x, rect.y, texBut->width / 2.f, rect.h);
-	state.arrowButton1.isHover = _isHover(rectBut1);
+	rectButL = imGuiRect(rect.x, rect.y, texBut->width / 2.f, rect.h);
+	state.arrowButton1.isHover = _isHover(rectButL);
 
-	imGuiRect& rectBut2 = state.arrowButton2.rect;
-	rectBut2 = imGuiRect(rect.x + rect.w - texBut->width / 2.f, rect.y, texBut->width / 2.f, rect.h);
-	state.arrowButton2.isHover = _isHover(rectBut2);
+	rectButR = imGuiRect(rect.x + rect.w - texBut->width / 2.f, rect.y, texBut->width / 2.f, rect.h);
+	state.arrowButton2.isHover = _isHover(rectButR);
 
-	if(imGuiButtonLogic(state.arrowButton1))
+	// Handle arrow button click
+	if(imGuiButtonLogic(state.arrowButton1) || _isRepeatedClick(rectButL))
 		state.value -= state.smallStep;
-	if(imGuiButtonLogic(state.arrowButton2))
+	if(imGuiButtonLogic(state.arrowButton2) || _isRepeatedClick(rectButR))
 		state.value += state.smallStep;
+
+	// Handle bar background click
+	imGuiRect rectBg(rect.x + rectButL.w, rect.y, rect.w - rectButL.w - rectButR.w, rect.h);
+	if(_states.lastFrameHotObject != &state.barButton && (_isClicked(rectBg) || _isRepeatedClick(rectBg)))
+	{
+		if(_states.mouseClickx() < (rect.x + rect.w / 2))
+			state.value -= state.largeStep;
+		else
+			state.value += state.largeStep;
+	}
+
+	// Handle bar button drag
+	imGuiButtonLogic(state.barButton);
+	if(_states.hotObject == &state.barButton)
+		state.value += (_states.mousedx() * state.valueMax / (slideSize - barSize));
+
 	state.value = roClamp(state.value, 0.f, state.valueMax);
 
 	// Update bar rect
-	float slideSize = rect.w - rectBut1.w - rectBut2.w;
-	float barSize = roMaxOf2((state.pageSize * slideSize) / (state.valueMax + state.pageSize), 10.f);
 	float barPos = ((slideSize - barSize) * state.value) / state.valueMax;
-
 	state.barButton.rect = imGuiRect(
-		rect.x + rectBut1.w + barPos,
+		rect.x + rectButL.w + barPos,
 		rect.y,
 		barSize,
 		rect.h
@@ -632,7 +715,9 @@ void imGuiBeginScrollPanel(imGuiPanelState& state)
 	virtualRect.h = 0;
 
 	imGuiBeginClip(state._clientRect);
-	c.translate(virtualRect.x, virtualRect.y);
+
+	// NOTE: Truncate float value to integer, so we will always have pixel perfect match
+	c.translate(_round(virtualRect.x), _round(virtualRect.y));
 
 	_states.offsetx -= virtualRect.x;
 	_states.offsety -= virtualRect.y;
