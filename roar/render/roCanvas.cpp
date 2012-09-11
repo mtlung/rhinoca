@@ -365,16 +365,16 @@ void Canvas::_flushDrawImageBatch()
 	if(_batchedQuadCount == 0)
 		return;
 
-	for(roSize i=0; i<perTextureQuadList.size(); ++i)
+	for(roSize i=0; i<_perTextureQuadList.size(); ++i)
 	{
 		// Resize the index buffer if needed
-		roSize indexBufSize = perTextureQuadList[i].quadCount * 6 * sizeof(roUint16);
+		roSize indexBufSize = _perTextureQuadList[i].quadCount * 6 * sizeof(roUint16);
 		if(_iBuffer->sizeInBytes <= indexBufSize)
 			roVerify(_driver->resizeBuffer(_iBuffer, indexBufSize));
 
 		// Build the index buffer
 		roUint16 iIdx = 0;
-		ro::Array<PerTextureQuadList::Range>& ranges = perTextureQuadList[i].range;
+		ro::Array<PerTextureQuadList::Range>& ranges = _perTextureQuadList[i].range;
 		_mappedIBuffer = (roUint16*)_driver->mapBuffer(_iBuffer, roRDriverMapUsage_Write, 0, indexBufSize);
 		for(roSize j=0; j<ranges.size(); ++j) {
 			for(roUint16 k=ranges[j].begin; k<ranges[j].end; ++k) {
@@ -388,11 +388,11 @@ void Canvas::_flushDrawImageBatch()
 		}
 		_driver->unmapBuffer(_iBuffer);
 
-		_drawImageDrawcall(perTextureQuadList[i].tex, perTextureQuadList[i].quadCount);
+		_drawImageDrawcall(_perTextureQuadList[i].tex, _perTextureQuadList[i].quadCount);
 	}
 
 	_batchedQuadCount = 0;
-	perTextureQuadList.clear();
+	_perTextureQuadList.clear();
 }
 
 void Canvas::_drawImageDrawcall(roRDriverTexture* texture, roSize quadCount)
@@ -465,14 +465,14 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 	if(_isBatchMode) {
 		// Search for the cache entry
 		PerTextureQuadList* listEntry = NULL;
-		for(roSize i=0; i<perTextureQuadList.size(); ++i) {
-			if(perTextureQuadList[i].tex == texture) {
-				listEntry = &perTextureQuadList[i];
+		for(roSize i=0; i<_perTextureQuadList.size(); ++i) {
+			if(_perTextureQuadList[i].tex == texture) {
+				listEntry = &_perTextureQuadList[i];
 				break;
 			}
 		}
 		if(!listEntry) {
-			listEntry = &perTextureQuadList.pushBack();
+			listEntry = &_perTextureQuadList.pushBack();
 			listEntry->tex = texture;
 			listEntry->quadCount = 0;
 		}

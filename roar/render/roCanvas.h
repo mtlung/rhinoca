@@ -156,7 +156,7 @@ struct Canvas
 		struct Range { roUint16 begin, end; };
 		ro::Array<Range> range;
 	};
-	ro::Array<PerTextureQuadList> perTextureQuadList;
+	ro::Array<PerTextureQuadList> _perTextureQuadList;
 
 	struct OpenVG;
 	OpenVG* _openvg;
