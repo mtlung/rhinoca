@@ -472,7 +472,7 @@ bool imGuiButtonLogic(imGuiButtonState& state)
 
 imGuiScrollBarState::imGuiScrollBarState()
 {
-	pageSize = 0;
+	_pageSize = 0;
 	value = 0;
 	valueMax = 0;
 	smallStep = 5.f;
@@ -569,7 +569,7 @@ void imGuiVScrollBarLogic(imGuiScrollBarState& state)
 	imGuiRect& rectButU = state.arrowButton1.rect;
 	imGuiRect& rectButD = state.arrowButton2.rect;
 	float slideSize = rect.h - rectButU.h - rectButD.h;
-	float barSize = roMaxOf2((state.pageSize * slideSize) / (state.valueMax + state.pageSize), 10.f);
+	float barSize = roMaxOf2((state._pageSize * slideSize) / (state.valueMax + state._pageSize), 10.f);
 
 	// Update buttons
 	roRDriverTexture* texBut = _states.skin.texScrollPanel[3]->handle;
@@ -620,7 +620,7 @@ void imGuiHScrollBarLogic(imGuiScrollBarState& state)
 	imGuiRect& rectButL = state.arrowButton1.rect;
 	imGuiRect& rectButR = state.arrowButton2.rect;
 	float slideSize = rect.w - rectButL.w - rectButR.w;
-	float barSize = roMaxOf2((state.pageSize * slideSize) / (state.valueMax + state.pageSize), 10.f);
+	float barSize = roMaxOf2((state._pageSize * slideSize) / (state.valueMax + state._pageSize), 10.f);
 
 	// Update buttons
 	roRDriverTexture* texBut = _states.skin.texScrollPanel[7]->handle;
@@ -688,6 +688,9 @@ void imGuiBeginScrollPanel(imGuiPanelState& state)
 
 	const imGuiRect& rect = state.rect;
 
+	if(_isHot(rect))
+		_states.potentialHotObject = &state;
+
 	if(!_states.panelStateStack.isEmpty())
 		_mergeExtend(_states.panelStateStack.back()->_virtualRect, rect);
 
@@ -743,7 +746,7 @@ void imGuiEndScrollPanel()
 	bool showHScrollBar = false;
 	float vScrollBarThickness = (float)_states.skin.texScrollPanel[2]->width();
 	float hScrollBarThickness = (float)_states.skin.texScrollPanel[6]->height();
-	if(virtualRect.w > rect.w || virtualRect.h > rect.h) {
+	if(panelState.scrollable && (virtualRect.w > rect.w || virtualRect.h > rect.h)) {
 		showVScrollBar = virtualRect.h > rect.h;
 		showHScrollBar = virtualRect.w > (rect.w - vScrollBarThickness);
 	}
@@ -771,8 +774,8 @@ void imGuiEndScrollPanel()
 			vScrollBarThickness,
 			rect.h - border * 2
 		);
-		panelState.vScrollBar.pageSize = (rect.h - border * 2) - (showHScrollBar ? hScrollBarThickness : 0);
-		panelState.vScrollBar.valueMax = roMaxOf2(virtualRect.h - panelState.vScrollBar.pageSize, 0.f);
+		panelState.vScrollBar._pageSize = (rect.h - border * 2) - (showHScrollBar ? hScrollBarThickness : 0);
+		panelState.vScrollBar.valueMax = roMaxOf2(virtualRect.h - panelState.vScrollBar._pageSize, 0.f);
 		if(showVScrollBar)
 			imGuiVScrollBar(panelState.vScrollBar);
 
@@ -783,13 +786,31 @@ void imGuiEndScrollPanel()
 			rect.w - border * 2 - (showVScrollBar ? hScrollBarThickness : 0),
 			hScrollBarThickness
 		);
-		panelState.hScrollBar.pageSize = (rect.w - border * 2) - (showVScrollBar ? vScrollBarThickness : 0);
-		panelState.hScrollBar.valueMax = roMaxOf2(virtualRect.w - panelState.hScrollBar.pageSize, 0.f);
+		panelState.hScrollBar._pageSize = (rect.w - border * 2) - (showVScrollBar ? vScrollBarThickness : 0);
+		panelState.hScrollBar.valueMax = roMaxOf2(virtualRect.w - panelState.hScrollBar._pageSize, 0.f);
 		if(showHScrollBar)
 			imGuiHScrollBar(panelState.hScrollBar);
 	}
 
 	_states.panelStateStack.popBack();
+}
+
+void imGuiTextArea(imGuiTextAreaState& state, const roUtf8* text)
+{
+	imGuiBeginScrollPanel(state);
+
+	Canvas& c = *_states.canvas;
+
+	imGuiRect rect = state.rect;
+	imGuiRect textRect = _calTextRect(imGuiRect(rect.x + _states.margin, rect.y + _states.margin), text);
+	rect = _calMarginRect(rect, textRect);
+	_mergeExtend(_states.panelStateStack.back()->_virtualRect, textRect);
+
+	c.setTextAlign("left");
+	c.setTextBaseline("top");
+	c.fillText(text, textRect.x, textRect.y, -1);
+
+	imGuiEndScrollPanel();
 }
 
 }	// namespace ro

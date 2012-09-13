@@ -54,9 +54,9 @@ struct imGuiScrollBarState : public imGuiWigetState {
 	imGuiScrollBarState();
 	imGuiButtonState arrowButton1, arrowButton2;
 	imGuiButtonState barButton;
-	float pageSize;
 	float value, valueMax;
 	float smallStep, largeStep;
+	float _pageSize;
 };
 void imGuiVScrollBar(imGuiScrollBarState& state);
 void imGuiHScrollBar(imGuiScrollBarState& state);
@@ -74,6 +74,11 @@ struct imGuiPanelState : public imGuiWigetState {
 };
 void imGuiBeginScrollPanel(imGuiPanelState& state);
 void imGuiEndScrollPanel();
+
+// Text area
+struct imGuiTextAreaState : public imGuiPanelState {
+};
+void imGuiTextArea(imGuiTextAreaState& state, const roUtf8* text);
 
 // options
 void imGuiSetMargin(float margin);

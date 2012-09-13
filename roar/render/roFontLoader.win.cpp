@@ -683,6 +683,10 @@ static void _draw(FontData& fontData, const GlyphCache* cache, roSize count, flo
 
 	if(alignment == stringHash("center"))
 		offsetX -= boundingWidth / 2;
+	else if(alignment == stringHash("start"))
+		offsetX += 0;
+	else if(alignment == stringHash("left"))
+		offsetX += 0;
 	else if(alignment == stringHash("end"))
 		offsetX -= boundingWidth;
 	else if(alignment == stringHash("right"))
