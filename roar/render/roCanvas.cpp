@@ -1008,10 +1008,10 @@ void Canvas::clipRect(float x, float y, float w, float h)
 	_driver->setScissorRect(int(x), int(y), int(w), int(h));
 }
 
-void Canvas::getClipRect(float* rect)
+void Canvas::getClipRect(float* rect_xywh)
 {
-	if(rect)
-		roMemcpy(rect, _currentState.clipRect, sizeof(_currentState.clipRect));
+	if(rect_xywh)
+		roMemcpy(rect_xywh, _currentState.clipRect, sizeof(_currentState.clipRect));
 }
 
 void Canvas::clip()

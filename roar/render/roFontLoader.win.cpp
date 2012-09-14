@@ -673,7 +673,7 @@ struct GlyphCache
 	roRDriverTexture* tex;
 };
 
-static void _draw(FontData& fontData, const GlyphCache* cache, roSize count, float boundingWidth, Canvas& canvas)
+static void _drawLineOfText(FontData& fontData, const GlyphCache* cache, roSize count, float boundingWidth, Canvas& canvas)
 {
 	float offsetX = 0;
 	float offsetY = 0;
@@ -707,10 +707,11 @@ static void _draw(FontData& fontData, const GlyphCache* cache, roSize count, flo
 		float x = (float)int(c.x + offsetX);	// NOTE: We ensure x and y are in integer
 		float y = (float)int(c.y + offsetY);
 
-		if(x + g.texSizeX < 0)
-			continue;
-		if(x >= canvas.width())
-			break;
+		// TODO: Clip against current clip rect with transform.inverse
+//		if(x + g.texSizeX < 0)
+//			continue;
+//		if(x >= canvas.width())
+//			break;
 
 		canvas.drawImage(
 			c.tex, g.texOffsetX, g.texOffsetY, g.texSizeX, g.texSizeY,
@@ -752,10 +753,11 @@ void FontImpl::draw(const roUtf8* str, roSize maxStrLen, float x_, float y_, flo
 		}
 		if(w == L'\n') {
 			// Text getting out of our canvas, no need to continue
-			if(y > canvas.height())
-				break;
+			// TODO: Clip against current clip rect with transform.inverse
+//			if(y > canvas.height())
+//				break;
 
-			_draw(fontData, caches.begin(), caches.size(), x - x_, canvas);
+			_drawLineOfText(fontData, caches.begin(), caches.size(), x - x_, canvas);
 			caches.clear();
 
 			x = x_;
@@ -794,7 +796,7 @@ void FontImpl::draw(const roUtf8* str, roSize maxStrLen, float x_, float y_, flo
 	}
 
 	// Flush the remaining glyph caches
-	_draw(fontData, caches.begin(), caches.size(), x - x_, canvas);
+	_drawLineOfText(fontData, caches.begin(), caches.size(), x - x_, canvas);
 	caches.clear();
 
 	canvas.endDrawImageBatch();
