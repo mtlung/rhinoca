@@ -381,6 +381,14 @@ void roInputDriverImpl::_processButtons(const WinEvent& winEvent)
 	}
 }
 
+// Mouse position can be negative (when it move out side the window)
+// therefore we can't simple use LOWORD and HIWORD
+// See http://msdn.microsoft.com/en-us/library/windows/desktop/ms632654%28v=vs.85%29.aspx
+#ifndef GET_X_LPARAM
+#	define GET_X_LPARAM(lp) ((int)(short)LOWORD(lp))
+#	define GET_Y_LPARAM(lp) ((int)(short)HIWORD(lp))
+#endif
+
 void roInputDriverImpl::_popWinEvents()
 {
 	bool buttonCaptured = false;	// TODO: Change this behavior to per button
@@ -410,7 +418,7 @@ void roInputDriverImpl::_popWinEvents()
 		case WM_MOUSEMOVE:
 			_previousMouseAxisRaw.x = _mouseAxisRaw.x;
 			_previousMouseAxisRaw.y = _mouseAxisRaw.y;
-			{	Vec2 newPos(LOWORD(e.lParam), HIWORD(e.lParam));
+			{	Vec2 newPos(float(GET_X_LPARAM(e.lParam)), float(GET_Y_LPARAM(e.lParam)));
 				_mouseAxisRaw.x += (newPos.x - _mousePos.x);
 				_mouseAxisRaw.y += (newPos.y - _mousePos.y);
 				_mousePos = newPos;
@@ -433,6 +441,7 @@ void roInputDriverImpl::_popWinEvents()
 				mouseButton = 2;
 
 			if(mouseButtonCaptured) return;
+			SetCapture(e.hWnd);
 			mouseButtonCaptured = true;
 			_mouseButtonDownBits |= (1 << mouseButton);
 			break;
@@ -440,6 +449,7 @@ void roInputDriverImpl::_popWinEvents()
 		case WM_LBUTTONUP:
 		case WM_MBUTTONUP:
 		case WM_RBUTTONUP:
+		case WM_KILLFOCUS:
 			if(e.uMsg == WM_LBUTTONUP)
 				mouseButton = 0;
 			if(e.uMsg == WM_MBUTTONUP)
@@ -448,10 +458,15 @@ void roInputDriverImpl::_popWinEvents()
 				mouseButton = 2;
 
 			if(mouseButtonCaptured) return;
+			ReleaseCapture();
 			mouseButtonCaptured = true;
-			_mouseButtonUpBits |= (1 << mouseButton);
-			break;
 
+			// All button up when losing focus
+			if(e.uMsg == WM_KILLFOCUS)
+				_mouseButtonUpBits = 0xFF;
+			else
+				_mouseButtonUpBits |= (1 << mouseButton);
+			break;
 		}
 
 		_winEvents.remove(0);
