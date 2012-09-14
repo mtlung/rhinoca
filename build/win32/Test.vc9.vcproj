@@ -437,6 +437,14 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="math"
+			>
+			<File
+				RelativePath="..\..\test\math\roMatrixTest.cpp"
+				>
+			</File>
+		</Filter>
 		<File
 			RelativePath="..\..\test\main.cpp"
 			>

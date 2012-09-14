@@ -25,12 +25,12 @@ Mat4 makeScaleMat4(const float scale[3])
 	return ret;
 }
 
-Mat4 makeAxisRotationMat4(const float _axis[3], float angle)
+Mat4 makeAxisRotationMat4(const float _axis[3], float angleRad)
 {
 	// Reference: OgreMatrix3.cpp
 	float c, s;
-	c = cosf(angle);
-	s = sinf(angle);
+	c = cosf(angleRad);
+	s = sinf(angleRad);
 
 	const Vec3& axis = *reinterpret_cast<const Vec3*>(_axis);
 	const float oneMinusCos = 1 - c;
@@ -66,23 +66,34 @@ Mat4 makeTranslationMat4(const float translation[3])
 	return ret;
 }
 
+void mat4MulVec2(const float m[4][4], const float src[2], float dst[2])
+{
+	// Local variables to prevent parameter aliasing
+	const float x = src[0];
+	const float y = src[1];
+
+	dst[0] = m[0][0] * x + m[0][1] * y + m[0][3];
+	dst[1] = m[1][0] * x + m[1][1] * y + m[1][3];
+}
+
 void mat4MulVec3(const float m[4][4], const float src[3], float dst[3])
 {
-	float x = src[0];
-	float y = src[1];
-	float z = src[2];
+	// Local variables to prevent parameter aliasing
+	const float x = src[0];
+	const float y = src[1];
+	const float z = src[2];
 
-	float s = m[0][3] * x + m[1][3] * y + m[2][3] * z + m[3][3];
-	if(s == 0.0f) {
+	float scale = m[0][3] * x + m[1][3] * y + m[2][3] * z + m[3][3];
+	if(scale == 0.0f) {
 		dst[0] = dst[1] = dst[2] = 0;
 	}
-	else if(s == 1.0f) {
+	else if(scale == 1.0f) {
 		dst[0] = m[0][0] * x + m[1][0] * y + m[2][0] * z + m[3][0];
 		dst[1] = m[0][1] * x + m[1][1] * y + m[2][1] * z + m[3][1];
 		dst[2] = m[0][2] * x + m[1][2] * y + m[2][2] * z + m[3][2];
 	}
 	else {
-		float invS = 1.0f / s;
+		float invS = 1.0f / scale;
 		dst[0] = (m[0][0] * x + m[1][0] * y + m[2][0] * z + m[3][0]) * invS;
 		dst[1] = (m[0][1] * x + m[1][1] * y + m[2][1] * z + m[3][1]) * invS;
 		dst[2] = (m[0][2] * x + m[1][2] * y + m[2][2] * z + m[3][2]) * invS;
@@ -120,10 +131,10 @@ void mat4MulVec4(const float m[4][4], const float src[4], float dst[4])
 	const float z = src[2];
 	const float w = src[3];
 
-	dst[0] = m[0][0] * x + m[0][1] * y + m[0][2] * z + m[0][3] * w;
-	dst[1] = m[1][0] * x + m[1][1] * y + m[1][2] * z + m[1][3] * w;
-	dst[2] = m[2][0] * x + m[2][1] * y + m[2][2] * z + m[2][3] * w;
-	dst[3] = m[3][0] * x + m[3][1] * y + m[3][2] * z + m[3][3] * w;
+	dst[0] = m[0][0] * x + m[1][0] * y + m[2][0] * z + m[3][0] * w;
+	dst[1] = m[0][1] * x + m[1][1] * y + m[2][1] * z + m[3][1] * w;
+	dst[2] = m[0][2] * x + m[1][2] * y + m[2][2] * z + m[3][2] * w;
+	dst[3] = m[0][3] * x + m[1][3] * y + m[2][3] * z + m[3][3] * w;
 #endif
 }
 
@@ -165,8 +176,8 @@ void mat4MulMat4(const float lhs[4][4], const float rhs[4][4], float dst[4][4])
 	const float* m2Ptr = reinterpret_cast<const float*>(rhs);
 	float* dstPtr = reinterpret_cast<float*>(dst);
 
-	for(int i=0; i<4; ++i) {
-		for(int j=0; j<4; ++j) {
+	for(roSize i=0; i<4; ++i) {
+		for(roSize j=0; j<4; ++j) {
 			*dstPtr
 			= m1Ptr[0 * 4 + j] * m2Ptr[0]
 			+ m1Ptr[1 * 4 + j] * m2Ptr[1]

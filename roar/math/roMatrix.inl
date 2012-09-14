@@ -32,14 +32,14 @@ inline void Mat4::copyTo(float* p16f) const {
 }
 
 
-inline const Vec4& Mat4::operator[](roSize index) const {
-	roAssert(index >= 0 && index < 4);
-	return reinterpret_cast<const Vec4&>(mat[index]);
+inline const Vec4& Mat4::operator[](roSize colIndex) const {
+	roAssert(colIndex >= 0 && colIndex < 4);
+	return reinterpret_cast<const Vec4&>(mat[colIndex]);
 }
 
-inline Vec4& Mat4::operator[](roSize index) {
-	roAssert(index >= 0 && index < 4);
-	return reinterpret_cast<Vec4&>(mat[index]);
+inline Vec4& Mat4::operator[](roSize colIndex) {
+	roAssert(colIndex >= 0 && colIndex < 4);
+	return reinterpret_cast<Vec4&>(mat[colIndex]);
 }
 
 inline Mat4 Mat4::operator*(float a) const {
@@ -47,15 +47,21 @@ inline Mat4 Mat4::operator*(float a) const {
 	return ret;
 }
 
-inline Vec4 Mat4::operator*(const Vec4& vec) const {
-	Vec4 ret;
-	mat4MulVec4(mat, vec.data, ret.data);
+inline Vec2 Mat4::operator*(const Vec2& vec) const {
+	Vec2 ret;
+	mat4MulVec2(mat, vec.data, ret.data);
 	return ret;
 }
 
 inline Vec3 Mat4::operator*(const Vec3& vec) const {
 	Vec3 ret;
 	mat4MulVec3(mat, vec.data, ret.data);
+	return ret;
+}
+
+inline Vec4 Mat4::operator*(const Vec4& vec) const {
+	Vec4 ret;
+	mat4MulVec4(mat, vec.data, ret.data);
 	return ret;
 }
 
@@ -94,7 +100,7 @@ inline Mat4 operator*(float a, const Mat4& mat) {
 	return mat * a;
 }
 
-inline Vec4 operator*(const Vec4& vec, const Mat4& mat) {
+inline Vec2 operator*(const Vec2& vec, const Mat4& mat) {
 	return mat * vec;
 }
 
@@ -102,12 +108,21 @@ inline Vec3 operator*(const Vec3& vec, const Mat4& mat) {
 	return mat * vec;
 }
 
-inline Vec4& operator*=(Vec4& vec, const Mat4& mat) {
+inline Vec4 operator*(const Vec4& vec, const Mat4& mat) {
+	return mat * vec;
+}
+
+inline Vec2& operator*=(Vec2& vec, const Mat4& mat) {
 	vec = mat * vec;
 	return vec;
 }
 
 inline Vec3& operator*=(Vec3& vec, const Mat4& mat) {
+	vec = mat * vec;
+	return vec;
+}
+
+inline Vec4& operator*=(Vec4& vec, const Mat4& mat) {
 	vec = mat * vec;
 	return vec;
 }

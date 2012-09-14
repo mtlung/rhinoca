@@ -312,6 +312,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\math\roRect.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\math\roVector.cpp"
 				>
 			</File>
