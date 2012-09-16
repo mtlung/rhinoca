@@ -12,7 +12,7 @@ namespace ro {
 
 namespace {
 
-static void _mergeExtend(imGuiRect& rect1, const imGuiRect& rect2)
+static void _mergeExtend(Rectf& rect1, const Rectf& rect2)
 {
 	rect1.w = roMaxOf2(rect1.w, rect2.x + rect2.w);
 	rect1.h = roMaxOf2(rect1.h, rect2.y + rect2.h);
@@ -213,7 +213,7 @@ void imGuiBegin(Canvas& canvas)
 
 	_states.rootPanel.showBorder = false;
 	_states.rootPanel.scrollable = false;
-	_states.rootPanel.rect = imGuiRect(0, 0, (float)canvas.width(), (float)canvas.height());
+	_states.rootPanel.rect = Rectf(0, 0, (float)canvas.width(), (float)canvas.height());
 	imGuiBeginScrollPanel(_states.rootPanel);
 }
 
@@ -238,7 +238,7 @@ void imGuiEnd()
 	}
 }
 
-void imGuiLayout(imGuiRect& rect)
+void imGuiLayout(Rectf& rect)
 {
 }
 
@@ -257,21 +257,21 @@ void imGuiSetTextColor(float r, float g, float b, float a)
 	_states.canvas->setGlobalColor(r, g, b, a);
 }
 
-static imGuiRect _calTextRect(const imGuiRect& prefered, const roUtf8* str)
+static Rectf _calTextRect(const Rectf& prefered, const roUtf8* str)
 {
 	TextMetrics metrics;
 	_states.canvas->measureText(str, FLT_MAX, metrics);
 
-	imGuiRect ret = prefered;
+	Rectf ret = prefered;
 	ret.w = roMaxOf2(prefered.w, metrics.width);
 	ret.h = roMaxOf2(prefered.h, metrics.height);
 
 	return ret;
 }
 
-static imGuiRect _calMarginRect(const imGuiRect& prefered, const imGuiRect& content)
+static Rectf _calMarginRect(const Rectf& prefered, const Rectf& content)
 {
-	imGuiRect ret = content;
+	Rectf ret = content;
 
 	ret.w = roMaxOf2(prefered.w, content.w + 2 * _states.margin);
 	ret.h = roMaxOf2(prefered.h, content.h + 2 * _states.margin);
@@ -279,26 +279,26 @@ static imGuiRect _calMarginRect(const imGuiRect& prefered, const imGuiRect& cont
 	return ret;
 }
 
-static bool _isHover(const imGuiRect& rect)
+static bool _isHover(const Rectf& rect)
 {
 	float x = _states.mousex();
 	float y = _states.mousey();
-	return imGuiInRect(rect, x, y) && imGuiInClipRect(x, y);
+	return rect.isPointInRect(x, y) && imGuiInClipRect(x, y);
 }
 
-static bool _isHot(const imGuiRect& rect)
+static bool _isHot(const Rectf& rect)
 {
 	float x = _states.mouseClickx();
 	float y = _states.mouseClicky();
-	return imGuiInRect(rect, x, y) && imGuiInClipRect(x, y);
+	return rect.isPointInRect(x, y) && imGuiInClipRect(x, y);
 }
 
-static bool _isClicked(const imGuiRect& rect)
+static bool _isClicked(const Rectf& rect)
 {
 	return _isHover(rect) && _isHot(rect) && _states.mouseUp();
 }
 
-static bool _isRepeatedClick(const imGuiRect& rect)
+static bool _isRepeatedClick(const Rectf& rect)
 {
 	return _states.mousePulse && _isHot(rect);
 }
@@ -308,26 +308,19 @@ static float _round(float x)
 	return float(int(x));
 }
 
-bool imGuiInRect(const imGuiRect& rect, float x, float y)
-{
-	return
-		rect.x < x && x < rect.x + rect.w &&
-		rect.y < y && y < rect.y + rect.h;
-}
-
 bool imGuiInClipRect(float x, float y)
 {
 	// Convert to global coordinate
 	x -= _states.offsetx;
 	y -= _states.offsety;
 
-	imGuiRect clipRect;
+	Rectf clipRect;
 	_states.canvas->getClipRect((float*)&clipRect);
 
-	return imGuiInRect(clipRect, x, y);
+	return clipRect.isPointInRect(x, y);
 }
 
-void imGuiBeginClip(imGuiRect rect)
+void imGuiBeginClip(Rectf rect)
 {
 	Canvas& c = *_states.canvas;
 
@@ -347,7 +340,7 @@ void imGuiEndClip()
 
 // Draw functions
 
-void _draw3x3(roRDriverTexture* tex, const imGuiRect& rect, float borderWidth, bool drawMiddle = true)
+void _draw3x3(roRDriverTexture* tex, const Rectf& rect, float borderWidth, bool drawMiddle = true)
 {
 	if(!tex) return;
 	Canvas& c = *_states.canvas;
@@ -356,9 +349,9 @@ void _draw3x3(roRDriverTexture* tex, const imGuiRect& rect, float borderWidth, b
 	float texw = (float)tex->width;
 	float texh = (float)tex->height;
 	float srcx[3] = { 0,		borderWidth,			texw - borderWidth				};	// From left to right
-	float dstx[3] = { rect.x,	rect.x + borderWidth,	rect.x + rect.w - borderWidth	};	//
+	float dstx[3] = { rect.x,	rect.x + borderWidth,	rect.right() - borderWidth	};	//
 	float srcy[3] = { 0,		borderWidth,			texh - borderWidth				};	// From top to bottom
-	float dsty[3] = { rect.y,	rect.y + borderWidth,	rect.y + rect.h - borderWidth	};	//
+	float dsty[3] = { rect.y,	rect.y + borderWidth,	rect.bottom() - borderWidth	};	//
 	float srcw[3] = { borderWidth,	texw - 2 * borderWidth,		borderWidth };
 	float dstw[3] = { borderWidth,	rect.w - borderWidth * 2,	borderWidth };
 	float srch[3] = { borderWidth,	texh - 2 * borderWidth,		borderWidth };
@@ -384,7 +377,7 @@ void _draw3x3(roRDriverTexture* tex, const imGuiRect& rect, float borderWidth, b
 	c.endDrawImageBatch();
 }
 
-void _drawButton(const imGuiRect& rect, const roUtf8* text, bool enabled, bool hover, bool down)
+void _drawButton(const Rectf& rect, const roUtf8* text, bool enabled, bool hover, bool down)
 {
 	Canvas& c = *_states.canvas;
 	c.setGlobalColor(1, 1, 1, 1);
@@ -394,24 +387,24 @@ void _drawButton(const imGuiRect& rect, const roUtf8* text, bool enabled, bool h
 	_draw3x3(tex, rect, 3);
 
 	float buttonDownOffset = down ? 1.0f : 0;
-	c.fillText(text, rect.x + rect.w / 2, rect.y + rect.h / 2 + buttonDownOffset, -1);
+	c.fillText(text, rect.centerx(), rect.centery() + buttonDownOffset, -1);
 }
 
-void imGuiLabel(imGuiRect rect, const roUtf8* text)
+void imGuiLabel(Rectf rect, const roUtf8* text)
 {
 	if(!text) text = "";
 
-	imGuiRect textRect = _calTextRect(imGuiRect(rect.x, rect.y), text);
+	Rectf textRect = _calTextRect(Rectf(rect.x, rect.y), text);
 	rect = _calMarginRect(rect, textRect);
-	_states.canvas->fillText(text, rect.x + rect.w / 2, rect.y + rect.h / 2, -1);
+	_states.canvas->fillText(text, rect.centerx(), rect.centery(), -1);
 }
 
-bool imGuiCheckBox(imGuiRect rect, const roUtf8* text, bool& state)
+bool imGuiCheckBox(Rectf rect, const roUtf8* text, bool& state)
 {
 	if(!text) text = "";
 
-	imGuiRect textRect = _calTextRect(imGuiRect(rect.x, rect.y), text);
-	imGuiRect contentRect = textRect;
+	Rectf textRect = _calTextRect(Rectf(rect.x, rect.y), text);
+	Rectf contentRect = textRect;
 	contentRect.w += _states.skin.texCheckboxSize.x + _states.margin;
 	contentRect.h = roMaxOf2(contentRect.h, _states.skin.texCheckboxSize.y);
 	rect = _calMarginRect(rect, contentRect);
@@ -427,12 +420,12 @@ bool imGuiCheckBox(imGuiRect rect, const roUtf8* text, bool& state)
 	roRDriverTexture* tex = _states.skin.texCheckbox[(hover ? 2 : 0) + (state ? 1 : 0)]->handle;
 	c.drawImage(
 		tex, 0, 0, _states.skin.texCheckboxSize.x, _states.skin.texCheckboxSize.y,
-		_round(rect.x + _states.margin), _round(rect.y + rect.h / 2 - _states.skin.texCheckboxSize.y / 2), _states.skin.texCheckboxSize.x, _states.skin.texCheckboxSize.y
+		_round(rect.x + _states.margin), _round(rect.centery() - _states.skin.texCheckboxSize.y / 2), _states.skin.texCheckboxSize.x, _states.skin.texCheckboxSize.y
 	);
 
 	// Draw the text
 	float buttonDownOffset = hot ? 1.0f : 0;
-	c.fillText(text, (rect.x + rect.w / 2) + _states.skin.texCheckboxSize.x / 2 + _states.margin / 2, rect.y + rect.h / 2 + buttonDownOffset, -1);
+	c.fillText(text, rect.centerx() + _states.skin.texCheckboxSize.x / 2 + _states.margin / 2, rect.centery() + buttonDownOffset, -1);
 
 	imGuiButtonState buttonState;
 	buttonState.rect = rect;
@@ -447,8 +440,8 @@ bool imGuiButton(imGuiButtonState& state, const roUtf8* text)
 {
 	if(!text) text = "";
 
-	imGuiRect rect = state.rect;
-	imGuiRect textRect = _calTextRect(imGuiRect(rect.x, rect.y), text);
+	Rectf rect = state.rect;
+	Rectf textRect = _calTextRect(Rectf(rect.x, rect.y), text);
 	rect = _calMarginRect(rect, textRect);
 	_mergeExtend(_states.panelStateStack.back()->_virtualRect, rect);
 
@@ -484,7 +477,7 @@ void imGuiVScrollBar(imGuiScrollBarState& state)
 	imGuiVScrollBarLogic(state);
 
 	Canvas& c = *_states.canvas;
-	const imGuiRect& rect = state.rect;
+	const Rectf& rect = state.rect;
 
 	c.setGlobalColor(1, 1, 1, 1);
 
@@ -497,7 +490,7 @@ void imGuiVScrollBar(imGuiScrollBarState& state)
 	);
 
 	// The up button
-	imGuiRect& rectBut1 = state.arrowButton1.rect;
+	Rectf& rectBut1 = state.arrowButton1.rect;
 	bool isUpButtonHot = _isHot(rectBut1);
 	roRDriverTexture* texBut = _states.skin.texScrollPanel[isUpButtonHot ? 4 : 3]->handle;
 	c.drawImage(
@@ -507,7 +500,7 @@ void imGuiVScrollBar(imGuiScrollBarState& state)
 	);
 
 	// The down button
-	imGuiRect& rectBut2 = state.arrowButton2.rect;
+	Rectf& rectBut2 = state.arrowButton2.rect;
 	bool isDownButtonHot = _isHot(rectBut2);
 	texBut = _states.skin.texScrollPanel[isDownButtonHot ? 4 : 3]->handle;
 	c.drawImage(
@@ -526,7 +519,7 @@ void imGuiHScrollBar(imGuiScrollBarState& state)
 	imGuiHScrollBarLogic(state);
 
 	Canvas& c = *_states.canvas;
-	const imGuiRect& rect = state.rect;
+	const Rectf& rect = state.rect;
 
 	c.setGlobalColor(1, 1, 1, 1);
 
@@ -539,7 +532,7 @@ void imGuiHScrollBar(imGuiScrollBarState& state)
 	);
 
 	// The left button
-	imGuiRect& rectBut1 = state.arrowButton1.rect;
+	Rectf& rectBut1 = state.arrowButton1.rect;
 	bool isLeftButtonHot = _isHot(rectBut1);
 	roRDriverTexture* texBut = _states.skin.texScrollPanel[isLeftButtonHot ? 8 : 7]->handle;
 	c.drawImage(
@@ -549,7 +542,7 @@ void imGuiHScrollBar(imGuiScrollBarState& state)
 	);
 
 	// The right button
-	imGuiRect& rectBut2 = state.arrowButton2.rect;
+	Rectf& rectBut2 = state.arrowButton2.rect;
 	bool isRightButtonHot = _isHot(rectBut2);
 	texBut = _states.skin.texScrollPanel[isRightButtonHot ? 8 : 7]->handle;
 	c.drawImage(
@@ -565,19 +558,19 @@ void imGuiHScrollBar(imGuiScrollBarState& state)
 
 void imGuiVScrollBarLogic(imGuiScrollBarState& state)
 {
-	const imGuiRect& rect = state.rect;
-	imGuiRect& rectButU = state.arrowButton1.rect;
-	imGuiRect& rectButD = state.arrowButton2.rect;
+	const Rectf& rect = state.rect;
+	Rectf& rectButU = state.arrowButton1.rect;
+	Rectf& rectButD = state.arrowButton2.rect;
 	float slideSize = rect.h - rectButU.h - rectButD.h;
 	float barSize = roMaxOf2((state._pageSize * slideSize) / (state.valueMax + state._pageSize), 10.f);
 
 	// Update buttons
 	roRDriverTexture* texBut = _states.skin.texScrollPanel[3]->handle;
 
-	rectButU = imGuiRect(rect.x, rect.y, rect.w, texBut->height / 2.f);
+	rectButU = Rectf(rect.x, rect.y, rect.w, texBut->height / 2.f);
 	state.arrowButton1.isHover = _isHover(rectButU);
 
-	rectButD = imGuiRect(rect.x, rect.y + rect.h - texBut->height / 2.f, rect.w, texBut->height / 2.f);
+	rectButD = Rectf(rect.x, rect.bottom() - texBut->height / 2.f, rect.w, texBut->height / 2.f);
 	state.arrowButton2.isHover = _isHover(rectButD);
 
 	// Handle arrow button click
@@ -587,10 +580,10 @@ void imGuiVScrollBarLogic(imGuiScrollBarState& state)
 		state.value += state.smallStep;
 
 	// Handle bar background click
-	imGuiRect rectBg(rect.x, rect.y + rectButU.h, rect.w, rect.h - rectButU.h - rectButD.h);
+	Rectf rectBg(rect.x, rect.y + rectButU.h, rect.w, rect.h - rectButU.h - rectButD.h);
 	if(_states.lastFrameHotObject != &state.barButton && (_isClicked(rectBg) || _isRepeatedClick(rectBg)))
 	{
-		if(_states.mouseClicky() < (rect.y + rect.h / 2))
+		if(_states.mouseClicky() < rect.centery())
 			state.value -= state.largeStep;
 		else
 			state.value += state.largeStep;
@@ -605,7 +598,7 @@ void imGuiVScrollBarLogic(imGuiScrollBarState& state)
 
 	// Update bar rect
     float barPos = ((slideSize - barSize) * state.value) / state.valueMax;
-	state.barButton.rect = imGuiRect(
+	state.barButton.rect = Rectf(
 		rect.x,
 		rect.y + rectButU.h + barPos,
 		rect.w,
@@ -616,19 +609,19 @@ void imGuiVScrollBarLogic(imGuiScrollBarState& state)
 
 void imGuiHScrollBarLogic(imGuiScrollBarState& state)
 {
-	const imGuiRect& rect = state.rect;
-	imGuiRect& rectButL = state.arrowButton1.rect;
-	imGuiRect& rectButR = state.arrowButton2.rect;
+	const Rectf& rect = state.rect;
+	Rectf& rectButL = state.arrowButton1.rect;
+	Rectf& rectButR = state.arrowButton2.rect;
 	float slideSize = rect.w - rectButL.w - rectButR.w;
 	float barSize = roMaxOf2((state._pageSize * slideSize) / (state.valueMax + state._pageSize), 10.f);
 
 	// Update buttons
 	roRDriverTexture* texBut = _states.skin.texScrollPanel[7]->handle;
 
-	rectButL = imGuiRect(rect.x, rect.y, texBut->width / 2.f, rect.h);
+	rectButL = Rectf(rect.x, rect.y, texBut->width / 2.f, rect.h);
 	state.arrowButton1.isHover = _isHover(rectButL);
 
-	rectButR = imGuiRect(rect.x + rect.w - texBut->width / 2.f, rect.y, texBut->width / 2.f, rect.h);
+	rectButR = Rectf(rect.right() - texBut->width / 2.f, rect.y, texBut->width / 2.f, rect.h);
 	state.arrowButton2.isHover = _isHover(rectButR);
 
 	// Handle arrow button click
@@ -638,10 +631,10 @@ void imGuiHScrollBarLogic(imGuiScrollBarState& state)
 		state.value += state.smallStep;
 
 	// Handle bar background click
-	imGuiRect rectBg(rect.x + rectButL.w, rect.y, rect.w - rectButL.w - rectButR.w, rect.h);
+	Rectf rectBg(rect.x + rectButL.w, rect.y, rect.w - rectButL.w - rectButR.w, rect.h);
 	if(_states.lastFrameHotObject != &state.barButton && (_isClicked(rectBg) || _isRepeatedClick(rectBg)))
 	{
-		if(_states.mouseClickx() < (rect.x + rect.w / 2))
+		if(_states.mouseClickx() < rect.centerx())
 			state.value -= state.largeStep;
 		else
 			state.value += state.largeStep;
@@ -656,7 +649,7 @@ void imGuiHScrollBarLogic(imGuiScrollBarState& state)
 
 	// Update bar rect
 	float barPos = ((slideSize - barSize) * state.value) / state.valueMax;
-	state.barButton.rect = imGuiRect(
+	state.barButton.rect = Rectf(
 		rect.x + rectButL.w + barPos,
 		rect.y,
 		barSize,
@@ -686,7 +679,7 @@ void imGuiBeginScrollPanel(imGuiPanelState& state)
 	Canvas& c = *_states.canvas;
 	c.setGlobalColor(1, 1, 1, 1);
 
-	const imGuiRect& rect = state.rect;
+	const Rectf& rect = state.rect;
 
 	if(_isHot(rect))
 		_states.potentialHotObject = &state;
@@ -711,7 +704,7 @@ void imGuiBeginScrollPanel(imGuiPanelState& state)
 	state.hScrollBar.value = roClamp(state.hScrollBar.value, 0.f, state.hScrollBar.valueMax);
 
 	// Initialize the virtual bound
-	imGuiRect& virtualRect = state._virtualRect;
+	Rectf& virtualRect = state._virtualRect;
 	virtualRect.x = rect.x - state.hScrollBar.value;
 	virtualRect.y = rect.y - state.vScrollBar.value;
 	virtualRect.w = 0;
@@ -735,8 +728,8 @@ void imGuiEndScrollPanel()
 	_states.mouseCaptured = false;
 
 	float border = 2;
-	const imGuiRect& rect = panelState.rect;
-	imGuiRect& virtualRect = panelState._virtualRect;
+	const Rectf& rect = panelState.rect;
+	Rectf& virtualRect = panelState._virtualRect;
 
 	_states.offsetx += virtualRect.x;
 	_states.offsety += virtualRect.y;
@@ -752,7 +745,7 @@ void imGuiEndScrollPanel()
 	}
 
 	// Update the client area
-	imGuiRect& clientRect = panelState._clientRect;
+	Rectf& clientRect = panelState._clientRect;
 	clientRect = rect;
 	clientRect.x += panelState.showBorder ? border : 0;
 	clientRect.w -= panelState.showBorder ? border * 2 : 0;
@@ -768,8 +761,8 @@ void imGuiEndScrollPanel()
 	if(panelState.scrollable)
 	{
 		// Draw the vertical scroll bar
-		panelState.vScrollBar.rect = imGuiRect(
-			rect.x + rect.w - vScrollBarThickness - border,
+		panelState.vScrollBar.rect = Rectf(
+			rect.right() - vScrollBarThickness - border,
 			rect.y + border,
 			vScrollBarThickness,
 			rect.h - border * 2
@@ -780,9 +773,9 @@ void imGuiEndScrollPanel()
 			imGuiVScrollBar(panelState.vScrollBar);
 
 		// Draw the horizontal scroll bar
-		panelState.hScrollBar.rect = imGuiRect(
+		panelState.hScrollBar.rect = Rectf(
 			rect.x + border,
-			rect.y + rect.h - hScrollBarThickness - border,
+			rect.bottom() - hScrollBarThickness - border,
 			rect.w - border * 2 - (showVScrollBar ? hScrollBarThickness : 0),
 			hScrollBarThickness
 		);
@@ -801,8 +794,8 @@ void imGuiTextArea(imGuiTextAreaState& state, const roUtf8* text)
 
 	Canvas& c = *_states.canvas;
 
-	imGuiRect rect = state.rect;
-	imGuiRect textRect = _calTextRect(imGuiRect(rect.x + _states.margin, rect.y + _states.margin), text);
+	Rectf rect = state.rect;
+	Rectf textRect = _calTextRect(Rectf(rect.x + _states.margin, rect.y + _states.margin), text);
 	rect = _calMarginRect(rect, textRect);
 	_mergeExtend(_states.panelStateStack.back()->_virtualRect, textRect);
 

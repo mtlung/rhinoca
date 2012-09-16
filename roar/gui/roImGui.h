@@ -2,18 +2,11 @@
 #define __gui_roImGui_h__
 
 #include "../base/roStatus.h"
+#include "../math/roRect.h"
 
 namespace ro {
 
 struct Canvas;
-
-struct imGuiRect {
-	imGuiRect() { x = y = w = h = 0; }
-	imGuiRect(float x, float y) : x(x), y(y) { w = h = 0; }
-	imGuiRect(float x, float y, float w, float h) : x(x), y(y), w(w), h(h) {}
-	float x, y;
-	float w, h;
-};
 
 roStatus imGuiInit();
 void imGuiClose();
@@ -21,26 +14,28 @@ void imGuiClose();
 void imGuiBegin(Canvas& canvas);
 void imGuiEnd();
 
+// Style
+struct imGuiStyle {
+};
+
 // States
 struct imGuiWigetState {
 	imGuiWigetState();
-	imGuiRect rect;
+	Rectf rect;
 	bool isEnable;
 	bool isHover;
 };
 
 // Common
-bool imGuiInRect(const imGuiRect& rect, float x, float y);
-
 bool imGuiInClipRect(float x, float y);
-void imGuiBeginClip(imGuiRect rect);	// Clip away any drawing and inputs outside this rect until imGuiEndClip() is called.
+void imGuiBeginClip(Rectf rect);	// Clip away any drawing and inputs outside this rect until imGuiEndClip() is called.
 void imGuiEndClip();
 
 // Label
-void imGuiLabel(imGuiRect rect, const roUtf8* text);
+void imGuiLabel(Rectf rect, const roUtf8* text);
 
 // Check box
-bool imGuiCheckBox(imGuiRect rect, const roUtf8* text, bool& state);
+bool imGuiCheckBox(Rectf rect, const roUtf8* text, bool& state);
 
 // Button
 struct imGuiButtonState : public imGuiWigetState {
@@ -69,8 +64,8 @@ struct imGuiPanelState : public imGuiWigetState {
 	bool showBorder;
 	bool scrollable;
 	imGuiScrollBarState hScrollBar, vScrollBar;
-	imGuiRect _clientRect;
-	imGuiRect _virtualRect;
+	Rectf _clientRect;
+	Rectf _virtualRect;
 };
 void imGuiBeginScrollPanel(imGuiPanelState& state);
 void imGuiEndScrollPanel();
