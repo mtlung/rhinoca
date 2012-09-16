@@ -436,6 +436,7 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
 	if(!texture || !texture->width || !texture->height || globalAlpha() <= 0) return;
+	if(srcw <= 0 || srch <= 0 || dstw <= 0 || dsth <= 0) return;
 
 	const float z = 0;
 

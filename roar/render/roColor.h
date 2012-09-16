@@ -20,7 +20,11 @@ public:
 	void toString(char str[10]);
 
 // Attributes
-	float r, g, b, a;
+	union { struct {
+		float r, g, b, a;
+	};
+		float data[4];
+	};
 };	// Colorf
 
 }	// namespace ro

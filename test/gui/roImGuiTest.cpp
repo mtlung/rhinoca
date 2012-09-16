@@ -45,7 +45,6 @@ TEST_FIXTURE(ImGuiTest, button)
 		driver->clearColor(68.0f/256, 68.0f/256, 68.0f/256, 1);
 
 		guiBegin(canvas);
-			guiSetTextColor(1, 1, 0, 1);
 			guiBeginScrollPanel(panel[0]);
 
 			guiTextArea(textArea, "Hello asdfas dffewar ad eghtdagtewg wdsfg ewrsg hahahahahah\nLine 2\nLine 3");

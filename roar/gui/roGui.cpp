@@ -26,10 +26,8 @@ struct Skin
 	void tick();
 
 // Attributes
-	Vec2 texButtonSize;
 	Vec2 texCheckboxSize;
 
-	StaticArray<TexturePtr, 2> texButton;
 	StaticArray<TexturePtr, 4> texCheckbox;
 	StaticArray<TexturePtr, 9> texScrollPanel;
 };
@@ -41,11 +39,61 @@ roStatus Skin::init()
 	ResourceManager* mgr = roSubSystems->resourceMgr;
 	if(!mgr) return roStatus::not_initialized;
 
-	guiSkin.button.normal.backgroundImage = mgr->loadAs<Texture>("imGui/button.png");
-	guiSkin.button.hover.backgroundImage = mgr->loadAs<Texture>("imGui/button_.png");
+	{	GuiStyle& style = guiSkin.label;
+		style.border = 0;
+		style.padding = 5;
+		style.normal.textColor = Colorf(1, 1, 1);
+		style.normal.backgroundColor = Colorf(1, 1, 1, 0);
+		style.normal.backgroundImage = NULL;
+		style.hover.textColor = Colorf(1, 1, 1);
+		style.hover.backgroundColor = Colorf(1, 1, 1, 0);
+		style.hover.backgroundImage = NULL;
+		style.active.textColor = Colorf(1, 1, 1);
+		style.active.backgroundColor = Colorf(1, 1, 1, 0);
+		style.active.backgroundImage = NULL;
+	}
 
-	texButton[0] = mgr->loadAs<Texture>("imGui/button.png");
-	texButton[1] = mgr->loadAs<Texture>("imGui/button_.png");
+	{	GuiStyle& style = guiSkin.checkBox;
+		style.border = 0;
+		style.padding = 5;
+		style.normal.textColor = Colorf(1, 1, 1);
+		style.normal.backgroundColor = Colorf(1, 1, 1, 0);
+		style.normal.backgroundImage = NULL;
+		style.hover.textColor = Colorf(1, 1, 1);
+		style.hover.backgroundColor = Colorf(1, 1, 1, 0);
+		style.hover.backgroundImage = NULL;
+		style.active.textColor = Colorf(1, 1, 1);
+		style.active.backgroundColor = Colorf(1, 1, 1, 0);
+		style.active.backgroundImage = NULL;
+	}
+
+	{	GuiStyle& style = guiSkin.button;
+		style.border = 3;
+		style.padding = 5;
+		style.normal.textColor = Colorf(1, 1, 1);
+		style.normal.backgroundColor = Colorf(1, 1, 1);
+		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/button.png");
+		style.hover.textColor = Colorf(1, 1, 1);
+		style.hover.backgroundColor = Colorf(1, 1, 1);
+		style.hover.backgroundImage = mgr->loadAs<Texture>("imGui/button_.png");
+		style.active.textColor = Colorf(1, 1, 1);
+		style.active.backgroundColor = Colorf(1, 1, 1);
+		style.active.backgroundImage = mgr->loadAs<Texture>("imGui/button_.png");
+	}
+
+	{	GuiStyle& style = guiSkin.textArea;
+		style.border = 3;
+		style.padding = 5;
+		style.normal.textColor = Colorf(1, 1, 1);
+		style.normal.backgroundColor = Colorf(1, 1, 1);
+		style.normal.backgroundImage = NULL;
+		style.hover.textColor = Colorf(1, 1, 1);
+		style.hover.backgroundColor = Colorf(1, 1, 1);
+		style.hover.backgroundImage = NULL;
+		style.active.textColor = Colorf(1, 1, 1);
+		style.active.backgroundColor = Colorf(1, 1, 1);
+		style.active.backgroundImage = NULL;
+	}
 
 	texCheckbox[0] = mgr->loadAs<Texture>("imGui/checkbox-0.png");
 	texCheckbox[1] = mgr->loadAs<Texture>("imGui/checkbox-1.png");
@@ -66,6 +114,20 @@ roStatus Skin::init()
 	return roStatus::ok;
 }
 
+static const GuiStyle::StateSensitiveStyle& _selectStateSensitiveSytle(const GuiWigetState& state, const GuiStyle& style)
+{
+	const GuiStyle::StateSensitiveStyle* ret = &style.normal;
+	if(state.isHover) ret = &style.hover;
+
+	return *ret;
+}
+
+static roRDriverTexture* _selectBackgroundTexture(const GuiWigetState& state, const GuiStyle& style)
+{
+	const GuiStyle::StateSensitiveStyle& stateSensitiveSytle = _selectStateSensitiveSytle(state, style);
+	return stateSensitiveSytle.backgroundImage ? stateSensitiveSytle.backgroundImage->handle : NULL;
+}
+
 static void _clearStyle(GuiStyle& style)
 {
 	style.normal.backgroundImage = NULL;
@@ -75,16 +137,12 @@ static void _clearStyle(GuiStyle& style)
 
 void Skin::close()
 {
-	texButton.assign(NULL);
 	texCheckbox.assign(NULL);
 	texScrollPanel.assign(NULL);
 }
 
 void Skin::tick()
 {
-	texButtonSize = texButton[0] ?
-		Vec2((float)texButton[0]->width(), (float)texButton[0]->height()) : Vec2(0.0f);
-
 	texCheckboxSize = texCheckbox[0] ?
 		Vec2((float)texCheckbox[0]->width(), (float)texCheckbox[0]->height()) : Vec2(0.0f);
 }
@@ -117,8 +175,6 @@ struct guiStates
 
 	Canvas* canvas;
 
-	float margin;
-
 	bool mouseCaptured;
 	MouseState mouseState;
 	MouseState mouseCapturedState;
@@ -143,7 +199,6 @@ struct guiStates
 guiStates::guiStates()
 {
 	canvas = NULL;
-	margin = 0;
 	roZeroMemory(&mouseState, sizeof(mouseState));
 	roZeroMemory(&mouseCapturedState, sizeof(mouseCapturedState));
 	offsetx = offsety = 0;
@@ -169,8 +224,6 @@ roStatus guiInit()
 	roStatus st;
 	st = _states.skin.init(); if(!st) return st;
 
-	guiSetMargin(5);
-
 	_states.hotObject = NULL;
 	_states.lastFrameHotObject = NULL;
 	_states.potentialHotObject = NULL;
@@ -184,7 +237,10 @@ roStatus guiInit()
 
 void guiClose()
 {
+	_clearStyle(guiSkin.label);
+	_clearStyle(guiSkin.checkBox);
 	_clearStyle(guiSkin.button);
+	_clearStyle(guiSkin.textArea);
 	_states.skin.close();
 }
 
@@ -260,21 +316,6 @@ void guiLayout(Rectf& rect)
 {
 }
 
-void guiSetMargin(float margin)
-{
-	_states.margin = margin;
-}
-
-void guiSetTextAlign(const char* align)
-{
-	_states.canvas->setTextAlign(align);
-}
-
-void guiSetTextColor(float r, float g, float b, float a)
-{
-	_states.canvas->setGlobalColor(r, g, b, a);
-}
-
 static Rectf _calTextRect(const Rectf& prefered, const roUtf8* str)
 {
 	TextMetrics metrics;
@@ -287,14 +328,16 @@ static Rectf _calTextRect(const Rectf& prefered, const roUtf8* str)
 	return ret;
 }
 
-static Rectf _calMarginRect(const Rectf& prefered, const Rectf& content)
+static void _setContentRect(GuiWigetState& state, const GuiStyle& style, float contentWidth, float contentHeight)
 {
-	Rectf ret = content;
+	Rectf& deduced = state._deducedRect;
 
-	ret.w = roMaxOf2(prefered.w, content.w + 2 * _states.margin);
-	ret.h = roMaxOf2(prefered.h, content.h + 2 * _states.margin);
+	// Add padding to the content rect
+	deduced = state.rect;
+	deduced.w = roMaxOf2(deduced.w, contentWidth + 2 * style.padding);
+	deduced.h = roMaxOf2(deduced.h, contentHeight + 2 * style.padding);
 
-	return ret;
+	_mergeExtend(_states.panelStateStack.back()->_virtualRect, state._deducedRect);
 }
 
 static bool _isHover(const Rectf& rect)
@@ -309,6 +352,15 @@ static bool _isHot(const Rectf& rect)
 	float x = _states.mouseClickx();
 	float y = _states.mouseClicky();
 	return rect.isPointInRect(x, y) && guiInClipRect(x, y);
+}
+
+static void _updateWigetState(GuiWigetState& state)
+{
+	state.isHover = _isHover(state._deducedRect);
+	state.isActive = _isHot(state._deducedRect);
+
+	if(state.isActive)
+		_states.potentialHotObject = &state;
 }
 
 static bool _isClicked(const Rectf& rect)
@@ -362,13 +414,12 @@ void _draw3x3(roRDriverTexture* tex, const Rectf& rect, float borderWidth, bool 
 {
 	if(!tex) return;
 	Canvas& c = *_states.canvas;
-	c.setGlobalColor(1, 1, 1, 1);
 
 	float texw = (float)tex->width;
 	float texh = (float)tex->height;
-	float srcx[3] = { 0,		borderWidth,			texw - borderWidth				};	// From left to right
+	float srcx[3] = { 0,		borderWidth,			texw - borderWidth			};	// From left to right
 	float dstx[3] = { rect.x,	rect.x + borderWidth,	rect.right() - borderWidth	};	//
-	float srcy[3] = { 0,		borderWidth,			texh - borderWidth				};	// From top to bottom
+	float srcy[3] = { 0,		borderWidth,			texh - borderWidth			};	// From top to bottom
 	float dsty[3] = { rect.y,	rect.y + borderWidth,	rect.bottom() - borderWidth	};	//
 	float srcw[3] = { borderWidth,	texw - 2 * borderWidth,		borderWidth };
 	float dstw[3] = { borderWidth,	rect.w - borderWidth * 2,	borderWidth };
@@ -399,17 +450,13 @@ GuiWigetState::GuiWigetState()
 {
 	isEnable = false;
 	isHover = false;
+	isActive = false;
+	isLastFrameEnable = false;
+	isLastFrameHover = false;
+	isLastFrameActive = false;
 }
 
-void guiLabel(Rectf rect, const roUtf8* text)
-{
-	if(!text) text = "";
-
-	Rectf textRect = _calTextRect(Rectf(rect.x, rect.y), text);
-	rect = _calMarginRect(rect, textRect);
-	_states.canvas->fillText(text, rect.centerx(), rect.centery(), -1);
-}
-
+#include "roGuiLabel.h"
 #include "roGuiCheckBox.h"
 #include "roGuiButton.h"
 #include "roGuiScrollbar.h"

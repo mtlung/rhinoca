@@ -2,42 +2,38 @@ GuiButtonState::GuiButtonState()
 {
 }
 
-void _drawButton(const Rectf& rect, const roUtf8* text, bool enabled, bool hover, bool down)
-{
-	Canvas& c = *_states.canvas;
-	c.setGlobalColor(1, 1, 1, 1);
-
-	roRDriverTexture* tex = _states.skin.texButton[hover ? 1 : 0]->handle;
-
-	_draw3x3(tex, rect, 3);
-
-	float buttonDownOffset = down ? 1.0f : 0;
-	c.fillText(text, rect.centerx(), rect.centery() + buttonDownOffset, -1);
-}
-
 bool guiButton(GuiButtonState& state, const roUtf8* text, const GuiStyle* style)
 {
 	if(!text) text = "";
+	if(!style) style = &guiSkin.button;
 
-	Rectf rect = state.rect;
-	Rectf textRect = _calTextRect(Rectf(rect.x, rect.y), text);
-	rect = _calMarginRect(rect, textRect);
-	_mergeExtend(_states.panelStateStack.back()->_virtualRect, rect);
+	bool clicked = guiButtonLogic(state, text, style);
 
-	bool clicked = guiButtonLogic(state);
+	const Rectf& rect = state._deducedRect;
+	Canvas& c = *_states.canvas;
+	const GuiStyle::StateSensitiveStyle& sStyle = _selectStateSensitiveSytle(state, *style);
 
-	_drawButton(rect, text, state.isEnable, state.isHover, _isHot(rect));
+	// Draw the background
+	roRDriverTexture* tex = _selectBackgroundTexture(state, *style);
+	c.setGlobalColor(sStyle.backgroundColor.data);
+	_draw3x3(tex, rect, style->border);
+
+	// Draw the text
+	c.setGlobalColor(sStyle.textColor.data);
+	float buttonDownOffset = state.isActive ? 1.0f : 0;
+	c.fillText(text, rect.centerx(), rect.centery() + buttonDownOffset, -1);
 
 	return clicked;
 }
 
-bool guiButtonLogic(GuiButtonState& state)
+bool guiButtonLogic(GuiButtonState& state, const roUtf8* text, const GuiStyle* style)
 {
-	state.isHover = _isHover(state.rect);
-	bool hot = _isHot(state.rect);
+	if(!text) text = "";
+	if(!style) style = &guiSkin.button;
 
-	if(hot)
-		_states.potentialHotObject = &state;
+	Rectf textRect = _calTextRect(Rectf(), text);
+	_setContentRect(state, *style, textRect.w, textRect.h);
+	_updateWigetState(state);
 
-	return state.isHover && hot && _states.mouseUp();
+	return state.isHover && state.isActive && _states.mouseUp();
 }

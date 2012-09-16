@@ -32,13 +32,16 @@ struct GuiStyle {
 // Modeled over Unity Gui skin
 // http://docs.unity3d.com/Documentation/Components/class-GUISkin.html
 struct GuiSkin {
+	GuiStyle label;
 	GuiStyle button;
+	GuiStyle checkBox;
 	GuiStyle vScrollbar;
 	GuiStyle vScrollbarLeftButton;
 	GuiStyle vScrollbarRightButton;
 	GuiStyle hScrollbar;
 	GuiStyle hScrollbarLeftButton;
 	GuiStyle hScrollbarRightButton;
+	GuiStyle textArea;
 };
 
 // The current skin to use
@@ -47,9 +50,15 @@ extern GuiSkin guiSkin;
 // States
 struct GuiWigetState {
 	GuiWigetState();
-	Rectf rect;
 	bool isEnable;
 	bool isHover;
+	bool isActive;
+	bool isLastFrameEnable;
+	bool isLastFrameHover;
+	bool isLastFrameActive;
+	Rectf rect;
+
+	Rectf _deducedRect;
 };
 
 // Common
@@ -64,17 +73,17 @@ void guiBeginClip(Rectf rect);	// Clip away any drawing and inputs outside this 
 void guiEndClip();
 
 // Label
-void guiLabel(Rectf rect, const roUtf8* text);
+void guiLabel(const Rectf& rect, const roUtf8* text);
 
 // Check box
-bool guiCheckBox(Rectf rect, const roUtf8* text, bool& state);
+bool guiCheckBox(const Rectf& rect, const roUtf8* text, bool& state);
 
 // Button
 struct GuiButtonState : public GuiWigetState {
 	GuiButtonState();
 };
-bool guiButton(GuiButtonState& state, const roUtf8* text, const GuiStyle* style=NULL);
-bool guiButtonLogic(GuiButtonState& state);
+bool guiButton(GuiButtonState& state, const roUtf8* text=NULL, const GuiStyle* style=NULL);
+bool guiButtonLogic(GuiButtonState& state, const roUtf8* text=NULL, const GuiStyle* style=NULL);
 
 // Scroll bar
 struct GuiScrollBarState : public GuiWigetState {
@@ -106,11 +115,6 @@ void guiEndScrollPanel();
 struct GuiTextAreaState : public GuiPanelState {
 };
 void guiTextArea(GuiTextAreaState& state, const roUtf8* text);
-
-// options
-void guiSetMargin(float margin);
-void guiSetTextAlign(const char* align);
-void guiSetTextColor(float r, float g, float b, float a);
 
 }	// namespace ro
 

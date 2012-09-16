@@ -22,10 +22,9 @@ struct Rectf
 	float centerx() const	{ return x + w / 2; }
 	float centery() const	{ return y + h / 2; }
 
-	union {
-		struct { float
-			x, y, w, h;
-		};
+	union { struct {
+		float x, y, w, h;
+	};
 		float data[4];
 	};
 };	// Rectf
