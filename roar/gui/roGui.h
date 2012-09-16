@@ -41,6 +41,9 @@ struct GuiSkin {
 	GuiStyle hScrollbarRightButton;
 };
 
+// The current skin to use
+extern GuiSkin guiSkin;
+
 // States
 struct GuiWigetState {
 	GuiWigetState();
@@ -70,7 +73,7 @@ bool guiCheckBox(Rectf rect, const roUtf8* text, bool& state);
 struct GuiButtonState : public GuiWigetState {
 	GuiButtonState();
 };
-bool guiButton(GuiButtonState& state, const roUtf8* text);
+bool guiButton(GuiButtonState& state, const roUtf8* text, const GuiStyle* style=NULL);
 bool guiButtonLogic(GuiButtonState& state);
 
 // Scroll bar

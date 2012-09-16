@@ -824,11 +824,31 @@
 			Name="gui"
 			>
 			<File
-				RelativePath="..\..\roar\gui\roImGui.cpp"
+				RelativePath="..\..\roar\gui\roGui.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\roar\gui\roImGui.h"
+				RelativePath="..\..\roar\gui\roGui.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\gui\roGuiButton.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\gui\roGuiCheckBox.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\gui\roGuiPanel.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\gui\roGuiScrollbar.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\gui\roGuiTextArea.h"
 				>
 			</File>
 		</Filter>

@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "../render/roGraphicsTestBase.win.h"
-#include "../../roar/gui/roImGui.h"
+#include "../../roar/gui/roGui.h"
 #include "../../roar/render/roCanvas.h"
 
 using namespace ro;
