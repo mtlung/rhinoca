@@ -79,7 +79,7 @@ void Skin::tick()
 		Vec2((float)texCheckbox[0]->width(), (float)texCheckbox[0]->height()) : Vec2(0.0f);
 }
 
-struct imGuiStates
+struct guiStates
 {
 	struct MouseState {
 		float mousex, mousey, mousez;
@@ -88,7 +88,7 @@ struct imGuiStates
 		bool mouseUp, mouseDown;
 	};
 
-	imGuiStates();
+	guiStates();
 
 	float mousex() { return mouseCaptured ? mouseCapturedState.mousex : mouseState.mousex + offsetx; }
 	float mousey() { return mouseCaptured ? mouseCapturedState.mousey : mouseState.mousey + offsety; }
@@ -125,12 +125,12 @@ struct imGuiStates
 	void* hoveringObject;
 	void* lastFrameHoveringObject;
 
-	imGuiPanelState rootPanel;
+	GuiPanelState rootPanel;
 
-	Array<imGuiPanelState*> panelStateStack;
+	Array<GuiPanelState*> panelStateStack;
 };
 
-imGuiStates::imGuiStates()
+guiStates::guiStates()
 {
 	canvas = NULL;
 	margin = 0;
@@ -145,14 +145,19 @@ imGuiStates::imGuiStates()
 
 }	// namespace
 
-static imGuiStates _states;
+static guiStates _states;
 
-roStatus imGuiInit()
+GuiStyle::GuiStyle()
+{
+//	textColor = Colorf(1, 1, 1);
+}
+
+roStatus guiInit()
 {
 	roStatus st;
 	st = _states.skin.init(); if(!st) return st;
 
-	imGuiSetMargin(5);
+	guiSetMargin(5);
 
 	_states.hotObject = NULL;
 	_states.lastFrameHotObject = NULL;
@@ -165,12 +170,12 @@ roStatus imGuiInit()
 	return roStatus::ok;
 }
 
-void imGuiClose()
+void guiClose()
 {
 	_states.skin.close();
 }
 
-void imGuiBegin(Canvas& canvas)
+void guiBegin(Canvas& canvas)
 {
 	roAssert(!_states.canvas);
 	_states.canvas = &canvas;
@@ -214,12 +219,12 @@ void imGuiBegin(Canvas& canvas)
 	_states.rootPanel.showBorder = false;
 	_states.rootPanel.scrollable = false;
 	_states.rootPanel.rect = Rectf(0, 0, (float)canvas.width(), (float)canvas.height());
-	imGuiBeginScrollPanel(_states.rootPanel);
+	guiBeginScrollPanel(_states.rootPanel);
 }
 
-void imGuiEnd()
+void guiEnd()
 {
-	imGuiEndScrollPanel();
+	guiEndScrollPanel();
 
 	_states.canvas = NULL;
 
@@ -238,21 +243,21 @@ void imGuiEnd()
 	}
 }
 
-void imGuiLayout(Rectf& rect)
+void guiLayout(Rectf& rect)
 {
 }
 
-void imGuiSetMargin(float margin)
+void guiSetMargin(float margin)
 {
 	_states.margin = margin;
 }
 
-void imGuiSetTextAlign(const char* align)
+void guiSetTextAlign(const char* align)
 {
 	_states.canvas->setTextAlign(align);
 }
 
-void imGuiSetTextColor(float r, float g, float b, float a)
+void guiSetTextColor(float r, float g, float b, float a)
 {
 	_states.canvas->setGlobalColor(r, g, b, a);
 }
@@ -283,14 +288,14 @@ static bool _isHover(const Rectf& rect)
 {
 	float x = _states.mousex();
 	float y = _states.mousey();
-	return rect.isPointInRect(x, y) && imGuiInClipRect(x, y);
+	return rect.isPointInRect(x, y) && guiInClipRect(x, y);
 }
 
 static bool _isHot(const Rectf& rect)
 {
 	float x = _states.mouseClickx();
 	float y = _states.mouseClicky();
-	return rect.isPointInRect(x, y) && imGuiInClipRect(x, y);
+	return rect.isPointInRect(x, y) && guiInClipRect(x, y);
 }
 
 static bool _isClicked(const Rectf& rect)
@@ -308,7 +313,7 @@ static float _round(float x)
 	return float(int(x));
 }
 
-bool imGuiInClipRect(float x, float y)
+bool guiInClipRect(float x, float y)
 {
 	// Convert to global coordinate
 	x -= _states.offsetx;
@@ -320,7 +325,7 @@ bool imGuiInClipRect(float x, float y)
 	return clipRect.isPointInRect(x, y);
 }
 
-void imGuiBeginClip(Rectf rect)
+void guiBeginClip(Rectf rect)
 {
 	Canvas& c = *_states.canvas;
 
@@ -332,7 +337,7 @@ void imGuiBeginClip(Rectf rect)
 	c.clipRect(rect.x, rect.y, rect.w, rect.h);	// clipRect() will perform intersection
 }
 
-void imGuiEndClip()
+void guiEndClip()
 {
 	Canvas& c = *_states.canvas;
 	c.restore();
@@ -390,7 +395,7 @@ void _drawButton(const Rectf& rect, const roUtf8* text, bool enabled, bool hover
 	c.fillText(text, rect.centerx(), rect.centery() + buttonDownOffset, -1);
 }
 
-void imGuiLabel(Rectf rect, const roUtf8* text)
+void guiLabel(Rectf rect, const roUtf8* text)
 {
 	if(!text) text = "";
 
@@ -399,7 +404,7 @@ void imGuiLabel(Rectf rect, const roUtf8* text)
 	_states.canvas->fillText(text, rect.centerx(), rect.centery(), -1);
 }
 
-bool imGuiCheckBox(Rectf rect, const roUtf8* text, bool& state)
+bool guiCheckBox(Rectf rect, const roUtf8* text, bool& state)
 {
 	if(!text) text = "";
 
@@ -427,16 +432,16 @@ bool imGuiCheckBox(Rectf rect, const roUtf8* text, bool& state)
 	float buttonDownOffset = hot ? 1.0f : 0;
 	c.fillText(text, rect.centerx() + _states.skin.texCheckboxSize.x / 2 + _states.margin / 2, rect.centery() + buttonDownOffset, -1);
 
-	imGuiButtonState buttonState;
+	GuiButtonState buttonState;
 	buttonState.rect = rect;
-	bool clicked = imGuiButtonLogic(buttonState);
+	bool clicked = guiButtonLogic(buttonState);
 	if(clicked)
 		state = !state;
 
 	return clicked;
 }
 
-bool imGuiButton(imGuiButtonState& state, const roUtf8* text)
+bool guiButton(GuiButtonState& state, const roUtf8* text)
 {
 	if(!text) text = "";
 
@@ -445,14 +450,14 @@ bool imGuiButton(imGuiButtonState& state, const roUtf8* text)
 	rect = _calMarginRect(rect, textRect);
 	_mergeExtend(_states.panelStateStack.back()->_virtualRect, rect);
 
-	bool clicked = imGuiButtonLogic(state);
+	bool clicked = guiButtonLogic(state);
 
 	_drawButton(rect, text, state.isEnable, state.isHover, _isHot(rect));
 
 	return clicked;
 }
 
-bool imGuiButtonLogic(imGuiButtonState& state)
+bool guiButtonLogic(GuiButtonState& state)
 {
 	state.isHover = _isHover(state.rect);
 	bool hot = _isHot(state.rect);
@@ -463,7 +468,7 @@ bool imGuiButtonLogic(imGuiButtonState& state)
 	return state.isHover && hot && _states.mouseUp();
 }
 
-imGuiScrollBarState::imGuiScrollBarState()
+GuiScrollBarState::GuiScrollBarState()
 {
 	_pageSize = 0;
 	value = 0;
@@ -472,9 +477,9 @@ imGuiScrollBarState::imGuiScrollBarState()
 	largeStep = smallStep * 5;
 }
 
-void imGuiVScrollBar(imGuiScrollBarState& state)
+void guiVScrollBar(GuiScrollBarState& state)
 {
-	imGuiVScrollBarLogic(state);
+	guiVScrollBarLogic(state);
 
 	Canvas& c = *_states.canvas;
 	const Rectf& rect = state.rect;
@@ -514,9 +519,9 @@ void imGuiVScrollBar(imGuiScrollBarState& state)
 	_draw3x3(texBar, state.barButton.rect, 2);
 }
 
-void imGuiHScrollBar(imGuiScrollBarState& state)
+void guiHScrollBar(GuiScrollBarState& state)
 {
-	imGuiHScrollBarLogic(state);
+	guiHScrollBarLogic(state);
 
 	Canvas& c = *_states.canvas;
 	const Rectf& rect = state.rect;
@@ -556,7 +561,7 @@ void imGuiHScrollBar(imGuiScrollBarState& state)
 	_draw3x3(texBar, state.barButton.rect, 2);
 }
 
-void imGuiVScrollBarLogic(imGuiScrollBarState& state)
+void guiVScrollBarLogic(GuiScrollBarState& state)
 {
 	const Rectf& rect = state.rect;
 	Rectf& rectButU = state.arrowButton1.rect;
@@ -574,9 +579,9 @@ void imGuiVScrollBarLogic(imGuiScrollBarState& state)
 	state.arrowButton2.isHover = _isHover(rectButD);
 
 	// Handle arrow button click
-	if(imGuiButtonLogic(state.arrowButton1) || _isRepeatedClick(rectButU))
+	if(guiButtonLogic(state.arrowButton1) || _isRepeatedClick(rectButU))
 		state.value -= state.smallStep;
-	if(imGuiButtonLogic(state.arrowButton2) || _isRepeatedClick(rectButD))
+	if(guiButtonLogic(state.arrowButton2) || _isRepeatedClick(rectButD))
 		state.value += state.smallStep;
 
 	// Handle bar background click
@@ -590,7 +595,7 @@ void imGuiVScrollBarLogic(imGuiScrollBarState& state)
 	}
 
 	// Handle bar button drag
-	imGuiButtonLogic(state.barButton);
+	guiButtonLogic(state.barButton);
 	if(_states.hotObject == &state.barButton)
 		state.value += (_states.mousedy() * state.valueMax / (slideSize - barSize));
 
@@ -607,7 +612,7 @@ void imGuiVScrollBarLogic(imGuiScrollBarState& state)
 	state.barButton.isHover = _isHover(state.barButton.rect);
 }
 
-void imGuiHScrollBarLogic(imGuiScrollBarState& state)
+void guiHScrollBarLogic(GuiScrollBarState& state)
 {
 	const Rectf& rect = state.rect;
 	Rectf& rectButL = state.arrowButton1.rect;
@@ -625,9 +630,9 @@ void imGuiHScrollBarLogic(imGuiScrollBarState& state)
 	state.arrowButton2.isHover = _isHover(rectButR);
 
 	// Handle arrow button click
-	if(imGuiButtonLogic(state.arrowButton1) || _isRepeatedClick(rectButL))
+	if(guiButtonLogic(state.arrowButton1) || _isRepeatedClick(rectButL))
 		state.value -= state.smallStep;
-	if(imGuiButtonLogic(state.arrowButton2) || _isRepeatedClick(rectButR))
+	if(guiButtonLogic(state.arrowButton2) || _isRepeatedClick(rectButR))
 		state.value += state.smallStep;
 
 	// Handle bar background click
@@ -641,7 +646,7 @@ void imGuiHScrollBarLogic(imGuiScrollBarState& state)
 	}
 
 	// Handle bar button drag
-	imGuiButtonLogic(state.barButton);
+	guiButtonLogic(state.barButton);
 	if(_states.hotObject == &state.barButton)
 		state.value += (_states.mousedx() * state.valueMax / (slideSize - barSize));
 
@@ -658,23 +663,23 @@ void imGuiHScrollBarLogic(imGuiScrollBarState& state)
 	state.barButton.isHover = _isHover(state.barButton.rect);
 }
 
-imGuiWigetState::imGuiWigetState()
+GuiWigetState::GuiWigetState()
 {
 	isEnable = false;
 	isHover = false;
 }
 
-imGuiButtonState::imGuiButtonState()
+GuiButtonState::GuiButtonState()
 {
 }
 
-imGuiPanelState::imGuiPanelState()
+GuiPanelState::GuiPanelState()
 {
 	showBorder = true;
 	scrollable = true;
 }
 
-void imGuiBeginScrollPanel(imGuiPanelState& state)
+void guiBeginScrollPanel(GuiPanelState& state)
 {
 	Canvas& c = *_states.canvas;
 	c.setGlobalColor(1, 1, 1, 1);
@@ -710,7 +715,7 @@ void imGuiBeginScrollPanel(imGuiPanelState& state)
 	virtualRect.w = 0;
 	virtualRect.h = 0;
 
-	imGuiBeginClip(state._clientRect);
+	guiBeginClip(state._clientRect);
 
 	// NOTE: Truncate float value to integer, so we will always have pixel perfect match
 	c.translate(_round(virtualRect.x), _round(virtualRect.y));
@@ -719,11 +724,11 @@ void imGuiBeginScrollPanel(imGuiPanelState& state)
 	_states.offsety -= virtualRect.y;
 }
 
-void imGuiEndScrollPanel()
+void guiEndScrollPanel()
 {
-	imGuiPanelState& panelState = *_states.panelStateStack.back();
+	GuiPanelState& panelState = *_states.panelStateStack.back();
 
-	imGuiEndClip();
+	guiEndClip();
 
 	_states.mouseCaptured = false;
 
@@ -770,7 +775,7 @@ void imGuiEndScrollPanel()
 		panelState.vScrollBar._pageSize = (rect.h - border * 2) - (showHScrollBar ? hScrollBarThickness : 0);
 		panelState.vScrollBar.valueMax = roMaxOf2(virtualRect.h - panelState.vScrollBar._pageSize, 0.f);
 		if(showVScrollBar)
-			imGuiVScrollBar(panelState.vScrollBar);
+			guiVScrollBar(panelState.vScrollBar);
 
 		// Draw the horizontal scroll bar
 		panelState.hScrollBar.rect = Rectf(
@@ -782,15 +787,15 @@ void imGuiEndScrollPanel()
 		panelState.hScrollBar._pageSize = (rect.w - border * 2) - (showVScrollBar ? vScrollBarThickness : 0);
 		panelState.hScrollBar.valueMax = roMaxOf2(virtualRect.w - panelState.hScrollBar._pageSize, 0.f);
 		if(showHScrollBar)
-			imGuiHScrollBar(panelState.hScrollBar);
+			guiHScrollBar(panelState.hScrollBar);
 	}
 
 	_states.panelStateStack.popBack();
 }
 
-void imGuiTextArea(imGuiTextAreaState& state, const roUtf8* text)
+void guiTextArea(GuiTextAreaState& state, const roUtf8* text)
 {
-	imGuiBeginScrollPanel(state);
+	guiBeginScrollPanel(state);
 
 	Canvas& c = *_states.canvas;
 
@@ -803,7 +808,7 @@ void imGuiTextArea(imGuiTextAreaState& state, const roUtf8* text)
 	c.setTextBaseline("top");
 	c.fillText(text, textRect.x, textRect.y, -1);
 
-	imGuiEndScrollPanel();
+	guiEndScrollPanel();
 }
 
 }	// namespace ro

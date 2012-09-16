@@ -10,79 +10,104 @@ namespace ro {
 
 struct Canvas;
 
-roStatus imGuiInit();
-void imGuiClose();
-
-void imGuiBegin(Canvas& canvas);
-void imGuiEnd();
-
 // Style
-struct imGuiStyle {
-	Colorf backgroundColor;
-	TexturePtr backgroundImage;
+struct GuiStyle {
+	GuiStyle();
+
+	struct StateSensitiveStyle {
+		Colorf textColor;
+		Colorf backgroundColor;
+		TexturePtr backgroundImage;
+	};
+
+	StateSensitiveStyle normal;
+	StateSensitiveStyle hover;
+	StateSensitiveStyle active;
+
+	float border;	// Number of pixels on each side of the background image that are not affected by the scale of the Control' shape
+	float padding;	// Space in pixels from each edge of the Control to the start of its contents
+	float margin;	// The margins between elements rendered in this style and any other GUI Controls
+};
+
+// Modeled over Unity Gui skin
+// http://docs.unity3d.com/Documentation/Components/class-GUISkin.html
+struct GuiSkin {
+	GuiStyle button;
+	GuiStyle vScrollbar;
+	GuiStyle vScrollbarLeftButton;
+	GuiStyle vScrollbarRightButton;
+	GuiStyle hScrollbar;
+	GuiStyle hScrollbarLeftButton;
+	GuiStyle hScrollbarRightButton;
 };
 
 // States
-struct imGuiWigetState {
-	imGuiWigetState();
+struct GuiWigetState {
+	GuiWigetState();
 	Rectf rect;
 	bool isEnable;
 	bool isHover;
 };
 
 // Common
-bool imGuiInClipRect(float x, float y);
-void imGuiBeginClip(Rectf rect);	// Clip away any drawing and inputs outside this rect until imGuiEndClip() is called.
-void imGuiEndClip();
+roStatus guiInit();
+void guiClose();
+
+void guiBegin(Canvas& canvas);
+void guiEnd();
+
+bool guiInClipRect(float x, float y);
+void guiBeginClip(Rectf rect);	// Clip away any drawing and inputs outside this rect until guiEndClip() is called.
+void guiEndClip();
 
 // Label
-void imGuiLabel(Rectf rect, const roUtf8* text);
+void guiLabel(Rectf rect, const roUtf8* text);
 
 // Check box
-bool imGuiCheckBox(Rectf rect, const roUtf8* text, bool& state);
+bool guiCheckBox(Rectf rect, const roUtf8* text, bool& state);
 
 // Button
-struct imGuiButtonState : public imGuiWigetState {
-	imGuiButtonState();
+struct GuiButtonState : public GuiWigetState {
+	GuiButtonState();
 };
-bool imGuiButton(imGuiButtonState& state, const roUtf8* text);
-bool imGuiButtonLogic(imGuiButtonState& state);
+bool guiButton(GuiButtonState& state, const roUtf8* text);
+bool guiButtonLogic(GuiButtonState& state);
 
 // Scroll bar
-struct imGuiScrollBarState : public imGuiWigetState {
-	imGuiScrollBarState();
-	imGuiButtonState arrowButton1, arrowButton2;
-	imGuiButtonState barButton;
+struct GuiScrollBarState : public GuiWigetState {
+	GuiScrollBarState();
+	GuiButtonState arrowButton1, arrowButton2;
+	GuiButtonState barButton;
 	float value, valueMax;
 	float smallStep, largeStep;
 	float _pageSize;
 };
-void imGuiVScrollBar(imGuiScrollBarState& state);
-void imGuiHScrollBar(imGuiScrollBarState& state);
-void imGuiVScrollBarLogic(imGuiScrollBarState& state);
-void imGuiHScrollBarLogic(imGuiScrollBarState& state);
+void guiVScrollBar(GuiScrollBarState& state);
+void guiHScrollBar(GuiScrollBarState& state);
+void guiVScrollBarLogic(GuiScrollBarState& state);
+void guiHScrollBarLogic(GuiScrollBarState& state);
 
 // Panel
-struct imGuiPanelState : public imGuiWigetState {
-	imGuiPanelState();
+struct GuiPanelState : public GuiWigetState {
+	GuiPanelState();
 	bool showBorder;
 	bool scrollable;
-	imGuiScrollBarState hScrollBar, vScrollBar;
+	GuiScrollBarState hScrollBar, vScrollBar;
 	Rectf _clientRect;
 	Rectf _virtualRect;
 };
-void imGuiBeginScrollPanel(imGuiPanelState& state);
-void imGuiEndScrollPanel();
+void guiBeginScrollPanel(GuiPanelState& state);
+void guiEndScrollPanel();
 
 // Text area
-struct imGuiTextAreaState : public imGuiPanelState {
+struct GuiTextAreaState : public GuiPanelState {
 };
-void imGuiTextArea(imGuiTextAreaState& state, const roUtf8* text);
+void guiTextArea(GuiTextAreaState& state, const roUtf8* text);
 
 // options
-void imGuiSetMargin(float margin);
-void imGuiSetTextAlign(const char* align);
-void imGuiSetTextColor(float r, float g, float b, float a);
+void guiSetMargin(float margin);
+void guiSetTextAlign(const char* align);
+void guiSetTextColor(float r, float g, float b, float a);
 
 }	// namespace ro
 
