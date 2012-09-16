@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "canvasgradient.h"
-#include "color.h"
 #include "../../roar/render/roCanvas.h"
+#include "../../roar/render/roColor.h"
 
 namespace Dom {
 
@@ -65,7 +65,7 @@ void CanvasGradient::createRadial(float xStart, float yStart, float radiusStart,
 
 void CanvasGradient::addColorStop(float offset, const char* color)
 {
-	Color c;
+	ro::Colorf c;
 	c.parse(color);
 	ro::Canvas::addGradientColorStop(handle, offset, c.r, c.g, c.b, c.a);
 }

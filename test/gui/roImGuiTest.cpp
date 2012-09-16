@@ -30,16 +30,16 @@ TEST_FIXTURE(ImGuiTest, button)
 
 	bool showDetails = true;
 	imGuiPanelState panel[2];
-	panel[0].rect = imGuiRect(0, 0, 500, 400);
-	panel[1].rect = imGuiRect(0, 200, 200-4, 200-4);
+	panel[0].rect = Rectf(0, 0, 500, 400);
+	panel[1].rect = Rectf(0, 200, 200-4, 200-4);
 
 	imGuiButtonState buttons[3];
-	buttons[0].rect = imGuiRect(5, 100, 90, 30);
-	buttons[1].rect = imGuiRect(105, 100, 90, 30);
-	buttons[2].rect = imGuiRect(5, 180);
+	buttons[0].rect = Rectf(5, 100, 90, 30);
+	buttons[1].rect = Rectf(105, 100, 90, 30);
+	buttons[2].rect = Rectf(5, 180);
 
 	imGuiTextAreaState textArea;
-	textArea.rect = imGuiRect(0, 0, 300, 200);
+	textArea.rect = Rectf(0, 0, 300, 200);
 
 	while(keepRun()) {
 		driver->clearColor(68.0f/256, 68.0f/256, 68.0f/256, 1);
@@ -51,8 +51,8 @@ TEST_FIXTURE(ImGuiTest, button)
 			imGuiTextArea(textArea, "Hello asdfas dffewar ad eghtdagtewg wdsfg ewrsg hahahahahah\nLine 2\nLine 3");
 
 			imGuiBeginScrollPanel(panel[1]);
-				imGuiLabel(imGuiRect(0, 20), "Hello world! I am Ricky Lung");
-				imGuiCheckBox(imGuiRect(5, 60), "Show details", showDetails);
+				imGuiLabel(Rectf(0, 20), "Hello world! I am Ricky Lung");
+				imGuiCheckBox(Rectf(5, 60), "Show details", showDetails);
 				if(showDetails) {
 					imGuiButton(buttons[0], "OK");
 					imGuiButton(buttons[1], "Cancel");

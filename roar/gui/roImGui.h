@@ -3,6 +3,8 @@
 
 #include "../base/roStatus.h"
 #include "../math/roRect.h"
+#include "../render/roColor.h"
+#include "../render/roTexture.h"
 
 namespace ro {
 
@@ -16,6 +18,8 @@ void imGuiEnd();
 
 // Style
 struct imGuiStyle {
+	Colorf backgroundColor;
+	TexturePtr backgroundImage;
 };
 
 // States

@@ -1,16 +1,16 @@
-#ifndef __DOM_COLOR_H__
-#define __DOM_COLOR_H__
+#ifndef __render_roColor_h__
+#define __render_roColor_h__
 
-namespace Dom {
+namespace ro {
 
-class Color
+class Colorf
 {
 public:
 	/// Default color is black
-	Color();
+	Colorf();
 
-	Color(float r, float g, float b);
-	Color(float r, float g, float b, float a);
+	Colorf(float r, float g, float b);
+	Colorf(float r, float g, float b, float a);
 
 // Operation
 	/// http://msdn.microsoft.com/en-us/library/ms531197%28v=vs.85%29.aspx
@@ -21,8 +21,8 @@ public:
 
 // Attributes
 	float r, g, b, a;
-};	// Color
+};	// Colorf
 
-}	// namespace Dom
+}	// namespace ro
 
-#endif	// __DOM_COLOR_H__
+#endif	// __render_roColor_h__

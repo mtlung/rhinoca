@@ -592,6 +592,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\render\roColor.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\render\roColor.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\render\roFont.cpp"
 				>
 			</File>

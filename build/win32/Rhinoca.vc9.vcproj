@@ -332,14 +332,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\dom\color.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\dom\color.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\dom\cssparser.cpp"
 				>
 			</File>

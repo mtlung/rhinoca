@@ -1,9 +1,9 @@
 #ifndef __CSS_ELEMENTSTYLE_H__
 #define __CSS_ELEMENTSTYLE_H__
 
-#include "color.h"
 #include "../jsbindable.h"
 #include "../../roar/math/roMatrix.h"
+#include "../../roar/render/roColor.h"
 #include "../../roar/render/roTexture.h"
 
 namespace Dom {
@@ -90,7 +90,7 @@ public:
 	ro::TexturePtr backgroundImage;
 
 	bool setBackgroundColor(const char* cssColor);
-	Color backgroundColor;
+	ro::Colorf backgroundColor;
 
 	static JSClass jsClass;
 };	// ElementStyle

@@ -1,10 +1,10 @@
 #include "pch.h"
 #include "canvas2dcontext.h"
 #include "canvasgradient.h"
-#include "color.h"
 #include "image.h"
 #include "imagedata.h"
 #include "../../roar/base/roLog.h"
+#include "../../roar/render/roColor.h"
 
 using namespace Render;
 using namespace ro;
@@ -61,7 +61,7 @@ static JSBool getStrokeStyle(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
 	if(!self) return JS_FALSE;
 
-	Color c;
+	Colorf c;
 	self->_canvas.getStrokeColor((float*)(&c));
 
 	char str[10];
@@ -82,7 +82,7 @@ static JSBool setStrokeStyle(JSContext* cx, JSObject* obj, jsid id, JSBool stric
 		self->_canvas.setStrokeGradient(g->handle);
 	}
 	else {
-		Color c;
+		Colorf c;
 		JsString jss(cx, *vp);
 		if(c.parse(jss.c_str()))
 			self->_canvas.setStrokeColor((float*)&c);
@@ -100,7 +100,7 @@ static JSBool getFillStyle(JSContext* cx, JSObject* obj, jsid id, jsval* vp)
 	CanvasRenderingContext2D* self = getJsBindable<CanvasRenderingContext2D>(cx, obj);
 	if(!self) return JS_FALSE;
 
-	Color c;
+	Colorf c;
 	self->_canvas.getFillColor((float*)(&c));
 
 	char str[10];
@@ -122,7 +122,7 @@ static JSBool setFillStyle(JSContext* cx, JSObject* obj, jsid id, JSBool strict,
 		self->_canvas.setFillGradient(g->handle);
 	}
 	else {
-		Color c;
+		Colorf c;
 		JsString jss(cx, *vp);
 		if(c.parse(jss.c_str()))
 			self->_canvas.setFillColor((float*)&c);

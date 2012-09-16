@@ -1,33 +1,33 @@
 #include "pch.h"
-#include "color.h"
-#include "../common.h"
-#include "../../roar/base/roStringUtility.h"
+#include "roColor.h"
+//#include "../common.h"
+#include "../base/roStringUtility.h"
 #include <stdio.h>
 
-namespace Dom {
+namespace ro {
 
-Color::Color()
+Colorf::Colorf()
 	: r(0), g(0), b(0), a(1)
 {
 }
 
-Color::Color(float r_, float g_, float b_)
+Colorf::Colorf(float r_, float g_, float b_)
 	: r(r_), g(g_), b(b_), a(1)
 {
 }
 
-Color::Color(float r_, float g_, float b_, float a_)
+Colorf::Colorf(float r_, float g_, float b_, float a_)
 	: r(r_), g(g_), b(b_), a(a_)
 {
 }
 
 // TODO: Parse more formats
-bool Color::parse(const char* str)
+bool Colorf::parse(const char* str)
 {
 	if(!str)
 		return false;
 
-	unsigned len = 0;
+	roSize len = 0;
 	char buf[512];
 
 	const char* p = str;
@@ -37,7 +37,7 @@ bool Color::parse(const char* str)
 
 		buf[len] = (char)roToLower(*p);
 		++len;
-		if(len == COUNTOF(buf)) return false;
+		if(len == roCountof(buf)) return false;
 		++p;
 	}
 	buf[len] = '\0';
@@ -104,35 +104,35 @@ bool Color::parse(const char* str)
 
 	struct NamedColor {
 		const char* name;
-		Color color;
+		Colorf color;
 	};
 
 	static const float x80 = float(0x80)/0xFF;
 	static const float xC0 = float(0xC0)/0xFF;
 
 	static const NamedColor namedColors[] = {
-		{ "black",		Color(0, 0, 0) },
-		{ "silver",		Color(xC0, xC0, xC0) },
-		{ "gray",		Color(x80, x80, x80) },
-		{ "white",		Color(1, 1, 1) },
+		{ "black",		Colorf(0, 0, 0) },
+		{ "silver",		Colorf(xC0, xC0, xC0) },
+		{ "gray",		Colorf(x80, x80, x80) },
+		{ "white",		Colorf(1, 1, 1) },
 
-		{ "maroon",		Color(x80, 0, 0) },
-		{ "red",		Color(1, 0, 0) },
-		{ "purple",		Color(x80, 0, x80) },
-		{ "fuchsia",	Color(1, 0, 1) },
+		{ "maroon",		Colorf(x80, 0, 0) },
+		{ "red",		Colorf(1, 0, 0) },
+		{ "purple",		Colorf(x80, 0, x80) },
+		{ "fuchsia",	Colorf(1, 0, 1) },
 
-		{ "green",		Color(0, x80, 0) },
-		{ "lime",		Color(0, 1, 0) },
-		{ "ilive",		Color(x80, 0, x80) },
-		{ "yellow",		Color(1, 1, 0) },
+		{ "green",		Colorf(0, x80, 0) },
+		{ "lime",		Colorf(0, 1, 0) },
+		{ "ilive",		Colorf(x80, 0, x80) },
+		{ "yellow",		Colorf(1, 1, 0) },
 
-		{ "navy",		Color(0, 0, x80) },
-		{ "blue",		Color(0, 0, 1) },
-		{ "teal",		Color(0, x80, x80) },
-		{ "aqua",		Color(0, 1, 1) },
+		{ "navy",		Colorf(0, 0, x80) },
+		{ "blue",		Colorf(0, 0, 1) },
+		{ "teal",		Colorf(0, x80, x80) },
+		{ "aqua",		Colorf(0, 1, 1) },
 	};
 
-	for(unsigned i=0; i<COUNTOF(namedColors); ++i)
+	for(roSize i=0; i<roCountof(namedColors); ++i)
 		if(roStrCaseCmp(buf, namedColors[i].name) == 0) {
 			*this = namedColors[i].color;
 			return true;
@@ -141,7 +141,7 @@ bool Color::parse(const char* str)
 	return false;
 }
 
-void Color::toString(char str[10])
+void Colorf::toString(char str[10])
 {
 	int r_ = int(r * 255);
 	int g_ = int(g * 255);
@@ -151,4 +151,4 @@ void Color::toString(char str[10])
 	sprintf(str, "#%02x%02x%02x%02x", r_, g_, b_, a_);
 }
 
-}	// namespace Dom
+}	// namespace ro
