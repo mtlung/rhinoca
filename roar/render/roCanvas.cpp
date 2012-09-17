@@ -451,6 +451,15 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 	sx1 *= invw; sx2 *= invw;
 	sy1 *= invh; sy2 *= invh;
 
+	// Adjust UV so that the sampling position after interpolation is at the center,
+	// making a perfect pixel transfer even src size and dst size are not the same.
+	float centriodOffsetx = 0.5f * invw * (1 - srcw / dstw);
+	float centriodOffsety = 0.5f * invh * (1 - srch / dsth);
+	sx1 += centriodOffsetx;
+	sx2 -= centriodOffsetx;
+	sy1 += centriodOffsety;
+	sy2 -= centriodOffsety;
+
 	float vertex[4][6] = {
 		{dx1, dy1, z, 1,	sx1,sy1},
 		{dx2, dy1, z, 1,	sx2,sy1},
