@@ -4,10 +4,15 @@ GuiButtonState::GuiButtonState()
 
 bool guiButton(GuiButtonState& state, const roUtf8* text, const GuiStyle* style)
 {
+	bool clicked = guiButtonLogic(state, text, style);
+	guiButtonDraw(state, text, style);
+	return clicked;
+}
+
+void guiButtonDraw(GuiButtonState& state, const roUtf8* text, const GuiStyle* style)
+{
 	if(!text) text = "";
 	if(!style) style = &guiSkin.button;
-
-	bool clicked = guiButtonLogic(state, text, style);
 
 	const Rectf& rect = state._deducedRect;
 	Canvas& c = *_states.canvas;
@@ -26,11 +31,11 @@ bool guiButton(GuiButtonState& state, const roUtf8* text, const GuiStyle* style)
 	}
 
 	// Draw the text
-	c.setGlobalColor(sStyle.textColor.data);
-	float buttonDownOffset = state.isActive ? 1.0f : 0;
-	c.fillText(text, rect.centerx(), rect.centery() + buttonDownOffset, -1);
-
-	return clicked;
+	if(text && *text != '\0') {
+		c.setGlobalColor(sStyle.textColor.data);
+		float buttonDownOffset = state.isActive ? 1.0f : 0;
+		c.fillText(text, rect.centerx(), rect.centery() + buttonDownOffset, -1);
+	}
 }
 
 bool guiButtonLogic(GuiButtonState& state, const roUtf8* text, const GuiStyle* style)
@@ -42,5 +47,5 @@ bool guiButtonLogic(GuiButtonState& state, const roUtf8* text, const GuiStyle* s
 	_setContentExtend(state, *style, textExtend);
 	_updateWigetState(state);
 
-	return state.isHover && state.isActive && _states.mouseUp();
+	return state.isClicked;
 }

@@ -36,11 +36,12 @@ struct GuiSkin {
 	GuiStyle button;
 	GuiStyle checkBox;
 	GuiStyle vScrollbar;
-	GuiStyle vScrollbarLeftButton;
-	GuiStyle vScrollbarRightButton;
+	GuiStyle vScrollbarUpButton;
+	GuiStyle vScrollbarDownButton;
 	GuiStyle hScrollbar;
 	GuiStyle hScrollbarLeftButton;
 	GuiStyle hScrollbarRightButton;
+	GuiStyle panel;
 	GuiStyle textArea;
 };
 
@@ -53,6 +54,8 @@ struct GuiWigetState {
 	bool isEnable;
 	bool isHover;
 	bool isActive;
+	bool isClicked;
+	bool isClickRepeated;
 	bool isLastFrameEnable;
 	bool isLastFrameHover;
 	bool isLastFrameActive;
@@ -83,6 +86,7 @@ struct GuiButtonState : public GuiWigetState {
 	GuiButtonState();
 };
 bool guiButton(GuiButtonState& state, const roUtf8* text=NULL, const GuiStyle* style=NULL);
+void guiButtonDraw(GuiButtonState& state, const roUtf8* text=NULL, const GuiStyle* style=NULL);
 bool guiButtonLogic(GuiButtonState& state, const roUtf8* text=NULL, const GuiStyle* style=NULL);
 
 // Scroll bar

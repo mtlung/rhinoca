@@ -25,24 +25,10 @@ void guiVScrollBar(GuiScrollBarState& state)
 	);
 
 	// The up button
-	Rectf& rectBut1 = state.arrowButton1.rect;
-	bool isUpButtonHot = _isHot(rectBut1);
-	roRDriverTexture* texBut = _states.skin.texScrollPanel[isUpButtonHot ? 4 : 3]->handle;
-	c.drawImage(
-		texBut,
-		0, 0, (float)texBut->width, texBut->height / 2.f,
-		rectBut1.x, rectBut1.y, rectBut1.w, rectBut1.h
-	);
+	guiButtonDraw(state.arrowButton1, NULL, &guiSkin.vScrollbarUpButton);
 
 	// The down button
-	Rectf& rectBut2 = state.arrowButton2.rect;
-	bool isDownButtonHot = _isHot(rectBut2);
-	texBut = _states.skin.texScrollPanel[isDownButtonHot ? 4 : 3]->handle;
-	c.drawImage(
-		texBut,
-		0, texBut->height / 2.f, (float)texBut->width, texBut->height / 2.f,
-		rectBut2.x, rectBut2.y, rectBut2.w, rectBut2.h
-	);
+	guiButtonDraw(state.arrowButton2, NULL, &guiSkin.vScrollbarDownButton);
 
 	// The bar
 	roRDriverTexture* texBar = _states.skin.texScrollPanel[2]->handle;
@@ -100,18 +86,18 @@ void guiVScrollBarLogic(GuiScrollBarState& state)
 	float barSize = roMaxOf2((state._pageSize * slideSize) / (state.valueMax + state._pageSize), 10.f);
 
 	// Update buttons
-	roRDriverTexture* texBut = _states.skin.texScrollPanel[3]->handle;
+	float upButtonHeight = (float)guiSkin.vScrollbarUpButton.normal.backgroundImage->height();
+	rectButU = Rectf(rect.x, rect.y, rect.w, upButtonHeight);
+	guiButtonLogic(state.arrowButton1, NULL, &guiSkin.vScrollbarUpButton);
 
-	rectButU = Rectf(rect.x, rect.y, rect.w, texBut->height / 2.f);
-	state.arrowButton1.isHover = _isHover(rectButU);
-
-	rectButD = Rectf(rect.x, rect.bottom() - texBut->height / 2.f, rect.w, texBut->height / 2.f);
-	state.arrowButton2.isHover = _isHover(rectButD);
+	float downButtonHeight = (float)guiSkin.vScrollbarDownButton.normal.backgroundImage->height();
+	rectButD = Rectf(rect.x, rect.bottom() - downButtonHeight, rect.w, downButtonHeight);
+	guiButtonLogic(state.arrowButton2, NULL, &guiSkin.vScrollbarDownButton);
 
 	// Handle arrow button click
-	if(guiButtonLogic(state.arrowButton1) || _isRepeatedClick(rectButU))
+	if(state.arrowButton1.isClicked || state.arrowButton1.isClickRepeated)
 		state.value -= state.smallStep;
-	if(guiButtonLogic(state.arrowButton2) || _isRepeatedClick(rectButD))
+	if(state.arrowButton2.isClicked || state.arrowButton2.isClickRepeated)
 		state.value += state.smallStep;
 
 	// Handle bar background click
@@ -154,15 +140,15 @@ void guiHScrollBarLogic(GuiScrollBarState& state)
 	roRDriverTexture* texBut = _states.skin.texScrollPanel[7]->handle;
 
 	rectButL = Rectf(rect.x, rect.y, texBut->width / 2.f, rect.h);
-	state.arrowButton1.isHover = _isHover(rectButL);
+	guiButtonLogic(state.arrowButton1, NULL, &guiSkin.hScrollbarLeftButton);
 
 	rectButR = Rectf(rect.right() - texBut->width / 2.f, rect.y, texBut->width / 2.f, rect.h);
-	state.arrowButton2.isHover = _isHover(rectButR);
+	guiButtonLogic(state.arrowButton2, NULL, &guiSkin.hScrollbarRightButton);
 
 	// Handle arrow button click
-	if(guiButtonLogic(state.arrowButton1) || _isRepeatedClick(rectButL))
+	if(state.arrowButton1.isClicked || state.arrowButton1.isClickRepeated)
 		state.value -= state.smallStep;
-	if(guiButtonLogic(state.arrowButton2) || _isRepeatedClick(rectButR))
+	if(state.arrowButton2.isClicked || state.arrowButton2.isClickRepeated)
 		state.value += state.smallStep;
 
 	// Handle bar background click

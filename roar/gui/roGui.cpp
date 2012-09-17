@@ -37,12 +37,13 @@ roStatus Skin::init()
 	const Colorf transparent = Colorf(0, 0, 0, 0);
 
 	GuiStyle baseStyle;
+	baseStyle.border = 0;
 	baseStyle.padding = 5;
 	baseStyle.normal.textColor = white;
-	baseStyle.normal.backgroundColor = transparent;
 	baseStyle.hover.textColor = Colorf(0.7f, 0.9f, 0.9f);
-	baseStyle.hover.backgroundColor = transparent;
 	baseStyle.active.textColor = baseStyle.hover.textColor;
+	baseStyle.normal.backgroundColor = transparent;
+	baseStyle.hover.backgroundColor = transparent;
 	baseStyle.active.backgroundColor = transparent;
 
 	{	GuiStyle& style = guiSkin.label;
@@ -57,11 +58,35 @@ roStatus Skin::init()
 		style = baseStyle;
 		style.border = 3;
 		style.normal.backgroundColor = white;
-		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/button.png");
 		style.hover.backgroundColor = white;
-		style.hover.backgroundImage = mgr->loadAs<Texture>("imGui/button_.png");
 		style.active.backgroundColor = white;
+		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/button.png");
+		style.hover.backgroundImage = mgr->loadAs<Texture>("imGui/button_.png");
 		style.active.backgroundImage = mgr->loadAs<Texture>("imGui/button_.png");
+	}
+
+	{	GuiStyle& style = guiSkin.vScrollbarUpButton;
+		style = baseStyle;
+		style.normal.backgroundColor = white;
+		style.hover.backgroundColor = white;
+		style.active.backgroundColor = white;
+		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/scrollbar-upbutton-normal.png");
+		style.hover.backgroundImage = style.normal.backgroundImage;
+		style.active.backgroundImage = mgr->loadAs<Texture>("imGui/scrollbar-upbutton-active.png");
+	}
+
+	{	GuiStyle& style = guiSkin.vScrollbarDownButton;
+		style = baseStyle;
+		style.normal.backgroundColor = white;
+		style.hover.backgroundColor = white;
+		style.active.backgroundColor = white;
+		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/scrollbar-downbutton-normal.png");
+		style.hover.backgroundImage = style.normal.backgroundImage;
+		style.active.backgroundImage = mgr->loadAs<Texture>("imGui/scrollbar-downbutton-active.png");
+	}
+
+	{	GuiStyle& style = guiSkin.panel;
+		style = baseStyle;
 	}
 
 	{	GuiStyle& style = guiSkin.textArea;
@@ -78,8 +103,6 @@ roStatus Skin::init()
 	texScrollPanel[0] = mgr->loadAs<Texture>("imGui/panel-border-0.png");
 	texScrollPanel[1] = mgr->loadAs<Texture>("imGui/vscrollbar-bar-bg.png");
 	texScrollPanel[2] = mgr->loadAs<Texture>("imGui/vscrollbar-bar-0.png");
-	texScrollPanel[3] = mgr->loadAs<Texture>("imGui/vscrollbar-arrow-0.png");
-	texScrollPanel[4] = mgr->loadAs<Texture>("imGui/vscrollbar-arrow-1.png");
 	texScrollPanel[5] = mgr->loadAs<Texture>("imGui/hscrollbar-bar-bg.png");
 	texScrollPanel[6] = mgr->loadAs<Texture>("imGui/hscrollbar-bar-0.png");
 	texScrollPanel[7] = mgr->loadAs<Texture>("imGui/hscrollbar-arrow-0.png");
@@ -215,6 +238,11 @@ void guiClose()
 	_clearStyle(guiSkin.label);
 	_clearStyle(guiSkin.checkBox);
 	_clearStyle(guiSkin.button);
+	_clearStyle(guiSkin.vScrollbarUpButton);
+	_clearStyle(guiSkin.vScrollbarDownButton);
+	_clearStyle(guiSkin.hScrollbarLeftButton);
+	_clearStyle(guiSkin.hScrollbarRightButton);
+	_clearStyle(guiSkin.panel);
 	_clearStyle(guiSkin.textArea);
 	_states.skin.close();
 }
@@ -293,6 +321,9 @@ void guiLayout(Rectf& rect)
 
 static Sizef _calTextExtend(const roUtf8* str)
 {
+	if(!str || *str == '\0')
+		return Sizef();
+
 	TextMetrics metrics;
 	_states.canvas->measureText(str, FLT_MAX, metrics);
 
@@ -335,6 +366,11 @@ static void _updateWigetState(GuiWigetState& state)
 {
 	state.isHover = _isHover(state._deducedRect);
 	state.isActive = _isHot(state._deducedRect);
+	state.isClicked = state.isHover && state.isActive && _states.mouseUp();
+	state.isClickRepeated = state.isActive && _states.mousePulse;
+
+	if(state.isHover)
+		_states.hoveringObject = &state;
 
 	if(state.isActive)
 		_states.potentialHotObject = &state;
@@ -428,6 +464,8 @@ GuiWigetState::GuiWigetState()
 	isEnable = false;
 	isHover = false;
 	isActive = false;
+	isClicked = false;
+	isClickRepeated = false;
 	isLastFrameEnable = false;
 	isLastFrameHover = false;
 	isLastFrameActive = false;

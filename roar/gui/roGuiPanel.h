@@ -22,9 +22,8 @@ void guiBeginScrollPanel(GuiPanelState& state)
 	if(state._clientRect.w == 0 || state._clientRect.h == 0)
 		state._clientRect = state.rect;
 
-	state.isHover = _isHover(state.rect);
-	if(state.isHover)
-		_states.hoveringObject = &state;
+	_setContentExtend(state, guiSkin.panel, Sizef());
+	_updateWigetState(state);
 
 	// Detect mouse scroll
 	if(_states.lastFrameHoveringObject == &state && state.scrollable)
