@@ -8,6 +8,7 @@ class Colorf
 public:
 	/// Default color is black
 	Colorf();
+	Colorf(const char* str, const Colorf& fallback=Colorf());
 
 	Colorf(float r, float g, float b);
 	Colorf(float r, float g, float b, float a);
@@ -20,6 +21,10 @@ public:
 	void toString(char str[10]);
 
 // Attributes
+	static const Colorf black;
+	static const Colorf white;
+	static const Colorf transparent;
+
 	union { struct {
 		float r, g, b, a;
 	};

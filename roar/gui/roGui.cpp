@@ -12,12 +12,6 @@ namespace ro {
 
 namespace {
 
-static void _mergeExtend(Rectf& rect1, const Rectf& rect2)
-{
-	rect1.w = roMaxOf2(rect1.w, rect2.x + rect2.w);
-	rect1.h = roMaxOf2(rect1.h, rect2.y + rect2.h);
-}
-
 struct Skin
 {
 	roStatus init();
@@ -39,60 +33,40 @@ roStatus Skin::init()
 	ResourceManager* mgr = roSubSystems->resourceMgr;
 	if(!mgr) return roStatus::not_initialized;
 
+	const Colorf white = Colorf(1, 1, 1);
+	const Colorf transparent = Colorf(0, 0, 0, 0);
+
+	GuiStyle baseStyle;
+	baseStyle.padding = 5;
+	baseStyle.normal.textColor = white;
+	baseStyle.normal.backgroundColor = transparent;
+	baseStyle.hover.textColor = Colorf(0.7f, 0.9f, 0.9f);
+	baseStyle.hover.backgroundColor = transparent;
+	baseStyle.active.textColor = baseStyle.hover.textColor;
+	baseStyle.active.backgroundColor = transparent;
+
 	{	GuiStyle& style = guiSkin.label;
-		style.border = 0;
-		style.padding = 5;
-		style.normal.textColor = Colorf(1, 1, 1);
-		style.normal.backgroundColor = Colorf(1, 1, 1, 0);
-		style.normal.backgroundImage = NULL;
-		style.hover.textColor = Colorf(1, 1, 1);
-		style.hover.backgroundColor = Colorf(1, 1, 1, 0);
-		style.hover.backgroundImage = NULL;
-		style.active.textColor = Colorf(1, 1, 1);
-		style.active.backgroundColor = Colorf(1, 1, 1, 0);
-		style.active.backgroundImage = NULL;
+		style = baseStyle;
 	}
 
 	{	GuiStyle& style = guiSkin.checkBox;
-		style.border = 0;
-		style.padding = 5;
-		style.normal.textColor = Colorf(1, 1, 1);
-		style.normal.backgroundColor = Colorf(1, 1, 1, 0);
-		style.normal.backgroundImage = NULL;
-		style.hover.textColor = Colorf(1, 1, 1);
-		style.hover.backgroundColor = Colorf(1, 1, 1, 0);
-		style.hover.backgroundImage = NULL;
-		style.active.textColor = Colorf(1, 1, 1);
-		style.active.backgroundColor = Colorf(1, 1, 1, 0);
-		style.active.backgroundImage = NULL;
+		style = baseStyle;
 	}
 
 	{	GuiStyle& style = guiSkin.button;
+		style = baseStyle;
 		style.border = 3;
-		style.padding = 5;
-		style.normal.textColor = Colorf(1, 1, 1);
-		style.normal.backgroundColor = Colorf(1, 1, 1);
+		style.normal.backgroundColor = white;
 		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/button.png");
-		style.hover.textColor = Colorf(1, 1, 1);
-		style.hover.backgroundColor = Colorf(1, 1, 1);
+		style.hover.backgroundColor = white;
 		style.hover.backgroundImage = mgr->loadAs<Texture>("imGui/button_.png");
-		style.active.textColor = Colorf(1, 1, 1);
-		style.active.backgroundColor = Colorf(1, 1, 1);
+		style.active.backgroundColor = white;
 		style.active.backgroundImage = mgr->loadAs<Texture>("imGui/button_.png");
 	}
 
 	{	GuiStyle& style = guiSkin.textArea;
+		style = baseStyle;
 		style.border = 3;
-		style.padding = 5;
-		style.normal.textColor = Colorf(1, 1, 1);
-		style.normal.backgroundColor = Colorf(1, 1, 1);
-		style.normal.backgroundImage = NULL;
-		style.hover.textColor = Colorf(1, 1, 1);
-		style.hover.backgroundColor = Colorf(1, 1, 1);
-		style.hover.backgroundImage = NULL;
-		style.active.textColor = Colorf(1, 1, 1);
-		style.active.backgroundColor = Colorf(1, 1, 1);
-		style.active.backgroundImage = NULL;
 	}
 
 	texCheckbox[0] = mgr->loadAs<Texture>("imGui/checkbox-0.png");
@@ -118,6 +92,7 @@ static const GuiStyle::StateSensitiveStyle& _selectStateSensitiveSytle(const Gui
 {
 	const GuiStyle::StateSensitiveStyle* ret = &style.normal;
 	if(state.isHover) ret = &style.hover;
+	if(state.isActive) ret = &style.active;
 
 	return *ret;
 }
@@ -316,26 +291,28 @@ void guiLayout(Rectf& rect)
 {
 }
 
-static Rectf _calTextRect(const Rectf& prefered, const roUtf8* str)
+static Sizef _calTextExtend(const roUtf8* str)
 {
 	TextMetrics metrics;
 	_states.canvas->measureText(str, FLT_MAX, metrics);
 
-	Rectf ret = prefered;
-	ret.w = roMaxOf2(prefered.w, metrics.width);
-	ret.h = roMaxOf2(prefered.h, metrics.height);
-
-	return ret;
+	return Sizef(metrics.width, metrics.height);
 }
 
-static void _setContentRect(GuiWigetState& state, const GuiStyle& style, float contentWidth, float contentHeight)
+static void _mergeExtend(Rectf& rect1, const Rectf& rect2)
+{
+	rect1.w = roMaxOf2(rect1.w, rect2.x + rect2.w);
+	rect1.h = roMaxOf2(rect1.h, rect2.y + rect2.h);
+}
+
+static void _setContentExtend(GuiWigetState& state, const GuiStyle& style, const Sizef& size)
 {
 	Rectf& deduced = state._deducedRect;
 
 	// Add padding to the content rect
 	deduced = state.rect;
-	deduced.w = roMaxOf2(deduced.w, contentWidth + 2 * style.padding);
-	deduced.h = roMaxOf2(deduced.h, contentHeight + 2 * style.padding);
+	deduced.w = roMaxOf2(deduced.w, size.w + 2 * style.padding);
+	deduced.h = roMaxOf2(deduced.h, size.h + 2 * style.padding);
 
 	_mergeExtend(_states.panelStateStack.back()->_virtualRect, state._deducedRect);
 }

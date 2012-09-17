@@ -1,19 +1,22 @@
 void guiTextArea(GuiTextAreaState& state, const roUtf8* text)
 {
 	state._deducedRect = state.rect;
+	_setContentExtend(state, guiSkin.textArea, Sizef());
 	_updateWigetState(state);
-	_setContentRect(state, guiSkin.textArea, 0, 0);
 
 	guiBeginScrollPanel(state);
 		GuiWigetState labelState;
-		Rectf textRect = _calTextRect(Rectf(), text);
-		_setContentRect(labelState, guiSkin.textArea, textRect.w, textRect.h);
+		Sizef textExtend = _calTextExtend(text);
+		_setContentExtend(labelState, guiSkin.textArea, textExtend);
+		_updateWigetState(labelState);
 
 		Canvas& c = *_states.canvas;
 		float padding = guiSkin.textArea.padding;
+		const GuiStyle::StateSensitiveStyle& sStyle = _selectStateSensitiveSytle(labelState, guiSkin.textArea);
 
 		c.setTextAlign("left");
 		c.setTextBaseline("top");
-		c.fillText(text, textRect.x + padding, textRect.y + padding, -1);
+		c.setGlobalColor(sStyle.textColor.data);
+		c.fillText(text, padding, padding, -1);
 	guiEndScrollPanel();
 }

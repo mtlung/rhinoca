@@ -58,7 +58,7 @@ struct GuiWigetState {
 	bool isLastFrameActive;
 	Rectf rect;
 
-	Rectf _deducedRect;
+	Rectf _deducedRect;	// The final rectangle after considered content size and layout engine
 };
 
 // Common

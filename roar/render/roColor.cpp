@@ -6,9 +6,19 @@
 
 namespace ro {
 
+const Colorf Colorf::black = Colorf(0, 0, 0, 1);
+const Colorf Colorf::white = Colorf(1, 1, 1, 1);
+const Colorf Colorf::transparent = Colorf(0, 0, 0, 0);
+
 Colorf::Colorf()
 	: r(0), g(0), b(0), a(1)
 {
+}
+
+Colorf::Colorf(const char* str, const Colorf& fallback)
+{
+	if(!parse(str))
+		*this = fallback;
 }
 
 Colorf::Colorf(float r_, float g_, float b_)

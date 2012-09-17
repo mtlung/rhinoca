@@ -16,7 +16,14 @@ bool guiButton(GuiButtonState& state, const roUtf8* text, const GuiStyle* style)
 	// Draw the background
 	roRDriverTexture* tex = _selectBackgroundTexture(state, *style);
 	c.setGlobalColor(sStyle.backgroundColor.data);
-	_draw3x3(tex, rect, style->border);
+	if(sStyle.backgroundColor.a > 0 && !tex) {
+		c.setFillColor(1, 1, 1, 1);
+		c.fillRect(rect.x, rect.y, rect.w, rect.h);
+	}
+	else if(tex) {
+		c.setFillColor(0, 0, 0, 0);
+		_draw3x3(tex, rect, style->border);
+	}
 
 	// Draw the text
 	c.setGlobalColor(sStyle.textColor.data);
@@ -31,8 +38,8 @@ bool guiButtonLogic(GuiButtonState& state, const roUtf8* text, const GuiStyle* s
 	if(!text) text = "";
 	if(!style) style = &guiSkin.button;
 
-	Rectf textRect = _calTextRect(Rectf(), text);
-	_setContentRect(state, *style, textRect.w, textRect.h);
+	Sizef textExtend = _calTextExtend(text);
+	_setContentExtend(state, *style, textExtend);
 	_updateWigetState(state);
 
 	return state.isHover && state.isActive && _states.mouseUp();

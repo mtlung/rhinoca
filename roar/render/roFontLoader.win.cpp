@@ -599,10 +599,11 @@ roStatus FontImpl::measure(const roUtf8* str, roSize maxStrLen, float maxWidth, 
 		return roStatus::not_initialized;
 
 	FontData& fontData = typefaces[currnetFontForDraw];
+	metrics.lineSpacing = float(fontData.tm.tmHeight + fontData.tm.tmInternalLeading + fontData.tm.tmExternalLeading);
 
 	float x_ = 0, y_ = 0;
 	RecordMaxValue<float> x = x_, y = y_;
-	y.max = (float)fontData.tm.tmHeight;
+	y.max = metrics.lineSpacing;
 
 	// Pointer to the last and the current glyph
 	Glyph* g1 = NULL, *g2 = NULL;
@@ -626,7 +627,7 @@ roStatus FontImpl::measure(const roUtf8* str, roSize maxStrLen, float maxWidth, 
 		}
 		if(w == L'\n') {
 			x = x_;
-			y += fontData.tm.tmHeight;
+			y += metrics.lineSpacing;
 
 			continue;
 		}
@@ -658,7 +659,6 @@ roStatus FontImpl::measure(const roUtf8* str, roSize maxStrLen, float maxWidth, 
 
 	metrics.width = x.max;
 	metrics.height = y.max;
-	metrics.lineSpacing = float(fontData.tm.tmHeight + fontData.tm.tmInternalLeading + fontData.tm.tmExternalLeading);
 
 	if(someGlyphNotLoaded)
 		return roStatus::not_loaded;
