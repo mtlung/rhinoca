@@ -39,6 +39,11 @@ void guiBeginScrollPanel(GuiPanelState& state)
 	virtualRect.w = 0;
 	virtualRect.h = 0;
 
+	// Draw background
+	GuiButtonState buttonState;
+	static_cast<GuiWigetState&>(buttonState) = state;
+	guiButtonDraw(buttonState, NULL, &guiSkin.panel);
+
 	guiBeginClip(state._clientRect);
 
 	// NOTE: Truncate float value to integer, so we will always have pixel perfect match
@@ -66,8 +71,8 @@ void guiEndScrollPanel()
 	// Determine whether we need to show scroll bars
 	bool showVScrollBar = false;
 	bool showHScrollBar = false;
-	float vScrollBarThickness = (float)_states.skin.texScrollPanel[2]->width();
-	float hScrollBarThickness = (float)_states.skin.texScrollPanel[6]->height();
+	float vScrollBarThickness = (float)guiSkin.vScrollbarThumbButton.normal.backgroundImage->width();
+	float hScrollBarThickness = (float)guiSkin.hScrollbarThumbButton.normal.backgroundImage->height();
 	if(panelState.scrollable && (virtualRect.w > rect.w || virtualRect.h > rect.h)) {
 		showVScrollBar = virtualRect.h > rect.h;
 		showHScrollBar = virtualRect.w > (rect.w - vScrollBarThickness);
@@ -84,8 +89,8 @@ void guiEndScrollPanel()
 	clientRect.h -= showHScrollBar ? hScrollBarThickness : 0;
 
 	// Draw the border
-	if(panelState.showBorder)
-		_draw3x3(_states.skin.texScrollPanel[0]->handle, panelState.rect, border, false);
+//	if(panelState.showBorder)
+//		_draw3x3(_states.skin.texScrollPanel[0]->handle, panelState.rect, border, false);
 
 	if(panelState.scrollable)
 	{

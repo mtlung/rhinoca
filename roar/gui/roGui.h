@@ -11,10 +11,12 @@ namespace ro {
 struct Canvas;
 
 // Style
-struct GuiStyle {
+struct GuiStyle
+{
 	GuiStyle();
 
-	struct StateSensitiveStyle {
+	struct StateSensitiveStyle
+	{
 		Colorf textColor;
 		Colorf backgroundColor;
 		TexturePtr backgroundImage;
@@ -31,16 +33,19 @@ struct GuiStyle {
 
 // Modeled over Unity Gui skin
 // http://docs.unity3d.com/Documentation/Components/class-GUISkin.html
-struct GuiSkin {
+struct GuiSkin
+{
 	GuiStyle label;
 	GuiStyle button;
 	GuiStyle checkBox;
 	GuiStyle vScrollbar;
 	GuiStyle vScrollbarUpButton;
 	GuiStyle vScrollbarDownButton;
+	GuiStyle vScrollbarThumbButton;
 	GuiStyle hScrollbar;
 	GuiStyle hScrollbarLeftButton;
 	GuiStyle hScrollbarRightButton;
+	GuiStyle hScrollbarThumbButton;
 	GuiStyle panel;
 	GuiStyle textArea;
 };
@@ -49,8 +54,10 @@ struct GuiSkin {
 extern GuiSkin guiSkin;
 
 // States
-struct GuiWigetState {
+struct GuiWigetState
+{
 	GuiWigetState();
+
 	bool isEnable;
 	bool isHover;
 	bool isActive;
@@ -82,7 +89,8 @@ void guiLabel(const Rectf& rect, const roUtf8* text);
 bool guiCheckBox(const Rectf& rect, const roUtf8* text, bool& state);
 
 // Button
-struct GuiButtonState : public GuiWigetState {
+struct GuiButtonState : public GuiWigetState
+{
 	GuiButtonState();
 };
 bool guiButton(GuiButtonState& state, const roUtf8* text=NULL, const GuiStyle* style=NULL);
@@ -90,7 +98,8 @@ void guiButtonDraw(GuiButtonState& state, const roUtf8* text=NULL, const GuiStyl
 bool guiButtonLogic(GuiButtonState& state, const roUtf8* text=NULL, const GuiStyle* style=NULL);
 
 // Scroll bar
-struct GuiScrollBarState : public GuiWigetState {
+struct GuiScrollBarState : public GuiWigetState
+{
 	GuiScrollBarState();
 	GuiButtonState arrowButton1, arrowButton2;
 	GuiButtonState barButton;
@@ -104,7 +113,8 @@ void guiVScrollBarLogic(GuiScrollBarState& state);
 void guiHScrollBarLogic(GuiScrollBarState& state);
 
 // Panel
-struct GuiPanelState : public GuiWigetState {
+struct GuiPanelState : public GuiWigetState
+{
 	GuiPanelState();
 	bool showBorder;
 	bool scrollable;

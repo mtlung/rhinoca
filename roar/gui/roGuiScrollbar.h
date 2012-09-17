@@ -14,8 +14,6 @@ void guiVScrollBar(GuiScrollBarState& state)
 	Canvas& c = *_states.canvas;
 	const Rectf& rect = state.rect;
 
-	c.setGlobalColor(1, 1, 1, 1);
-
 	// Background
 	roRDriverTexture* texBg = _states.skin.texScrollPanel[1]->handle;
 	c.drawImage(
@@ -31,8 +29,7 @@ void guiVScrollBar(GuiScrollBarState& state)
 	guiButtonDraw(state.arrowButton2, NULL, &guiSkin.vScrollbarDownButton);
 
 	// The bar
-	roRDriverTexture* texBar = _states.skin.texScrollPanel[2]->handle;
-	_draw3x3(texBar, state.barButton.rect, 2);
+	guiButtonDraw(state.barButton, NULL, &guiSkin.vScrollbarThumbButton);
 }
 
 void guiHScrollBar(GuiScrollBarState& state)
@@ -42,8 +39,6 @@ void guiHScrollBar(GuiScrollBarState& state)
 	Canvas& c = *_states.canvas;
 	const Rectf& rect = state.rect;
 
-	c.setGlobalColor(1, 1, 1, 1);
-
 	// Background
 	roRDriverTexture* texBg = _states.skin.texScrollPanel[5]->handle;
 	c.drawImage(
@@ -52,29 +47,14 @@ void guiHScrollBar(GuiScrollBarState& state)
 		rect.x, rect.y, rect.w, rect.h
 	);
 
-	// The left button
-	Rectf& rectBut1 = state.arrowButton1.rect;
-	bool isLeftButtonHot = _isHot(rectBut1);
-	roRDriverTexture* texBut = _states.skin.texScrollPanel[isLeftButtonHot ? 8 : 7]->handle;
-	c.drawImage(
-		texBut,
-		0, 0, texBut->width / 2.f, (float)texBut->height,
-		rectBut1.x, rectBut1.y, rectBut1.w, rectBut1.h
-	);
+	// The up button
+	guiButtonDraw(state.arrowButton1, NULL, &guiSkin.hScrollbarLeftButton);
 
 	// The right button
-	Rectf& rectBut2 = state.arrowButton2.rect;
-	bool isRightButtonHot = _isHot(rectBut2);
-	texBut = _states.skin.texScrollPanel[isRightButtonHot ? 8 : 7]->handle;
-	c.drawImage(
-		texBut,
-		texBut->width / 2.f, 0, texBut->width / 2.f, (float)texBut->height,
-		rectBut2.x, rectBut2.y, rectBut2.w, rectBut2.h
-	);
+	guiButtonDraw(state.arrowButton2, NULL, &guiSkin.hScrollbarRightButton);
 
 	// The bar
-	roRDriverTexture* texBar = _states.skin.texScrollPanel[6]->handle;
-	_draw3x3(texBar, state.barButton.rect, 2);
+	guiButtonDraw(state.barButton, NULL, &guiSkin.hScrollbarThumbButton);
 }
 
 void guiVScrollBarLogic(GuiScrollBarState& state)
@@ -137,12 +117,12 @@ void guiHScrollBarLogic(GuiScrollBarState& state)
 	float barSize = roMaxOf2((state._pageSize * slideSize) / (state.valueMax + state._pageSize), 10.f);
 
 	// Update buttons
-	roRDriverTexture* texBut = _states.skin.texScrollPanel[7]->handle;
-
-	rectButL = Rectf(rect.x, rect.y, texBut->width / 2.f, rect.h);
+	float leftButtonWidth = (float)guiSkin.hScrollbarLeftButton.normal.backgroundImage->width();
+	rectButL = Rectf(rect.x, rect.y, leftButtonWidth, rect.h);
 	guiButtonLogic(state.arrowButton1, NULL, &guiSkin.hScrollbarLeftButton);
 
-	rectButR = Rectf(rect.right() - texBut->width / 2.f, rect.y, texBut->width / 2.f, rect.h);
+	float rightButtonWidth = (float)guiSkin.hScrollbarRightButton.normal.backgroundImage->width();
+	rectButR = Rectf(rect.right() - rightButtonWidth, rect.y, rightButtonWidth, rect.h);
 	guiButtonLogic(state.arrowButton2, NULL, &guiSkin.hScrollbarRightButton);
 
 	// Handle arrow button click

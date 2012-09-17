@@ -36,62 +36,92 @@ roStatus Skin::init()
 	const Colorf white = Colorf(1, 1, 1);
 	const Colorf transparent = Colorf(0, 0, 0, 0);
 
-	GuiStyle baseStyle;
-	baseStyle.border = 0;
-	baseStyle.padding = 5;
-	baseStyle.normal.textColor = white;
-	baseStyle.hover.textColor = Colorf(0.7f, 0.9f, 0.9f);
-	baseStyle.active.textColor = baseStyle.hover.textColor;
-	baseStyle.normal.backgroundColor = transparent;
-	baseStyle.hover.backgroundColor = transparent;
-	baseStyle.active.backgroundColor = transparent;
+	GuiStyle transparentStyle;
+	transparentStyle.border = 0;
+	transparentStyle.padding = 5;
+	transparentStyle.normal.textColor = white;
+	transparentStyle.hover.textColor = Colorf(0.7f, 0.9f, 0.9f);
+	transparentStyle.active.textColor = transparentStyle.hover.textColor;
+	transparentStyle.normal.backgroundColor = transparent;
+	transparentStyle.hover.backgroundColor = transparent;
+	transparentStyle.active.backgroundColor = transparent;
+
+	GuiStyle opaqueStyle = transparentStyle;
+	opaqueStyle.normal.backgroundColor = white;
+	opaqueStyle.hover.backgroundColor = white;
+	opaqueStyle.active.backgroundColor = white;
 
 	{	GuiStyle& style = guiSkin.label;
-		style = baseStyle;
+		style = transparentStyle;
 	}
 
 	{	GuiStyle& style = guiSkin.checkBox;
-		style = baseStyle;
+		style = transparentStyle;
 	}
 
 	{	GuiStyle& style = guiSkin.button;
-		style = baseStyle;
-		style.border = 3;
-		style.normal.backgroundColor = white;
-		style.hover.backgroundColor = white;
-		style.active.backgroundColor = white;
+		style = opaqueStyle;
+		style.border = 2;
 		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/button.png");
 		style.hover.backgroundImage = mgr->loadAs<Texture>("imGui/button_.png");
 		style.active.backgroundImage = mgr->loadAs<Texture>("imGui/button_.png");
 	}
 
 	{	GuiStyle& style = guiSkin.vScrollbarUpButton;
-		style = baseStyle;
-		style.normal.backgroundColor = white;
-		style.hover.backgroundColor = white;
-		style.active.backgroundColor = white;
+		style = opaqueStyle;
 		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/scrollbar-upbutton-normal.png");
 		style.hover.backgroundImage = style.normal.backgroundImage;
 		style.active.backgroundImage = mgr->loadAs<Texture>("imGui/scrollbar-upbutton-active.png");
 	}
 
 	{	GuiStyle& style = guiSkin.vScrollbarDownButton;
-		style = baseStyle;
-		style.normal.backgroundColor = white;
-		style.hover.backgroundColor = white;
-		style.active.backgroundColor = white;
+		style = opaqueStyle;
 		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/scrollbar-downbutton-normal.png");
 		style.hover.backgroundImage = style.normal.backgroundImage;
 		style.active.backgroundImage = mgr->loadAs<Texture>("imGui/scrollbar-downbutton-active.png");
 	}
 
+	{	GuiStyle& style = guiSkin.vScrollbarThumbButton;
+		style = opaqueStyle;
+		style.border = 2;
+		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/vscrollbar-thumb-normal.png");
+		style.hover.backgroundImage = style.normal.backgroundImage;
+		style.active.backgroundImage = style.normal.backgroundImage;
+	}
+
+	{	GuiStyle& style = guiSkin.hScrollbarLeftButton;
+		style = opaqueStyle;
+		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/scrollbar-leftbutton-normal.png");
+		style.hover.backgroundImage = style.normal.backgroundImage;
+		style.active.backgroundImage = mgr->loadAs<Texture>("imGui/scrollbar-leftbutton-active.png");
+	}
+
+	{	GuiStyle& style = guiSkin.hScrollbarRightButton;
+		style = opaqueStyle;
+		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/scrollbar-rightbutton-normal.png");
+		style.hover.backgroundImage = style.normal.backgroundImage;
+		style.active.backgroundImage = mgr->loadAs<Texture>("imGui/scrollbar-rightbutton-active.png");
+	}
+
+	{	GuiStyle& style = guiSkin.hScrollbarThumbButton;
+		style = opaqueStyle;
+		style.border = 2;
+		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/hscrollbar-thumb-normal.png");
+		style.hover.backgroundImage = style.normal.backgroundImage;
+		style.active.backgroundImage = style.normal.backgroundImage;
+	}
+
 	{	GuiStyle& style = guiSkin.panel;
-		style = baseStyle;
+		style = opaqueStyle;
+		style.border = 2;
+		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/panel-normal.png");
+		style.hover.backgroundImage = mgr->loadAs<Texture>("imGui/panel-hover.png");
+		style.active.backgroundImage = style.hover.backgroundImage;
 	}
 
 	{	GuiStyle& style = guiSkin.textArea;
-		style = baseStyle;
-		style.border = 3;
+		style = transparentStyle;
+		style.border = 2;
 	}
 
 	texCheckbox[0] = mgr->loadAs<Texture>("imGui/checkbox-0.png");
@@ -100,13 +130,9 @@ roStatus Skin::init()
 	texCheckbox[3] = mgr->loadAs<Texture>("imGui/checkbox-3.png");
 
 	texScrollPanel.assign(NULL);
-	texScrollPanel[0] = mgr->loadAs<Texture>("imGui/panel-border-0.png");
+	texScrollPanel[0] = mgr->loadAs<Texture>("imGui/panel-normal.png");
 	texScrollPanel[1] = mgr->loadAs<Texture>("imGui/vscrollbar-bar-bg.png");
-	texScrollPanel[2] = mgr->loadAs<Texture>("imGui/vscrollbar-bar-0.png");
 	texScrollPanel[5] = mgr->loadAs<Texture>("imGui/hscrollbar-bar-bg.png");
-	texScrollPanel[6] = mgr->loadAs<Texture>("imGui/hscrollbar-bar-0.png");
-	texScrollPanel[7] = mgr->loadAs<Texture>("imGui/hscrollbar-arrow-0.png");
-	texScrollPanel[8] = mgr->loadAs<Texture>("imGui/hscrollbar-arrow-1.png");
 
 	return roStatus::ok;
 }
@@ -240,8 +266,10 @@ void guiClose()
 	_clearStyle(guiSkin.button);
 	_clearStyle(guiSkin.vScrollbarUpButton);
 	_clearStyle(guiSkin.vScrollbarDownButton);
+	_clearStyle(guiSkin.vScrollbarThumbButton);
 	_clearStyle(guiSkin.hScrollbarLeftButton);
 	_clearStyle(guiSkin.hScrollbarRightButton);
+	_clearStyle(guiSkin.hScrollbarThumbButton);
 	_clearStyle(guiSkin.panel);
 	_clearStyle(guiSkin.textArea);
 	_states.skin.close();
