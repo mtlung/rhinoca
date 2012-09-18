@@ -88,9 +88,15 @@ void guiPushHostWiget(GuiWigetState& wiget);	// For wiget grouping ie: guiBeginS
 GuiWigetState* guiGetHostWiget();
 void guiPopHostWiget();
 
-void guiPushIntegerToStack(int value);
-int guiGetIntegerFromStack();
-void guiPopIntegerFromStack();
+void guiPushPtrToStack(void* ptr);
+void* guiGetPtrFromStack(roSize index);
+void guiPopPtrFromStack();
+
+void guiPushFloatToStack(float value);
+float& guiGetFloatFromStack(roSize index);
+void guiPopFloatFromStack();
+
+void guiDoLayout(Rectf& rect, float margin);
 
 // Label
 void guiLabel(const Rectf& rect, const roUtf8* text);
@@ -146,6 +152,10 @@ void guiBeginTabs(GuiTabAreaState& state);
 void guiEndTabs();
 bool guiBeginTab(const roUtf8* text);
 void guiEndTab();
+
+// Layout
+void guiBeginFlowLayout(Rectf rect, char hORv);
+void guiEndFlowLayout();
 
 }	// namespace ro
 

@@ -39,6 +39,7 @@ roStatus Skin::init()
 	GuiStyle transparentStyle;
 	transparentStyle.border = 0;
 	transparentStyle.padding = 5;
+	transparentStyle.margin = 1;
 	transparentStyle.normal.textColor = white;
 	transparentStyle.hover.textColor = Colorf(0.7f, 0.9f, 0.9f);
 	transparentStyle.active.textColor = transparentStyle.hover.textColor;
@@ -224,7 +225,8 @@ struct guiStates
 
 	Array<GuiWigetState*> groupStack;
 	Array<GuiPanelState*> panelStateStack;
-	Array<int> integerStack;
+	Array<void*> ptrStack;
+	Array<float> floatStack;
 };
 
 guiStates::guiStates()
@@ -247,7 +249,7 @@ static guiStates _states;
 
 GuiStyle::GuiStyle()
 {
-//	textColor = Colorf(1, 1, 1);
+	border = padding = margin = 0;
 }
 
 roStatus guiInit()
@@ -476,19 +478,45 @@ void guiPopHostWiget()
 		_states.groupStack.popBack();
 }
 
-void guiPushIntegerToStack(int value)
+void guiPushPtrToStack(void* ptr)
 {
-	_states.integerStack.pushBack(value);
+	_states.ptrStack.pushBack(ptr);
 }
 
-int guiGetIntegerFromStack()
+void* guiGetPtrFromStack(roSize index)
 {
-	return _states.integerStack.back();
+	if(_states.ptrStack.isEmpty())
+		return NULL;
+	return _states.ptrStack.back(index);
 }
 
-void guiPopIntegerFromStack()
+void guiPopPtrFromStack()
 {
-	_states.integerStack.popBack();
+	_states.ptrStack.popBack();
+}
+
+void guiPushFloatToStack(float value)
+{
+	_states.floatStack.pushBack(value);
+}
+
+float& guiGetFloatFromStack(roSize index)
+{
+	return _states.floatStack.back(index);
+}
+
+void guiPopFloatFromStack()
+{
+	_states.floatStack.popBack();
+}
+
+typedef void (*LayoutCallback)(Rectf& rect, float margin);
+
+void guiDoLayout(Rectf& rect, float margin)
+{
+	LayoutCallback callback = (LayoutCallback)guiGetPtrFromStack(0);
+	if(callback)
+		(*callback)(rect, margin);
 }
 
 // Draw functions
@@ -575,5 +603,6 @@ GuiWigetState::GuiWigetState()
 #include "roGuiPanel.h"
 #include "roGuiTextArea.h"
 #include "roGuiTabArea.h"
+#include "roGuiLayout.h"
 
 }	// namespace ro

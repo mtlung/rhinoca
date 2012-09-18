@@ -20,6 +20,7 @@ bool guiButtonLogic(GuiButtonState& state, const roUtf8* text, const GuiStyle* s
 
 	Sizef textExtend = _calTextExtend(text);
 	_setContentExtend(state, *style, textExtend);
+	guiDoLayout(state._deducedRect, style->margin);
 	_updateWigetState(state);
 
 	return state.isClicked;

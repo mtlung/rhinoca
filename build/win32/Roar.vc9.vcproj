@@ -844,6 +844,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\gui\roGuiLayout.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\gui\roGuiPanel.h"
 				>
 			</File>

@@ -21,11 +21,8 @@ TEST_FIXTURE(ImGuiTest, button)
 {
 	createWindow(300, 300);
 	initContext(driverStr[driverIndex]);
-
 	Canvas canvas;
 	canvas.init();
-	canvas.setGlobalColor(1, 0, 0, 1);
-
 	CHECK(guiInit());
 
 	bool showDetails = true;
@@ -45,10 +42,9 @@ TEST_FIXTURE(ImGuiTest, button)
 
 	while(keepRun()) {
 		driver->clearColor(68.0f/256, 68.0f/256, 68.0f/256, 1);
-
 		guiBegin(canvas);
-			tabArea.rect.w = canvas.width();
-			tabArea.rect.h = canvas.height();
+			tabArea.rect.w = (float)canvas.width();
+			tabArea.rect.h = (float)canvas.height();
 			guiBeginTabs(tabArea);
 			guiBeginScrollPanel(panel[0]);
 
@@ -66,7 +62,54 @@ TEST_FIXTURE(ImGuiTest, button)
 			guiEndScrollPanel();
 			guiEndTabs();
 		guiEnd();
+		driver->swapBuffers();
+	}
 
+	guiClose();
+}
+
+TEST_FIXTURE(ImGuiTest, flowLayout)
+{
+	createWindow(300, 300);
+	initContext(driverStr[driverIndex]);
+	Canvas canvas;
+	canvas.init();
+	CHECK(guiInit());
+
+	while(keepRun()) {
+		driver->clearColor(68.0f/256, 68.0f/256, 68.0f/256, 1);
+		guiBegin(canvas);
+			GuiButtonState button;
+
+			// Horizontal flow layout
+			guiBeginFlowLayout(Rectf(10, 10, 0, 30), 'h');
+				guiButton(button, "Horizontal");
+				guiButton(button, "flow");
+				guiButton(button, "layout");
+			guiEndFlowLayout();
+
+			// Vertical flow layout
+			guiBeginFlowLayout(Rectf(10, 50, 60, 0), 'v');
+				guiButton(button, "Vertical");
+				guiButton(button, "flow");
+				guiButton(button, "layout");
+			guiEndFlowLayout();
+
+			// Horizontal flow layout inside vertical flow layout
+			guiBeginFlowLayout(Rectf(100, 50, 60, 0), 'v');
+				guiBeginFlowLayout(Rectf(0, 0, 0, 30), 'h');
+					guiButton(button, "Two");
+					guiButton(button, "horizontal");
+					guiButton(button, "layout");
+				guiEndFlowLayout();
+				guiBeginFlowLayout(Rectf(0, 0, 0, 30), 'h');
+					guiButton(button, "in");
+					guiButton(button, "a");
+					guiButton(button, "vertical");
+					guiButton(button, "layout");
+				guiEndFlowLayout();
+			guiEndFlowLayout();
+		guiEnd();
 		driver->swapBuffers();
 	}
 
