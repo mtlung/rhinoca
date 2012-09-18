@@ -4,26 +4,19 @@ GuiPanelState::GuiPanelState()
 	scrollable = true;
 }
 
-void guiBeginScrollPanel(GuiPanelState& state)
+void guiBeginScrollPanel(GuiPanelState& state, const GuiStyle* style)
 {
+	if(!style) style = &guiSkin.panel;
 	Canvas& c = *_states.canvas;
-	c.setGlobalColor(1, 1, 1, 1);
 
 	const Rectf& rect = state.rect;
 
-	if(_isHot(rect))
-		_states.potentialHotObject = &state;
-
-	if(!_states.panelStateStack.isEmpty())
-		_mergeExtend(_states.panelStateStack.back()->_virtualRect, rect);
-
+	_setContentExtend(state, *style, Sizef());
+	_updateWigetState(state);
 	_states.panelStateStack.pushBack(&state);
 
 	if(state._clientRect.w == 0 || state._clientRect.h == 0)
 		state._clientRect = state.rect;
-
-	_setContentExtend(state, guiSkin.panel, Sizef());
-	_updateWigetState(state);
 
 	// Detect mouse scroll
 	if(_states.lastFrameHoveringObject == &state && state.scrollable)
@@ -40,9 +33,8 @@ void guiBeginScrollPanel(GuiPanelState& state)
 	virtualRect.h = 0;
 
 	// Draw background
-	GuiButtonState buttonState;
-	static_cast<GuiWigetState&>(buttonState) = state;
-	guiButtonDraw(buttonState, NULL, &guiSkin.panel);
+	GuiWigetState buttonState = state;
+	guiDrawBox(buttonState, NULL, *style, state.showBorder, true);
 
 	guiBeginClip(state._clientRect);
 
@@ -87,10 +79,6 @@ void guiEndScrollPanel()
 	clientRect.h -= panelState.showBorder ? border * 2 : 0;
 	clientRect.w -= showVScrollBar ? vScrollBarThickness : 0;
 	clientRect.h -= showHScrollBar ? hScrollBarThickness : 0;
-
-	// Draw the border
-//	if(panelState.showBorder)
-//		_draw3x3(_states.skin.texScrollPanel[0]->handle, panelState.rect, border, false);
 
 	if(panelState.scrollable)
 	{

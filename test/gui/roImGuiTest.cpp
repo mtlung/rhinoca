@@ -31,7 +31,7 @@ TEST_FIXTURE(ImGuiTest, button)
 	bool showDetails = true;
 	GuiPanelState panel[2];
 	panel[0].rect = Rectf(0, 0, 500, 400);
-	panel[1].rect = Rectf(0, 200, 200-4, 200-4);
+	panel[1].rect = Rectf(0, 250, 200-4, 200-4);
 
 	GuiButtonState buttons[3];
 	buttons[0].rect = Rectf(5, 100, 90, 30);
@@ -41,10 +41,15 @@ TEST_FIXTURE(ImGuiTest, button)
 	GuiTextAreaState textArea;
 	textArea.rect = Rectf(0, 0, 300, 200);
 
+	GuiTabAreaState tabArea;
+
 	while(keepRun()) {
 		driver->clearColor(68.0f/256, 68.0f/256, 68.0f/256, 1);
 
 		guiBegin(canvas);
+			tabArea.rect.w = canvas.width();
+			tabArea.rect.h = canvas.height();
+			guiBeginTabs(tabArea);
 			guiBeginScrollPanel(panel[0]);
 
 			guiTextArea(textArea, "Hello asdfas dffewar ad eghtdagtewg wdsfg ewrsg hahahahahah\nLine 2\nLine 3");
@@ -59,6 +64,7 @@ TEST_FIXTURE(ImGuiTest, button)
 				}
 			guiEndScrollPanel();
 			guiEndScrollPanel();
+			guiEndTabs();
 		guiEnd();
 
 		driver->swapBuffers();

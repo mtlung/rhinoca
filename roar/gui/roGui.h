@@ -1,7 +1,6 @@
 #ifndef __gui_roImGui_h__
 #define __gui_roImGui_h__
 
-#include "../base/roStatus.h"
 #include "../math/roRect.h"
 #include "../render/roColor.h"
 #include "../render/roTexture.h"
@@ -48,6 +47,7 @@ struct GuiSkin
 	GuiStyle hScrollbarThumbButton;
 	GuiStyle panel;
 	GuiStyle textArea;
+	GuiStyle tabArea;
 };
 
 // The current skin to use
@@ -82,6 +82,16 @@ bool guiInClipRect(float x, float y);
 void guiBeginClip(Rectf rect);	// Clip away any drawing and inputs outside this rect until guiEndClip() is called.
 void guiEndClip();
 
+void guiDrawBox(GuiWigetState& state, const roUtf8* text, const GuiStyle& style, bool drawBorder, bool drawCenter);
+
+void guiPushHostWiget(GuiWigetState& wiget);	// For wiget grouping ie: guiBeginScrollPanel/guiEndScrollPanel
+GuiWigetState* guiGetHostWiget();
+void guiPopHostWiget();
+
+void guiPushIntegerToStack(int value);
+int guiGetIntegerFromStack();
+void guiPopIntegerFromStack();
+
 // Label
 void guiLabel(const Rectf& rect, const roUtf8* text);
 
@@ -89,9 +99,7 @@ void guiLabel(const Rectf& rect, const roUtf8* text);
 bool guiCheckBox(const Rectf& rect, const roUtf8* text, bool& state);
 
 // Button
-struct GuiButtonState : public GuiWigetState
-{
-	GuiButtonState();
+struct GuiButtonState : public GuiWigetState {
 };
 bool guiButton(GuiButtonState& state, const roUtf8* text=NULL, const GuiStyle* style=NULL);
 void guiButtonDraw(GuiButtonState& state, const roUtf8* text=NULL, const GuiStyle* style=NULL);
@@ -122,13 +130,22 @@ struct GuiPanelState : public GuiWigetState
 	Rectf _clientRect;
 	Rectf _virtualRect;
 };
-void guiBeginScrollPanel(GuiPanelState& state);
+void guiBeginScrollPanel(GuiPanelState& state, const GuiStyle* style=NULL);
 void guiEndScrollPanel();
 
 // Text area
 struct GuiTextAreaState : public GuiPanelState {
 };
 void guiTextArea(GuiTextAreaState& state, const roUtf8* text);
+
+// Tab area
+struct GuiTabAreaState : public GuiWigetState {
+	GuiPanelState tabButtons;	// Panel to host the tab buttons
+};
+void guiBeginTabs(GuiTabAreaState& state);
+void guiEndTabs();
+bool guiBeginTab(const roUtf8* text);
+void guiEndTab();
 
 }	// namespace ro
 

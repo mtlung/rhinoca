@@ -115,11 +115,16 @@ roStatus Skin::init()
 		style = opaqueStyle;
 		style.border = 2;
 		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/panel-normal.png");
-		style.hover.backgroundImage = mgr->loadAs<Texture>("imGui/panel-hover.png");
-		style.active.backgroundImage = style.hover.backgroundImage;
+		style.hover.backgroundImage = style.normal.backgroundImage;
+		style.active.backgroundImage = style.normal.backgroundImage;
 	}
 
 	{	GuiStyle& style = guiSkin.textArea;
+		style = transparentStyle;
+		style.border = 2;
+	}
+
+	{	GuiStyle& style = guiSkin.tabArea;
 		style = transparentStyle;
 		style.border = 2;
 	}
@@ -217,7 +222,9 @@ struct guiStates
 
 	GuiPanelState rootPanel;
 
+	Array<GuiWigetState*> groupStack;
 	Array<GuiPanelState*> panelStateStack;
+	Array<int> integerStack;
 };
 
 guiStates::guiStates()
@@ -272,6 +279,7 @@ void guiClose()
 	_clearStyle(guiSkin.hScrollbarThumbButton);
 	_clearStyle(guiSkin.panel);
 	_clearStyle(guiSkin.textArea);
+	_clearStyle(guiSkin.tabArea);
 	_states.skin.close();
 }
 
@@ -373,7 +381,8 @@ static void _setContentExtend(GuiWigetState& state, const GuiStyle& style, const
 	deduced.w = roMaxOf2(deduced.w, size.w + 2 * style.padding);
 	deduced.h = roMaxOf2(deduced.h, size.h + 2 * style.padding);
 
-	_mergeExtend(_states.panelStateStack.back()->_virtualRect, state._deducedRect);
+	if(!_states.panelStateStack.isEmpty())
+		_mergeExtend(_states.panelStateStack.back()->_virtualRect, state._deducedRect);
 }
 
 static bool _isHover(const Rectf& rect)
@@ -449,9 +458,42 @@ void guiEndClip()
 	c.restore();
 }
 
+void guiPushHostWiget(GuiWigetState& wiget)
+{
+	_states.groupStack.pushBack(&wiget);
+}
+
+GuiWigetState* guiGetHostWiget()
+{
+	if(_states.groupStack.isEmpty())
+		return NULL;
+	return _states.groupStack.back();
+}
+
+void guiPopHostWiget()
+{
+	if(!_states.groupStack.isEmpty())
+		_states.groupStack.popBack();
+}
+
+void guiPushIntegerToStack(int value)
+{
+	_states.integerStack.pushBack(value);
+}
+
+int guiGetIntegerFromStack()
+{
+	return _states.integerStack.back();
+}
+
+void guiPopIntegerFromStack()
+{
+	_states.integerStack.popBack();
+}
+
 // Draw functions
 
-void _draw3x3(roRDriverTexture* tex, const Rectf& rect, float borderWidth, bool drawMiddle = true)
+void _draw3x3(roRDriverTexture* tex, const Rectf& rect, float borderWidth, bool drawBorder=true, bool drawMiddle=true)
 {
 	if(!tex) return;
 	Canvas& c = *_states.canvas;
@@ -472,19 +514,46 @@ void _draw3x3(roRDriverTexture* tex, const Rectf& rect, float borderWidth, bool 
 
 	c.beginDrawImageBatch();
 
-	for(roSize i=0; i<roCountof(ix_); ++i) {
+	if(drawBorder) for(roSize i=0; i<roCountof(ix_); ++i) {
 		roSize ix = ix_[i];
 		roSize iy = iy_[i];
 		c.drawImage(tex, srcx[ix], srcy[iy], srcw[ix], srch[iy], dstx[ix], dsty[iy], dstw[ix], dsth[iy]);
 	}
 
+	float dstBorderWidth = drawBorder ? borderWidth : 0;
 	if(drawMiddle) c.drawImage(
 		tex,
 		borderWidth, borderWidth, tex->width - borderWidth * 2, tex->height - borderWidth * 2,
-		borderWidth + rect.x, borderWidth + rect.y, rect.w - borderWidth * 2, rect.h - borderWidth * 2
+		dstBorderWidth + rect.x, dstBorderWidth + rect.y, rect.w - dstBorderWidth * 2, rect.h - dstBorderWidth * 2
 	);
 
 	c.endDrawImageBatch();
+}
+
+void guiDrawBox(GuiWigetState& state, const roUtf8* text, const GuiStyle& style, bool drawBorder, bool drawCenter)
+{
+	const Rectf& rect = state._deducedRect;
+	Canvas& c = *_states.canvas;
+	const GuiStyle::StateSensitiveStyle& sStyle = _selectStateSensitiveSytle(state, style);
+
+	// Draw the background
+	roRDriverTexture* tex = _selectBackgroundTexture(state, style);
+	c.setGlobalColor(sStyle.backgroundColor.data);
+	if(sStyle.backgroundColor.a > 0 && !tex) {
+		c.setFillColor(1, 1, 1, 1);
+		c.fillRect(rect.x, rect.y, rect.w, rect.h);
+	}
+	else if(tex) {
+		c.setFillColor(0, 0, 0, 0);
+		_draw3x3(tex, rect, style.border, drawBorder, drawCenter);
+	}
+
+	// Draw the text
+	if(text && *text != '\0') {
+		c.setGlobalColor(sStyle.textColor.data);
+		float buttonDownOffset = state.isActive ? 1.0f : 0;
+		c.fillText(text, rect.centerx(), rect.centery() + buttonDownOffset, -1);
+	}
 }
 
 GuiWigetState::GuiWigetState()
@@ -505,5 +574,6 @@ GuiWigetState::GuiWigetState()
 #include "roGuiScrollbar.h"
 #include "roGuiPanel.h"
 #include "roGuiTextArea.h"
+#include "roGuiTabArea.h"
 
 }	// namespace ro
