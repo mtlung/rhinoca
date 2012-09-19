@@ -133,8 +133,8 @@ struct GuiPanelState : public GuiWigetState
 	bool showBorder;
 	bool scrollable;
 	GuiScrollBarState hScrollBar, vScrollBar;
-	Rectf _clientRect;
-	Rectf _virtualRect;
+	Rectf _clientRect;	// Relative to panel's _deducedRect
+	Rectf _virtualRect;	// Relative to panel's _deducedRect
 };
 void guiBeginScrollPanel(GuiPanelState& state, const GuiStyle* style=NULL);
 void guiEndScrollPanel();

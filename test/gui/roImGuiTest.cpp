@@ -45,7 +45,7 @@ TEST_FIXTURE(ImGuiTest, button)
 		guiBegin(canvas);
 			tabArea.rect.w = (float)canvas.width();
 			tabArea.rect.h = (float)canvas.height();
-			guiBeginTabs(tabArea);
+//			guiBeginTabs(tabArea);
 			guiBeginScrollPanel(panel[0]);
 
 			guiTextArea(textArea, "Hello asdfas dffewar ad eghtdagtewg wdsfg ewrsg hahahahahah\nLine 2\nLine 3");
@@ -60,7 +60,32 @@ TEST_FIXTURE(ImGuiTest, button)
 				}
 			guiEndScrollPanel();
 			guiEndScrollPanel();
-			guiEndTabs();
+//			guiEndTabs();
+		guiEnd();
+		driver->swapBuffers();
+	}
+
+	guiClose();
+}
+
+TEST_FIXTURE(ImGuiTest, autoSizedPanel)
+{
+	createWindow(300, 300);
+	initContext(driverStr[driverIndex]);
+	Canvas canvas;
+	canvas.init();
+	CHECK(guiInit());
+
+	GuiPanelState panel[2];
+
+	while(keepRun()) {
+		driver->clearColor(68.0f/256, 68.0f/256, 68.0f/256, 1);
+		guiBegin(canvas);
+			GuiButtonState button;
+
+			guiBeginScrollPanel(panel[0]);
+				guiButton(button, "Horizontal");
+			guiEndScrollPanel();
 		guiEnd();
 		driver->swapBuffers();
 	}

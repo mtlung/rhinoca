@@ -10,8 +10,9 @@ void guiBeginScrollPanel(GuiPanelState& state, const GuiStyle* style)
 	Canvas& c = *_states.canvas;
 
 	const Rectf& rect = state.rect;
+	Sizef deducedSize = Sizef(rect.w == 0 ? state._virtualRect.w : 0, rect.h == 0 ? state._virtualRect.h : 0);
 
-	_setContentExtend(state, *style, Sizef());
+	_setContentExtend(state, *style, deducedSize);
 	_updateWigetState(state);
 	_states.panelStateStack.pushBack(&state);
 
@@ -27,8 +28,8 @@ void guiBeginScrollPanel(GuiPanelState& state, const GuiStyle* style)
 
 	// Initialize the virtual bound
 	Rectf& virtualRect = state._virtualRect;
-	virtualRect.x = rect.x - state.hScrollBar.value;
-	virtualRect.y = rect.y - state.vScrollBar.value;
+	virtualRect.x = rect.x + style->border - state.hScrollBar.value;
+	virtualRect.y = rect.y + style->border - state.vScrollBar.value;
 	virtualRect.w = 0;
 	virtualRect.h = 0;
 
@@ -54,7 +55,7 @@ void guiEndScrollPanel()
 	_states.mouseCaptured = false;
 
 	float border = 2;
-	const Rectf& rect = panelState.rect;
+	const Rectf& rect = panelState._deducedRect;
 	Rectf& virtualRect = panelState._virtualRect;
 
 	_states.offsetx += virtualRect.x;
@@ -72,7 +73,7 @@ void guiEndScrollPanel()
 
 	// Update the client area
 	Rectf& clientRect = panelState._clientRect;
-	clientRect = rect;
+	clientRect = panelState._deducedRect;
 	clientRect.x += panelState.showBorder ? border : 0;
 	clientRect.w -= panelState.showBorder ? border * 2 : 0;
 	clientRect.y += panelState.showBorder ? border : 0;
