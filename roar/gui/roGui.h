@@ -67,8 +67,7 @@ struct GuiWigetState
 	bool isLastFrameHover;
 	bool isLastFrameActive;
 	Rectf rect;
-
-	Rectf _deducedRect;	// The final rectangle after considered content size and layout engine
+	Rectf deducedRect;	// The final rectangle after considered content size and layout engine
 };
 
 // Common
@@ -94,7 +93,7 @@ void guiPopPtrFromStack();
 
 void guiPushFloatToStack(float value);
 float& guiGetFloatFromStack(roSize index);
-void guiPopFloatFromStack();
+float guiPopFloatFromStack();
 
 void guiDoLayout(Rectf& rect, float margin);
 
@@ -133,8 +132,8 @@ struct GuiPanelState : public GuiWigetState
 	bool showBorder;
 	bool scrollable;
 	GuiScrollBarState hScrollBar, vScrollBar;
-	Rectf _clientRect;	// Relative to panel's _deducedRect
-	Rectf _virtualRect;	// Relative to panel's _deducedRect
+	Rectf _clientRect;	// Relative to panel's deducedRect
+	Rectf _virtualRect;	// Relative to panel's deducedRect
 };
 void guiBeginScrollPanel(GuiPanelState& state, const GuiStyle* style=NULL);
 void guiEndScrollPanel();

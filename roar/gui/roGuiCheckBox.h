@@ -12,7 +12,7 @@ bool guiCheckBox(const Rectf& rect_, const roUtf8* text, bool& checkState)
 	));
 	_updateWigetState(state);
 
-	Rectf& rect = state._deducedRect;
+	Rectf& rect = state.deducedRect;
 	Canvas& c = *_states.canvas;
 	const GuiStyle::StateSensitiveStyle& sStyle = _selectStateSensitiveSytle(state, guiSkin.checkBox);
 

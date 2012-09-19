@@ -9,15 +9,22 @@ void guiBeginScrollPanel(GuiPanelState& state, const GuiStyle* style)
 	if(!style) style = &guiSkin.panel;
 	Canvas& c = *_states.canvas;
 
+	float border = style->border;
+	float padding = style->padding;
+	guiPushFloatToStack(border);
+	guiPushFloatToStack(padding);
+
 	const Rectf& rect = state.rect;
-	Sizef deducedSize = Sizef(rect.w == 0 ? state._virtualRect.w : 0, rect.h == 0 ? state._virtualRect.h : 0);
+	const Rectf& deducedRect = state.deducedRect;
+	const Rectf& clientRect = state._clientRect;
+	Sizef deducedSize = Sizef(rect.w == 0 ? state._virtualRect.w - 2 * style->padding : 0, rect.h == 0 ? state._virtualRect.h - 2 * style->padding : 0);
 
 	_setContentExtend(state, *style, deducedSize);
 	_updateWigetState(state);
 	_states.panelStateStack.pushBack(&state);
 
 	if(state._clientRect.w == 0 || state._clientRect.h == 0)
-		state._clientRect = state.rect;
+		state._clientRect = deducedRect;
 
 	// Detect mouse scroll
 	if(_states.lastFrameHoveringObject == &state && state.scrollable)
@@ -28,8 +35,8 @@ void guiBeginScrollPanel(GuiPanelState& state, const GuiStyle* style)
 
 	// Initialize the virtual bound
 	Rectf& virtualRect = state._virtualRect;
-	virtualRect.x = rect.x + style->border - state.hScrollBar.value;
-	virtualRect.y = rect.y + style->border - state.vScrollBar.value;
+	virtualRect.x = clientRect.x + padding - state.hScrollBar.value;
+	virtualRect.y = clientRect.y + padding - state.vScrollBar.value;
 	virtualRect.w = 0;
 	virtualRect.h = 0;
 
@@ -54,10 +61,14 @@ void guiEndScrollPanel()
 
 	_states.mouseCaptured = false;
 
-	float border = 2;
-	const Rectf& rect = panelState._deducedRect;
+	float padding = guiPopFloatFromStack();
+	float border = guiPopFloatFromStack();
+
+	const Rectf& rect = panelState.deducedRect;
 	Rectf& virtualRect = panelState._virtualRect;
 
+	virtualRect.w += padding * 2;
+	virtualRect.h += padding * 2;
 	_states.offsetx += virtualRect.x;
 	_states.offsety += virtualRect.y;
 
@@ -73,7 +84,7 @@ void guiEndScrollPanel()
 
 	// Update the client area
 	Rectf& clientRect = panelState._clientRect;
-	clientRect = panelState._deducedRect;
+	clientRect = panelState.deducedRect;
 	clientRect.x += panelState.showBorder ? border : 0;
 	clientRect.w -= panelState.showBorder ? border * 2 : 0;
 	clientRect.y += panelState.showBorder ? border : 0;

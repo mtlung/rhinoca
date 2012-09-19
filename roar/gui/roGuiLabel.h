@@ -8,7 +8,7 @@ void guiLabel(const Rectf& rect_, const roUtf8* text)
 	_setContentExtend(state, guiSkin.label, textExtend);
 	_updateWigetState(state);
 
-	const Rectf& rect = state._deducedRect;
+	const Rectf& rect = state.deducedRect;
 	Canvas& c = *_states.canvas;
 	const GuiStyle::StateSensitiveStyle& sStyle = _selectStateSensitiveSytle(state, guiSkin.label);
 
@@ -26,5 +26,5 @@ void guiLabel(const Rectf& rect_, const roUtf8* text)
 
 	// Draw the text
 	c.setGlobalColor(sStyle.textColor.data);
-	_states.canvas->fillText(text, state._deducedRect.centerx(), state._deducedRect.centery(), -1);
+	_states.canvas->fillText(text, state.deducedRect.centerx(), state.deducedRect.centery(), -1);
 }

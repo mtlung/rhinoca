@@ -1,6 +1,6 @@
 void guiTextArea(GuiTextAreaState& state, const roUtf8* text)
 {
-	state._deducedRect = state.rect;
+	state.deducedRect = state.rect;
 	_setContentExtend(state, guiSkin.textArea, Sizef());
 	_updateWigetState(state);
 

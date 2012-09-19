@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "../render/roGraphicsTestBase.win.h"
 #include "../../roar/gui/roGui.h"
+#include "../../roar/base/roStringFormat.h"
 #include "../../roar/render/roCanvas.h"
 
 using namespace ro;
@@ -70,22 +71,33 @@ TEST_FIXTURE(ImGuiTest, button)
 
 TEST_FIXTURE(ImGuiTest, autoSizedPanel)
 {
-	createWindow(300, 300);
+	createWindow(380, 120);
 	initContext(driverStr[driverIndex]);
 	Canvas canvas;
 	canvas.init();
 	CHECK(guiInit());
 
+	bool autoSizedButton = false;
 	GuiPanelState panel[2];
 
 	while(keepRun()) {
 		driver->clearColor(68.0f/256, 68.0f/256, 68.0f/256, 1);
 		guiBegin(canvas);
 			GuiButtonState button;
+			if(!autoSizedButton)
+				button.rect.setSize(100, 100);
 
 			guiBeginScrollPanel(panel[0]);
-				guiButton(button, "Horizontal");
+			guiBeginScrollPanel(panel[1]);
+				guiButton(button, "This is a button");
 			guiEndScrollPanel();
+			guiEndScrollPanel();
+
+			guiCheckBox(Rectf(120, 0), "Button auto size", autoSizedButton);
+
+			String str;
+			strFormat(str, "Outer most panel: width-{}, height-{}", panel[0].deducedRect.w, panel[0].deducedRect.h);
+			guiLabel(Rectf(120, 40), str.c_str());
 		guiEnd();
 		driver->swapBuffers();
 	}

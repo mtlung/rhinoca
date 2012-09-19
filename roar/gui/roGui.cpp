@@ -115,6 +115,7 @@ roStatus Skin::init()
 	{	GuiStyle& style = guiSkin.panel;
 		style = opaqueStyle;
 		style.border = 2;
+		style.padding = 1;
 		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/panel-normal.png");
 		style.hover.backgroundImage = style.normal.backgroundImage;
 		style.active.backgroundImage = style.normal.backgroundImage;
@@ -376,15 +377,15 @@ static void _mergeExtend(Rectf& rect1, const Rectf& rect2)
 
 static void _setContentExtend(GuiWigetState& state, const GuiStyle& style, const Sizef& size)
 {
-	Rectf& deduced = state._deducedRect;
+	Rectf& deduced = state.deducedRect;
 
 	// Add padding to the content rect
 	deduced = state.rect;
-	deduced.w = roMaxOf2(deduced.w, size.w + 2 * style.padding);
-	deduced.h = roMaxOf2(deduced.h, size.h + 2 * style.padding);
+	deduced.w = roMaxOf2(deduced.w, size.w + 2 * (style.padding + style.border));
+	deduced.h = roMaxOf2(deduced.h, size.h + 2 * (style.padding + style.border));
 
 	if(!_states.panelStateStack.isEmpty())
-		_mergeExtend(_states.panelStateStack.back()->_virtualRect, state._deducedRect);
+		_mergeExtend(_states.panelStateStack.back()->_virtualRect, state.deducedRect);
 }
 
 static bool _isHover(const Rectf& rect)
@@ -403,8 +404,8 @@ static bool _isHot(const Rectf& rect)
 
 static void _updateWigetState(GuiWigetState& state)
 {
-	state.isHover = _isHover(state._deducedRect);
-	state.isActive = _isHot(state._deducedRect);
+	state.isHover = _isHover(state.deducedRect);
+	state.isActive = _isHot(state.deducedRect);
 	state.isClicked = state.isHover && state.isActive && _states.mouseUp();
 	state.isClickRepeated = state.isActive && _states.mousePulse;
 
@@ -505,9 +506,11 @@ float& guiGetFloatFromStack(roSize index)
 	return _states.floatStack.back(index);
 }
 
-void guiPopFloatFromStack()
+float guiPopFloatFromStack()
 {
+	float ret = guiGetFloatFromStack(0);
 	_states.floatStack.popBack();
+	return ret;
 }
 
 typedef void (*LayoutCallback)(Rectf& rect, float margin);
@@ -560,7 +563,7 @@ void _draw3x3(roRDriverTexture* tex, const Rectf& rect, float borderWidth, bool 
 
 void guiDrawBox(GuiWigetState& state, const roUtf8* text, const GuiStyle& style, bool drawBorder, bool drawCenter)
 {
-	const Rectf& rect = state._deducedRect;
+	const Rectf& rect = state.deducedRect;
 	Canvas& c = *_states.canvas;
 	const GuiStyle::StateSensitiveStyle& sStyle = _selectStateSensitiveSytle(state, style);
 

@@ -35,6 +35,7 @@ struct Rectf
 
 	Sizef size() const				{ return Sizef(w, h); }
 	void setSize(const Sizef& size)	{ w = size.w; h = size.h; }
+	void setSize(float w_, float h_){ w = w_; h = h_; }
 
 	union { struct {
 		float x, y, w, h;
