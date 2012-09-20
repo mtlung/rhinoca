@@ -1,28 +1,28 @@
-static void _doHorizontalFlowLayout(Rectf& rect, float margin)
+static void _doHorizontalFlowLayout(const Rectf& rect, Rectf& deducedRect, float margin)
 {
 	float& x = guiGetFloatFromStack(3);
 	float& y = guiGetFloatFromStack(2);
 	float& h = guiGetFloatFromStack(0);
-	rect.x = x + margin;
-	rect.y = y + margin;
-	rect.h = h - margin * 2;
-	x += rect.w + margin;
+	deducedRect.x = x + margin;
+	deducedRect.y = y + margin;
+	deducedRect.h = roMaxOf2(h - margin * 2, deducedRect.h);
+	x += deducedRect.w + margin;
 }
 
-static void _doVerticalFlowLayout(Rectf& rect, float margin)
+static void _doVerticalFlowLayout(const Rectf& rect, Rectf& deducedRect, float margin)
 {
 	float& x = guiGetFloatFromStack(3);
 	float& y = guiGetFloatFromStack(2);
 	float& w = guiGetFloatFromStack(1);
-	rect.x = x + margin;
-	rect.y = y + margin;
-	rect.w = w - margin * 2;
-	y += rect.h + margin;
+	deducedRect.x = x + margin;
+	deducedRect.y = y + margin;
+	deducedRect.w = roMaxOf2(w - margin * 2, deducedRect.w);
+	y += deducedRect.h + margin;
 }
 
 void guiBeginFlowLayout(Rectf rect, char hORv)
 {
-	guiDoLayout(rect, 0);
+	guiDoLayout(rect, rect, 0);
 
 	if(hORv == 'h' || hORv == 'H')
 		guiPushPtrToStack(_doHorizontalFlowLayout);

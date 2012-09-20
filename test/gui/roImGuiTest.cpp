@@ -133,7 +133,7 @@ TEST_FIXTURE(ImGuiTest, flowLayout)
 			guiEndFlowLayout();
 
 			// Horizontal flow layout inside vertical flow layout
-			guiBeginFlowLayout(Rectf(100, 50, 60, 0), 'v');
+			guiBeginFlowLayout(Rectf(100, 50, 0, 0), 'v');
 				guiBeginFlowLayout(Rectf(0, 0, 0, 30), 'h');
 					guiButton(button, "Two");
 					guiButton(button, "horizontal");
@@ -146,6 +146,38 @@ TEST_FIXTURE(ImGuiTest, flowLayout)
 					guiButton(button, "layout");
 				guiEndFlowLayout();
 			guiEndFlowLayout();
+		guiEnd();
+		driver->swapBuffers();
+	}
+
+	guiClose();
+}
+
+TEST_FIXTURE(ImGuiTest, tabPanel)
+{
+	createWindow(300, 300);
+	initContext(driverStr[driverIndex]);
+	Canvas canvas;
+	canvas.init();
+	CHECK(guiInit());
+
+	GuiTabAreaState tabArea;
+	GuiButtonState button;
+
+	while(keepRun()) {
+		driver->clearColor(68.0f/256, 68.0f/256, 68.0f/256, 1);
+		guiBegin(canvas);
+			tabArea.rect.w = (float)canvas.width();
+			tabArea.rect.h = (float)canvas.height();
+
+			guiBeginTabs(tabArea);
+				if(guiBeginTab("Tab 1"))
+					guiButton(GuiButtonState(), "This is a button in Tab 1");
+				guiEndTab();
+				if(guiBeginTab("Tab 2"))
+					guiButton(GuiButtonState(), "This is a button in Tab 2");
+				guiEndTab();
+			guiEndTabs();
 		guiEnd();
 		driver->swapBuffers();
 	}

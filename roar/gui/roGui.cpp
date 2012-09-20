@@ -228,6 +228,7 @@ struct guiStates
 	Array<GuiPanelState*> panelStateStack;
 	Array<void*> ptrStack;
 	Array<float> floatStack;
+	Array<String> stringStack;
 };
 
 guiStates::guiStates()
@@ -493,7 +494,8 @@ void* guiGetPtrFromStack(roSize index)
 
 void guiPopPtrFromStack()
 {
-	_states.ptrStack.popBack();
+	if(!_states.ptrStack.isEmpty())
+		_states.ptrStack.popBack();
 }
 
 void guiPushFloatToStack(float value)
@@ -501,8 +503,11 @@ void guiPushFloatToStack(float value)
 	_states.floatStack.pushBack(value);
 }
 
+static float _dummyFloat = 0;
 float& guiGetFloatFromStack(roSize index)
 {
+	if(_states.floatStack.isEmpty())
+		return _dummyFloat;
 	return _states.floatStack.back(index);
 }
 
@@ -513,13 +518,31 @@ float guiPopFloatFromStack()
 	return ret;
 }
 
-typedef void (*LayoutCallback)(Rectf& rect, float margin);
+void guiPushStringToStack(const roUtf8* str)
+{
+	_states.stringStack.pushBack(str);
+}
 
-void guiDoLayout(Rectf& rect, float margin)
+static String _dummyString;
+String& guiGetStringFromStack(roSize index)
+{
+	if(_states.stringStack.isEmpty())
+		return _dummyString;
+	return _states.stringStack.back(index);
+}
+
+void guiPopStringFromStack()
+{
+	_states.stringStack.popBack();
+}
+
+typedef void (*LayoutCallback)(const Rectf& rect, Rectf& deducedRect, float margin);
+
+void guiDoLayout(const Rectf& rect, Rectf& deducedRect, float margin)
 {
 	LayoutCallback callback = (LayoutCallback)guiGetPtrFromStack(0);
 	if(callback)
-		(*callback)(rect, margin);
+		(*callback)(rect, deducedRect, margin);
 }
 
 // Draw functions

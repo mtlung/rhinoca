@@ -95,7 +95,11 @@ void guiPushFloatToStack(float value);
 float& guiGetFloatFromStack(roSize index);
 float guiPopFloatFromStack();
 
-void guiDoLayout(Rectf& rect, float margin);
+void guiPushStringToStack(const roUtf8* str);
+String& guiGetStringFromStack(roSize index);
+void guiPopStringFromStack();
+
+void guiDoLayout(const Rectf& rect, Rectf& deducedRect, float margin);
 
 // Label
 void guiLabel(const Rectf& rect, const roUtf8* text);
@@ -145,7 +149,11 @@ void guiTextArea(GuiTextAreaState& state, const roUtf8* text);
 
 // Tab area
 struct GuiTabAreaState : public GuiWigetState {
+	GuiTabAreaState();
 	GuiPanelState tabButtons;	// Panel to host the tab buttons
+	GuiPanelState clientPanel;
+	roSize activeTabIndex;
+	roSize _tabCount;
 };
 void guiBeginTabs(GuiTabAreaState& state);
 void guiEndTabs();
