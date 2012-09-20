@@ -21,6 +21,11 @@ Colorf::Colorf(const char* str, const Colorf& fallback)
 		*this = fallback;
 }
 
+Colorf::Colorf(float rgb, float a_)
+	: r(rgb), g(rgb), b(rgb), a(a_)
+{
+}
+
 Colorf::Colorf(float r_, float g_, float b_)
 	: r(r_), g(g_), b(b_), a(1)
 {

@@ -10,6 +10,7 @@ public:
 	Colorf();
 	Colorf(const char* str, const Colorf& fallback=Colorf());
 
+	Colorf(float rgb, float a);
 	Colorf(float r, float g, float b);
 	Colorf(float r, float g, float b, float a);
 

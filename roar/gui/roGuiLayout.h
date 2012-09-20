@@ -7,6 +7,9 @@ static void _doHorizontalFlowLayout(const Rectf& rect, Rectf& deducedRect, float
 	deducedRect.y = y + margin;
 	deducedRect.h = roMaxOf2(h - margin * 2, deducedRect.h);
 	x += deducedRect.w + margin;
+
+	if(!_states.panelStateStack.isEmpty())
+		_mergeExtend(_states.panelStateStack.back()->_virtualRect, deducedRect);
 }
 
 static void _doVerticalFlowLayout(const Rectf& rect, Rectf& deducedRect, float margin)
@@ -18,6 +21,9 @@ static void _doVerticalFlowLayout(const Rectf& rect, Rectf& deducedRect, float m
 	deducedRect.y = y + margin;
 	deducedRect.w = roMaxOf2(w - margin * 2, deducedRect.w);
 	y += deducedRect.h + margin;
+
+	if(!_states.panelStateStack.isEmpty())
+		_mergeExtend(_states.panelStateStack.back()->_virtualRect, deducedRect);
 }
 
 void guiBeginFlowLayout(Rectf rect, char hORv)

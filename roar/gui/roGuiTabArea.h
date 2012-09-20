@@ -12,11 +12,11 @@ void guiBeginTabs(GuiTabAreaState& state)
 	_updateWigetState(state);
 	guiPushHostWiget(state);
 
-	state.clientPanel.rect.x = state.rect.x;
-	state.clientPanel.rect.y = state.rect.y + 40;
-	state.clientPanel.rect.w = state.rect.w;
-	state.clientPanel.rect.h = state.rect.h - 40;
-	guiBeginScrollPanel(state.clientPanel);
+	state.clientPanel.rect.x = state.deducedRect.x;
+	state.clientPanel.rect.y = state.deducedRect.y + state.tabButtons.deducedRect.h;
+	state.clientPanel.rect.w = state.deducedRect.w;
+	state.clientPanel.rect.h = state.deducedRect.h - state.tabButtons.deducedRect.h;
+	guiBeginScrollPanel(state.clientPanel, &guiSkin.tabArea);
 }
 
 void guiEndTabs()
@@ -25,9 +25,9 @@ void guiEndTabs()
 
 	GuiTabAreaState& state = *static_cast<GuiTabAreaState*>(guiGetHostWiget());
 
-	state.tabButtons.rect.w = 200;
-	guiBeginScrollPanel(state.tabButtons);
-	guiBeginFlowLayout(Rectf(0, 0, 0, 30), 'h');
+	GuiStyle style;
+	guiBeginScrollPanel(state.tabButtons, &style);
+	guiBeginFlowLayout(Rectf(), 'h');
 		GuiButtonState button;
 		for(roSize i=0; i<state._tabCount; ++i) {
 			String& tabText = guiGetStringFromStack(state._tabCount - i - 1);

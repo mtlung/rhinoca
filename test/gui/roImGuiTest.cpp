@@ -170,12 +170,17 @@ TEST_FIXTURE(ImGuiTest, tabPanel)
 			tabArea.rect.w = (float)canvas.width();
 			tabArea.rect.h = (float)canvas.height();
 
+			GuiButtonState button;
+
 			guiBeginTabs(tabArea);
 				if(guiBeginTab("Tab 1"))
-					guiButton(GuiButtonState(), "This is a button in Tab 1");
+					guiButton(button, "This is a button in Tab 1");
 				guiEndTab();
 				if(guiBeginTab("Tab 2"))
-					guiButton(GuiButtonState(), "This is a button in Tab 2");
+					guiButton(button, "This is a button in Tab 2");
+				guiEndTab();
+				if(guiBeginTab("Tab 3"))
+					guiButton(button, "This is a button in Tab 3");
 				guiEndTab();
 			guiEndTabs();
 		guiEnd();

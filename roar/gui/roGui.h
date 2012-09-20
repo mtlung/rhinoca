@@ -36,6 +36,7 @@ struct GuiSkin
 {
 	GuiStyle label;
 	GuiStyle button;
+//	GuiStyle toggleOn, toggleOff;
 	GuiStyle checkBox;
 	GuiStyle vScrollbar;
 	GuiStyle vScrollbarUpButton;
@@ -111,6 +112,7 @@ bool guiCheckBox(const Rectf& rect, const roUtf8* text, bool& state);
 struct GuiButtonState : public GuiWigetState {
 };
 bool guiButton(GuiButtonState& state, const roUtf8* text=NULL, const GuiStyle* style=NULL);
+bool guiToggleButton(GuiButtonState& state, bool& onOffState, const roUtf8* text=NULL, const GuiStyle* onStyle=NULL, const GuiStyle* offStyle=NULL);
 void guiButtonDraw(GuiButtonState& state, const roUtf8* text=NULL, const GuiStyle* style=NULL);
 bool guiButtonLogic(GuiButtonState& state, const roUtf8* text=NULL, const GuiStyle* style=NULL);
 

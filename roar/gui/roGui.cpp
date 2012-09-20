@@ -127,8 +127,11 @@ roStatus Skin::init()
 	}
 
 	{	GuiStyle& style = guiSkin.tabArea;
-		style = transparentStyle;
-		style.border = 2;
+		style = opaqueStyle;
+		style.border = 5;
+		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/tabpanel.png");
+		style.hover.backgroundImage = style.normal.backgroundImage;
+		style.active.backgroundImage = style.normal.backgroundImage;
 	}
 
 	texCheckbox[0] = mgr->loadAs<Texture>("imGui/checkbox-0.png");
@@ -252,6 +255,7 @@ static guiStates _states;
 GuiStyle::GuiStyle()
 {
 	border = padding = margin = 0;
+	normal.backgroundColor = hover.backgroundColor = active.backgroundColor = Colorf(0, 0);
 }
 
 roStatus guiInit()
@@ -331,7 +335,9 @@ void guiBegin(Canvas& canvas)
 	_states.rootPanel.showBorder = false;
 	_states.rootPanel.scrollable = false;
 	_states.rootPanel.rect = Rectf(0, 0, (float)canvas.width(), (float)canvas.height());
-	guiBeginScrollPanel(_states.rootPanel);
+	GuiStyle rootPanelStyle = guiSkin.panel;
+	rootPanelStyle.padding = 0;
+	guiBeginScrollPanel(_states.rootPanel, &rootPanelStyle);
 }
 
 void guiEnd()
