@@ -3,6 +3,7 @@
 
 #include "../roar/platform/roOS.h"
 #include "rhinoca.h"
+#include "jsbindable.h"
 
 #ifdef _DEBUG
 #	define DEBUG

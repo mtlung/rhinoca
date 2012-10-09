@@ -1,2 +1,10 @@
 #include "platform/roCompiler.h"
 #include "platform/roOS.h"
+#include "platform/roPlatformHeaders.h"
+#include <float.h>
+#include <malloc.h>
+#include <math.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
