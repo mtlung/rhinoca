@@ -612,6 +612,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\render\roImagingLoader.windows.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\render\roJpegLoader.cpp"
 				>
 			</File>

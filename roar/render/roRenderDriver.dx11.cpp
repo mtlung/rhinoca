@@ -1064,6 +1064,7 @@ static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
 	if(!ctx || !impl) return false;
 	if(impl->format || impl->dxTexture) return false;
+	if(width == 0 || height == 0) return false;
 
 	impl->width = width;
 	impl->height = height;

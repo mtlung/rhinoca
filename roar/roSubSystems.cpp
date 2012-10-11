@@ -36,16 +36,20 @@ static void _initResourceManager(SubSystems& subSystems)
 	subSystems.resourceMgr->addLoader(resourceCreateText, resourceLoadText);
 
 	// Image loaders
+	extern bool extMappingImage(const char*, void*&, void*&);
 	extern bool extMappingBmp(const char*, void*&, void*&);
 	extern bool extMappingJpeg(const char*, void*&, void*&);
 	extern bool extMappingPng(const char*, void*&, void*&);
-	subSystems.resourceMgr->addExtMapping(extMappingBmp);
-	subSystems.resourceMgr->addExtMapping(extMappingJpeg);
-	subSystems.resourceMgr->addExtMapping(extMappingPng);
+	subSystems.resourceMgr->addExtMapping(extMappingImage);
+//	subSystems.resourceMgr->addExtMapping(extMappingBmp);
+//	subSystems.resourceMgr->addExtMapping(extMappingJpeg);
+//	subSystems.resourceMgr->addExtMapping(extMappingPng);
 
+	extern Resource* resourceCreateImage(ResourceManager*, const char*);
 	extern Resource* resourceCreateBmp(ResourceManager*, const char*);
 	extern Resource* resourceCreateJpeg(ResourceManager*, const char*);
 	extern Resource* resourceCreatePng(ResourceManager*, const char*);
+	subSystems.resourceMgr->addLoader(resourceCreateBmp, resourceLoadImage);
 	subSystems.resourceMgr->addLoader(resourceCreateBmp, resourceLoadBmp);
 	subSystems.resourceMgr->addLoader(resourceCreateJpeg, resourceLoadJpeg);
 	subSystems.resourceMgr->addLoader(resourceCreatePng, resourceLoadPng);

@@ -75,6 +75,7 @@ struct SubSystems
 
 // Forward declarations of all build-in loaders
 extern bool resourceLoadText(ResourceManager*, Resource*);
+extern bool resourceLoadImage(ResourceManager*, Resource*);
 extern bool resourceLoadBmp(ResourceManager*, Resource*);
 extern bool resourceLoadJpeg(ResourceManager*, Resource*);
 extern bool resourceLoadPng(ResourceManager*, Resource*);

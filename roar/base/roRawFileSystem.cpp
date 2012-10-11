@@ -183,7 +183,7 @@ Status rawFileSystemSeek(void* file, roInt64 offset, FileSystem::SeekOrigin orig
 	roAssert(impl); if(!impl) return Status::invalid_parameter;
 
 	Status st;
-	LARGE_INTEGER absOffset;
+	LARGE_INTEGER absOffset = { 0 };
 	if(origin == FileSystem::SeekOrigin_Begin) {
 		st = roIsValidCast(absOffset.QuadPart, offset);
 		if(!st) return st;

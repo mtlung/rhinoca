@@ -19,28 +19,28 @@ struct SharedPtr
 {
 	typedef SharedPtr<T> this_type;
 
-	SharedPtr() : _ptr(NULL)	{}
-	~SharedPtr() { if(_ptr) sharedPtrRelease(_ptr); }
+	SharedPtr()										{ _ptr = NULL; }
+	~SharedPtr()									{ if(_ptr) sharedPtrRelease(_ptr); }
 
 	template<class U>
-	SharedPtr(const SharedPtr<U>& rhs) : _ptr(rhs.get()) { if(_ptr) sharedPtrAddRef(_ptr); }
-	SharedPtr(const SharedPtr& rhs) : _ptr(rhs.get()) { if(_ptr) sharedPtrAddRef(_ptr); }
-	SharedPtr(T* p, bool addRef=true) : _ptr(p) { if(_ptr && addRef) sharedPtrAddRef(_ptr); }
+	SharedPtr(const SharedPtr<U>& rhs)				{ if((_ptr = rhs.get()) != NULL) sharedPtrAddRef(_ptr); }
+	SharedPtr(const SharedPtr& rhs)					{ if((_ptr = rhs.get()) != NULL) sharedPtrAddRef(_ptr); }
+	SharedPtr(T* p, bool addRef=true)				{ if((_ptr = p) != NULL && addRef) sharedPtrAddRef(_ptr); }
 
 	template<class U>
 	SharedPtr& operator=(const SharedPtr<U>& rhs)	{ this_type(rhs).swap(*this); return *this; }
 	SharedPtr& operator=(const SharedPtr& rhs)		{ this_type(rhs).swap(*this); return *this; }
 	SharedPtr& operator=(T* rhs)					{ this_type(rhs).swap(*this); return *this; }
 
-	T*	get() const			{ return _ptr; }
-	T&	operator*() const	{ return *_ptr; }
-	T*	operator->() const	{ return _ptr; }
+	T*	get() const									{ return _ptr; }
+	T&	operator*() const							{ return *_ptr; }
+	T*	operator->() const							{ return _ptr; }
 
 	typedef T* this_type::*unspecified_bool_type;
-	bool operator!() const { return _ptr == NULL; }	///< Null test
-	operator unspecified_bool_type() const { return _ptr == NULL ? NULL : &this_type::_ptr; }	///< Non-null test
+	bool operator!() const							{ return _ptr == NULL; }	///< Null test
+	operator unspecified_bool_type() const			{ return _ptr == NULL ? NULL : &this_type::_ptr; }	///< Non-null test
 
-	void swap(SharedPtr& rhs) { T* tmp(_ptr); _ptr = rhs._ptr; rhs._ptr = tmp; }
+	void swap(SharedPtr& rhs)						{ T* tmp(_ptr); _ptr = rhs._ptr; rhs._ptr = tmp; }
 
 // Private
 	T* _ptr;
