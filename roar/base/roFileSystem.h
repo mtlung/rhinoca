@@ -20,7 +20,7 @@ struct FileSystem
 	Status		(*read)			(void* file, void* buffer, roUint64 bytesToRead, roUint64& bytesRead);
 	Status		(*atomicRead)	(void* file, void* buffer, roUint64 bytesToRead);
 	Status		(*size)			(void* file, roUint64& bytes);
-	Status		(*seek)			(void* file, roUint64 offset, SeekOrigin origin);
+	Status		(*seek)			(void* file, roInt64 offset, SeekOrigin origin);
 	void		(*closeFile)	(void* file);
 
 	roBytePtr	(*getBuffer)	(void* file, roUint64 requestSize, roUint64& readableSizeLEqRequest);	///< If fail, readableSize (<= requestSize) will be zero but may/may-not return NULL.

@@ -140,7 +140,7 @@ bool SockAddr::parse(const char* addressAndPort)
 	if(sscanf(addressAndPort, "%[^:]:%d", buf.c_str(), &port) != 2)
 		return false;
 
-	if(!roCastAssert(port, roUint16()))
+	if(!roIsValidCast(port, roUint16()))
 		return false;
 
 	parse(buf.c_str(), num_cast<roUint16>(port));

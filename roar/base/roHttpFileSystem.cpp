@@ -235,8 +235,9 @@ bool httpFileSystemReadWillBlock(void* file, roUint64 size)
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
 	if(!s) return false;
 
-	if(!roCastAssert<roSize>(size)) return s->status = Status::numeric_cast_overflow, false;
-	roSize requestSize = clamp_cast<roSize>(size);
+	roSize requestSize = 0;
+	s->status = roSafeAssign(requestSize, size);
+	if(!s->status) return false;
 
 	static const roSize headerBufSize = 128;
 
@@ -472,8 +473,9 @@ Status httpFileSystemRead(void* file, void* buffer, roUint64 size, roUint64& byt
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
 	if(!s) return Status::invalid_parameter;
 
-	if(!roCastAssert<roSize>(size)) return Status::numeric_cast_overflow;
-	roSize _size = clamp_cast<roSize>(size);
+	roSize _size = 0;
+	s->status = roSafeAssign(_size, size);
+	if(!s->status) return s->status;
 
 	_blockTillReadable(*s, _size);
 	roAssert(s->status != Status::in_progress);
@@ -517,7 +519,7 @@ Status httpFileSystemSize(void* file, roUint64& size)
 	return Status::ok;
 }
 
-Status httpFileSystemSeek(void* file, roUint64 offset, FileSystem::SeekOrigin origin)
+Status httpFileSystemSeek(void* file, roInt64 offset, FileSystem::SeekOrigin origin)
 {
 	return Status::not_implemented;
 }
@@ -532,7 +534,9 @@ roBytePtr httpFileSystemGetBuffer(void* file, roUint64 requestSize, roUint64& re
 {
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
 	if(!s || s->state == State_Error || requestSize == 0) { readableSize = 0; return NULL; }
-	roSize bytesToRead = clamp_cast<roSize>(requestSize);
+
+	roSize bytesToRead = 0;
+	if(!roSafeAssign(bytesToRead, requestSize)) return false;
 
 	if(!_blockTillReadable(*s, bytesToRead))
 		bytesToRead = 0;

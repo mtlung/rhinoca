@@ -10,7 +10,7 @@ bool		httpFileSystemReadWillBlock	(void* file, roUint64 bytesToRead);
 Status		httpFileSystemRead			(void* file, void* buffer, roUint64 bytesToRead, roUint64& bytesRead);
 Status		httpFileSystemAtomicRead	(void* file, void* buffer, roUint64 bytesToRead);
 Status		httpFileSystemSize			(void* file, roUint64& bytes);
-Status		httpFileSystemSeek			(void* file, roUint64 offset, FileSystem::SeekOrigin origin);
+Status		httpFileSystemSeek			(void* file, roInt64 offset, FileSystem::SeekOrigin origin);
 void		httpFileSystemCloseFile		(void* file);
 roBytePtr	httpFileSystemGetBuffer		(void* file, roUint64 requestSize, roUint64& readableSize);
 void		httpFileSystemTakeBuffer	(void* file);

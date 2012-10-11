@@ -9,7 +9,7 @@
 
 #include "../platform/roPlatformHeaders.h"
 
-HMODULE _hOpenAL = 0;
+static HMODULE _hOpenAL = 0;
 
 // Load OpenAL dynamically
 // I need to do so because the support of OpenAL on 64-bits was bad.

@@ -12,7 +12,6 @@ template<typename T> struct ComPtr
 	ComPtr& operator=(U* rhs) { ComPtr tmp(static_cast<T*>(rhs)); swap(tmp); return *this; }
 	void swap(ComPtr& rhs) { T* tmp = ptr; ptr = rhs.ptr; rhs.ptr = tmp; }
 	T* operator->() const { return ptr; }
-	operator bool() const { return ptr != NULL; }
 	operator T*() const { return ptr; }
 	T* ptr;
 };

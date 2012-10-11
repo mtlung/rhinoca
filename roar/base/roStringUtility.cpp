@@ -86,14 +86,6 @@ void roStrReverse(char *str, roSize len)
 
 // ----------------------------------------------------------------------
 
-template<class A, class B>
-bool _castAssign(A a, B& b)
-{
-	if(!roCastAssert(a, b)) return false;
-	b = B(a);
-	return true;
-}
-
 template<class T>
 static bool _parseNumber(const char* p, T& ret)
 {
@@ -183,11 +175,11 @@ bool roStrTo(const char* str, double& ret) {
 }
 
 bool roStrTo(const char* str, roInt8& ret) {
-	int tmp; return roStrTo(str, tmp) && _castAssign(tmp, ret);
+	int tmp; return roStrTo(str, tmp) && roSafeAssign(tmp, ret);
 }
 
 bool roStrTo(const char* str, roInt16& ret) {
-	int tmp; return roStrTo(str, tmp) && _castAssign(tmp, ret);
+	int tmp; return roStrTo(str, tmp) && roSafeAssign(tmp, ret);
 }
 
 bool roStrTo(const char* str, roInt32& ret) {
@@ -199,11 +191,11 @@ bool roStrTo(const char* str, roInt64& ret) {
 }
 
 bool roStrTo(const char* str, roUint8& ret) {
-	unsigned tmp; return roStrTo(str, tmp) && _castAssign(tmp, ret);
+	unsigned tmp; return roStrTo(str, tmp) && roSafeAssign(tmp, ret);
 }
 
 bool roStrTo(const char* str, roUint16& ret) {
-	unsigned tmp; return roStrTo(str, tmp) && _castAssign(tmp, ret);
+	unsigned tmp; return roStrTo(str, tmp) && roSafeAssign(tmp, ret);
 }
 
 bool roStrTo(const char* str, roUint32& ret) {

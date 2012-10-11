@@ -22,6 +22,18 @@ TEST_FIXTURE(FileSystemTest, defaultFS)
 	fileSystem.closeFile(file);
 }
 
+TEST_FIXTURE(FileSystemTest, rawFS_getWholeFile)
+{
+	void* file = NULL;
+	Status st = rawFileSystemOpenFile("Test.vc9.vcproj", file);
+
+	while(rawFileSystemReadWillBlock(file, roUint64(-1))) {}
+
+	roUint64 size;
+	char* buf = rawFileSystemGetBuffer(file, roUint64(-1), size);
+	CHECK(buf);
+}
+
 TEST_FIXTURE(FileSystemTest, rawFS_getBuffer)
 {
 	void* file = NULL;

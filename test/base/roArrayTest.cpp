@@ -39,14 +39,16 @@ TEST_FIXTURE(TinyArrayTest, basic)
 	v.reserve(3);
 	CHECK_EQUAL(3u, v.capacity());
 
+	// NOTE: Calling reserve with smaller value didn't change the capacity
 	v.reserve(2);
-	CHECK_EQUAL(2u, v.capacity());
+	CHECK_EQUAL(3u, v.capacity());
 
 	v.clear();
 	CHECK_EQUAL(0u, v.size());
-	CHECK_EQUAL(2u, v.capacity());
+	CHECK_EQUAL(3u, v.capacity());
 
-	v.reserve(1);
+	v.condense();
+	CHECK_EQUAL(v.size(), v.capacity());
 }
 
 TEST_FIXTURE(TinyArrayTest, insert)

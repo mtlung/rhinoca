@@ -25,6 +25,7 @@ struct _RawFile {
 	roSize bufOffset;
 	roSize bufSize;
 	roSize readable;
+	roUint64 fileSize;
 	Status st;
 };
 
@@ -47,7 +48,7 @@ Status rawFileSystemOpenFile(const char* uri, void*& outFile)
 		return Status::file_error;
 	}
 
-	_RawFile ret = { h, false, {0}, NULL, 0, 0, 0 };
+	_RawFile ret = { h, false, {0}, NULL, 0, 0, 0, 0 };
 	outFile = _allocator.newObj<_RawFile>(ret).unref();
 
 	return Status::ok;
@@ -60,6 +61,14 @@ bool rawFileSystemReadWillBlock(void* file, roUint64 size)
 
 	if(impl->readable >= size)
 		return false;
+
+	// Get file size
+	if(impl->fileSize == 0) {
+		if(!(impl->st = rawFileSystemSize(file, impl->fileSize)))
+			return impl->st;
+	}
+
+	size = roMinOf2(impl->fileSize, size);
 
 CheckProgress:
 	if(impl->readInProgress) {
@@ -84,7 +93,10 @@ CheckProgress:
 		return impl->st = Status::ok, false;
 	}
 
-	DWORD bytesToRead = clamp_cast<unsigned int>(size);
+	DWORD bytesToRead = 0;
+	impl->st = roSafeAssign(bytesToRead, size);
+	if(!impl->st) return false;
+
 	roSize bufSize = roMaxOf2(impl->bufOffset + impl->readable + (roSize)bytesToRead, (roSize)1024);
 	if(bufSize > impl->bufSize) {
 		impl->buf = _allocator.realloc(impl->buf, impl->bufSize, bufSize);
@@ -125,8 +137,11 @@ Status rawFileSystemRead(void* file, void* buffer, roUint64 size, roUint64& byte
 		if(!impl->st) return impl->st;
 	}
 
+	roSize bytesToMove = 0;
+	impl->st = roSafeAssign(bytesToMove, roMinOf2(size, roUint64(impl->readable)));
+	if(!impl->st) return impl->st;
+
 	// NOTE: A memory copy overhead here
-	roSize bytesToMove = roMinOf2(clamp_cast<roSize>(size), impl->readable);
 	roAssert(impl->readable >= bytesToMove);
 	roMemcpy(buffer, impl->buf + impl->bufOffset, bytesToMove);
 
@@ -162,14 +177,18 @@ Status rawFileSystemSize(void* file, roUint64& bytes)
 	return Status::ok;
 }
 
-Status rawFileSystemSeek(void* file, roUint64 offset, FileSystem::SeekOrigin origin)
+Status rawFileSystemSeek(void* file, roInt64 offset, FileSystem::SeekOrigin origin)
 {
 	_RawFile* impl = (_RawFile*)(file);
 	roAssert(impl); if(!impl) return Status::invalid_parameter;
 
+	Status st;
 	LARGE_INTEGER absOffset;
-	if(origin == FileSystem::SeekOrigin_Begin)
+	if(origin == FileSystem::SeekOrigin_Begin) {
+		st = roIsValidCast(absOffset.QuadPart, offset);
+		if(!st) return st;
 		absOffset.QuadPart = offset;
+	}
 	else if(origin == FileSystem::SeekOrigin_Current) {
 		absOffset.LowPart = impl->overlap.Offset;
 		absOffset.HighPart = impl->overlap.OffsetHigh;
@@ -211,9 +230,10 @@ roBytePtr rawFileSystemGetBuffer(void* file, roUint64 requestSize, roUint64& rea
 
 	while(impl->readable < requestSize && rawFileSystemReadWillBlock(file, requestSize - impl->readable)) {}
 
-	readableSize = roMinOf2(num_cast<roSize>(requestSize), impl->readable);
+	readableSize = roMinOf2(requestSize, roUint64(impl->readable));
 	impl->bufOffset += impl->readable;
-	impl->readable -= clamp_cast<roSize>(readableSize);
+	roAssert(readableSize <= impl->readable);
+	impl->readable -= num_cast<roSize>(readableSize);
 
 	return impl->buf;
 }
@@ -302,11 +322,14 @@ Status rawFileSystemSize(void* file, roUint64& bytes)
 	return Status::ok;
 }
 
-Status rawFileSystemSeek(void* file, roUint64 offset, FileSystem::SeekOrigin origin)
+Status rawFileSystemSeek(void* file, roInt64 offset, FileSystem::SeekOrigin origin)
 {
 	_RawFile* impl = (_RawFile*)(file);
 	roAssert(impl); if(!impl) return Status::invalid_parameter;
 	if(!impl->file) return Status::file_not_open;
+
+	Status st = roIsValidCast<long>(offset);
+	if(!st) return st;
 	return fseek(impl->file, num_cast<long>(offset), origin) == 0 ? Status::ok : Status::file_seek_error;
 }
 

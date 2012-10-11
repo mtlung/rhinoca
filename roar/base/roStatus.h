@@ -24,11 +24,16 @@ struct roStatus
 	roStatus(const roStatus& rhs)	{ _code = rhs._code; }
 	roStatus(Code n)				{ _code = n; }
 
-	operator	bool() const	{ return _code <= 0; }
+	operator	bool() const		{ return _code <= 0; }
 	const char*	c_str() const;
 
-	bool operator==(Code c) const{ return _code == c; }
-	bool operator!=(Code c) const{ return _code != c; }
+	bool operator==(Code c) const	{ return _code == c; }
+	bool operator!=(Code c) const	{ return _code != c; }
+	bool operator==(roStatus st) const	{ return _code == st._code; }
+	bool operator!=(roStatus st) const	{ return _code != st._code; }
+
+	friend bool operator==(Code c, roStatus st) { return st == c; }
+	friend bool operator!=(Code c, roStatus st) { return st != c; }
 
 	Code _code;
 	operator int()  const;

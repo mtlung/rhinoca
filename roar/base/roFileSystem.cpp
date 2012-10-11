@@ -60,7 +60,7 @@ Status _compoundFSSize(void* file, roUint64& bytes)
 	return c->fsImpl->size(c->impl, bytes);
 }
 
-Status _compoundFSSeek(void* file, roUint64 offset, FileSystem::SeekOrigin origin)
+Status _compoundFSSeek(void* file, roInt64 offset, FileSystem::SeekOrigin origin)
 {
 	_CompoundFSContext* c = (_CompoundFSContext*)file;
 	if(!c) return Status::invalid_parameter;

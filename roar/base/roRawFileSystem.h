@@ -10,7 +10,7 @@ bool		rawFileSystemReadWillBlock	(void* file, roUint64 bytesToRead);
 Status		rawFileSystemRead			(void* file, void* buffer, roUint64 bytesToRead, roUint64& bytesRead);
 Status		rawFileSystemAtomicRead		(void* file, void* buffer, roUint64 bytesToRead);
 Status		rawFileSystemSize			(void* file, roUint64& bytes);
-Status		rawFileSystemSeek			(void* file, roUint64 offset, FileSystem::SeekOrigin origin);
+Status		rawFileSystemSeek			(void* file, roInt64 offset, FileSystem::SeekOrigin origin);
 void		rawFileSystemCloseFile		(void* file);
 roBytePtr	rawFileSystemGetBuffer		(void* file, roUint64 requestSize, roUint64& readableSize);
 void		rawFileSystemTakeBuffer		(void* file);

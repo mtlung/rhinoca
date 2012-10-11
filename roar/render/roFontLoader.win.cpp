@@ -298,7 +298,7 @@ static void _initWinFont(FontData& fontData, HDC hdc)
 
 void FontLoader::processRequest(TaskPool* taskPool)
 {
-	ro::Array<char> glyhpBitmapBuf;
+	ro::Array<roUint8> glyhpBitmapBuf;
 
 	for(roSize i=0; i<font->requestLoadThread.size(); ++i)
 	{
@@ -393,7 +393,7 @@ void FontLoader::processRequest(TaskPool* taskPool)
 			int c = glyhpBitmapBuf[i];
 			pixelSum += c;
 			c = int(c * (float)255 / 64);
-			glyhpBitmapBuf[i] = num_cast<char>(c);
+			glyhpBitmapBuf[i] = num_cast<roUint8>(c);
 		}
 
 		// If the bitmap doesn't has any visual pixel, force the box to be zero

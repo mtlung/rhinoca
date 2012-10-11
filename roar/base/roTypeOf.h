@@ -1,6 +1,8 @@
 #ifndef __roTypeOf_h__
 #define __roTypeOf_h__
 
+#include "../platform/roCompiler.h"
+
 namespace ro {
 
 template<typename T>	
@@ -8,6 +10,7 @@ struct TypeOf {
 	static T valueMin();
 	static T valueMax();
 
+	static bool isSigned();
 	static bool isUnsigned();
 
 #ifdef _MSC_VER
@@ -19,10 +22,12 @@ struct TypeOf {
 
 #define roTYPE_LIST(T) \
 	template<> inline bool TypeOf<T>::isPOD()		{ return true; } \
+	template<> inline bool TypeOf<T>::isSigned()	{ return true; } \
 	template<> inline bool TypeOf<T>::isUnsigned()	{ return false; } \
 
 roTYPE_LIST(float);
 roTYPE_LIST(double);
+roTYPE_LIST(long);
 roTYPE_LIST(roInt8);
 roTYPE_LIST(roInt16);
 roTYPE_LIST(roInt32);
@@ -32,8 +37,10 @@ roTYPE_LIST(roInt64);
 
 #define roTYPE_LIST(T) \
 	template<> inline bool TypeOf<T>::isPOD()		{ return true; } \
+	template<> inline bool TypeOf<T>::isSigned()	{ return false; } \
 	template<> inline bool TypeOf<T>::isUnsigned()	{ return true; } \
 
+roTYPE_LIST(unsigned long);
 roTYPE_LIST(roUint8);
 roTYPE_LIST(roUint16);
 roTYPE_LIST(roUint32);

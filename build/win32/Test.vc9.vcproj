@@ -353,6 +353,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\test\base\roNumericOverflowTest.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\test\base\roParserTest.cpp"
 				>
 			</File>
