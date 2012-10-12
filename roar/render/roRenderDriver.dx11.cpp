@@ -197,12 +197,16 @@ typedef struct TextureFormatMapping
 TextureFormatMapping _textureFormatMappings[] = {
 	{ roRDriverTextureFormat(0),			0,	DXGI_FORMAT(0) },
 	{ roRDriverTextureFormat_RGBA,			4,	DXGI_FORMAT_R8G8B8A8_UNORM },
+	{ roRDriverTextureFormat_RGBA_16F,		8,	DXGI_FORMAT_R16G16B16A16_FLOAT },
+	{ roRDriverTextureFormat_RGBA_32F,		16,	DXGI_FORMAT_R32G32B32A32_FLOAT },
+	{ roRDriverTextureFormat_RGB_16F,		0,	DXGI_FORMAT_UNKNOWN },
+	{ roRDriverTextureFormat_RGB_32F,		12,	DXGI_FORMAT_R32G32B32_FLOAT },
 	{ roRDriverTextureFormat_L,				1,	DXGI_FORMAT_R8_UNORM },				// NOTE: DX11 no longer support gray scale texture, have to deal with it in shader
 	{ roRDriverTextureFormat_A,				1,	DXGI_FORMAT_A8_UNORM },
 	{ roRDriverTextureFormat_Depth,			4,	DXGI_FORMAT_D32_FLOAT },
 	{ roRDriverTextureFormat_DepthStencil,	4,	DXGI_FORMAT_D24_UNORM_S8_UINT },	// DXGI_FORMAT_D32_FLOAT_S8X24_UINT
-	{ roRDriverTextureFormat_PVRTC2,		0,	DXGI_FORMAT(0) },
-	{ roRDriverTextureFormat_PVRTC4,		0,	DXGI_FORMAT(0) },
+	{ roRDriverTextureFormat_PVRTC2,		0,	DXGI_FORMAT_UNKNOWN },
+	{ roRDriverTextureFormat_PVRTC4,		0,	DXGI_FORMAT_UNKNOWN },
 	{ roRDriverTextureFormat_DXT1,			0,	DXGI_FORMAT_BC1_UNORM },
 	{ roRDriverTextureFormat_DXT5,			0,	DXGI_FORMAT_BC3_UNORM },
 };

@@ -32,6 +32,61 @@ struct InitCom
 
 static InitCom _initCom;
 
+struct WICConvert
+{
+	GUID source;
+	GUID target;
+	roRDriverTextureFormat driverFormat;
+};
+
+// Formats that were not listed here will by default convert to roRDriverTextureFormat_RGBA with a warning log
+static const WICConvert _wicConvert[] = 
+{
+	{ GUID_WICPixelFormatBlackWhite,			GUID_WICPixelFormat8bppGray,		roRDriverTextureFormat_L		},
+	{ GUID_WICPixelFormat2bppGray,				GUID_WICPixelFormat8bppGray,		roRDriverTextureFormat_L		},
+	{ GUID_WICPixelFormat4bppGray,				GUID_WICPixelFormat8bppGray,		roRDriverTextureFormat_L		},
+	{ GUID_WICPixelFormat16bppGrayFixedPoint,	GUID_WICPixelFormat8bppGray,		roRDriverTextureFormat_L		},
+	{ GUID_WICPixelFormat32bppGrayFixedPoint,	GUID_WICPixelFormat8bppGray,		roRDriverTextureFormat_L		},
+
+	{ GUID_WICPixelFormat24bppBGR,				GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
+	{ GUID_WICPixelFormat24bppRGB,				GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
+	{ GUID_WICPixelFormat32bppPBGRA,			GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
+//	{ GUID_WICPixelFormat32bppPRGBA,			GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
+
+	{ GUID_WICPixelFormat1bppIndexed,			GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
+	{ GUID_WICPixelFormat2bppIndexed,			GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
+	{ GUID_WICPixelFormat4bppIndexed,			GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
+	{ GUID_WICPixelFormat8bppIndexed,			GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
+
+	{ GUID_WICPixelFormat48bppRGBFixedPoint,	GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F	},
+//	{ GUID_WICPixelFormat48bppBGRFixedPoint,	GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F },
+	{ GUID_WICPixelFormat64bppRGBAFixedPoint,	GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F },
+//	{ GUID_WICPixelFormat64bppBGRAFixedPoint,	GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F },
+	{ GUID_WICPixelFormat64bppRGBFixedPoint,	GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F },
+	{ GUID_WICPixelFormat64bppRGBHalf,			GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F },
+	{ GUID_WICPixelFormat48bppRGBHalf,			GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F },
+
+	{ GUID_WICPixelFormat128bppPRGBAFloat,		GUID_WICPixelFormat128bppRGBAFloat,	roRDriverTextureFormat_RGBA_32F	},
+	{ GUID_WICPixelFormat128bppRGBFloat,		GUID_WICPixelFormat128bppRGBAFloat,	roRDriverTextureFormat_RGBA_32F	},
+	{ GUID_WICPixelFormat128bppRGBAFixedPoint,	GUID_WICPixelFormat128bppRGBAFloat,	roRDriverTextureFormat_RGBA_32F	},
+	{ GUID_WICPixelFormat128bppRGBFixedPoint,	GUID_WICPixelFormat128bppRGBAFloat,	roRDriverTextureFormat_RGBA_32F	},
+
+	{ GUID_WICPixelFormat32bppCMYK,				GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA	}
+};
+
+static const WICConvert _defaultWicConvert = { GUID(), GUID_WICPixelFormat32bppRGBA, roRDriverTextureFormat_RGBA };
+
+static const WICConvert& _getConvertFormat(GUID source)
+{
+	for(roSize i=0; i<roCountof(_wicConvert); ++i) {
+		if(_wicConvert[i].source == source)
+			return _wicConvert[i];
+	}
+
+	roLog("warn", "WICLoader: Fail to find exact matched texture format, a lower precision format is used.\n");
+	return _defaultWicConvert;
+}
+
 }	// namespace
 
 class WICLoader : public Task
@@ -71,6 +126,7 @@ protected:
 
 	UINT bpp;
 	UINT rowStride;
+	roRDriverTextureFormat textureFormat;
 
 	void (WICLoader::*nextFun)(TaskPool*);
 };
@@ -98,7 +154,7 @@ void WICLoader::initWic(TaskPool* taskPool)
 	);
 
 	if(FAILED(hr)) {
-		roLog("error", "WindowsImagingLoader: Fail to create IWICImagingFactory");
+		roLog("error", "WindowsImagingLoader: Fail to create IWICImagingFactory\n");
 		nextFun = &WICLoader::abort;
 		return reSchedule(false, taskPool->mainThreadId());
 	}
@@ -196,7 +252,10 @@ roEXCP_TRY
 	hr = wic->CreateFormatConverter(&converter);
 	if(FAILED(hr)) roEXCP_THROW;
 
-	GUID dstWicFormat = GUID_WICPixelFormat32bppRGBA;
+	const WICConvert& convertFormat = _getConvertFormat(pixelFormat);
+	GUID dstWicFormat = convertFormat.target;
+	textureFormat = convertFormat.driverFormat;
+
 	hr = converter->Initialize(frame, dstWicFormat, WICBitmapDitherTypeErrorDiffusion, 0, 0, WICBitmapPaletteTypeCustom);
 	if(FAILED(hr)) roEXCP_THROW;
 
@@ -222,7 +281,7 @@ roEXCP_END
 
 void WICLoader::initTexture(TaskPool* taskPool)
 {
-	if(roRDriverCurrentContext->driver->initTexture(texture->handle, width, height, 1, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_None))
+	if(roRDriverCurrentContext->driver->initTexture(texture->handle, width, height, 1, textureFormat, roRDriverTextureFlag_None))
 		nextFun = &WICLoader::commit;
 	else
 		nextFun = &WICLoader::abort;
