@@ -146,8 +146,11 @@ void guiEndScrollPanel();
 
 // Text area
 struct GuiTextAreaState : public GuiPanelState {
+	GuiTextAreaState();
+	roSize highLightBegPos;
+	roSize highLightEndPos;
 };
-void guiTextArea(GuiTextAreaState& state, const roUtf8* text);
+void guiTextArea(GuiTextAreaState& state, String& text);
 
 // Tab area
 struct GuiTabAreaState : public GuiWigetState {

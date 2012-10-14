@@ -8,6 +8,7 @@ static void _doHorizontalFlowLayout(const Rectf& rect, Rectf& deducedRect, float
 	deducedRect.h = roMaxOf2(h - margin * 2, deducedRect.h);
 	x += deducedRect.w + margin;
 
+	// The deduced size may change after layout, so need to merge with the panel again
 	if(!_states.panelStateStack.isEmpty())
 		_mergeExtend(_states.panelStateStack.back()->_virtualRect, deducedRect);
 }
@@ -22,6 +23,7 @@ static void _doVerticalFlowLayout(const Rectf& rect, Rectf& deducedRect, float m
 	deducedRect.w = roMaxOf2(w - margin * 2, deducedRect.w);
 	y += deducedRect.h + margin;
 
+	// The deduced size may change after layout, so need to merge with the panel again
 	if(!_states.panelStateStack.isEmpty())
 		_mergeExtend(_states.panelStateStack.back()->_virtualRect, deducedRect);
 }
