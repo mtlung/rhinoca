@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "roTexture.h"
 #include "roRenderDriver.h"
+#include "../base/roComPtr.h"
 #include "../base/roCpuProfiler.h"
 #include "../base/roFileSystem.h"
 #include "../base/roLog.h"
@@ -8,7 +9,6 @@
 #include "../base/roTypeCast.h"
 #include "../platform/roPlatformHeaders.h"
 
-#include <atlbase.h>
 #include <wincodec.h>
 
 #pragma comment(lib, "Windowscodecs.lib")
@@ -50,6 +50,7 @@ static const WICConvert _wicConvert[] =
 
 	{ GUID_WICPixelFormat24bppBGR,				GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
 	{ GUID_WICPixelFormat24bppRGB,				GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
+	{ GUID_WICPixelFormat32bppBGRA,				GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
 	{ GUID_WICPixelFormat32bppPBGRA,			GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
 //	{ GUID_WICPixelFormat32bppPRGBA,			GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
 

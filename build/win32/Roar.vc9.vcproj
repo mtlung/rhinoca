@@ -360,6 +360,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roComPtr.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roCondVar.cpp"
 				>
 			</File>
@@ -612,7 +616,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\roar\render\roImagingLoader.windows.cpp"
+				RelativePath="..\..\roar\render\roImageLoader.windows.cpp"
 				>
 			</File>
 			<File
@@ -817,6 +821,10 @@
 			>
 			<File
 				RelativePath="..\..\roar\input\roInputDriver.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\input\roInputDriver.ime.windows.inl"
 				>
 			</File>
 			<File

@@ -1,9 +1,13 @@
 #include "pch.h"
 #include "roInputDriver.h"
 #include "../base/roArray.h"
+#include "../base/roComPtr.h"
+#include "../base/roString.h"
 #include "../base/roStringHash.h"
 #include "../math/roVector.h"
 #include "../platform/roPlatformHeaders.h"
+
+#include "roInputDriver.ime.windows.inl"
 
 using namespace ro;
 
@@ -36,6 +40,9 @@ struct roInputDriverImpl : public roInputDriver
 	Vec2 _mousePos;
 	Vec3 _mouseAxis, _mouseAxisRaw;
 	Vec3 _previousMouseAxis, _previousMouseAxisRaw;
+
+	ro::String outputText;
+	roComPtr<TextService> _textServiceManager;
 };
 
 struct ButtonMapping {
@@ -304,6 +311,14 @@ bool _mouseButtonUp(roInputDriver* self, int buttonId, bool lastFrame)
 	return (bits & (1 << buttonId)) > 0;
 }
 
+const roUtf8* _inputText(roInputDriver* self)
+{
+	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
+	if(!impl) return "";
+
+	return impl->outputText.c_str();
+}
+
 void _tick(roInputDriver* self)
 {
 	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
@@ -329,6 +344,8 @@ void roInputDriverImpl::_tick()
 	// Perform axis smoothing
 	// TODO: Make the smoothing framerate independent
 	_mouseAxis = _mouseAxisRaw * 0.5f + _mouseAxis * 0.5f;
+
+	_textServiceManager->popText(outputText);
 
 	_popWinEvents();
 }
@@ -467,6 +484,14 @@ void roInputDriverImpl::_popWinEvents()
 			else
 				_mouseButtonUpBits |= (1 << mouseButton);
 			break;
+
+		case WM_CHAR:
+		{
+			roUint16 wchar[2] = { num_cast<roUint16>(e.wParam), L'\0' };
+			ro::String tmp;
+			tmp.fromUtf16(wchar);
+			outputText += tmp;
+		}	break;
 		}
 
 		_winEvents.remove(0);
@@ -500,14 +525,21 @@ void roInitInputDriver(roInputDriver* self, const char* options)
 	impl->mouseButtonDown = _mouseButtonDown;
 	impl->mouseButtonUp = _mouseButtonUp;
 
+	impl->inputText = _inputText;
+
 	impl->tick = _tick;
 	impl->processEvents = _processEvents;
+
+	impl->_textServiceManager = new TextService();
+	impl->_textServiceManager->init();
 }
 
 void roDeleteInputDriver(roInputDriver* self)
 {
 	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
 	if(!impl) return;
+
+	impl->_textServiceManager->close();
 
 	_allocator.deleteObj(impl);
 }

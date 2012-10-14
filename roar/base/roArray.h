@@ -91,7 +91,7 @@ struct IArray
 	Status		resizeNoInit(roSize newSize);	///< For optimization purpose on something like raw byte buffer, use with care
 	Status		incSizeNoInit(roSize size);		///< For optimization purpose on something like raw byte buffer, use with care
 
-	void		clear();
+	void		clear();		///< Has the same effect as resize(0), if you want to clear the memory, use condense
 	void		condense();
 
 	T&			pushBack(const T& val=T());
