@@ -4,28 +4,22 @@ GuiTextAreaState::GuiTextAreaState()
 	highLightEndPos = 0;
 }
 
-static void _removeHighLightText(GuiTextAreaState& state, String& text, bool backSpace, bool del)
+static bool _removeHighLightText(GuiTextAreaState& state, String& text)
 {
-	roAssert(!(backSpace && del) && "back space and delete should not be both true");
-
 	roSize& posBeg = state.highLightBegPos;
 	roSize& posEnd = state.highLightEndPos;
 
 	if(text.isEmpty()) {
 		posBeg = posEnd = 0;
-		return;
+		return false;
 	}
 
-	roSize minRemoveCount = (backSpace || del) ? 1 : 0;
-	roSize removeCount = roMinOf2(minRemoveCount, posEnd - posBeg);
+	roAssert(posEnd >= posBeg);
+	roSize removeCount = roClampedSubtraction(posEnd, posBeg);
 	text.erase(posBeg, removeCount);
-
-	if(posBeg == posEnd) {
-		roAssert(minRemoveCount == 1);
-		posBeg = roClampedSubtraction(posBeg, minRemoveCount);
-	}
-
 	posEnd = posBeg;
+
+	return removeCount > 0;
 }
 
 void guiTextArea(GuiTextAreaState& state, String& text)
@@ -45,22 +39,40 @@ void guiTextArea(GuiTextAreaState& state, String& text)
 		const GuiStyle::StateSensitiveStyle& sStyle = _selectStateSensitiveSytle(labelState, guiSkin.textArea);
 
 		roInputDriver* inputDriver = roSubSystems->inputDriver;
-		text += inputDriver->inputText(inputDriver);
 
 		roSize& posBeg = state.highLightBegPos;
 		roSize& posEnd = state.highLightEndPos;
 
+		// Handle text insertion
+		const roUtf8* inputText = inputDriver->inputText(inputDriver);
+		roSize inputTextLen = roStrLen(inputText);
+		if(inputText && *inputText != '\0') {
+			_removeHighLightText(state, text);
+			roAssert(posBeg == posEnd);
+			text.insert(posBeg, inputText, inputTextLen);
+			posBeg = posEnd = posBeg + inputTextLen;
+		}
+
 		// Handle character removal
 		if(!text.isEmpty())
 		{
-			if(inputDriver->buttonDown(inputDriver, stringHash("Back"), false))
-				_removeHighLightText(state, text, true, false);
+			if(inputDriver->buttonDown(inputDriver, stringHash("Back"), false)) {
+				if(!_removeHighLightText(state, text)) {
+					roAssert(posBeg == posEnd);
+					if(posBeg > 0 && posBeg <= text.size()) {
+						text.erase(posBeg - 1, 1);
+						posBeg = posEnd = posBeg - 1;
+					}
+				}
+			}
 
-			if(inputDriver->buttonDown(inputDriver, stringHash("Delete"), false))
-				_removeHighLightText(state, text, false, true);
-
-			if(inputDriver->buttonDown(inputDriver, stringHash("Return"), false))
-				text.append('\n');
+			if(inputDriver->buttonDown(inputDriver, stringHash("Delete"), false)) {
+				if(!_removeHighLightText(state, text)) {
+					roAssert(posBeg == posEnd);
+					if(posBeg < text.size())
+						text.erase(posBeg, 1);
+				}
+			}
 		}
 		else
 			posBeg = posEnd = 0;
@@ -77,7 +89,7 @@ void guiTextArea(GuiTextAreaState& state, String& text)
 			posEnd = roClamp(posEnd, 0u, text.size());
 		}
 
-		c.setFont("10pt \"DFKai-SB\"");
+		c.setFont("12pt \"DFKai-SB\"");
 		c.setTextAlign("left");
 		c.setTextBaseline("top");
 		c.setGlobalColor(sStyle.textColor.data);

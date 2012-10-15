@@ -491,9 +491,12 @@ void roInputDriverImpl::_popWinEvents()
 			static const roUint16 include[] = {
 				0x9,	// Horizontal tab
 				0xA,	// New line
+				0xD,	// Line feed
 			};
 
 			if(wchar[0] >= 0x20 || roArrayFind(include, roCountof(include), wchar[0])) {
+				if(wchar[0] == 0xD)	// Change new feed char to new line char
+					wchar[0] = 0xA;
 				ro::String tmp;
 				tmp.fromUtf16(wchar);
 				outputText += tmp;

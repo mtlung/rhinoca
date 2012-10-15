@@ -197,10 +197,10 @@ void String::clear()
 
 void String::erase(roSize offset, roSize count)
 {
-	roSize currentSize = _size();
-	if(currentSize == 0)
+	if(count == 0)
 		return;
 
+	roSize currentSize = _size();
 	roAssert(offset < currentSize);
 	if(count > currentSize - offset)
 		count = currentSize - offset;
