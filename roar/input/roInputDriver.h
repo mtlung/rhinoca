@@ -11,12 +11,13 @@ typedef roUint32 roStringHash;
 
 typedef struct roInputDriver
 {
-// Immediate input state query
+// Keyboard event query
 	bool			(*anyButtonDown)	(roInputDriver* self, bool lastFrame);
 	bool			(*anyButtonUp)		(roInputDriver* self, bool lastFrame);
 	bool			(*buttonDown)		(roInputDriver* self, roStringHash buttonName, bool lastFrame);
 	bool			(*buttonUp)			(roInputDriver* self, roStringHash buttonName, bool lastFrame);
 
+// Immediate input state query
 	float			(*mouseAxis)		(roInputDriver* self, roStringHash axisName);
 	float			(*mouseAxisRaw)		(roInputDriver* self, roStringHash axisName);
 	float			(*mouseAxisDelta)	(roInputDriver* self, roStringHash axisName);

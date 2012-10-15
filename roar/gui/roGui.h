@@ -147,8 +147,8 @@ void guiEndScrollPanel();
 // Text area
 struct GuiTextAreaState : public GuiPanelState {
 	GuiTextAreaState();
-	roSize highLightBegPos;
-	roSize highLightEndPos;
+	roSize highLightBegPos;	// Means how many character before this position
+	roSize highLightEndPos;	// It also means the caret position
 };
 void guiTextArea(GuiTextAreaState& state, String& text);
 
