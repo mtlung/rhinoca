@@ -67,8 +67,8 @@ public:
 	CComPtr<ITextStoreACPSink> sink;
 	ITfCompositionView* currentCompositionView;
  
-	LONG m_AcpStart;
-	LONG m_AcpEnd;
+	LONG _acpStart;
+	LONG _acpEnd;
 
 	HWND _hWnd;
 	ro::Array<wchar_t> _wString;
@@ -89,7 +89,7 @@ TextService::TextService()
 	sink = NULL;
 	currentCompositionView = NULL;
 
-	m_AcpStart = m_AcpEnd = 0;
+	_acpStart = _acpEnd = 0;
 }
 
 TextService::~TextService()
@@ -224,8 +224,8 @@ STDMETHODIMP TextService::GetSelection(ULONG ulIndex, ULONG ulCount, TS_SELECTIO
 	*pcFetched = 0;
 	if((ulCount > 0) && ((ulIndex == 0) || (ulIndex == TS_DEFAULT_SELECTION)))
 	{
-		pSelection[0].acpStart = m_AcpStart;
-		pSelection[0].acpEnd = m_AcpEnd;
+		pSelection[0].acpStart = _acpStart;
+		pSelection[0].acpEnd = _acpEnd;
 		pSelection[0].style.ase = TS_AE_END;
 		pSelection[0].style.fInterimChar = FALSE;
 		*pcFetched = 1;
@@ -237,8 +237,8 @@ STDMETHODIMP TextService::GetSelection(ULONG ulIndex, ULONG ulCount, TS_SELECTIO
 STDMETHODIMP TextService::SetSelection(ULONG ulCount, const TS_SELECTION_ACP* pSelection)
 {
 	if(ulCount > 0) {
-		m_AcpStart = pSelection[0].acpStart;
-		m_AcpEnd = pSelection[0].acpEnd;
+		_acpStart = pSelection[0].acpStart;
+		_acpEnd = pSelection[0].acpEnd;
 	}
 
 	return S_OK;
@@ -250,7 +250,7 @@ STDMETHODIMP TextService::GetText(LONG acpStart, LONG acpEnd, WCHAR* pchPlain, U
         return S_OK;
 
     if(acpEnd == -1)
-        acpEnd = m_AcpEnd;
+        acpEnd = _acpEnd;
 
     acpEnd = roMinOf3(num_cast<ULONG>(acpEnd), acpStart + cchPlainReq, num_cast<ULONG>(_wString.size()));
 
@@ -291,37 +291,37 @@ STDMETHODIMP TextService::SetText(DWORD dwFlags, LONG acpStart, LONG acpEnd, con
 STDMETHODIMP TextService::InsertTextAtSelection(DWORD dwFlags, const WCHAR* pchText, ULONG cch, LONG* pacpStart, LONG* pacpEnd, TS_TEXTCHANGE* pChange)
 {
 	if (dwFlags & TS_IAS_QUERYONLY) {
-		*pacpStart = m_AcpStart;
-		*pacpEnd = m_AcpStart + cch;
+		*pacpStart = _acpStart;
+		*pacpEnd = _acpStart + cch;
 		return S_OK;
 	}
 
-	for(roSize i=0; i<num_cast<roSize>(m_AcpEnd - m_AcpStart); ++i)
-		_wString.remove(m_AcpStart);
+	for(roSize i=0; i<num_cast<roSize>(_acpEnd - _acpStart); ++i)
+		_wString.remove(_acpStart);
 
-	_wString.insert(m_AcpStart, pchText, cch);
+	_wString.insert(_acpStart, pchText, cch);
 
 	if(pacpStart)
-		*pacpStart = m_AcpStart;
+		*pacpStart = _acpStart;
 
 	if(pacpEnd)
-		*pacpEnd = m_AcpStart + cch;
+		*pacpEnd = _acpStart + cch;
 
 	if(pChange) {
-		pChange->acpStart = m_AcpStart;
-		pChange->acpOldEnd = m_AcpEnd;
-		pChange->acpNewEnd = m_AcpStart + cch;
+		pChange->acpStart = _acpStart;
+		pChange->acpOldEnd = _acpEnd;
+		pChange->acpNewEnd = _acpStart + cch;
 	}
 
 	// Set new end
-	m_AcpEnd = m_AcpStart + cch;
+	_acpEnd = _acpStart + cch;
 
 	return S_OK;
 }
 
 STDMETHODIMP TextService::GetEndACP(LONG* pacp)
 {
-    *pacp = m_AcpEnd;
+    *pacp = _acpEnd;
     return S_OK;
 }
 
@@ -376,7 +376,7 @@ STDMETHODIMP TextService::OnEndComposition(ITfCompositionView* pComposition)
 	roVerify(tmp.fromUtf16(_wString.castedPtr<roUint16>(), _wString.size()));
 	_outputString += tmp;
 	_wString.clear();
-	m_AcpStart = m_AcpEnd = 0;
+	_acpStart = _acpEnd = 0;
 
 	return S_OK;
 }

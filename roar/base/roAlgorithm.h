@@ -45,7 +45,7 @@ T* roArrayFind(T* begin, T* end, const T& key)
 template<class T>
 const T* roArrayFind(const T* begin, const T* end, const T& key)
 {
-	return arrayFind((T*)begin, end, key);
+	return roArrayFind((T*)begin, (T*)end, key);
 }
 
 template<class T, class K>

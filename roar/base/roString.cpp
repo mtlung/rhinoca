@@ -216,6 +216,11 @@ void String::erase(roSize offset, roSize count)
 		clear();
 }
 
+void String::popBack(roSize count)
+{
+	erase(size() - 1, count);
+}
+
 roSize String::find(char c, roSize offset) const
 {
 	const char* p = _str();

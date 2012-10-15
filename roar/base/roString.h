@@ -36,6 +36,7 @@ struct String
 
 	void		clear		();
 	void		erase		(roSize offset, roSize count=npos);
+	void		popBack		(roSize count);
 
 	roSize		find		(char c, roSize offset=0) const;
 	roSize		find		(const char* str, roSize offset=0) const;
