@@ -43,9 +43,9 @@ T* roArrayFind(T* begin, T* end, const T& key)
 }
 
 template<class T>
-const T* roArrayFind(const T* begin, const T* end, const T& key)
+T* roArrayFind(T* begin, roSize count, const T& key)
 {
-	return roArrayFind((T*)begin, (T*)end, key);
+	return roArrayFind(begin, begin + count, key);
 }
 
 template<class T, class K>
@@ -55,18 +55,6 @@ T* roArrayFind(T* begin, roSize count, const K& key, bool(*equal)(const T&, cons
 		if(equal(*i, key))
 			return i;
 	return NULL;
-}
-
-template<class T>
-T* roArrayFind(T* begin, roSize count, const T& key)
-{
-	return roArrayFind(begin, begin + count, key);
-}
-
-template<class T>
-const T* roArrayFind(const T* begin, roSize count, const T& key)
-{
-	return roArrayFind(begin, begin + count, key);
 }
 
 /// Find first element not before key, using operator<
@@ -326,6 +314,47 @@ void roQuickSort(T* begin, T* end)
 		return a < b;
 	}};
 	roQuickSort(begin, end, _Less());
+}
+
+// Const version overloads
+template<class T>
+const T* roArrayFind(const T* begin, const T* end, const T& key)
+{
+	return roArrayFind((T*)begin, (T*)end, key);
+}
+
+template<class T>
+const T* roArrayFind(const T* begin, roSize count, const T& key)
+{
+	return roArrayFind((T*)begin, begin + count, key);
+}
+
+template<class T, class K>
+const T* roArrayFind(const T* begin, roSize count, const K& key, bool(*equal)(const T&, const K&))
+{
+	return roArrayFind((T*)begin, begin + count, key);
+}
+
+template<class T>
+const T* roLowerBound(const T* ary, roSize count, const T& key)
+{
+	return roLowerBound((T*)ary, count, key);
+}
+template<class T, class K>
+const T* roLowerBound(const T* ary, roSize count, const K& key, bool(*less)(const T&, const K&))
+{
+	return roLowerBound((T*)ary, count, key, less);
+}
+
+template<class T>
+const T* roUpperBound(const T* ary, roSize count, const T& key)
+{
+	return roUpperBound((T*)ary, count, key);
+}
+template<class T, class K>
+const T* roUpperBound(const T* ary, roSize count, const K& key, bool(*less)(const T&, const K&))
+{
+	return roUpperBound((T*)ary, count, key, less);
 }
 
 #endif	// __roAlgorithm_h__

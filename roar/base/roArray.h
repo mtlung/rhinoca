@@ -20,11 +20,8 @@ struct StaticArray
 	enum { N = N_ };
 	T data[N];		///< Fixed-size array of elements of type T
 
-	T*				begin()				{ return data; }
-	const T*		begin() const		{ return data; }
-
-	T*				end()				{ return data + N; }
-	const T*		end() const			{ return data + N; }
+	bool			isInRange(int i) const		{ return i >= 0 && roSize(i) < N; }
+	bool			isInRange(roSize i) const	{ return i < N; }
 
 	T&				operator[](roSize i)		{ roAssert(i < N); return data[i]; }
 	const T&		operator[](roSize i) const	{ roAssert(i < N); return data[i]; }
@@ -34,6 +31,12 @@ struct StaticArray
 
 	T&				back()						{ return data[N-1]; }
 	const T&		back() const				{ return data[N-1]; }
+
+	T*				begin()				{ return data; }
+	const T*		begin() const		{ return data; }
+
+	T*				end()				{ return data + N; }
+	const T*		end() const			{ return data + N; }
 
 	roSize			size() const				{ return N; }
 	roSize			byteSize() const			{ return sizeof(data); }
@@ -69,15 +72,6 @@ struct IArray
 
 	bool		isInRange(int i) const			{ return i >= 0 && roSize(i) < size(); }
 	bool		isInRange(roSize i) const		{ return i < size(); }
-
-	T&			front()							{ roAssert(_size > 0); return _data[0]; }
-	const T&	front() const					{ roAssert(_size > 0); return _data[0]; }
-
-	T&			back(roSize i=0)				{ roAssert(_size > 0); return _data[_size - i - 1]; }
-	const T&	back(roSize i=0) const			{ roAssert(_size > 0); return _data[_size - i - 1]; }
-
-	T&			operator[](roSize idx)			{ roAssert(idx < _size); return _data[idx]; }
-	const T&	operator[](roSize idx) const	{ roAssert(idx < _size); return _data[idx]; }
 
 	void		swap(IArray& rhs)				{ roSwap(_size, rhs._size); roSwap(_capacity, rhs._capacity); roSwap(_data, rhs._data); }
 
@@ -117,26 +111,35 @@ struct IArray
 	const T*	find(const K& key, bool(*equal)(const T&, const K&)) const;
 
 // Attributes
-	iterator		begin()				{ return _data; }
-	const_iterator	begin() const		{ return _data; }
+	T&				operator[](roSize idx)		{ roAssert(idx < _size); return _data[idx]; }
+	const T&		operator[](roSize idx) const{ roAssert(idx < _size); return _data[idx]; }
 
-	iterator		end()				{ return _data + _size; }
-	const_iterator	end() const			{ return _data + _size; }
+	T&				front()						{ roAssert(_size > 0); return _data[0]; }
+	const T&		front() const				{ roAssert(_size > 0); return _data[0]; }
 
-	roSize			size() const		{ return _size; }
-	roSize			sizeInByte() const	{ return _size * sizeof(T); }
-	roSize			capacity() const	{ return _capacity; }
+	T&				back(roSize i=0)			{ roAssert(_size > 0); return _data[_size - i - 1]; }
+	const T&		back(roSize i=0) const		{ roAssert(_size > 0); return _data[_size - i - 1]; }
 
-	T*				typedPtr()			{ return _data; }
-	const T*		typedPtr() const	{ return _data; }
+	iterator		begin()						{ return _data; }
+	const_iterator	begin() const				{ return _data; }
+
+	iterator		end()						{ return _data + _size; }
+	const_iterator	end() const					{ return _data + _size; }
+
+	roSize			size() const				{ return _size; }
+	roSize			sizeInByte() const			{ return _size * sizeof(T); }
+	roSize			capacity() const			{ return _capacity; }
+
+	T*				typedPtr()					{ return _data; }
+	const T*		typedPtr() const			{ return _data; }
 
 	template<class U>
-	U*				castedPtr()			{ return (U*)_data; }
+	U*				castedPtr()					{ return (U*)_data; }
 	template<class U>
-	const U*		castedPtr() const	{ return (U*)_data; }
+	const U*		castedPtr() const			{ return (U*)_data; }
 
-	roBytePtr		bytePtr()			{ return _data; }
-	const roBytePtr	bytePtr() const		{ return _data; }
+	roBytePtr		bytePtr()					{ return _data; }
+	const roBytePtr	bytePtr() const				{ return _data; }
 
 // Private
 	roSize _size;
