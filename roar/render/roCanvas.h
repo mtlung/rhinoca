@@ -96,7 +96,8 @@ struct Canvas
 	void resetClip				();
 
 // Text metrics
-	void		measureText		(const roUtf8* str, float maxWidth, TextMetrics& metrics);
+	void		measureText		(const roUtf8* str, roSize maxStrLen, float maxWidth, TextMetrics& metrics);
+	float		lineSpacing		();
 
 // Attributes
 	unsigned	width			() const;

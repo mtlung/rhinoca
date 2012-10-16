@@ -16,6 +16,7 @@ struct TextMetrics
 	float	width;
 	float	height;
 	float	lineSpacing;
+	roSize	lineCount;
 };
 
 enum TextAlignment
@@ -43,7 +44,10 @@ struct Font : public ro::Resource
 	virtual bool setStyle(const char* styleStr) { return false; }
 
 	/// Will fail if the font is not yet loaded, you may need to loop until it success
-	virtual roStatus measure(const roUtf8* str, roSize maxStrLen, float maxWidth, TextMetrics& metrics) { return roStatus::not_implemented; }
+	/// You can specify the initial width and height by passing though the "metrics" parameter
+	virtual roStatus measure(const roUtf8* str, roSize maxStrLen, float maxWidth, TextMetrics& metrics) const { return roStatus::not_implemented; }
+
+	virtual float getLineSpacing() const { return 0; }
 
 	/// Draw to the roRDriverCurrentContext, with it current selected render target
 	virtual void draw(const roUtf8* str, roSize maxStrLen, float x, float y, float maxWidth, Canvas& canvas) {}

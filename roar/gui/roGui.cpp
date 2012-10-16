@@ -371,7 +371,7 @@ static Sizef _calTextExtend(const roUtf8* str)
 		return Sizef();
 
 	TextMetrics metrics;
-	_states.canvas->measureText(str, FLT_MAX, metrics);
+	_states.canvas->measureText(str, roSize(-1), FLT_MAX, metrics);
 
 	return Sizef(metrics.width, metrics.height);
 }

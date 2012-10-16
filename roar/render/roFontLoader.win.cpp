@@ -104,14 +104,16 @@ struct FontImpl : public Font
 
 	override bool setStyle(const char* styleStr);
 
-	override roStatus measure(const roUtf8* str, roSize maxStrLen, float maxWidth, TextMetrics& metrics);
+	override roStatus measure(const roUtf8* str, roSize maxStrLen, float maxWidth, TextMetrics& metrics) const;
+
+	override float getLineSpacing() const;
 
 	override void draw(const roUtf8* str, roSize maxStrLen, float x, float y, float maxWidth, Canvas&);
 
 	HDC hdc;	/// It is used when drawing text
 
 	Array<FontData> typefaces;
-	Array<Request> requestMainThread, requestLoadThread;
+	mutable Array<Request> requestMainThread, requestLoadThread;
 	Array<Reply> replys;
 
 	roSize currnetFontForDraw;
@@ -591,26 +593,32 @@ struct RecordMaxValue
 	T val, max;
 };
 
-roStatus FontImpl::measure(const roUtf8* str, roSize maxStrLen, float maxWidth, TextMetrics& metrics)
+roStatus FontImpl::measure(const roUtf8* str, roSize maxStrLen, float maxWidth, TextMetrics& metrics) const
 {
 	roStatus st;
 
 	if(typefaces.isEmpty())
 		return roStatus::not_initialized;
 
-	FontData& fontData = typefaces[currnetFontForDraw];
-	metrics.lineSpacing = float(fontData.tm.tmHeight + fontData.tm.tmInternalLeading + fontData.tm.tmExternalLeading);
+	const FontData& fontData = typefaces[currnetFontForDraw];
+	metrics.lineSpacing = getLineSpacing();
 
-	float x_ = 0, y_ = metrics.lineSpacing;
+	float x_ = metrics.width, y_ = metrics.height;
 	RecordMaxValue<float> x = x_, y = y_;
-	y.max = metrics.lineSpacing;
+	y.max += metrics.lineSpacing;
 
 	// Pointer to the last and the current glyph
-	Glyph* g1 = NULL, *g2 = NULL;
+	const Glyph* g1 = NULL, *g2 = NULL;
 
 	bool someGlyphNotLoaded = false;
 
 	roSize len = roMinOf2(roStrLen(str), maxStrLen);
+
+	if(len > 0) {
+		metrics.lineCount++;
+		y += metrics.lineSpacing;
+	}
+
 	for(roUint16 w; len; g1 = g2)
 	{
 		int utf8Consumed = roUtf8ToUtf16Char(w, str, len);
@@ -627,6 +635,7 @@ roStatus FontImpl::measure(const roUtf8* str, roSize maxStrLen, float maxWidth, 
 		}
 		if(w == L'\n') {
 			x = x_;
+			metrics.lineCount++;
 			y += metrics.lineSpacing;
 			continue;
 		}
@@ -641,7 +650,7 @@ roStatus FontImpl::measure(const roUtf8* str, roSize maxStrLen, float maxWidth, 
 					return k.second < c;
 				}};
 
-				KerningPair* k = roLowerBound(&fontData.kerningPairs[g1->kerningIndex], g1->kerningCount, w, &Pred::kerningLowerBound);
+				const KerningPair* k = roLowerBound(&fontData.kerningPairs[g1->kerningIndex], g1->kerningCount, w, &Pred::kerningLowerBound);
 				if(k && k->second == w)
 					x += k->offset;
 			}
@@ -663,6 +672,12 @@ roStatus FontImpl::measure(const roUtf8* str, roSize maxStrLen, float maxWidth, 
 		return roStatus::not_loaded;
 
 	return roStatus::ok;
+}
+
+float FontImpl::getLineSpacing() const
+{
+	const FontData& fontData = typefaces[currnetFontForDraw];
+	return float(fontData.tm.tmHeight + fontData.tm.tmInternalLeading + fontData.tm.tmExternalLeading);
 }
 
 struct GlyphCache
@@ -729,7 +744,7 @@ void FontImpl::draw(const roUtf8* str, roSize maxStrLen, float x_, float y_, flo
 	FontData& fontData = typefaces[currnetFontForDraw];
 
 	float x = x_, y = y_;
-	float lineSpacing = float(fontData.tm.tmHeight + fontData.tm.tmInternalLeading + fontData.tm.tmExternalLeading);
+	float lineSpacing = getLineSpacing();
 
 	// Pointer to the last and the current glyph
 	Glyph* g1 = NULL, *g2 = NULL;
