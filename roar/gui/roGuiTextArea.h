@@ -9,18 +9,26 @@ static bool _removeHighLightText(GuiTextAreaState& state, String& text)
 	roSize& posBeg = state.highLightBegPos;
 	roSize& posEnd = state.highLightEndPos;
 
+	// It's possible the beg is larger than end, in this case swap them.
+	roSize beg = posBeg;
+	roSize end = posEnd;
+	if(end < beg)
+		roSwap(beg, end);
+
 	if(text.isEmpty()) {
 		posBeg = posEnd = 0;
 		return false;
 	}
 
-	roAssert(posEnd >= posBeg);
-	roSize removeCount = roClampedSubtraction(posEnd, posBeg);
-	text.erase(posBeg, removeCount);
-	posEnd = posBeg;
+	roAssert(end >= beg);
+	roSize removeCount = roClampedSubtraction(end, beg);
+	text.erase(beg, removeCount);
+	posEnd = posBeg = beg;
 
 	return removeCount > 0;
 }
+
+namespace {
 
 struct Layout
 {
@@ -113,9 +121,25 @@ struct Layout
 		return charIdx;
 	}
 
+	Vec2 getPosFromCharIdx(const roUtf8* str, roSize charIdx, Canvas& c)
+	{
+		roSize lineIdx = getLineIdxForCharIdx(charIdx);
+		roSize lineBegCharIdx = getLineBegCharIdx(charIdx);
+		roAssert(charIdx >= lineBegCharIdx);
+
+		TextMetrics metrics;
+		metrics.width = 0;
+		metrics.height = lineIdx * c.lineSpacing();
+		c.measureText(str + lineBegCharIdx, charIdx - lineBegCharIdx, FLT_MAX, metrics);
+
+		return Vec2(metrics.width, metrics.height);
+	}
+
 	roSize utfLen;
 	Array<roSize> lineIndice;	// Map line beginning to char index
-};
+};	// Layout
+
+}	// namespace
 
 void guiTextArea(GuiTextAreaState& state, String& text)
 {
@@ -126,8 +150,8 @@ void guiTextArea(GuiTextAreaState& state, String& text)
 	Canvas& c = *_states.canvas;
 	c.setFont("16pt \"DFKai-SB\"");
 
-	roSize& posBeg = state.highLightBegPos;
-	roSize& posEnd = state.highLightEndPos;
+	roSize posBeg = state.highLightBegPos;
+	roSize posEnd = state.highLightEndPos;
 
 	// Pre-process a map to the first line character
 	Layout layout;
@@ -180,53 +204,8 @@ guiBeginScrollPanel(state);
 		posBeg = posEnd = 0;
 
 	// Get highlighting pixel positions
-	Vec2 coordBeg, coordEnd;
-	{
-		roSize lineIdx = layout.getLineIdxForCharIdx(posBeg);
-		roSize lineBegCharIdx = layout.getLineBegCharIdx(posBeg);
-		roAssert(posBeg >= lineBegCharIdx);
-
-		TextMetrics metrics;
-		metrics.width = 0;
-		metrics.height = lineIdx * c.lineSpacing();
-		c.measureText(text.c_str() + lineBegCharIdx, posBeg - lineBegCharIdx, FLT_MAX, metrics);
-
-		coordBeg.x = metrics.width;
-		coordBeg.y = metrics.height;
-	}
-
-	if(posEnd != posBeg) {
-		roSize lineIdx = layout.getLineIdxForCharIdx(posEnd);
-		roSize lineBegCharIdx = layout.getLineBegCharIdx(posEnd);
-		roAssert(posEnd >= lineBegCharIdx);
-
-		TextMetrics metrics;
-		metrics.width = 0;
-		metrics.height = lineIdx * c.lineSpacing();
-		c.measureText(text.c_str() + lineBegCharIdx, posEnd - lineBegCharIdx, FLT_MAX, metrics);
-
-		coordEnd.x = metrics.width;
-		coordEnd.y = metrics.height;
-	}
-	else
-		coordEnd = coordBeg;
-
-	{	// Make sure the caret can be seen on screen
-		float diff = 0;
-		float torrence = c.lineSpacing() * 3;
-		if((diff = state.hScrollBar.value - coordEnd.x) > 0) {
-			if(diff > torrence)
-				state.hScrollBar.value = coordEnd.x;
-			else
-				state.hScrollBar.value -= torrence;
-		}
-		if((diff = coordEnd.x - state.hScrollBar.value - state._clientRect.right()) > 0) {
-			if(diff > torrence)
-				state.hScrollBar.value = coordEnd.x;
-			else
-				state.hScrollBar.value += torrence;
-		}
-	}
+	Vec2 coordBeg = layout.getPosFromCharIdx(text.c_str(), posBeg, c);
+	Vec2 coordEnd = (posEnd == posBeg) ? coordBeg : layout.getPosFromCharIdx(text.c_str(), posEnd, c);;
 
 	{	// Handle keyboard input to manipulate the carte position
 		if(inputDriver->buttonDown(inputDriver, stringHash("Left"), false))
@@ -252,6 +231,30 @@ guiBeginScrollPanel(state);
 		posEnd = roClamp(posEnd, 0u, text.size());
 	}
 
+	// Update the pixel positions
+	coordBeg = layout.getPosFromCharIdx(text.c_str(), posBeg, c);
+	coordEnd = (posEnd == posBeg) ? coordBeg : layout.getPosFromCharIdx(text.c_str(), posEnd, c);
+
+	// Make sure the caret can be seen on screen
+	if(posBeg != state.highLightBegPos || posEnd != state.highLightEndPos) {
+		float diff = 0;
+		float torrence = c.lineSpacing() * 3;
+		if((diff = state.hScrollBar.value - coordEnd.x) > 0) {
+			if(diff > torrence)
+				state.hScrollBar.value = coordEnd.x - torrence;
+			state.hScrollBar.value -= torrence;
+		}
+		if((diff = coordEnd.x - state.hScrollBar.value - state._clientRect.right()) > 0) {
+			if(diff > torrence)
+				state.hScrollBar.value = coordEnd.x;
+			state.hScrollBar.value += torrence;
+		}
+	}
+
+	state.highLightBegPos = posBeg;
+	state.highLightEndPos = posEnd;
+
+	// Draw text
 	c.setTextAlign("left");
 	c.setTextBaseline("top");
 	c.setGlobalColor(sStyle.textColor.data);
