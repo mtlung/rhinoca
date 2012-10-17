@@ -211,6 +211,23 @@ guiBeginScrollPanel(state);
 	else
 		coordEnd = coordBeg;
 
+	{	// Make sure the caret can be seen on screen
+		float diff = 0;
+		float torrence = c.lineSpacing() * 3;
+		if((diff = state.hScrollBar.value - coordEnd.x) > 0) {
+			if(diff > torrence)
+				state.hScrollBar.value = coordEnd.x;
+			else
+				state.hScrollBar.value -= torrence;
+		}
+		if((diff = coordEnd.x - state.hScrollBar.value - state._clientRect.right()) > 0) {
+			if(diff > torrence)
+				state.hScrollBar.value = coordEnd.x;
+			else
+				state.hScrollBar.value += torrence;
+		}
+	}
+
 	{	// Handle keyboard input to manipulate the carte position
 		if(inputDriver->buttonDown(inputDriver, stringHash("Left"), false))
 			posBeg = posEnd = roClampedSubtraction(posBeg, 1u);
