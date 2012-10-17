@@ -56,7 +56,7 @@ struct Layout
 		if(!lineIndice.isInRange(lineIdx + 1))
 			return utfLen - lineIndice[lineIdx];
 		else
-			return lineIndice[lineIdx + 1] - lineIndice[lineIdx];
+			return lineIndice[lineIdx + 1] - lineIndice[lineIdx] - 1;	// -1 for excluding '\n'
 	}
 
 	roSize getLineIdxForCharIdx(roSize charIdx)
@@ -84,8 +84,37 @@ struct Layout
 		return lineIndice[currentLine + 1] - 1;
 	}
 
+	roSize getLineIdxFromPos(float x, float y, Canvas& c)
+	{
+		float lineSpacing = c.lineSpacing();
+		if(lineSpacing == 0 || lineIndice.isEmpty())
+			return 0;
+
+		return roMinOf2(lineIndice.size() - 1, roSize(y / lineSpacing));
+	}
+
+	roSize getCharIdxFromPos(const roUtf8* str, float x, float y, Canvas& c)
+	{
+		roSize lineIdx = getLineIdxFromPos(x, y, c);
+		roSize lineLength = getLineLength(lineIdx);
+		roSize firstCharIdx = lineIndice[lineIdx];
+		roSize charIdx = firstCharIdx;
+
+		const roUtf8* p = str + lineIndice[lineIdx];
+
+		for(roSize i=0; i<=lineLength; ++i) {
+			TextMetrics metrics;
+			c.measureText(p, i, FLT_MAX, metrics);
+			charIdx = firstCharIdx + i;
+			if(metrics.width >= x)
+				break;
+		}
+
+		return charIdx;
+	}
+
 	roSize utfLen;
-	Array<roSize> lineIndice;	// Map line begining to char index
+	Array<roSize> lineIndice;	// Map line beginning to char index
 };
 
 void guiTextArea(GuiTextAreaState& state, String& text)
@@ -104,88 +133,118 @@ void guiTextArea(GuiTextAreaState& state, String& text)
 	Layout layout;
 	layout.init(text);
 
-	guiBeginScrollPanel(state);
-		GuiWigetState labelState;
-		Sizef textExtend = _calTextExtend(text.c_str());
-		_setContentExtend(labelState, guiSkin.textArea, textExtend);
-		_updateWigetState(labelState);
+guiBeginScrollPanel(state);
 
-		float padding = guiSkin.textArea.padding;
-		const GuiStyle::StateSensitiveStyle& sStyle = _selectStateSensitiveSytle(labelState, guiSkin.textArea);
+	GuiWigetState labelState;
+	Sizef textExtend = _calTextExtend(text.c_str());
+	_setContentExtend(labelState, guiSkin.textArea, textExtend);
+	_updateWigetState(labelState);
 
-		roInputDriver* inputDriver = roSubSystems->inputDriver;
+	float padding = guiSkin.textArea.padding;
+	const GuiStyle::StateSensitiveStyle& sStyle = _selectStateSensitiveSytle(labelState, guiSkin.textArea);
 
-		// Handle text insertion
-		const roUtf8* inputText = inputDriver->inputText(inputDriver);
-		roSize inputTextLen = roStrLen(inputText);
-		if(inputText && *inputText != '\0') {
-			_removeHighLightText(state, text);
-			roAssert(posBeg == posEnd);
-			text.insert(posBeg, inputText, inputTextLen);
-			posBeg = posEnd = posBeg + inputTextLen;
-		}
+	roInputDriver* inputDriver = roSubSystems->inputDriver;
 
-		// Handle character removal
-		if(!text.isEmpty())
-		{
-			if(inputDriver->buttonDown(inputDriver, stringHash("Back"), false)) {
-				if(!_removeHighLightText(state, text)) {
-					roAssert(posBeg == posEnd);
-					if(posBeg > 0 && posBeg <= text.size()) {
-						text.erase(posBeg - 1, 1);
-						posBeg = posEnd = posBeg - 1;
-					}
-				}
-			}
+	// Handle text insertion
+	const roUtf8* inputText = inputDriver->inputText(inputDriver);
+	roSize inputTextLen = roStrLen(inputText);
+	if(inputText && *inputText != '\0') {
+		_removeHighLightText(state, text);
+		roAssert(posBeg == posEnd);
+		text.insert(posBeg, inputText, inputTextLen);
+		posBeg = posEnd = posBeg + inputTextLen;
+	}
 
-			if(inputDriver->buttonDown(inputDriver, stringHash("Delete"), false)) {
-				if(!_removeHighLightText(state, text)) {
-					roAssert(posBeg == posEnd);
-					if(posBeg < text.size())
-						text.erase(posBeg, 1);
+	// Handle character removal
+	if(!text.isEmpty())
+	{
+		if(inputDriver->buttonDown(inputDriver, stringHash("Back"), false)) {
+			if(!_removeHighLightText(state, text)) {
+				roAssert(posBeg == posEnd);
+				if(posBeg > 0 && posBeg <= text.size()) {
+					text.erase(posBeg - 1, 1);
+					posBeg = posEnd = posBeg - 1;
 				}
 			}
 		}
-		else
-			posBeg = posEnd = 0;
 
-		{	// Handle keyboard input to manipulate the carte position
-			if(inputDriver->buttonDown(inputDriver, stringHash("Left"), false))
-				posBeg = posEnd = roClampedSubtraction(posBeg, 1u);
-
-			if(inputDriver->buttonDown(inputDriver, stringHash("Right"), false))
-				posBeg = posEnd = posEnd + 1;
-
-			if(inputDriver->buttonDown(inputDriver, stringHash("Home"), false))
-				posBeg = posEnd = layout.getLineBegCharIdx(posBeg);
-
-			if(inputDriver->buttonDown(inputDriver, stringHash("End"), false))
-				posBeg = posEnd = layout.getLineEndCharIdx(posEnd);
-
-			// Make sure the range is correct
-			posBeg = roClamp(posBeg, 0u, text.size());
-			posEnd = roClamp(posEnd, 0u, text.size());
+		if(inputDriver->buttonDown(inputDriver, stringHash("Delete"), false)) {
+			if(!_removeHighLightText(state, text)) {
+				roAssert(posBeg == posEnd);
+				if(posBeg < text.size())
+					text.erase(posBeg, 1);
+			}
 		}
+	}
+	else
+		posBeg = posEnd = 0;
 
-		c.setTextAlign("left");
-		c.setTextBaseline("top");
-		c.setGlobalColor(sStyle.textColor.data);
-		c.fillText(text.c_str(), padding, padding, -1);
+	// Get highlighting pixel positions
+	Vec2 coordBeg, coordEnd;
+	{
+		roSize lineIdx = layout.getLineIdxForCharIdx(posBeg);
+		roSize lineBegCharIdx = layout.getLineBegCharIdx(posBeg);
+		roAssert(posBeg >= lineBegCharIdx);
 
-		{	// Draw caret
-			roSize lineIdx = layout.getLineIdxForCharIdx(posEnd);
-			roSize lineBegCharIdx = layout.getLineBegCharIdx(posEnd);
-			roAssert(posEnd >= lineBegCharIdx);
+		TextMetrics metrics;
+		metrics.width = 0;
+		metrics.height = lineIdx * c.lineSpacing();
+		c.measureText(text.c_str() + lineBegCharIdx, posBeg - lineBegCharIdx, FLT_MAX, metrics);
 
-			TextMetrics metrics;
-			metrics.width = 0;
-			metrics.height = lineIdx * c.lineSpacing();
-			c.measureText(text.c_str() + lineBegCharIdx, posEnd - lineBegCharIdx, FLT_MAX, metrics);
+		coordBeg.x = metrics.width;
+		coordBeg.y = metrics.height;
+	}
 
-			c.beginPath();
-			c.moveTo(padding + metrics.width, padding + metrics.height);
-			c.lineTo(padding + metrics.width, padding + metrics.height - c.lineSpacing());
-			c.stroke();
-		}
-	guiEndScrollPanel();
+	if(posEnd != posBeg) {
+		roSize lineIdx = layout.getLineIdxForCharIdx(posEnd);
+		roSize lineBegCharIdx = layout.getLineBegCharIdx(posEnd);
+		roAssert(posEnd >= lineBegCharIdx);
+
+		TextMetrics metrics;
+		metrics.width = 0;
+		metrics.height = lineIdx * c.lineSpacing();
+		c.measureText(text.c_str() + lineBegCharIdx, posEnd - lineBegCharIdx, FLT_MAX, metrics);
+
+		coordEnd.x = metrics.width;
+		coordEnd.y = metrics.height;
+	}
+	else
+		coordEnd = coordBeg;
+
+	{	// Handle keyboard input to manipulate the carte position
+		if(inputDriver->buttonDown(inputDriver, stringHash("Left"), false))
+			posBeg = posEnd = roClampedSubtraction(posBeg, 1u);
+
+		if(inputDriver->buttonDown(inputDriver, stringHash("Right"), false))
+			posBeg = posEnd = posEnd + 1;
+
+		if(inputDriver->buttonDown(inputDriver, stringHash("Up"), false))
+			posBeg = posEnd = layout.getCharIdxFromPos(text.c_str(), coordEnd.x, coordEnd.y - c.lineSpacing() - 1, c);
+
+		if(inputDriver->buttonDown(inputDriver, stringHash("Down"), false))
+			posBeg = posEnd = layout.getCharIdxFromPos(text.c_str(), coordEnd.x, coordEnd.y + 1, c);
+
+		if(inputDriver->buttonDown(inputDriver, stringHash("Home"), false))
+			posBeg = posEnd = layout.getLineBegCharIdx(posBeg);
+
+		if(inputDriver->buttonDown(inputDriver, stringHash("End"), false))
+			posBeg = posEnd = layout.getLineEndCharIdx(posEnd);
+
+		// Make sure the range is correct
+		posBeg = roClamp(posBeg, 0u, text.size());
+		posEnd = roClamp(posEnd, 0u, text.size());
+	}
+
+	c.setTextAlign("left");
+	c.setTextBaseline("top");
+	c.setGlobalColor(sStyle.textColor.data);
+	c.fillText(text.c_str(), padding, padding, -1);
+
+	// Draw caret
+	c.beginPath();
+	c.moveTo(padding + coordEnd.x, padding + coordEnd.y);
+	c.lineTo(padding + coordEnd.x, padding + coordEnd.y - c.lineSpacing());
+	c.stroke();
+
+guiEndScrollPanel();
 }

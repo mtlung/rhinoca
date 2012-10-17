@@ -90,6 +90,8 @@ TextService::TextService()
 	currentCompositionView = NULL;
 
 	_acpStart = _acpEnd = 0;
+
+	AddRef();
 }
 
 TextService::~TextService()
@@ -101,8 +103,6 @@ TextService::~TextService()
 roStatus TextService::init()
 {
 	roStatus st;
-
-	AddRef();
 
 	_hWnd = ::GetActiveWindow();
 
@@ -167,10 +167,8 @@ STDMETHODIMP TextService::QueryInterface(REFIID riid, LPVOID* pVoid)
 	else if(IsEqualIID(riid, IID_ITfContextOwnerCompositionSink))
 		*pVoid = (ITfContextOwnerCompositionSink*)this;
 
-	if(*pVoid) {
-		AddRef();
+	if(*pVoid)
 		return S_OK;
-	}
 
 	return E_NOINTERFACE;
 }
