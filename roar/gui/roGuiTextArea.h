@@ -165,6 +165,7 @@ guiBeginScrollPanel(state);
 	_updateWigetState(labelState);
 
 	float padding = guiSkin.textArea.padding;
+	float lineSpacing = c.lineSpacing();
 	const GuiStyle::StateSensitiveStyle& sStyle = _selectStateSensitiveSytle(labelState, guiSkin.textArea);
 
 	roInputDriver* inputDriver = roSubSystems->inputDriver;
@@ -207,24 +208,38 @@ guiBeginScrollPanel(state);
 	Vec2 coordBeg = layout.getPosFromCharIdx(text.c_str(), posBeg, c);
 	Vec2 coordEnd = (posEnd == posBeg) ? coordBeg : layout.getPosFromCharIdx(text.c_str(), posEnd, c);;
 
-	{	// Handle keyboard input to manipulate the carte position
-		if(inputDriver->buttonDown(inputDriver, stringHash("Left"), false))
-			posBeg = posEnd = roClampedSubtraction(posBeg, 1u);
+	{	// Handle keyboard input to manipulate the caret position
+		bool shift = (inputDriver->button(inputDriver, stringHash("Shift"), false));
 
-		if(inputDriver->buttonDown(inputDriver, stringHash("Right"), false))
-			posBeg = posEnd = posEnd + 1;
+		if(inputDriver->buttonDown(inputDriver, stringHash("Left"), false)) {
+			posEnd = roClampedSubtraction(posEnd, 1u);
+			if(!shift) posBeg = posEnd;
+		}
 
-		if(inputDriver->buttonDown(inputDriver, stringHash("Up"), false))
-			posBeg = posEnd = layout.getCharIdxFromPos(text.c_str(), coordEnd.x, coordEnd.y - c.lineSpacing() - 1, c);
+		if(inputDriver->buttonDown(inputDriver, stringHash("Right"), false)) {
+			posEnd = posEnd + 1;
+			if(!shift) posBeg = posEnd;
+		}
 
-		if(inputDriver->buttonDown(inputDriver, stringHash("Down"), false))
-			posBeg = posEnd = layout.getCharIdxFromPos(text.c_str(), coordEnd.x, coordEnd.y + 1, c);
+		if(inputDriver->buttonDown(inputDriver, stringHash("Up"), false)) {
+			posEnd = layout.getCharIdxFromPos(text.c_str(), coordEnd.x, coordEnd.y - lineSpacing - 1, c);
+			if(!shift) posBeg = posEnd;
+		}
 
-		if(inputDriver->buttonDown(inputDriver, stringHash("Home"), false))
-			posBeg = posEnd = layout.getLineBegCharIdx(posBeg);
+		if(inputDriver->buttonDown(inputDriver, stringHash("Down"), false)) {
+			posEnd = layout.getCharIdxFromPos(text.c_str(), coordEnd.x, coordEnd.y + 1, c);
+			if(!shift) posBeg = posEnd;
+		}
 
-		if(inputDriver->buttonDown(inputDriver, stringHash("End"), false))
-			posBeg = posEnd = layout.getLineEndCharIdx(posEnd);
+		if(inputDriver->buttonDown(inputDriver, stringHash("Home"), false)) {
+			posEnd = layout.getLineBegCharIdx(posBeg);
+			if(!shift) posBeg = posEnd;
+		}
+
+		if(inputDriver->buttonDown(inputDriver, stringHash("End"), false)) {
+			posEnd = layout.getLineEndCharIdx(posEnd);
+			if(!shift) posBeg = posEnd;
+		}
 
 		// Make sure the range is correct
 		posBeg = roClamp(posBeg, 0u, text.size());
@@ -238,7 +253,7 @@ guiBeginScrollPanel(state);
 	// Make sure the caret can be seen on screen
 	if(posBeg != state.highLightBegPos || posEnd != state.highLightEndPos) {
 		float diff = 0;
-		float torrence = c.lineSpacing() * 3;
+		float torrence = lineSpacing * 3;
 		if((diff = state.hScrollBar.value - coordEnd.x) > 0) {
 			if(diff > torrence)
 				state.hScrollBar.value = coordEnd.x - torrence;
@@ -254,6 +269,10 @@ guiBeginScrollPanel(state);
 	state.highLightBegPos = posBeg;
 	state.highLightEndPos = posEnd;
 
+	// Draw highlight
+	c.setFillColor(0, 0, 0, 1);
+	c.fillRect(padding + coordBeg.x, padding + coordBeg.y - lineSpacing, coordEnd.x - coordBeg.x, coordEnd.y - coordBeg.y + lineSpacing);
+
 	// Draw text
 	c.setTextAlign("left");
 	c.setTextBaseline("top");
@@ -263,7 +282,7 @@ guiBeginScrollPanel(state);
 	// Draw caret
 	c.beginPath();
 	c.moveTo(padding + coordEnd.x, padding + coordEnd.y);
-	c.lineTo(padding + coordEnd.x, padding + coordEnd.y - c.lineSpacing());
+	c.lineTo(padding + coordEnd.x, padding + coordEnd.y - lineSpacing);
 	c.stroke();
 
 guiEndScrollPanel();

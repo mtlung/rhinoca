@@ -17,6 +17,9 @@ typedef struct roInputDriver
 	bool			(*buttonDown)		(roInputDriver* self, roStringHash buttonName, bool lastFrame);
 	bool			(*buttonUp)			(roInputDriver* self, roStringHash buttonName, bool lastFrame);
 
+// Keyboard state query
+	bool			(*button)			(roInputDriver* self, roStringHash buttonName, bool lastFrame);
+
 // Immediate input state query
 	float			(*mouseAxis)		(roInputDriver* self, roStringHash axisName);
 	float			(*mouseAxisRaw)		(roInputDriver* self, roStringHash axisName);

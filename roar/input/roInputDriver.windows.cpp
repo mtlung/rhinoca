@@ -11,6 +11,10 @@
 
 using namespace ro;
 
+// Some notes on win input message for game:
+// http://dominikgrabiec.com/26-game-engine-input/
+// http://www.yaldex.com/games-programming/0672323699_ch03lev1sec4.html
+
 static DefaultAllocator _allocator;
 
 struct roInputDriverImpl : public roInputDriver
@@ -41,6 +45,9 @@ struct roInputDriverImpl : public roInputDriver
 	Vec3 _mouseAxis, _mouseAxisRaw;
 	Vec3 _previousMouseAxis, _previousMouseAxisRaw;
 
+	bool _lShiftDown;
+	bool _rShiftDown;
+
 	ro::String outputText;
 	roComPtr<TextService> _textServiceManager;
 };
@@ -62,6 +69,9 @@ static ButtonMapping _buttonMapping[] = {
 	{ stringHash("Return"),		VK_RETURN,		false },
 	{ stringHash("LAlt"),		VK_MENU,		false },
 	{ stringHash("RAlt"),		VK_MENU,		false },
+	{ stringHash("Shift"),		VK_SHIFT,		false },
+	{ stringHash("LShift"),		VK_LSHIFT,		false },
+	{ stringHash("RShift"),		VK_RSHIFT,		false },
 	{ stringHash("LControl"),	VK_CONTROL,		false },
 	{ stringHash("RControl"),	VK_CONTROL,		false },
 	{ stringHash("Numpad0"),	VK_NUMPAD0,		false },
@@ -229,6 +239,14 @@ bool _buttonUp(roInputDriver* self, roStringHash buttonName, bool lastFrame)
 	return impl->_keyUpList.find(buttonName) != NULL;
 }
 
+bool _button(roInputDriver* self, roStringHash buttonName, bool lastFrame)
+{
+	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
+	if(!impl) return false;
+
+	return impl->_keyList.find(buttonName) != NULL;
+}
+
 float _mouseAxis(roInputDriver* self, roStringHash axisName)
 {
 	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
@@ -373,16 +391,12 @@ void roInputDriverImpl::_processButtons(const WinEvent& winEvent)
 {
 	bool buttonDown = (winEvent.uMsg == WM_KEYDOWN || winEvent.uMsg == WM_SYSKEYDOWN);
 	bool buttonUp = (winEvent.uMsg == WM_KEYUP || winEvent.uMsg == WM_SYSKEYUP);
-	bool alt = HIWORD(::GetAsyncKeyState(VK_MENU)) != 0;
-	bool ctrl = HIWORD(::GetAsyncKeyState(VK_CONTROL)) != 0;
-	bool shift = HIWORD(::GetAsyncKeyState(VK_SHIFT)) != 0;
+	WPARAM wParam = winEvent.wParam;
 
+HandleLRShift:
 	// Find the mapping for the button event
 	for(roSize i=0; i<roCountof(_buttonMapping); ++i) {
-		if(winEvent.wParam != _buttonMapping[i].vkCode)
-			continue;
-
-		if(!shift && _buttonMapping[i].shift)
+		if(wParam != _buttonMapping[i].vkCode)
 			continue;
 
 		roStringHash hash = _buttonMapping[i].hash;
@@ -395,6 +409,32 @@ void roInputDriverImpl::_processButtons(const WinEvent& winEvent)
 			_keyList.removeAllByKey(hash);
 			_keyUpList.pushBack(hash);
 		}
+
+		break;
+	}
+
+	// Special handling to determine left/right shift key
+	if(wParam == VK_SHIFT) {
+		if(!_lShiftDown && (GetKeyState(VK_LSHIFT) & 0x8000)) {
+			_lShiftDown = true;
+			wParam = VK_LSHIFT;
+		}
+		if(_lShiftDown && !(GetKeyState(VK_LSHIFT) & 0x8000)) {
+			_lShiftDown = false;
+			wParam = VK_LSHIFT;
+		}
+
+		if(!_rShiftDown && (GetKeyState(VK_RSHIFT) & 0x8000)) {
+			_rShiftDown = true;
+			wParam = VK_RSHIFT;
+		}
+		if(_rShiftDown && !(GetKeyState(VK_RSHIFT) & 0x8000)) {
+			_rShiftDown = false;
+			wParam = VK_RSHIFT;
+		}
+
+		if(wParam != VK_SHIFT)
+			goto HandleLRShift;
 	}
 }
 
@@ -527,6 +567,7 @@ void roInitInputDriver(roInputDriver* self, const char* options)
 	impl->anyButtonUp = _anyButtonUp;
 	impl->buttonDown = _buttonDown;
 	impl->buttonUp = _buttonUp;
+	impl->button = _button;
 
 	impl->mouseAxis = _mouseAxis;
 	impl->mouseAxisRaw = _mouseAxisRaw;
@@ -534,6 +575,9 @@ void roInitInputDriver(roInputDriver* self, const char* options)
 	impl->mouseAxisDeltaRaw = _mouseAxisDeltaRaw;
 	impl->mouseButtonDown = _mouseButtonDown;
 	impl->mouseButtonUp = _mouseButtonUp;
+
+	impl->_lShiftDown = false;
+	impl->_rShiftDown = false;
 
 	impl->inputText = _inputText;
 
