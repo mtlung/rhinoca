@@ -4,11 +4,8 @@ GuiTextAreaState::GuiTextAreaState()
 	highLightEndPos = 0;
 }
 
-static bool _removeHighLightText(GuiTextAreaState& state, String& text)
+static bool _removeHighLightText(GuiTextAreaState& state, String& text, roSize& posBeg, roSize& posEnd)
 {
-	roSize& posBeg = state.highLightBegPos;
-	roSize& posEnd = state.highLightEndPos;
-
 	// It's possible the beg is larger than end, in this case swap them.
 	roSize beg = posBeg;
 	roSize end = posEnd;
@@ -135,6 +132,19 @@ struct Layout
 		return Vec2(metrics.width, metrics.height);
 	}
 
+	Vec2 getLineEndPos(const roUtf8* str, roSize lineIdx, Canvas& c)
+	{
+		roSize lineBegCharIdx = lineIndice[lineIdx];
+		roSize charIdx = lineBegCharIdx + getLineLength(lineIdx);
+
+		TextMetrics metrics;
+		metrics.width = 0;
+		metrics.height = lineIdx * c.lineSpacing();
+		c.measureText(str + lineBegCharIdx, charIdx - lineBegCharIdx, FLT_MAX, metrics);
+
+		return Vec2(metrics.width, metrics.height);
+	}
+
 	roSize utfLen;
 	Array<roSize> lineIndice;	// Map line beginning to char index
 };	// Layout
@@ -174,7 +184,7 @@ guiBeginScrollPanel(state);
 	const roUtf8* inputText = inputDriver->inputText(inputDriver);
 	roSize inputTextLen = roStrLen(inputText);
 	if(inputText && *inputText != '\0') {
-		_removeHighLightText(state, text);
+		_removeHighLightText(state, text, posBeg, posEnd);
 		roAssert(posBeg == posEnd);
 		text.insert(posBeg, inputText, inputTextLen);
 		posBeg = posEnd = posBeg + inputTextLen;
@@ -184,7 +194,7 @@ guiBeginScrollPanel(state);
 	if(!text.isEmpty())
 	{
 		if(inputDriver->buttonDown(inputDriver, stringHash("Back"), false)) {
-			if(!_removeHighLightText(state, text)) {
+			if(!_removeHighLightText(state, text, posBeg, posEnd)) {
 				roAssert(posBeg == posEnd);
 				if(posBeg > 0 && posBeg <= text.size()) {
 					text.erase(posBeg - 1, 1);
@@ -194,7 +204,7 @@ guiBeginScrollPanel(state);
 		}
 
 		if(inputDriver->buttonDown(inputDriver, stringHash("Delete"), false)) {
-			if(!_removeHighLightText(state, text)) {
+			if(!_removeHighLightText(state, text, posBeg, posEnd)) {
 				roAssert(posBeg == posEnd);
 				if(posBeg < text.size())
 					text.erase(posBeg, 1);
@@ -232,7 +242,7 @@ guiBeginScrollPanel(state);
 		}
 
 		if(inputDriver->buttonDown(inputDriver, stringHash("Home"), false)) {
-			posEnd = layout.getLineBegCharIdx(posBeg);
+			posEnd = layout.getLineBegCharIdx(posEnd);
 			if(!shift) posBeg = posEnd;
 		}
 
@@ -269,9 +279,38 @@ guiBeginScrollPanel(state);
 	state.highLightBegPos = posBeg;
 	state.highLightEndPos = posEnd;
 
-	// Draw highlight
-	c.setFillColor(0, 0, 0, 1);
-	c.fillRect(padding + coordBeg.x, padding + coordBeg.y - lineSpacing, coordEnd.x - coordBeg.x, coordEnd.y - coordBeg.y + lineSpacing);
+	{	// Draw highlight
+		// It's possible the beg is larger than end, in this case swap them.
+		roSize beg = posBeg;
+		roSize end = posEnd;
+		float coordBegX = coordBeg.x;
+		float coordEndX = coordEnd.x;
+		float coordBegY = coordBeg.y;
+		if(end < beg) {
+			roSwap(beg, end);
+			roSwap(coordBegX, coordEndX);
+			coordBegY = coordEnd.y;
+		}
+
+		roSize begLine = layout.getLineIdxForCharIdx(beg);
+		roSize endLine = layout.getLineIdxForCharIdx(end);
+
+		// Draw hight light line by line
+		c.setFillColor(0, 0, 0, 1);
+		for(roSize i=begLine; i<=endLine; ++i) {
+			float x1 = (i == begLine) ? coordBegX : 0;
+			float x2 = (i == endLine) ? coordEndX : layout.getLineEndPos(text.c_str(), i, c).x;
+			float y1 = coordBegY + (i - begLine) * lineSpacing - lineSpacing;
+			float y2 = y1 + lineSpacing;
+
+			c.fillRect(
+				padding + x1,
+				padding + y1,
+				x2 - x1,
+				y2 - y1
+			);
+		}
+	}
 
 	// Draw text
 	c.setTextAlign("left");
