@@ -34,7 +34,6 @@ struct Layout
 		const roUtf8* str = text.c_str();
 		utfLen = text.size();
 		roSize len = utfLen;
-		roSize wlen = 0;
 
 		lineIndice.clear();
 		if(len)
@@ -47,11 +46,35 @@ struct Layout
 
 			str += utf8Consumed;
 			len -= utf8Consumed;
-			wlen++;
 
 			if(w == L'\n')
-				lineIndice.pushBack(wlen);
+				lineIndice.pushBack(str - text.c_str());
 		}
+	}
+
+	roSize incrementCharIdx(const String& str, roSize idx)
+	{
+		roUint16 w;
+		if(str.isEmpty())
+			return 0;
+
+		if(!str.isInRange(idx))
+			return idx;
+
+		return idx + roUtf8ToUtf16Char(w, &str[idx], roClampedSubtraction(str.size(), idx));
+	}
+
+	roSize decrementCharIdx(const String& str, roSize idx)
+	{
+		if(str.isEmpty())
+			return 0;
+
+		// Snap back to leading character
+		do {
+			idx = roClampedSubtraction(idx, 1u);
+		} while(idx > 0 && (str[idx] & 0xC0) == 0x80);
+
+		return idx;
 	}
 
 	roSize getLineLength(roSize lineIdx)
@@ -229,12 +252,12 @@ guiBeginScrollPanel(state);
 		bool shift = (inputDriver->button(inputDriver, stringHash("Shift"), false));
 
 		if(inputDriver->buttonDown(inputDriver, stringHash("Left"), false)) {
-			posEnd = roClampedSubtraction(posEnd, 1u);
+			posEnd = layout.decrementCharIdx(text, posEnd);
 			if(!shift) posBeg = posEnd;
 		}
 
 		if(inputDriver->buttonDown(inputDriver, stringHash("Right"), false)) {
-			posEnd = posEnd + 1;
+			posEnd = layout.incrementCharIdx(text, posEnd);
 			if(!shift) posBeg = posEnd;
 		}
 
@@ -261,6 +284,17 @@ guiBeginScrollPanel(state);
 		// Make sure the range is correct
 		posBeg = roClamp(posBeg, 0u, text.size());
 		posEnd = roClamp(posEnd, 0u, text.size());
+	}
+
+	{	// Handle mouse inputs
+		bool shift = (inputDriver->button(inputDriver, stringHash("Shift"), false));
+
+		if(_states.mouseDown()) {
+			float x = _states.mousex() - padding;
+			float y = _states.mousey() - padding;
+			posEnd = layout.getCharIdxFromPos(text.c_str(), x, y, c);
+			if(!shift) posBeg = posEnd;
+		}
 	}
 
 	// Update the pixel positions

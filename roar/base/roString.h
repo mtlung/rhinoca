@@ -54,6 +54,9 @@ struct String
 	bool		operator==	(const char* rhs) const;
 	bool		operator==	(const String& rhs) const;
 
+	bool		isInRange	(int i) const		{ return i >= 0 && roSize(i) < size(); }
+	bool		isInRange	(roSize i) const	{ return i < size(); }
+
 // Attributes
 	roSize		size		() const	{ return _size(); }
 	bool		isEmpty		() const	{ return _size() == 0; }
@@ -62,7 +65,7 @@ struct String
 	const char*	c_str		() const	{ return _str(); }
 
 	char& operator[]		(roSize index) { roAssert(index < _size()); return _str()[index]; }
-	char operator[]			(roSize index) const { roAssert(index < _size()); return _str()[index]; }
+	const char& operator[]	(roSize index) const { roAssert(index < _size()); return _str()[index]; }
 
 	static const roSize npos = roSize(-1);
 
