@@ -101,6 +101,10 @@ struct Layout
 	roSize getCharIdxFromPos(const roUtf8* str, float x, float y, Canvas& c)
 	{
 		roSize lineIdx = getLineIdxFromPos(x, y, c);
+
+		if(!lineIndice.isInRange(lineIdx))
+			return 0;
+
 		roSize lineLength = getLineLength(lineIdx);
 		roSize firstCharIdx = lineIndice[lineIdx];
 		roSize charIdx = firstCharIdx;
@@ -134,6 +138,9 @@ struct Layout
 
 	Vec2 getLineEndPos(const roUtf8* str, roSize lineIdx, Canvas& c)
 	{
+		if(!lineIndice.isInRange(lineIdx))
+			return Vec2(0.f);
+
 		roSize lineBegCharIdx = lineIndice[lineIdx];
 		roSize charIdx = lineBegCharIdx + getLineLength(lineIdx);
 
