@@ -131,6 +131,7 @@ static bool _setRenderTargets(roRDriverTexture** textures, roSize targetCount, b
 	if(!ctx) return false;
 
 	if(!textures || targetCount == 0) {
+		ctx->currentRenderHash = 0;
 		// Bind default frame buffer
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		return true;
@@ -138,6 +139,11 @@ static bool _setRenderTargets(roRDriverTexture** textures, roSize targetCount, b
 
 	// Make hash value
 	unsigned hash = _hash(textures, sizeof(*textures) * targetCount);
+
+	if(ctx->currentRenderHash == hash)
+		return true;
+
+	ctx->currentRenderHash = hash;
 
 	// Find render target cache
 	for(unsigned i=0; i<ctx->renderTargetCache.size(); ++i) {

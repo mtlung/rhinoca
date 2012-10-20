@@ -228,6 +228,10 @@ static bool _setRenderTargets(roRDriverTexture** textures, roSize targetCount, b
 
 	// Make hash value
 	roUint32 hash = _hash(textures, sizeof(*textures) * targetCount);
+
+	if(ctx->currentRenderTargetViewHash == hash)
+		return true;
+
 	ctx->currentRenderTargetViewHash = hash;
 
 	// Find render target cache

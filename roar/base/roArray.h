@@ -32,11 +32,11 @@ struct StaticArray
 	T&				back()						{ return data[N-1]; }
 	const T&		back() const				{ return data[N-1]; }
 
-	T*				begin()				{ return data; }
-	const T*		begin() const		{ return data; }
+	T*				begin()						{ return data; }
+	const T*		begin() const				{ return data; }
 
-	T*				end()				{ return data + N; }
-	const T*		end() const			{ return data + N; }
+	T*				end()						{ return data + N; }
+	const T*		end() const					{ return data + N; }
 
 	roSize			size() const				{ return N; }
 	roSize			byteSize() const			{ return sizeof(data); }

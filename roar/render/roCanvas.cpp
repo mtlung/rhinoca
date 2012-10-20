@@ -248,18 +248,15 @@ void Canvas::makeCurrent()
 {
 	bool targetSizeChanged = false;
 	if(!targetTexture || !targetTexture->handle) {
-		if(roSubSystems->currentCanvas != this)
-			roVerify(_driver->setRenderTargets(NULL, 0, false));
+		roVerify(_driver->setRenderTargets(NULL, 0, false));
 
 		targetSizeChanged = _targetWidth != _context->width || _targetHeight != _context->height;
 		_targetWidth = _context->width;
 		_targetHeight = _context->height;
 	}
 	else {
-		if(roSubSystems->currentCanvas != this) {
-			roRDriverTexture* tex[] = { targetTexture->handle, depthStencilTexture->handle };
-			roVerify(_driver->setRenderTargets(tex, roCountof(tex), false));
-		}
+		roRDriverTexture* tex[] = { targetTexture->handle, depthStencilTexture->handle };
+		roVerify(_driver->setRenderTargets(tex, roCountof(tex), false));
 
 		targetSizeChanged = _targetWidth != targetTexture->handle->width || _targetHeight != targetTexture->handle->height;
 		_targetWidth = targetTexture->handle->width;

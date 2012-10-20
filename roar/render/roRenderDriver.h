@@ -89,8 +89,8 @@ typedef struct roRDriverTexture
 	unsigned isYAxisUp: 2;
 	unsigned maxMipLevels : 4;
 	roRDriverMapUsage mapUsage : 4;
-	roRDriverTextureFormat format : 4;
-	roRDriverTextureFlag flags : 16;
+	roRDriverTextureFormat format : 8;
+	roRDriverTextureFlag flags : 12;
 } roRDriverTexture;
 
 typedef enum roRDriverShaderType

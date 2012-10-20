@@ -246,11 +246,13 @@ template<class T, class S>
 bool IArray<T,S>::removeAllByKey(const T& key)
 {
 	bool ret = false;
-	for(roSize i=0; i<this->_size; ++i) {
+	for(roSize i=0; i<this->_size;) {
 		if(_data[i] == key) {
 			_typedThis().remove(i);
 			ret = true;
 		}
+		else
+			++i;
 	}
 
 	return ret;

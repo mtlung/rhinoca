@@ -69,6 +69,9 @@ roRDriverContext* _newDriverContext_GL(roRDriver* driver)
 	ret->currentDepthFunc = roRDriverCompareFunc(-1);
 	ret->currentColorWriteMask = roRDriverColorWriteMask(-1);
 
+	ret->currentRenderHash = 0;
+	ret->bindedIndexCount = 0;
+
 	ret->hWnd = NULL;
 	ret->hDc = NULL;
 	ret->hRc = NULL;

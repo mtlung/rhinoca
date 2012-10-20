@@ -141,6 +141,7 @@ struct roRDriverContextImpl : public roRDriverContext
 	roRDriverCompareFunc currentDepthFunc;
 	roRDriverColorWriteMask currentColorWriteMask;
 
+	unsigned currentRenderHash;
 	Array<RenderTarget> renderTargetCache;
 	Array<DepthStencilBuffer> depthStencilBufferCache;
 
