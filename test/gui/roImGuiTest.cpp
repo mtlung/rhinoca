@@ -229,8 +229,7 @@ TEST_FIXTURE(ImGuiTest, window)
 	CHECK(guiInit());
 
 	GuiWindowState window;
-	window.rect.w = 100;
-	window.rect.h = 100;
+	window.rect = Rectf(100, 50, 100, 100);
 	window.windowFunction = drawWindow1;
 
 	while(keepRun()) {
