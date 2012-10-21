@@ -342,21 +342,7 @@ void guiBegin(Canvas& canvas)
 	guiBeginScrollPanel(_states.rootPanel, &rootPanelStyle);
 }
 
-static void _drawWindows()
-{
-	for(roSize i=0; i<_states.windowList.size(); ++i) {
-		roAssert(_states.windowList[i]);
-		GuiWindowState& state = *_states.windowList[i];
-
-		guiDrawBox(state, NULL, guiSkin.panel, true, true);
-
-		if(state.windowFunction) {
-			guiBeginClip(state.deducedRect);
-			(*state.windowFunction)(state);
-			guiEndClip();
-		}
-	}
-}
+static void _drawWindows();
 
 void guiEnd()
 {
