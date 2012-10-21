@@ -40,6 +40,7 @@ TEST_FIXTURE(ImGuiTest, button)
 	textArea.rect = Rectf(0, 0, 300, 200);
 
 	GuiTabAreaState tabArea;
+	String text = "Hello asdfas dffewar ad eghtdagtewg wdsfg ewrsg hahahahahah\nLine 2\nLine 3";
 
 	while(keepRun()) {
 		driver->clearColor(68.0f/256, 68.0f/256, 68.0f/256, 1);
@@ -49,7 +50,7 @@ TEST_FIXTURE(ImGuiTest, button)
 //			guiBeginTabs(tabArea);
 			guiBeginScrollPanel(panel[0]);
 
-			guiTextArea(textArea, "Hello asdfas dffewar ad eghtdagtewg wdsfg ewrsg hahahahahah\nLine 2\nLine 3");
+			guiTextArea(textArea, text);
 
 			guiBeginScrollPanel(panel[1]);
 				guiLabel(Rectf(0, 20), "Hello world! I am Ricky Lung");
@@ -184,6 +185,63 @@ TEST_FIXTURE(ImGuiTest, tabPanel)
 				guiEndTab();
 			guiEndTabs();
 		guiEnd();
+		driver->swapBuffers();
+	}
+
+	guiClose();
+}
+
+TEST_FIXTURE(ImGuiTest, textArea)
+{
+	createWindow(300, 300);
+	initContext(driverStr[driverIndex]);
+	Canvas canvas;
+	canvas.init();
+	CHECK(guiInit());
+
+	GuiTextAreaState textArea;
+	String text = "Hello";
+
+	while(keepRun()) {
+		driver->clearColor(68.0f/256, 68.0f/256, 68.0f/256, 1);
+		guiBegin(canvas);
+			textArea.rect.w = (float)canvas.width();
+			textArea.rect.h = (float)canvas.height();
+			guiTextArea(textArea, text);
+		guiEnd();
+		driver->swapBuffers();
+	}
+
+	guiClose();
+}
+
+static void drawWindow1(GuiWindowState& state)
+{
+	guiLabel(Rectf(0, 20), "I am inner window");
+}
+
+TEST_FIXTURE(ImGuiTest, window)
+{
+	createWindow(300, 300);
+	initContext(driverStr[driverIndex]);
+	Canvas canvas;
+	canvas.init();
+	CHECK(guiInit());
+
+	GuiWindowState window;
+	window.rect.w = 100;
+	window.rect.h = 100;
+	window.windowFunction = drawWindow1;
+
+	while(keepRun()) {
+		driver->clearColor(68.0f/256, 68.0f/256, 68.0f/256, 1);
+		guiBegin(canvas);
+			guiLabel(Rectf(0, 140), "I am root window 1");
+			guiLabel(Rectf(0, 120), "I am root window");
+
+			guiWindow(window);
+		guiEnd();
+
 		driver->swapBuffers();
 	}
 

@@ -254,27 +254,27 @@ guiBeginScrollPanel(state);
 		if(inputDriver->buttonDown(inputDriver, stringHash("Left"), false)) {
 			posEnd = layout.decrementCharIdx(text, posEnd);
 			if(!shift) posBeg = posEnd;
-		}
+		} else
 
 		if(inputDriver->buttonDown(inputDriver, stringHash("Right"), false)) {
 			posEnd = layout.incrementCharIdx(text, posEnd);
 			if(!shift) posBeg = posEnd;
-		}
+		} else
 
 		if(inputDriver->buttonDown(inputDriver, stringHash("Up"), false)) {
 			posEnd = layout.getCharIdxFromPos(text.c_str(), coordEnd.x, coordEnd.y - lineSpacing - 1, c);
 			if(!shift) posBeg = posEnd;
-		}
+		} else
 
 		if(inputDriver->buttonDown(inputDriver, stringHash("Down"), false)) {
 			posEnd = layout.getCharIdxFromPos(text.c_str(), coordEnd.x, coordEnd.y + 1, c);
 			if(!shift) posBeg = posEnd;
-		}
+		} else
 
 		if(inputDriver->buttonDown(inputDriver, stringHash("Home"), false)) {
 			posEnd = layout.getLineBegCharIdx(posEnd);
 			if(!shift) posBeg = posEnd;
-		}
+		} else
 
 		if(inputDriver->buttonDown(inputDriver, stringHash("End"), false)) {
 			posEnd = layout.getLineEndCharIdx(posEnd);
@@ -294,6 +294,12 @@ guiBeginScrollPanel(state);
 			float y = _states.mousey() - padding;
 			posEnd = layout.getCharIdxFromPos(text.c_str(), x, y, c);
 			if(!shift) posBeg = posEnd;
+		}
+
+		if(_states.hotObject == &state) {
+			float x = _states.mousex() - padding;
+			float y = _states.mousey() - padding;
+			posEnd = layout.getCharIdxFromPos(text.c_str(), x, y, c);
 		}
 	}
 

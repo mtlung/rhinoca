@@ -144,6 +144,18 @@ struct GuiPanelState : public GuiWigetState
 void guiBeginScrollPanel(GuiPanelState& state, const GuiStyle* style=NULL);
 void guiEndScrollPanel();
 
+// Window
+struct GuiWindowState : public GuiWigetState
+{
+	GuiWindowState();
+
+	typedef void (*WindowFunction)(GuiWindowState& state);
+
+	void* userData;
+	WindowFunction windowFunction;
+};
+void guiWindow(GuiWindowState& state, const GuiStyle* style=NULL);
+
 // Text area
 struct GuiTextAreaState : public GuiPanelState {
 	GuiTextAreaState();

@@ -875,6 +875,10 @@
 				RelativePath="..\..\roar\gui\roGuiTextArea.h"
 				>
 			</File>
+			<File
+				RelativePath="..\..\roar\gui\roGuiWindow.h"
+				>
+			</File>
 		</Filter>
 		<File
 			RelativePath="..\..\roar\pch.cpp"

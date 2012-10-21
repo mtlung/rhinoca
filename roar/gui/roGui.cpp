@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "roGui.h"
 #include "../base/roStopWatch.h"
+#include "../base/roTypeCast.h"
 #include "../input/roInputDriver.h"
 #include "../render/roCanvas.h"
 #include "../render/roFont.h"
@@ -229,6 +230,7 @@ struct guiStates
 
 	Array<GuiWigetState*> groupStack;
 	Array<GuiPanelState*> panelStateStack;
+	Array<GuiWindowState*> windowList;
 	Array<void*> ptrStack;
 	Array<float> floatStack;
 	Array<String> stringStack;
@@ -340,9 +342,27 @@ void guiBegin(Canvas& canvas)
 	guiBeginScrollPanel(_states.rootPanel, &rootPanelStyle);
 }
 
+static void _drawWindows()
+{
+	for(roSize i=0; i<_states.windowList.size(); ++i) {
+		roAssert(_states.windowList[i]);
+		GuiWindowState& state = *_states.windowList[i];
+
+		guiDrawBox(state, NULL, guiSkin.panel, true, true);
+
+		if(state.windowFunction) {
+			guiBeginClip(state.deducedRect);
+			(*state.windowFunction)(state);
+			guiEndClip();
+		}
+	}
+}
+
 void guiEnd()
 {
 	guiEndScrollPanel();
+
+	_drawWindows();
 
 	_states.canvas = NULL;
 
@@ -553,7 +573,7 @@ void guiDoLayout(const Rectf& rect, Rectf& deducedRect, float margin)
 
 // Draw functions
 
-void _draw3x3(roRDriverTexture* tex, const Rectf& rect, float borderWidth, bool drawBorder=true, bool drawMiddle=true)
+static void _draw3x3(roRDriverTexture* tex, const Rectf& rect, float borderWidth, bool drawBorder=true, bool drawMiddle=true)
 {
 	if(!tex) return;
 	Canvas& c = *_states.canvas;
@@ -633,6 +653,7 @@ GuiWigetState::GuiWigetState()
 #include "roGuiButton.h"
 #include "roGuiScrollbar.h"
 #include "roGuiPanel.h"
+#include "roGuiWindow.h"
 #include "roGuiTextArea.h"
 #include "roGuiTabArea.h"
 #include "roGuiLayout.h"
