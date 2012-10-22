@@ -26,8 +26,12 @@ void guiBeginScrollPanel(GuiPanelState& state, const GuiStyle* style)
 	if(state._clientRect.w == 0 || state._clientRect.h == 0)
 		state._clientRect = deducedRect;
 
+	// Try capture the mouse and prevent the mouse scroll fall though this panel
+	if(_isHover(deducedRect))
+		_states.mouseCapturedObject = &state;
+
 	// Detect mouse scroll
-	if(_states.lastFrameHoveringObject == &state && state.scrollable)
+	if(_states.lastFrameMouseCapturedObject == &state && state.scrollable)
 		state.vScrollBar.value -= _states.mousez() * 10;
 
 	state.vScrollBar.value = roClamp(state.vScrollBar.value, 0.f, state.vScrollBar.valueMax);

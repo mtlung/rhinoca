@@ -311,6 +311,8 @@ guiBeginScrollPanel(state);
 	if(posBeg != state.highLightBegPos || posEnd != state.highLightEndPos) {
 		float diff = 0;
 		float torrence = lineSpacing * 3;
+
+		// Horizontal
 		if((diff = state.hScrollBar.value - coordEnd.x) > 0) {
 			if(diff > torrence)
 				state.hScrollBar.value = coordEnd.x - torrence;
@@ -320,6 +322,18 @@ guiBeginScrollPanel(state);
 			if(diff > torrence)
 				state.hScrollBar.value = coordEnd.x;
 			state.hScrollBar.value += torrence;
+		}
+
+		// Vertical
+		if((diff = state.vScrollBar.value - coordEnd.y) > -lineSpacing) {
+			if(diff > torrence)
+				state.vScrollBar.value = coordEnd.y - torrence;
+			state.vScrollBar.value -= torrence;
+		}
+		if((diff = coordEnd.y - state.vScrollBar.value - state._clientRect.bottom()) > 0) {
+			if(diff > torrence)
+				state.vScrollBar.value = coordEnd.y;
+			state.vScrollBar.value += torrence;
 		}
 	}
 

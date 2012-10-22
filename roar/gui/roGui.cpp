@@ -224,7 +224,11 @@ struct guiStates
 	void* lastFrameHotObject;
 	void* potentialHotObject;
 	void* hoveringObject;
+	void* mouseCapturedObject;
+	void* keyboardCapturedObject;
 	void* lastFrameHoveringObject;
+	void* lastFrameMouseCapturedObject;
+	void* lastFrameKeyboardCapturedObject;
 
 	GuiPanelState rootPanel;
 
@@ -244,8 +248,11 @@ guiStates::guiStates()
 	offsetx = offsety = 0;
 	mousePulse = false;
 	hoveringObject = NULL;
-	hoveringObject = NULL;
+	mouseCapturedObject = NULL;
+	keyboardCapturedObject = NULL;
 	lastFrameHoveringObject = NULL;
+	lastFrameMouseCapturedObject = NULL;
+	lastFrameKeyboardCapturedObject = NULL;
 }
 
 }	// namespace
@@ -269,7 +276,11 @@ roStatus guiInit()
 	_states.lastFrameHotObject = NULL;
 	_states.potentialHotObject = NULL;
 	_states.hoveringObject = NULL;
+	_states.mouseCapturedObject = NULL;
+	_states.keyboardCapturedObject = NULL;
 	_states.lastFrameHoveringObject = NULL;
+	_states.lastFrameMouseCapturedObject = NULL;
+	_states.lastFrameKeyboardCapturedObject = NULL;
 	_states.mousePulseTimer.reset(0.1f);
 	_states.mousePulseTimer.pause();
 
@@ -354,6 +365,8 @@ void guiEnd()
 
 	_states.lastFrameHotObject = _states.hotObject;
 	_states.lastFrameHoveringObject = _states.hoveringObject;
+	_states.lastFrameMouseCapturedObject = _states.mouseCapturedObject;
+	_states.lastFrameKeyboardCapturedObject = _states.keyboardCapturedObject;
 
 	if(!_states.hotObject)
 		_states.hotObject = _states.potentialHotObject;
