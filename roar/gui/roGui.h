@@ -19,6 +19,7 @@ struct GuiStyle
 		Colorf textColor;
 		Colorf backgroundColor;
 		TexturePtr backgroundImage;
+		Array<TexturePtr> auxImages;
 	};
 
 	StateSensitiveStyle normal;
@@ -49,6 +50,7 @@ struct GuiSkin
 	GuiStyle panel;
 	GuiStyle textArea;
 	GuiStyle tabArea;
+	GuiStyle window;
 };
 
 // The current skin to use
@@ -149,10 +151,14 @@ struct GuiWindowState : public GuiWigetState
 {
 	GuiWindowState();
 
-	typedef void (*WindowFunction)(GuiWindowState& state);
+	String title;
+	GuiButtonState titleBar;	// We represent the title using a button
 
 	void* userData;
+	typedef void (*WindowFunction)(GuiWindowState& state);
 	WindowFunction windowFunction;
+
+	Rectf _clientRect;	// Relative to window's deducedRect
 };
 void guiWindow(GuiWindowState& state, const GuiStyle* style=NULL);
 

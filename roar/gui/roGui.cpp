@@ -135,6 +135,15 @@ roStatus Skin::init()
 		style.active.backgroundImage = style.normal.backgroundImage;
 	}
 
+	{	GuiStyle& style = guiSkin.window;
+		style = opaqueStyle;
+		style.border = 5;
+		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/tabpanel.png");
+		style.normal.auxImages.pushBack(mgr->loadAs<Texture>("imGui/window-title.png"));
+		style.hover = style.normal;
+		style.active = style.normal;
+	}
+
 	texCheckbox[0] = mgr->loadAs<Texture>("imGui/checkbox-0.png");
 	texCheckbox[1] = mgr->loadAs<Texture>("imGui/checkbox-1.png");
 	texCheckbox[2] = mgr->loadAs<Texture>("imGui/checkbox-2.png");
@@ -168,6 +177,9 @@ static void _clearStyle(GuiStyle& style)
 	style.normal.backgroundImage = NULL;
 	style.hover.backgroundImage = NULL;
 	style.active.backgroundImage = NULL;
+	style.normal.auxImages.clear();
+	style.hover.auxImages.clear();
+	style.active.auxImages.clear();
 }
 
 void Skin::close()
@@ -301,6 +313,7 @@ void guiClose()
 	_clearStyle(guiSkin.panel);
 	_clearStyle(guiSkin.textArea);
 	_clearStyle(guiSkin.tabArea);
+	_clearStyle(guiSkin.window);
 	_states.skin.close();
 }
 
@@ -341,6 +354,9 @@ void guiBegin(Canvas& canvas)
 	}
 
 	_states.potentialHotObject = NULL;
+	_states.hoveringObject = NULL;
+	_states.mouseCapturedObject = NULL;
+	_states.keyboardCapturedObject = NULL;
 
 	canvas.setTextAlign("center");
 	canvas.setTextBaseline("middle");

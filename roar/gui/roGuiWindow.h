@@ -12,7 +12,18 @@ static void _drawWindows()
 		roAssert(_states.windowList[i]);
 		GuiWindowState& state = *_states.windowList[i];
 
-		guiDrawBox(state, NULL, guiSkin.panel, true, true);
+		// Draw background
+		guiDrawBox(state, NULL, guiSkin.window, true, true);
+
+		// Draw title bar
+		GuiWigetState titleLabel;
+		titleLabel.rect = state.deducedRect;
+		titleLabel.rect.h = 20;
+
+		Sizef textExtend(c.lineSpacing(), c.lineSpacing());
+		_setContentExtend(titleLabel, guiSkin.window, textExtend);
+
+		guiDrawBox(titleLabel, NULL, guiSkin.window, true, true);
 
 		if(state.windowFunction) {
 			guiBeginClip(state.deducedRect);
