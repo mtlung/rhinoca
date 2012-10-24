@@ -139,7 +139,14 @@ roStatus Skin::init()
 		style = opaqueStyle;
 		style.border = 5;
 		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/tabpanel.png");
-		style.normal.auxImages.pushBack(mgr->loadAs<Texture>("imGui/window-title.png"));
+		style.hover = style.normal;
+		style.active = style.normal;
+	}
+
+	{	GuiStyle& style = guiSkin.windowTitle;
+		style = opaqueStyle;
+		style.border = 6;
+		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/window-title.png");
 		style.hover = style.normal;
 		style.active = style.normal;
 	}
@@ -205,13 +212,13 @@ struct guiStates
 
 	guiStates();
 
-	float mousex() { return mouseCaptured ? mouseCapturedState.mousex : mouseState.mousex + offsetx; }
-	float mousey() { return mouseCaptured ? mouseCapturedState.mousey : mouseState.mousey + offsety; }
+	float mousex() { return mouseCaptured ? mouseCapturedState.mousex : mouseState.mousex + offsetStack.back().x; }
+	float mousey() { return mouseCaptured ? mouseCapturedState.mousey : mouseState.mousey + offsetStack.back().y; }
 	float& mousez() { return mouseCaptured ? mouseCapturedState.mousey : mouseState.mousez; }
 	float& mousedx() { return mouseCaptured ? mouseCapturedState.mousedx : mouseState.mousedx; }
 	float& mousedy() { return mouseCaptured ? mouseCapturedState.mousedy : mouseState.mousedy; }
-	float mouseClickx() { return mouseCaptured ? mouseCapturedState.mouseClickx : mouseState.mouseClickx + offsetx; }
-	float mouseClicky() { return mouseCaptured ? mouseCapturedState.mouseClicky : mouseState.mouseClicky + offsety; }
+	float mouseClickx() { return mouseCaptured ? mouseCapturedState.mouseClickx : mouseState.mouseClickx + offsetStack.back().x; }
+	float mouseClicky() { return mouseCaptured ? mouseCapturedState.mouseClicky : mouseState.mouseClicky + offsetStack.back().y; }
 	bool& mouseUp() { return mouseCaptured ? mouseCapturedState.mouseUp : mouseState.mouseUp; }
 	bool& mouseDown() { return mouseCaptured ? mouseCapturedState.mouseDown : mouseState.mouseDown; }
 
@@ -225,7 +232,7 @@ struct guiStates
 	bool mouseCaptured;
 	MouseState mouseState;
 	MouseState mouseCapturedState;
-	float offsetx, offsety;
+	Array<Vec2> offsetStack;
 
 	bool mousePulse;
 	PeriodicTimer mousePulseTimer;
@@ -257,7 +264,6 @@ guiStates::guiStates()
 	canvas = NULL;
 	roZeroMemory(&mouseState, sizeof(mouseState));
 	roZeroMemory(&mouseCapturedState, sizeof(mouseCapturedState));
-	offsetx = offsety = 0;
 	mousePulse = false;
 	hoveringObject = NULL;
 	mouseCapturedObject = NULL;
@@ -314,6 +320,7 @@ void guiClose()
 	_clearStyle(guiSkin.textArea);
 	_clearStyle(guiSkin.tabArea);
 	_clearStyle(guiSkin.window);
+	_clearStyle(guiSkin.windowTitle);
 	_states.skin.close();
 }
 
@@ -323,6 +330,9 @@ void guiBegin(Canvas& canvas)
 	_states.canvas = &canvas;
 
 	_states.skin.tick();
+
+	_states.offsetStack.clear();
+	_states.offsetStack.pushBack(Vec2(0.f));
 
 	roInputDriver* inputDriver = roSubSystems->inputDriver;
 
@@ -334,8 +344,6 @@ void guiBegin(Canvas& canvas)
 	_states.mousez() = inputDriver->mouseAxisDelta(inputDriver, stringHash("mouse z"));
 	_states.mouseUp() = inputDriver->mouseButtonUp(inputDriver, 0, false);
 	_states.mouseDown() = inputDriver->mouseButtonDown(inputDriver, 0, false);
-	_states.offsetx = 0;
-	_states.offsety = 0;
 
 	_states.mousePulse = 
 		_states.mousePulseTimer.isTriggered() &&
@@ -476,8 +484,9 @@ static float _round(float x)
 bool guiInClipRect(float x, float y)
 {
 	// Convert to global coordinate
-	x -= _states.offsetx;
-	y -= _states.offsety;
+	const Vec2& offset = _states.offsetStack.back();
+	x -= offset.x;
+	y -= offset.y;
 
 	Rectf clipRect;
 	_states.canvas->getClipRect((float*)&clipRect);
@@ -485,22 +494,30 @@ bool guiInClipRect(float x, float y)
 	return clipRect.isPointInRect(x, y);
 }
 
-void guiBeginClip(Rectf rect)
+void guiBeginClip(Rectf clipRect, Rectf clientRect)
 {
 	Canvas& c = *_states.canvas;
 
+	Vec2 offset = _states.offsetStack.back();
+
 	// Convert to global coordinate
-	rect.x -= _states.offsetx;
-	rect.y -= _states.offsety;
+	clipRect.x -= offset.x;
+	clipRect.y -= offset.y;
 
 	c.save();
-	c.clipRect(rect.x, rect.y, rect.w, rect.h);	// clipRect() will perform intersection
+	c.clipRect(clipRect.x, clipRect.y, clipRect.w, clipRect.h);	// clipRect() will perform intersection
+
+	// Adjust origin
+	Vec2 newOffset(_round(offset.x - clientRect.x), _round(offset.y - clientRect.y));
+	_states.offsetStack.pushBack(newOffset);
+	c.translate(clientRect.x, clientRect.y);
 }
 
 void guiEndClip()
 {
 	Canvas& c = *_states.canvas;
 	c.restore();
+	_states.offsetStack.popBack();
 }
 
 void guiPushHostWiget(GuiWigetState& wiget)

@@ -16,19 +16,17 @@ static void _drawWindows()
 		guiDrawBox(state, NULL, guiSkin.window, true, true);
 
 		// Draw title bar
-		GuiWigetState titleLabel;
-		titleLabel.rect = state.deducedRect;
-		titleLabel.rect.h = 20;
+		state.titleBar.rect = state.deducedRect;
+		state.titleBar.rect.h = 10;	// This is the minimum bar height
 
 		Sizef textExtend(c.lineSpacing(), c.lineSpacing());
-		_setContentExtend(titleLabel, guiSkin.window, textExtend);
-
-		guiDrawBox(titleLabel, NULL, guiSkin.window, true, true);
+		GuiStyle dummyStyle;
+		_setContentExtend(state.titleBar, dummyStyle, textExtend);
+		state.titleBar.deducedRect.y -= state.titleBar.deducedRect.h;
+		guiButtonDraw(state.titleBar, state.title.c_str(), &guiSkin.windowTitle);
 
 		if(state.windowFunction) {
-			guiBeginClip(state.deducedRect);
-			c.translate(_round(state.deducedRect.x), _round(state.deducedRect.y));
-
+			guiBeginClip(state.deducedRect, state.deducedRect);
 			(*state.windowFunction)(state);
 			guiEndClip();
 		}

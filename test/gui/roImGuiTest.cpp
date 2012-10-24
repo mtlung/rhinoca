@@ -229,6 +229,7 @@ TEST_FIXTURE(ImGuiTest, window)
 	CHECK(guiInit());
 
 	GuiWindowState window;
+	window.title = "Untitled ...";
 	window.rect = Rectf(100, 50, 100, 100);
 	window.windowFunction = drawWindow1;
 

@@ -51,6 +51,7 @@ struct GuiSkin
 	GuiStyle textArea;
 	GuiStyle tabArea;
 	GuiStyle window;
+	GuiStyle windowTitle;
 };
 
 // The current skin to use
@@ -81,7 +82,7 @@ void guiBegin(Canvas& canvas);
 void guiEnd();
 
 bool guiInClipRect(float x, float y);
-void guiBeginClip(Rectf rect);	// Clip away any drawing and inputs outside this rect until guiEndClip() is called.
+void guiBeginClip(Rectf clipRect, Rectf clientRect);	// Clip away any drawing and inputs outside this rect until guiEndClip() is called.
 void guiEndClip();
 
 void guiDrawBox(GuiWigetState& state, const roUtf8* text, const GuiStyle& style, bool drawBorder, bool drawCenter);

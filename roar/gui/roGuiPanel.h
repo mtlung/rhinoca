@@ -7,7 +7,6 @@ GuiPanelState::GuiPanelState()
 void guiBeginScrollPanel(GuiPanelState& state, const GuiStyle* style)
 {
 	if(!style) style = &guiSkin.panel;
-	Canvas& c = *_states.canvas;
 
 	float border = style->border;
 	float padding = style->padding;
@@ -48,13 +47,7 @@ void guiBeginScrollPanel(GuiPanelState& state, const GuiStyle* style)
 	GuiWigetState buttonState = state;
 	guiDrawBox(buttonState, NULL, *style, state.showBorder, true);
 
-	guiBeginClip(state._clientRect);
-
-	// NOTE: Truncate float value to integer, so we will always have pixel perfect match
-	c.translate(_round(virtualRect.x), _round(virtualRect.y));
-
-	_states.offsetx -= virtualRect.x;
-	_states.offsety -= virtualRect.y;
+	guiBeginClip(state._clientRect, virtualRect);
 }
 
 void guiEndScrollPanel()
@@ -73,8 +66,6 @@ void guiEndScrollPanel()
 
 	virtualRect.w += padding * 2;
 	virtualRect.h += padding * 2;
-	_states.offsetx += virtualRect.x;
-	_states.offsety += virtualRect.y;
 
 	// Determine whether we need to show scroll bars
 	bool showVScrollBar = false;
