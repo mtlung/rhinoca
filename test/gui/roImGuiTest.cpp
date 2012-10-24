@@ -217,7 +217,17 @@ TEST_FIXTURE(ImGuiTest, textArea)
 
 static void drawWindow1(GuiWindowState& state)
 {
-	guiLabel(Rectf(0, 20), "I am inner window");
+	guiLabel(Rectf(0, 20), "Label in window 1");
+}
+
+static void drawWindow2(GuiWindowState& state)
+{
+	guiLabel(Rectf(0, 20), "Label in window 2");
+}
+
+static void drawWindow3(GuiWindowState& state)
+{
+	guiLabel(Rectf(0, 20), "Label in window 3");
 }
 
 TEST_FIXTURE(ImGuiTest, window)
@@ -228,10 +238,20 @@ TEST_FIXTURE(ImGuiTest, window)
 	canvas.init();
 	CHECK(guiInit());
 
-	GuiWindowState window;
-	window.title = "Untitled ...";
-	window.rect = Rectf(100, 50, 100, 100);
-	window.windowFunction = drawWindow1;
+	GuiWindowState window1;
+	window1.title = "WIndow 1 ...";
+	window1.rect = Rectf(50, 40, 100, 100);
+	window1.windowFunction = drawWindow1;
+
+	GuiWindowState window2;
+	window2.title = "WIndow 2 ...";
+	window2.rect = Rectf(100, 80, 100, 100);
+	window2.windowFunction = drawWindow2;
+
+	GuiWindowState window3;
+	window3.title = "WIndow 3 ...";
+	window3.rect = Rectf(150, 120, 100, 100);
+	window3.windowFunction = drawWindow3;
 
 	while(keepRun()) {
 		driver->clearColor(68.0f/256, 68.0f/256, 68.0f/256, 1);
@@ -239,7 +259,9 @@ TEST_FIXTURE(ImGuiTest, window)
 			guiLabel(Rectf(0, 140), "I am root window 1");
 			guiLabel(Rectf(0, 120), "I am root window");
 
-			guiWindow(window);
+			guiWindow(window1);
+			guiWindow(window2);
+			guiWindow(window3);
 		guiEnd();
 
 		driver->swapBuffers();

@@ -160,8 +160,10 @@ struct GuiWindowState : public GuiWigetState
 	WindowFunction windowFunction;
 
 	Rectf _clientRect;	// Relative to window's deducedRect
+	int _useCount;
 };
 void guiWindow(GuiWindowState& state, const GuiStyle* style=NULL);
+void guiFocusWindow(GuiWindowState& state);
 
 // Text area
 struct GuiTextAreaState : public GuiPanelState {

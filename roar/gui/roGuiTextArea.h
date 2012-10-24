@@ -71,7 +71,7 @@ struct Layout
 
 		// Snap back to leading character
 		do {
-			idx = roClampedSubtraction(idx, 1u);
+			idx = roClampedSubtraction(idx, roSize(1u));
 		} while(idx > 0 && (str[idx] & 0xC0) == 0x80);
 
 		return idx;
@@ -282,8 +282,8 @@ guiBeginScrollPanel(state);
 		}
 
 		// Make sure the range is correct
-		posBeg = roClamp(posBeg, 0u, text.size());
-		posEnd = roClamp(posEnd, 0u, text.size());
+		posBeg = roClamp(posBeg, roSize(0u), text.size());
+		posEnd = roClamp(posEnd, roSize(0u), text.size());
 	}
 
 	{	// Handle mouse inputs
