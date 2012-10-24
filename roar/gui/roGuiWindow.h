@@ -9,6 +9,7 @@ static void _drawWindows()
 {
 	Canvas& c = *_states.canvas;
 
+	// Determine which window haven't been use for this frame
 	// Use a temp list to prevent the window callback making changes to _states.windowList
 	TinyArray<GuiWindowState*, 32> tmpWindows;
 	for(roSize i=0; i<_states.windowList.size(); ++i) {
@@ -25,7 +26,16 @@ static void _drawWindows()
 		tmpWindows.pushBack(&state);
 	}
 
-	// It is safe to do anything to _states.windowList now
+	// Determine which window is clicked and make it active
+	for(roSize i = tmpWindows.size(); i--;) {
+		GuiWindowState& state = *tmpWindows[i];
+		_states.currentProcessingWindow = _states.windowList.back();	// Force guiIsInActiveWindow() to pass
+		if(_isClickedDown(state.deducedRect) || _isClickedDown(state.titleBar.deducedRect)) {
+			guiFocusWindow(state);
+			break;
+		}
+	}
+
 	for(roSize i=0; i<tmpWindows.size(); ++i) {
 		GuiWindowState& state = *tmpWindows[i];
 
@@ -53,15 +63,13 @@ static void _drawWindows()
 		state.titleBar.deducedRect.y -= state.titleBar.deducedRect.h;
 		guiButtonDraw(state.titleBar, state.title.c_str(), &guiSkin.windowTitle);
 
-		if(_isClicked(state.deducedRect))
-			guiFocusWindow(state);
-		if(_isClicked(state.titleBar.deducedRect))
-			guiFocusWindow(state);
-
+		// Process the window's content
 		if(state.windowFunction) {
+			_states.currentProcessingWindow = &state;
 			guiBeginClip(state._clientRect, state._clientRect);
 			(*state.windowFunction)(state);
 			guiEndClip();
+			_states.currentProcessingWindow = NULL;
 		}
 	}
 }
@@ -79,4 +87,11 @@ void guiFocusWindow(GuiWindowState& state)
 {
 	if(_states.windowList.removeByKey(&state))
 		_states.windowList.pushBack(&state);
+}
+
+bool guiIsInActiveWindow()
+{
+	if(_states.windowList.isEmpty())
+		return true;
+	return _states.currentProcessingWindow == _states.windowList.back();
 }

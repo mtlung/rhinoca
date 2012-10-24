@@ -215,9 +215,18 @@ TEST_FIXTURE(ImGuiTest, textArea)
 	guiClose();
 }
 
+struct MyWindow : GuiWindowState
+{
+	GuiButtonState button;
+};
+
 static void drawWindow1(GuiWindowState& state)
 {
+	MyWindow& window = static_cast<MyWindow&>(state);
 	guiLabel(Rectf(0, 20), "Label in window 1");
+
+	window.button.rect = Rectf(20, 50);
+	guiButton(window.button, "Button");
 }
 
 static void drawWindow2(GuiWindowState& state)
@@ -238,7 +247,7 @@ TEST_FIXTURE(ImGuiTest, window)
 	canvas.init();
 	CHECK(guiInit());
 
-	GuiWindowState window1;
+	MyWindow window1;
 	window1.title = "WIndow 1 ...";
 	window1.rect = Rectf(50, 40, 100, 100);
 	window1.windowFunction = drawWindow1;

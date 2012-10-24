@@ -248,6 +248,7 @@ struct guiStates
 	void* lastFrameHoveringObject;
 	void* lastFrameMouseCapturedObject;
 	void* lastFrameKeyboardCapturedObject;
+	void* currentProcessingWindow;
 
 	GuiPanelState rootPanel;
 
@@ -271,6 +272,7 @@ guiStates::guiStates()
 	lastFrameHoveringObject = NULL;
 	lastFrameMouseCapturedObject = NULL;
 	lastFrameKeyboardCapturedObject = NULL;
+	currentProcessingWindow = NULL;
 }
 
 }	// namespace
@@ -299,6 +301,7 @@ roStatus guiInit()
 	_states.lastFrameHoveringObject = NULL;
 	_states.lastFrameMouseCapturedObject = NULL;
 	_states.lastFrameKeyboardCapturedObject = NULL;
+	_states.currentProcessingWindow = NULL;
 	_states.mousePulseTimer.reset(0.1f);
 	_states.mousePulseTimer.pause();
 
@@ -449,7 +452,7 @@ static bool _isHot(const Rectf& rect)
 {
 	float x = _states.mouseClickx();
 	float y = _states.mouseClicky();
-	return rect.isPointInRect(x, y) && guiInClipRect(x, y);
+	return guiIsInActiveWindow() && rect.isPointInRect(x, y) && guiInClipRect(x, y);
 }
 
 static void _updateWigetState(GuiWigetState& state)
@@ -466,7 +469,12 @@ static void _updateWigetState(GuiWigetState& state)
 		_states.potentialHotObject = &state;
 }
 
-static bool _isClicked(const Rectf& rect)
+static bool _isClickedDown(const Rectf& rect)
+{
+	return _isHover(rect) && _isHot(rect);
+}
+
+static bool _isClickedUp(const Rectf& rect)
 {
 	return _isHover(rect) && _isHot(rect) && _states.mouseUp();
 }

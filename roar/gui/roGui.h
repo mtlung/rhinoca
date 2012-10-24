@@ -164,6 +164,7 @@ struct GuiWindowState : public GuiWigetState
 };
 void guiWindow(GuiWindowState& state, const GuiStyle* style=NULL);
 void guiFocusWindow(GuiWindowState& state);
+bool guiIsInActiveWindow();
 
 // Text area
 struct GuiTextAreaState : public GuiPanelState {
