@@ -445,7 +445,7 @@ static bool _isHover(const Rectf& rect)
 {
 	float x = _states.mousex();
 	float y = _states.mousey();
-	return rect.isPointInRect(x, y) && guiInClipRect(x, y);
+	return rect.isPointInRect(x, y) && guiInClipRect(x, y) && !guiIsObstructedByOtherWindow(x, y);
 }
 
 static bool _isHot(const Rectf& rect)
@@ -471,12 +471,12 @@ static void _updateWigetState(GuiWigetState& state)
 
 static bool _isClickedDown(const Rectf& rect)
 {
-	return _isHover(rect) && _isHot(rect);
+	return _states.mouseDown() && _isHover(rect) && _isHot(rect);
 }
 
 static bool _isClickedUp(const Rectf& rect)
 {
-	return _isHover(rect) && _isHot(rect) && _states.mouseUp();
+	return _states.mouseUp() && _isHover(rect) && _isHot(rect);
 }
 
 static bool _isRepeatedClick(const Rectf& rect)
@@ -500,6 +500,13 @@ bool guiInClipRect(float x, float y)
 	_states.canvas->getClipRect((float*)&clipRect);
 
 	return clipRect.isPointInRect(x, y);
+}
+
+Vec2 guiMouseDragOffset()
+{
+	Vec2 clickPos(_states.mouseClickx(), _states.mouseClicky());
+	Vec2 curPos(_states.mousex(), _states.mousey());
+	return curPos - clickPos;
 }
 
 void guiBeginClip(Rectf clipRect, Rectf clientRect)

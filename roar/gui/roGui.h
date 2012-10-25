@@ -2,6 +2,7 @@
 #define __gui_roImGui_h__
 
 #include "../math/roRect.h"
+#include "../math/roVector.h"
 #include "../render/roColor.h"
 #include "../render/roTexture.h"
 
@@ -82,6 +83,7 @@ void guiBegin(Canvas& canvas);
 void guiEnd();
 
 bool guiInClipRect(float x, float y);
+ro::Vec2 guiMouseDragOffset();
 void guiBeginClip(Rectf clipRect, Rectf clientRect);	// Clip away any drawing and inputs outside this rect until guiEndClip() is called.
 void guiEndClip();
 
@@ -165,6 +167,7 @@ struct GuiWindowState : public GuiWigetState
 void guiWindow(GuiWindowState& state, const GuiStyle* style=NULL);
 void guiFocusWindow(GuiWindowState& state);
 bool guiIsInActiveWindow();
+bool guiIsObstructedByOtherWindow(float x, float y);
 
 // Text area
 struct GuiTextAreaState : public GuiPanelState {
