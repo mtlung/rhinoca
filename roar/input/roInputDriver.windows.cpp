@@ -38,8 +38,10 @@ struct roInputDriverImpl : public roInputDriver
 
 	roUint8 _mouseButtonDownBits;	// 8 bit can store 8 mouse buttons
 	roUint8 _mouseButtonUpBits;
+	roUint8 _mouseButtonPressBits;
 	roUint8 _previousMouseButtonDownBits;
 	roUint8 _previousMouseButtonUpBits;
+	roUint8 _previousMouseButtonPressBits;
 
 	Vec2 _mousePos;
 	Vec3 _mouseAxis, _mouseAxisRaw;
@@ -206,6 +208,38 @@ static ButtonMapping _buttonMapping[] = {
 	{ stringHash("\""),			VK_OEM_7	},
 };
 
+static bool _buttonUp(roInputDriver* self, roStringHash buttonName, bool lastFrame)
+{
+	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
+	if(!impl) return false;
+
+	return impl->_keyUpList.find(buttonName) != NULL;
+}
+
+static bool _buttonDown(roInputDriver* self, roStringHash buttonName, bool lastFrame)
+{
+	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
+	if(!impl) return false;
+
+	return impl->_keyDownList.find(buttonName) != NULL;
+}
+
+static bool _buttonPressed(roInputDriver* self, roStringHash buttonName, bool lastFrame)
+{
+	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
+	if(!impl) return false;
+
+	return impl->_keyList.find(buttonName) != NULL;
+}
+
+static bool _anyButtonUp(roInputDriver* self, bool lastFrame)
+{
+	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
+	if(!impl) return false;
+
+	return !impl->_keyUpList.isEmpty();
+}
+
 static bool _anyButtonDown(roInputDriver* self, bool lastFrame)
 {
 	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
@@ -214,39 +248,7 @@ static bool _anyButtonDown(roInputDriver* self, bool lastFrame)
 	return !impl->_keyDownList.isEmpty();
 }
 
-bool _anyButtonUp(roInputDriver* self, bool lastFrame)
-{
-	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
-	if(!impl) return false;
-
-	return !impl->_keyUpList.isEmpty();
-}
-
-bool _buttonDown(roInputDriver* self, roStringHash buttonName, bool lastFrame)
-{
-	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
-	if(!impl) return false;
-
-	return impl->_keyDownList.find(buttonName) != NULL;
-}
-
-bool _buttonUp(roInputDriver* self, roStringHash buttonName, bool lastFrame)
-{
-	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
-	if(!impl) return false;
-
-	return impl->_keyUpList.find(buttonName) != NULL;
-}
-
-bool _button(roInputDriver* self, roStringHash buttonName, bool lastFrame)
-{
-	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
-	if(!impl) return false;
-
-	return impl->_keyList.find(buttonName) != NULL;
-}
-
-float _mouseAxis(roInputDriver* self, roStringHash axisName)
+static float _mouseAxis(roInputDriver* self, roStringHash axisName)
 {
 	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
 	if(!impl) return false;
@@ -261,7 +263,7 @@ float _mouseAxis(roInputDriver* self, roStringHash axisName)
 	return false;
 }
 
-float _mouseAxisRaw(roInputDriver* self, roStringHash axisName)
+static float _mouseAxisRaw(roInputDriver* self, roStringHash axisName)
 {
 	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
 	if(!impl) return 0;
@@ -276,7 +278,7 @@ float _mouseAxisRaw(roInputDriver* self, roStringHash axisName)
 	return 0;
 }
 
-float _mouseAxisDelta(roInputDriver* self, roStringHash axisName)
+static float _mouseAxisDelta(roInputDriver* self, roStringHash axisName)
 {
 	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
 	if(!impl) return 0;
@@ -291,7 +293,7 @@ float _mouseAxisDelta(roInputDriver* self, roStringHash axisName)
 	return 0;
 }
 
-float _mouseAxisDeltaRaw(roInputDriver* self, roStringHash axisName)
+static float _mouseAxisDeltaRaw(roInputDriver* self, roStringHash axisName)
 {
 	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
 	if(!impl) return 0;
@@ -306,18 +308,7 @@ float _mouseAxisDeltaRaw(roInputDriver* self, roStringHash axisName)
 	return false;
 }
 
-bool _mouseButtonDown(roInputDriver* self, int buttonId, bool lastFrame)
-{
-	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
-	if(!impl) return false;
-
-	roUint8 bits = lastFrame ?
-		impl->_previousMouseButtonDownBits : impl->_mouseButtonDownBits;
-
-	return (bits & (1 << buttonId)) > 0;
-}
-
-bool _mouseButtonUp(roInputDriver* self, int buttonId, bool lastFrame)
+static bool _mouseButtonUp(roInputDriver* self, int buttonId, bool lastFrame)
 {
 	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
 	if(!impl) return false;
@@ -328,7 +319,29 @@ bool _mouseButtonUp(roInputDriver* self, int buttonId, bool lastFrame)
 	return (bits & (1 << buttonId)) > 0;
 }
 
-const roUtf8* _inputText(roInputDriver* self)
+static bool _mouseButtonDown(roInputDriver* self, int buttonId, bool lastFrame)
+{
+	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
+	if(!impl) return false;
+
+	roUint8 bits = lastFrame ?
+		impl->_previousMouseButtonDownBits : impl->_mouseButtonDownBits;
+
+	return (bits & (1 << buttonId)) > 0;
+}
+
+static bool _mouseButtonPressed(roInputDriver* self, int buttonId, bool lastFrame)
+{
+	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
+	if(!impl) return false;
+
+	roUint8 bits = lastFrame ?
+		impl->_previousMouseButtonPressBits : impl->_mouseButtonPressBits;
+
+	return (bits & (1 << buttonId)) > 0;
+}
+
+static const roUtf8* _inputText(roInputDriver* self)
 {
 	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
 	if(!impl) return "";
@@ -336,7 +349,7 @@ const roUtf8* _inputText(roInputDriver* self)
 	return impl->outputText.c_str();
 }
 
-void _tick(roInputDriver* self)
+static void _tick(roInputDriver* self)
 {
 	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
 	if(!impl) return;
@@ -355,6 +368,8 @@ void roInputDriverImpl::_tick()
 	_previousMouseButtonUpBits = _mouseButtonUpBits;
 	_mouseButtonUpBits = 0;
 
+	_previousMouseButtonPressBits = _mouseButtonPressBits;
+
 	_previousMouseAxis = _mouseAxis;
 	_previousMouseAxisRaw = _mouseAxisRaw;
 
@@ -367,7 +382,7 @@ void roInputDriverImpl::_tick()
 	_popWinEvents();
 }
 
-void _processEvents(roInputDriver* self, void** data, roSize numData)
+static void _processEvents(roInputDriver* self, void** data, roSize numData)
 {
 	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
 	if(!impl) return;
@@ -500,6 +515,7 @@ void roInputDriverImpl::_popWinEvents()
 			SetCapture(e.hWnd);
 			mouseButtonCaptured = true;
 			_mouseButtonDownBits |= (1 << mouseButton);
+			_mouseButtonPressBits |= (1 << mouseButton);
 			break;
 
 		case WM_LBUTTONUP:
@@ -520,8 +536,10 @@ void roInputDriverImpl::_popWinEvents()
 			// All button up when losing focus
 			if(e.uMsg == WM_KILLFOCUS)
 				_mouseButtonUpBits = 0xFF;
-			else
+			else {
 				_mouseButtonUpBits |= (1 << mouseButton);
+				_mouseButtonPressBits &= ~(1 << mouseButton);
+			}
 			break;
 
 		case WM_CHAR:
@@ -562,18 +580,19 @@ void roInitInputDriver(roInputDriver* self, const char* options)
 	roZeroMemory(impl, sizeof(*impl));
 
 	// Setup the function pointers
-	impl->anyButtonDown = _anyButtonDown;
-	impl->anyButtonUp = _anyButtonUp;
-	impl->buttonDown = _buttonDown;
 	impl->buttonUp = _buttonUp;
-	impl->button = _button;
+	impl->buttonDown = _buttonDown;
+	impl->buttonPressed = _buttonPressed;
+	impl->anyButtonUp = _anyButtonUp;
+	impl->anyButtonDown = _anyButtonDown;
 
 	impl->mouseAxis = _mouseAxis;
 	impl->mouseAxisRaw = _mouseAxisRaw;
 	impl->mouseAxisDelta = _mouseAxisDelta;
 	impl->mouseAxisDeltaRaw = _mouseAxisDeltaRaw;
-	impl->mouseButtonDown = _mouseButtonDown;
 	impl->mouseButtonUp = _mouseButtonUp;
+	impl->mouseButtonDown = _mouseButtonDown;
+	impl->mouseButtonPressed = _mouseButtonPressed;
 
 	impl->_lShiftDown = false;
 	impl->_rShiftDown = false;

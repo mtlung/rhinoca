@@ -220,10 +220,22 @@ struct MyWindow : GuiWindowState
 	GuiButtonState button;
 };
 
+static void showDebugLabel()
+{
+	String str;
+	strFormat(str, "Mouse pos {}, {}", guiMousePos().x, guiMousePos().y);
+	guiLabel(Rectf(0, 0), str.c_str());
+
+	str.clear();
+	strFormat(str, "Mouse down pos {}, {}", guiMouseDownPos().x, guiMouseDownPos().y);
+	guiLabel(Rectf(0, 20), str.c_str());
+}
+
 static void drawWindow1(GuiWindowState& state)
 {
 	MyWindow& window = static_cast<MyWindow&>(state);
-	guiLabel(Rectf(0, 20), "Label in window 1");
+
+	showDebugLabel();
 
 	window.button.rect = Rectf(20, 50);
 	guiButton(window.button, "Button");
@@ -231,17 +243,17 @@ static void drawWindow1(GuiWindowState& state)
 
 static void drawWindow2(GuiWindowState& state)
 {
-	guiLabel(Rectf(0, 20), "Label in window 2");
+	showDebugLabel();
 }
 
 static void drawWindow3(GuiWindowState& state)
 {
-	guiLabel(Rectf(0, 20), "Label in window 3");
+	showDebugLabel();
 }
 
 TEST_FIXTURE(ImGuiTest, window)
 {
-	createWindow(300, 300);
+	createWindow(500, 500);
 	initContext(driverStr[driverIndex]);
 	Canvas canvas;
 	canvas.init();
@@ -251,24 +263,23 @@ TEST_FIXTURE(ImGuiTest, window)
 
 	MyWindow window1;
 	window1.title = "Window 1 ...";
-	window1.rect = Rectf(50, 40, 100, 100);
+	window1.rect = Rectf(50, 40, 200, 100);
 	window1.windowFunction = drawWindow1;
 
 	GuiWindowState window2;
 	window2.title = "Window 2 ...";
-	window2.rect = Rectf(100, 80, 100, 100);
+	window2.rect = Rectf(100, 80, 200, 100);
 	window2.windowFunction = drawWindow2;
 
 	GuiWindowState window3;
 	window3.title = "Window 3 ...";
-	window3.rect = Rectf(150, 120, 100, 100);
+	window3.rect = Rectf(150, 120, 200, 100);
 	window3.windowFunction = drawWindow3;
 
 	while(keepRun()) {
 		driver->clearColor(68.0f/256, 68.0f/256, 68.0f/256, 1);
 		guiBegin(canvas);
-			guiLabel(Rectf(0, 140), "I am root window 1");
-			guiLabel(Rectf(0, 120), "I am root window");
+			showDebugLabel();
 
 			guiButton(button, "Button");
 

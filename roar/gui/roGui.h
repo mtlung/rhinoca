@@ -82,8 +82,11 @@ void guiClose();
 void guiBegin(Canvas& canvas);
 void guiEnd();
 
-bool guiInClipRect(float x, float y);
+ro::Vec2 guiMousePos();
+ro::Vec2 guiMouseDownPos();
 ro::Vec2 guiMouseDragOffset();
+
+bool guiInClipRect(float x, float y);
 void guiBeginClip(Rectf clipRect, Rectf clientRect);	// Clip away any drawing and inputs outside this rect until guiEndClip() is called.
 void guiEndClip();
 
@@ -136,21 +139,27 @@ void guiHScrollBar(GuiScrollBarState& state);
 void guiVScrollBarLogic(GuiScrollBarState& state);
 void guiHScrollBarLogic(GuiScrollBarState& state);
 
+struct GuiWigetContainer : public GuiWigetState
+{
+	GuiWigetContainer();
+	Rectf clientRect;
+	Vec2 mouseClickPos;	// Each container store it's own relative position for the mouse click
+};
+
 // Panel
-struct GuiPanelState : public GuiWigetState
+struct GuiPanelState : public GuiWigetContainer
 {
 	GuiPanelState();
 	bool showBorder;
 	bool scrollable;
 	GuiScrollBarState hScrollBar, vScrollBar;
-	Rectf _clientRect;	// Relative to panel's deducedRect
 	Rectf _virtualRect;	// Relative to panel's deducedRect
 };
 void guiBeginScrollPanel(GuiPanelState& state, const GuiStyle* style=NULL);
 void guiEndScrollPanel();
 
 // Window
-struct GuiWindowState : public GuiWigetState
+struct GuiWindowState : public GuiWigetContainer
 {
 	GuiWindowState();
 
@@ -161,7 +170,6 @@ struct GuiWindowState : public GuiWigetState
 	typedef void (*WindowFunction)(GuiWindowState& state);
 	WindowFunction windowFunction;
 
-	Rectf _clientRect;	// Relative to window's deducedRect
 	int _useCount;
 };
 void guiWindow(GuiWindowState& state, const GuiStyle* style=NULL);

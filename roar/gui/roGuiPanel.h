@@ -15,15 +15,21 @@ void guiBeginScrollPanel(GuiPanelState& state, const GuiStyle* style)
 
 	const Rectf& rect = state.rect;
 	const Rectf& deducedRect = state.deducedRect;
-	const Rectf& clientRect = state._clientRect;
+	const Rectf& clientRect = state.clientRect;
 	Sizef deducedSize = Sizef(rect.w == 0 ? state._virtualRect.w - 2 * style->padding : 0, rect.h == 0 ? state._virtualRect.h - 2 * style->padding : 0);
 
 	_setContentExtend(state, *style, deducedSize);
 	_updateWigetState(state);
 	_states.panelStateStack.pushBack(&state);
 
-	if(state._clientRect.w == 0 || state._clientRect.h == 0)
-		state._clientRect = deducedRect;
+	if(state.clientRect.w == 0 || state.clientRect.h == 0)
+		state.clientRect = deducedRect;
+
+	if(_states.mouseDown()) {
+		state.mouseClickPos.x = _states.mousex() - state._virtualRect.x;
+		state.mouseClickPos.y = _states.mousey() - state._virtualRect.y;
+	}
+	_states.mouseClickPosStack.pushBack(state.mouseClickPos);
 
 	// Try capture the mouse and prevent the mouse scroll fall though this panel
 	if(_isHover(deducedRect))
@@ -47,7 +53,7 @@ void guiBeginScrollPanel(GuiPanelState& state, const GuiStyle* style)
 	GuiWigetState buttonState = state;
 	guiDrawBox(buttonState, NULL, *style, state.showBorder, true);
 
-	guiBeginClip(state._clientRect, virtualRect);
+	guiBeginClip(state.clientRect, virtualRect);
 }
 
 void guiEndScrollPanel()
@@ -78,7 +84,7 @@ void guiEndScrollPanel()
 	}
 
 	// Update the client area
-	Rectf& clientRect = panelState._clientRect;
+	Rectf& clientRect = panelState.clientRect;
 	clientRect = panelState.deducedRect;
 	clientRect.x += panelState.showBorder ? border : 0;
 	clientRect.w -= panelState.showBorder ? border * 2 : 0;

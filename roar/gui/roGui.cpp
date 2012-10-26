@@ -208,6 +208,7 @@ struct guiStates
 		float mousedx, mousedy;
 		float mouseClickx, mouseClicky;
 		bool mouseUp, mouseDown;
+		bool mousePressed;
 	};
 
 	guiStates();
@@ -217,10 +218,19 @@ struct guiStates
 	float& mousez() { return mouseCaptured ? mouseCapturedState.mousey : mouseState.mousez; }
 	float& mousedx() { return mouseCaptured ? mouseCapturedState.mousedx : mouseState.mousedx; }
 	float& mousedy() { return mouseCaptured ? mouseCapturedState.mousedy : mouseState.mousedy; }
-	float mouseClickx() { return mouseCaptured ? mouseCapturedState.mouseClickx : mouseState.mouseClickx + offsetStack.back().x; }
-	float mouseClicky() { return mouseCaptured ? mouseCapturedState.mouseClicky : mouseState.mouseClicky + offsetStack.back().y; }
+	float mouseClickx() {
+//		return mouseCaptured ? mouseCapturedState.mouseClickx : mouseState.mouseClickx + offsetStack.back().x;
+		return mouseCaptured ? mouseCapturedState.mouseClickx : mouseClickPosStack.back().x;
+//		return panelStateStack.isEmpty() ? 0 : panelStateStack.back()->mouseClickPos.x;
+	}
+	float mouseClicky() {
+//		return mouseCaptured ? mouseCapturedState.mouseClicky : mouseState.mouseClicky + offsetStack.back().y;
+		return mouseCaptured ? mouseCapturedState.mouseClicky : mouseClickPosStack.back().y;
+//		return panelStateStack.isEmpty() ? 0 : panelStateStack.back()->mouseClickPos.y;
+	}
 	bool& mouseUp() { return mouseCaptured ? mouseCapturedState.mouseUp : mouseState.mouseUp; }
 	bool& mouseDown() { return mouseCaptured ? mouseCapturedState.mouseDown : mouseState.mouseDown; }
+	bool& mousePressed() { return mouseCaptured ? mouseCapturedState.mousePressed : mouseState.mousePressed; }
 
 	void setMousex(float v) { if(mouseCaptured) mouseCapturedState.mousex = v; else mouseState.mousex = v; }
 	void setMousey(float v) { if(mouseCaptured) mouseCapturedState.mousey = v; else mouseState.mousey = v; }
@@ -233,6 +243,7 @@ struct guiStates
 	MouseState mouseState;
 	MouseState mouseCapturedState;
 	Array<Vec2> offsetStack;
+	Array<Vec2> mouseClickPosStack;
 
 	bool mousePulse;
 	PeriodicTimer mousePulseTimer;
@@ -336,6 +347,8 @@ void guiBegin(Canvas& canvas)
 
 	_states.offsetStack.clear();
 	_states.offsetStack.pushBack(Vec2(0.f));
+	_states.mouseClickPosStack.clear();
+	_states.mouseClickPosStack.pushBack(Vec2(_states.mouseState.mouseClickx, _states.mouseState.mouseClicky));
 
 	roInputDriver* inputDriver = roSubSystems->inputDriver;
 
@@ -347,6 +360,7 @@ void guiBegin(Canvas& canvas)
 	_states.mousez() = inputDriver->mouseAxisDelta(inputDriver, stringHash("mouse z"));
 	_states.mouseUp() = inputDriver->mouseButtonUp(inputDriver, 0, false);
 	_states.mouseDown() = inputDriver->mouseButtonDown(inputDriver, 0, false);
+	_states.mousePressed() = inputDriver->mouseButtonDown(inputDriver, 0, false);
 
 	_states.mousePulse = 
 		_states.mousePulseTimer.isTriggered() &&
@@ -384,9 +398,9 @@ static void _drawWindows();
 
 void guiEnd()
 {
+	_drawWindows();
 	guiEndScrollPanel();
 
-	_drawWindows();
 
 	_states.canvas = NULL;
 
@@ -500,6 +514,16 @@ bool guiInClipRect(float x, float y)
 	_states.canvas->getClipRect((float*)&clipRect);
 
 	return clipRect.isPointInRect(x, y);
+}
+
+Vec2 guiMousePos()
+{
+	return Vec2(_states.mousex(), _states.mousey());
+}
+
+Vec2 guiMouseDownPos()
+{
+	return Vec2(_states.mouseClickx(), _states.mouseClicky());
 }
 
 Vec2 guiMouseDragOffset()
@@ -693,6 +717,11 @@ GuiWigetState::GuiWigetState()
 	isLastFrameEnable = false;
 	isLastFrameHover = false;
 	isLastFrameActive = false;
+}
+
+GuiWigetContainer::GuiWigetContainer()
+{
+	mouseClickPos = Vec2(0.f);
 }
 
 #include "roGuiLabel.h"

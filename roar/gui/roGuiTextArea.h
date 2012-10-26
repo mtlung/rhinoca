@@ -249,7 +249,7 @@ guiBeginScrollPanel(state);
 	Vec2 coordEnd = (posEnd == posBeg) ? coordBeg : layout.getPosFromCharIdx(text.c_str(), posEnd, c);;
 
 	{	// Handle keyboard input to manipulate the caret position
-		bool shift = (inputDriver->button(inputDriver, stringHash("Shift"), false));
+		bool shift = (inputDriver->buttonPressed(inputDriver, stringHash("Shift"), false));
 
 		if(inputDriver->buttonDown(inputDriver, stringHash("Left"), false)) {
 			posEnd = layout.decrementCharIdx(text, posEnd);
@@ -287,7 +287,7 @@ guiBeginScrollPanel(state);
 	}
 
 	{	// Handle mouse inputs
-		bool shift = (inputDriver->button(inputDriver, stringHash("Shift"), false));
+		bool shift = (inputDriver->buttonPressed(inputDriver, stringHash("Shift"), false));
 
 		if(_states.mouseDown()) {
 			float x = _states.mousex() - padding;
@@ -318,7 +318,7 @@ guiBeginScrollPanel(state);
 				state.hScrollBar.value = coordEnd.x - torrence;
 			state.hScrollBar.value -= torrence;
 		}
-		if((diff = coordEnd.x - state.hScrollBar.value - state._clientRect.right()) > 0) {
+		if((diff = coordEnd.x - state.hScrollBar.value - state.clientRect.right()) > 0) {
 			if(diff > torrence)
 				state.hScrollBar.value = coordEnd.x;
 			state.hScrollBar.value += torrence;
@@ -330,7 +330,7 @@ guiBeginScrollPanel(state);
 				state.vScrollBar.value = coordEnd.y - torrence;
 			state.vScrollBar.value -= torrence;
 		}
-		if((diff = coordEnd.y - state.vScrollBar.value - state._clientRect.bottom()) > 0) {
+		if((diff = coordEnd.y - state.vScrollBar.value - state.clientRect.bottom()) > 0) {
 			if(diff > torrence)
 				state.vScrollBar.value = coordEnd.y;
 			state.vScrollBar.value += torrence;

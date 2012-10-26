@@ -28,10 +28,15 @@ static void _drawWindows()
 	for(roSize i = tmpWindows.size(); i--;) {
 		GuiWindowState& state = *tmpWindows[i];
 		_states.currentProcessingWindow = _states.windowList.back();	// Force guiIsInActiveWindow() to pass
+
 		if(_isClickedDown(state.deducedRect)) {
 			guiFocusWindow(state);
+			state.mouseClickPos.x = _states.mousex() - state.clientRect.x;
+			state.mouseClickPos.y = _states.mousey() - state.clientRect.y;
 			break;
 		}
+
+		_states.mouseClickPosStack.pushBack(state.mouseClickPos);
 	}
 
 	for(roSize i=0; i<tmpWindows.size(); ++i) {
@@ -57,7 +62,7 @@ static void _drawWindows()
 		state.deducedRect.h += style.border * 2;
 
 		// Update the client area
-		state._clientRect = state.rect;
+		state.clientRect = state.rect;
 
 		// Draw background
 		guiDrawBox(state, NULL, style, true, true);
@@ -68,7 +73,7 @@ static void _drawWindows()
 		// Process the window's content
 		if(state.windowFunction) {
 			_states.currentProcessingWindow = &state;
-			guiBeginClip(state._clientRect, state._clientRect);
+			guiBeginClip(state.clientRect, state.clientRect);
 			(*state.windowFunction)(state);
 			guiEndClip();
 			_states.currentProcessingWindow = NULL;
