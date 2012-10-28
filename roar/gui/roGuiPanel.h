@@ -16,7 +16,7 @@ void guiBeginScrollPanel(GuiPanelState& state, const GuiStyle* style)
 	const Rectf& rect = state.rect;
 	const Rectf& deducedRect = state.deducedRect;
 	const Rectf& clientRect = state.clientRect;
-	Sizef deducedSize = Sizef(rect.w == 0 ? state._virtualRect.w - 2 * style->padding : 0, rect.h == 0 ? state._virtualRect.h - 2 * style->padding : 0);
+	Sizef deducedSize = Sizef(rect.w == 0 ? state.virtualRect.w - 2 * style->padding : 0, rect.h == 0 ? state.virtualRect.h - 2 * style->padding : 0);
 
 	_setContentExtend(state, *style, deducedSize);
 	_updateWigetState(state);
@@ -24,12 +24,6 @@ void guiBeginScrollPanel(GuiPanelState& state, const GuiStyle* style)
 
 	if(state.clientRect.w == 0 || state.clientRect.h == 0)
 		state.clientRect = deducedRect;
-
-	if(_states.mouseDown()) {
-		state.mouseClickPos.x = _states.mousex() - state._virtualRect.x;
-		state.mouseClickPos.y = _states.mousey() - state._virtualRect.y;
-	}
-	_states.mouseClickPosStack.pushBack(state.mouseClickPos);
 
 	// Try capture the mouse and prevent the mouse scroll fall though this panel
 	if(_isHover(deducedRect))
@@ -43,24 +37,23 @@ void guiBeginScrollPanel(GuiPanelState& state, const GuiStyle* style)
 	state.hScrollBar.value = roClamp(state.hScrollBar.value, 0.f, state.hScrollBar.valueMax);
 
 	// Initialize the virtual bound
-	Rectf& virtualRect = state._virtualRect;
+	Rectf& virtualRect = state.virtualRect;
 	virtualRect.x = clientRect.x + padding - state.hScrollBar.value;
 	virtualRect.y = clientRect.y + padding - state.vScrollBar.value;
 	virtualRect.w = 0;
 	virtualRect.h = 0;
 
 	// Draw background
-	GuiWigetState buttonState = state;
-	guiDrawBox(buttonState, NULL, *style, state.showBorder, true);
+	guiDrawBox(state, NULL, *style, state.showBorder, true);
 
-	guiBeginClip(state.clientRect, virtualRect);
+	guiBeginContainer(state);
 }
 
 void guiEndScrollPanel()
 {
 	GuiPanelState& panelState = *_states.panelStateStack.back();
 
-	guiEndClip();
+	guiEndContainer();
 
 	_states.mouseCaptured = false;
 
@@ -68,7 +61,7 @@ void guiEndScrollPanel()
 	float border = guiPopFloatFromStack();
 
 	const Rectf& rect = panelState.deducedRect;
-	Rectf& virtualRect = panelState._virtualRect;
+	Rectf& virtualRect = panelState.virtualRect;
 
 	virtualRect.w += padding * 2;
 	virtualRect.h += padding * 2;

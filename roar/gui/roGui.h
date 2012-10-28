@@ -76,53 +76,51 @@ struct GuiWigetState
 };
 
 // Common
-roStatus guiInit();
-void guiClose();
+roStatus		guiInit					();
+void			guiClose				();
 
-void guiBegin(Canvas& canvas);
-void guiEnd();
+void			guiBegin				(Canvas& canvas);
+void			guiEnd					();
 
-ro::Vec2 guiMousePos();
-ro::Vec2 guiMouseDownPos();
-ro::Vec2 guiMouseDragOffset();
+ro::Vec2		guiMousePos				();
+ro::Vec2		guiMouseDownPos			();
+ro::Vec2		guiMouseDragOffset		();
 
-bool guiInClipRect(float x, float y);
-void guiBeginClip(Rectf clipRect, Rectf clientRect);	// Clip away any drawing and inputs outside this rect until guiEndClip() is called.
-void guiEndClip();
+bool			guiInClipRect			(float x, float y);
 
-void guiDrawBox(GuiWigetState& state, const roUtf8* text, const GuiStyle& style, bool drawBorder, bool drawCenter);
+void			guiDrawBox				(GuiWigetState& state, const roUtf8* text, const GuiStyle& style, bool drawBorder, bool drawCenter);
 
-void guiPushHostWiget(GuiWigetState& wiget);	// For wiget grouping ie: guiBeginScrollPanel/guiEndScrollPanel
-GuiWigetState* guiGetHostWiget();
-void guiPopHostWiget();
+void			guiPushHostWiget		(GuiWigetState& wiget);	// For wiget grouping ie: guiBeginScrollPanel/guiEndScrollPanel
+GuiWigetState*	guiGetHostWiget			();
+void			guiPopHostWiget			();
 
-void guiPushPtrToStack(void* ptr);
-void* guiGetPtrFromStack(roSize index);
-void guiPopPtrFromStack();
+void			guiPushPtrToStack		(void* ptr);
+void*			guiGetPtrFromStack		(roSize index);
+void			guiPopPtrFromStack		();
 
-void guiPushFloatToStack(float value);
-float& guiGetFloatFromStack(roSize index);
-float guiPopFloatFromStack();
+void			guiPushFloatToStack		(float value);
+float&			guiGetFloatFromStack	(roSize index);
+float			guiPopFloatFromStack	();
 
-void guiPushStringToStack(const roUtf8* str);
-String& guiGetStringFromStack(roSize index);
-void guiPopStringFromStack();
+void			guiPushStringToStack	(const roUtf8* str);
+String&			guiGetStringFromStack	(roSize index);
+void			guiPopStringFromStack	();
 
-void guiDoLayout(const Rectf& rect, Rectf& deducedRect, float margin);
+void			guiDoLayout				(const Rectf& rect, Rectf& deducedRect, float margin);
 
 // Label
-void guiLabel(const Rectf& rect, const roUtf8* text);
+void			guiLabel				(const Rectf& rect, const roUtf8* text);
 
 // Check box
-bool guiCheckBox(const Rectf& rect, const roUtf8* text, bool& state);
+bool			guiCheckBox				(const Rectf& rect, const roUtf8* text, bool& state);
 
 // Button
 struct GuiButtonState : public GuiWigetState {
 };
-bool guiButton(GuiButtonState& state, const roUtf8* text=NULL, const GuiStyle* style=NULL);
-bool guiToggleButton(GuiButtonState& state, bool& onOffState, const roUtf8* text=NULL, const GuiStyle* onStyle=NULL, const GuiStyle* offStyle=NULL);
-void guiButtonDraw(GuiButtonState& state, const roUtf8* text=NULL, const GuiStyle* style=NULL);
-bool guiButtonLogic(GuiButtonState& state, const roUtf8* text=NULL, const GuiStyle* style=NULL);
+bool			guiButton				(GuiButtonState& state, const roUtf8* text=NULL, const GuiStyle* style=NULL);
+bool			guiToggleButton			(GuiButtonState& state, bool& onOffState, const roUtf8* text=NULL, const GuiStyle* onStyle=NULL, const GuiStyle* offStyle=NULL);
+void			guiButtonDraw			(GuiButtonState& state, const roUtf8* text=NULL, const GuiStyle* style=NULL);
+bool			guiButtonLogic			(GuiButtonState& state, const roUtf8* text=NULL, const GuiStyle* style=NULL);
 
 // Scroll bar
 struct GuiScrollBarState : public GuiWigetState
@@ -134,17 +132,20 @@ struct GuiScrollBarState : public GuiWigetState
 	float smallStep, largeStep;
 	float _pageSize;
 };
-void guiVScrollBar(GuiScrollBarState& state);
-void guiHScrollBar(GuiScrollBarState& state);
-void guiVScrollBarLogic(GuiScrollBarState& state);
-void guiHScrollBarLogic(GuiScrollBarState& state);
+void			guiVScrollBar			(GuiScrollBarState& state);
+void			guiHScrollBar			(GuiScrollBarState& state);
+void			guiVScrollBarLogic		(GuiScrollBarState& state);
+void			guiHScrollBarLogic		(GuiScrollBarState& state);
 
 struct GuiWigetContainer : public GuiWigetState
 {
 	GuiWigetContainer();
 	Rectf clientRect;
-	Vec2 mouseClickPos;	// Each container store it's own relative position for the mouse click
+	Rectf virtualRect;	// Relative to deducedRect
+	mutable Vec2 mouseClickPos;	// Each container store it's own relative position for the mouse click
 };
+void			guiBeginContainer		(const GuiWigetContainer& container);
+void			guiEndContainer			();
 
 // Panel
 struct GuiPanelState : public GuiWigetContainer
@@ -153,10 +154,9 @@ struct GuiPanelState : public GuiWigetContainer
 	bool showBorder;
 	bool scrollable;
 	GuiScrollBarState hScrollBar, vScrollBar;
-	Rectf _virtualRect;	// Relative to panel's deducedRect
 };
-void guiBeginScrollPanel(GuiPanelState& state, const GuiStyle* style=NULL);
-void guiEndScrollPanel();
+void			guiBeginScrollPanel		(GuiPanelState& state, const GuiStyle* style=NULL);
+void			guiEndScrollPanel		();
 
 // Window
 struct GuiWindowState : public GuiWigetContainer
@@ -172,10 +172,10 @@ struct GuiWindowState : public GuiWigetContainer
 
 	int _useCount;
 };
-void guiWindow(GuiWindowState& state, const GuiStyle* style=NULL);
-void guiFocusWindow(GuiWindowState& state);
-bool guiIsInActiveWindow();
-bool guiIsObstructedByOtherWindow(float x, float y);
+void			guiWindow				(GuiWindowState& state, const GuiStyle* style=NULL);
+void			guiFocusWindow			(GuiWindowState& state);
+bool			guiIsInActiveWindow		();
+bool			guiIsObstructedByOtherWindow(float x, float y);
 
 // Text area
 struct GuiTextAreaState : public GuiPanelState {
@@ -183,7 +183,7 @@ struct GuiTextAreaState : public GuiPanelState {
 	roSize highLightBegPos;	// Means how many character before this position
 	roSize highLightEndPos;	// It also means the caret position
 };
-void guiTextArea(GuiTextAreaState& state, String& text);
+void			guiTextArea				(GuiTextAreaState& state, String& text);
 
 // Tab area
 struct GuiTabAreaState : public GuiWigetState {
@@ -193,14 +193,14 @@ struct GuiTabAreaState : public GuiWigetState {
 	roSize activeTabIndex;
 	roSize _tabCount;
 };
-void guiBeginTabs(GuiTabAreaState& state);
-void guiEndTabs();
-bool guiBeginTab(const roUtf8* text);
-void guiEndTab();
+void			guiBeginTabs			(GuiTabAreaState& state);
+void			guiEndTabs				();
+bool			guiBeginTab				(const roUtf8* text);
+void			guiEndTab				();
 
 // Layout
-void guiBeginFlowLayout(Rectf rect, char hORv);
-void guiEndFlowLayout();
+void			guiBeginFlowLayout		(Rectf rect, char hORv);
+void			guiEndFlowLayout		();
 
 }	// namespace ro
 

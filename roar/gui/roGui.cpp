@@ -360,7 +360,7 @@ void guiBegin(Canvas& canvas)
 	_states.mousez() = inputDriver->mouseAxisDelta(inputDriver, stringHash("mouse z"));
 	_states.mouseUp() = inputDriver->mouseButtonUp(inputDriver, 0, false);
 	_states.mouseDown() = inputDriver->mouseButtonDown(inputDriver, 0, false);
-	_states.mousePressed() = inputDriver->mouseButtonDown(inputDriver, 0, false);
+	_states.mousePressed() = inputDriver->mouseButtonPressed(inputDriver, 0, false);
 
 	_states.mousePulse = 
 		_states.mousePulseTimer.isTriggered() &&
@@ -401,7 +401,6 @@ void guiEnd()
 	_drawWindows();
 	guiEndScrollPanel();
 
-
 	_states.canvas = NULL;
 
 	_states.lastFrameHotObject = _states.hotObject;
@@ -411,8 +410,6 @@ void guiEnd()
 
 	if(!_states.hotObject)
 		_states.hotObject = _states.potentialHotObject;
-
-//	printf("%x\n", _states.hotObject);
 
 	if(_states.mouseUp()) {
 		_states.setMouseClickx(FLT_MAX);
@@ -452,7 +449,7 @@ static void _setContentExtend(GuiWigetState& state, const GuiStyle& style, const
 	deduced.h = roMaxOf2(deduced.h, size.h + 2 * (style.padding + style.border));
 
 	if(!_states.panelStateStack.isEmpty())
-		_mergeExtend(_states.panelStateStack.back()->_virtualRect, state.deducedRect);
+		_mergeExtend(_states.panelStateStack.back()->virtualRect, state.deducedRect);
 }
 
 static bool _isHover(const Rectf& rect)
@@ -466,7 +463,9 @@ static bool _isHot(const Rectf& rect)
 {
 	float x = _states.mouseClickx();
 	float y = _states.mouseClicky();
-	return guiIsInActiveWindow() && rect.isPointInRect(x, y) && guiInClipRect(x, y);
+	return
+		(_states.mousePressed() || _states.mouseUp()) &&
+		guiIsInActiveWindow() && rect.isPointInRect(x, y) && guiInClipRect(x, y);
 }
 
 static void _updateWigetState(GuiWigetState& state)
@@ -533,30 +532,39 @@ Vec2 guiMouseDragOffset()
 	return curPos - clickPos;
 }
 
-void guiBeginClip(Rectf clipRect, Rectf clientRect)
+void guiBeginContainer(const GuiWigetContainer& container)
 {
 	Canvas& c = *_states.canvas;
 
-	Vec2 offset = _states.offsetStack.back();
-
 	// Convert to global coordinate
+	Rectf clipRect = container.clientRect;
+	Rectf virtualRect = container.virtualRect;
+	Vec2 offset = _states.offsetStack.back();
 	clipRect.x -= offset.x;
 	clipRect.y -= offset.y;
+
+	// Update the mouse click position
+	if(_states.mouseDown()) {
+		container.mouseClickPos.x = _states.mousex() - virtualRect.x;
+		container.mouseClickPos.y = _states.mousey() - virtualRect.y;
+	}
+	_states.mouseClickPosStack.pushBack(container.mouseClickPos);
 
 	c.save();
 	c.clipRect(clipRect.x, clipRect.y, clipRect.w, clipRect.h);	// clipRect() will perform intersection
 
 	// Adjust origin
-	Vec2 newOffset(_round(offset.x - clientRect.x), _round(offset.y - clientRect.y));
+	Vec2 newOffset(_round(offset.x - virtualRect.x), _round(offset.y - virtualRect.y));
 	_states.offsetStack.pushBack(newOffset);
-	c.translate(clientRect.x, clientRect.y);
+	c.translate(virtualRect.x, virtualRect.y);
 }
 
-void guiEndClip()
+void guiEndContainer()
 {
 	Canvas& c = *_states.canvas;
 	c.restore();
 	_states.offsetStack.popBack();
+	_states.mouseClickPosStack.popBack();
 }
 
 void guiPushHostWiget(GuiWigetState& wiget)

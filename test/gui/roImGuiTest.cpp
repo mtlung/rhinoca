@@ -215,11 +215,6 @@ TEST_FIXTURE(ImGuiTest, textArea)
 	guiClose();
 }
 
-struct MyWindow : GuiWindowState
-{
-	GuiButtonState button;
-};
-
 static void showDebugLabel()
 {
 	String str;
@@ -231,9 +226,14 @@ static void showDebugLabel()
 	guiLabel(Rectf(0, 20), str.c_str());
 }
 
+struct MyWindow1 : GuiWindowState
+{
+	GuiButtonState button;
+};
+
 static void drawWindow1(GuiWindowState& state)
 {
-	MyWindow& window = static_cast<MyWindow&>(state);
+	MyWindow1& window = static_cast<MyWindow1&>(state);
 
 	showDebugLabel();
 
@@ -241,9 +241,21 @@ static void drawWindow1(GuiWindowState& state)
 	guiButton(window.button, "Button");
 }
 
+struct MyWindow2 : GuiWindowState
+{
+	GuiPanelState panel[2];
+};
+
 static void drawWindow2(GuiWindowState& state)
 {
+	MyWindow2& window = static_cast<MyWindow2&>(state);
+
 	showDebugLabel();
+
+	window.panel[0].rect = Rectf(0, 0, 100, 100);
+	guiBeginScrollPanel(window.panel[0]);
+		showDebugLabel();
+	guiEndScrollPanel;
 }
 
 static void drawWindow3(GuiWindowState& state)
@@ -260,13 +272,15 @@ TEST_FIXTURE(ImGuiTest, window)
 	CHECK(guiInit());
 
 	GuiButtonState button;
+	GuiPanelState panel;
+	panel.rect = Rectf(100, 100, 200, 100);
 
-	MyWindow window1;
+	MyWindow1 window1;
 	window1.title = "Window 1 ...";
 	window1.rect = Rectf(50, 40, 200, 100);
 	window1.windowFunction = drawWindow1;
 
-	GuiWindowState window2;
+	MyWindow2 window2;
 	window2.title = "Window 2 ...";
 	window2.rect = Rectf(100, 80, 200, 100);
 	window2.windowFunction = drawWindow2;
@@ -280,12 +294,18 @@ TEST_FIXTURE(ImGuiTest, window)
 		driver->clearColor(68.0f/256, 68.0f/256, 68.0f/256, 1);
 		guiBegin(canvas);
 			showDebugLabel();
-
 			guiButton(button, "Button");
 
-			guiWindow(window1);
+			guiBeginScrollPanel(panel);
+				showDebugLabel();
+				guiLabel(Rectf(0, 40), "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
+				guiLabel(Rectf(0, 60), "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
+				guiLabel(Rectf(0, 80), "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
+			guiEndScrollPanel();
+
+//			guiWindow(window1);
 			guiWindow(window2);
-			guiWindow(window3);
+//			guiWindow(window3);
 		guiEnd();
 
 		driver->swapBuffers();
