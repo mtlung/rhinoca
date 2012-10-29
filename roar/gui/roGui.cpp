@@ -146,9 +146,10 @@ roStatus Skin::init()
 	{	GuiStyle& style = guiSkin.windowTitle;
 		style = opaqueStyle;
 		style.border = 6;
-		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/window-title.png");
+		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/window-title-inactive.png");
 		style.hover = style.normal;
 		style.active = style.normal;
+		style.active.backgroundImage = mgr->loadAs<Texture>("imGui/window-title-active.png");
 	}
 
 	texCheckbox[0] = mgr->loadAs<Texture>("imGui/checkbox-0.png");
@@ -354,11 +355,11 @@ void guiBegin(Canvas& canvas)
 	roInputDriver* inputDriver = roSubSystems->inputDriver;
 
 	roAssert(!_states.mouseCaptured);
-	_states.setMousex(inputDriver->mouseAxis(inputDriver, stringHash("mouse x")));
-	_states.setMousey(inputDriver->mouseAxis(inputDriver, stringHash("mouse y")));
-	_states.mousedx() = inputDriver->mouseAxisDelta(inputDriver, stringHash("mouse x"));
-	_states.mousedy() = inputDriver->mouseAxisDelta(inputDriver, stringHash("mouse y"));
-	_states.mousez() = inputDriver->mouseAxisDelta(inputDriver, stringHash("mouse z"));
+	_states.setMousex(inputDriver->mouseAxisRaw(inputDriver, stringHash("mouse x")));
+	_states.setMousey(inputDriver->mouseAxisRaw(inputDriver, stringHash("mouse y")));
+	_states.mousedx() = inputDriver->mouseAxisDeltaRaw(inputDriver, stringHash("mouse x"));
+	_states.mousedy() = inputDriver->mouseAxisDeltaRaw(inputDriver, stringHash("mouse y"));
+	_states.mousez() = inputDriver->mouseAxisDeltaRaw(inputDriver, stringHash("mouse z"));
 	_states.mouseUp() = inputDriver->mouseButtonUp(inputDriver, 0, false);
 	_states.mouseDown() = inputDriver->mouseButtonDown(inputDriver, 0, false);
 	_states.mousePressed() = inputDriver->mouseButtonPressed(inputDriver, 0, false);

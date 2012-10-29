@@ -52,15 +52,26 @@ static void _drawWindows()
 			state.rect.x += _states.mousedx();
 			state.rect.y += _states.mousedy();
 		}
-		guiButtonDraw(state.titleBar, state.title.c_str(), &guiSkin.windowTitle);
+
+		// Draw the title
+		GuiStyle titleStyle = guiSkin.windowTitle;
+		if(i == tmpWindows.size() - 1) {
+			titleStyle.normal = titleStyle.active;
+			titleStyle.hover = titleStyle.active;
+		}
+		else {
+			titleStyle.hover = titleStyle.normal;
+			titleStyle.active = titleStyle.normal;
+		}
+		guiButtonDraw(state.titleBar, state.title.c_str(), &titleStyle);
 
 		// Update deducedRect
-		GuiStyle& style = guiSkin.window;
+		GuiStyle& bgStyle = guiSkin.window;
 		state.deducedRect = state.rect;
-		state.deducedRect.x -= style.border;
-		state.deducedRect.w += style.border * 2;
-		state.deducedRect.y -= style.border;
-		state.deducedRect.h += style.border * 2;
+		state.deducedRect.x -= bgStyle.border;
+		state.deducedRect.w += bgStyle.border * 2;
+		state.deducedRect.y -= bgStyle.border;
+		state.deducedRect.h += bgStyle.border * 2;
 
 		if(!_states.containerStack.isEmpty())
 			_mergeExtend(_states.containerStack.back()->virtualRect, state.deducedRect);
@@ -70,7 +81,7 @@ static void _drawWindows()
 		state.virtualRect = state.clientRect;
 
 		// Draw background
-		guiDrawBox(state, NULL, style, true, true);
+		guiDrawBox(state, NULL, bgStyle, true, true);
 
 		state.deducedRect.y -= state.titleBar.deducedRect.h;
 		state.deducedRect.h += state.titleBar.deducedRect.h;

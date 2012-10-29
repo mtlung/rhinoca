@@ -252,10 +252,10 @@ static void drawWindow2(GuiWindowState& state)
 
 	showDebugLabel();
 
-	window.panel[0].rect = Rectf(0, 0, 100, 100);
+	window.panel[0].rect = Rectf(50, 50, 100, 100);
 	guiBeginScrollPanel(window.panel[0]);
 		showDebugLabel();
-	guiEndScrollPanel;
+	guiEndScrollPanel();
 }
 
 static void drawWindow3(GuiWindowState& state)
@@ -282,7 +282,7 @@ TEST_FIXTURE(ImGuiTest, window)
 
 	MyWindow2 window2;
 	window2.title = "Window 2 ...";
-	window2.rect = Rectf(100, 80, 200, 100);
+	window2.rect = Rectf(100, 80, 200, 200);
 	window2.windowFunction = drawWindow2;
 
 	GuiWindowState window3;
@@ -303,9 +303,9 @@ TEST_FIXTURE(ImGuiTest, window)
 				guiLabel(Rectf(0, 80), "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
 			guiEndScrollPanel();
 
-//			guiWindow(window1);
+			guiWindow(window1);
 			guiWindow(window2);
-//			guiWindow(window3);
+			guiWindow(window3);
 		guiEnd();
 
 		driver->swapBuffers();
