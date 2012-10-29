@@ -9,8 +9,8 @@ static void _doHorizontalFlowLayout(const Rectf& rect, Rectf& deducedRect, float
 	x += deducedRect.w + margin;
 
 	// The deduced size may change after layout, so need to merge with the panel again
-	if(!_states.panelStateStack.isEmpty())
-		_mergeExtend(_states.panelStateStack.back()->virtualRect, deducedRect);
+	if(!_states.containerStack.isEmpty())
+		_mergeExtend(_states.containerStack.back()->virtualRect, deducedRect);
 }
 
 static void _doVerticalFlowLayout(const Rectf& rect, Rectf& deducedRect, float margin)
@@ -24,8 +24,8 @@ static void _doVerticalFlowLayout(const Rectf& rect, Rectf& deducedRect, float m
 	y += deducedRect.h + margin;
 
 	// The deduced size may change after layout, so need to merge with the panel again
-	if(!_states.panelStateStack.isEmpty())
-		_mergeExtend(_states.panelStateStack.back()->virtualRect, deducedRect);
+	if(!_states.containerStack.isEmpty())
+		_mergeExtend(_states.containerStack.back()->virtualRect, deducedRect);
 }
 
 void guiBeginFlowLayout(Rectf rect, char hORv)

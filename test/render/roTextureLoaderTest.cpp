@@ -114,13 +114,14 @@ TEST_FIXTURE(TextureLoaderTest, stressTest)
 {
 	createWindow(800, 600);
 	initContext(driverStr[driverIndex]);
+	subSystems.enableCpuProfiler(true);
 
 	Canvas canvas;
 	canvas.init();
 
 	Array<ResourcePtr> resources;
 
-	String rootPath = "D:\\tmp\\117___07\\";
+	String rootPath = "D:\\jpegs\\";
 	void* dir = ro::fileSystem.openDir(rootPath.c_str());
 	CHECK("Open directory failed" && dir);
 

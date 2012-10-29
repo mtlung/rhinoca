@@ -1017,8 +1017,8 @@ void Canvas::clipRect(float x, float y, float w, float h)
 	float bottom = roMinOf2(bottom1, bottom2);
 	x = roMaxOf2(x, _currentState.clipRect[0]);
 	y = roMaxOf2(y, _currentState.clipRect[1]);
-	w = right - x;
-	h = bottom - y;
+	w = roMaxOf2(right - x, 0.f);
+	h = roMaxOf2(bottom - y, 0.f);
 
 	float rect[4] = { x, y, w, h };
 	roMemcpy(_currentState.clipRect, rect, sizeof(rect));

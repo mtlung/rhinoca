@@ -34,9 +34,9 @@ typedef struct roInputDriver
 	void			(*processEvents)		(roInputDriver* self, void** data, roSize numData);
 } roInputDriver;
 
-roInputDriver*	roNewInputDriver		();
-void			roInitInputDriver		(roInputDriver* self, const char* options);
-void			roDeleteInputDriver		(roInputDriver* self);
+roInputDriver*		roNewInputDriver		();
+void				roInitInputDriver		(roInputDriver* self, const char* options);
+void				roDeleteInputDriver		(roInputDriver* self);
 
 #ifdef __cplusplus
 }

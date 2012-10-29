@@ -62,6 +62,9 @@ static void _drawWindows()
 		state.deducedRect.y -= style.border;
 		state.deducedRect.h += style.border * 2;
 
+		if(!_states.containerStack.isEmpty())
+			_mergeExtend(_states.containerStack.back()->virtualRect, state.deducedRect);
+
 		// Update the client area
 		state.clientRect = state.rect;
 		state.virtualRect = state.clientRect;

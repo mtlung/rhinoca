@@ -266,6 +266,7 @@ struct guiStates
 	Array<GuiWigetState*> groupStack;
 	Array<GuiPanelState*> panelStateStack;
 	Array<GuiWindowState*> windowList;
+	Array<GuiWigetContainer*> containerStack;
 	Array<void*> ptrStack;
 	Array<float> floatStack;
 	Array<String> stringStack;
@@ -416,6 +417,14 @@ void guiEnd()
 		_states.setMouseClicky(FLT_MAX);
 		_states.hotObject = NULL;
 	}
+
+	// You have a begin() / end() miss-match if you see any of the following assertion
+	roAssert(_states.groupStack.isEmpty());
+	roAssert(_states.panelStateStack.isEmpty());
+	roAssert(_states.containerStack.isEmpty());
+	roAssert(_states.ptrStack.isEmpty());
+	roAssert(_states.floatStack.isEmpty());
+	roAssert(_states.stringStack.isEmpty());
 }
 
 void guiLayout(Rectf& rect)
@@ -448,8 +457,8 @@ static void _setContentExtend(GuiWigetState& state, const GuiStyle& style, const
 	deduced.w = roMaxOf2(deduced.w, size.w + 2 * (style.padding + style.border));
 	deduced.h = roMaxOf2(deduced.h, size.h + 2 * (style.padding + style.border));
 
-	if(!_states.panelStateStack.isEmpty())
-		_mergeExtend(_states.panelStateStack.back()->virtualRect, state.deducedRect);
+	if(!_states.containerStack.isEmpty())
+		_mergeExtend(_states.containerStack.back()->virtualRect, state.deducedRect);
 }
 
 static bool _isHover(const Rectf& rect)
@@ -532,7 +541,7 @@ Vec2 guiMouseDragOffset()
 	return curPos - clickPos;
 }
 
-void guiBeginContainer(const GuiWigetContainer& container)
+void guiBeginContainer(GuiWigetContainer& container)
 {
 	Canvas& c = *_states.canvas;
 
@@ -557,6 +566,7 @@ void guiBeginContainer(const GuiWigetContainer& container)
 	Vec2 newOffset(_round(offset.x - virtualRect.x), _round(offset.y - virtualRect.y));
 	_states.offsetStack.pushBack(newOffset);
 	c.translate(virtualRect.x, virtualRect.y);
+	_states.containerStack.pushBack(&container);
 }
 
 void guiEndContainer()
@@ -565,6 +575,7 @@ void guiEndContainer()
 	c.restore();
 	_states.offsetStack.popBack();
 	_states.mouseClickPosStack.popBack();
+	_states.containerStack.popBack();
 }
 
 void guiPushHostWiget(GuiWigetState& wiget)

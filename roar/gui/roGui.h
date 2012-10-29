@@ -144,7 +144,7 @@ struct GuiWigetContainer : public GuiWigetState
 	Rectf virtualRect;	// Relative to deducedRect
 	mutable Vec2 mouseClickPos;	// Each container store it's own relative position for the mouse click
 };
-void			guiBeginContainer		(const GuiWigetContainer& container);
+void			guiBeginContainer		(GuiWigetContainer& container);
 void			guiEndContainer			();
 
 // Panel
