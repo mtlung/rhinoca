@@ -294,14 +294,16 @@ TEST_FIXTURE(ImGuiTest, window)
 		driver->clearColor(68.0f/256, 68.0f/256, 68.0f/256, 1);
 		guiBegin(canvas);
 			showDebugLabel();
-			guiButton(button, "Button");
+			guiBeginFlowLayout(Rectf(10, 10, 0, 0), 'h');
+				guiButton(button, "Button");
 
-			guiBeginScrollPanel(panel);
-				showDebugLabel();
-				guiLabel(Rectf(0, 40), "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
-				guiLabel(Rectf(0, 60), "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
-				guiLabel(Rectf(0, 80), "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
-			guiEndScrollPanel();
+				guiBeginScrollPanel(panel);
+					showDebugLabel();
+					guiLabel(Rectf(0, 40), "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
+					guiLabel(Rectf(0, 60), "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
+					guiLabel(Rectf(0, 80), "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
+				guiEndScrollPanel();
+			guiEndFlowLayout();
 
 			guiWindow(window1);
 			guiWindow(window2);

@@ -263,6 +263,7 @@ struct guiStates
 	void* currentProcessingWindow;
 
 	GuiPanelState rootPanel;
+	GuiWindowState rootWindow;
 
 	Array<GuiWigetState*> groupStack;
 	Array<GuiPanelState*> panelStateStack;
@@ -393,14 +394,23 @@ void guiBegin(Canvas& canvas)
 	_states.rootPanel.rect = Rectf(0, 0, (float)canvas.width(), (float)canvas.height());
 	GuiStyle rootPanelStyle = guiSkin.panel;
 	rootPanelStyle.padding = 0;
+
 	guiBeginScrollPanel(_states.rootPanel, &rootPanelStyle);
+
+	// Add our dummy root window
+	_states.currentProcessingWindow = &_states.rootWindow;
+	_states.windowList.pushBack(&_states.rootWindow);
 }
 
 static void _drawWindows();
 
 void guiEnd()
 {
+	// Remove our dummy root window
+	_states.windowList.removeByKey(&_states.rootWindow);
+
 	_drawWindows();
+
 	guiEndScrollPanel();
 
 	_states.canvas = NULL;

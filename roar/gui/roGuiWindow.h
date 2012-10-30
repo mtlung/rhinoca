@@ -116,8 +116,6 @@ void guiFocusWindow(GuiWindowState& state)
 
 bool guiIsInActiveWindow()
 {
-	if(_states.windowList.isEmpty())
-		return true;
 	return _states.currentProcessingWindow == _states.windowList.back();
 }
 
