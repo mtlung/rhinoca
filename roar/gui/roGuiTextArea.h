@@ -296,7 +296,7 @@ guiBeginScrollPanel(state);
 			if(!shift) posBeg = posEnd;
 		}
 
-		if(_states.hotObject == &state) {
+		if(state.isActive) {
 			float x = _states.mousex() - padding;
 			float y = _states.mousey() - padding;
 			posEnd = layout.getCharIdxFromPos(text.c_str(), x, y, c);

@@ -251,13 +251,8 @@ struct guiStates
 
 	Skin skin;
 
-	void* hotObject;
-	void* lastFrameHotObject;
-	void* potentialHotObject;
-	void* hoveringObject;
 	void* mouseCapturedObject;
 	void* keyboardCapturedObject;
-	void* lastFrameHoveringObject;
 	void* lastFrameMouseCapturedObject;
 	void* lastFrameKeyboardCapturedObject;
 	void* currentProcessingWindow;
@@ -280,10 +275,8 @@ guiStates::guiStates()
 	roZeroMemory(&mouseState, sizeof(mouseState));
 	roZeroMemory(&mouseCapturedState, sizeof(mouseCapturedState));
 	mousePulse = false;
-	hoveringObject = NULL;
 	mouseCapturedObject = NULL;
 	keyboardCapturedObject = NULL;
-	lastFrameHoveringObject = NULL;
 	lastFrameMouseCapturedObject = NULL;
 	lastFrameKeyboardCapturedObject = NULL;
 	currentProcessingWindow = NULL;
@@ -306,13 +299,8 @@ roStatus guiInit()
 	roStatus st;
 	st = _states.skin.init(); if(!st) return st;
 
-	_states.hotObject = NULL;
-	_states.lastFrameHotObject = NULL;
-	_states.potentialHotObject = NULL;
-	_states.hoveringObject = NULL;
 	_states.mouseCapturedObject = NULL;
 	_states.keyboardCapturedObject = NULL;
-	_states.lastFrameHoveringObject = NULL;
 	_states.lastFrameMouseCapturedObject = NULL;
 	_states.lastFrameKeyboardCapturedObject = NULL;
 	_states.currentProcessingWindow = NULL;
@@ -376,13 +364,10 @@ void guiBegin(Canvas& canvas)
 	}
 
 	if(_states.mouseUp()) {
-		_states.hotObject = NULL;
 		_states.mousePulseTimer.reset();
 		_states.mousePulseTimer.pause();
 	}
 
-	_states.potentialHotObject = NULL;
-	_states.hoveringObject = NULL;
 	_states.mouseCapturedObject = NULL;
 	_states.keyboardCapturedObject = NULL;
 
@@ -417,18 +402,12 @@ void guiEnd()
 
 	_states.canvas = NULL;
 
-	_states.lastFrameHotObject = _states.hotObject;
-	_states.lastFrameHoveringObject = _states.hoveringObject;
 	_states.lastFrameMouseCapturedObject = _states.mouseCapturedObject;
 	_states.lastFrameKeyboardCapturedObject = _states.keyboardCapturedObject;
-
-	if(!_states.hotObject)
-		_states.hotObject = _states.potentialHotObject;
 
 	if(_states.mouseUp()) {
 		_states.setMouseClickx(FLT_MAX);
 		_states.setMouseClicky(FLT_MAX);
-		_states.hotObject = NULL;
 	}
 
 	// You have a begin() / end() miss-match if you see any of the following assertion
@@ -493,15 +472,14 @@ static bool _isHot(const Rectf& rect)
 static void _updateWigetState(GuiWigetState& state)
 {
 	state.isHover = _isHover(state.deducedRect);
-	state.isActive = _isHot(state.deducedRect);
+
+	if(!_states.mousePressed() && !_states.mouseUp())
+		state.isActive = false;
+	else
+		state.isActive = (_states.mouseDown() || _states.mouseUp()) ? state.isHover : state.isActive;
+
 	state.isClicked = state.isHover && state.isActive && _states.mouseUp();
 	state.isClickRepeated = state.isActive && _states.mousePulse;
-
-	if(state.isHover)
-		_states.hoveringObject = &state;
-
-	if(state.isActive)
-		_states.potentialHotObject = &state;
 }
 
 static bool _isClickedDown(const Rectf& rect)

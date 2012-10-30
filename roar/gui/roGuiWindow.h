@@ -48,7 +48,7 @@ static void _drawWindows()
 
 	for(roSize i=0; i<tmpWindows.size(); ++i) {
 		GuiWindowState& state = *tmpWindows[i];
-		_states.currentProcessingWindow = _states.windowList.back();	// Force guiIsInActiveWindow() to pass
+		_states.currentProcessingWindow = &state;
 
 		// Nothing to draw for the root window, just skip it
 		if(&state == &_states.rootWindow)
@@ -58,7 +58,7 @@ static void _drawWindows()
 		state.titleBar.rect = state.deducedRect;
 		state.titleBar.rect.h = 20;
 		guiButtonLogic(state.titleBar);
-		if(_states.hotObject == &state.titleBar) {
+		if(state.titleBar.isActive) {
 			state.rect.x += _states.mousedx();
 			state.rect.y += _states.mousedy();
 		}

@@ -82,7 +82,7 @@ void guiVScrollBarLogic(GuiScrollBarState& state)
 
 	// Handle bar background click
 	Rectf rectBg(rect.x, rect.y + rectButU.h, rect.w, rect.h - rectButU.h - rectButD.h);
-	if(_states.lastFrameHotObject != &state.barButton && (_isClickedUp(rectBg) || _isRepeatedClick(rectBg)))
+	if(!state.barButton.isHover && (_isClickedUp(rectBg) || _isRepeatedClick(rectBg)))
 	{
 		if(_states.mouseClicky() < rect.centery())
 			state.value -= state.largeStep;
@@ -92,7 +92,7 @@ void guiVScrollBarLogic(GuiScrollBarState& state)
 
 	// Handle bar button drag
 	guiButtonLogic(state.barButton);
-	if(_states.hotObject == &state.barButton)
+	if(state.barButton.isActive)
 		state.value += (_states.mousedy() * state.valueMax / (slideSize - barSize));
 
 	state.value = roClamp(state.value, 0.f, state.valueMax);
@@ -133,7 +133,7 @@ void guiHScrollBarLogic(GuiScrollBarState& state)
 
 	// Handle bar background click
 	Rectf rectBg(rect.x + rectButL.w, rect.y, rect.w - rectButL.w - rectButR.w, rect.h);
-	if(_states.lastFrameHotObject != &state.barButton && (_isClickedUp(rectBg) || _isRepeatedClick(rectBg)))
+	if(!state.barButton.isHover && (_isClickedUp(rectBg) || _isRepeatedClick(rectBg)))
 	{
 		if(_states.mouseClickx() < rect.centerx())
 			state.value -= state.largeStep;
@@ -143,7 +143,7 @@ void guiHScrollBarLogic(GuiScrollBarState& state)
 
 	// Handle bar button drag
 	guiButtonLogic(state.barButton);
-	if(_states.hotObject == &state.barButton)
+	if(state.barButton.isActive)
 		state.value += (_states.mousedx() * state.valueMax / (slideSize - barSize));
 
 	state.value = roClamp(state.value, 0.f, state.valueMax);
