@@ -25,12 +25,18 @@ static void _drawWindows()
 	}
 
 	// Determine which window is clicked and make it active
-	for(roSize i = tmpWindows.size(); i--;) {
-		GuiWindowState& state = *tmpWindows[i];
-		_states.currentProcessingWindow = _states.windowList.back();	// Force guiIsInActiveWindow() to pass
-		if(_isClickedDown(state.deducedRect)) {
-			guiFocusWindow(state);
-			break;
+	if(_states.mouseDown()) {
+		TinyArray<GuiWindowState*, 32> tmpWindows2 = tmpWindows;
+		tmpWindows2.removeByKey(&_states.rootWindow);
+		tmpWindows2.insert(0, &_states.rootWindow);
+
+		for(roSize i = tmpWindows2.size(); i--;) {
+			GuiWindowState& state = *tmpWindows2[i];
+			_states.currentProcessingWindow = _states.windowList.back();	// Force guiIsInActiveWindow() to pass
+			if(_isClickedDown(state.deducedRect)) {
+				guiFocusWindow(state);
+				break;
+			}
 		}
 	}
 
@@ -43,6 +49,10 @@ static void _drawWindows()
 	for(roSize i=0; i<tmpWindows.size(); ++i) {
 		GuiWindowState& state = *tmpWindows[i];
 		_states.currentProcessingWindow = _states.windowList.back();	// Force guiIsInActiveWindow() to pass
+
+		// Nothing to draw for the root window, just skip it
+		if(&state == &_states.rootWindow)
+			continue;
 
 		// Handle mouse drag on the title bar
 		state.titleBar.rect = state.deducedRect;

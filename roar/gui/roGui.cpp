@@ -392,14 +392,16 @@ void guiBegin(Canvas& canvas)
 	_states.rootPanel.showBorder = false;
 	_states.rootPanel.scrollable = false;
 	_states.rootPanel.rect = Rectf(0, 0, (float)canvas.width(), (float)canvas.height());
+	_states.rootWindow.rect = Rectf(0, 0, (float)canvas.width(), (float)canvas.height());
+	_states.rootWindow.deducedRect = _states.rootWindow.rect;
 	GuiStyle rootPanelStyle = guiSkin.panel;
 	rootPanelStyle.padding = 0;
 
 	guiBeginScrollPanel(_states.rootPanel, &rootPanelStyle);
 
 	// Add our dummy root window
+	guiWindow(_states.rootWindow);
 	_states.currentProcessingWindow = &_states.rootWindow;
-	_states.windowList.pushBack(&_states.rootWindow);
 }
 
 static void _drawWindows();
@@ -407,7 +409,7 @@ static void _drawWindows();
 void guiEnd()
 {
 	// Remove our dummy root window
-	_states.windowList.removeByKey(&_states.rootWindow);
+	_states.currentProcessingWindow = NULL;
 
 	_drawWindows();
 
@@ -573,6 +575,9 @@ void guiBeginContainer(GuiWigetContainer& container)
 	c.save();
 	c.clipRect(clipRect.x, clipRect.y, clipRect.w, clipRect.h);	// clipRect() will perform intersection
 
+	// Stop layout function to propagates
+	guiPushPtrToStack(NULL);
+
 	// Adjust origin
 	Vec2 newOffset(_round(offset.x - virtualRect.x), _round(offset.y - virtualRect.y));
 	_states.offsetStack.pushBack(newOffset);
@@ -587,6 +592,8 @@ void guiEndContainer()
 	_states.offsetStack.popBack();
 	_states.mouseClickPosStack.popBack();
 	_states.containerStack.popBack();
+
+	guiPopPtrFromStack();
 }
 
 void guiPushHostWiget(GuiWigetState& wiget)

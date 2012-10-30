@@ -6,6 +6,7 @@ void guiLabel(const Rectf& rect_, const roUtf8* text)
 	state.rect = rect_;
 	Sizef textExtend = _calTextExtend(text);
 	_setContentExtend(state, guiSkin.label, textExtend);
+	guiDoLayout(state.rect, state.deducedRect, 0);
 	_updateWigetState(state);
 
 	const Rectf& rect = state.deducedRect;

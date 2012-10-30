@@ -8,19 +8,21 @@ void guiBeginScrollPanel(GuiPanelState& state, const GuiStyle* style)
 {
 	if(!style) style = &guiSkin.panel;
 
-	float border = style->border;
-	float padding = style->padding;
-	guiPushFloatToStack(border);
-	guiPushFloatToStack(padding);
-
 	const Rectf& rect = state.rect;
 	const Rectf& deducedRect = state.deducedRect;
 	const Rectf& clientRect = state.clientRect;
 	Sizef deducedSize = Sizef(rect.w == 0 ? state.virtualRect.w - 2 * style->padding : 0, rect.h == 0 ? state.virtualRect.h - 2 * style->padding : 0);
 
 	_setContentExtend(state, *style, deducedSize);
+	guiDoLayout(state.rect, state.deducedRect, style->margin);
+
 	_updateWigetState(state);
 	_states.panelStateStack.pushBack(&state);
+
+	float border = style->border;
+	float padding = style->padding;
+	guiPushFloatToStack(border);
+	guiPushFloatToStack(padding);
 
 	if(state.clientRect.w == 0 || state.clientRect.h == 0)
 		state.clientRect = deducedRect;
@@ -54,6 +56,9 @@ void guiEndScrollPanel()
 	GuiPanelState& panelState = *_states.panelStateStack.back();
 
 	guiEndContainer();
+
+	// Stop layout function to propagates
+	guiPushPtrToStack(NULL);
 
 	_states.mouseCaptured = false;
 
@@ -112,6 +117,9 @@ void guiEndScrollPanel()
 		if(showHScrollBar)
 			guiHScrollBar(panelState.hScrollBar);
 	}
+
+	// Restore the layout function
+	guiPopPtrFromStack();
 
 	_states.panelStateStack.popBack();
 }
