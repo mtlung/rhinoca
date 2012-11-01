@@ -11,22 +11,13 @@ void guiVScrollBar(GuiScrollBarState& state)
 {
 	guiVScrollBarLogic(state);
 
-	Canvas& c = *_states.canvas;
-	const Rectf& rect = state.rect;
-
-	// Background
-	roRDriverTexture* texBg = _states.skin.texScrollPanel[1]->handle;
-	c.drawImage(
-		texBg,
-		rect.x, rect.y, (float)texBg->width, rect.h,
-		rect.x, rect.y, rect.w, rect.h
-	);
-
-	// The up button
+	// The up/down buttons
 	guiButtonDraw(state.arrowButton1, NULL, &guiSkin.vScrollbarUpButton);
-
-	// The down button
 	guiButtonDraw(state.arrowButton2, NULL, &guiSkin.vScrollbarDownButton);
+
+	// The background
+	guiButtonDraw(state.bgButton1, NULL, &guiSkin.vScrollbarBG);
+	guiButtonDraw(state.bgButton2, NULL, &guiSkin.vScrollbarBG);
 
 	// The bar
 	guiButtonDraw(state.barButton, NULL, &guiSkin.vScrollbarThumbButton);
@@ -36,22 +27,13 @@ void guiHScrollBar(GuiScrollBarState& state)
 {
 	guiHScrollBarLogic(state);
 
-	Canvas& c = *_states.canvas;
-	const Rectf& rect = state.rect;
-
-	// Background
-	roRDriverTexture* texBg = _states.skin.texScrollPanel[5]->handle;
-	c.drawImage(
-		texBg,
-		rect.x, rect.y, rect.w, (float)texBg->height,
-		rect.x, rect.y, rect.w, rect.h
-	);
-
-	// The up button
+	// The left/right buttons
 	guiButtonDraw(state.arrowButton1, NULL, &guiSkin.hScrollbarLeftButton);
-
-	// The right button
 	guiButtonDraw(state.arrowButton2, NULL, &guiSkin.hScrollbarRightButton);
+
+	// The background
+	guiButtonDraw(state.bgButton1, NULL, &guiSkin.hScrollbarBG);
+	guiButtonDraw(state.bgButton2, NULL, &guiSkin.hScrollbarBG);
 
 	// The bar
 	guiButtonDraw(state.barButton, NULL, &guiSkin.hScrollbarThumbButton);
@@ -81,17 +63,12 @@ void guiVScrollBarLogic(GuiScrollBarState& state)
 		state.value += state.smallStep;
 
 	// Handle bar background click
-	Rectf rectBg(rect.x, rect.y + rectButU.h, rect.w, rect.h - rectButU.h - rectButD.h);
-	if(!state.barButton.isHover && (_isClickedUp(rectBg) || _isRepeatedClick(rectBg)))
-	{
-		if(_states.mouseClicky() < rect.centery())
-			state.value -= state.largeStep;
-		else
-			state.value += state.largeStep;
-	}
+	if(state.bgButton1.isClicked || state.bgButton1.isClickRepeated)
+		state.value -= state.largeStep;
+	if(state.bgButton2.isClicked || state.bgButton2.isClickRepeated)
+		state.value += state.largeStep;
 
 	// Handle bar button drag
-	guiButtonLogic(state.barButton);
 	if(state.barButton.isActive)
 		state.value += (_states.mousedy() * state.valueMax / (slideSize - barSize));
 
@@ -105,7 +82,23 @@ void guiVScrollBarLogic(GuiScrollBarState& state)
 		rect.w,
 		barSize
 	);
-	state.barButton.isHover = _isHover(state.barButton.rect);
+	guiButtonLogic(state.barButton, NULL, &guiSkin.vScrollbarThumbButton);
+
+	// Update background rect
+	state.bgButton1.rect = Rectf(
+		rect.x,
+		rectButU.bottom(),
+		rect.w,
+		state.barButton.rect.top() - rectButU.bottom()
+	);
+	guiButtonLogic(state.bgButton1, NULL, &guiSkin.vScrollbarBG);
+	state.bgButton2.rect = Rectf(
+		rect.x,
+		state.barButton.rect.bottom(),
+		rect.w,
+		rectButD.top() - state.barButton.rect.bottom()
+	);
+	guiButtonLogic(state.bgButton2, NULL, &guiSkin.vScrollbarBG);
 }
 
 void guiHScrollBarLogic(GuiScrollBarState& state)
@@ -132,17 +125,12 @@ void guiHScrollBarLogic(GuiScrollBarState& state)
 		state.value += state.smallStep;
 
 	// Handle bar background click
-	Rectf rectBg(rect.x + rectButL.w, rect.y, rect.w - rectButL.w - rectButR.w, rect.h);
-	if(!state.barButton.isHover && (_isClickedUp(rectBg) || _isRepeatedClick(rectBg)))
-	{
-		if(_states.mouseClickx() < rect.centerx())
-			state.value -= state.largeStep;
-		else
-			state.value += state.largeStep;
-	}
+	if(state.bgButton1.isClicked || state.bgButton1.isClickRepeated)
+		state.value -= state.largeStep;
+	if(state.bgButton2.isClicked || state.bgButton2.isClickRepeated)
+		state.value += state.largeStep;
 
 	// Handle bar button drag
-	guiButtonLogic(state.barButton);
 	if(state.barButton.isActive)
 		state.value += (_states.mousedx() * state.valueMax / (slideSize - barSize));
 
@@ -156,5 +144,21 @@ void guiHScrollBarLogic(GuiScrollBarState& state)
 		barSize,
 		rect.h
 	);
-	state.barButton.isHover = _isHover(state.barButton.rect);
+	guiButtonLogic(state.barButton, NULL, &guiSkin.hScrollbarThumbButton);
+
+	// Update background rect
+	state.bgButton1.rect = Rectf(
+		rectButL.right(),
+		rect.y,
+		state.barButton.rect.left() - rectButL.right(),
+		rect.h
+	);
+	guiButtonLogic(state.bgButton1, NULL, &guiSkin.hScrollbarBG);
+	state.bgButton2.rect = Rectf(
+		state.barButton.rect.right(),
+		rect.y,
+		rectButR.left() - state.barButton.rect.right(),
+		rect.h
+	);
+	guiButtonLogic(state.bgButton2, NULL, &guiSkin.hScrollbarBG);
 }

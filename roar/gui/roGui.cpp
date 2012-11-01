@@ -24,7 +24,6 @@ struct Skin
 	Vec2 texCheckboxSize;
 
 	StaticArray<TexturePtr, 4> texCheckbox;
-	StaticArray<TexturePtr, 9> texScrollPanel;
 };
 
 roStatus Skin::init()
@@ -69,6 +68,16 @@ roStatus Skin::init()
 		style.active.backgroundImage = mgr->loadAs<Texture>("imGui/button_.png");
 	}
 
+	{	GuiStyle& style = guiSkin.vScrollbarBG;
+		style = opaqueStyle;
+		style.border = 0;
+		style.padding = 0;
+		style.tileCenter = true;
+		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/vscrollbar-bar-bg.png");
+		style.hover.backgroundImage = style.normal.backgroundImage;
+		style.active.backgroundImage = style.normal.backgroundImage;
+	}
+
 	{	GuiStyle& style = guiSkin.vScrollbarUpButton;
 		style = opaqueStyle;
 		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/scrollbar-upbutton-normal.png");
@@ -87,6 +96,16 @@ roStatus Skin::init()
 		style = opaqueStyle;
 		style.border = 2;
 		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/vscrollbar-thumb-normal.png");
+		style.hover.backgroundImage = style.normal.backgroundImage;
+		style.active.backgroundImage = style.normal.backgroundImage;
+	}
+
+	{	GuiStyle& style = guiSkin.hScrollbarBG;
+		style = opaqueStyle;
+		style.border = 0;
+		style.padding = 0;
+		style.tileCenter = true;
+		style.normal.backgroundImage = mgr->loadAs<Texture>("imGui/hscrollbar-bar-bg.png");
 		style.hover.backgroundImage = style.normal.backgroundImage;
 		style.active.backgroundImage = style.normal.backgroundImage;
 	}
@@ -157,11 +176,6 @@ roStatus Skin::init()
 	texCheckbox[2] = mgr->loadAs<Texture>("imGui/checkbox-2.png");
 	texCheckbox[3] = mgr->loadAs<Texture>("imGui/checkbox-3.png");
 
-	texScrollPanel.assign(NULL);
-	texScrollPanel[0] = mgr->loadAs<Texture>("imGui/panel-normal.png");
-	texScrollPanel[1] = mgr->loadAs<Texture>("imGui/vscrollbar-bar-bg.png");
-	texScrollPanel[5] = mgr->loadAs<Texture>("imGui/hscrollbar-bar-bg.png");
-
 	return roStatus::ok;
 }
 
@@ -193,7 +207,6 @@ static void _clearStyle(GuiStyle& style)
 void Skin::close()
 {
 	texCheckbox.assign(NULL);
-	texScrollPanel.assign(NULL);
 }
 
 void Skin::tick()
@@ -283,6 +296,7 @@ static guiStates _states;
 GuiStyle::GuiStyle()
 {
 	border = padding = margin = 0;
+	tileCenter = false;
 	normal.backgroundColor = hover.backgroundColor = active.backgroundColor = Colorf(0, 0);
 }
 
@@ -307,9 +321,11 @@ void guiClose()
 	_clearStyle(guiSkin.label);
 	_clearStyle(guiSkin.checkBox);
 	_clearStyle(guiSkin.button);
+	_clearStyle(guiSkin.vScrollbarBG);
 	_clearStyle(guiSkin.vScrollbarUpButton);
 	_clearStyle(guiSkin.vScrollbarDownButton);
 	_clearStyle(guiSkin.vScrollbarThumbButton);
+	_clearStyle(guiSkin.hScrollbarBG);
 	_clearStyle(guiSkin.hScrollbarLeftButton);
 	_clearStyle(guiSkin.hScrollbarRightButton);
 	_clearStyle(guiSkin.hScrollbarThumbButton);
@@ -479,16 +495,6 @@ static bool _isClickedDown(const Rectf& rect)
 	return _states.mouseDown() && _isHot(rect);
 }
 
-static bool _isClickedUp(const Rectf& rect)
-{
-	return _states.mouseUp() && _isHot(rect);
-}
-
-static bool _isRepeatedClick(const Rectf& rect)
-{
-	return _states.mousePulse && _isHot(rect);
-}
-
 static float _round(float x)
 {
 	return float(int(x));
@@ -651,7 +657,7 @@ void guiDoLayout(const Rectf& rect, Rectf& deducedRect, float margin)
 
 // Draw functions
 
-static void _draw3x3(roRDriverTexture* tex, const Rectf& rect, float borderWidth, bool drawBorder=true, bool drawMiddle=true)
+static void _draw3x3(roRDriverTexture* tex, const Rectf& rect, float borderWidth, bool drawBorder=true, bool drawCenter=true, bool tileCenter=false)
 {
 	if(!tex) return;
 	Canvas& c = *_states.canvas;
@@ -679,11 +685,17 @@ static void _draw3x3(roRDriverTexture* tex, const Rectf& rect, float borderWidth
 	}
 
 	float dstBorderWidth = drawBorder ? borderWidth : 0;
-	if(drawMiddle) c.drawImage(
-		tex,
-		borderWidth, borderWidth, tex->width - borderWidth * 2, tex->height - borderWidth * 2,
-		dstBorderWidth + rect.x, dstBorderWidth + rect.y, rect.w - dstBorderWidth * 2, rect.h - dstBorderWidth * 2
-	);
+	if(drawCenter) {
+		float dw = rect.w - dstBorderWidth * 2;
+		float dh = rect.h - dstBorderWidth * 2;
+		float sw = tileCenter ? dw : (tex->width - borderWidth * 2);
+		float sh = tileCenter ? dh : (tex->height - borderWidth * 2);
+		c.drawImage(
+			tex,
+			borderWidth, borderWidth, sw, sh,
+			dstBorderWidth + rect.x, dstBorderWidth + rect.y, dw, dh
+		);
+	}
 
 	c.endDrawImageBatch();
 }
@@ -703,7 +715,7 @@ void guiDrawBox(GuiWigetState& state, const roUtf8* text, const GuiStyle& style,
 	}
 	else if(tex) {
 		c.setFillColor(0, 0, 0, 0);
-		_draw3x3(tex, rect, style.border, drawBorder, drawCenter);
+		_draw3x3(tex, rect, style.border, drawBorder, drawCenter, style.tileCenter);
 	}
 
 	// Draw the text

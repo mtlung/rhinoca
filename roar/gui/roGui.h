@@ -30,6 +30,7 @@ struct GuiStyle
 	float border;	// Number of pixels on each side of the background image that are not affected by the scale of the Control' shape
 	float padding;	// Space in pixels from each edge of the Control to the start of its contents
 	float margin;	// The margins between elements rendered in this style and any other GUI Controls
+	bool tileCenter;
 };
 
 // Modeled over Unity Gui skin
@@ -40,11 +41,11 @@ struct GuiSkin
 	GuiStyle button;
 //	GuiStyle toggleOn, toggleOff;
 	GuiStyle checkBox;
-	GuiStyle vScrollbar;
+	GuiStyle vScrollbarBG;
 	GuiStyle vScrollbarUpButton;
 	GuiStyle vScrollbarDownButton;
 	GuiStyle vScrollbarThumbButton;
-	GuiStyle hScrollbar;
+	GuiStyle hScrollbarBG;
 	GuiStyle hScrollbarLeftButton;
 	GuiStyle hScrollbarRightButton;
 	GuiStyle hScrollbarThumbButton;
@@ -127,6 +128,7 @@ struct GuiScrollBarState : public GuiWigetState
 {
 	GuiScrollBarState();
 	GuiButtonState arrowButton1, arrowButton2;
+	GuiButtonState bgButton1, bgButton2;	// The background space between the bar and the arrows
 	GuiButtonState barButton;
 	float value, valueMax;
 	float smallStep, largeStep;
