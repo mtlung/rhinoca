@@ -40,7 +40,7 @@ static void _drawWindows()
 		}
 	}
 
-	if(_states.mouseDown()) for(roSize i = tmpWindows.size(); i--;) {
+	for(roSize i = tmpWindows.size(); i--;) {
 		GuiWindowState& state = *tmpWindows[i];
 		state.mouseClickPos.x = _states.mousex() - state.clientRect.x;
 		state.mouseClickPos.y = _states.mousey() - state.clientRect.y;

@@ -219,16 +219,8 @@ struct guiStates
 	float& mousez() { return mouseCaptured ? mouseCapturedState.mousey : mouseState.mousez; }
 	float& mousedx() { return mouseCaptured ? mouseCapturedState.mousedx : mouseState.mousedx; }
 	float& mousedy() { return mouseCaptured ? mouseCapturedState.mousedy : mouseState.mousedy; }
-	float mouseClickx() {
-//		return mouseCaptured ? mouseCapturedState.mouseClickx : mouseState.mouseClickx + offsetStack.back().x;
-		return mouseCaptured ? mouseCapturedState.mouseClickx : mouseClickPosStack.back().x;
-//		return panelStateStack.isEmpty() ? 0 : panelStateStack.back()->mouseClickPos.x;
-	}
-	float mouseClicky() {
-//		return mouseCaptured ? mouseCapturedState.mouseClicky : mouseState.mouseClicky + offsetStack.back().y;
-		return mouseCaptured ? mouseCapturedState.mouseClicky : mouseClickPosStack.back().y;
-//		return panelStateStack.isEmpty() ? 0 : panelStateStack.back()->mouseClickPos.y;
-	}
+	float mouseClickx() { return mouseCaptured ? mouseCapturedState.mouseClickx : mouseClickPosStack.back().x; }
+	float mouseClicky() { return mouseCaptured ? mouseCapturedState.mouseClicky : mouseClickPosStack.back().y; }
 	bool& mouseUp() { return mouseCaptured ? mouseCapturedState.mouseUp : mouseState.mouseUp; }
 	bool& mouseDown() { return mouseCaptured ? mouseCapturedState.mouseDown : mouseState.mouseDown; }
 	bool& mousePressed() { return mouseCaptured ? mouseCapturedState.mousePressed : mouseState.mousePressed; }
@@ -484,12 +476,12 @@ static void _updateWigetState(GuiWigetState& state)
 
 static bool _isClickedDown(const Rectf& rect)
 {
-	return _states.mouseDown() && _isHover(rect) && _isHot(rect);
+	return _states.mouseDown() && _isHot(rect);
 }
 
 static bool _isClickedUp(const Rectf& rect)
 {
-	return _states.mouseUp() && _isHover(rect) && _isHot(rect);
+	return _states.mouseUp() && _isHot(rect);
 }
 
 static bool _isRepeatedClick(const Rectf& rect)
