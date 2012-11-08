@@ -330,10 +330,9 @@ Status TinyArray<T,PreAllocCount>::reserve(roSize newSize)
 		T* newPtr = roRealloc(oldPtr, this->_capacity, newSize * sizeof(T)).template cast<T>();
 		if(!newPtr) return Status::not_enough_memory;
 
-		if(oldPtr != newPtr) {
+		moved = oldPtr != newPtr;
+		if(oldPtr == (T*)this->_buffer)
 			roMemcpy(newPtr, this->_buffer, sizeof(T) * this->_size);
-			moved = true;
-		}
 
 		this->_data = newPtr;
 		this->_capacity = newSize;
