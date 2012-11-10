@@ -8,17 +8,17 @@ using namespace ro;
 
 class ArrayPerformanceTest {};
 
-#define BEGIN_PROFILE(repeatCount, arySize, initCode) \
+#define BEGIN_PROFILE(repeatCount, arySize, initCode) { \
 	roLog("info", "%d x %d, ", repeatCount, arySize); \
 	timer.reset(); \
 	for(roSize i=0; i<sampleCount; ++i) for(roSize j=0; j<repeatCount; ++j) { initCode; for(roSize k=0; k<arySize; ++k) {
 
 #define END_PROFILE() \
-	}} roLog("info", "%f\n", timer.getFloat());
+	}} roLog("info", "%f\n", timer.getFloat()); }
 
 TEST_FIXTURE(ArrayPerformanceTest, compareWithSTL)
 {
-	const roSize sampleCount = 1000;
+	roSize sampleCount = 1000;
 	ro::StopWatch timer;
 
 	{	// Push back of int
@@ -61,33 +61,40 @@ TEST_FIXTURE(ArrayPerformanceTest, compareWithSTL)
 
 	{	// Push back of string
 		roLog("\ninfo", "Push back std::string\n");
+		sampleCount = 100;
 
 		typedef Array<std::string> MyArray;
-		const char* str = "abc";
-		BEGIN_PROFILE(1000, 1, MyArray ary;)
+		const std::string str("abcdefghijklmnopqrstuvwxyz");
+		BEGIN_PROFILE(10000, 1, MyArray ary;)
 			ary.pushBack(str);
 		END_PROFILE();
-		BEGIN_PROFILE(100, 10, MyArray ary;)
+		BEGIN_PROFILE(1000, 10, MyArray ary;)
 			ary.pushBack(str);
 		END_PROFILE();
-		BEGIN_PROFILE(10, 100, MyArray ary;)
+		BEGIN_PROFILE(100, 100, MyArray ary;)
 			ary.pushBack(str);
 		END_PROFILE();
-		BEGIN_PROFILE(1, 1000, MyArray ary;)
+		BEGIN_PROFILE(10, 1000, MyArray ary;)
+			ary.pushBack(str);
+		END_PROFILE();
+		BEGIN_PROFILE(1, 10000, MyArray ary;)
 			ary.pushBack(str);
 		END_PROFILE();
 
 		typedef std::vector<std::string> STLVec;
-		BEGIN_PROFILE(1000, 1, STLVec vec;)
+		BEGIN_PROFILE(10000, 1, STLVec vec;)
 			vec.push_back(str);
 		END_PROFILE();
-		BEGIN_PROFILE(100, 10, STLVec vec;)
+		BEGIN_PROFILE(1000, 10, STLVec vec;)
 			vec.push_back(str);
 		END_PROFILE();
-		BEGIN_PROFILE(10, 100, STLVec vec;)
+		BEGIN_PROFILE(100, 100, STLVec vec;)
 			vec.push_back(str);
 		END_PROFILE();
-		BEGIN_PROFILE(1, 1000, STLVec vec;)
+		BEGIN_PROFILE(10, 1000, STLVec vec;)
+			vec.push_back(str);
+		END_PROFILE();
+		BEGIN_PROFILE(1, 10000, STLVec vec;)
 			vec.push_back(str);
 		END_PROFILE();
 	}

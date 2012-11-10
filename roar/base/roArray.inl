@@ -64,7 +64,7 @@ Status IArray<T,S>::assign(const T* srcBegin, const T* srcEnd)
 	return Status::ok;
 }
 
-template<class T, class S>
+template<class T, class S> roFORCEINLINE
 Status IArray<T,S>::resize(roSize newSize, const T& fill)
 {
 	if(newSize > _capacity) {
@@ -126,7 +126,7 @@ void IArray<T,S>::condense()
 	_typedThis().reserve(_size);
 }
 
-template<class T, class S>
+template<class T, class S> roFORCEINLINE
 Status IArray<T,S>::pushBack(const T& fill)
 {
 	return _typedThis().resize(_size + 1, fill);
@@ -289,7 +289,7 @@ const T* IArray<T,S>::find(const K& key, bool(*equal)(const T&, const K&)) const
 
 // ----------------------------------------------------------------------
 
-template<class T>
+template<class T> roFORCEINLINE
 Status Array<T>::reserve(roSize newCapacity)
 {
 	newCapacity = roMaxOf2(newCapacity, this->size());
