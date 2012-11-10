@@ -59,7 +59,9 @@ struct FunctionPatcher
 		MEMORY_BASIC_INFORMATION mbi;
 
 		// Create a buffer of executable memory to store our jump table
-		PathInfo& info = patchInfo.pushBack();
+		if(!patchInfo.pushBack())
+			return NULL;
+		PathInfo& info = patchInfo.back();
 		info.original = func;
 
 		Address uninfouedAddress = (Address)func + JMP_CODE_SIZE;
@@ -141,7 +143,9 @@ TlsStruct* _tlsStruct()
 		if(_tlsStructs.size() >= _tlsStructs.capacity())
 			return NULL;
 
-		tls = &_tlsStructs.pushBack();
+		if(!_tlsStructs.pushBack())
+			return NULL;
+		tls = &_tlsStructs.back();
 		::TlsSetValue(_tlsIndex, tls);
 	}
 

@@ -323,7 +323,8 @@ void FontLoader::processRequest(TaskPool* taskPool)
 
 		// If no reply object exist yet, create one
 		if(!reply) {
-			reply = &font->replys.pushBack();
+			font->replys.pushBack();
+			reply = &font->replys.back();
 			if(!reply)
 				continue;
 
@@ -341,7 +342,8 @@ void FontLoader::processRequest(TaskPool* taskPool)
 		if(reply->glyphs.find(codePoint, &Pred::glyphEqual))
 			continue;
 
-		g = &reply->glyphs.pushBack();
+		reply->glyphs.pushBack();
+		g = &reply->glyphs.back();
 		g->codePoint = codePoint;
 		g->kerningIndex = 0;
 		g->kerningCount = 0;

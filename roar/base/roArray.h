@@ -88,13 +88,13 @@ struct IArray
 	void		clear();		///< Has the same effect as resize(0), if you want to clear the memory, use condense
 	void		condense();
 
-	T&			pushBack(const T& val=T());
-	T&			pushBackBySwap(const T& val);
-	T&			insert(roSize idx, const T& val);
-	T&			insert(roSize idx, const T* srcBegin, roSize count);
-	T&			insert(roSize idx, const T* srcBegin, const T* srcEnd);
-	T&			insertSorted(const T& val);
-	T&			insertSorted(const T& val, bool(*less)(const T&, const T&));
+	Status		pushBack(const T& val=T());
+	Status		pushBackBySwap(const T& val);
+	Status		insert(roSize idx, const T& val);
+	Status		insert(roSize idx, const T* srcBegin, roSize count);
+	Status		insert(roSize idx, const T* srcBegin, const T* srcEnd);
+	Status		insertSorted(const T& val);
+	Status		insertSorted(const T& val, bool(*less)(const T&, const T&));
 
 	void		popBack();
 	void		remove(roSize i);

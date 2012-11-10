@@ -274,7 +274,10 @@ TlsStruct* _tlsStruct()
 		if(_tlsStructs.size() >= _tlsStructs.capacity())
 			return NULL;
 
-		tls = &_tlsStructs.pushBack();
+		if(!_tlsStructs.pushBack())
+			return NULL;
+
+		tls = &_tlsStructs.back();
 		::TlsSetValue(_tlsIndex, tls);
 	}
 

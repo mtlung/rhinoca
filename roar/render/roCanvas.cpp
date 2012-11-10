@@ -479,7 +479,8 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 			}
 		}
 		if(!listEntry) {
-			listEntry = &_perTextureQuadList.pushBack();
+			_perTextureQuadList.pushBack();
+			listEntry = &_perTextureQuadList.back();
 			listEntry->tex = texture;
 			listEntry->quadCount = 0;
 		}

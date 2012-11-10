@@ -68,24 +68,25 @@ template<class T, class S>
 Status IArray<T,S>::resize(roSize newSize, const T& fill)
 {
 	if(newSize > _capacity) {
-		Status st = _typedThis().reserve(roMaxOf2(newSize, _size*3/2));	// Extend the size by 1.5x
+		Status st = _typedThis().reserve(roMaxOf2(newSize, _capacity + _capacity/2));	// Extend the capacity by 1.5x
 		if(!st) return st;
 	}
 
-	if(newSize > _size) {
-		while(_size < newSize) {
-			new ((void *)&_data[_size]) T(fill);
-			++_size;
+	roSize sz = _size;
+	if(newSize > sz) {
+		while(sz < newSize) {
+			new ((void *)&_data[sz]) T(fill);
+			++sz;
 		}
 	}
-	else{
+	else {
 		if(!TypeOf<T>::isPOD())
-		for(roSize i = newSize; i < _size; ++i) {
+		for(roSize i = newSize; i < sz; ++i) {
 			_data[i].~T();
 		}
-		_size = newSize;
 	}
 
+	_size = newSize;
 	return Status::ok;
 }
 
@@ -99,7 +100,7 @@ template<class T, class S>
 Status IArray<T,S>::resizeNoInit(roSize newSize)
 {
 	if(newSize > _capacity) {
-		Status st = _typedThis().reserve(roMaxOf2(newSize, _size*3/2));	// Extend the size by 1.5x
+		Status st = _typedThis().reserve(roMaxOf2(newSize, _capacity + _capacity/2));	// Extend the size by 1.5x
 		if(!st) return st;
 	}
 
@@ -126,59 +127,62 @@ void IArray<T,S>::condense()
 }
 
 template<class T, class S>
-T& IArray<T,S>::pushBack(const T& fill)
+Status IArray<T,S>::pushBack(const T& fill)
 {
-	_typedThis().resize(_size + 1, fill);
-	return back();
+	return _typedThis().resize(_size + 1, fill);
 }
 
 template<class T, class S>
-T& IArray<T,S>::pushBackBySwap(const T& val)
+Status IArray<T,S>::pushBackBySwap(const T& val)
 {
-	_typedThis().resize(_size + 1);
+	Status st = _typedThis().resize(_size + 1);
+	if(!st) return st;
 	roSwap(back(), const_cast<T&>(val));
-	return back();
+	return st;
 }
 
 template<class T, class S>
-T& IArray<T,S>::insert(roSize idx, const T& val)
+Status IArray<T,S>::insert(roSize idx, const T& val)
 {
 	roAssert(idx <= _size);
-	_typedThis().resize(_size + 1);
+	Status st = _typedThis().resize(_size + 1);
+	if(!st) return st;
 	for(roSize i = _size - 1; i > idx; --i)
 		_data[i] = _data[i - 1];
 
 	_data[idx] = val;
-	return _data[idx];
+	return st;
 }
 
 template<class T, class S>
-T& IArray<T,S>::insert(roSize idx, const T* srcBegin, roSize count)
+Status IArray<T,S>::insert(roSize idx, const T* srcBegin, roSize count)
 {
 	return insert(idx, srcBegin, srcBegin + count);
 }
 
 template<class T, class S>
-T& IArray<T,S>::insert(roSize idx, const T* srcBegin, const T* srcEnd)
+Status IArray<T,S>::insert(roSize idx, const T* srcBegin, const T* srcEnd)
 {
 	roAssert(idx <= _size);
 	roAssert(srcBegin <= srcEnd);
 	roSize inc = srcEnd - srcBegin;
-	if(inc == 0)
-		return _data[idx];
 
-	_typedThis().resize(_size + inc);
+	if(inc == 0) return Status::ok;
+
+	Status st = _typedThis().resize(_size + inc);
+	if(!st) return st;
+
 	for(roSize i = _size - 1; i >= idx + inc; --i)
 		_data[i] = _data[i - inc];
 
 	for(T* src = (T*)srcBegin, *dst = _data + idx; src != srcEnd; ++src, ++dst)
 		*dst = *src;
 
-	return _data[idx];
+	return st;
 }
 
 template<class T, class S>
-T& IArray<T,S>::insertSorted(const T&val)
+Status IArray<T,S>::insertSorted(const T&val)
 {
 	if(T* p = roLowerBound(_data, _size, val)) {
 		roAssert(!(*p < val));
@@ -188,7 +192,7 @@ T& IArray<T,S>::insertSorted(const T&val)
 }
 
 template<class T, class S>
-T& IArray<T,S>::insertSorted(const T& val, bool(*less)(const T&, const T&))
+Status IArray<T,S>::insertSorted(const T& val, bool(*less)(const T&, const T&))
 {
 	if(T* p = roLowerBound(_data, _size, val, less)) {
 		roAssert(!less(*p, val));
@@ -291,7 +295,8 @@ Status Array<T>::reserve(roSize newCapacity)
 	newCapacity = roMaxOf2(newCapacity, this->size());
 	if(newCapacity == 0) return Status::ok;
 
-	T* newPtr = roRealloc(this->_data, newCapacity * sizeof(T), newCapacity * sizeof(T)).template cast<T>();
+	T* newPtr = roRealloc(this->_data, this->_capacity * sizeof(T), newCapacity * sizeof(T)).template cast<T>();
+
 	if(!newPtr) return Status::not_enough_memory;
 
 	if(!TypeOf<T>::isPOD() && newPtr != this->_data) for(roSize i=0; i<this->_size; ++i)	// Notify the object that it's memory is moved

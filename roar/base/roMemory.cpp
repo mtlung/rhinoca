@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "roMemory.h"
 #include <stdlib.h>
+#include "roUtility.h"
 
 roBytePtr roMalloc(roSize size)
 {
@@ -26,7 +27,7 @@ roBytePtr DefaultAllocator::malloc(roSize size)
 
 roBytePtr DefaultAllocator::realloc(void* originalPtr, roSize originalSize, roSize newSize)
 {
-	return ::realloc(originalPtr, newSize);
+	return roRealloc(originalPtr, originalSize, newSize);
 }
 
 void DefaultAllocator::free(void* ptr)

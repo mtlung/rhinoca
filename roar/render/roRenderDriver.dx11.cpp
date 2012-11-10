@@ -848,7 +848,8 @@ static StagingBuffer* _getStagingBuffer(roRDriverContextImpl* ctx, roSize size, 
 				}
 			}
 
-			ret = &ctx->stagingBufferCache.pushBack();
+			ctx->stagingBufferCache.pushBack();
+			ret = &ctx->stagingBufferCache.back();
 
 			ret->size = size;
 			roAssert(!ret->mapped);
@@ -1188,7 +1189,8 @@ static StagingTexture* _getStagingTexture(roRDriverContextImpl* ctx, roRDriverTe
 				}
 			}
 
-			ret = &ctx->stagingTextureCache.pushBack();
+			ctx->stagingTextureCache.pushBack();
+			ret = &ctx->stagingTextureCache.back();
 
 			ret->hash = hash;
 			roAssert(!ret->mapped);
