@@ -5,6 +5,7 @@
 #include "../math/roVector.h"
 #include "../render/roColor.h"
 #include "../render/roTexture.h"
+#include "../base/roWeakPtr.h"
 
 namespace ro {
 
@@ -60,7 +61,7 @@ struct GuiSkin
 extern GuiSkin guiSkin;
 
 // States
-struct GuiWigetState
+struct GuiWigetState : public WeakObject
 {
 	GuiWigetState();
 

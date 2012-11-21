@@ -299,9 +299,9 @@ Status Array<T>::reserve(roSize newCapacity)
 
 	if(!newPtr) return Status::not_enough_memory;
 
-	if(!TypeOf<T>::isPOD() && newPtr != this->_data) for(roSize i=0; i<this->_size; ++i)	// Notify the object that it's memory is moved
-		roOnMemMove(this->_data[i], newPtr + i);
 	this->_data = newPtr;
+	if(!TypeOf<T>::isPOD() && newPtr != this->_data) for(roSize i=0; i<this->_size; ++i)	// Notify the object that it's memory is moved
+		roOnMemMove(this->_data[i], &this->_data[i]);
 	this->_capacity = newCapacity;
 	return Status::ok;
 }
