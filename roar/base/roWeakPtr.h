@@ -1,8 +1,7 @@
 #ifndef __roWeakPtr_h__
 #define __roWeakPtr_h__
 
-#include "roUtility.h"
-#include "roArray.h"
+#include "../platform/roCompiler.h"
 
 namespace ro {
 

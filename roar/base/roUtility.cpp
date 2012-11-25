@@ -4,21 +4,26 @@
 
 void roMemcpy(void* dst, const void* src, roSize size)
 {
+	roAssert(dst && src);
 	::memcpy(dst, src, size);
 }
 
 void roMemmov(void* dst, const void* src, roSize size)
 {
+	roAssert(dst && src);
 	::memmove(dst, src, size);
 }
 
 void roZeroMemory(void* dst, roSize size)
 {
+	roAssert(dst);
 	::memset(dst, 0, size);
 }
 
 void roSwapMemory(void* p1_, void* p2_, roSize size)
 {
+	roAssert(p1_ && p2_);
+
 	char* p1 = (char*)p1_;
 	char* e1 = p1 + size;
 	char* p2 = (char*)p2_;

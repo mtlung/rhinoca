@@ -3,12 +3,10 @@
 
 #include "../roar/platform/roOS.h"
 #include "rhinoca.h"
-#include "jsbindable.h"
 
+// Spider monkey need DEBUG to be defined
 #ifdef _DEBUG
 #	define DEBUG
 #endif
 
-//#define XP_WIN
-//#include "../thirdParty/SpiderMonkey/jsapi.h"
-//#undef XP_WIN
+#include "jsbindable.h"
