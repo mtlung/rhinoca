@@ -9,20 +9,26 @@ void roSwap(ro::Array<T>& lhs, ro::Array<T>& rhs)
 template<class T, roSize N> inline
 void roSwap(ro::TinyArray<T,N>& lhs, ro::TinyArray<T,N>& rhs)
 {
-	roSwap(lhs._size, rhs._size);
-	roSwap(lhs._capacity, rhs._capacity);
-	roSwap(lhs._data, rhs._data);
-}
+	// Simply swap pointer and sizes if both are dynamic
+	if(lhs._isUsingDynamic() && rhs._isUsingDynamic()) {
+		roSwap(lhs._size, rhs._size);
+		roSwap(lhs._capacity, rhs._capacity);
+		roSwap(lhs._data, rhs._data);
+	}
+	// Otherwise swap element by element
+	else {
+		roSize lSize = lhs._size;
+		roSize rSize = rhs._size;
+		roSize size2 = roMaxOf2(lSize, rSize);
+		lhs.resize(size2);
+		rhs.resize(size2);
 
-template<class T, roSize N> inline
-void roOnMemMove(ro::TinyArray<T,N>& ary, void* newMemLocation)
-{
-	if(ary._isUsingDynamic())
-		return;
+		for(roSize i=0; i<size2; ++i)
+			roSwap(lhs[i], rhs[i]);
 
-	ary._data = (T*)ary._buffer;
-	for(roSize i=0; i<ary._size; ++i)
-		roOnMemMove(ary._data[i], &ary._data[i]);
+		lhs.resize(rSize);
+		rhs.resize(lSize);
+	}
 }
 
 namespace ro {
@@ -216,9 +222,14 @@ void IArray<T,S>::remove(roSize idx)
 
 	_data[idx].~T();
 	if(idx < _size - 1) {
-		roMemmov(&_data[idx], &_data[idx+1], sizeof(T) * (_size - idx - 1));
-		if(!TypeOf<T>::isPOD()) for(roSize i=idx; i<_size-1; ++i)	// Notify the object that it's memory is moved
-			roOnMemMove(_data[i], &_data[i]);
+		if(TypeOf<T>::isPOD())
+			roMemmov(&_data[idx], &_data[idx+1], sizeof(T) * (_size - idx - 1));
+		else {
+			new ((void *)&_data[idx]) T;
+			for(roSize i=idx; i<_size-1; ++i)	// Move object forward
+				roSwap(_data[i], _data[i+1]);
+			_data[_size-1].~T();
+		}
 	}
 	--_size;
 }
@@ -295,19 +306,41 @@ Status Array<T>::reserve(roSize newCapacity)
 	newCapacity = roMaxOf2(newCapacity, this->size());
 	if(newCapacity == 0) return Status::ok;
 
-	T* newPtr = roRealloc(this->_data, this->_capacity * sizeof(T), newCapacity * sizeof(T)).template cast<T>();
-
-	if(!newPtr) return Status::not_enough_memory;
+	T* newPtr = NULL;
+	if(TypeOf<T>::isPOD()) {
+		newPtr = roRealloc(this->_data, this->_capacity * sizeof(T), newCapacity * sizeof(T)).template cast<T>();
+		if(!newPtr) return Status::not_enough_memory;
+	}
+	else {
+		newPtr = roMalloc(newCapacity * sizeof(T)).template cast<T>();
+		// Move the objects from old memory to new memory
+		for(roSize i=0; i<this->_size; ++i) {
+			new ((void *)&newPtr[i]) T;
+			roSwap(this->_data[i], newPtr[i]);
+			_data[i].~T();
+		}
+		roFree(this->_data);
+	}
 
 	this->_data = newPtr;
-	if(!TypeOf<T>::isPOD() && newPtr != this->_data) for(roSize i=0; i<this->_size; ++i)	// Notify the object that it's memory is moved
-		roOnMemMove(this->_data[i], &this->_data[i]);
 	this->_capacity = newCapacity;
 	return Status::ok;
 }
 
 
 // ----------------------------------------------------------------------
+
+template<class T>
+inline void _tinyArrayMoveObjects(T* oldPtr, T* newPtr, roSize size)
+{
+	if(TypeOf<T>::isPOD())
+		roMemcpy(newPtr, oldPtr, sizeof(T) * size);
+	else for(roSize i=0; i<size; ++i) {
+		new (newPtr + i) T;
+		roSwap(oldPtr[i], newPtr[i]);
+		(oldPtr[i]).~T();
+	}
+}
 
 template<class T, roSize PreAllocCount>
 Status TinyArray<T,PreAllocCount>::reserve(roSize newSize)
@@ -318,36 +351,50 @@ Status TinyArray<T,PreAllocCount>::reserve(roSize newSize)
 		return Status::ok;
 
 	newSize = roMaxOf2(newSize, this->size());
-	bool moved = false;
 
 	// Transit from dynamic to static
 	// NOTE: The check for this->_capacity == 0 make this class "zero memory initialization" friendly
 	if(newSize <= PreAllocCount && (_isUsingDynamic() || this->_capacity == 0)) {
-		roMemcpy(this->_buffer, this->_data, sizeof(T) * this->_size);
-		roFree(this->_data);
-		this->_data = (T*)this->_buffer;
+		T* oldPtr = this->_data;
+		T* newPtr = (T*)this->_buffer;
+
+		_tinyArrayMoveObjects(oldPtr, newPtr, this->_size);
+
+		roFree(oldPtr);
+		this->_data = newPtr;
 		this->_capacity = PreAllocCount;
-		moved = true;
 	}
 	// Transit from static to dynamic
-	else {
-		T* oldPtr = (this->_data == (T*)this->_buffer) ? NULL : this->_data;
-		T* newPtr = roRealloc(oldPtr, this->_capacity, newSize * sizeof(T)).template cast<T>();
+	else if(!_isUsingDynamic()) {
+		T* oldPtr = (T*)this->_buffer;
+		T* newPtr = roMalloc(newSize * sizeof(T)).template cast<T>();
 		if(!newPtr) return Status::not_enough_memory;
 
-		moved = oldPtr != newPtr;
-		if(oldPtr == (T*)this->_buffer)
-			roMemcpy(newPtr, this->_buffer, sizeof(T) * this->_size);
+		_tinyArrayMoveObjects(oldPtr, newPtr, this->_size);
 
 		this->_data = newPtr;
 		this->_capacity = newSize;
 	}
+	// Enlarging dynamic memory
+	else {
+		T* oldPtr = this->_data;
+
+		if(TypeOf<T>::isPOD()) {
+			T* newPtr = roRealloc(oldPtr, this->_capacity * sizeof(T), newSize * sizeof(T)).template cast<T>();
+			if(!newPtr) return Status::not_enough_memory;
+		}
+		else {
+			T* newPtr = roMalloc(newSize * sizeof(T)).template cast<T>();
+
+			_tinyArrayMoveObjects(oldPtr, newPtr, this->_size);
+
+			roFree(oldPtr);
+			this->_data = newPtr;
+			this->_capacity = newSize;
+		}
+	}
 
 	roAssert(this->_capacity >= PreAllocCount);
-
-	if(!TypeOf<T>::isPOD() && moved) for(roSize i=0; i<this->_size; ++i)	// Notify the object that it's memory is moved
-		roOnMemMove(this->_data[i], &this->_data[i]);
-
 	return Status::ok;
 }
 

@@ -265,10 +265,10 @@ struct guiStates
 	GuiPanelState rootPanel;
 	GuiWindowState rootWindow;
 
-	Array<GuiWigetState*> groupStack;
-	Array<GuiPanelState*> panelStateStack;
-	Array<GuiWindowState*> windowList;
-	Array<GuiWigetContainer*> containerStack;
+	Array<WeakPtr<GuiWigetState> > groupStack;
+	Array<WeakPtr<GuiPanelState> > panelStateStack;
+	Array<WeakPtr<GuiWindowState> > windowList;
+	Array<WeakPtr<GuiWigetContainer> > containerStack;
 	Array<void*> ptrStack;
 	Array<float> floatStack;
 	Array<String> stringStack;
@@ -581,7 +581,7 @@ GuiWigetState* guiGetHostWiget()
 {
 	if(_states.groupStack.isEmpty())
 		return NULL;
-	return _states.groupStack.back();
+	return _states.groupStack.back().get();
 }
 
 void guiPopHostWiget()

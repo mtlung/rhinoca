@@ -20,7 +20,7 @@ struct InputParam
 {
 	StringHash nameHash;		// Hash value for the input semantic
 	roUint32 elementCount;
-	roInt32 type;	// D3D10_REGISTER_COMPONENT_TYPE
+	roInt32 type;				// D3D10_REGISTER_COMPONENT_TYPE
 };
 
 struct ShaderResourceBinding
@@ -100,8 +100,8 @@ struct roRDriverShaderImpl : public roRDriverShader
 	ComPtr<ID3D11DeviceChild> dxShader;
 
 	Array<roByte> shaderBlob;
-	Array<InputParam> inputParams;
-	Array<ShaderResourceBinding> shaderResourceBindings;
+	TinyArray<InputParam, 8> inputParams;
+	TinyArray<ShaderResourceBinding, 8> shaderResourceBindings;
 };
 
 struct InputLayout
@@ -113,22 +113,18 @@ struct InputLayout
 	Array<roByte>* shaderBlob;
 
 	ComPtr<ID3D11InputLayout> layout;
-	Array<D3D11_INPUT_ELEMENT_DESC> inputDescs;
+	TinyArray<D3D11_INPUT_ELEMENT_DESC, 8> inputDescs;
 
-	Array<UINT> strides;
-	Array<UINT> offsets;
+	TinyArray<UINT, 8> strides;
+	TinyArray<UINT, 8> offsets;
 };
 
 struct RenderTarget
 {
 	unsigned hash;
 	float lastUsedTime;
-	Array<ComPtr<ID3D11RenderTargetView> > rtViews;
+	TinyArray<ComPtr<ID3D11RenderTargetView>, 8> rtViews;
 	ComPtr<ID3D11DepthStencilView> depthStencilView;
-
-	friend void roOnMemMove(RenderTarget& self, void* newMemLocation) {
-		::roOnMemMove(self.rtViews, &self.rtViews);
-	}
 };
 
 struct roRDriverContextImpl : public roRDriverContext
@@ -147,21 +143,21 @@ struct roRDriverContextImpl : public roRDriverContext
 	typedef StaticArray<roRDriverShaderImpl*, 3> CurrentShaders;
 	CurrentShaders currentShaders;
 
-	Array<InputLayout> inputLayoutCache;
+	TinyArray<InputLayout, 16> inputLayoutCache;
 	roSize stagingBufferCacheSearchIndex;
-	Array<StagingBuffer> stagingBufferCache;
+	TinyArray<StagingBuffer, 16> stagingBufferCache;
 	roSize stagingTextureCacheSearchIndex;
-	Array<StagingTexture> stagingTextureCache;
+	TinyArray<StagingTexture, 16> stagingTextureCache;
 
-	Array<BlendState> blendStateCache;
-	Array<RasterizerState> rasterizerState;
-	Array<DepthStencilState> depthStencilStateCache;
+	TinyArray<BlendState, 16> blendStateCache;
+	TinyArray<RasterizerState, 16> rasterizerState;
+	TinyArray<DepthStencilState, 16> depthStencilStateCache;
 	StaticArray<SamplerState, 64> samplerStateCache;
 
-	Array<RenderTarget> renderTargetCache;
+	TinyArray<RenderTarget, 16> renderTargetCache;
 	unsigned currentRenderTargetViewHash;
 
-	Array<BufferCacheEntry> bufferCache;
+	TinyArray<BufferCacheEntry, 16> bufferCache;
 	StaticArray<roRDriverBufferImpl*, 3> constBufferInUse;
 
 	roSize triangleFanIndexBufferSize;

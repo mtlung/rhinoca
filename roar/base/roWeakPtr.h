@@ -100,22 +100,4 @@ inline WeakObject::~WeakObject()
 
 }	// namespace ro
 
-template<class T> inline
-void roOnMemMove(ro::WeakPtr<T>& weakPtr, void* newMemLocation)
-{
-	if(weakPtr._prev)
-		weakPtr._prev->_next = &weakPtr;
-	if(weakPtr._next)
-		weakPtr._next->_prev = &weakPtr;
-}
-
-inline void roOnMemMove(ro::WeakObject& weakObj, void* newMemLocation)
-{
-	ro::WeakPtr<ro::WeakObject>* next = &weakObj._ptrHead;
-	while(next) {
-		next->_ptr = &weakObj;
-		next = next->_next;
-	}
-}
-
 #endif	// __roWeakPtr_h__

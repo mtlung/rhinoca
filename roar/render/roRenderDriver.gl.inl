@@ -68,11 +68,7 @@ struct roRDriverTextureImpl : public roRDriverTexture
 		roRDriverMapUsage usage;
 	};
 
-	TinyArray<MapInfo, 1> mapInfo;	// For mapping different mip-level and texture array
-
-	friend void roOnMemMove(roRDriverTextureImpl& self, void* newMemLocation) {
-		::roOnMemMove(self.mapInfo, &self.mapInfo);
-	}
+	TinyArray<MapInfo, 8> mapInfo;	// For mapping different mip-level and texture array
 };	// roRDriverTextureImpl
 
 struct roRDriverShaderProgramImpl : public roRDriverShaderProgram
@@ -81,10 +77,10 @@ struct roRDriverShaderProgramImpl : public roRDriverShaderProgram
 	unsigned hash;	/// Base on the shader pointers
 	GLuint glh;
 	unsigned textureCount;
-	Array<roRDriverShaderImpl*> shaders;	/// When ever a shader is destroyed, one should also remove it from this list
-	Array<ProgramUniform> uniforms;
-	Array<ProgramUniformBlock> uniformBlocks;
-	Array<ProgramAttribute> attributes;
+	TinyArray<roRDriverShaderImpl*, 8> shaders;	/// When ever a shader is destroyed, one should also remove it from this list
+	TinyArray<ProgramUniform, 8> uniforms;
+	TinyArray<ProgramUniformBlock, 8> uniformBlocks;
+	TinyArray<ProgramAttribute, 8> attributes;
 };
 
 struct RenderTarget
@@ -120,17 +116,17 @@ struct roRDriverContextImpl : public roRDriverContext
 
 	void* currentIndexBufSysMemPtr;
 
-	Array<roRDriverShaderProgramImpl> shaderProgramCache;
+	TinyArray<roRDriverShaderProgramImpl, 16> shaderProgramCache;
 	roRDriverShaderProgramImpl* currentShaderProgram;
 
 	// A ring of pixel buffer object
-	Array<GLuint> pixelBufferInUse;
-	Array<GLuint> pixelBufferCache;
+	TinyArray<GLuint, 16> pixelBufferInUse;
+	TinyArray<GLuint, 16> pixelBufferCache;
 	roSize currentPixelBufferIndex;
 
-	Array<roRDriverBufferImpl*> bufferCache;	// We would like to minimize the create/delete of buffer objects
+	TinyArray<roRDriverBufferImpl*, 16> bufferCache;	// We would like to minimize the create/delete of buffer objects
 
-	Array<VertexArrayObject> vaoCache;
+	TinyArray<VertexArrayObject, 16> vaoCache;
 
 	struct TextureState {
 		void* hash;
@@ -142,8 +138,8 @@ struct roRDriverContextImpl : public roRDriverContext
 	roRDriverColorWriteMask currentColorWriteMask;
 
 	unsigned currentRenderHash;
-	Array<RenderTarget> renderTargetCache;
-	Array<DepthStencilBuffer> depthStencilBufferCache;
+	TinyArray<RenderTarget, 16> renderTargetCache;
+	TinyArray<DepthStencilBuffer, 16> depthStencilBufferCache;
 
 	roSize bindedIndexCount;	// For debug purpose
 

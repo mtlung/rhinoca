@@ -20,6 +20,11 @@ struct TypeOf {
 #endif
 };
 
+template<typename T>	
+struct TypeOf<T*> {
+	static bool isPOD() { return true; }
+};
+
 #define roTYPE_LIST(T) \
 	template<> inline bool TypeOf<T>::isPOD()		{ return true; } \
 	template<> inline bool TypeOf<T>::isSigned()	{ return true; } \

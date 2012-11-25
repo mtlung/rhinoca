@@ -115,11 +115,6 @@ namespace {
 
 struct MyClass {
 	TinyArray<int, 1> v;
-
-	friend void roOnMemMove(MyClass& c, void* newMemLocation)
-	{
-		::roOnMemMove(c.v, &c.v);
-	}
 };
 
 }	// namespace

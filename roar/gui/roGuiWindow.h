@@ -32,7 +32,7 @@ static void _drawWindows()
 
 		for(roSize i = tmpWindows2.size(); i--;) {
 			GuiWindowState& state = *tmpWindows2[i];
-			_states.currentProcessingWindow = _states.windowList.back();	// Force guiIsInActiveWindow() to pass
+			_states.currentProcessingWindow = _states.windowList.back().get();	// Force guiIsInActiveWindow() to pass
 			if(_isClickedDown(state.deducedRect)) {
 				guiFocusWindow(state);
 				break;
