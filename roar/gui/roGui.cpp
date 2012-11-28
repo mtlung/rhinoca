@@ -581,7 +581,7 @@ GuiWigetState* guiGetHostWiget()
 {
 	if(_states.groupStack.isEmpty())
 		return NULL;
-	return _states.groupStack.back().get();
+	return _states.groupStack.back();
 }
 
 void guiPopHostWiget()

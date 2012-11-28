@@ -1,6 +1,10 @@
 #ifndef __roComPtr_h__
 #define __roComPtr_h__
 
+#if! roOS_WIN
+#	error "Windows only"
+#endif
+
 #include "roUtility.h"
 #include <atlbase.h>	// For CComPtr
 

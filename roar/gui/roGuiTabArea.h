@@ -39,6 +39,8 @@ void guiEndTabs()
 
 	guiPopHostWiget();
 
+	for(roSize i=0; i<state._tabCount; ++i)
+		guiPopStringFromStack();
 }
 
 bool guiBeginTab(const roUtf8* text)

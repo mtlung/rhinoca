@@ -16,9 +16,14 @@ class ArrayPerformanceTest {};
 #define END_PROFILE() \
 	}} roLog("info", "%f\n", timer.getFloat()); }
 
+void roSwap(std::string& lhs, std::string& rhs)
+{
+	lhs.swap(rhs);
+}
+
 TEST_FIXTURE(ArrayPerformanceTest, compareWithSTL)
 {
-	roSize sampleCount = 1000;
+	roSize sampleCount = roIsDebug ? 10 : 1000;
 	ro::StopWatch timer;
 
 	{	// Push back of int
@@ -61,7 +66,7 @@ TEST_FIXTURE(ArrayPerformanceTest, compareWithSTL)
 
 	{	// Push back of string
 		roLog("\ninfo", "Push back std::string\n");
-		sampleCount = 100;
+		roSize sampleCount = roIsDebug ? 1 : 100;
 
 		typedef Array<std::string> MyArray;
 		const std::string str("abcdefghijklmnopqrstuvwxyz");

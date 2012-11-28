@@ -45,16 +45,16 @@ ro::TinyArray<*> {
 ro::String {
 	preview (
 		#(
-			(char*)($c._cstr)+sizeof(_roSize)*2
+			(char*)($c._cstr)+sizeof(roSize)*2
 		)
 	)
 
 	children
 	(
 		#(
-			str: (char*)($c._cstr)+sizeof(_roSize)*2,
+			str: (char*)($c._cstr)+sizeof(roSize)*2,
 			length:	*(int*)($c._cstr),
-			capacity: *(int*)($c._cstr+sizeof(_roSize))
+			capacity: *(int*)($c._cstr+sizeof(roSize))
 		)
 	)
 }

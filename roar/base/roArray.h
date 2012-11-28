@@ -164,7 +164,7 @@ struct Array : public IArray<T, Array<T> >
 	Array&	operator=(const Array& rhs) { this->copy(rhs); return *this; }
 
 // Operations
-	Status reserve(roSize newCapacity);
+	Status reserve(roSize newCapacity, bool force=false);
 };	// Array
 
 template<class T, roSize PreAllocCount>
@@ -178,7 +178,7 @@ struct TinyArray : public IArray<T, TinyArray<T,PreAllocCount> >
 	TinyArray& operator=(const TinyArray& rhs)		{ this->copy(rhs); return *this; }
 
 // Operations
-	Status reserve(roSize newSize);
+	Status reserve(roSize newSize, bool force=false);
 
 // Private
 	bool _isUsingDynamic() const { return this->_capacity > PreAllocCount; }

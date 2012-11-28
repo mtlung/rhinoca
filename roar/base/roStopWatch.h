@@ -8,10 +8,12 @@ namespace ro {
 roUint64 ticksSinceProgramStatup();
 roUint64 microSecondsSince1970();
 
-double ticksToSeconds();
+double ticksToSeconds(roUint64 ticks);
 roUint64 secondsToTicks(double second);
 
 /// A StopWatch to measure time interval.
+/// This timer is suppose to measure relative shot duration,
+/// as this timer will diverge about 1ms every 1000s
 struct StopWatch
 {
 	StopWatch();

@@ -20,13 +20,16 @@ struct WeakPtr
 	WeakPtr(T* p)									{ _setPtr(p); }
 
 	template<class U>
-	WeakPtr& operator=(const WeakPtr<U>& rhs)		{ _resetLink(); _setPtr(rhs._ptr); return *this; }
-	WeakPtr& operator=(const WeakPtr& rhs)			{ _resetLink(); _setPtr(rhs._ptr); return *this; }
-	WeakPtr& operator=(T* rhs)						{ _resetLink(); _setPtr(rhs); return *this; }
+	WeakPtr&	operator=(const WeakPtr<U>& rhs)	{ _resetLink(); _setPtr(rhs._ptr); return *this; }
+	WeakPtr&	operator=(const WeakPtr& rhs)		{ _resetLink(); _setPtr(rhs._ptr); return *this; }
+	WeakPtr&	operator=(T* rhs)					{ _resetLink(); _setPtr(rhs); return *this; }
 
-	T*	get() const									{ return _ptr; }
-	T&	operator*() const							{ return *_ptr; }
-	T*	operator->() const							{ return _ptr; }
+				operator T* ()						{ return _ptr; }
+				operator const T* () const			{ return _ptr; }
+	T&			operator*()							{ return *_ptr; }
+	T*			operator->()						{ return _ptr; }
+	const T&	operator*() const					{ return *_ptr; }
+	const T*	operator->() const					{ return _ptr; }
 
 	typedef T* this_type::*unspecified_bool_type;
 	bool operator!() const							{ return _ptr == NULL; }	///< Null test
@@ -41,17 +44,17 @@ struct WeakPtr
 	WeakPtr<T>* _next;
 };	// WeakPtr
 
-template<class T, class U>	bool operator==(const WeakPtr<T>& a, U* b) { return a.get() == b; }
-template<class T, class U>	bool operator!=(const WeakPtr<T>& a, U* b) { return a.get() != b; }
-template<class T, class U>	bool operator==(T* a, const WeakPtr<U>& b) { return a == b.get(); }
-template<class T, class U>	bool operator!=(T* a, const WeakPtr<U>& b) { return a != b.get(); }
-template<class T, class U>	bool operator==(const WeakPtr<T>& a, const WeakPtr<U>& b)	{ return a.get() == b.get(); }
-template<class T, class U>	bool operator!=(const WeakPtr<T>& a, const WeakPtr<U>& b)	{ return a.get() != b.get(); }
-template<class T, class U>	bool operator<(const WeakPtr<T>& a, const WeakPtr<U>& b)	{ return a.get() < b.get(); }
+template<class T, class U>	bool operator==(const WeakPtr<T>& a, U* b)					{ return a._ptr == b; }
+template<class T, class U>	bool operator!=(const WeakPtr<T>& a, U* b)					{ return a._ptr != b; }
+template<class T, class U>	bool operator==(T* a, const WeakPtr<U>& b)					{ return a == b._ptr; }
+template<class T, class U>	bool operator!=(T* a, const WeakPtr<U>& b)					{ return a != b._ptr; }
+template<class T, class U>	bool operator==(const WeakPtr<T>& a, const WeakPtr<U>& b)	{ return a._ptr == b._ptr; }
+template<class T, class U>	bool operator!=(const WeakPtr<T>& a, const WeakPtr<U>& b)	{ return a._ptr != b._ptr; }
+template<class T, class U>	bool operator<(const WeakPtr<T>& a, const WeakPtr<U>& b)	{ return a._ptr < b._ptr; }
 
-template<class T, class U>	WeakPtr<T> static_pointer_cast(const WeakPtr<U>& p)	{ return static_cast<T*>(p.get()); }
-template<class T, class U>	WeakPtr<T> const_pointer_cast(const WeakPtr<U>& p)	{ return const_cast<T*>(p.get()); }
-template<class T, class U>	WeakPtr<T> dynamic_pointer_cast(const WeakPtr<U>& p){ return dynamic_cast<T*>(p.get()); }
+template<class T, class U>	WeakPtr<T> static_pointer_cast(const WeakPtr<U>& p)			{ return static_cast<T*>(p._ptr); }
+template<class T, class U>	WeakPtr<T> const_pointer_cast(const WeakPtr<U>& p)			{ return const_cast<T*>(p._ptr); }
+template<class T, class U>	WeakPtr<T> dynamic_pointer_cast(const WeakPtr<U>& p)		{ return dynamic_cast<T*>(p._ptr); }
 
 
 // ----------------------------------------------------------------------

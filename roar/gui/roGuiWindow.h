@@ -11,17 +11,16 @@ static void _drawWindows()
 	// Use a temp list to prevent the window callback making changes to _states.windowList
 	TinyArray<GuiWindowState*, 32> tmpWindows;
 	for(roSize i=0; i<_states.windowList.size(); ++i) {
-		roAssert(_states.windowList[i]);
-		GuiWindowState& state = *_states.windowList[i];
+		GuiWindowState* state = _states.windowList[i];
 
-		if(state._useCount == 1) {
+		if(!state || state->_useCount == 1) {
 			_states.windowList.remove(i);
 			--i;
 			continue;
 		}
-		state._useCount--;
+		state->_useCount--;
 
-		tmpWindows.pushBack(&state);
+		tmpWindows.pushBack(state);
 	}
 
 	// Determine which window is clicked and make it active
@@ -32,7 +31,7 @@ static void _drawWindows()
 
 		for(roSize i = tmpWindows2.size(); i--;) {
 			GuiWindowState& state = *tmpWindows2[i];
-			_states.currentProcessingWindow = _states.windowList.back().get();	// Force guiIsInActiveWindow() to pass
+			_states.currentProcessingWindow = _states.windowList.back();	// Force guiIsInActiveWindow() to pass
 			if(_isClickedDown(state.deducedRect)) {
 				guiFocusWindow(state);
 				break;

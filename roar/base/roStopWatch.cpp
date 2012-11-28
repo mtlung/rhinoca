@@ -41,28 +41,14 @@ static roUint64 getQueryPerformanceFrequency()
 	::QueryPerformanceCounter((LARGE_INTEGER*)(&ticks1));
 	roUint64 ticks2 = rdtsc();
 
-	// In most cases, the absolution values of QueryPerformanceCounter and rdtsc
-	// can be used to computer their clock frequency ratio. But in some cases, for
-	// example the machine is waken up from a sleeping state, the CPU clock is stopped
-	// while the mother board's clock is still running, making them out of sync after
-	// the machine wake up.
-	double ratio = double(ticks2) / ticks1;
-	if(ratio < 1) {	// Absolute value messed up, calculate relative value.
-		double dummy = double(ret.LowPart);
-		for(int i=0; i<1000; ++i)
-			dummy = sin(dummy);
-		roUint64 ticks1b;
-		::QueryPerformanceCounter((LARGE_INTEGER*)(&ticks1b));
-		roUint64 ticks2b = rdtsc();
-		ticks1 = ticks1b - ticks1;
-		ticks2 = ticks2b - ticks2;
-		// NOTE: The action of adding "dummy" to the equation is to
-		// prevent the compiler optimize away the sin(dummy) operation.
-		// And since the value of sin() always smaller than 1, so the error
-		// introduced is minimum.
-		ratio = double(ticks2 + dummy) / (ticks1);
-	}
+	::Sleep(10);
+	roUint64 ticks1b;
+	::QueryPerformanceCounter((LARGE_INTEGER*)(&ticks1b));
+	roUint64 ticks2b = rdtsc();
+	ticks1 = ticks1b - ticks1;
+	ticks2 = ticks2b - ticks2;
 
+	double ratio = double(ticks2) / ticks1;
 	return roUint64(ret.QuadPart * ratio);
 #elif roOS_iOS
 	// Reference: http://www.macresearch.org/tutorial_performance_and_time

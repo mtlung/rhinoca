@@ -102,7 +102,7 @@ static void end_callback(png_structp png_ptr, png_infop)
 	if(impl->rowBytes / impl->width == 3) {
 		Array<png_byte> tmpBuf(impl->height * impl->width * 4);
 		_rgbToRgba(impl->pixelData.bytePtr(), tmpBuf.bytePtr(), impl->width, impl->height);
-		impl->pixelData.swap(tmpBuf);
+		roSwap(impl->pixelData, tmpBuf);
 	}
 }
 

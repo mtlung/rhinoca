@@ -39,8 +39,10 @@ TEST_FIXTURE(TinyArrayTest, basic)
 	v.reserve(3);
 	CHECK_EQUAL(3u, v.capacity());
 
-	v.reserve(2);
-	CHECK_EQUAL(2u, v.capacity());
+	v.reserve(2, false);
+	CHECK_EQUAL(3u, v.capacity());	// Don't force reserve to change size, so it keep capacity as 3
+	v.reserve(2, true);
+	CHECK_EQUAL(2u, v.capacity());	// Force capacity to be 2
 
 	v.clear();
 	CHECK_EQUAL(0u, v.size());
@@ -118,8 +120,47 @@ struct MyClass {
 
 }	// namespace
 
+#include <windows.h>
+
+struct Timer
+{
+	Timer()
+	{
+		LARGE_INTEGER ret;
+		::QueryPerformanceFrequency(&ret);
+		ratio = 1.0 / double(ret.QuadPart);
+
+		LARGE_INTEGER t1, t2;
+		QueryPerformanceCounter(&t1);
+		tickCount = GetTickCount64();
+		QueryPerformanceCounter(&t2);
+
+		roUint64 qpc = t1.QuadPart/2 + t2.QuadPart/2;
+		offset = qpc * ratio * 1000 - tickCount;
+	}
+
+	double now()
+	{
+		LARGE_INTEGER ret;
+		QueryPerformanceCounter(&ret);
+
+		double fromTickCount = GetTickCount64();
+		fromTickCount/= 1000;
+		return ret.QuadPart * ratio;
+	}
+
+	double ratio;
+	double offset;
+	roUint64 tickCount;
+};
+
 TEST_FIXTURE(TinyArrayTest, arrayOfClassWithArray)
 {
+	for(int i=0; i<1000; ++i) {
+		Timer t;
+		t.now();
+	}
+
 	TinyArray<MyClass, 1> v;
 	v.incSize(1);
 

@@ -381,6 +381,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\test\base\roStopWatchTest.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\test\base\roStringFormatTest.cpp"
 				>
 			</File>

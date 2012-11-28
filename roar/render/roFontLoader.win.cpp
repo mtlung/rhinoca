@@ -184,7 +184,7 @@ void FontLoader::run(TaskPool* taskPool)
 
 void FontLoader::checkRequest(TaskPool* taskPool)
 {
-	font->requestMainThread.swap(font->requestLoadThread);
+	roSwap(font->requestMainThread, font->requestLoadThread);
 
 	// Process reply
 	for(roSize i=0; i<font->replys.size(); ++i)
