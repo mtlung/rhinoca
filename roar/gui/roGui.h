@@ -75,6 +75,8 @@ struct GuiWigetState : public WeakObject
 	bool isLastFrameActive;
 	Rectf rect;
 	Rectf deducedRect;	// The final rectangle after considered content size and layout engine
+
+	roUint64 _frameId;	// The frame ID for the last update on this wiget
 };
 
 // Common

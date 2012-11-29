@@ -256,6 +256,8 @@ struct guiStates
 
 	Skin skin;
 
+	roUint64 frameCount;
+
 	void* mouseCapturedObject;
 	void* keyboardCapturedObject;
 	void* lastFrameMouseCapturedObject;
@@ -280,6 +282,7 @@ guiStates::guiStates()
 	roZeroMemory(&mouseState, sizeof(mouseState));
 	roZeroMemory(&mouseCapturedState, sizeof(mouseCapturedState));
 	mousePulse = false;
+	frameCount = 0;
 	mouseCapturedObject = NULL;
 	keyboardCapturedObject = NULL;
 	lastFrameMouseCapturedObject = NULL;
@@ -425,6 +428,8 @@ void guiEnd()
 	roAssert(_states.ptrStack.isEmpty());
 	roAssert(_states.floatStack.isEmpty());
 	roAssert(_states.stringStack.isEmpty());
+
+	++_states.frameCount;
 }
 
 void guiLayout(Rectf& rect)
@@ -468,7 +473,8 @@ static bool _isHover(const Rectf& rect)
 	return rect.isPointInRect(x, y) && guiInClipRect(x, y) && !guiIsObstructedByOtherWindow(x, y);
 }
 
-static bool _isHot(const Rectf& rect)
+// This function don't remember state, so it's only accurate if rect didn't move frame to frame
+static bool _isActive(const Rectf& rect)
 {
 	float x = _states.mouseClickx();
 	float y = _states.mouseClicky();
@@ -483,16 +489,24 @@ static void _updateWigetState(GuiWigetState& state)
 
 	if(!_states.mousePressed() && !_states.mouseUp())
 		state.isActive = false;
-	else
-		state.isActive = (_states.mouseDown() || _states.mouseUp()) ? state.isHover : state.isActive;
+	else {
+		// If the wiget has been updated on last frame
+		if(state._frameId + 1 == _states.frameCount)
+			state.isActive = (_states.mouseDown() || _states.mouseUp()) ? state.isHover : state.isActive;
+		// If the wiget is freshly created, or being resued multiple times in a single frame
+		else
+			state.isActive = _isActive(state.deducedRect);
+	}
 
 	state.isClicked = state.isHover && state.isActive && _states.mouseUp();
 	state.isClickRepeated = state.isActive && _states.mousePulse;
+
+	state._frameId = _states.frameCount;
 }
 
 static bool _isClickedDown(const Rectf& rect)
 {
-	return _states.mouseDown() && _isHot(rect);
+	return _states.mouseDown() && _isActive(rect);
 }
 
 static float _round(float x)
@@ -736,6 +750,7 @@ GuiWigetState::GuiWigetState()
 	isLastFrameEnable = false;
 	isLastFrameHover = false;
 	isLastFrameActive = false;
+	_frameId = 0;
 }
 
 GuiWigetContainer::GuiWigetContainer()

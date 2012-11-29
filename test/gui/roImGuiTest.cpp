@@ -163,7 +163,6 @@ TEST_FIXTURE(ImGuiTest, tabPanel)
 	CHECK(guiInit());
 
 	GuiTabAreaState tabArea;
-	GuiButtonState button;
 
 	while(keepRun()) {
 		driver->clearColor(68.0f/256, 68.0f/256, 68.0f/256, 1);
