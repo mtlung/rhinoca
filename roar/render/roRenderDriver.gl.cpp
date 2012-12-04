@@ -548,7 +548,16 @@ static roRDriverBuffer* _newBuffer()
 	}
 
 	roRDriverBufferImpl* ret = _allocator.newObj<roRDriverBufferImpl>().unref();
-	roZeroMemory(ret, sizeof(*ret));
+	ret->type = roRDriverBufferType_Vertex;
+	ret->usage = roRDriverDataUsage_Static;
+	ret->isMapped = false;
+	ret->mapUsage = roRDriverMapUsage_Read;
+	ret->mapOffset = 0;
+	ret->mapSize = 0;
+	ret->sizeInBytes = 0;
+
+	ret->glh = 0;
+	ret->systemBuf = NULL;
 	return ret;
 }
 
@@ -839,8 +848,17 @@ TextureFormatMapping _textureFormatMappings[] = {
 static roRDriverTexture* _newTexture()
 {
 	roRDriverTextureImpl* ret = _allocator.newObj<roRDriverTextureImpl>().unref();
-	roZeroMemory(ret, sizeof(*ret));
+	ret->width = ret->height = 0;
+	ret->isMapped = false;
 	ret->isYAxisUp = true;
+	ret->maxMipLevels = 0;
+	ret->mapUsage = roRDriverMapUsage_Read;
+	ret->format = roRDriverTextureFormat_Unknown;
+	ret->flags = roRDriverTextureFlag_None;
+
+	ret->glh = 0;
+	ret->glTarget = 0;
+	ret->formatMapping = NULL;
 	return ret;
 }
 
@@ -1258,7 +1276,8 @@ static const StaticArray<GLenum, 5> _shaderTypes = {
 static roRDriverShader* _newShader()
 {
 	roRDriverShaderImpl* ret = _allocator.newObj<roRDriverShaderImpl>().unref();
-	roZeroMemory(ret, sizeof(*ret));
+	ret->type = roRDriverShaderType_Vertex;
+	ret->glh = 0;
 	return ret;
 }
 
@@ -1899,7 +1918,7 @@ static void _rhDeleteRenderDriver_GL(roRDriver* self)
 roRDriver* _roNewRenderDriver_GL(const char* driverStr, const char*)
 {
 	roRDriverImpl* ret = _allocator.newObj<roRDriverImpl>().unref();
-	roZeroMemory(ret, sizeof(*ret));
+
 	ret->destructor = &_rhDeleteRenderDriver_GL;
 	ret->_driverName = driverStr;
 	ret->driverName = ret->_driverName.c_str();

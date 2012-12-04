@@ -62,7 +62,40 @@ typedef _sizetSelector<sizeof(void*)>::_signed roPtrInt;
 #define roOffsetof(s, m) (roSize)((roPtrInt)&(((s*)0)->m))
 #define roMemberHost(s, m, pm) (s*)((char*)pm - roOffsetof(s, m))
 
-// Namespace forward declaration
-namespace ro {}
+namespace ro {
+
+// Make variable zero initialized by default
+template<class T>
+struct ZeroInit
+{
+	ZeroInit() : _m(0) {}
+	ZeroInit(const T& t) : _m(t) {}
+
+	ZeroInit&	operator=(const ZeroInit<T>& t)	{ _m = t; return *this; }
+	T*			operator&()						{ return &_m; }
+	const T*	operator&() const				{ return &_m; }
+				operator T& ()					{ return _m; }
+				operator const T& () const		{ return _m; }
+	T _m;
+};
+
+// Make pointer variable NULL initialized by default
+template<class T>
+struct Ptr
+{
+	Ptr() : _ptr(NULL) {}
+	Ptr(T* p) : _ptr(p) {}
+
+	Ptr&		operator=(const Ptr<T>& t)		{ _ptr = t._ptr; return *this; }
+				operator T* ()					{ return _ptr; }
+				operator const T* () const		{ return _ptr; }
+	T&			operator*()						{ return *_ptr; }
+	T*			operator->()					{ return _ptr; }
+	const T&	operator*() const				{ return *_ptr; }
+	const T*	operator->() const				{ return _ptr; }
+	T* _ptr;
+};
+
+}	// namespace ro
 
 #endif	// __roCompiler_h__

@@ -120,47 +120,8 @@ struct MyClass {
 
 }	// namespace
 
-#include <windows.h>
-
-struct Timer
-{
-	Timer()
-	{
-		LARGE_INTEGER ret;
-		::QueryPerformanceFrequency(&ret);
-		ratio = 1.0 / double(ret.QuadPart);
-
-		LARGE_INTEGER t1, t2;
-		QueryPerformanceCounter(&t1);
-		tickCount = GetTickCount64();
-		QueryPerformanceCounter(&t2);
-
-		roUint64 qpc = t1.QuadPart/2 + t2.QuadPart/2;
-		offset = qpc * ratio * 1000 - tickCount;
-	}
-
-	double now()
-	{
-		LARGE_INTEGER ret;
-		QueryPerformanceCounter(&ret);
-
-		double fromTickCount = GetTickCount64();
-		fromTickCount/= 1000;
-		return ret.QuadPart * ratio;
-	}
-
-	double ratio;
-	double offset;
-	roUint64 tickCount;
-};
-
 TEST_FIXTURE(TinyArrayTest, arrayOfClassWithArray)
 {
-	for(int i=0; i<1000; ++i) {
-		Timer t;
-		t.now();
-	}
-
 	TinyArray<MyClass, 1> v;
 	v.incSize(1);
 

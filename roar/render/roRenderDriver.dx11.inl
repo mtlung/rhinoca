@@ -40,10 +40,9 @@ struct StagingBuffer
 
 struct StagingTexture
 {
-	StagingTexture() : hash(0), mapped(false), lastUsedTime(0) {}
-	unsigned hash;
-	unsigned mapped;
-	float lastUsedTime;
+	ZeroInit<unsigned> hash;
+	ZeroInit<unsigned> mapped;
+	ZeroInit<float> lastUsedTime;
 	ComPtr<ID3D11Resource> dxTexture;
 };
 
@@ -77,7 +76,7 @@ struct BufferCacheEntry {
 	ComPtr<ID3D11Buffer> dxBuffer;
 };
 
-struct roRDriverBufferImpl : public roRDriverBuffer
+struct roRDriverBufferImpl : public roRDriverBuffer, NonCopyable
 {
 	void* hash;
 	roSize capacity;	// This is the actual size of the dxBuffer
@@ -85,7 +84,7 @@ struct roRDriverBufferImpl : public roRDriverBuffer
 	int dxStagingIdx;	// Index into stagingBufferCache
 };
 
-struct roRDriverTextureImpl : public roRDriverTexture
+struct roRDriverTextureImpl : public roRDriverTexture, NonCopyable
 {
 	ComPtr<ID3D11Resource> dxTexture;	// May store a 1d, 2d or 3d texture
 	ComPtr<ID3D11ShaderResourceView> dxView;
@@ -93,10 +92,8 @@ struct roRDriverTextureImpl : public roRDriverTexture
 	int dxStagingIdx;	// Index into stagingTextureCache
 };
 
-struct roRDriverShaderImpl : public roRDriverShader
+struct roRDriverShaderImpl : public roRDriverShader, NonCopyable
 {
-	roRDriverShaderImpl() : dxShader(NULL) {}
-
 	ComPtr<ID3D11DeviceChild> dxShader;
 
 	Array<roByte> shaderBlob;
@@ -106,11 +103,10 @@ struct roRDriverShaderImpl : public roRDriverShader
 
 struct InputLayout
 {
-	InputLayout() : hash(0), lastUsedTime(0), shaderBlob(NULL) {}
-	unsigned hash;
-	float lastUsedTime;
+	ZeroInit<unsigned> hash;
+	ZeroInit<float> lastUsedTime;
 
-	Array<roByte>* shaderBlob;
+	Ptr<Array<roByte> > shaderBlob;
 
 	ComPtr<ID3D11InputLayout> layout;
 	TinyArray<D3D11_INPUT_ELEMENT_DESC, 8> inputDescs;
@@ -127,7 +123,7 @@ struct RenderTarget
 	ComPtr<ID3D11DepthStencilView> depthStencilView;
 };
 
-struct roRDriverContextImpl : public roRDriverContext
+struct roRDriverContextImpl : public roRDriverContext, NonCopyable
 {
 	void* currentBlendStateHash;
 	void* currentRasterizerStateHash;

@@ -20,7 +20,7 @@ typedef SharedPtr<struct Font> FontPtr;
 
 /// Container of most important sub-system
 /// This simplify how we access from one sub-system to another sub-system
-struct SubSystems
+struct SubSystems : private NonCopyable 
 {
 	SubSystems();
 	~SubSystems();

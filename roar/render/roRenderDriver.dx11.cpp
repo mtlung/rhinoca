@@ -676,7 +676,17 @@ static void _setTextureState(roRDriverTextureState* states, roSize stateCount, u
 static roRDriverBuffer* _newBuffer()
 {
 	roRDriverBufferImpl* ret = _allocator.newObj<roRDriverBufferImpl>().unref();
-	memset(ret, 0, sizeof(*ret));
+	ret->type = roRDriverBufferType_Vertex;
+	ret->usage = roRDriverDataUsage_Static;
+	ret->isMapped = false;
+	ret->mapUsage = roRDriverMapUsage_Read;
+	ret->mapOffset = 0;
+	ret->mapSize = 0;
+	ret->sizeInBytes = 0;
+
+	ret->hash = 0;
+	ret->capacity = 0;
+	ret->dxStagingIdx = 0;
 	return ret;
 }
 
@@ -1055,7 +1065,16 @@ static bool _resizeBuffer(roRDriverBuffer* self, roSize sizeInBytes)
 static roRDriverTexture* _newTexture()
 {
 	roRDriverTextureImpl* ret = _allocator.newObj<roRDriverTextureImpl>().unref();
-	memset(ret, 0, sizeof(*ret));
+	ret->width = ret->height = 0;
+	ret->isMapped = false;
+	ret->isYAxisUp = true;
+	ret->maxMipLevels = 0;
+	ret->mapUsage = roRDriverMapUsage_Read;
+	ret->format = roRDriverTextureFormat_Unknown;
+	ret->flags = roRDriverTextureFlag_None;
+
+	ret->dxDimension = D3D11_RESOURCE_DIMENSION_UNKNOWN;
+	ret->dxStagingIdx = 0;
 	return ret;
 }
 
@@ -2061,7 +2080,7 @@ static void _deleteRenderDriver_DX11(roRDriver* self)
 roRDriver* _roNewRenderDriver_DX11(const char* driverStr, const char*)
 {
 	roRDriverImpl* ret = _allocator.newObj<roRDriverImpl>().unref();
-	memset(ret, 0, sizeof(*ret));
+
 	ret->destructor = &_deleteRenderDriver_DX11;
 	ret->_driverName = driverStr;
 	ret->driverName = ret->_driverName.c_str();

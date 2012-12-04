@@ -46,6 +46,11 @@ struct SharedPtr
 	T* _ptr;
 };	// SharedPtr
 
+// These 2 lines make compiler happy when we don't see the definition of T
+// but we want to query sizeof(SharedPtr<T>)
+inline void sharedPtrRelease(void*)		{ roAssert(false && "Using SharedPtr on incomplete type"); }
+inline void sharedPtrAddRef(void*)		{ roAssert(false && "Using SharedPtr on incomplete type"); }
+
 template<class T, class U>	bool operator==(const SharedPtr<T>& a, U* b) { return a.get() == b; }
 template<class T, class U>	bool operator!=(const SharedPtr<T>& a, U* b) { return a.get() != b; }
 template<class T, class U>	bool operator==(T* a, const SharedPtr<U>& b) { return a == b.get(); }

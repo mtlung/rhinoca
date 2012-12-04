@@ -1,4 +1,4 @@
-struct roRDriverShaderImpl : public roRDriverShader
+struct roRDriverShaderImpl : public roRDriverShader, NonCopyable
 {
 	GLuint glh;
 };
@@ -33,7 +33,7 @@ struct ProgramAttribute
 	GLint elementCount;		// 1, 2, 3 or 4
 };
 
-struct roRDriverBufferImpl : public roRDriverBuffer
+struct roRDriverBufferImpl : public roRDriverBuffer, NonCopyable
 {
 	GLuint glh;
 	void* systemBuf;
@@ -55,7 +55,7 @@ typedef struct TextureFormatMapping
 	GLenum glType;			// eg. GL_UNSIGNED_BYTE
 } TextureFormatMapping;
 
-struct roRDriverTextureImpl : public roRDriverTexture
+struct roRDriverTextureImpl : public roRDriverTexture, NonCopyable
 {
 	GLuint glh;
 	GLenum glTarget;	// eg. GL_TEXTURE_2D
@@ -108,7 +108,7 @@ struct GLCapability
 	GLfloat maxAnisotropic;
 };
 
-struct roRDriverContextImpl : public roRDriverContext
+struct roRDriverContextImpl : public roRDriverContext, NonCopyable
 {
 	void* currentBlendStateHash;
 	void* currentRasterizerStateHash;

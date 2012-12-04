@@ -26,6 +26,8 @@ struct roInputDriverImpl : public roInputDriver
 		LPARAM lParam;
 	};
 
+	roInputDriverImpl();
+
 	void _processEvents(void** data, roSize numData);
 	void _processButtons(const WinEvent& e);
 
@@ -36,23 +38,30 @@ struct roInputDriverImpl : public roInputDriver
 	Array<WinEvent> _winEvents;
 	Array<ro::StringHash> _keyList, _keyDownList, _keyUpList;
 
-	roUint8 _mouseButtonDownBits;	// 8 bit can store 8 mouse buttons
-	roUint8 _mouseButtonUpBits;
-	roUint8 _mouseButtonPressBits;
-	roUint8 _previousMouseButtonDownBits;
-	roUint8 _previousMouseButtonUpBits;
-	roUint8 _previousMouseButtonPressBits;
+	ZeroInit<roUint8> _mouseButtonDownBits;	// 8 bit can store 8 mouse buttons
+	ZeroInit<roUint8> _mouseButtonUpBits;
+	ZeroInit<roUint8> _mouseButtonPressBits;
+	ZeroInit<roUint8> _previousMouseButtonDownBits;
+	ZeroInit<roUint8> _previousMouseButtonUpBits;
+	ZeroInit<roUint8> _previousMouseButtonPressBits;
 
 	Vec2 _mousePos;
 	Vec3 _mouseAxis, _mouseAxisRaw;
 	Vec3 _previousMouseAxis, _previousMouseAxisRaw;
 
-	bool _lShiftDown;
-	bool _rShiftDown;
+	ZeroInit<bool> _lShiftDown;
+	ZeroInit<bool> _rShiftDown;
 
 	ro::String outputText;
 	roComPtr<TextService> _textServiceManager;
 };
+
+roInputDriverImpl::roInputDriverImpl()
+{
+	_mousePos = Vec2(0.f);
+	_mouseAxis = _mouseAxisRaw = Vec3(0.f);
+	_previousMouseAxis = _previousMouseAxisRaw = Vec3(0.f);
+}
 
 struct ButtonMapping {
 	StringHash hash;
@@ -576,8 +585,6 @@ void roInitInputDriver(roInputDriver* self, const char* options)
 {
 	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
 	if(!impl) return;
-
-	roZeroMemory(impl, sizeof(*impl));
 
 	// Setup the function pointers
 	impl->buttonUp = _buttonUp;

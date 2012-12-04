@@ -2,6 +2,7 @@
 #define __input_roInputDriver_h__
 
 #include "../platform/roCompiler.h"
+#include "../base/roNonCopyable.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -9,7 +10,7 @@ extern "C" {
 
 typedef roUint32 roStringHash;
 
-typedef struct roInputDriver
+typedef struct roInputDriver : private ro::NonCopyable
 {
 // Keyboard state query
 	bool			(*buttonUp)				(roInputDriver* self, roStringHash buttonName, bool lastFrame);

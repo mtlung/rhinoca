@@ -88,7 +88,7 @@ struct AudioBuffer : public ro::Resource
 
 typedef ro::SharedPtr<AudioBuffer> AudioBufferPtr;
 
-struct AudioLoader : public Task
+struct AudioLoader : public Task, NonCopyable
 {
 	AudioLoader(AudioBuffer* b, ResourceManager* mgr)
 		: stream(NULL), manager(mgr), audioBuffer(b)

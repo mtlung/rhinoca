@@ -58,7 +58,8 @@ typedef struct roRDriverBuffer
 
 typedef enum roRDriverTextureFormat
 {
-	roRDriverTextureFormat_RGBA = 1,
+	roRDriverTextureFormat_Unknown = 0,
+	roRDriverTextureFormat_RGBA,
 	roRDriverTextureFormat_RGBA_16F,
 	roRDriverTextureFormat_RGBA_32F,
 	roRDriverTextureFormat_RGB_16F,
