@@ -175,8 +175,6 @@ Status MemoryProfiler::init(roUint16 listeningPort)
 
 	_tlsIndex = ::TlsAlloc();
 
-	::SymInitialize(::GetCurrentProcess(), NULL, TRUE);
-
 	SockAddr addr(SockAddr::ipAny(), listeningPort);
 
 	if(_listeningSocket.create(BsdSocket::TCP) != 0) return Status::net_error;
@@ -235,31 +233,48 @@ void MemoryProfiler::tick()
 	#pragma warning(disable : 4389) // warning C4389: '==' : signed/unsigned mismatch
 	FD_SET(_acceptorSocket.fd(), &fdRead);
 
+	TlsStruct* tls = reinterpret_cast<TlsStruct*>(::TlsGetValue(_tlsIndex));
+	tls->recurseCount++;	// Exclude the memory overhead cause by the debug symbols
+
+	static bool _symInited = false;
+	HANDLE _process = ::GetCurrentProcess();
+
 	timeval tVal = { 0, 0 };
 	while(select(1, &fdRead, NULL, NULL, &tVal) == 1) {
 		roUint64 stackFrame;
 		if(_acceptorSocket.receive(&stackFrame, sizeof(stackFrame)) == sizeof(stackFrame)) {
-			char buf[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR)];
-			PSYMBOL_INFO symbol = (PSYMBOL_INFO)buf;
-			symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-			symbol->MaxNameLen = MAX_SYM_NAME;
+			if(!_symInited) {
+				::SymInitialize(_process, NULL, TRUE);
+				_symInited = true;
+			}
+
+			char buf[sizeof(IMAGEHLP_SYMBOL64) + MAX_SYM_NAME * sizeof(TCHAR)];
+			PIMAGEHLP_SYMBOL64 symbol = (PIMAGEHLP_SYMBOL64)buf;
+			symbol->SizeOfStruct = sizeof(buf);
+			symbol->MaxNameLength = MAX_SYM_NAME;
 
 			ScopeRecursiveLock lock(_mutex);
 			roUint64 displacement = 0;
-			if(!::SymFromAddr(::GetCurrentProcess(), stackFrame, &displacement, symbol)) {
+			if(!::SymGetSymFromAddr64(_process, DWORD64(stackFrame), &displacement, symbol)) {
 				strcpy(symbol->Name, "no symbol");
-				symbol->NameLen = num_cast<ULONG>(strlen(symbol->Name));
 			}
 
 			char cmd = 's';
 			_acceptorSocket.send(&cmd, sizeof(cmd));
 			_acceptorSocket.send(&stackFrame, sizeof(stackFrame));
 			_acceptorSocket.send(&displacement, sizeof(displacement));
-			roUint16 nameLen = num_cast<roUint16>(symbol->NameLen);
+			roUint16 nameLen = num_cast<roUint16>(strlen(symbol->Name));
 			_acceptorSocket.send(&nameLen, sizeof(nameLen));
 			_acceptorSocket.send(&symbol->Name, nameLen);
 		}
 	}
+
+	if(_symInited) {
+		::SymCleanup(_process);
+		_symInited = false;
+	}
+
+	tls->recurseCount--;
 }
 
 struct StackTracer
