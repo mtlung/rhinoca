@@ -3,10 +3,25 @@
 #include "roArray.h"
 #include "roTaskPool.h"
 #include "roTypeCast.h"
+#include "../platform/roCpu.h"
 #include "../platform/roPlatformHeaders.h"
 #include <DbgHelp.h>
 #include <Winsock2.h>
 #include <Ntsecapi.h>
+
+#if roCPU_LP32
+#	include "hde/hde32.h"
+#	include "hde/hde32.c"
+#	define hde_disasm hde32_disasm
+	typedef hde32s hdes;
+#elif roCPU_LP64
+#	include "hde/hde64.h"
+#	include "hde/hde64.c"
+#	define hde_disasm hde64_disasm
+	typedef hde64s hdes;
+#else
+#	error
+#endif
 
 #pragma comment(lib, "DbgHelp.lib")
 
@@ -34,19 +49,139 @@ struct ScopeChangeProtection
 
 struct FunctionPatcher
 {
-	struct PathInfo
+	struct PageAllocator
+	{
+		char* head;
+		char* nextFree;
+		roSize pageSize;
+		roSize allocated;
+	};
+
+	struct PatchInfo
 	{
 		void* original;
 		static const roSize MAX_PROLOGUE_CODE_SIZE = 64;
-		unsigned char origByteCodes[MAX_PROLOGUE_CODE_SIZE];
-		unsigned char jumpByteCodes[MAX_PROLOGUE_CODE_SIZE];
+		TinyArray<unsigned char, 64> origByteCodes;
+		void* jumpByteCodes;
+		void* longJumpBuf;
 	};
 
-	typedef roUint8* Address;
-	#define IAX86_NEARJMP_OPCODE 0xe9
-	#define JMP_CODE_SIZE 5
-	#define MakeIAX86Offset(to,from) ((unsigned)((char*)(to)-(char*)(from)) - JMP_CODE_SIZE)
+	void* allocatePage(void* nearAddr, roSize& size)
+	{
+		SYSTEM_INFO sysInfo;
+		GetSystemInfo(&sysInfo);
 
+		const roSize blockSize = sysInfo.dwAllocationGranularity;
+
+		// Search for a page near by
+		void* ret = NULL;
+		char* addr = (char*)nearAddr;
+
+		// Search towards higher memory address
+		for(char* p = addr; !ret && p < addr + 0x30000000; p += blockSize)
+			ret = ::VirtualAlloc(p, sysInfo.dwPageSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+		// Search towards lower memory address
+		for(char* p = addr; !ret && p > addr - 0x30000000; p += blockSize)
+			ret = ::VirtualAlloc(p, sysInfo.dwPageSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+
+		if(ret)
+			size = sysInfo.dwPageSize;
+
+		return ret;
+	}
+
+	void* allocateExeBuffer(void* nearAddr, roSize size)
+	{
+		PageAllocator* alloc = NULL;
+		char* addr = (char*)nearAddr;
+
+		// Scan existing pages for available memory
+		for(roSize i=0; i<allocatedPages.size(); ++i) {
+			PageAllocator& a = allocatedPages[i];
+			char* p = allocatedPages[i].nextFree;
+			if(a.pageSize - a.allocated < size)
+				continue;
+
+			// nearAddr == NULL means no requirement on the address range
+			if(!addr || (p > addr - 0x30000000 && p < addr + 0x30000000)) {
+				alloc = &a;
+				break;
+			}
+		}
+
+		if(!alloc) {
+			roSize pageSize = 0;
+			void* page = allocatePage(nearAddr, pageSize);
+			if(!page)
+				return NULL;
+
+			PageAllocator a = { (char*)page, (char*)page, pageSize, 0 };
+			allocatedPages.pushBack(a);
+			alloc = &allocatedPages.back();
+		}
+
+		roAssert(alloc->pageSize - alloc->allocated >= size);
+		
+		alloc->allocated += size;
+		void* ret = alloc->nextFree;
+		alloc->nextFree += size;
+
+		return ret;
+	}
+
+	typedef roUint8* Address;
+
+	// Reference: http://code.google.com/p/dropboxfilter/source/browse/Inject/mhook-lib/mhook.cpp?r=9abae8a80cf73d190cdc6aed8c46edbbb5b43078
+	roSize emitJump(Address buf_, Address jumpDest)
+	{
+		const roSize relativeJmpCodeSize = 5;	// 0xE9 (1 byte) + jump address (4 bytes)
+		Address buf = buf_;
+		Address jumpSrc = buf + relativeJmpCodeSize;
+		roSize absDiff = jumpSrc > jumpDest ? jumpSrc - jumpDest : jumpDest - jumpSrc;
+
+		// With a small jump distance we can use the relative jump
+		if(absDiff <= 0x7FFF0000) {
+			buf[0] = 0xE9;
+			buf++;
+
+			*(roInt32*)buf = roInt32(jumpDest - jumpSrc);
+			buf += sizeof(roInt32);
+		}
+		// Otherwise jump to absolute address
+		else {
+			buf[0] = 0xFF;
+			buf[1] = 0x25;
+			buf += 2;
+
+			*(roInt32*)buf = 0;
+			buf += sizeof(roInt32);
+
+			*(void**)(buf) = (void*)jumpDest;
+			buf += sizeof(void*);
+		}
+
+		return buf - buf_;
+	}
+
+	// We want to intercept the origanl function with our target function,
+	// and allow target function to call the original function.
+	// ------------                   --------
+	// |   Orig   |                   |target|
+	// |   ...    |	                  | ...  |
+	//
+	// It is done by patching the original funtion with jmp instruction like follow:
+	//
+	// ------------     ----------    --------
+	// |short jmp |---->|long jmp|--->|target|
+	// |   ...    |<-|  ----------    | ...  |    ----------
+	// |          |  |                | call |--->|  Orig  |
+	//               |                         |--|long jmp|
+	//               |-------------------------|  ----------
+	//
+	// We need to use a short jmp (+-2G address) at the patch site because
+	// otherwise we need a 14 bytes instruction (on x64), while creates
+	// problem for example the whole original function is less than 14 bytes.
+	// How do we make sure a short jmp can be used? Thanks to VirtualAlloc().
 	void* patch(void* func, void* newFunc)
 	{
 		// The patchInfo was designed as static array, because we will change it's memory page protection
@@ -56,36 +191,53 @@ struct FunctionPatcher
 
 		roAssert(func);
 		if(!func) return NULL;
-		MEMORY_BASIC_INFORMATION mbi;
 
 		// Create a buffer of executable memory to store our jump table
 		if(!patchInfo.pushBack())
 			return NULL;
-		PathInfo& info = patchInfo.back();
-		info.original = func;
+		PatchInfo& info = patchInfo.back();
 
-		Address uninfouedAddress = (Address)func + JMP_CODE_SIZE;
-		Address infouedFromAddress = (Address)info.jumpByteCodes;
-		memcpy(infouedFromAddress, func, JMP_CODE_SIZE);
+		// Get the instruction boundary of the original function and copy that header to origByteCodes
+		const roSize relativeJmpCodeSize = 5;
+		{
+			hdes hs;
+			Address f = (Address)func;
+			while((f - (Address)func) < relativeJmpCodeSize) {
+				// TODO: Should abort the patching if any branch instruction encountered
+				f += hde_disasm(f, &hs);
+			}
 
-		infouedFromAddress += JMP_CODE_SIZE;
-		*(infouedFromAddress++) = IAX86_NEARJMP_OPCODE;
-		*(roPtrInt*)infouedFromAddress = MakeIAX86Offset(uninfouedAddress, info.jumpByteCodes + JMP_CODE_SIZE);
+			info.original = func;
+			info.origByteCodes.pushBack((Address)func, f - (Address)func);
+		}
 
-		// Change rights on jump table to execute/read/write.
-		::VirtualQuery(info.jumpByteCodes, &mbi, sizeof(mbi));
-		::VirtualProtect(mbi.BaseAddress, mbi.RegionSize, PAGE_EXECUTE_READWRITE, &mbi.Protect);
+		// Patch header of the original function
+		{
+			// Change rights on original function memory to execute/read/write.
+			ScopeChangeProtection guard(func);
 
-		// Change rights on original function memory to execute/read/write.
-		ScopeChangeProtection guard(func);
+			// Allocate buffer for the jump buffer
+			info.longJumpBuf = allocateExeBuffer(func, 16);
 
-		// Save original code bytes for exit restoration
-		memcpy(info.origByteCodes, func, JMP_CODE_SIZE);
+			// Write the jump instruction to jump from func to longJumpBuf
+			emitJump((Address)func, (Address)info.longJumpBuf);
 
-		// Write the jump instruction to jump to the replacement function
-		Address patchloc = (Address)func;
-		*patchloc++ = IAX86_NEARJMP_OPCODE;
-		*(unsigned*)patchloc = MakeIAX86Offset(newFunc, func);
+			// Write the jump instruction to jump from longJumpBuf to newFunc
+			emitJump((Address)info.longJumpBuf, (Address)newFunc);
+		}
+
+		// Copy the header of the original function to our stub function
+		{
+			roSize headerSize = info.origByteCodes.size();
+
+			info.jumpByteCodes = allocateExeBuffer(NULL, 16);
+			Address infouedFromAddress = (Address)info.jumpByteCodes;
+			memcpy(infouedFromAddress, info.origByteCodes.bytePtr(), headerSize);
+			infouedFromAddress += headerSize;
+
+			Address uninfouedAddress = (Address)func + headerSize;
+			emitJump(infouedFromAddress, uninfouedAddress);
+		}
 
 		return info.jumpByteCodes;
 	}
@@ -93,13 +245,20 @@ struct FunctionPatcher
 	void unpatchAll()
 	{
 		for(roSize i=0; i < patchInfo.size(); ++i) {
-			PathInfo& info = patchInfo[i];
+			PatchInfo& info = patchInfo[i];
 			ScopeChangeProtection guard(info.original);
-			memcpy(info.original, info.origByteCodes, JMP_CODE_SIZE);
+			memcpy(info.original, info.origByteCodes.bytePtr(), info.origByteCodes.size());
 		}
+		patchInfo.clear();
+
+		for(roSize i=0; i<allocatedPages.size(); ++i) {
+			roVerify(SUCCEEDED(VirtualFree(allocatedPages[i].head, 0, MEM_RELEASE)));
+		}
+		allocatedPages.clear();
 	}
 
-	TinyArray<PathInfo, 8> patchInfo;
+	TinyArray<PatchInfo, 8> patchInfo;
+	TinyArray<PageAllocator, 8> allocatedPages;
 };
 
 typedef LPVOID (WINAPI *MyHeapAlloc)(HANDLE, DWORD, SIZE_T);
@@ -113,7 +272,6 @@ FunctionPatcher _functionPatcher;
 MyHeapAlloc		_orgHeapAlloc = NULL;
 MyHeapReAlloc	_orgHeapReAlloc = NULL;
 MyHeapFree		_orgHeapFree = NULL;
-MyHeapSize		_orgHeapSize = NULL;
 MyLdrLoadDll	_orgLdrLoadDll = NULL;
 
 // I want to use __declspec(thread) but seems it cannot be accessed when a new thread is just created.
@@ -157,7 +315,6 @@ TlsStruct* _tlsStruct()
 LPVOID WINAPI myHeapAlloc(HANDLE, DWORD, SIZE_T);
 LPVOID WINAPI myHeapReAlloc(HANDLE, DWORD, LPVOID, SIZE_T);
 LPVOID WINAPI myHeapFree(HANDLE, DWORD, LPVOID);
-NTSTATUS NTAPI myLdrLoadDll(PWCHAR, ULONG, PUNICODE_STRING, PHANDLE);
 
 MemoryProfiler::MemoryProfiler()
 {
@@ -198,27 +355,22 @@ Status MemoryProfiler::init(roUint16 listeningPort)
 	if(_acceptorSocket.setBlocking(true) != 0) return Status::net_error;
 
 	{	// Patching heap functions
-		void* pAlloc, *pReAlloc, *pFree, *pLdrLoadDll;
+		void* pAlloc, *pReAlloc, *pFree;
 		if(HMODULE h = GetModuleHandleA("ntdll.dll")) {
 			pAlloc = GetProcAddress(h, "RtlAllocateHeap");
 			pReAlloc = GetProcAddress(h, "RtlReAllocateHeap");
 			pFree = GetProcAddress(h, "RtlFreeHeap");
-			_orgHeapSize = (MyHeapSize)GetProcAddress(h, "RtlSizeHeap");
-			pLdrLoadDll = GetProcAddress(h, "LdrLoadDll");
 		}
 		else {
 			pAlloc = &HeapAlloc;
 			pReAlloc = &HeapReAlloc;
 			pFree = &HeapFree;
-			_orgHeapSize = (MyHeapSize)&HeapSize;
-			pLdrLoadDll = NULL;
 		}
 
 		// Back up the original function and then do patching
 		_orgHeapAlloc = (MyHeapAlloc)_functionPatcher.patch(pAlloc, &myHeapAlloc);
 		_orgHeapReAlloc = (MyHeapReAlloc)_functionPatcher.patch(pReAlloc, &myHeapReAlloc);
 		_orgHeapFree = (MyHeapFree)_functionPatcher.patch(pFree, &myHeapFree);
-		_orgLdrLoadDll = (MyLdrLoadDll)_functionPatcher.patch(pLdrLoadDll, &myLdrLoadDll);
 	}
 
 	return Status::ok;
@@ -285,7 +437,7 @@ struct StackTracer
 
 	static roUint8 stackWalk(void** address, roUint8 maxCount)
 	{
-		USHORT frames = ::CaptureStackBackTrace(5, maxCount, (void**)address, NULL);
+		USHORT frames = ::CaptureStackBackTrace(2, maxCount, (void**)address, NULL);
 		return num_cast<roUint8>(frames);
 	}
 };
@@ -342,7 +494,7 @@ LPVOID WINAPI myHeapReAlloc(__in HANDLE hHeap, __in DWORD dwFlags, __deref LPVOI
 		return _orgHeapReAlloc(hHeap, dwFlags, lpMem, dwBytes);
 
 	tls->recurseCount++;
-	roSize orgSize = _orgHeapSize(hHeap, dwFlags, lpMem);
+	roSize orgSize = HeapSize(hHeap, dwFlags, lpMem);
 	void* ret = _orgHeapReAlloc(hHeap, dwFlags, lpMem, dwBytes);
 	_send(tls, 'f', lpMem, orgSize);
 	_send(tls, 'a', ret, dwBytes);
@@ -360,20 +512,11 @@ LPVOID WINAPI myHeapFree(__in HANDLE hHeap, __in DWORD dwFlags, __deref LPVOID l
 		return _orgHeapFree(hHeap, dwFlags, lpMem);
 
 	tls->recurseCount++;
-	roSize orgSize = _orgHeapSize(hHeap, dwFlags, lpMem);
+	roSize orgSize = HeapSize(hHeap, dwFlags, lpMem);
 	void* ret = _orgHeapFree(hHeap, dwFlags, lpMem);
 	_send(tls, 'f', lpMem, orgSize);
 	tls->recurseCount--;
 
-	return ret;
-}
-
-NTSTATUS NTAPI myLdrLoadDll(PWCHAR PathToFile, ULONG Flags, PUNICODE_STRING ModuleFileName, PHANDLE ModuleHandle)
-{
-	// Intercept any load module event and refresh the symbol table
-	NTSTATUS ret = _orgLdrLoadDll(PathToFile, Flags, ModuleFileName, ModuleHandle);
-//	ScopeRecursiveLock lock(_mutex);
-	::SymRefreshModuleList(::GetCurrentProcess());
 	return ret;
 }
 
