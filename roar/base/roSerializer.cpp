@@ -8,7 +8,7 @@ Serializer::Serializer()
 	: _buf(NULL), _used(0), _remain(0)
 {}
 
-void Serializer::setBuf(ByteArray* buf)
+void Serializer::setBuf(IByteArray* buf)
 {
 	_buf = buf;
 	_w = NULL;
@@ -44,9 +44,11 @@ Status Deserializer::ioRaw(roBytePtr p, roSize size)
 	return Status::ok;
 }
 
-Status serializeIoVary(Serializer& s, roUint32& v)
+Status serializeIoVary(Serializer& s, roUint32& v_)
 {
 	Status st;
+	roUint32 v = v_;
+
 	if(v < (1<<(7*1))) {
 		st = s._checkRemain(1); if(!st) return st;
 		s._w[0] = (roUint8) (v >> (7*0));
@@ -95,15 +97,17 @@ Status serializeIoVary(Serializer& s, roUint32& v)
 	return Status::assertion;
 }
 
-Status serializeIoVary(Serializer& s, roUint64& v)
+Status serializeIoVary(Serializer& s, roUint64& v_)
 {
 	// Unlike the 32-bit version, we use a loop here to save code size
 	Status st;
+
+	roUint64 v = v_;
 	roSize i;
-	for(i=0; i<roSize((sizeof(v) * 8)/(7-1)); ++i) {
+	for(i=0; i<roSize((sizeof(v) * 8)/7); ++i) {
 		if(v >= (1ULL<<(7*(i+1)))) {
 			st = s._checkRemain(1); if(!st) return st;
-			s._w[i] = (roUint8) (v >> (7*i) | 0x80);
+			s._w[0] = (roUint8) (v >> (7*i) | 0x80);
 			s._advance(1);
 		}
 		else
@@ -111,7 +115,7 @@ Status serializeIoVary(Serializer& s, roUint64& v)
 	}
 
 	st = s._checkRemain(1); if(!st) return st;
-	s._w[i] = (roUint8) (v >> (7*i));
+	s._w[0] = (roUint8) (v >> (7*i));
 	s._advance(1);
 
 	return st;

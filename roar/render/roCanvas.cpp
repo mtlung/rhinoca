@@ -702,7 +702,6 @@ struct Gradient
 		float t, r, g, b, a;
 	};
 
-	Gradient() {}
 	void* handle;
 	typedef TinyArray<ColorStop, 4> ColorStops;
 	ColorStops stops;
@@ -712,7 +711,6 @@ struct Gradient
 void* Canvas::createLinearGradient(float xStart, float yStart, float xEnd, float yEnd)
 {
 	Gradient* ret = _allocator.newObj<Gradient>().unref();
-	roZeroMemory(ret, sizeof(*ret));
 
 	ret->handle = vgCreatePaint();
 	vgSetParameteri(ret->handle, VG_PAINT_COLOR_RAMP_SPREAD_MODE, VG_COLOR_RAMP_SPREAD_PAD);
@@ -726,7 +724,6 @@ void* Canvas::createLinearGradient(float xStart, float yStart, float xEnd, float
 void* Canvas::createRadialGradient(float xStart, float yStart, float radiusStart, float xEnd, float yEnd, float radiusEnd)
 {
 	Gradient* ret = _allocator.newObj<Gradient>().unref();
-	roZeroMemory(ret, sizeof(*ret));
 
 	ret->handle = vgCreatePaint();
 	vgSetParameteri(ret->handle, VG_PAINT_COLOR_RAMP_SPREAD_MODE, VG_COLOR_RAMP_SPREAD_PAD);

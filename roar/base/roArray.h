@@ -56,7 +56,7 @@ struct StaticArray
 // ----------------------------------------------------------------------
 
 /// Interface for common dynamic array operations
-template<class T_, class Super>
+template<class T_>
 struct IArray
 {
 	typedef T_ T;
@@ -66,6 +66,7 @@ struct IArray
 	typedef const T& const_reference;
 
 	IArray() : _size(0), _capacity(0), _data(NULL) {}
+	virtual ~IArray() {}
 
 // Operations
 	bool		isEmpty() const					{ return (_size <= 0); }
@@ -75,7 +76,7 @@ struct IArray
 
 	void		swap(IArray& rhs)				{ roSwap(_size, rhs._size); roSwap(_capacity, rhs._capacity); roSwap(_data, rhs._data); }
 
-	Status		copy(const Super& src);
+	Status		copy(const IArray& src);
 	Status		assign(const T* srcBegin, roSize count);
 	Status		assign(const T* srcBegin, const T* srcEnd);
 
@@ -89,6 +90,7 @@ struct IArray
 	void		condense();
 
 	Status		pushBack(const T& val=T());
+	Status		pushBack(const T* srcBegin, roSize count);
 	Status		pushBackBySwap(const T& val);
 	Status		insert(roSize idx, const T& val);
 	Status		insert(roSize idx, const T* srcBegin, roSize count);
@@ -109,6 +111,8 @@ struct IArray
 	T*			find(const K& key, bool(*equal)(const T&, const K&));
 	template<class K>
 	const T*	find(const K& key, bool(*equal)(const T&, const K&)) const;
+
+	virtual Status	reserve(roSize newSize, bool force) = 0;
 
 // Attributes
 	T&				operator[](roSize idx)		{ roAssert(idx < _size); return _data[idx]; }
@@ -145,8 +149,6 @@ struct IArray
 	roSize _size;
 	roSize _capacity;
 	T* _data;
-	Super& _typedThis() { return static_cast<Super&>(*this); }
-	const Super& _typedThis() const { return static_cast<const Super&>(*this); }
 };	// IArray
 
 
@@ -154,21 +156,21 @@ struct IArray
 
 /// Dynamic array in it's standard form (similar to std::vector)
 template<class T>
-struct Array : public IArray<T, Array<T> >
+struct Array : public IArray<T>
 {
 	Array() {}
 	Array(roSize size)					{ this->resize(size); }
 	Array(roSize size, const T& val)	{ this->resize(size, val); }
 	Array(const Array<T>& src)			{ this->copy(src); }
 	~Array()							{ this->clear(); roFree(this->_data); }
-	Array&	operator=(const Array& rhs) { this->copy(rhs); return *this; }
+	Array& operator=(const Array& rhs)	{ this->copy(rhs); return *this; }
 
 // Operations
-	Status reserve(roSize newCapacity, bool force=false);
+	override Status reserve(roSize newCapacity, bool force=false);
 };	// Array
 
 template<class T, roSize PreAllocCount>
-struct TinyArray : public IArray<T, TinyArray<T,PreAllocCount> >
+struct TinyArray : public IArray<T>
 {
 	TinyArray()										{ this->_data = (T*)_buffer; this->_capacity = PreAllocCount; }
 	TinyArray(roSize size)							{ this->_data = (T*)_buffer; this->_capacity = PreAllocCount; this->resize(size); }
@@ -178,14 +180,26 @@ struct TinyArray : public IArray<T, TinyArray<T,PreAllocCount> >
 	TinyArray& operator=(const TinyArray& rhs)		{ this->copy(rhs); return *this; }
 
 // Operations
-	Status reserve(roSize newSize, bool force=false);
+	override Status reserve(roSize newSize, bool force=false);
 
 // Private
 	bool _isUsingDynamic() const { return this->_capacity > PreAllocCount; }
 	char _buffer[PreAllocCount * sizeof(T)];	/// Don't use array of T to prevent unecessary constructor call
 };	// TinyArray
 
+template<class T>
+struct ExtArray : public IArray<T>
+{
+	ExtArray(void* extBuf, roSize extBufBytes)		{ _data = extBuf; _capacity = extBufBytes / sizeof(T); }
+	~ExtArray()										{ this->clear(); }
+
+// Operations
+	Status reserve(roSize newCapacity, bool force=false);
+};	// ExtArray
+
+typedef IArray<roUint8> IByteArray;
 typedef Array<roUint8> ByteArray;
+typedef TinyArray<roUint8, 64> TinyByteArray;
 
 
 // ----------------------------------------------------------------------

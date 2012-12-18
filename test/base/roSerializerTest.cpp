@@ -31,6 +31,16 @@ TEST(SerializerTest)
 		s.ioVary(v);
 	}
 
+	{	roUint64 v = 123;
+		s.ioVary(v);
+
+		v = 256;
+		s.ioVary(v);
+
+		v = TypeOf<roUint64>::valueMax();
+		s.ioVary(v);
+	}
+
 	{	float v = 4.56f;
 		s.io(v);
 	}
@@ -69,6 +79,17 @@ TEST(SerializerTest)
 
 		d.ioVary(v);
 		CHECK_EQUAL(TypeOf<unsigned>::valueMax(), v);
+	}
+
+	{	roUint64 v;
+		d.ioVary(v);
+		CHECK_EQUAL(123u, v);
+
+		d.ioVary(v);
+		CHECK_EQUAL(256u, v);
+
+		d.ioVary(v);
+		CHECK_EQUAL(TypeOf<roUint64>::valueMax(), v);
 	}
 
 	{	float v;

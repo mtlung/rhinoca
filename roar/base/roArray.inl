@@ -1,5 +1,5 @@
-template<class T, class S> inline
-void roSwap(ro::IArray<T,S>& lhs, ro::IArray<T,S>& rhs)
+template<class T> inline
+void roSwap(ro::IArray<T>& lhs, ro::IArray<T>& rhs)
 {
 	roSwap(lhs._size, rhs._size);
 	roSwap(lhs._capacity, rhs._capacity);
@@ -51,10 +51,10 @@ void StaticArray<T,N>::assign(const T& fill)
 
 // ----------------------------------------------------------------------
 
-template<class T, class S>
-Status IArray<T,S>::copy(const S& src)
+template<class T>
+Status IArray<T>::copy(const IArray<T>& src)
 {
-	Status st = _typedThis().resize(src._size);
+	Status st = this->resize(src._size);
 	if(!st) return st;
 	for(roSize i = 0; i < src._size; ++i) {
 		_data[i] = src._data[i];
@@ -62,27 +62,27 @@ Status IArray<T,S>::copy(const S& src)
 	return Status::ok;
 }
 
-template<class T, class S>
-Status IArray<T,S>::assign(const T* srcBegin, roSize count)
+template<class T>
+Status IArray<T>::assign(const T* srcBegin, roSize count)
 {
 	clear();
 	insert(0, srcBegin, count);
 	return Status::ok;
 }
 
-template<class T, class S>
-Status IArray<T,S>::assign(const T* srcBegin, const T* srcEnd)
+template<class T>
+Status IArray<T>::assign(const T* srcBegin, const T* srcEnd)
 {
 	clear();
 	insert(0, srcBegin, srcEnd);
 	return Status::ok;
 }
 
-template<class T, class S> roFORCEINLINE
-Status IArray<T,S>::resize(roSize newSize, const T& fill)
+template<class T> roFORCEINLINE
+Status IArray<T>::resize(roSize newSize, const T& fill)
 {
 	if(newSize > _capacity) {
-		Status st = _typedThis().reserve(roMaxOf2(newSize, _capacity + _capacity/2));	// Extend the capacity by 1.5x
+		Status st = reserve(roMaxOf2(newSize, _capacity + _capacity/2), false);	// Extend the capacity by 1.5x
 		if(!st) return st;
 	}
 
@@ -104,17 +104,17 @@ Status IArray<T,S>::resize(roSize newSize, const T& fill)
 	return Status::ok;
 }
 
-template<class T, class S>
-Status IArray<T,S>::incSize(roSize newSize, const T& fill)
+template<class T>
+Status IArray<T>::incSize(roSize newSize, const T& fill)
 {
-	return _typedThis().resize(_size + newSize, fill);
+	return this->resize(_size + newSize, fill);
 }
 
-template<class T, class S>
-Status IArray<T,S>::resizeNoInit(roSize newSize)
+template<class T>
+Status IArray<T>::resizeNoInit(roSize newSize)
 {
 	if(newSize > _capacity) {
-		Status st = _typedThis().reserve(roMaxOf2(newSize, _capacity + _capacity/2));	// Extend the size by 1.5x
+		Status st = reserve(roMaxOf2(newSize, _capacity + _capacity/2), false);	// Extend the size by 1.5x
 		if(!st) return st;
 	}
 
@@ -122,44 +122,50 @@ Status IArray<T,S>::resizeNoInit(roSize newSize)
 	return Status::ok;
 }
 
-template<class T, class S>
-Status IArray<T,S>::incSizeNoInit(roSize newSize)
+template<class T>
+Status IArray<T>::incSizeNoInit(roSize newSize)
 {
-	return _typedThis().resizeNoInit(_size + newSize);
+	return this->resizeNoInit(_size + newSize);
 }
 
-template<class T, class S>
-void IArray<T,S>::clear()
+template<class T>
+void IArray<T>::clear()
 {
-	_typedThis().resize(0);
+	this->resize(0);
 }
 
-template<class T, class S>
-void IArray<T,S>::condense()
+template<class T>
+void IArray<T>::condense()
 {
-	_typedThis().reserve(_size, true);
+	reserve(_size, true);
 }
 
-template<class T, class S> roFORCEINLINE
-Status IArray<T,S>::pushBack(const T& fill)
+template<class T> roFORCEINLINE
+Status IArray<T>::pushBack(const T& fill)
 {
-	return _typedThis().resize(_size + 1, fill);
+	return this->resize(_size + 1, fill);
 }
 
-template<class T, class S>
-Status IArray<T,S>::pushBackBySwap(const T& val)
+template<class T> roFORCEINLINE
+Status IArray<T>::pushBack(const T* srcBegin, roSize count)
 {
-	Status st = _typedThis().resize(_size + 1);
+	return insert(this->_size, srcBegin, count);
+}
+
+template<class T>
+Status IArray<T>::pushBackBySwap(const T& val)
+{
+	Status st = this->resize(_size + 1);
 	if(!st) return st;
 	roSwap(back(), const_cast<T&>(val));
 	return st;
 }
 
-template<class T, class S>
-Status IArray<T,S>::insert(roSize idx, const T& val)
+template<class T>
+Status IArray<T>::insert(roSize idx, const T& val)
 {
 	roAssert(idx <= _size);
-	Status st = _typedThis().resize(_size + 1);
+	Status st = this->resize(_size + 1);
 	if(!st) return st;
 	for(roSize i = _size - 1; i > idx; --i)
 		_data[i] = _data[i - 1];
@@ -168,14 +174,14 @@ Status IArray<T,S>::insert(roSize idx, const T& val)
 	return st;
 }
 
-template<class T, class S>
-Status IArray<T,S>::insert(roSize idx, const T* srcBegin, roSize count)
+template<class T>
+Status IArray<T>::insert(roSize idx, const T* srcBegin, roSize count)
 {
 	return insert(idx, srcBegin, srcBegin + count);
 }
 
-template<class T, class S>
-Status IArray<T,S>::insert(roSize idx, const T* srcBegin, const T* srcEnd)
+template<class T>
+Status IArray<T>::insert(roSize idx, const T* srcBegin, const T* srcEnd)
 {
 	roAssert(idx <= _size);
 	roAssert(srcBegin <= srcEnd);
@@ -183,7 +189,7 @@ Status IArray<T,S>::insert(roSize idx, const T* srcBegin, const T* srcEnd)
 
 	if(inc == 0) return Status::ok;
 
-	Status st = _typedThis().resize(_size + inc);
+	Status st = this->resize(_size + inc);
 	if(!st) return st;
 
 	for(roSize i = _size - 1; i >= idx + inc; --i)
@@ -195,35 +201,35 @@ Status IArray<T,S>::insert(roSize idx, const T* srcBegin, const T* srcEnd)
 	return st;
 }
 
-template<class T, class S>
-Status IArray<T,S>::insertSorted(const T&val)
+template<class T>
+Status IArray<T>::insertSorted(const T&val)
 {
 	if(T* p = roLowerBound(_data, _size, val)) {
 		roAssert(!(*p < val));
-		return _typedThis().insert(p - _data, val);
+		return this->insert(p - _data, val);
 	} else
-		return _typedThis().pushBack(val);
+		return this->pushBack(val);
 }
 
-template<class T, class S>
-Status IArray<T,S>::insertSorted(const T& val, bool(*less)(const T&, const T&))
+template<class T>
+Status IArray<T>::insertSorted(const T& val, bool(*less)(const T&, const T&))
 {
 	if(T* p = roLowerBound(_data, _size, val, less)) {
 		roAssert(!less(*p, val));
-		return _typedThis().insert(p - _data, val);
+		return this->insert(p - _data, val);
 	} else
-		return _typedThis().pushBack(val);
+		return this->pushBack(val);
 }
 
-template<class T, class S>
-void IArray<T,S>::popBack()
+template<class T>
+void IArray<T>::popBack()
 {
 	if(_size > 0)
-		_typedThis().resize(_size - 1);
+		this->resize(_size - 1);
 }
 
-template<class T, class S>
-void IArray<T,S>::remove(roSize idx)
+template<class T>
+void IArray<T>::remove(roSize idx)
 {
 	roAssert(idx < _size);
 	if(idx >= _size) return;
@@ -242,8 +248,8 @@ void IArray<T,S>::remove(roSize idx)
 	--_size;
 }
 
-template<class T, class S>
-void IArray<T,S>::removeBySwap(roSize idx)
+template<class T>
+void IArray<T>::removeBySwap(roSize idx)
 {
 	roAssert(idx < _size);
 	if(idx >= _size) return;
@@ -251,27 +257,27 @@ void IArray<T,S>::removeBySwap(roSize idx)
 	if(_size > 1)
 		roSwap(_data[idx], back());
 
-	_typedThis().popBack();
+	this->popBack();
 }
 
-template<class T, class S>
-bool IArray<T,S>::removeByKey(const T& key)
+template<class T>
+bool IArray<T>::removeByKey(const T& key)
 {
-	T* v = _typedThis().find(key);
+	T* v = this->find(key);
 	if(!v) return false;
 
 	roAssert(v >= begin() && v < end());
-	_typedThis().remove(v - begin());
+	this->remove(v - begin());
 	return true;
 }
 
-template<class T, class S>
-bool IArray<T,S>::removeAllByKey(const T& key)
+template<class T>
+bool IArray<T>::removeAllByKey(const T& key)
 {
 	bool ret = false;
 	for(roSize i=0; i<this->_size;) {
 		if(_data[i] == key) {
-			_typedThis().remove(i);
+			this->remove(i);
 			ret = true;
 		}
 		else
@@ -281,26 +287,26 @@ bool IArray<T,S>::removeAllByKey(const T& key)
 	return ret;
 }
 
-template<class T, class S>
-T* IArray<T,S>::find(const T& key)
+template<class T>
+T* IArray<T>::find(const T& key)
 {
 	return roArrayFind(this->_data, this->_size, key);
 }
 
-template<class T, class S>
-const T* IArray<T,S>::find(const T& key) const
+template<class T>
+const T* IArray<T>::find(const T& key) const
 {
 	return roArrayFind(this->_data, this->_size, key);
 }
 
-template<class T, class S> template<class K>
-T* IArray<T,S>::find(const K& key, bool(*equal)(const T&, const K&))
+template<class T> template<class K>
+T* IArray<T>::find(const K& key, bool(*equal)(const T&, const K&))
 {
 	return roArrayFind(this->_data, this->_size, key, equal);
 }
 
-template<class T, class S>  template<class K>
-const T* IArray<T,S>::find(const K& key, bool(*equal)(const T&, const K&)) const
+template<class T>  template<class K>
+const T* IArray<T>::find(const K& key, bool(*equal)(const T&, const K&)) const
 {
 	return roArrayFind(this->_data, this->_size, key, equal);
 }
@@ -412,6 +418,18 @@ Status TinyArray<T,PreAllocCount>::reserve(roSize newCapacity, bool force)
 
 	roAssert(this->_capacity >= PreAllocCount);
 	return Status::ok;
+}
+
+template<class T>
+Status ExtArray<T>::reserve(roSize newCapacity, bool force)
+{
+	newCapacity = roMaxOf2(newCapacity, this->size());
+
+	if(!force && this->_capacity >= newCapacity)
+		return Status::ok;
+
+	if(newCapacity > this->_capacity)
+		return Status::not_enough_memory;
 }
 
 }	// namespace ro
