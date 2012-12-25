@@ -388,6 +388,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roFuncPatcher.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roHttpFileSystem.cpp"
 				>
 			</File>
@@ -497,6 +501,10 @@
 			</File>
 			<File
 				RelativePath="..\..\roar\base\roSocket.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roStackWalker.h"
 				>
 			</File>
 			<File
