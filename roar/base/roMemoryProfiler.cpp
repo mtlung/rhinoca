@@ -104,8 +104,6 @@ Status MemoryProfiler::init(roUint16 listeningPort)
 	_tlsIndex = ::TlsAlloc();
 	StackWalker::init();
 
-	::SymInitialize(::GetCurrentProcess(), NULL, TRUE);
-
 	SockAddr addr(SockAddr::ipAny(), listeningPort);
 
 	if(_listeningSocket.create(BsdSocket::TCP) != 0) return Status::net_error;
@@ -156,40 +154,7 @@ Status MemoryProfiler::init(roUint16 listeningPort)
 		_orgHeapFree = (MyHeapFree)_functionPatcher.patch(pFree, &myHeapFree);
 //		_orgNtAlloc = (MyNtAlloc)_functionPatcher.patch(pNtAlloc, &myNtAlloc);
 //		_orgNtFree = (MyNtFree)_functionPatcher.patch(pNtFree, &myNtFree);
-
-/*		SIZE_T size = 1024;
-		void* addr = NULL;
-		(*(MyNtAlloc)pNtAlloc)(::GetCurrentProcess(), &addr, 0, &size, MEM_COMMIT, PAGE_READWRITE);
-
-		// Try to redo the alloc request
-		(*(MyNtAlloc)pNtAlloc)(::GetCurrentProcess(), &addr, 0, &size, MEM_COMMIT, PAGE_READWRITE);
-
-		// Try to redo the alloc request with smaller page size
-		size -= 1;
-		(*(MyNtAlloc)pNtAlloc)(::GetCurrentProcess(), &addr, 0, &size, MEM_COMMIT, PAGE_READWRITE);
-
-		// Request on the same address but larger size (will fail)
-		size *= 2;
-		(*(MyNtAlloc)pNtAlloc)(::GetCurrentProcess(), &addr, 0, &size, MEM_COMMIT, PAGE_READWRITE);
-
-		// Request another free one
-		addr = NULL;
-		(*(MyNtAlloc)pNtAlloc)(::GetCurrentProcess(), &addr, 0, &size, MEM_COMMIT, PAGE_READWRITE);
-
-		size = size;*/
 	}
-
-	// Look for the main function
-/*	::SymInitialize(::GetCurrentProcess(), NULL, TRUE);
-	char buf[sizeof(IMAGEHLP_SYMBOL64) + MAX_SYM_NAME * sizeof(TCHAR)] = {0};
-	PIMAGEHLP_SYMBOL64 symbol = (PIMAGEHLP_SYMBOL64)buf;
-	symbol->SizeOfStruct = sizeof(buf);
-	symbol->MaxNameLength = MAX_SYM_NAME;
-	if(SUCCEEDED(::SymGetSymFromName64(::GetCurrentProcess(), "mainCRTStartup", symbol))) {
-		_mainBeg = symbol->Address;
-		_mainEnd = symbol->Address + symbol->Size;
-		_mainThreadId = ::GetCurrentThreadId();
-	}*/
 
 	return Status::ok;
 }
@@ -276,8 +241,10 @@ LPVOID WINAPI myHeapReAlloc(__in HANDLE hHeap, __in DWORD dwFlags, __deref LPVOI
 	roSize orgSize = HeapSize(hHeap, dwFlags, lpMem);
 	void* ret = _orgHeapReAlloc(hHeap, dwFlags, lpMem, dwBytes);
 	roAssert(HeapSize(hHeap, dwFlags, ret) == dwBytes);
-	if(lpMem)	_send(tls, 'f', lpMem, orgSize);
-	if(dwBytes)	_send(tls, 'a', ret, dwBytes);
+	if(ret != lpMem || orgSize != dwBytes) {
+		if(lpMem)	_send(tls, 'f', lpMem, orgSize);
+		if(dwBytes)	_send(tls, 'a', ret, dwBytes);
+	}
 	tls->recurseCount--;
 
 	return ret;
