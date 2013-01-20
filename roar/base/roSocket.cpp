@@ -302,6 +302,34 @@ ErrorCode BsdSocket::setBlocking(bool block)
 #endif
 }
 
+ErrorCode BsdSocket::setNoDelay(bool b)
+{
+	int a = b ? 1 : 0;
+	return _setOption(IPPROTO_TCP, TCP_NODELAY, &a, sizeof(a));
+}
+
+ErrorCode BsdSocket::setSendTimeout(float seconds)
+{
+	unsigned s = unsigned(seconds);
+	unsigned us = unsigned((seconds - s) * 1000 * 1000);
+	timeval timeout = { s, us };
+	return _setOption(SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
+}
+
+ErrorCode BsdSocket::setSendBuffSize(roSize size)
+{
+	int n = 0;
+	if(!roSafeAssign(n, size)) return -1;
+	return _setOption(SOL_SOCKET, SO_SNDBUF, &n, sizeof(n));
+}
+
+ErrorCode BsdSocket::setReceiveBuffSize(roSize size)
+{
+	int n = 0;
+	if(!roSafeAssign(n, size)) return -1;
+	return _setOption(SOL_SOCKET, SO_RCVBUF, &n, sizeof(n));
+}
+
 ErrorCode BsdSocket::bind(const SockAddr& endPoint)
 {
 	sockaddr addr = endPoint.asSockAddr();
@@ -455,6 +483,15 @@ SockAddr BsdSocket::remoteEndPoint() const
 bool BsdSocket::inProgress(int code)
 {
 	return code == EINPROGRESS || code == EWOULDBLOCK;
+}
+
+ErrorCode BsdSocket::_setOption(int opt, int level, const void* p, roSize size)
+{
+	int n = 0;
+	if(!roSafeAssign(n, size)) return -1;
+	int ret = ::setsockopt(fd(), level, opt, (const char*)p, n);
+	lastError = ret < 0 ? getLastError() : OK;
+	return ret;
 }
 
 const socket_t& BsdSocket::fd() const {

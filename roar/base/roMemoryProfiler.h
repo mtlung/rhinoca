@@ -16,8 +16,6 @@ struct MemoryProfiler
 
 	void shutdown();
 
-	void tick();
-
 // Private
 	BsdSocket _listeningSocket;
 	BsdSocket _acceptorSocket;

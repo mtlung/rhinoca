@@ -93,28 +93,32 @@ struct BsdSocket : NonCopyable
 	~BsdSocket();
 
 // Operations
-	ErrorCode	create		(SocketType type);
+	ErrorCode	create				(SocketType type);
 
-	ErrorCode	setBlocking	(bool block);
+	ErrorCode	setBlocking			(bool block);
+	ErrorCode	setNoDelay			(bool b);
+	ErrorCode	setSendTimeout		(float seconds);
+	ErrorCode	setSendBuffSize		(roSize size);
+	ErrorCode	setReceiveBuffSize	(roSize size);
 
-	ErrorCode	bind		(const SockAddr& endPoint);
+	ErrorCode	bind				(const SockAddr& endPoint);
 
 	///	Places the socket in a listening state
 	///	\param backlog Specifies the number of incoming connections that can be queued for acceptance
-	ErrorCode	listen		(unsigned backlog=5);
+	ErrorCode	listen				(unsigned backlog=5);
 
 	///	Creates a new Socket for a newly created connection.
 	///	Accept extracts the first connection on the queue of pending connections on this socket.
 	///	It then returns a the newly connected socket that will handle the actual connection.
-	ErrorCode	accept		(BsdSocket& socket) const;
+	ErrorCode	accept				(BsdSocket& socket) const;
 
 	/// Establishes a connection to a remote host.
-	ErrorCode	connect		(const SockAddr& endPoint);
+	ErrorCode	connect				(const SockAddr& endPoint);
 
-	int			send		(const void* data, roSize len, int flags=0);								///< Returns -1 for any error
-	int			receive		(void* buf, roSize len, int flags=0);										///< Returns -1 for any error
-	int			sendTo		(const void* data, roSize len, const SockAddr& destEndPoint, int flags=0);	///< Returns -1 for any error
-	int			receiveFrom	(void* buf, roSize len, SockAddr& srcEndPoint, int flags=0);				///< Returns -1 for any error
+	int			send				(const void* data, roSize len, int flags=0);								///< Returns -1 for any error
+	int			receive				(void* buf, roSize len, int flags=0);										///< Returns -1 for any error
+	int			sendTo				(const void* data, roSize len, const SockAddr& destEndPoint, int flags=0);	///< Returns -1 for any error
+	int			receiveFrom			(void* buf, roSize len, SockAddr& srcEndPoint, int flags=0);				///< Returns -1 for any error
 
 	///	To assure that all data is sent and received on a connected socket before it is closed,
 	///	an application should use shutDownXXX() to close connection before calling close().
@@ -154,6 +158,7 @@ struct BsdSocket : NonCopyable
 	void setFd(const socket_t& f);
 
 // Private
+	ErrorCode	_setOption			(int level, int opt, const void* p, roSize size);
 	char _fd[sizeof(void*)];	///< File descriptor
 };	// BsdSocket
 

@@ -107,10 +107,10 @@ struct StackWalker
 {
 	static void init();
 
-	roSize stackWalk	(void** address, roSize maxCount);
-	roSize stackWalk_v1	(void** address, roSize maxCount);
-	roSize stackWalk_v2	(void** address, roSize maxCount);
-	roSize stackWalk_v3	(void** address, roSize maxCount);
+	roSize stackWalk	(void** address, roSize maxCount, roUint64* outHash);
+	roSize stackWalk_v1	(void** address, roSize maxCount, roUint64* outHash);
+	roSize stackWalk_v2	(void** address, roSize maxCount, roUint64* outHash);
+	roSize stackWalk_v3	(void** address, roSize maxCount, roUint64* outHash);
 
 	static const roSize maxStackFrame = 64;
 };
@@ -129,21 +129,26 @@ void StackWalker::init()
 #endif
 }
 
-roSize StackWalker::stackWalk(void** address, roSize maxCount)
+roSize StackWalker::stackWalk(void** address, roSize maxCount, roUint64* outHash)
 {
-	return stackWalk_v1(address, maxCount);
+	return stackWalk_v1(address, maxCount, outHash);
 }
 
-roSize StackWalker::stackWalk_v1(void** address, roSize maxCount)
+roSize StackWalker::stackWalk_v1(void** address, roSize maxCount, roUint64* outHash)
 {
+	roZeroMemory(address, maxCount * sizeof(address));
 	// NOTE: We may need other accurate stack trace method, especially
 	// when "Omit Frame Pointer Optimization" has been turn on.
 	// http://www.nynaeve.net/?p=97
 	// http://www.yosefk.com/blog/getting-the-call-stack-without-a-frame-pointer.html
-	return _captureStackBackTrace(2, (DWORD)maxCount, address, NULL);
+	ULONG hash;
+	roSize ret = _captureStackBackTrace(2, (DWORD)maxCount, address, &hash);
+	if(outHash)
+		*outHash = hash;
+	return ret;
 }
 
-roSize StackWalker::stackWalk_v2(void** address, roSize maxCount)
+roSize StackWalker::stackWalk_v2(void** address, roSize maxCount, roUint64* outHash)
 {
 	CONTEXT ctx;
 	::RtlCaptureContext(&ctx);
@@ -208,7 +213,7 @@ roSize StackWalker::stackWalk_v2(void** address, roSize maxCount)
 	return depth;
 }
 /*
-roSize StackWalker::stackWalk_v2(void** address, roSize maxCount)
+roSize StackWalker::stackWalk_v2(void** address, roSize maxCount, roUint64* outHash)
 {
 	CONTEXT Context;
 	RtlCaptureContext( &Context );
@@ -295,7 +300,7 @@ roSize StackWalker::stackWalk_v2(void** address, roSize maxCount)
 
 #if defined(_WIN64)
 
-roSize StackWalker::stackWalk_v3(void** address, roSize maxCount)
+roSize StackWalker::stackWalk_v3(void** address, roSize maxCount, roUint64* outHash)
 {
 	// Adopted from:
 	// http://www.nynaeve.net/Code/StackWalk64.cpp

@@ -101,7 +101,7 @@ Status SubSystems::init()
 	Status st;
 	BsdSocket::initApplication();
 	st = _cpuProfiler.init(); if(!st) return st;
-//	st = _memoryProfiler.init(5000); if(!st) return st;
+	st = _memoryProfiler.init(5000); if(!st) return st;
 
 	_cpuProfiler.enable = false;
 
@@ -167,8 +167,6 @@ void SubSystems::tick()
 
 	if(resourceMgr)
 		resourceMgr->tick();
-
-	_memoryProfiler.tick();
 
 	if(inputDriver)
 		inputDriver->tick(inputDriver);

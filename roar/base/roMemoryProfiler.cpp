@@ -3,7 +3,9 @@
 #include "roSerializer.h"
 #include "roTaskPool.h"
 #include "roTypeCast.h"
+#include "roStopWatch.h"
 #include "../platform/roCpu.h"
+
 #include <DbgHelp.h>
 #include <Winsock2.h>
 #include <Ntsecapi.h>
@@ -15,9 +17,10 @@
 
 namespace ro {
 
-static MemoryProfiler* _profiler = NULL;
-
-FunctionPatcher _functionPatcher;
+static DWORD			_tlsIndex = 0;
+static RecursiveMutex	_mutex;
+static FunctionPatcher	_functionPatcher;
+static MemoryProfiler*	_profiler = NULL;
 
 typedef LPVOID (WINAPI *MyHeapAlloc)(HANDLE, DWORD, SIZE_T);
 typedef LPVOID (WINAPI *MyHeapReAlloc)(HANDLE, DWORD, LPVOID, SIZE_T);
@@ -54,11 +57,102 @@ struct TlsStruct
 	TinyArray<roUint8, maxStackDepth * sizeof(void*)> serializeBuf;
 };	// TlsStruct
 
+// To avoid the problem of calling malloc in the malloc callback,
+// this Array class use VirtualAlloc as the memory source.
+template<class T>
+struct Array_VirtualAlloc : public IArray<T>
+{
+	Array_VirtualAlloc() { this->_data = NULL; this->_capacity = 0; }
+	~Array_VirtualAlloc() { this->clear(); reserve(0, true); }
+	override Status reserve(roSize newSize, bool force=false);
+};	// TinyArray
+
+template<class T>
+Status Array_VirtualAlloc<T>::reserve(roSize newCapacity, bool force)
+{
+	if(newCapacity < _size)
+		newCapacity = _size;
+
+	T* newPtr = NULL;
+	roSize roundUpSize = 0;
+
+	if(newCapacity > 0) {
+		// Round the size to nearest 4K boundary
+		roundUpSize = newCapacity * sizeof(T);
+		roundUpSize = (roundUpSize + 4096-1) & (roSize(-1) << 12);
+
+		if(_capacity * sizeof(T) >= roundUpSize && !force)
+			return Status::ok;
+
+		newPtr = (T*)::VirtualAlloc(NULL, roundUpSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+		if(!newPtr)
+			return Status::not_enough_memory;
+	}
+
+	// Move object from old memory to new memory
+	if(newPtr) for(roSize i=0; i<_size; ++i)
+		new (newPtr + i) T;
+	if(_data && newPtr) for(roSize i=0; i<_size; ++i)
+		roSwap(_data[i], newPtr[i]);
+	if(_data) for(roSize i=0; i<_size; ++i)
+		(_data[i]).~T();
+	if(_data)
+		::VirtualFree(_data, _capacity * sizeof(T), MEM_RELEASE);
+
+	_data = newPtr;
+	_capacity = roundUpSize / sizeof(T);
+
+	return Status::ok;
+}
+
+// The original TCP send function already take care of flow control,
+// however each call to send() has considerable overhead.
+// Therefore we make a buffer to batch multiple values into a single send()
+struct FlowRegulator
+{
+	FlowRegulator()
+	{
+		roVerify(_buffer.reserve(_flushSize));
+	}
+
+	bool send(TlsStruct* tls)
+	{
+		ScopeRecursiveLock lock(_mutex);
+		if(!_buffer.pushBack(tls->serializeBuf.bytePtr(), tls->serializeBuf.sizeInByte()))
+			return false;
+
+		tls->serializeBuf.clear();
+
+		if(_buffer.size() > _flushSize)
+			return flush(_profiler->_acceptorSocket);
+
+		if(_stopWatch.getFloat() > 1)
+			return flush(_profiler->_acceptorSocket);
+
+		return true;
+	}
+
+	bool flush(BsdSocket& socket)
+	{
+		ScopeRecursiveLock lock(_mutex);
+
+		roSize size = _buffer.sizeInByte();
+		if(socket.send(_buffer.bytePtr(), size) != size)
+			return false;
+
+		_buffer.clear();
+		_stopWatch.reset();
+		return true;
+	}
+
+	StopWatch _stopWatch;
+	Array_VirtualAlloc<char> _buffer;
+	static const roSize _flushSize = 1024 * 512;
+};
+
 }	// namespace
 
-DWORD _tlsIndex = 0;
-RecursiveMutex _mutex;
-TinyArray<TlsStruct, 64> _tlsStructs;
+static TinyArray<TlsStruct, 64> _tlsStructs;
 
 TlsStruct* _tlsStruct()
 {
@@ -159,56 +253,63 @@ Status MemoryProfiler::init(roUint16 listeningPort)
 	return Status::ok;
 }
 
-void MemoryProfiler::tick()
+static FlowRegulator _regulator;
+static Array_VirtualAlloc<roUint64> _callstackHash;
+
+static bool _firstSeen(roUint64 hash)
 {
-	// Look for command from the client
-	fd_set fdRead;
-	FD_ZERO(&fdRead);
-	#pragma warning(disable : 4389) // warning C4389: '==' : signed/unsigned mismatch
-	FD_SET(_acceptorSocket.fd(), &fdRead);
+	ScopeRecursiveLock lock(_mutex);
+	roUint64* h = roLowerBound(_callstackHash.begin(), _callstackHash.size(), hash);
 
-	TlsStruct* tls = reinterpret_cast<TlsStruct*>(::TlsGetValue(_tlsIndex));
-	if(!tls)
-		return;
-
-	timeval tVal = { 0, 0 };
-	while(select(1, &fdRead, NULL, NULL, &tVal) == 1) {
-		roUint64 stackFrame;
-		if(_acceptorSocket.receive(&stackFrame, sizeof(stackFrame)) == sizeof(stackFrame)) {
-		}
+	if(!h || (*h != hash)) {
+		_callstackHash.insertSorted(hash);
+		return true;
 	}
+
+	return false;
 }
 
 static void _send(TlsStruct* tls, char cmd, void* memAddr, roSize memSize)
 {
-	roSize count = 0;
-
-	// Right now we only need callstack for the allocation
-	if(cmd == 'a')
-		count = tls->stackWalker.stackWalk(&tls->stackBuf[0], roCountof(tls->stackBuf));
-	if(count > 2)
-		count -= 2;
-
 	Serializer s;
-	tls->serializeBuf.clear();
 	s.setBuf(&tls->serializeBuf);
 
+	roUint64 hash = 0;
+
+	// Right now we only need callstack for the allocation
+	if(cmd == 'a') {
+		roUint64 count = tls->stackWalker.stackWalk(&tls->stackBuf[0], roCountof(tls->stackBuf), &hash);
+		if(count > 2)
+			count -= 2;
+
+		// The first time we save this particular callstack, send it to the client
+		if(_firstSeen(hash)) {
+			char c = 'h';
+			s.setBuf(&tls->serializeBuf);
+
+			s.io(c);
+			s.ioVary(hash);
+			s.ioVary(count);
+			// Reverse the order so the root come first
+			for(roSize i=0; i<count; ++i) {
+				roUint64 addr = (roSize)tls->stackBuf[count - i];
+				s.ioVary(addr);
+			}
+
+			_regulator.send(tls);
+		}
+	}
+
+	s.setBuf(&tls->serializeBuf);
 	s.io(cmd);
 	roUint64 memAddr64 = (roUint64)memAddr;
 	s.ioVary(memAddr64);
 	s.ioVary(memSize);
 
 	if(cmd == 'a')
-		s.ioVary(count);
+		s.ioVary(hash);
 
-	// Reverse the order so the root come first
-	for(roSize i=0; i<count; ++i) {
-		roSize addr = (roSize)tls->stackBuf[count - i];
-		s.ioVary(addr);
-	}
-
-	ScopeRecursiveLock lock(_mutex);
-	_profiler->_acceptorSocket.send(tls->serializeBuf.bytePtr(), tls->serializeBuf.sizeInByte());
+	_regulator.send(tls);
 }
 
 LPVOID WINAPI myHeapAlloc(__in HANDLE hHeap, __in DWORD dwFlags, __in SIZE_T dwBytes)
