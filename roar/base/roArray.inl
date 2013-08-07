@@ -202,6 +202,15 @@ Status IArray<T>::insert(roSize idx, const T* srcBegin, const T* srcEnd)
 }
 
 template<class T>
+Status IArray<T>::insertUnique(roSize idx, const T& val)
+{
+	Status st = Status::ok;
+	if(find(val) != NULL)
+		return st;
+	return insert(idx, val);
+}
+
+template<class T>
 Status IArray<T>::insertSorted(const T&val)
 {
 	if(T* p = roLowerBound(_data, _size, val)) {

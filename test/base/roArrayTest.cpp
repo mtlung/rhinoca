@@ -70,6 +70,12 @@ TEST_FIXTURE(TinyArrayTest, insert)
 		// Insert at the end
 		v.insert(v.size(), 4);
 		CHECK_EQUAL(4, v.back());
+
+		// Insert unique
+		v.insertUnique(0, 4);
+		CHECK_EQUAL(4, v.size());
+		v.insertUnique(0, 5);
+		CHECK_EQUAL(5, v.size());
 	}
 
 	{	Array<int> v;

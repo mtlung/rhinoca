@@ -92,9 +92,10 @@ struct IArray
 	Status		pushBack(const T& val=T());
 	Status		pushBack(const T* srcBegin, roSize count);
 	Status		pushBackBySwap(const T& val);
-	Status		insert(roSize idx, const T& val);
-	Status		insert(roSize idx, const T* srcBegin, roSize count);
-	Status		insert(roSize idx, const T* srcBegin, const T* srcEnd);
+	Status		insert(roSize atIdx, const T& val);
+	Status		insert(roSize atIdx, const T* srcBegin, roSize count);
+	Status		insert(roSize atIdx, const T* srcBegin, const T* srcEnd);
+	Status		insertUnique(roSize atIdx, const T& val);
 	Status		insertSorted(const T& val);
 	Status		insertSorted(const T& val, bool(*less)(const T&, const T&));
 
@@ -184,7 +185,7 @@ struct TinyArray : public IArray<T>
 
 // Private
 	bool _isUsingDynamic() const { return this->_capacity > PreAllocCount; }
-	char _buffer[PreAllocCount * sizeof(T)];	/// Don't use array of T to prevent unecessary constructor call
+	char _buffer[PreAllocCount * sizeof(T)];	/// Don't use array of T to prevent unnecessary constructor call
 };	// TinyArray
 
 template<class T>
