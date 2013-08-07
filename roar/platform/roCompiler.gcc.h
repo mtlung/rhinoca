@@ -35,9 +35,6 @@ typedef unsigned char roByte;
 #	define roAssert(expression) {((void)0);}
 #endif
 
-// Counting the number of array elements
-#define roCountof(x) (sizeof(x) / sizeof(x[0]))
-
 // Source code annotation
 #if !defined(__midl) && defined(_PREFAST_) 
 #	define override __declspec("__override")
@@ -47,6 +44,10 @@ typedef unsigned char roByte;
 
 // Force inline
 #define roFORCEINLINE inline __forceinline
+
+// Offset of
+#define roOffsetOf(s, m) __builtin_offsetof(s, m)
+#define roContainerOf(s, m, pm) ({const typeof(((s*)0)->m)*__mptr=(pm); (s*)((char*)__mptr - roOffsetOf(s,m));})
 
 // Printf style compiler check
 #define roPRINTF_FORMAT_PARAM

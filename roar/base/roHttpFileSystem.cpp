@@ -450,7 +450,7 @@ static Status _blockTillReadable(HttpStream& s, roUint64 size)
 		if(!httpFileSystemReadWillBlock(&s, size))
 			break;
 
-		TaskPool::sleep(0);	// TODO: Do something useful here instead of sleep
+		TaskPool::yield();	// TODO: Do something useful here instead of yield
 		if(s.state == State_ReadReady)
 			continue;
 

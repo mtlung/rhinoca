@@ -14,6 +14,11 @@
 /// |: separates alternatives
 /// [ ]: grouping 
 
+/// A problem yet to solve is ambiguation, suppose we have 3 rules:
+/// E -> X Y
+/// X -> a b | a
+/// Y -> b
+/// It will fail to match "a b" without back-tracking
 
 namespace ro {
 namespace Parsing {
@@ -146,8 +151,10 @@ struct Matcher
 		}
 
 		if(result) {
-			if(customResult.type && customResult.begin)
-				*result = customResult;
+			if(customResult.type && customResult.begin) {
+				result->begin = customResult.begin;
+                result->end = customResult.end;
+            }
 			else {
 				result->begin = bk;
 				result->end = parser->begin;

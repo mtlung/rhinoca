@@ -46,8 +46,9 @@ typedef unsigned char roByte;
 #	define roAssert(expression) {((void)0);}
 #endif
 
-// Counting the number of array elements
-#define roCountof(x) (sizeof(x) / sizeof(x[0]))
+// Break if debugger present
+void _roDebugBreak(bool doBreak=true);
+#define roDebugBreak _roDebugBreak
 
 // Source code annotation
 #if !defined(__midl) && defined(_PREFAST_) 

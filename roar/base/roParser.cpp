@@ -82,6 +82,7 @@ bool NumberMatcher::match(Parser* p)
 bool QuotedStringMatcher::match(Parser* p)
 {
 	ParserResult& result = *p->customResult;
+    result.type = "quotedString";
 
 	if(*p->begin != '\'')
 		return false;
@@ -106,6 +107,7 @@ bool QuotedStringMatcher::match(Parser* p)
 bool DoubleQuotedStringMatcher::match(Parser* p)
 {
 	ParserResult& result = *p->customResult;
+    result.type = "doubleQuotedString";
 
 	if(*p->begin != '"')
 		return false;

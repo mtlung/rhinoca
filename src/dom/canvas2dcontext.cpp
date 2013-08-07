@@ -667,7 +667,7 @@ static JSBool getImageData(JSContext* cx, uintN argc, jsval* vp)
 	if(!srcPixels)
 		return JS_FALSE;
 
-	bool srcYUp = self->_canvas.targetTexture->handle->isYAxisUp;
+	bool srcYUp = self->_canvas.targetTexture->handle->isYAxisUp > 0 ? true : false;
 	bool dstYUp = false;	// HTML5 canvas use Y down
 
 	// Clamp width/height to the smaller one
@@ -714,7 +714,7 @@ static JSBool putImageData(JSContext* cx, uintN argc, jsval* vp)
 		return JS_FALSE;
 
 	bool srcYUp = false;	// HTML5 canvas use Y down
-	bool dstYUp = self->_canvas.targetTexture->handle->isYAxisUp;
+	bool dstYUp = self->_canvas.targetTexture->handle->isYAxisUp > 0 ? true : false;
 
 	// Clamp width/height to the smaller one
 	dirtyWidth = roMinOf2(imgData->width - dirtyX, self->_canvas.width() - dx);

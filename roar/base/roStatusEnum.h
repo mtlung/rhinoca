@@ -41,6 +41,8 @@ roStatusEnum( file_access_denied )
 roStatusEnum( file_ended )
 roStatusEnum( file_error_delete )
 
+roStatusEnum( file_is_empty )
+
 // Network
 roStatusEnum( net_error )
 

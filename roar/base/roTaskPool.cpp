@@ -160,6 +160,17 @@ void TaskPool::sleep(int ms)
 #endif
 }
 
+void TaskPool::yield()
+{
+#ifdef roOS_WIN
+    ::SwitchToThread();
+#elif defined roOS_UNIX
+    sched_yield();
+#else
+    ::Sleep(0);
+#endif
+}
+
 void _run(TaskPool* pool)
 {
 	String s("WORKER THREAD");	// NOTE: This make sure every thread have it's own copy of the scope name

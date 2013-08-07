@@ -105,6 +105,9 @@ public:
 
 	static void sleep(int milliSeconds);
 
+    /// This function is better than sleep(0)
+    static void yield();
+
 // Attributes
 	/// To get the current thread id, which is use for setting affinity
 	static ThreadId threadId();

@@ -5,7 +5,7 @@
 
 // Some marcos to simplify error handling
 #define roEXCP_TRY bool _roExcp_has_throw = false; do {
-#define roEXCP_THROW {_roExcp_has_throw = true; goto roEXCP_CATCH_LABEL;}
+#define roEXCP_THROW {_roExcp_has_throw = true; roDebugBreak(); goto roEXCP_CATCH_LABEL;}
 #define roEXCP_CATCH } while(false); roEXCP_CATCH_LABEL:if(_roExcp_has_throw) {
 #define roEXCP_END }
 

@@ -33,6 +33,10 @@
 #	define roAssert(x) assert(x)
 #endif
 
+#ifndef roDebugBreak
+#	define roDebugBreak(x)
+#endif
+
 #if roDEBUG
 #	define roVerify(x) roAssert(x)
 #	define roIsDebug (true)
@@ -59,8 +63,17 @@ typedef _sizetSelector<sizeof(void*)>::_signed roPtrInt;
 #endif
 
 // Offset of
-#define roOffsetof(s, m) (roSize)((roPtrInt)&(((s*)0)->m))
-#define roMemberHost(s, m, pm) (s*)((char*)pm - roOffsetof(s, m))
+#ifndef roOffsetof
+#   define roOffsetof(s, m) (roSize)((roPtrInt)&(((s*)0)->m))
+#endif
+#ifndef roMemberHost
+#   define roMemberHost(s, m, pm) (s*)((char*)pm - roOffsetof(s, m))
+#endif
+
+// Counting the number of array elements
+template<typename count, int size> 
+char (*_roCountofHelper(count (&array)[size]))[size];
+#define roCountof(array) ( sizeof(*_roCountofHelper(array)) )
 
 namespace ro {
 

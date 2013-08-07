@@ -426,8 +426,8 @@ int roUtf16ToUtf8(roUtf8* utf8, roSize utf8Len, roUtf16 c)
 	}
 	if(c <= 0x7FF) {
 		if(utf8Len < 2) return -2;
-		utf8[0] = num_cast<roUtf8>((c >> 6) | 0xC0);
-		utf8[1] = num_cast<roUtf8>((c & 0x3F) | 0x80);
+		utf8[0] = num_cast<roUint8>((c >> 6) | 0xC0);
+		utf8[1] = num_cast<roUint8>((c & 0x3F) | 0x80);
 		return 2;
 	}
 	if(utf8Len < 3) return -3;
