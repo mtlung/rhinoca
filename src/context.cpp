@@ -139,7 +139,7 @@ void Rhinoca::update()
 	for(Dom::Node::TickEntry* n = audioTickList.begin(); n != audioTickList.end(); )
 	{
 		Dom::Node::TickEntry* next = n->next();
-		Dom::Node& node = *(roMemberHost(Dom::Node, tickListNode, n));
+		Dom::Node& node = *(roContainerof(Dom::Node, tickListNode, n));
 		node.tick(0);
 		n = next;
 	}

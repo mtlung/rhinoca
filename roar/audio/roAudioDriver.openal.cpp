@@ -201,7 +201,7 @@ struct SoundSource : public roADriverSoundSource, ro::ListNode<SoundSource>
 	struct Active : public ro::ListNode<SoundSource::Active>
 	{
 		void destroyThis() {
-			delete roMemberHost(SoundSource, activeListNode, this);
+			delete roContainerof(SoundSource, activeListNode, this);
 		}
 	} activeListNode;
 
@@ -330,7 +330,7 @@ static void _playSoundSource(roADriverSoundSource* self)
 	if(!impl->activeListNode.isInList()) {
 		roAssert(impl->getList());
 		LinkList<SoundSource>* list = impl->getList();
-		roAudioDriverImpl* driver = roMemberHost(roAudioDriverImpl, soundList, list);
+		roAudioDriverImpl* driver = roContainerof(roAudioDriverImpl, soundList, list);
 		driver->activeSoundList.pushBack(impl->activeListNode);
 	}
 
@@ -511,7 +511,7 @@ static void _tick(roAudioDriver* self)
 	SoundSource::Active* next = NULL;
 	for(SoundSource::Active* n = impl->activeSoundList.begin(); n != impl->activeSoundList.end(); n=next)
 	{
-		SoundSource& sound = *(roMemberHost(SoundSource, activeListNode, n));
+		SoundSource& sound = *(roContainerof(SoundSource, activeListNode, n));
 		next = n->next();
 
 		// Remove in-active sound from the active list

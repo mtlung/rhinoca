@@ -64,10 +64,10 @@ typedef _sizetSelector<sizeof(void*)>::_signed roPtrInt;
 
 // Offset of
 #ifndef roOffsetof
-#   define roOffsetof(s, m) (roSize)((roPtrInt)&(((s*)0)->m))
+#	define roOffsetof(s, m) (roSize)((roPtrInt)&(((s*)0)->m))
 #endif
-#ifndef roMemberHost
-#   define roMemberHost(s, m, pm) (s*)((char*)pm - roOffsetof(s, m))
+#ifndef roContainerof
+#	define roContainerof(s, m, pm) (s*)((char*)pm - roOffsetof(s, m))
 #endif
 
 // Counting the number of array elements

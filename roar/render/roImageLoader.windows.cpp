@@ -45,13 +45,13 @@ static const WICConvert _wicConvert[] =
 	{ GUID_WICPixelFormatBlackWhite,			GUID_WICPixelFormat8bppGray,		roRDriverTextureFormat_L		},
 	{ GUID_WICPixelFormat2bppGray,				GUID_WICPixelFormat8bppGray,		roRDriverTextureFormat_L		},
 	{ GUID_WICPixelFormat4bppGray,				GUID_WICPixelFormat8bppGray,		roRDriverTextureFormat_L		},
-    { GUID_WICPixelFormat8bppGray,				GUID_WICPixelFormat8bppGray,		roRDriverTextureFormat_L		},
+	{ GUID_WICPixelFormat8bppGray,				GUID_WICPixelFormat8bppGray,		roRDriverTextureFormat_L		},
 	{ GUID_WICPixelFormat16bppGrayFixedPoint,	GUID_WICPixelFormat8bppGray,		roRDriverTextureFormat_L		},
 	{ GUID_WICPixelFormat32bppGrayFixedPoint,	GUID_WICPixelFormat8bppGray,		roRDriverTextureFormat_L		},
 
 	{ GUID_WICPixelFormat24bppBGR,				GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
 	{ GUID_WICPixelFormat24bppRGB,				GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
-    { GUID_WICPixelFormat32bppRGBA,				GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
+	{ GUID_WICPixelFormat32bppRGBA,				GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
 	{ GUID_WICPixelFormat32bppBGRA,				GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
 	{ GUID_WICPixelFormat32bppPBGRA,			GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
 //	{ GUID_WICPixelFormat32bppPRGBA,			GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
@@ -68,12 +68,12 @@ static const WICConvert _wicConvert[] =
 	{ GUID_WICPixelFormat64bppRGBFixedPoint,	GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F },
 	{ GUID_WICPixelFormat64bppRGBHalf,			GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F },
 	{ GUID_WICPixelFormat48bppRGBHalf,			GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F },
-    { GUID_WICPixelFormat64bppRGBAHalf,			GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F	},
-    { GUID_WICPixelFormat48bppRGB,				GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F },
-    { GUID_WICPixelFormat64bppRGBA,				GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F	},
+	{ GUID_WICPixelFormat64bppRGBAHalf,			GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F	},
+	{ GUID_WICPixelFormat48bppRGB,				GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F },
+	{ GUID_WICPixelFormat64bppRGBA,				GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F	},
 
-    { GUID_WICPixelFormat128bppPRGBAFloat,		GUID_WICPixelFormat128bppRGBAFloat,	roRDriverTextureFormat_RGBA_32F	},
-    { GUID_WICPixelFormat128bppRGBAFloat,		GUID_WICPixelFormat128bppRGBAFloat,	roRDriverTextureFormat_RGBA_32F	},
+	{ GUID_WICPixelFormat128bppPRGBAFloat,		GUID_WICPixelFormat128bppRGBAFloat,	roRDriverTextureFormat_RGBA_32F	},
+	{ GUID_WICPixelFormat128bppRGBAFloat,		GUID_WICPixelFormat128bppRGBAFloat,	roRDriverTextureFormat_RGBA_32F	},
 	{ GUID_WICPixelFormat128bppRGBFloat,		GUID_WICPixelFormat128bppRGBAFloat,	roRDriverTextureFormat_RGBA_32F	},
 	{ GUID_WICPixelFormat128bppRGBAFixedPoint,	GUID_WICPixelFormat128bppRGBAFloat,	roRDriverTextureFormat_RGBA_32F	},
 	{ GUID_WICPixelFormat128bppRGBFixedPoint,	GUID_WICPixelFormat128bppRGBAFloat,	roRDriverTextureFormat_RGBA_32F	},
@@ -229,10 +229,10 @@ roEXCP_TRY
 	roUint64 readableSize = 0;
 	char* buf = fileSystem.getBuffer(stream, roUint64(-1), readableSize);
 
-    if(!buf || !readableSize) {
-        st = roStatus::file_is_empty;
-        roEXCP_THROW;
-    }
+	if(!buf || !readableSize) {
+		st = roStatus::file_is_empty;
+		roEXCP_THROW;
+	}
 
 	DWORD wicSize = 0;
 	st = roSafeAssign(wicSize, readableSize);
@@ -246,7 +246,7 @@ roEXCP_TRY
 	hr = wicStream->InitializeFromMemory((BYTE*)buf, wicSize);
 	if(FAILED(hr)) roEXCP_THROW;
 
-    // Look for WINCODEC_ERR_ in wincodec.h if something failed
+	// Look for WINCODEC_ERR_ in wincodec.h if something failed
 	CComPtr<IWICBitmapDecoder> decoder = NULL;
 	hr = wic->CreateDecoderFromStream(wicStream, 0, WICDecodeMetadataCacheOnDemand, &decoder);
 	if(FAILED(hr)) roEXCP_THROW;
