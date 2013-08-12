@@ -120,7 +120,7 @@ static roStatus _parseNumber(const char* p, T& ret)
 			ret = i;
 			return roStatus::ok;
 		}
-		return roStatus::string_to_number_sign_unsigned_mistmatch;
+		return roStatus::string_to_number_sign_mistmatch;
 	}
 
 	if(ro::TypeOf<T>::isUnsigned() || !neg)
