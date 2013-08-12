@@ -24,6 +24,9 @@ roStatusEnum( in_progress )
 
 // String
 roStatusEnum( string_encoding_error )
+roStatusEnum( string_parsing_error )
+roStatusEnum( string_to_number_sign_mistmatch )
+roStatusEnum( string_to_number_overflow )
 
 // File
 roStatusEnum( file_error )

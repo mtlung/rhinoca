@@ -36,17 +36,17 @@ void			roStrReverse	(char* str, roSize len);
 // ----------------------------------------------------------------------
 // String to different data types
 
-bool		roStrTo			(const char* str, bool& ret);
-bool		roStrTo			(const char* str, float& ret);
-bool		roStrTo			(const char* str, double& ret);
-bool		roStrTo			(const char* str, roInt8& ret);
-bool		roStrTo			(const char* str, roInt16& ret);
-bool		roStrTo			(const char* str, roInt32& ret);
-bool		roStrTo			(const char* str, roInt64& ret);
-bool		roStrTo			(const char* str, roUint8& ret);
-bool		roStrTo			(const char* str, roUint16& ret);
-bool		roStrTo			(const char* str, roUint32& ret);
-bool		roStrTo			(const char* str, roUint64& ret);
+roStatus	roStrTo			(const char* str, bool& ret);
+roStatus	roStrTo			(const char* str, float& ret);
+roStatus	roStrTo			(const char* str, double& ret);
+roStatus	roStrTo			(const char* str, roInt8& ret);
+roStatus	roStrTo			(const char* str, roInt16& ret);
+roStatus	roStrTo			(const char* str, roInt32& ret);
+roStatus	roStrTo			(const char* str, roInt64& ret);
+roStatus	roStrTo			(const char* str, roUint8& ret);
+roStatus	roStrTo			(const char* str, roUint16& ret);
+roStatus	roStrTo			(const char* str, roUint32& ret);
+roStatus	roStrTo			(const char* str, roUint64& ret);
 
 bool		roStrToBool		(const char* str, bool defaultValue);
 float		roStrToFloat	(const char* str, float defaultValue);

@@ -5,15 +5,47 @@
 
 struct StringUtilityTest {};
 
+TEST_FIXTURE(StringUtilityTest, integer8)
+{
+	const roInt32 max8 = ro::TypeOf<roInt8>::valueMax();
+	const roInt32 min8 = ro::TypeOf<roInt8>::valueMin();
+	const roUint32 maxU8 = ro::TypeOf<roUint8>::valueMax();
+
+	// Not a number
+	CHECK_EQUAL(123,	roStrToInt8("abc", 123));
+
+	// Test for signed
+	CHECK_EQUAL(0,		roStrToInt8("  0", 123));
+	CHECK_EQUAL(-123,	roStrToInt8(" -123", 0));
+	CHECK_EQUAL(-123,	roStrToInt8("- 123", 0));
+
+	CHECK_EQUAL(min8,	roStrToInt8(" -128", 0));
+	CHECK_EQUAL(0,		roStrToInt8(" -2129", 0));
+	CHECK_EQUAL(max8,	roStrToInt8("  127", 0));
+	CHECK_EQUAL(0,		roStrToInt8("  128", 0));
+
+	// Test for unsigned
+	CHECK_EQUAL(0u,		roStrToUint8(" 0", 123));
+	CHECK_EQUAL(123u,	roStrToUint8(" 123", 0));
+
+	CHECK_EQUAL(0u,		roStrToUint8("-1", 0));
+	CHECK_EQUAL(maxU8,	roStrToUint8(" 255", 0));
+	CHECK_EQUAL(0u,		roStrToUint8(" 256", 0));
+}
+
 TEST_FIXTURE(StringUtilityTest, integer32)
 {
 	const roInt32 max32 = ro::TypeOf<roInt32>::valueMax();
 	const roInt32 min32 = ro::TypeOf<roInt32>::valueMin();
 	const roUint32 maxU32 = ro::TypeOf<roUint32>::valueMax();
 
+	// Not a number
+	CHECK_EQUAL(123,	roStrToInt32("abc", 123));
+
 	// Test for signed
 	CHECK_EQUAL(0,		roStrToInt32("  0", 123));
-	CHECK_EQUAL(123,	roStrToInt32(" - 123", 0));
+	CHECK_EQUAL(-123,	roStrToInt32(" -123", 0));
+	CHECK_EQUAL(-123,	roStrToInt32("- 123", 0));
 
 	CHECK_EQUAL(min32,	roStrToInt32(" -2147483648", 0));
 	CHECK_EQUAL(0,		roStrToInt32(" -2147483649", 0));
@@ -35,9 +67,13 @@ TEST_FIXTURE(StringUtilityTest, integer64)
 	const roInt64 min64 = ro::TypeOf<roInt64>::valueMin();
 	const roUint64 maxU64 = ro::TypeOf<roUint64>::valueMax();
 
+	// Not a number
+	CHECK_EQUAL(123,	roStrToInt64("abc", 123));
+
 	// Test for signed
 	CHECK_EQUAL(0,		roStrToInt64("  0", 123));
-	CHECK_EQUAL(123,	roStrToInt64(" - 123", 0));
+	CHECK_EQUAL(-123,	roStrToInt64(" -123", 0));
+	CHECK_EQUAL(-123,	roStrToInt64("- 123", 0));
 
 	CHECK_EQUAL(min64,	roStrToInt64(" -9223372036854775808", 0));
 	CHECK_EQUAL(0,		roStrToInt64(" -9223372036854775809", 0));

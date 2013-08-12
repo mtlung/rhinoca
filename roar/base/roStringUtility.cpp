@@ -87,7 +87,7 @@ void roStrReverse(char *str, roSize len)
 // ----------------------------------------------------------------------
 
 template<class T>
-static bool _parseNumber(const char* p, T& ret)
+static roStatus _parseNumber(const char* p, T& ret)
 {
 	// Skip white spaces
 	static const char _whiteSpace[] = " \t\r\n";
@@ -96,7 +96,7 @@ static bool _parseNumber(const char* p, T& ret)
 	const bool neg = (*p) == '-';
 
 	if(neg && ro::TypeOf<T>::isUnsigned())
-		return false;
+		return roStatus::string_to_number_overflow;
 
 	if(neg) ++p;
 	while(roStrChr(_whiteSpace, *p)) { ++p; }
@@ -116,16 +116,19 @@ static bool _parseNumber(const char* p, T& ret)
 	if(*p >= '1' && *p <= '9')
 		i = *(p++) - '0';
 	else {
-		ret = i;
-		return hasLeadingZeros;
+		if(hasLeadingZeros) {
+			ret = i;
+			return roStatus::ok;
+		}
+		return roStatus::string_to_number_sign_unsigned_mistmatch;
 	}
 
 	if(ro::TypeOf<T>::isUnsigned() || !neg)
 	{
-		while(*p >= '0' && *p <= '9') {
+		while(roIsDigit(*p)) {
 			if(i >= preOverMax) {
 				if(i != preOverMax || *p > preOverMax2)
-					return false;
+					return roStatus::string_to_number_overflow;
 			}
 			i = i * 10 + (*p - '0');
 			++p;
@@ -133,76 +136,79 @@ static bool _parseNumber(const char* p, T& ret)
 	}
 	else
 	{
-		while(*p >= '0' && *p <= '9') {
+		while(roIsDigit(*p)) {
 			if(i >= preUnderMin) {
 				if(i != preUnderMin || *p > preUnderMin2)
-					return false;
+					return roStatus::string_to_number_overflow;
 			}
 			i = i * 10 + (*p - '0');
 			++p;
 		}
+
+		if(neg)
+			i *= (T)-1;
 	}
 
 	ret = i;
-	return true;
+	return roStatus::ok;
 }
 
-bool roStrTo(const char* str, bool& ret)
+roStatus roStrTo(const char* str, bool& ret)
 {
 	if(roStrCaseCmp(str, "true") == 0) {
 		ret = true;
-		return true;
+		return roStatus::ok;
 	}
 	else if(roStrCaseCmp(str, "false") == 0) {
 		ret = false;
-		return true;
+		return roStatus::ok;
 	}
 
-	roUint8 tmp;
-	if(!roStrTo(str, tmp))
-		return false;
+	roUint64 tmp;
+	roStatus st = roStrTo(str, tmp);
+	if(!st) return st;
 
 	ret = (tmp == 1);
-	return true;
+	return roStatus::ok;
 }
 
-bool roStrTo(const char* str, float& ret) {
-	return sscanf(str, "%f", &ret) == 1;
+roStatus roStrTo(const char* str, float& ret) {
+	return sscanf(str, "%f", &ret) == 1 ? roStatus::ok : roStatus::string_parsing_error;
 }
 
-bool roStrTo(const char* str, double& ret) {
-	return sscanf(str, "%lf", &ret) == 1;
+roStatus roStrTo(const char* str, double& ret) {
+	return sscanf(str, "%lf", &ret) == 1 ? roStatus::ok : roStatus::string_parsing_error;
 }
 
-bool roStrTo(const char* str, roInt8& ret) {
-	int tmp; return roStrTo(str, tmp) && roSafeAssign(tmp, ret);
-}
-
-bool roStrTo(const char* str, roInt16& ret) {
-	int tmp; return roStrTo(str, tmp) && roSafeAssign(tmp, ret);
-}
-
-bool roStrTo(const char* str, roInt32& ret) {
+roStatus roStrTo(const char* str, roInt8& ret) {
 	return _parseNumber(str, ret);
 }
 
-bool roStrTo(const char* str, roInt64& ret) {
+roStatus roStrTo(const char* str, roInt16& ret) {
 	return _parseNumber(str, ret);
 }
 
-bool roStrTo(const char* str, roUint8& ret) {
-	unsigned tmp; return roStrTo(str, tmp) && roSafeAssign(tmp, ret);
-}
-
-bool roStrTo(const char* str, roUint16& ret) {
-	unsigned tmp; return roStrTo(str, tmp) && roSafeAssign(tmp, ret);
-}
-
-bool roStrTo(const char* str, roUint32& ret) {
+roStatus roStrTo(const char* str, roInt32& ret) {
 	return _parseNumber(str, ret);
 }
 
-bool roStrTo(const char* str, roUint64& ret) {
+roStatus roStrTo(const char* str, roInt64& ret) {
+	return _parseNumber(str, ret);
+}
+
+roStatus roStrTo(const char* str, roUint8& ret) {
+	return _parseNumber(str, ret);
+}
+
+roStatus roStrTo(const char* str, roUint16& ret) {
+	return _parseNumber(str, ret);
+}
+
+roStatus roStrTo(const char* str, roUint32& ret) {
+	return _parseNumber(str, ret);
+}
+
+roStatus roStrTo(const char* str, roUint64& ret) {
 	return _parseNumber(str, ret);
 }
 
