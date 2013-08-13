@@ -36,20 +36,8 @@ struct roStatus
 	friend bool operator!=(Code c, roStatus st) { return st != c; }
 
 	Code _code;
-	operator int()  const;
+	operator int() const;
 };
-
-inline const char* roStatus::c_str() const
-{
-	switch(_code) {
-	case ok: return "ok";
-#define roStatusEnum(n) case n: return #n;
-#include "roStatusEnum.h"
-#undef roStatusEnum
-	default: return "unknown";
-	}
-	return "unknown";
-}
 
 namespace ro {
 
