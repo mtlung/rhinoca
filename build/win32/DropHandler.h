@@ -37,8 +37,8 @@ private:
 		DropHandler& m_dropHandler;
 	};
 
-	HWND       m_hWnd;
-	DropTarget m_dropTarget;
+	HWND		m_hWnd;
+	DropTarget	m_dropTarget;
 };
 
 struct Rhinoca;

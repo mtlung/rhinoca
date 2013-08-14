@@ -86,7 +86,7 @@ struct Cancelable
 	bool isCanceled() const { return _canceled; }
 
 	bool _canceled;
-};	// RecursiveMutex
+};	// Cancelable
 
 
 // ----------------------------------------------------------------------

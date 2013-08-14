@@ -23,12 +23,15 @@ struct String
 
 // Operations
 	Status		resize		(roSize size);
+	Status		incSize		(roSize inc);
+	Status		decSize		(roSize dec);
 	Status		reserve		(roSize sizeNotCountingNull);
 	void		condense	();
 	Status		append		(char c);
 	Status		append		(char c, roSize repeat);
 	Status		append		(const char* str);
 	Status		append		(const char* str, roSize count);
+	Status		assign		(const char* str);
 	Status		assign		(const char* str, roSize count);
 	Status		insert		(roSize idx, char c);
 	Status		insert		(roSize idx, const char* str);
@@ -66,6 +69,12 @@ struct String
 
 	char& operator[]		(roSize index) { roAssert(index < _size()); return _str()[index]; }
 	const char& operator[]	(roSize index) const { roAssert(index < _size()); return _str()[index]; }
+
+	char&		front()					{ roAssert(_size() > 0); return _str()[0]; }
+	const char&	front() const			{ roAssert(_size() > 0); return _str()[0]; }
+
+	char&		back(roSize i=0)		{ roAssert(_size() > 0); return _str()[_size() - i - 1]; }
+	const char&	back(roSize i=0) const	{ roAssert(_size() > 0); return _str()[_size() - i - 1]; }
 
 	static const roSize npos = roSize(-1);
 

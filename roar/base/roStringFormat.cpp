@@ -161,7 +161,7 @@ void _strFormat_utf8(String& str, const roUtf8* val, const roUtf8* options)
 	if(sscanf(options, "pl%u%c", &padLen, &padding) == 2 && padLen > len)
 		str.append(padding, padLen - len);
 
-	str += val;
+	str.append(val, len);
 
 	if(sscanf(options, "pr%u%c", &padLen, &padding) == 2 && padLen > len)
 		str.append(padding, padLen - len);

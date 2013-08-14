@@ -81,7 +81,8 @@ struct IArray
 	Status		assign(const T* srcBegin, const T* srcEnd);
 
 	Status		resize(roSize newSize, const T& fill=T());
-	Status		incSize(roSize size, const T& fill=T());
+	Status		incSize(roSize inc, const T& fill=T());
+	Status		decSize(roSize dec);
 
 	Status		resizeNoInit(roSize newSize);	///< For optimization purpose on something like raw byte buffer, use with care
 	Status		incSizeNoInit(roSize size);		///< For optimization purpose on something like raw byte buffer, use with care

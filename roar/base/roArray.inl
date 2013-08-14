@@ -105,9 +105,16 @@ Status IArray<T>::resize(roSize newSize, const T& fill)
 }
 
 template<class T>
-Status IArray<T>::incSize(roSize newSize, const T& fill)
+Status IArray<T>::incSize(roSize inc, const T& fill)
 {
-	return this->resize(_size + newSize, fill);
+	return this->resize(_size + inc, fill);
+}
+
+template<class T>
+Status IArray<T>::decSize(roSize dec)
+{
+	dec = roClampMax(dec, _size);
+	return this->resize(_size - dec);
 }
 
 template<class T>

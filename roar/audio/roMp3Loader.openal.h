@@ -130,7 +130,7 @@ void Mp3Loader::commitHeader(TaskPool* taskPool)
 	audioBuffer->format = format;
 	nextFun = &Mp3Loader::checkRequest;
 
-	// Explicity make a starting request
+	// Explicitly make a starting request
 	requestPcm(0);
 
 	return reSchedule(false, taskPool->mainThreadId());

@@ -8,6 +8,7 @@
 #include "roStringUtility.h"
 #include "roTypeCast.h"
 #include "roUtility.h"
+#include "../math/roMath.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -82,10 +83,10 @@ roSize& String::_capacity() const
 Status String::_reserve(roSize size, bool forceRealloc)
 {
 	roSize currentCap = _capacity();
-	roSize currentSize = _size();
 	roSize desiredBytes = sizeof(roSize) * 2 + roSize(size * 1.5) + 1;
 
 	if(currentCap < desiredBytes || forceRealloc) {
+		roSize currentSize = _size();
 		char* newPtr = _allocator.realloc(currentCap ? _cstr : NULL, currentCap, desiredBytes);
 		if(!newPtr) return Status::not_enough_memory;
 		_cstr = newPtr;
@@ -113,6 +114,17 @@ Status String::resize(roSize size)
 	_str()[size] = '\0';
 
 	return Status::ok;
+}
+
+Status String::incSize(roSize inc)
+{
+	return resize(size() + inc);
+}
+
+Status String::decSize(roSize dec)
+{
+	dec = roClampMax(dec, size());
+	return resize(size() - dec);
 }
 
 void String::condense()
@@ -149,6 +161,11 @@ Status String::append(const char* str, roSize count)
 	return insert(size(), str, count);
 }
 
+Status String::assign(const char* str)
+{
+	return assign(str, roStrLen(str));
+}
+
 Status String::assign(const char* str, roSize count)
 {
 	roAssert(count <= roStrLen(str));
@@ -176,11 +193,12 @@ Status String::insert(roSize idx, const char* str)
 
 Status String::insert(roSize idx, const char* str, roSize count)
 {
-	if(idx > size())
+	roSize size_ = size();
+	if(idx > size_)
 		return Status::invalid_parameter;
 
-	roSize movCount = size() - idx;
-	resize(size() + count);
+	roSize movCount = size_ - idx;
+	resize(size_ + count);
 	char* p = c_str();
 	roMemmov(p + idx + count, p + idx, movCount);
 	roMemcpy(p + idx, str, count);
