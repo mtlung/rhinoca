@@ -88,7 +88,7 @@ template<class T> inline Status serializePrimitive(Serializer& s, T& v)
 {
 	Status st = s._checkRemain(sizeof(T)); if(!st) return st;
 	if(roCPU_SUPPORT_MEMORY_MISALIGNED >= sizeof(T))
-		*s._w.cast<T>() = roHostToSe(v);
+		s._w.ref<T>() = roHostToSe(v);
 	else {
 		T tmp = roHostToSe(v);
 		roBytePtr p = &tmp;
@@ -104,7 +104,7 @@ template<class T> inline Status serializePrimitive(Deserializer& s, T& v)
 {
 	Status st = s._checkRemain(sizeof(T)); if(!st) return st;
 	if(roCPU_SUPPORT_MEMORY_MISALIGNED >= sizeof(T))
-		v = roSeToHost(*s._r.cast<T>());
+		v = roSeToHost(s._r.ref<T>());
 	else {
 		T tmp;
 		roBytePtr p = &tmp;

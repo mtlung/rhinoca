@@ -1561,15 +1561,15 @@ static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const c
 
 		roUint32 paramCount = num_cast<roUint32>(impl->inputParams.size());
 		tmpBuffer.insert(tmpBuffer.size(), (roByte*)&paramCount, sizeof(paramCount));
-		tmpBuffer.insert(tmpBuffer.size(), impl->inputParams.bytePtr().cast<roByte>(), impl->inputParams.sizeInByte());
+		tmpBuffer.insert(tmpBuffer.size(), impl->inputParams.bytePtr(), impl->inputParams.sizeInByte());
 
 		roUint32 resourceBindingCount = num_cast<roUint32>(impl->shaderResourceBindings.size());
 		tmpBuffer.insert(tmpBuffer.size(), (roByte*)&resourceBindingCount, sizeof(resourceBindingCount));
-		tmpBuffer.insert(tmpBuffer.size(), impl->shaderResourceBindings.bytePtr().cast<roByte>(), impl->shaderResourceBindings.sizeInByte());
+		tmpBuffer.insert(tmpBuffer.size(), impl->shaderResourceBindings.bytePtr(), impl->shaderResourceBindings.sizeInByte());
 
 		roAssert(outBlob && outBlobSize);
 		*outBlobSize = sizeof(roUint32) + size + tmpBuffer.sizeInByte();
-		*outBlob = _allocator.malloc(*outBlobSize).cast<roByte>();
+		*outBlob = _allocator.malloc(*outBlobSize);
 
 		*((roUint32*)(*outBlob)) = roUint32(size);
 		roMemcpy(*outBlob + sizeof(roUint32), p, size);

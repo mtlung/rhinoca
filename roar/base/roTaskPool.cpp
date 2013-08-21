@@ -163,11 +163,11 @@ void TaskPool::sleep(int ms)
 void TaskPool::yield()
 {
 #ifdef roOS_WIN
-    ::SwitchToThread();
+	::SwitchToThread();
 #elif defined roOS_UNIX
-    sched_yield();
+	sched_yield();
 #else
-    ::Sleep(0);
+	::Sleep(0);
 #endif
 }
 
@@ -203,7 +203,7 @@ void TaskPool::init(roSize threadCount)
 {
 	roAssert(!_threadHandles);
 	_threadCount = threadCount;
-	_threadHandles = _allocator.malloc(threadCount * sizeof(roSize)).cast<roSize>();
+	_threadHandles = _allocator.malloc(threadCount * sizeof(roSize));
 
 	for(roSize i=0; i<_threadCount; ++i) {
 #ifdef roUSE_PTHREAD
