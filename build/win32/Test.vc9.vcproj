@@ -369,6 +369,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\test\base\roSafeIntegerTest.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\test\base\roSerializerTest.cpp"
 				>
 			</File>

@@ -484,6 +484,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roSafeInteger.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roSerializer.cpp"
 				>
 			</File>
@@ -505,6 +509,10 @@
 			</File>
 			<File
 				RelativePath="..\..\roar\base\roStackWalker.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roStatus.cpp"
 				>
 			</File>
 			<File

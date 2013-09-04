@@ -5,6 +5,7 @@
 #include "roTypeCast.h"
 #include "roStopWatch.h"
 #include "../platform/roCpu.h"
+#include "../platform/roPlatformHeaders.h"
 
 #include <DbgHelp.h>
 #include <Winsock2.h>

@@ -4,6 +4,7 @@
 #include "roAlgorithm.h"
 #include "roBytePtr.h"
 #include "roMemory.h"
+#include "roSafeInteger.h"
 #include "roStatus.h"
 #include "roTypeOf.h"
 #include "roUtility.h"

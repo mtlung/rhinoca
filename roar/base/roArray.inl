@@ -107,7 +107,10 @@ Status IArray<T>::resize(roSize newSize, const T& fill)
 template<class T>
 Status IArray<T>::incSize(roSize inc, const T& fill)
 {
-	return this->resize(_size + inc, fill);
+	roSize newSize;
+	Status st = roSafeAdd(_size, inc, newSize);
+	if(!st) return st;
+	return this->resize(newSize, fill);
 }
 
 template<class T>
@@ -132,7 +135,9 @@ Status IArray<T>::resizeNoInit(roSize newSize)
 template<class T>
 Status IArray<T>::incSizeNoInit(roSize newSize)
 {
-	return this->resizeNoInit(_size + newSize);
+	Status st = roSafeAdd(_size, newSize, newSize);
+	if(!st) return st;
+	return this->resizeNoInit(newSize);
 }
 
 template<class T>
@@ -196,9 +201,10 @@ Status IArray<T>::insert(roSize idx, const T* srcBegin, const T* srcEnd)
 
 	if(inc == 0) return Status::ok;
 
-	Status st = this->resize(_size + inc);
+	Status st = this->incSize(inc);
 	if(!st) return st;
 
+	roAssert(_size > 0);
 	for(roSize i = _size - 1; i >= idx + inc; --i)
 		_data[i] = _data[i - inc];
 
@@ -251,6 +257,7 @@ void IArray<T>::remove(roSize idx)
 	if(idx >= _size) return;
 
 	_data[idx].~T();
+	roAssert(_size > 0);
 	if(idx < _size - 1) {
 		if(TypeOf<T>::isPOD())
 			roMemmov(&_data[idx], &_data[idx+1], sizeof(T) * (_size - idx - 1));
