@@ -339,3 +339,66 @@ TEST_FIXTURE(SafeIntegerTest, negate)
 		a = 127;	CHECK(roSafeNeg(a, b));	CHECK_EQUAL(-127, b);
 	}
 }
+
+TEST_FIXTURE(SafeIntegerTest, comparison)
+{
+	{	// This simply test demonstrate the problem of signed/unsigned comparison
+		roInt64 a = -1;
+		roUint64 b = 1;
+		CHECK((roUint64)a > b);	// As you see, -1 > 1, which doesn't make sense
+		CHECK(!((roUint64)a < b));
+
+		CHECK(!roIsGreater(a, b));
+		CHECK(roIsGreater(b, a));
+	}
+
+	{	// Problem should get worse if the signed type haveing a even smaller size
+		roInt32 a = -1;
+		roUint64 b = 1;
+		CHECK(a > b);	// As you see, -1 > 1, which doesn't make sense
+		CHECK(!(a < b));
+
+		CHECK(!roIsGreater(a, b));
+		CHECK(roIsGreater(b, a));
+	}
+
+	{	// No problem if signed type having a larger size
+		roInt64 a = -1;
+		roUint32 b = 1;
+		CHECK(!(a > b));
+		CHECK(a < b);
+
+		CHECK(!roIsGreater(a, b));
+		CHECK(roIsGreater(b, a));
+	}
+
+	{	// Interesting that int8 and 16 didn't have the problem
+		roInt8 a = -1;
+		roUint16 b = 1;
+		CHECK(!(a > b));
+		CHECK(a < b);
+
+		CHECK(!roIsGreater(a, b));
+		CHECK(roIsGreater(b, a));
+	}
+
+	{	// Same bit size
+		CHECK(roIsGreater(1, 0));
+		CHECK(roIsGreater(1u, 0));
+		CHECK(roIsGreater(1, 0u));
+		CHECK(roIsGreater(1u, 0u));
+
+		CHECK(!roIsGreater(0, 0));
+		CHECK(!roIsGreater(0u, 0));
+		CHECK(!roIsGreater(0, 0u));
+		CHECK(!roIsGreater(0u, 0u));
+
+		CHECK(roIsGreater(0, -1));
+		CHECK(roIsGreater(0u, -1));
+		CHECK(roIsGreater(-1, -2));
+
+		CHECK(!roIsGreater(-1, 0));
+		CHECK(!roIsGreater(-1, 0u));
+		CHECK(!roIsGreater(-2, -1));
+	}
+}

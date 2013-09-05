@@ -8,6 +8,9 @@
 #	include <intrin.h>
 #endif
 
+// Reference:
+// http://www.fefe.de/intof.html
+
 template<typename T> struct _HigherIntType	{};
 template<> struct _HigherIntType<roInt8>	{ typedef int ret;		typedef int forAddSub; };
 template<> struct _HigherIntType<roUint8>	{ typedef unsigned ret;	typedef int forAddSub; };
@@ -218,6 +221,26 @@ T roAssertNeg(T a)
 	roAssert(!ro::TypeOf<T>::isUnsigned());
 	roAssert(a >= 0 || a != ro::TypeOf<T>::valueMin());
 	return -a;
+}
+
+template<typename T1, typename T2>
+bool roIsGreater(T1 t1, T2 t2)
+{
+	if(ro::TypeOf<T1>::isSigned() == ro::TypeOf<T2>::isSigned())
+		return (T1)t1 > (T1)t2;
+
+	if(t1 < 0) return false;
+	if(t2 < 0) return true;
+
+	ro::UnsignedCounterPart<T1>::Ret t1_(t1);
+	ro::UnsignedCounterPart<T2>::Ret t2_(t2);
+	return t1_ > t2_;
+}
+
+template<typename T1, typename T2>
+bool roIsLess(T1 t1, T2 t2)
+{
+	return roIsGreater(t2, t1);
 }
 
 #endif	// __roSafeInteger_h__

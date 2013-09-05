@@ -85,6 +85,19 @@ template<> inline roUint64	TypeOf<roUint64>::valueMax(){ return 0xffffffffffffff
 
 template<class T> struct TypeHolder {};
 
+// Signed/unsigned counter part
+template<typename T> struct SignedCounterPart	{ typedef T Ret;		};
+template<>	struct SignedCounterPart<roUint8>	{ typedef roInt8 Ret;	};
+template<>	struct SignedCounterPart<roUint16>	{ typedef roInt16 Ret;	};
+template<>	struct SignedCounterPart<roUint32>	{ typedef roInt32 Ret;	};
+template<>	struct SignedCounterPart<roUint64>	{ typedef roInt64 Ret;	};
+
+template<typename T> struct UnsignedCounterPart	{ typedef T Ret;		};
+template<>	struct UnsignedCounterPart<roInt8>	{ typedef roUint8 Ret;	};
+template<>	struct UnsignedCounterPart<roInt16>	{ typedef roUint16 Ret;	};
+template<>	struct UnsignedCounterPart<roInt32>	{ typedef roUint32 Ret;	};
+template<>	struct UnsignedCounterPart<roInt64>	{ typedef roUint64 Ret;	};
+
 }	// namespace ro
 
 #endif	// __roTypeOf_h__
