@@ -8,8 +8,6 @@
 #	include <intrin.h>
 #endif
 
-#if roCPU_SSE
-
 template<typename T> struct _HigherIntType	{};
 template<> struct _HigherIntType<roInt8>	{ typedef int ret;		typedef int forAddSub; };
 template<> struct _HigherIntType<roUint8>	{ typedef unsigned ret;	typedef int forAddSub; };
@@ -112,7 +110,7 @@ inline roStatus roSafeMul(roUint64 a, roUint64 b, roUint64& ret)
 	// Consider that a*b can be broken up into:
 	// (aHigh * 2^32 + aLow) * (bHigh * 2^32 + bLow)
 	// => (aHigh * bHigh * 2^64) + (aLow * bHigh * 2^32) + (aHigh * bLow * 2^32) + (aLow * bLow)
-	// TODO: May use _umul128 intrinic
+	// TODO: May use _umul128 intrinsic
 	roUint32 aHigh = (roUint32)(a >> 32);
 	roUint32 aLow  = (roUint32)a;
 	roUint32 bHigh = (roUint32)(b >> 32);
@@ -163,6 +161,63 @@ inline roStatus roSafeMul(roInt64 a, roInt64 b, roInt64& ret)
 	return roStatus::ok;
 }
 
-#endif	// roCPU_SSE
+template<typename T>
+T roAssertAdd(T a, T b)
+{
+#if roDEBUG
+	T ret;
+	roStatus st = roSafeAdd(a, b, ret);
+	roAssert(st == roStatus::ok);
+#endif
+	return a + b;
+}
+
+template<typename T>
+T roAssertSub(T a, T b)
+{
+#if roDEBUG
+	T ret;
+	roStatus st = roSafeSub(a, b, ret);
+	roAssert(st == roStatus::ok);
+#endif
+	return a - b;
+}
+
+template<typename T>
+T roAssertMul(T a, T b)
+{
+#if roDEBUG
+	T ret;
+	roStatus st = roSafeMul(a, b, ret);
+	roAssert(st == roStatus::ok);
+#endif
+	return a * b;
+}
+
+template<typename T>
+T roAssertDiv(T a, T b)
+{
+#if roDEBUG
+	T ret;
+	roStatus st = roSafeDiv(a, b, ret);
+	roAssert(st == roStatus::ok);
+#endif
+	return a / b;
+}
+
+template<typename T>
+T roAssertAbs(T a)
+{
+	roAssert(a >= 0 || a != ro::TypeOf<T>::valueMin());
+	return (a < 0) ? (~a + 1) : a;
+}
+
+template<typename T>
+T roAssertNeg(T a)
+{
+	roAssert(!ro::TypeOf<T>::isUnsigned());
+	roAssert(a >= 0 || a != ro::TypeOf<T>::valueMin());
+	return -a;
+}
 
 #endif	// __roSafeInteger_h__

@@ -78,7 +78,7 @@ Status IArray<T>::assign(const T* srcBegin, const T* srcEnd)
 	return Status::ok;
 }
 
-template<class T> roFORCEINLINE
+template<class T>
 Status IArray<T>::resize(roSize newSize, const T& fill)
 {
 	if(newSize > _capacity) {
