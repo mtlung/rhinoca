@@ -1,6 +1,7 @@
 #ifndef __math_roMath_h__
 #define __math_roMath_h__
 
+#include "../base/roUtility.h"
 #include <math.h>
 
 static const float roPI				= 3.14159265358979323846f;	// pi
@@ -84,15 +85,6 @@ inline T roGcd(T a, T b)
 	if(r == 0) return b;
 	return roGcd(b, r);
 }
-
-template<class T>
-inline T roClamp(T x, T min, T max) { return x < min ? min : (x > max ? max : x); }
-
-template<class T>
-inline T roClampMin(T x, T min) { return x < min ? min : x; }
-
-template<class T>
-inline T roClampMax(T x, T max) { return x > max ? max : x; }
 
 template<class T>
 inline T roClampedSubtraction(T a, T b) { return a > b ? a - b : 0; }

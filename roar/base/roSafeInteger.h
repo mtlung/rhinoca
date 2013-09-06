@@ -281,4 +281,11 @@ bool roIsLessEqual(T1 t1, T2 t2)
 	return roIsGreaterEqual(t2, t1);
 }
 
+template<typename T1, typename T2>
+bool roIsValidIndex(T1 i, T2 size)
+{
+	if(roIsLess(i, 0)) return false;
+	return roIsLess(i, size);
+}
+
 #endif	// __roSafeInteger_h__

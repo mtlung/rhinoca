@@ -37,4 +37,14 @@ T roAlignFloor(const T& val, const T& alignTo) { return val - (val % alignTo); }
 template<typename T> inline
 T roAlignCeiling(const T& val, const T& alignTo) { T d = val % alignTo; return d == 0 ? val : val - d + alignTo; }
 
+template<class T>
+T roClamp(T x, T min, T max) { return x < min ? min : (x > max ? max : x); }
+
+template<class T>
+T roClampMin(T x, T min) { return x < min ? min : x; }
+
+template<class T>
+T roClampMax(T x, T max) { return x > max ? max : x; }
+
+
 #endif	// __roUtility_h__

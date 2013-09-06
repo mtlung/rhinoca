@@ -155,7 +155,7 @@ void IArray<T>::condense()
 template<class T> roFORCEINLINE
 Status IArray<T>::pushBack(const T& fill)
 {
-	return this->resize(_size + 1, fill);
+	return this->incSize(1, fill);
 }
 
 template<class T> roFORCEINLINE
@@ -167,7 +167,7 @@ Status IArray<T>::pushBack(const T* srcBegin, roSize count)
 template<class T>
 Status IArray<T>::pushBackBySwap(const T& val)
 {
-	Status st = this->resize(_size + 1);
+	Status st = this->incSize(1);
 	if(!st) return st;
 	roSwap(back(), const_cast<T&>(val));
 	return st;
@@ -177,7 +177,8 @@ template<class T>
 Status IArray<T>::insert(roSize idx, const T& val)
 {
 	roAssert(idx <= _size);
-	Status st = this->resize(_size + 1);
+	idx = roClampMax(idx, _size);
+	Status st = this->incSize(1);
 	if(!st) return st;
 	for(roSize i = _size - 1; i > idx; --i)
 		_data[i] = _data[i - 1];
@@ -196,6 +197,8 @@ template<class T>
 Status IArray<T>::insert(roSize idx, const T* srcBegin, const T* srcEnd)
 {
 	roAssert(idx <= _size);
+	idx = roClampMax(idx, _size);
+
 	roAssert(srcBegin <= srcEnd);
 	roSize inc = srcEnd - srcBegin;
 
