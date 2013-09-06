@@ -340,7 +340,32 @@ TEST_FIXTURE(SafeIntegerTest, negate)
 	}
 }
 
-TEST_FIXTURE(SafeIntegerTest, comparison)
+TEST_FIXTURE(SafeIntegerTest, comparison_equality)
+{
+	{	// Demonstration of the problem
+		roInt64 a = -1;
+		roUint64 b = ro::TypeOf<roUint64>::valueMax();
+		CHECK(a == b);	// Obviously incorrect
+	}
+
+	{	roInt64 a = 2;
+		roUint64 b = 3;
+		CHECK(!roIsEqual(a, b));
+		CHECK(!roIsEqual(b, a));
+		CHECK(roIsNotEqual(a, b));
+		CHECK(roIsNotEqual(b, a));
+	}
+
+	{	roInt64 a = -1;
+		roUint64 b = ro::TypeOf<roUint64>::valueMax();
+		CHECK(!roIsEqual(a, b));
+		CHECK(!roIsEqual(b, a));
+		CHECK(roIsNotEqual(a, b));
+		CHECK(roIsNotEqual(b, a));
+	}
+}
+
+TEST_FIXTURE(SafeIntegerTest, comparison_greater)
 {
 	{	// This simply test demonstrate the problem of signed/unsigned comparison
 		roInt64 a = -1;
@@ -352,7 +377,7 @@ TEST_FIXTURE(SafeIntegerTest, comparison)
 		CHECK(roIsGreater(b, a));
 	}
 
-	{	// Problem should get worse if the signed type haveing a even smaller size
+	{	// Problem should get worse if the signed type having a even smaller size
 		roInt32 a = -1;
 		roUint64 b = 1;
 		CHECK(a > b);	// As you see, -1 > 1, which doesn't make sense
@@ -400,5 +425,70 @@ TEST_FIXTURE(SafeIntegerTest, comparison)
 		CHECK(!roIsGreater(-1, 0));
 		CHECK(!roIsGreater(-1, 0u));
 		CHECK(!roIsGreater(-2, -1));
+	}
+
+	{	// Greater equal
+		CHECK(roIsGreaterEqual(0, 0));
+		CHECK(roIsGreaterEqual(1, 1));
+		CHECK(roIsGreaterEqual(1u, 1));
+		CHECK(roIsGreaterEqual(1, 1u));
+		CHECK(roIsGreaterEqual(1u, 1u));
+		CHECK(roIsGreaterEqual(-1, -1));
+		CHECK(roIsGreaterEqual(1, -1));
+		CHECK(roIsGreaterEqual(1u, -1));
+
+		CHECK(!roIsGreaterEqual(0, 1));
+		CHECK(!roIsGreaterEqual(0u, 1));
+		CHECK(!roIsGreaterEqual(0, 1u));
+		CHECK(!roIsGreaterEqual(0u, 1u));
+		CHECK(!roIsGreaterEqual(-2, -1));
+		CHECK(!roIsGreaterEqual(-1, 1));
+		CHECK(!roIsGreaterEqual(-1, 1u));
+	}
+}
+
+TEST_FIXTURE(SafeIntegerTest, comparison_less)
+{
+	{	CHECK(roIsLess(0, 1));
+		CHECK(roIsLess(0, 1u));
+		CHECK(roIsLess(0u, 1));
+		CHECK(roIsLess(0u, 1u));
+
+		CHECK(!roIsLess(1, 0));
+		CHECK(!roIsLess(1u, 0));
+		CHECK(!roIsLess(1, 0u));
+		CHECK(!roIsLess(1u, 0u));
+
+		CHECK(!roIsLess(0, 0));
+		CHECK(!roIsLess(0u, 0));
+		CHECK(!roIsLess(0, 0u));
+		CHECK(!roIsLess(0u, 0u));
+
+		CHECK(!roIsLess(0, -1));
+		CHECK(!roIsLess(0u, -1));
+		CHECK(!roIsLess(-1, -2));
+
+		CHECK(roIsLess(-1, 0));
+		CHECK(roIsLess(-1, 0u));
+		CHECK(roIsLess(-2, -1));
+	}
+
+	{	// Less equal
+		CHECK(roIsLessEqual(0, 0));
+		CHECK(roIsLessEqual(1, 1));
+		CHECK(roIsLessEqual(1u, 1));
+		CHECK(roIsLessEqual(1, 1u));
+		CHECK(roIsLessEqual(1u, 1u));
+		CHECK(roIsLessEqual(-1, -1));
+		CHECK(roIsLessEqual(-1, 1));
+		CHECK(roIsLessEqual(-1, 1u));
+
+		CHECK(!roIsLessEqual(1, 0));
+		CHECK(!roIsLessEqual(1, 0u));
+		CHECK(!roIsLessEqual(1u, 0));
+		CHECK(!roIsLessEqual(1u, 0u));
+		CHECK(!roIsLessEqual(-1, -2));
+		CHECK(!roIsLessEqual(1, -1));
+		CHECK(!roIsLessEqual(1u, -1));
 	}
 }

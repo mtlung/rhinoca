@@ -138,7 +138,7 @@ struct FlowRegulator
 		ScopeRecursiveLock lock(_mutex);
 
 		roSize size = _buffer.sizeInByte();
-		if(socket.send(_buffer.bytePtr(), size) != size)
+		if(roIsNotEqual(socket.send(_buffer.bytePtr(), size), size))
 			return false;
 
 		_buffer.clear();
