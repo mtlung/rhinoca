@@ -33,6 +33,47 @@ namespace CppTestHarness
 #endif
 	}
 
+#ifdef VISUAL_STUDIO
+	typedef __int8	int8_t;
+	typedef __int16	int16_t;
+	typedef __int32	int32_t;
+	typedef __int64	int64_t;
+	typedef unsigned __int8		uint8_t;
+	typedef unsigned __int16	uint16_t;
+	typedef unsigned __int32	uint32_t;
+	typedef unsigned __int64	uint64_t;
+#endif
+
+	template<typename T>
+	inline bool IsSigned(T t) { return false; }
+	inline bool IsSigned(int8_t) { return true; }
+	inline bool IsSigned(int16_t) { return true; }
+	inline bool IsSigned(int32_t) { return true; }
+	inline bool IsSigned(int64_t) { return true; }
+
+	template<typename T> struct UnsignedCounterPart	{ typedef T Ret;		};
+	template<>	struct UnsignedCounterPart<int8_t>	{ typedef uint8_t Ret;	};
+	template<>	struct UnsignedCounterPart<int16_t>	{ typedef uint16_t Ret;	};
+	template<>	struct UnsignedCounterPart<int32_t>	{ typedef uint32_t Ret;	};
+	template<>	struct UnsignedCounterPart<int64_t>	{ typedef uint64_t Ret;	};
+
+	template<typename T1, typename T2>
+	bool IsEqual(T1 t1, T2 t2)
+	{
+		if(IsSigned(t1) == IsSigned(t2))
+			return (T1)t1 == (T1)t2;
+		if(t1 < 0 && t2 >= 0) return false;
+		if(t2 < 0 && t1 >= 0) return false;
+		UnsignedCounterPart<T1>::Ret t1_(t1);
+		UnsignedCounterPart<T2>::Ret t2_(t2);
+		return t1_ == t2_;
+	}
+
+	inline bool IsEqual(	  char* s1,		  char* s2)	{ return strcmp(s1, s2) == 0; }
+	inline bool IsEqual(const char* s1, const char* s2)	{ return strcmp(s1, s2) == 0; }
+	inline bool IsEqual(	  char* s1, const char* s2)	{ return strcmp(s1, s2) == 0; }
+	inline bool IsEqual(const char* s1,		  char* s2)	{ return strcmp(s1, s2) == 0; }
+
 	template< typename Actual, typename Expected >
 	bool CheckEqual(Actual const actual, Expected const expected)
 	{
@@ -40,7 +81,7 @@ namespace CppTestHarness
 #	pragma warning(push)
 #	pragma warning(disable:4127) // conditional expression is constant
 #endif
-		return (actual == expected);
+		return IsEqual(actual, expected);
 #ifdef VISUAL_STUDIO
 #	pragma warning(pop)
 #endif

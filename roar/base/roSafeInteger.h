@@ -4,10 +4,6 @@
 #include "roStatus.h"
 #include "roTypeOf.h"
 
-#if roCPU_SSE
-#	include <intrin.h>
-#endif
-
 // Reference:
 // http://www.fefe.de/intof.html
 

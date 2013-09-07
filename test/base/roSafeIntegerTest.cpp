@@ -345,7 +345,7 @@ TEST_FIXTURE(SafeIntegerTest, comparison_equality)
 	{	// Demonstration of the problem
 		roInt64 a = -1;
 		roUint64 b = ro::TypeOf<roUint64>::valueMax();
-		CHECK(a == b);	// Obviously incorrect
+		CHECK((roUint64)a == b);	// Obviously incorrect
 	}
 
 	{	roInt64 a = 2;

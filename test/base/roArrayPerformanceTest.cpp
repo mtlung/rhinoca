@@ -29,7 +29,7 @@ TEST_FIXTURE(ArrayPerformanceTest, compareWithSTL)
 	{	// Push back of int
 		roLog("info", "Push back int\n");
 
-		typedef Array<int> MyArray;
+		typedef Array<roSize> MyArray;
 		BEGIN_PROFILE(10000, 1, MyArray ary;)
 			ary.pushBack(i);
 		END_PROFILE();
@@ -46,7 +46,7 @@ TEST_FIXTURE(ArrayPerformanceTest, compareWithSTL)
 			ary.pushBack(i);
 		END_PROFILE();
 
-		typedef std::vector<int> STLVec;
+		typedef std::vector<roSize> STLVec;
 		BEGIN_PROFILE(10000, 1, STLVec vec;)
 			vec.push_back(i);
 		END_PROFILE();

@@ -400,6 +400,22 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roIOStream.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roIOStream.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roJson.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roJson.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roLinkList.cpp"
 				>
 			</File>

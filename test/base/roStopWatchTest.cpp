@@ -36,7 +36,7 @@ public:
 			sumdt += dt;
 
 			for(roSize j=10; j--;)
-				dt = sinf(dt);
+				dt = sin(dt);
 		}
 
 		roUint64 tickEnd = ticksSinceProgramStatup();

@@ -353,6 +353,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\test\base\roIOStreamTest.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\test\base\roJsonTest.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\test\base\roMapTest.cpp"
 				>
 			</File>
