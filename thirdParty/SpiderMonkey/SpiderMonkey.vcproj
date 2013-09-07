@@ -49,6 +49,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/Oy-"
 				AdditionalIncludeDirectories="./;./assembler;./nanojit;./yarr"
 				PreprocessorDefinitions="EXPORT_JS_API;WIN32;DEBUG;NJ_VERBOSE"
 				ExceptionHandling="0"
@@ -198,6 +199,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/Oy-"
 				AdditionalIncludeDirectories="./;./assembler;./nanojit;./yarr"
 				PreprocessorDefinitions="EXPORT_JS_API;WIN32;"
 				ExceptionHandling="0"

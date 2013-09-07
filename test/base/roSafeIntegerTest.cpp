@@ -284,7 +284,7 @@ TEST_FIXTURE(SafeIntegerTest, division)
 	{	roUint8 a, b, c;
 
 		a = 10, b = 2;		CHECK(roSafeDiv(a, b, c));	CHECK_EQUAL(5, c);
-		a = 10, b = 1;		CHECK(roSafeDiv(a, b, c));	CHECK_EQUAL(1, c);
+		a = 10, b = 1;		CHECK(roSafeDiv(a, b, c));	CHECK_EQUAL(10, c);
 		a = 0, b = 1;		CHECK(roSafeDiv(a, b, c));	CHECK_EQUAL(0, c);
 		a = 10, b = 0;		CHECK(!roSafeDiv(a, b, c));
 		a = 0, b = 0;		CHECK(!roSafeDiv(a, b, c));

@@ -15,7 +15,7 @@ template<> struct _HigherIntType<roUint16>	{ typedef unsigned ret;	typedef int f
 template<> struct _HigherIntType<roInt32>	{ typedef roInt64 ret;	typedef roInt64 forAddSub; };
 template<> struct _HigherIntType<roUint32>	{ typedef roUint64 ret;	typedef roInt64 forAddSub; };
 
-template<typename T>
+template<typename T> roFORCEINLINE
 roStatus roSafeAdd(T a, T b, T& ret)
 {
 	typedef _HigherIntType<T>::forAddSub Type;
@@ -25,7 +25,7 @@ roStatus roSafeAdd(T a, T b, T& ret)
 	return T(val) == val ? roStatus::ok : roStatus::arithmetic_overflow;
 }
 
-template<typename T>
+template<typename T> roFORCEINLINE
 roStatus roSafeSub(T a, T b, T& ret)
 {
 	typedef _HigherIntType<T>::forAddSub Type;
@@ -35,7 +35,7 @@ roStatus roSafeSub(T a, T b, T& ret)
 	return T(val) == val ? roStatus::ok : roStatus::arithmetic_overflow;
 }
 
-template<typename T>
+template<typename T> roFORCEINLINE
 roStatus roSafeMul(T a, T b, T& ret)
 {
 	typedef _HigherIntType<T>::ret Type;
@@ -45,7 +45,7 @@ roStatus roSafeMul(T a, T b, T& ret)
 	return T(val) == val ? roStatus::ok : roStatus::arithmetic_overflow;
 }
 
-template<typename T>
+template<typename T> roFORCEINLINE
 roStatus roSafeDiv(T a, T b, T& ret)
 {
 	if(b == 0) return roStatus::division_with_zero;
@@ -54,7 +54,7 @@ roStatus roSafeDiv(T a, T b, T& ret)
 	return roStatus::ok;
 }
 
-template<typename T>
+template<typename T> roFORCEINLINE
 roStatus roSafeAbs(T a, T& ret)
 {
 	if(a < 0 && a == ro::TypeOf<T>::valueMin()) return roStatus::arithmetic_overflow;
@@ -62,7 +62,7 @@ roStatus roSafeAbs(T a, T& ret)
 	return roStatus::ok;
 }
 
-template<typename T>
+template<typename T> roFORCEINLINE
 roStatus roSafeNeg(T a, T& ret)
 {
 	if(ro::TypeOf<T>::isUnsigned()) return roStatus::arithmetic_overflow;

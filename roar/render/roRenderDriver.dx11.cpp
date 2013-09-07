@@ -68,6 +68,7 @@ static const char* _shaderTarget[5][3] = {
 static const char* _getShaderTarget(ID3D11Device* d3dDevice, roRDriverShaderType type)
 {
 	roAssert(int(type) < 3);
+	if(!d3dDevice) return NULL;
 	switch(d3dDevice->GetFeatureLevel()) {
 	case D3D_FEATURE_LEVEL_11_0:	return _shaderTarget[0][type];
 	case D3D_FEATURE_LEVEL_10_1:	return _shaderTarget[1][type];
@@ -799,6 +800,9 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 	data.pSysMem = initData;
 	data.SysMemPitch = 0;
 	data.SysMemSlicePitch = 0;
+
+	if(!ctx->dxDevice)
+		return false;
 
 	HRESULT hr = ctx->dxDevice->CreateBuffer(&desc, initData ? &data : NULL, &impl->dxBuffer.ptr);
 
