@@ -38,6 +38,8 @@ float roCeil				(float x);
 float roFrac				(float x);
 float roRound				(float x);	// < 0.5 floor, > 0.5 ceil
 
+double roPow10d				(int n);	// return 10.0^n
+
 template<class T> T roGcd	(T a, T b);	// Greatest common divisor
 
 template<class T> T roClamp	(T x, T min, T max);

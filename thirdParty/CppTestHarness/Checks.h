@@ -69,6 +69,7 @@ namespace CppTestHarness
 		return t1_ == t2_;
 	}
 
+	inline bool IsEqual(bool t1, bool t2)				{ return t1 == t2; }
 	inline bool IsEqual(	  char* s1,		  char* s2)	{ return strcmp(s1, s2) == 0; }
 	inline bool IsEqual(const char* s1, const char* s2)	{ return strcmp(s1, s2) == 0; }
 	inline bool IsEqual(	  char* s1, const char* s2)	{ return strcmp(s1, s2) == 0; }

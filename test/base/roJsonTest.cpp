@@ -6,16 +6,117 @@ using namespace ro;
 
 class JsonTest {};
 
+TEST_FIXTURE(JsonTest, parse_empty)
+{
+    JsonParser parser;
+	parser.parse("{}");
+
+	JsonParser::Event::Enum e;
+	e = parser.nextEvent();
+	CHECK_EQUAL(JsonParser::Event::BeginObject, e);
+
+	e = parser.nextEvent();
+	CHECK_EQUAL(JsonParser::Event::EndObject, e);
+
+	e = parser.nextEvent();
+	CHECK_EQUAL(JsonParser::Event::End, e);
+}
+
+TEST_FIXTURE(JsonTest, parse_basicType)
+{
+    JsonParser parser;
+	parser.parse(
+		"{\"null\":null,\"bool\":true,\"string\":\"This is a string\","
+		"\"int64\":-9223372036854775808,"
+		"\"uint64\":+18446744073709551615,"
+		"\"double\":+123.456,"
+		"\"double\":-1.0e-10"
+		"}"
+	);
+
+	JsonParser::Event::Enum e;
+	e = parser.nextEvent();
+	CHECK_EQUAL(JsonParser::Event::BeginObject, e);
+
+	{	e = parser.nextEvent();
+		CHECK_EQUAL(JsonParser::Event::Name, e);
+		CHECK_EQUAL("null", parser.getName());
+
+		e = parser.nextEvent();
+		CHECK_EQUAL(JsonParser::Event::Null, e);
+	}
+
+	{	e = parser.nextEvent();
+		CHECK_EQUAL(JsonParser::Event::Name, e);
+		CHECK_EQUAL("bool", parser.getName());
+
+		e = parser.nextEvent();
+		CHECK_EQUAL(JsonParser::Event::Bool, e);
+		CHECK_EQUAL(true, parser.getBool());
+	}
+
+	{	e = parser.nextEvent();
+		CHECK_EQUAL(JsonParser::Event::Name, e);
+		CHECK_EQUAL("string", parser.getName());
+
+		e = parser.nextEvent();
+		CHECK_EQUAL(JsonParser::Event::String, e);
+		CHECK_EQUAL("This is a string", parser.getString());
+	}
+
+	{	e = parser.nextEvent();
+		CHECK_EQUAL(JsonParser::Event::Name, e);
+		CHECK_EQUAL("int64", parser.getName());
+
+		e = parser.nextEvent();
+		CHECK_EQUAL(JsonParser::Event::Integer64, e);
+		CHECK_EQUAL(-9223372036854775808LL, parser.getInt64());
+	}
+
+	{	e = parser.nextEvent();
+		CHECK_EQUAL(JsonParser::Event::Name, e);
+		CHECK_EQUAL("uint64", parser.getName());
+
+		e = parser.nextEvent();
+		CHECK_EQUAL(JsonParser::Event::UInteger64, e);
+		CHECK_EQUAL(18446744073709551615uLL, parser.getUint64());
+	}
+
+	{	e = parser.nextEvent();
+		CHECK_EQUAL(JsonParser::Event::Name, e);
+		CHECK_EQUAL("double", parser.getName());
+
+		e = parser.nextEvent();
+		CHECK_EQUAL(JsonParser::Event::Double, e);
+		CHECK_EQUAL(123.456, parser.getDouble());
+	}
+
+	{	e = parser.nextEvent();
+		CHECK_EQUAL(JsonParser::Event::Name, e);
+		CHECK_EQUAL("double", parser.getName());
+
+		e = parser.nextEvent();
+		CHECK_EQUAL(JsonParser::Event::Double, e);
+		CHECK_CLOSE(-1e-10, parser.getDouble(), 1e-20);
+	}
+
+	e = parser.nextEvent();
+	CHECK_EQUAL(JsonParser::Event::EndObject, e);
+
+	e = parser.nextEvent();
+	CHECK_EQUAL(JsonParser::Event::End, e);
+}
+
 TEST_FIXTURE(JsonTest, writer_empty1)
 {
-    ro::JsonWriter writer;
-    ro::MemoryOStream os;
+    JsonWriter writer;
+    MemoryOStream os;
 }
 
 TEST_FIXTURE(JsonTest, writer_empty2)
 {
-    ro::JsonWriter writer;
-    ro::MemoryOStream os;
+    JsonWriter writer;
+    MemoryOStream os;
 
     writer.setStream(&os);
     writer.beginObject();
@@ -24,8 +125,8 @@ TEST_FIXTURE(JsonTest, writer_empty2)
 
 TEST_FIXTURE(JsonTest, writer_numeric)
 {
-    ro::JsonWriter writer;
-    ro::MemoryOStream os;
+    JsonWriter writer;
+    MemoryOStream os;
 
     writer.setStream(&os);
     writer.beginObject();
@@ -46,8 +147,8 @@ TEST_FIXTURE(JsonTest, writer_numeric)
 
 TEST_FIXTURE(JsonTest, writer)
 {
-	ro::JsonWriter writer;
-	ro::MemoryOStream os;
+	JsonWriter writer;
+	MemoryOStream os;
 
 	writer.setStream(&os);
 	writer.beginObject();

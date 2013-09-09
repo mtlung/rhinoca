@@ -2,9 +2,354 @@
 #include "roJson.h"
 #include "roIOStream.h"
 #include "roStringFormat.h"
+#include "../Math/roMath.h"
 
 namespace ro {
 
+JsonParser::JsonParser() : _str(NULL), _event(Event::Undefined) {}
+
+void JsonParser::parse(const roUtf8* source)
+{
+	_tmpStr = source;
+	parseInplace(_tmpStr.c_str());
+}
+
+void JsonParser::parseInplace(roUtf8* source)
+{
+	if(source != _tmpStr.c_str()) {
+		_tmpStr.clear();
+		_tmpStr.condense();
+	}
+
+	_str = source;
+	_it = source;
+	_event = Event::Undefined;
+	_stack.clear();
+	_nextFunc = &JsonParser::_parseBeginObject;
+}
+
+void JsonParser::_skipWhiteSpace()
+{
+	while(*_it == '\x20' || *_it == '\x9' || *_it == '\xD' || *_it == '\xA')
+		++_it;
+}
+
+bool JsonParser::_parseBeginObject()
+{
+	roAssert(*_it == '{');
+	_event = Event::BeginObject;
+	_stack.pushBack(_event);
+	++_it;
+
+	_skipWhiteSpace();
+	if(*_it == '}')
+		_nextFunc = &JsonParser::_parseEndObject;
+	else
+		_nextFunc = &JsonParser::_parseName;
+
+	return true;
+}
+
+bool JsonParser::_parseEndObject()
+{
+	roAssert(*_it == '}');
+	if(_stack.isEmpty() || _stack.back() != Event::BeginObject)
+		return false;
+
+	++_it;
+	_stack.popBack();
+	_event = Event::EndObject;
+
+	if(_stack.isEmpty())
+		_nextFunc = &JsonParser::_parseEnd;
+	else
+		return _valueEnd();
+
+	return true;
+}
+
+bool JsonParser::_parseEnd()
+{
+	_event = Event::End;
+	return true;
+}
+
+bool JsonParser::_parseBeginArray()
+{
+	roAssert(*_it == '[');
+
+	++_it;
+	_stack.pushBack(_event);
+	_event = Event::BeginArray;
+
+	_skipWhiteSpace();
+	if(*_it == ']')
+		_nextFunc = &JsonParser::_parseEndArray;
+	else
+		_nextFunc = &JsonParser::_parseValue;
+
+	return true;
+}
+
+bool JsonParser::_parseEndArray()
+{
+	roAssert(*_it == ']');
+	if(_stack.isEmpty() || _stack.back() != Event::BeginArray)
+		return false;
+
+	++_it;
+	_stack.popBack();
+	_event = Event::EndArray;
+
+	return _valueEnd();
+}
+
+bool JsonParser::_parseValue()
+{
+	switch(*_it) {
+	case '{':	return _parseBeginObject();
+	case '}':	return _parseEndObject();
+	case '[':	return _parseBeginArray();
+	case ']':	return _parseEndArray();
+	case '"':	return _parseString();
+	case 'n':
+	case 't':
+	case 'f':	return _parseNullTrueFalse();
+	default:	return _parseNumber();
+	}
+}
+
+bool JsonParser::_valueEnd()
+{
+	_skipWhiteSpace();
+
+	if(*_it == ',') {
+		if(_stack.back() == Event::BeginObject)
+			_nextFunc = &JsonParser::_parseName;
+		else
+			_nextFunc = &JsonParser::_parseValue;
+		++_it;
+	}
+	else if(*_it == '}')
+		_nextFunc = &JsonParser::_parseEndObject;
+	else if(*_it == ']')
+		_nextFunc = &JsonParser::_parseEndArray;
+	else
+		return false;
+
+	return true;
+}
+
+bool JsonParser::_parseName()
+{
+	if(!_parseStringImpl())
+		return false;
+
+	_skipWhiteSpace();
+	if(*_it != ':')
+		return false;
+
+	++_it;
+	_event = Event::Name;
+	_nextFunc = &JsonParser::_parseValue;
+
+	return true;
+}
+
+bool JsonParser::_parseString()
+{
+	if(!_parseStringImpl())
+		return false;
+
+	_event = Event::String;
+	return _valueEnd();
+}
+
+bool JsonParser::_parseStringImpl()
+{
+	if(*_it != '"')
+		return false;
+
+	++_it;
+	roUtf8* first = _it;
+	roUtf8* last = _it;
+
+	while(*_it) {
+		if(*_it == '\\') {
+		}
+		else if(*_it == '"') {
+			*last = '\0';
+			++_it;
+			break;
+		}
+		else
+			*last++ = *_it++;
+	}
+
+	_stringVal = first;
+	return true;
+}
+
+bool JsonParser::_parseNumber()
+{
+	bool minus = false;
+	if(*_it == '-') {
+		minus = true;
+		++_it;
+	}
+	else if(*_it == '+')
+		++_it;
+
+	// Take away any leading zero
+	while(*_it == '0')
+		++_it;
+
+	// Try parse as int64
+	roUint64 i = 0;
+	bool useDouble = false;
+	if(*_it >= '1' && *_it <= '9') {
+		i = *_it - '0';
+		++_it;
+
+		if(minus) {
+			while(*_it >= '0' && *_it <= '9') {
+				if(i >= 922337203685477580uLL)	// 2^63 = 9223372036854775808
+					if (i != 922337203685477580uLL || *_it > '8') {
+						useDouble = true;
+						break;
+					}
+				i = i * 10 + (*_it - '0');
+				++_it;
+			}
+		}
+		else {
+			while(*_it >= '0' && *_it <= '9') {
+				if(i >= 1844674407370955161uLL)	// 2^64 - 1 = 18446744073709551615
+					if (i != 1844674407370955161uLL || *_it > '5') {
+						useDouble = true;
+						break;
+					}
+				i = i * 10 + (*_it - '0');
+				++_it;
+			}
+		}
+	}
+
+	int expFrac = 0;
+	double d = 0.0;
+	if(*_it == '.') {
+		if(!useDouble) {
+			d = (double)i;
+			useDouble = true;
+		}
+		++_it;
+
+		if(*_it >= '0' && *_it <= '9') {
+			d = d * 10 + (*_it - '0');
+			++_it;
+			--expFrac;
+		}
+		else
+			return false;
+
+		while(*_it >= '0' && *_it <= '9') {
+			if(expFrac > -16) {
+				d = d * 10 + (*_it - '0');
+				--expFrac;
+			}
+			++_it;
+		}
+	}
+
+	// Parse exp = e [ minus / plus ] 1*DIGIT
+	int exp = 0;
+	if(*_it == 'e' || *_it == 'E') {
+		if(!useDouble) {
+			d = (double)i;
+			useDouble = true;
+		}
+		++_it;
+
+		bool expMinus = false;
+		if(*_it == '+')
+			++_it;
+		else if(*_it == '-') {
+			++_it;
+			expMinus = true;
+		}
+
+		if(*_it >= '0' && *_it <= '9') {
+			exp = *_it - '0';
+			++_it;
+			while(*_it >= '0' && *_it <= '9') {
+				exp = exp * 10 + (*_it - '0');
+				++_it;
+				if(exp > 308)
+					return false;
+			}
+		}
+		else
+			return false;
+
+		if (expMinus)
+			exp = -exp;
+	}
+
+	// Finish parsing, call event according to the type of number.
+	if(useDouble) {
+		d *= roPow10d(exp + expFrac);
+		_event = Event::Double;
+		_doubleVal = (minus ? -d : d);
+	}
+	else {
+		if(minus) {
+			_int64Val = -((roInt64)i);
+			_event = Event::Integer64;
+		}
+		else {
+			_uint64Val = i;
+			_event = Event::UInteger64;
+		}
+	}
+
+	return _valueEnd();
+}
+
+bool JsonParser::_parseNullTrueFalse()
+{
+	if(_it[0] == 'n' && _it[1] == 'u' && _it[2] == 'l' && _it[3] == 'l') {
+		_event = Event::Null;
+		_it += 4;
+	}
+	else if(_it[0] == 't' && _it[1] == 'r' && _it[2] == 'u' && _it[3] == 'e') {
+		_event = Event::Bool;
+		_boolVal = true;
+		_it += 4;
+	}
+	else if(_it[0] == 'f' && _it[1] == 'a' && _it[2] == 'l' && _it[3] == 's' && _it[4] == 'e') {
+		_event = Event::Bool;
+		_boolVal = false;
+		_it += 5;
+	}
+	else
+		return false;
+
+	return _valueEnd();
+}
+
+JsonParser::Event::Enum JsonParser::nextEvent()
+{
+	if(_event == Event::End || _event == Event::Error)
+		return _event;
+
+	_skipWhiteSpace();
+	if(!(this->*_nextFunc)())
+		_event = Event::Error;
+
+	return _event;
+}
+
+//
 JsonWriter::JsonWriter(OStream* stream)
 	: _stream(stream)
 	, _nestedLevel(0)
@@ -37,7 +382,6 @@ static void _strFormat_JsonString(String& str, JsonString* val, const roUtf8* op
 	if(!val) return;
 
 	// Perform escape
-	// TODO: Do escape only the option tell use do
 	static const StaticArray<char, 16> hexDigits = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 	static const StaticArray<char, 256> escape = {
 	#define Z16 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
