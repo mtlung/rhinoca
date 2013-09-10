@@ -24,13 +24,67 @@ TEST_FIXTURE(JsonTest, parse_empty)
 
 TEST_FIXTURE(JsonTest, parse_basicType)
 {
-    JsonParser parser;
+#define TEST_INT(str, val, eventType, getFunc) {\
+	JsonParser parser; \
+	parser.parse("{\"name\":" ##str "}"); \
+	parser.nextEvent(); \
+	parser.nextEvent(); \
+	JsonParser::Event::Enum e = parser.nextEvent(); \
+	CHECK_EQUAL(JsonParser::Event::eventType, e); \
+	CHECK_EQUAL(val, parser.getFunc()); }
+
+	TEST_INT("true",		true,			Bool,		getBool);
+	TEST_INT("0",			0,				UInteger64,	getUint64);
+	TEST_INT("123",			123,			UInteger64,	getUint64);
+	TEST_INT("2147483648",	2147483648,		UInteger64,	getUint64);	// 2^31 - 1
+	TEST_INT("4294967295",	4294967295,		UInteger64,	getUint64);
+	TEST_INT("-123",		-123,			Integer64,	getInt64);
+	TEST_INT("-2147483648",	-2147483648LL,	Integer64,	getInt64);	// -2^31 (min of int)
+
+	TEST_INT("4294967296",			4294967296ULL,			UInteger64,	getUint64);	// 2^32
+	TEST_INT("18446744073709551615",18446744073709551615ULL,UInteger64,	getUint64);	// 2^64 - 1
+
+	TEST_INT("-2147483649",			-2147483649LL,			Integer64,	getInt64);	// -2^31 - 1
+	TEST_INT("-9223372036854775808",-9223372036854775808LL,	Integer64,	getInt64);	// -2^63
+#undef TEST_INT
+
+#define TEST_DOUBLE(str, val) {\
+	JsonParser parser; \
+	parser.parse("{\"name\":" ##str "}"); \
+	parser.nextEvent(); \
+	parser.nextEvent(); \
+	JsonParser::Event::Enum e = parser.nextEvent(); \
+	CHECK_EQUAL(JsonParser::Event::Double, e); \
+	CHECK_CLOSE(val, parser.getDouble(), 1e-309); }
+
+	TEST_DOUBLE("0.0", 0.0);
+	TEST_DOUBLE("1.0", 1.0);
+	TEST_DOUBLE("-1.0", -1.0);
+	TEST_DOUBLE("1.5", 1.5);
+	TEST_DOUBLE("-1.5", -1.5);
+	TEST_DOUBLE("3.1416", 3.1416);
+	TEST_DOUBLE("1E10", 1E10);
+	TEST_DOUBLE("1e10", 1e10);
+	TEST_DOUBLE("1E+10", 1E+10);
+	TEST_DOUBLE("1E-10", 1E-10);
+	TEST_DOUBLE("-1E10", -1E10);
+	TEST_DOUBLE("-1e10", -1e10);
+	TEST_DOUBLE("-1E+10", -1E+10);
+	TEST_DOUBLE("-1E-10", -1E-10);
+	TEST_DOUBLE("1.234E+10", 1.234E+10);
+	TEST_DOUBLE("1.234E-10", 1.234E-10);
+	TEST_DOUBLE("1.79769e+308", 1.79769e+308);
+//	TEST_DOUBLE("2.22507e-308", 2.22507e-308);	// TODO: underflow
+	TEST_DOUBLE("-1.79769e+308", -1.79769e+308);
+//	TEST_DOUBLE("-2.22507e-308", -2.22507e-308);	// TODO: underflow
+//	TEST_DOUBLE("18446744073709551616", 18446744073709551616.0);	// 2^64 (max of uint64_t + 1, force to use double)
+//	TEST_DOUBLE("-9223372036854775809", -9223372036854775809.0);	// -2^63 - 1(min of int64_t + 1, force to use double)
+
+#undef TEST_DOUBLE
+
+	JsonParser parser;
 	parser.parse(
-		"{\"null\":null,\"bool\":true,\"string\":\"This is a string\","
-		"\"int64\":-9223372036854775808,"
-		"\"uint64\":+18446744073709551615,"
-		"\"double\":+123.456,"
-		"\"double\":-1.0e-10"
+		"{\"null\":null,\"bool\":true,\"string\":\"This is a string\""
 		"}"
 	);
 
@@ -62,42 +116,6 @@ TEST_FIXTURE(JsonTest, parse_basicType)
 		e = parser.nextEvent();
 		CHECK_EQUAL(JsonParser::Event::String, e);
 		CHECK_EQUAL("This is a string", parser.getString());
-	}
-
-	{	e = parser.nextEvent();
-		CHECK_EQUAL(JsonParser::Event::Name, e);
-		CHECK_EQUAL("int64", parser.getName());
-
-		e = parser.nextEvent();
-		CHECK_EQUAL(JsonParser::Event::Integer64, e);
-		CHECK_EQUAL(-9223372036854775808LL, parser.getInt64());
-	}
-
-	{	e = parser.nextEvent();
-		CHECK_EQUAL(JsonParser::Event::Name, e);
-		CHECK_EQUAL("uint64", parser.getName());
-
-		e = parser.nextEvent();
-		CHECK_EQUAL(JsonParser::Event::UInteger64, e);
-		CHECK_EQUAL(18446744073709551615uLL, parser.getUint64());
-	}
-
-	{	e = parser.nextEvent();
-		CHECK_EQUAL(JsonParser::Event::Name, e);
-		CHECK_EQUAL("double", parser.getName());
-
-		e = parser.nextEvent();
-		CHECK_EQUAL(JsonParser::Event::Double, e);
-		CHECK_EQUAL(123.456, parser.getDouble());
-	}
-
-	{	e = parser.nextEvent();
-		CHECK_EQUAL(JsonParser::Event::Name, e);
-		CHECK_EQUAL("double", parser.getName());
-
-		e = parser.nextEvent();
-		CHECK_EQUAL(JsonParser::Event::Double, e);
-		CHECK_CLOSE(-1e-10, parser.getDouble(), 1e-20);
 	}
 
 	e = parser.nextEvent();
