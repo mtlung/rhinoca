@@ -213,6 +213,21 @@ bool JsonParser::_parseStringImpl()
 				if(!parseHex4(_it + 2, codepoint))
 					return false;
 
+				// Reference:
+				// http://www.russellcottrell.com/greek/utilities/SurrogatePairCalculator.htm
+				if(codepoint >= 0xD800 && codepoint <= 0xDBFF) {	// Detect hight-surrogate code point
+					_it += 6;
+					if(_it[0] != '\\' || _it[1] != 'u')				// Expecting low-surrogate code point
+						return false;
+					unsigned codepoint2;
+					if(!parseHex4(_it + 2, codepoint2))
+						return false;
+					if(codepoint2 < 0xDC00 || codepoint2 > 0xDFFF)
+						return false;
+
+					codepoint = (((codepoint - 0xD800) << 10) | (codepoint2 - 0xDC00)) + 0x10000;
+				}
+
 				if(codepoint <= 0x7F)
 					*last = (roUtf8)codepoint;
 				else if(codepoint <= 0x7FF) {
@@ -297,8 +312,19 @@ bool JsonParser::_parseNumber()
 		}
 	}
 
-	int expFrac = 0;
+	// Force double if integer overflow occur
 	double d = 0.0;
+	if (useDouble) {
+		d = (double)i;
+		while(*_it >= '0' && *_it <= '9') {
+			if(d >= 1E307)	// Even double cannot store the number 
+				return false;
+			d = d * 10 + (*_it - '0');
+			++_it;
+		}
+	}
+
+	int expFrac = 0;
 	if(*_it == '.') {
 		if(!useDouble) {
 			d = (double)i;

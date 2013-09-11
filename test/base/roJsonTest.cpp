@@ -77,8 +77,8 @@ TEST_FIXTURE(JsonTest, parse_basicType)
 //	TEST_DOUBLE("2.22507e-308", 2.22507e-308);	// TODO: underflow
 	TEST_DOUBLE("-1.79769e+308", -1.79769e+308);
 //	TEST_DOUBLE("-2.22507e-308", -2.22507e-308);	// TODO: underflow
-//	TEST_DOUBLE("18446744073709551616", 18446744073709551616.0);	// 2^64 (max of uint64_t + 1, force to use double)
-//	TEST_DOUBLE("-9223372036854775809", -9223372036854775809.0);	// -2^63 - 1(min of int64_t + 1, force to use double)
+	TEST_DOUBLE("18446744073709551616", 18446744073709551616.0);	// 2^64 (max of uint64_t + 1, force to use double)
+	TEST_DOUBLE("-9223372036854775809", -9223372036854775809.0);	// -2^63 - 1(min of int64_t + 1, force to use double)
 
 #undef TEST_DOUBLE
 
@@ -97,7 +97,7 @@ TEST_FIXTURE(JsonTest, parse_basicType)
 	TEST_STRING("\"\\u0024\"", "\x24");
 	TEST_STRING("\"\\u0024\"", "\x24");
 	TEST_STRING("\"\\u20AC\"", "\xE2\x82\xAC");
-	TEST_STRING("\"\\uD834\\uDD1E\"", "\xF0\x9D\x84\x9E");
+	TEST_STRING("\"\\uD834\\uDD1E\"", "\xF0\x9D\x84\x9E");	// G clef sign U+1D11E
 
 #undef TEST_STRING
 
