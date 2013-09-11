@@ -82,6 +82,25 @@ TEST_FIXTURE(JsonTest, parse_basicType)
 
 #undef TEST_DOUBLE
 
+#define TEST_STRING(str, val) {\
+	JsonParser parser; \
+	parser.parse("{\"name\":" ##str "}"); \
+	parser.nextEvent(); \
+	parser.nextEvent(); \
+	JsonParser::Event::Enum e = parser.nextEvent(); \
+	CHECK_EQUAL(JsonParser::Event::String, e); \
+	CHECK_EQUAL(val, parser.getString()); }
+
+	TEST_STRING("\"\"", "");
+	TEST_STRING("\"Hello\"", "Hello");
+	TEST_STRING("\"\\\"\\\\/\\b\\f\\n\\r\\t\"", "\"\\/\b\f\n\r\t");
+	TEST_STRING("\"\\u0024\"", "\x24");
+	TEST_STRING("\"\\u0024\"", "\x24");
+	TEST_STRING("\"\\u20AC\"", "\xE2\x82\xAC");
+	TEST_STRING("\"\\uD834\\uDD1E\"", "\xF0\x9D\x84\x9E");
+
+#undef TEST_STRING
+
 	JsonParser parser;
 	parser.parse(
 		"{\"null\":null,\"bool\":true,\"string\":\"This is a string\""

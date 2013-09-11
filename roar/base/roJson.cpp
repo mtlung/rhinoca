@@ -165,9 +165,8 @@ bool JsonParser::_parseString()
 	return _valueEnd();
 }
 
-static bool parseHex4(roUtf8*& it_, unsigned& codepoint)
+static bool parseHex4(roUtf8* it, unsigned& codepoint)
 {
-	roUtf8* it = it_;
 	codepoint = 0;
 	for(roSize i = 0; i<4; ++i) {
 		roUtf8 c = *it;
@@ -183,7 +182,7 @@ static bool parseHex4(roUtf8*& it_, unsigned& codepoint)
 		else 
 			return false;
 	}
-	it_ = it;
+
 	return true;
 }
 
@@ -211,7 +210,7 @@ bool JsonParser::_parseStringImpl()
 			case 't':	*last = '\t';	break;
 			case 'u':
 				unsigned codepoint;
-				if(!parseHex4(_it, codepoint))
+				if(!parseHex4(_it + 2, codepoint))
 					return false;
 
 				if(codepoint <= 0x7F)
@@ -226,7 +225,11 @@ bool JsonParser::_parseStringImpl()
 					*last   = (roUtf8)(0x80 | (codepoint & 0x3F));
 				}
 				else {
-					roAssert(false);
+					roAssert(codepoint <= 0x10FFFF);
+					*last++ = (roUtf8)(0xF0 | (codepoint >> 18));
+					*last++ = (roUtf8)(0x80 | ((codepoint >> 12) & 0x3F));
+					*last++ = (roUtf8)(0x80 | ((codepoint >> 6) & 0x3F));
+					*last   = (roUtf8)(0x80 | (codepoint & 0x3F));
 				}
 				_it += 4;
 				break;

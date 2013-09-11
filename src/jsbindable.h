@@ -107,7 +107,7 @@ public:
 	JsString(JSContext* cx, jsval* vp, unsigned paramIdx);
 	~JsString();
 
-    char* c_str() const { return _bytes; }
+	char* c_str() const { return _bytes; }
 
 	unsigned size() const { return _length; }
 
