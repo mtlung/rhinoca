@@ -51,6 +51,18 @@ namespace CppTestHarness
 	inline bool IsSigned(int32_t) { return true; }
 	inline bool IsSigned(int64_t) { return true; }
 
+	struct TrueType {};
+	struct FalseType {};
+	template<typename T> struct IsIntType	{ typedef FalseType Ret;};
+	template<>	struct IsIntType<int8_t>	{ typedef TrueType Ret;	};
+	template<>	struct IsIntType<int16_t>	{ typedef TrueType Ret;	};
+	template<>	struct IsIntType<int32_t>	{ typedef TrueType Ret;	};
+	template<>	struct IsIntType<int64_t>	{ typedef TrueType Ret;	};
+	template<>	struct IsIntType<uint8_t>	{ typedef TrueType Ret;	};
+	template<>	struct IsIntType<uint16_t>	{ typedef TrueType Ret;	};
+	template<>	struct IsIntType<uint32_t>	{ typedef TrueType Ret;	};
+	template<>	struct IsIntType<uint64_t>	{ typedef TrueType Ret;	};
+
 	template<typename T> struct UnsignedCounterPart	{ typedef T Ret;		};
 	template<>	struct UnsignedCounterPart<int8_t>	{ typedef uint8_t Ret;	};
 	template<>	struct UnsignedCounterPart<int16_t>	{ typedef uint16_t Ret;	};
@@ -58,7 +70,7 @@ namespace CppTestHarness
 	template<>	struct UnsignedCounterPart<int64_t>	{ typedef uint64_t Ret;	};
 
 	template<typename T1, typename T2>
-	bool IsEqual(T1 t1, T2 t2)
+	bool IsEqualInteger(T1 t1, T2 t2)
 	{
 		if(IsSigned(t1) == IsSigned(t2))
 			return (T1)t1 == (T1)t2;
@@ -69,11 +81,28 @@ namespace CppTestHarness
 		return t1_ == t2_;
 	}
 
-	inline bool IsEqual(bool t1, bool t2)				{ return t1 == t2; }
+	template<typename T1, typename T2>
+	bool IsEqual(T1 t1, T2 t2)
+	{
+		return t1 == t2;
+	}
+
 	inline bool IsEqual(	  char* s1,		  char* s2)	{ return strcmp(s1, s2) == 0; }
 	inline bool IsEqual(const char* s1, const char* s2)	{ return strcmp(s1, s2) == 0; }
 	inline bool IsEqual(	  char* s1, const char* s2)	{ return strcmp(s1, s2) == 0; }
 	inline bool IsEqual(const char* s1,		  char* s2)	{ return strcmp(s1, s2) == 0; }
+
+	template<typename T1, typename T2, typename TF1, typename TF2>
+	bool IsEqual_(T1 t1, T2 t2, TF1, TF2)
+	{
+		return IsEqual(t1, t2);
+	}
+
+	template<typename T1, typename T2>
+	bool IsEqual_(T1 t1, T2 t2, TrueType, TrueType)
+	{
+		return IsEqualInteger(t1, t2);
+	}
 
 	template< typename Actual, typename Expected >
 	bool CheckEqual(Actual const actual, Expected const expected)
@@ -82,7 +111,7 @@ namespace CppTestHarness
 #	pragma warning(push)
 #	pragma warning(disable:4127) // conditional expression is constant
 #endif
-		return IsEqual(actual, expected);
+		return IsEqual_(actual, expected, IsIntType<Actual>::Ret(), IsIntType<Expected>::Ret());
 #ifdef VISUAL_STUDIO
 #	pragma warning(pop)
 #endif
