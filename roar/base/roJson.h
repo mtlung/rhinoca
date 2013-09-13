@@ -47,6 +47,8 @@ struct JsonParser : private NonCopyable
 	roSize			getObjectMemberCount()	{ roAssert(_event == Event::EndObject); return _MemberCount; }
 	roSize			getArrayElementCount()	{ roAssert(_event == Event::EndArray); return _ElementCount; }
 
+	const roUtf8*	getErrorMessage()		{ roAssert(_event == Event::Error); return _errStr.c_str(); }
+
 // Private
 	void			_skipWhiteSpace();
 	bool			_parseBeginObject();
@@ -61,12 +63,16 @@ struct JsonParser : private NonCopyable
 	bool			_parseStringImpl();
 	bool			_parseNumber();
 	bool			_parseNullTrueFalse();
+	bool			_onError(const roUtf8* errMsg);
 
 	roUtf8*		_str;
 	roUtf8*		_it;
 	String		_tmpStr;
+	String		_errStr;
 	Event::Enum	_event;
-	Array<Event::Enum> _stack;
+
+	struct _StackElement { Event::Enum event; roSize elementCount; };
+	Array<_StackElement> _stack;
 
 	bool (JsonParser::*_nextFunc)();
 

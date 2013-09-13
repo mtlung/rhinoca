@@ -107,41 +107,75 @@ TEST_FIXTURE(JsonTest, parse_basicType)
 		"}"
 	);
 
-	JsonParser::Event::Enum e;
-	e = parser.nextEvent();
-	CHECK_EQUAL(JsonParser::Event::BeginObject, e);
+	CHECK_EQUAL(JsonParser::Event::BeginObject, parser.nextEvent());
 
-	{	e = parser.nextEvent();
-		CHECK_EQUAL(JsonParser::Event::Name, e);
-		CHECK_EQUAL("null", parser.getName());
+	CHECK_EQUAL(JsonParser::Event::Name, parser.nextEvent());
+	CHECK_EQUAL("null", parser.getName());
+	CHECK_EQUAL(JsonParser::Event::Null, parser.nextEvent());
 
-		e = parser.nextEvent();
-		CHECK_EQUAL(JsonParser::Event::Null, e);
+	CHECK_EQUAL(JsonParser::Event::Name, parser.nextEvent());
+	CHECK_EQUAL("bool", parser.getName());
+	CHECK_EQUAL(JsonParser::Event::Bool, parser.nextEvent());
+	CHECK_EQUAL(true, parser.getBool());
+
+	CHECK_EQUAL(JsonParser::Event::Name, parser.nextEvent());
+	CHECK_EQUAL("string", parser.getName());
+	CHECK_EQUAL(JsonParser::Event::String, parser.nextEvent());
+	CHECK_EQUAL("This is a string", parser.getString());
+
+	CHECK_EQUAL(JsonParser::Event::EndObject, parser.nextEvent());
+	CHECK_EQUAL(JsonParser::Event::End, parser.nextEvent());
+}
+
+TEST_FIXTURE(JsonTest, parse_array)
+{
+	{	JsonParser parser;
+		parser.parse("{\"empty\":[]}");
+		parser.nextEvent();
+		parser.nextEvent();
+		CHECK_EQUAL(JsonParser::Event::BeginArray, parser.nextEvent());
+		CHECK_EQUAL(JsonParser::Event::EndArray, parser.nextEvent());
 	}
 
-	{	e = parser.nextEvent();
-		CHECK_EQUAL(JsonParser::Event::Name, e);
-		CHECK_EQUAL("bool", parser.getName());
-
-		e = parser.nextEvent();
-		CHECK_EQUAL(JsonParser::Event::Bool, e);
-		CHECK_EQUAL(true, parser.getBool());
+	{	JsonParser parser;
+		parser.parse("{\"2 ele\":[1,2]}");
+		parser.nextEvent();
+		parser.nextEvent();
+		CHECK_EQUAL(JsonParser::Event::BeginArray, parser.nextEvent());
+		CHECK_EQUAL(JsonParser::Event::UInteger64, parser.nextEvent());
+		CHECK_EQUAL(1u, parser.getUint64());
+		CHECK_EQUAL(JsonParser::Event::UInteger64, parser.nextEvent());
+		CHECK_EQUAL(2u, parser.getUint64());
+		CHECK_EQUAL(JsonParser::Event::EndArray, parser.nextEvent());
+		CHECK_EQUAL(2, parser.getArrayElementCount());
 	}
 
-	{	e = parser.nextEvent();
-		CHECK_EQUAL(JsonParser::Event::Name, e);
-		CHECK_EQUAL("string", parser.getName());
+	{	// Nested array
+		JsonParser parser;
+		parser.parse("{\"nested\":[[1],[11,12]]}");
+		parser.nextEvent();
+		parser.nextEvent();
+		CHECK_EQUAL(JsonParser::Event::BeginArray, parser.nextEvent());
 
-		e = parser.nextEvent();
-		CHECK_EQUAL(JsonParser::Event::String, e);
-		CHECK_EQUAL("This is a string", parser.getString());
+		CHECK_EQUAL(JsonParser::Event::BeginArray, parser.nextEvent());
+		CHECK_EQUAL(JsonParser::Event::UInteger64, parser.nextEvent());
+		CHECK_EQUAL(1u, parser.getUint64());
+		CHECK_EQUAL(JsonParser::Event::EndArray, parser.nextEvent());
+		CHECK_EQUAL(1u, parser.getArrayElementCount());
+
+		CHECK_EQUAL(JsonParser::Event::BeginArray, parser.nextEvent());
+		CHECK_EQUAL(JsonParser::Event::UInteger64, parser.nextEvent());
+		CHECK_EQUAL(11u, parser.getUint64());
+		CHECK_EQUAL(JsonParser::Event::UInteger64, parser.nextEvent());
+		CHECK_EQUAL(12u, parser.getUint64());
+		CHECK_EQUAL(JsonParser::Event::EndArray, parser.nextEvent());
+		CHECK_EQUAL(2u, parser.getArrayElementCount());
+
+		CHECK_EQUAL(JsonParser::Event::EndArray, parser.nextEvent());
+		CHECK_EQUAL(2u, parser.getArrayElementCount());
+
+		CHECK_EQUAL(JsonParser::Event::EndObject, parser.nextEvent());
 	}
-
-	e = parser.nextEvent();
-	CHECK_EQUAL(JsonParser::Event::EndObject, e);
-
-	e = parser.nextEvent();
-	CHECK_EQUAL(JsonParser::Event::End, e);
 }
 
 TEST_FIXTURE(JsonTest, writer_empty1)

@@ -34,11 +34,18 @@ void JsonParser::_skipWhiteSpace()
 		++_it;
 }
 
+bool JsonParser::_onError(const roUtf8* errMsg)
+{
+	_errStr = errMsg;
+	return false;
+}
+
 bool JsonParser::_parseBeginObject()
 {
 	roAssert(*_it == '{');
 	_event = Event::BeginObject;
-	_stack.pushBack(_event);
+	_StackElement s = { _event, 0 };
+	_stack.pushBack(s);
 	++_it;
 
 	_skipWhiteSpace();
@@ -53,10 +60,11 @@ bool JsonParser::_parseBeginObject()
 bool JsonParser::_parseEndObject()
 {
 	roAssert(*_it == '}');
-	if(_stack.isEmpty() || _stack.back() != Event::BeginObject)
-		return false;
+	if(_stack.isEmpty() || _stack.back().event != Event::BeginObject)
+		return _onError("unexpected '}'");
 
 	++_it;
+	_MemberCount = _stack.back().elementCount;
 	_stack.popBack();
 	_event = Event::EndObject;
 
@@ -79,8 +87,9 @@ bool JsonParser::_parseBeginArray()
 	roAssert(*_it == '[');
 
 	++_it;
-	_stack.pushBack(_event);
 	_event = Event::BeginArray;
+	_StackElement s = { _event, 0 };
+	_stack.pushBack(s);
 
 	_skipWhiteSpace();
 	if(*_it == ']')
@@ -94,10 +103,11 @@ bool JsonParser::_parseBeginArray()
 bool JsonParser::_parseEndArray()
 {
 	roAssert(*_it == ']');
-	if(_stack.isEmpty() || _stack.back() != Event::BeginArray)
-		return false;
+	if(_stack.isEmpty() || _stack.back().event != Event::BeginArray)
+		return _onError("unexpected ']'");
 
 	++_it;
+	_ElementCount = _stack.back().elementCount;
 	_stack.popBack();
 	_event = Event::EndArray;
 
@@ -124,7 +134,7 @@ bool JsonParser::_valueEnd()
 	_skipWhiteSpace();
 
 	if(*_it == ',') {
-		if(_stack.back() == Event::BeginObject)
+		if(_stack.back().event == Event::BeginObject)
 			_nextFunc = &JsonParser::_parseName;
 		else
 			_nextFunc = &JsonParser::_parseValue;
@@ -135,8 +145,9 @@ bool JsonParser::_valueEnd()
 	else if(*_it == ']')
 		_nextFunc = &JsonParser::_parseEndArray;
 	else
-		return false;
+		return _onError("Expecting ',}]'");
 
+	_stack.back().elementCount++;
 	return true;
 }
 
