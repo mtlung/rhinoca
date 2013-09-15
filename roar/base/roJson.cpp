@@ -6,7 +6,9 @@
 
 namespace ro {
 
-JsonParser::JsonParser() : _str(NULL), _event(Event::Undefined) {}
+JsonParser::JsonParser()
+	: _str(""), _it(""), _event(Event::Undefined), _nextFunc(&JsonParser::_unInitializedCallback)
+{}
 
 void JsonParser::parse(const roUtf8* source)
 {
@@ -25,7 +27,7 @@ void JsonParser::parseInplace(roUtf8* source)
 	_it = source;
 	_event = Event::Undefined;
 	_stack.clear();
-	_nextFunc = &JsonParser::_parseBeginObject;
+	_nextFunc = &JsonParser::_parseRoot;
 }
 
 void JsonParser::_skipWhiteSpace()
@@ -34,10 +36,25 @@ void JsonParser::_skipWhiteSpace()
 		++_it;
 }
 
+bool JsonParser::_unInitializedCallback()
+{
+	return _onError("Please call parse()");
+}
+
 bool JsonParser::_onError(const roUtf8* errMsg)
 {
 	_errStr = errMsg;
 	return false;
+}
+
+bool JsonParser::_parseRoot()
+{
+	_skipWhiteSpace();
+	switch(*_it) {
+		case '{': return _parseBeginObject();
+		case '[': return _parseBeginArray();
+		default: return _onError("Expecting object or array as root");
+	}
 }
 
 bool JsonParser::_parseBeginObject()
@@ -111,7 +128,12 @@ bool JsonParser::_parseEndArray()
 	_stack.popBack();
 	_event = Event::EndArray;
 
-	return _valueEnd();
+	if(_stack.isEmpty())
+		_nextFunc = &JsonParser::_parseEnd;
+	else
+		return _valueEnd();
+
+	return true;
 }
 
 bool JsonParser::_parseValue()
@@ -158,7 +180,7 @@ bool JsonParser::_parseName()
 
 	_skipWhiteSpace();
 	if(*_it != ':')
-		return false;
+		return _onError("Expecting ':'");
 
 	++_it;
 	_event = Event::Name;
@@ -200,7 +222,7 @@ static bool parseHex4(roUtf8* it, unsigned& codepoint)
 bool JsonParser::_parseStringImpl()
 {
 	if(*_it != '"')
-		return false;
+		return _onError("Expecting '\"'");
 
 	++_it;
 	roUtf8* first = _it;
@@ -439,7 +461,7 @@ bool JsonParser::_parseNullTrueFalse()
 JsonParser::Event::Enum JsonParser::nextEvent()
 {
 	if(_event == Event::End || _event == Event::Error)
-		return _event;
+		return Event::Error;
 
 	_skipWhiteSpace();
 	if(!(this->*_nextFunc)())

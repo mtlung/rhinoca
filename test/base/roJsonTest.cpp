@@ -129,11 +129,25 @@ TEST_FIXTURE(JsonTest, parse_basicType)
 
 TEST_FIXTURE(JsonTest, parse_array)
 {
-	{	JsonParser parser;
+	{	// Object as root
+		JsonParser parser;
 		parser.parse("{\"empty\":[]}");
 		parser.nextEvent();
 		parser.nextEvent();
 		CHECK_EQUAL(JsonParser::Event::BeginArray, parser.nextEvent());
+		CHECK_EQUAL(JsonParser::Event::EndArray, parser.nextEvent());
+	}
+
+	{	// Array as root
+		JsonParser parser;
+		parser.parse("[]");
+		CHECK_EQUAL(JsonParser::Event::BeginArray, parser.nextEvent());
+		CHECK_EQUAL(JsonParser::Event::EndArray, parser.nextEvent());
+
+		parser.parse("[{}]");
+		CHECK_EQUAL(JsonParser::Event::BeginArray, parser.nextEvent());
+		CHECK_EQUAL(JsonParser::Event::BeginObject, parser.nextEvent());
+		CHECK_EQUAL(JsonParser::Event::EndObject, parser.nextEvent());
 		CHECK_EQUAL(JsonParser::Event::EndArray, parser.nextEvent());
 	}
 
@@ -176,6 +190,60 @@ TEST_FIXTURE(JsonTest, parse_array)
 
 		CHECK_EQUAL(JsonParser::Event::EndObject, parser.nextEvent());
 	}
+}
+
+TEST_FIXTURE(JsonTest, parse_error)
+{
+	{	// Forgot to call pase()
+		JsonParser parser;
+		CHECK_EQUAL(JsonParser::Event::Error, parser.nextEvent());
+	}
+
+#define TEST_ERROR(str) {\
+	JsonParser parser; \
+	parser.parse(str); \
+	while(true) { \
+		JsonParser::Event::Enum e = parser.nextEvent(); \
+		if(e == JsonParser::Event::Error) break; \
+		CHECK(e != JsonParser::Event::End); \
+		if(e == JsonParser::Event::End) break; \
+	}}
+
+	// Text only contains white space(s)
+	TEST_ERROR("");
+	TEST_ERROR(" ");
+	TEST_ERROR(" \n");
+
+	// Expect either an object or array at root
+	TEST_ERROR("null");
+	TEST_ERROR("true");
+	TEST_ERROR("false");
+	TEST_ERROR("\"s\"");
+	TEST_ERROR("0");
+
+	// Invalid value
+	TEST_ERROR("nulL");
+	TEST_ERROR("truE");
+	TEST_ERROR("falsE");
+
+	// Name of an object member must be a string
+	TEST_ERROR("{null:1}");
+	TEST_ERROR("{true:1}");
+	TEST_ERROR("{false:1}");
+	TEST_ERROR("{1:1}");
+	TEST_ERROR("{[]:1}");
+	TEST_ERROR("{{}:1}");
+	TEST_ERROR("{xyz:1}");
+
+	// There must be a colon after the name of object member
+	TEST_ERROR("{\"a\" 1}");
+	TEST_ERROR("{\"a\",1}");
+
+	// Must be a comma or '}' after an object member
+	TEST_ERROR("{]");
+	TEST_ERROR("{\"a\":1]");
+
+#undef TEST_ERROR
 }
 
 TEST_FIXTURE(JsonTest, writer_empty1)

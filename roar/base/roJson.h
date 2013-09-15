@@ -9,9 +9,12 @@ namespace ro {
 
 struct OStream;
 
+// See RFC4627:
+// http://tools.ietf.org/html/rfc4627
 struct JsonParser : private NonCopyable
 {
 	struct Event { enum Enum {
+		End = -1,
 		Error = 0,
 		Null,
 		BeginObject,	EndObject,
@@ -19,10 +22,8 @@ struct JsonParser : private NonCopyable
 		Name,
 		Bool,
 		String,
-		Integer32,		UInteger32,
 		Integer64,		UInteger64,
 		Double,
-		End,
 		Undefined
 	}; };	// Event
 
@@ -38,8 +39,6 @@ struct JsonParser : private NonCopyable
 	bool			getBool()		{ roAssert(_event == Event::Bool); return _boolVal; }
 	const roUtf8*	getName()		{ roAssert(_event == Event::Name); return _stringVal; }
 	const roUtf8*	getString()		{ roAssert(_event == Event::String); return _stringVal; }
-	roInt32			getInt32()		{ roAssert(_event == Event::Integer32); return _int32Val; }
-	roUint32		getUint32()		{ roAssert(_event == Event::UInteger32); return _uint32Val; }
 	roInt64			getInt64()		{ roAssert(_event == Event::Integer64); return _int64Val; }
 	roUint64		getUint64()		{ roAssert(_event == Event::UInteger64); return _uint64Val; }
 	double			getDouble()		{ roAssert(_event == Event::Double); return _doubleVal; }
@@ -51,6 +50,8 @@ struct JsonParser : private NonCopyable
 
 // Private
 	void			_skipWhiteSpace();
+	bool			_unInitializedCallback();
+	bool			_parseRoot();
 	bool			_parseBeginObject();
 	bool			_parseEndObject();
 	bool			_parseEnd();
@@ -78,7 +79,6 @@ struct JsonParser : private NonCopyable
 
 	bool		_boolVal;
 	roUtf8*		_stringVal;
-	roInt32		_int32Val;		roUint32	_uint32Val;
 	roInt64		_int64Val;		roUint64	_uint64Val;
 	double		_doubleVal;
 	roSize		_MemberCount;	roSize		_ElementCount;
