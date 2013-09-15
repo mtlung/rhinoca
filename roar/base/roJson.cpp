@@ -109,10 +109,7 @@ bool JsonParser::_parseBeginArray()
 	_stack.pushBack(s);
 
 	_skipWhiteSpace();
-	if(*_it == ']')
-		_nextFunc = &JsonParser::_parseEndArray;
-	else
-		_nextFunc = &JsonParser::_parseValue;
+	_nextFunc = &JsonParser::_parseValue;
 
 	return true;
 }
