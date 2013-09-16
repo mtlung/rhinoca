@@ -373,6 +373,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\test\base\roReflectionTest.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\test\base\roResourceTest.cpp"
 				>
 			</File>

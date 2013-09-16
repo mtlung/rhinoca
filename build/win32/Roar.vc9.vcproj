@@ -488,6 +488,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roReflection.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roReflection.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roResource.cpp"
 				>
 			</File>

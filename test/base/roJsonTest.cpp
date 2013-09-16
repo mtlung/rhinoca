@@ -318,3 +318,26 @@ TEST_FIXTURE(JsonTest, writer)
 	writer.endArray();
 	writer.endObject();
 }
+
+#include "../../roar/base/roRawFileSystem.h"
+
+TEST_FIXTURE(JsonTest, parse_bigFile)
+{
+	void* file = NULL;
+	Status st = rawFileSystemOpenFile("test.json", file);
+
+	while(rawFileSystemReadWillBlock(file, roUint64(-1))) {}
+
+	roUint64 size;
+	char* buf = rawFileSystemGetBuffer(file, roUint64(-1), size);
+	CHECK(buf);
+
+	JsonParser parser;
+	parser.parseInplace(buf);
+
+	roSize i=0;
+	while(parser.nextEvent() > 0)
+	{
+		++i;
+	}
+}
