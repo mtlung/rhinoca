@@ -591,7 +591,7 @@ void Canvas::translate(float x, float y)
 
 void Canvas::transform(float m11, float m12, float m21, float m22, float dx, float dy)
 {
-	Mat4 m(mat4Identity);
+	Mat4 m(Mat4::identity);
 	m.m11 = m11;	m.m12 = m12;
 	m.m21 = m21;	m.m22 = m22;
 	m.m03 = dx;		m.m13 = dy;
@@ -605,7 +605,7 @@ void Canvas::transform(float mat44[16])
 
 void Canvas::setTransform(float m11, float m12, float m21, float m22, float dx, float dy)
 {
-	Mat4 m(mat4Identity);
+	Mat4 m(Mat4::identity);
 	m.m11 = m11;	m.m12 = m12;
 	m.m21 = m21;	m.m22 = m22;
 	m.m03 = dx;		m.m13 = dy;
@@ -614,7 +614,7 @@ void Canvas::setTransform(float m11, float m12, float m21, float m22, float dx, 
 
 void Canvas::setIdentity()
 {
-	_currentState.transform.identity();
+	_currentState.transform.toIdentity();
 }
 
 void Canvas::setTransform(float mat44[16])

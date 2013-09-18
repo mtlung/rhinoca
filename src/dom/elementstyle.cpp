@@ -212,8 +212,8 @@ ElementStyle::ElementStyle(Element* ele)
 	: element(ele)
 	, opacity(1)
 	, _origin(50, 50, 0)
-	, _localToWorld(mat4Identity)
-	, _localTransformation(mat4Identity)
+	, _localToWorld(Mat4::identity)
+	, _localTransformation(Mat4::identity)
 	, backgroundPositionX(0), backgroundPositionY(0)
 	, backgroundColor(0, 0, 0, 0)
 {
@@ -388,7 +388,7 @@ void ElementStyle::setHeight(unsigned val) { element->setHeight(val); }
 
 void ElementStyle::setIdentity()
 {
-	_localTransformation.identity();
+	_localTransformation.toIdentity();
 }
 
 void ElementStyle::setTransform(const char* transformStr)

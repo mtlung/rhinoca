@@ -26,8 +26,7 @@ TEST_FIXTURE(JsonTest, parse_basicType)
 {
 #define TEST_INT(str, val, eventType, getFunc) {\
 	JsonParser parser; \
-	parser.parse("{\"name\":" ##str "}"); \
-	parser.nextEvent(); \
+	parser.parse("[" ##str "]"); \
 	parser.nextEvent(); \
 	JsonParser::Event::Enum e = parser.nextEvent(); \
 	CHECK_EQUAL(JsonParser::Event::eventType, e); \
@@ -50,8 +49,7 @@ TEST_FIXTURE(JsonTest, parse_basicType)
 
 #define TEST_DOUBLE(str, val) {\
 	JsonParser parser; \
-	parser.parse("{\"name\":" ##str "}"); \
-	parser.nextEvent(); \
+	parser.parse("[" ##str "]"); \
 	parser.nextEvent(); \
 	JsonParser::Event::Enum e = parser.nextEvent(); \
 	CHECK_EQUAL(JsonParser::Event::Double, e); \
@@ -84,8 +82,7 @@ TEST_FIXTURE(JsonTest, parse_basicType)
 
 #define TEST_STRING(str, val) {\
 	JsonParser parser; \
-	parser.parse("{\"name\":" ##str "}"); \
-	parser.nextEvent(); \
+	parser.parse("[" ##str "]"); \
 	parser.nextEvent(); \
 	JsonParser::Event::Enum e = parser.nextEvent(); \
 	CHECK_EQUAL(JsonParser::Event::String, e); \

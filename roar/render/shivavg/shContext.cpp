@@ -56,7 +56,7 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 	g_context->driverContext = (roRDriverContext*)graphicDriverContext;
 	g_context->driver = g_context->driverContext->driver;
 
-	g_context->viewMat.identity();
+	g_context->viewMat.toIdentity();
 
 	vgResizeSurfaceSH(width, height);
 
@@ -139,8 +139,8 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 	// Init the uniform buffer
 	float whiteColor[4] = { 1, 1, 1, 1 };
 	d->updateBuffer(c->uBuffer, roOffsetof(UniformBuffer, UniformBuffer::color), whiteColor, sizeof(whiteColor));
-	d->updateBuffer(c->uBuffer, roOffsetof(UniformBuffer, UniformBuffer::viewMat), (float*)mat4Identity.data, sizeof(c->viewMat));
-	d->updateBuffer(c->uBuffer, roOffsetof(UniformBuffer, UniformBuffer::projMat), (float*)mat4Identity.data, sizeof(c->projMat));
+	d->updateBuffer(c->uBuffer, roOffsetof(UniformBuffer, UniformBuffer::viewMat), (const float*)Mat4::identity.data, sizeof(c->viewMat));
+	d->updateBuffer(c->uBuffer, roOffsetof(UniformBuffer, UniformBuffer::projMat), (const float*)Mat4::identity.data, sizeof(c->projMat));
 
 	// Bind shader input layout
 	{	// For use with stroke

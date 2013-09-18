@@ -6,7 +6,7 @@
 
 namespace ro {
 
-static float matrixEpsilon;
+extern float matrixEpsilon;
 
 /// Column major
 /// Matrix * column vector
@@ -39,6 +39,7 @@ struct Mat4
 	Mat4();
 //	explicit Mat4(const Mat3& rotation, const Vec3& translation);
 	Mat4(const Mat4& a);
+	explicit Mat4(float scalar);
 	explicit Mat4(const float* p16f);
 	Mat4(
 		float xx, float xy, float xz, float xw,
@@ -49,21 +50,25 @@ struct Mat4
 	void		copyFrom(const float* p16f);
 	void		copyTo(float* p16f) const;
 
+	roSize		rows() const { return 4; }
+	roSize		columns() const { return 4; }
+
 	const Vec4& operator[](roSize colIndex) const;
 	Vec4& 		operator[](roSize colIndex);
-	Mat4		operator*(float a) const;
-	Vec2		operator*(const Vec2& vec) const;
-	Vec3		operator*(const Vec3& vec) const;
-	Vec4		operator*(const Vec4& vec) const;
-	Mat4		operator*(const Mat4& a) const;
-	Mat4		operator+(const Mat4& a) const;
-	Mat4		operator-(const Mat4& a) const;
-	Mat4&		operator*=(float a);
-	Mat4&		operator*=(const Mat4& a);
-	Mat4&		operator+=(const Mat4& a);
-	Mat4&		operator-=(const Mat4& a);
 
+	// Operator with scaler
+	Mat4&			operator*=(float a);
+	friend Mat4		operator+(const Mat4& mat, float a);
+	friend Mat4		operator+(float a, const Mat4& mat);
+	friend Mat4		operator-(const Mat4& mat, float a);
+	friend Mat4		operator-(float a, const Mat4& mat);
+	friend Mat4		operator*(const Mat4& mat, float a);
 	friend Mat4		operator*(float a, const Mat4& mat);
+
+	// Operator with vec
+	friend Vec2		operator*(const Mat4& mat, const Vec2& vec);
+	friend Vec3		operator*(const Mat4& mat, const Vec3& vec);
+	friend Vec4		operator*(const Mat4& mat, const Vec4& vec);
 	friend Vec2		operator*(const Vec2& vec, const Mat4& mat);
 	friend Vec3		operator*(const Vec3& vec, const Mat4& mat);
 	friend Vec4		operator*(const Vec4& vec, const Mat4& mat);
@@ -71,13 +76,21 @@ struct Mat4
 	friend Vec3&	operator*=(Vec3& vec, const Mat4& mat);
 	friend Vec4&	operator*=(Vec4& vec, const Mat4& mat);
 
+	// Operator with mat
+	Mat4		operator*(const Mat4& a) const;
+	Mat4		operator+(const Mat4& a) const;
+	Mat4		operator-(const Mat4& a) const;
+	Mat4&		operator*=(const Mat4& a);
+	Mat4&		operator+=(const Mat4& a);
+	Mat4&		operator-=(const Mat4& a);
+
 	bool		compare(const Mat4& a) const;					// Exact compare, no epsilon
 	bool		compare(const Mat4& a, float epsilon) const;	// Compare with epsilon
 	bool		operator==(const Mat4& a) const;				// Exact compare, no epsilon
 	bool		operator!=(const Mat4& a) const;				// Exact compare, no epsilon
 
-	void		zero();
-	void		identity();
+	void		toZero();
+	void		toIdentity();
 	bool		isIdentity(float epsilon = matrixEpsilon) const;
 	bool		isSymmetric(float epsilon = matrixEpsilon) const;
 	bool		isDiagonal(float epsilon = matrixEpsilon) const;
@@ -88,23 +101,25 @@ struct Mat4
 
 	float		trace() const;
 	float		determinant() const;
-	Mat4		transpose() const;		// Returns transpose
+	Mat4		transpose() const;
 	Mat4&		transposeSelf();
-	Mat4		inverse() const;		// Returns the inverse (m * m.Inverse() = identity)
-	bool		inverseSelf();			// Returns false if determinant is zero
-	Mat4		inverseFast() const;	// Returns the inverse (m * m.Inverse() = identity)
-	bool		inverseFastSelf();		// Returns false if determinant is zero
+	bool		inverse(Mat4& dst, float epsilon = matrixEpsilon) const;	// Returns the inverse (m * m.Inverse() = identity)
+	bool		inverseSelf(float epsilon = matrixEpsilon);					// Returns false if determinant is zero
+	bool		inverseFast(Mat4& dst, float epsilon = matrixEpsilon) const;// Returns the inverse (m * m.Inverse() = identity)
+	bool		inverseFastSelf(float epsilon = matrixEpsilon);				// Returns false if determinant is zero
 	Mat4		transposeMultiply(const Mat4& b) const;
 
 	const char*	toString(int precision = 2) const;
-};	// Mat4
 
-extern const Mat4 mat4Identity;
+	static const Mat4 identity;
+};	// Mat4
 
 void mat4MulVec2(const float m[4][4], const float src[2], float dst[2]);
 void mat4MulVec3(const float m[4][4], const float src[3], float dst[3]);
 void mat4MulVec4(const float m[4][4], const float src[4], float dst[4]);
 void mat4MulMat4(const float lhs[4][4], const float rhs[4][4], float dst[4][4]);
+
+bool mat4Inverse(float dst[4][4], const float src[4][4], float epsilon = matrixEpsilon);
 
 Mat4 makeScaleMat4(const float scale[3]);
 Mat4 makeAxisRotationMat4(const float axis[3], float angleRad);

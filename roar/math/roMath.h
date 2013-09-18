@@ -20,6 +20,9 @@ static const float roM_MS2SEC		= 0.001f;					// Milliseconds to seconds multipli
 static const float roINFINITY		= 1e30f;					// Huge number which should be larger than any valid number used
 static const float roFLT_EPSILON	= 1.192092896e-07f;			// Smallest positive number such that 1.0+FLT_EPSILON != 1.0
 
+bool roIsNearZero			(float x, float epsilon = roFLT_EPSILON);
+bool roIsNearEqual			(float a, float b, float epsilon = roFLT_EPSILON);
+
 float roFAbs				(float x);
 float roSqrt				(float x);
 float roInvSqrt				(float x);
@@ -62,6 +65,9 @@ template<class T> T roStepRunAvg(const T& oldVal, const T& newVal, unsigned avgO
 
 
 // ----------------------------------------------------------------------
+
+inline bool roIsNearZero(float x, float epsilon) { return roFAbs(x) < epsilon; }
+inline bool roIsNearEqual(float a, float b, float epsilon) { return roIsNearZero(a - b, epsilon); }
 
 inline float roFAbs(float x) { return ::fabsf(x); }
 inline float roSqrt(float x) { return ::sqrtf(x); }
