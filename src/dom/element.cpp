@@ -214,12 +214,12 @@ NodeList* Element::getElementsByTagName(const char* tagName)
 
 void Element::fixRelativePath(const char* uri, const char* docUri, Path& path)
 {
-	if(Path(uri).hasRootDirectory())	// Absolute path
+	if(roStrStr(uri, "://"))	// Absolute path
 		path = uri;
 	else {
 		// Relative path to the document, convert it to absolute path
 		path = docUri;
-		path = path.getBranchPath() / uri;
+		path = path.getBranchPath() / ((*uri == '/') ? uri + 1 : uri);
 	}
 }
 
