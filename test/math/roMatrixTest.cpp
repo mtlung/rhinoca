@@ -38,6 +38,11 @@ TEST_FIXTURE(MatrixTest, basic)
 	}
 }
 
+TEST_FIXTURE(MatrixTest, negation)
+{
+	CHECK(-ma == Mat4(0, -1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13, -14, -15));
+}
+
 TEST_FIXTURE(MatrixTest, transformVector)
 {
 	float trans[] = { 1, 2, 3 };
@@ -130,10 +135,10 @@ TEST_FIXTURE(MatrixTest, inverse)
 	Mat4 ai;
 	CHECK(a.inverse(ai));
 
-	CHECK(ai.compare(b));
+	CHECK(ai == b);
 	Mat4 tmp;
 	CHECK((a * 1).inverse(tmp));
-	CHECK(ai.compare(tmp));
+	CHECK(ai == tmp);
 
 	CHECK(a * ai == Mat4::identity);
 	CHECK(ai * a == Mat4::identity);

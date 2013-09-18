@@ -66,6 +66,14 @@ Mat4 operator*(const Mat4& m, float a)
 }
 
 // Operator with mat
+Mat4 Mat4::operator-() const
+{
+	Mat4 ret;
+	for(roSize i=0; i<4; ++i) for(roSize j=0; j<4; ++j)
+		ret.mat[i][j] = -mat[i][j];
+	return ret;
+}
+
 Mat4 Mat4::operator+(const Mat4& a) const
 {
 	Mat4 ret;
@@ -86,6 +94,14 @@ bool Mat4::compare(const Mat4& a, float epsilon) const
 {
 	for(roSize i=0; i<4; ++i) for(roSize j=0; j<4; ++j)
 		if(!roIsNearEqual(mat[i][j], a.mat[i][j], epsilon))
+			return false;
+	return true;
+}
+
+bool Mat4::operator==(const Mat4& a) const
+{
+	for(roSize i=0; i<4; ++i) for(roSize j=0; j<4; ++j)
+		if(mat[i][j] != a.mat[i][j])
 			return false;
 	return true;
 }

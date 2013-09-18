@@ -77,6 +77,7 @@ struct Mat4
 	friend Vec4&	operator*=(Vec4& vec, const Mat4& mat);
 
 	// Operator with mat
+	Mat4		operator-() const;
 	Mat4		operator*(const Mat4& a) const;
 	Mat4		operator+(const Mat4& a) const;
 	Mat4		operator-(const Mat4& a) const;

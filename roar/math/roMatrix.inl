@@ -120,10 +120,6 @@ inline bool Mat4::compare(const Mat4& a) const {
 	return compare(a, matrixEpsilon);
 }
 
-inline bool Mat4::operator==(const Mat4& a) const {
-	return memcmp(mat, a.mat, sizeof(mat)) == 0;
-}
-
 inline bool Mat4::operator!=(const Mat4& a) const {
 	return !(*this == a);
 }
