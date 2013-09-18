@@ -141,7 +141,13 @@ static bool _parseUri(const char* uri, SockAddr& addr, Array<char>& host, String
 		path.insert(0, '/');
 
 	// NOTE: Currently this host resolving operation is blocking
-	if(!addr.parse(host.begin(), 80)) {
+	bool parseOk = false;
+	if(host.find(':'))
+		parseOk = addr.parse(host.begin());
+	else
+		parseOk = addr.parse(host.begin(), 80);
+
+	if(!parseOk) {
 		roLog("error", "Fail to resolve host %s\n", host.begin());
 		return false;
 	}
