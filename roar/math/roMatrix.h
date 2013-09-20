@@ -56,7 +56,7 @@ struct Mat4
 	const Vec4& operator[](roSize colIndex) const;
 	Vec4& 		operator[](roSize colIndex);
 
-	// Operator with scaler
+// Operator with scaler
 	Mat4&			operator*=(float a);
 	friend Mat4		operator+(const Mat4& mat, float a);
 	friend Mat4		operator+(float a, const Mat4& mat);
@@ -65,7 +65,7 @@ struct Mat4
 	friend Mat4		operator*(const Mat4& mat, float a);
 	friend Mat4		operator*(float a, const Mat4& mat);
 
-	// Operator with vec
+// Operator with vec
 	friend Vec2		operator*(const Mat4& mat, const Vec2& vec);
 	friend Vec3		operator*(const Mat4& mat, const Vec3& vec);
 	friend Vec4		operator*(const Mat4& mat, const Vec4& vec);
@@ -76,7 +76,7 @@ struct Mat4
 	friend Vec3&	operator*=(Vec3& vec, const Mat4& mat);
 	friend Vec4&	operator*=(Vec4& vec, const Mat4& mat);
 
-	// Operator with mat
+// Operator with mat
 	Mat4		operator-() const;
 	Mat4		operator*(const Mat4& a) const;
 	Mat4		operator+(const Mat4& a) const;

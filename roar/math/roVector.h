@@ -26,25 +26,34 @@ struct Vec2
 
 	float		operator[](roSize index) const;
 	float&		operator[](roSize index);
+
+// Operator with scaler
+	Vec2& 		operator+=(float a);
+	Vec2& 		operator-=(float a);
+	Vec2& 		operator*=(float a);
+	Vec2& 		operator/=(float a);
+	friend Vec2	operator+(float a, const Vec2& b);
+	friend Vec2	operator+(const Vec2& a, float b);
+	friend Vec2	operator-(float a, const Vec2& b);
+	friend Vec2	operator-(const Vec2& a, float b);
+	friend Vec2	operator*(float a, const Vec2& b);
+	friend Vec2	operator*(const Vec2& a, float b);
+	friend Vec2	operator/(const Vec2& a, float b);
+
+// Operator with vec
 	Vec2		operator-() const;
-	float		operator*(const Vec2& a) const;
-	Vec2		operator*(float a) const;
-	Vec2		operator/(float a) const;
 	Vec2		operator+(const Vec2& a) const;
 	Vec2		operator-(const Vec2& a) const;
 	Vec2& 		operator+=(const Vec2& a);
 	Vec2& 		operator-=(const Vec2& a);
 	Vec2& 		operator/=(const Vec2& a);
-	Vec2& 		operator/=(float a);
-	Vec2& 		operator*=(float a);
-
-	friend Vec2	operator*(float a, const Vec2 b);
 
 	bool		compare(const Vec2& a) const;						// Exact compare, no epsilon
 	bool		compare(const Vec2& a, float epsilon) const;		// Compare with epsilon
 	bool		operator==(	const Vec2& a) const;					// Exact compare, no epsilon
 	bool		operator!=(	const Vec2& a) const;					// Exact compare, no epsilon
 
+	float		dot(const Vec2& a) const;
 	float		length() const;
 	float		lengthFast() const;
 	float		lengthSqr() const;
@@ -84,19 +93,27 @@ struct Vec3
 
 	float		operator[](roSize index) const;
 	float&		operator[](roSize index);
+
+// Operator with scaler
+	Vec3& 		operator+=(float a);
+	Vec3& 		operator-=(float a);
+	Vec3&		operator*=(float a);
+	Vec3&		operator/=(float a);
+	friend Vec3	operator+(float a, const Vec3& b);
+	friend Vec3	operator+(const Vec3& a, float b);
+	friend Vec3	operator-(float a, const Vec3& b);
+	friend Vec3	operator-(const Vec3& a, float b);
+	friend Vec3	operator*(float a, const Vec3& b);
+	friend Vec3	operator*(const Vec3& a, float b);
+	friend Vec3	operator/(const Vec3& a, float b);
+
+// Operator with vec
 	Vec3		operator-() const;
-	float		operator*(const Vec3& a) const;
-	Vec3		operator*(float a) const;
-	Vec3		operator/(float a) const;
 	Vec3		operator+(const Vec3& a) const;
 	Vec3		operator-(const Vec3& a) const;
 	Vec3&		operator+=(const Vec3& a);
 	Vec3&		operator-=(const Vec3& a);
 	Vec3&		operator/=(const Vec3& a);
-	Vec3&		operator/=(float a);
-	Vec3&		operator*=(float a);
-
-	friend Vec3	operator*(float a, const Vec3& b);
 
 	bool		compare(const Vec3& a) const;						// Exact compare, no epsilon
 	bool		compare(const Vec3& a, float epsilon) const;		// Compare with epsilon
@@ -106,6 +123,7 @@ struct Vec3
 	bool		fixDegenerateNormal();	// Fix degenerate axial cases
 	bool		fixDenormals();			// Change tiny numbers to zero
 
+	float		dot(const Vec3& a) const;
 	Vec3		cross(const Vec3& a) const;
 	Vec3&		cross(const Vec3& a, const Vec3& b);
 	float		length() const;
@@ -162,25 +180,34 @@ struct Vec4
 
 	float		operator[](roSize index) const;
 	float&		operator[](roSize index);
+
+// Operator with scaler
+	Vec4&		operator+=(float a);
+	Vec4&		operator-=(float a);
+	Vec4&		operator*=(float a);
+	Vec4&		operator/=(float a);
+	friend Vec4	operator+(float a, const Vec4& b);
+	friend Vec4	operator+(const Vec4& a, float b);
+	friend Vec4	operator-(float a, const Vec4& b);
+	friend Vec4	operator-(const Vec4& a, float b);
+	friend Vec4	operator*(float a, const Vec4& b);
+	friend Vec4	operator*(const Vec4& a, float b);
+	friend Vec4	operator/(const Vec4& a, float b);
+
+// Operator with vec
 	Vec4		operator-() const;
-	float		operator*(const Vec4& a) const;
-	Vec4		operator*(float a) const;
-	Vec4		operator/(float a) const;
 	Vec4		operator+(const Vec4& a) const;
 	Vec4		operator-(const Vec4& a) const;
 	Vec4&		operator+=(const Vec4& a);
 	Vec4&		operator-=(const Vec4& a);
 	Vec4&		operator/=(const Vec4& a);
-	Vec4&		operator/=(float a);
-	Vec4&		operator*=(float a);
-
-	friend Vec4	operator*(float a, const Vec4& b);
 
 	bool		compare(const Vec4& a) const;						// Exact compare, no epsilon
 	bool		compare(const Vec4& a, float epsilon) const;		// Compare with epsilon
 	bool		operator==(const Vec4& a) const;					// Exact compare, no epsilon
 	bool		operator!=(const Vec4& a) const;					// Exact compare, no epsilon
 
+	float		dot(const Vec4& a) const;
 	float		length() const;
 	float		lengthSqr() const;
 	float		lengthFast() const;

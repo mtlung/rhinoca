@@ -38,19 +38,97 @@ inline void Vec2::copyTo(float* p2f) const {
 	p2f[1] = y;
 }
 
+inline float Vec2::operator[](roSize index) const {
+	roAssert(index < 2);
+	return (&x)[index];
+}
+
+inline float& Vec2::operator[](roSize index) {
+	roAssert(index < 2);
+	return (&x)[index];
+}
+
+inline Vec2& Vec2::operator+=(float a) {
+	x += a;	y += a;
+	return *this;
+}
+
+inline Vec2& Vec2::operator-=(float a) {
+	x -= a;	y -= a;
+	return *this;
+}
+
+inline Vec2& Vec2::operator*=(float a) {
+	x *= a;	y *= a;
+	return *this;
+}
+
+inline Vec2& Vec2::operator/=(float a) {
+	return operator*=(1.0f / a);
+}
+
+inline Vec2 operator+(float a, const Vec2& b) {
+	return Vec2(b.x + a, b.y + a);
+}
+
+inline Vec2 operator+(const Vec2& a, float b) {
+	return b + a;
+}
+
+inline Vec2 operator-(float a, const Vec2& b) {
+	return Vec2(b.x - a, b.y - a);
+}
+
+inline Vec2 operator-(const Vec2& a, float b) {
+	return Vec2(a.x - b, a.y - b);
+}
+
+inline Vec2 operator*(float a, const Vec2& b) {
+	return Vec2(b.x * a, b.y * a);
+}
+
+inline Vec2 operator*(const Vec2& a, float b) {
+	return b * a;
+}
+
+inline Vec2 operator/(const Vec2& a, float b) {
+	return a * (1.0f / b);
+}
+
+inline Vec2 Vec2::operator-() const {
+	return Vec2(-x, -y);
+}
+
+inline Vec2 Vec2::operator+(const Vec2& a) const {
+	return Vec2(x + a.x, y + a.y);
+}
+
+inline Vec2 Vec2::operator-(const Vec2& a) const {
+	return Vec2(x - a.x, y - a.y);
+}
+
+inline Vec2& Vec2::operator+=(const Vec2& a) {
+	x += a.x; y += a.y;
+	return *this;
+}
+
+inline Vec2& Vec2::operator-=(const Vec2& a) {
+	x -= a.x; y -= a.y;
+	return *this;
+}
+
+inline Vec2& Vec2::operator/=(const Vec2& a) {
+	x /= a.x; y /= a.y;
+	return *this;
+}
+
 inline bool Vec2::compare(const Vec2& a) const {
 	return ((x == a.x) && (y == a.y));
 }
 
 inline bool Vec2::compare(const Vec2& a, float epsilon) const {
-	if (roFAbs(x - a.x) > epsilon) {
-		return false;
-	}
-
-	if (roFAbs(y - a.y) > epsilon) {
-		return false;
-	}
-
+	if (roFAbs(x - a.x) > epsilon) return false;
+	if (roFAbs(y - a.y) > epsilon) return false;
 	return true;
 }
 
@@ -62,12 +140,8 @@ inline bool Vec2::operator!=(const Vec2& a) const {
 	return !compare(a);
 }
 
-inline float Vec2::operator[](roSize index) const {
-	return (&x)[index];
-}
-
-inline float& Vec2::operator[](roSize index) {
-	return (&x)[index];
+inline float Vec2::dot(const Vec2& a) const {
+	return x * a.x + y * a.y;
 }
 
 inline float Vec2::length() const {
@@ -115,71 +189,6 @@ inline void Vec2::snapInt() {
 	y = float(int(y));
 }
 
-inline Vec2 Vec2::operator-() const {
-	return Vec2(-x, -y);
-}
-
-inline Vec2 Vec2::operator-(const Vec2& a) const {
-	return Vec2(x - a.x, y - a.y);
-}
-
-inline float Vec2::operator*(const Vec2& a) const {
-	return x * a.x + y * a.y;
-}
-
-inline Vec2 Vec2::operator*(float a) const {
-	return Vec2(x * a, y * a);
-}
-
-inline Vec2 Vec2::operator/(float a) const {
-	float inva = 1.0f / a;
-	return Vec2(x * inva, y * inva);
-}
-
-inline Vec2 operator*(float a, const Vec2 b) {
-	return Vec2(b.x * a, b.y * a);
-}
-
-inline Vec2 Vec2::operator+(const Vec2& a) const {
-	return Vec2(x + a.x, y + a.y);
-}
-
-inline Vec2& Vec2::operator+=(const Vec2& a) {
-	x += a.x;
-	y += a.y;
-
-	return *this;
-}
-
-inline Vec2& Vec2::operator/=(const Vec2& a) {
-	x /= a.x;
-	y /= a.y;
-
-	return *this;
-}
-
-inline Vec2& Vec2::operator/=(float a) {
-	float inva = 1.0f / a;
-	x *= inva;
-	y *= inva;
-
-	return *this;
-}
-
-inline Vec2& Vec2::operator-=(const Vec2& a) {
-	x -= a.x;
-	y -= a.y;
-
-	return *this;
-}
-
-inline Vec2& Vec2::operator*=(float a) {
-	x *= a;
-	y *= a;
-
-	return *this;
-}
-
 
 // ----------------------------------------------------------------------
 
@@ -203,10 +212,12 @@ inline Vec3::Vec3(float x, float y, float z) {
 }
 
 inline float Vec3::operator[](roSize index) const {
+	roAssert(index < 3);
 	return (&x)[index];
 }
 
 inline float &Vec3::operator[](roSize index) {
+	roAssert(index < 3);
 	return (&x)[index];
 }
 
@@ -232,73 +243,77 @@ inline void Vec3::copyTo(float* p3f) const {
 	p3f[2] = z;
 }
 
-inline Vec3 Vec3::operator-() const {
-	return Vec3(-x, -y, -z);
+inline Vec3& Vec3::operator+=(float a) {
+	x += a;	y += a; z += a;
+	return *this;
 }
 
-inline Vec3 Vec3::operator-(const Vec3& a) const {
-	return Vec3(x - a.x, y - a.y, z - a.z);
+inline Vec3& Vec3::operator-=(float a) {
+	x -= a;	y -= a; z -= a;
+	return *this;
 }
 
-inline float Vec3::operator*(const Vec3& a) const {
-	return x * a.x + y * a.y + z * a.z;
+inline Vec3& Vec3::operator*=(float a) {
+	x *= a; y *= a; z *= a;
+	return *this;
 }
 
-inline Vec3 Vec3::operator*(float a) const {
-	return Vec3(x * a, y * a, z * a);
+inline Vec3& Vec3::operator/=(float a) {
+	return operator*=(1.0f / a);
 }
 
-inline Vec3 Vec3::operator/(float a) const {
-	float inva = 1.0f / a;
-	return Vec3(x * inva, y * inva, z * inva);
+inline Vec3 operator+(float a, const Vec3& b) {
+	return Vec3(b.x + a, b.y + a, b.z + a);
+}
+
+inline Vec3 operator+(const Vec3& a, float b) {
+	return b + a;
+}
+
+inline Vec3 operator-(float a, const Vec3& b) {
+	return Vec3(b.x - a, b.y - a, b.z - a);
+}
+
+inline Vec3 operator-(const Vec3& a, float b) {
+	return Vec3(a.x - b, a.y - b, a.z - b);
 }
 
 inline Vec3 operator*(float a, const Vec3& b) {
 	return Vec3(b.x * a, b.y * a, b.z * a);
 }
 
+inline Vec3 operator*(const Vec3& a, float b) {
+	return b * a;
+}
+
+inline Vec3 operator/(const Vec3& a, float b) {
+	return a * (1.0f / b);
+}
+
+inline Vec3 Vec3::operator-() const {
+	return Vec3(-x, -y, -z);
+}
+
 inline Vec3 Vec3::operator+(const Vec3& a) const {
 	return Vec3(x + a.x, y + a.y, z + a.z);
 }
 
+inline Vec3 Vec3::operator-(const Vec3& a) const {
+	return Vec3(x - a.x, y - a.y, z - a.z);
+}
+
 inline Vec3& Vec3::operator+=(const Vec3& a) {
-	x += a.x;
-	y += a.y;
-	z += a.z;
-
-	return *this;
-}
-
-inline Vec3& Vec3::operator/=(const Vec3& a) {
-	x /= a.x;
-	y /= a.y;
-	z /= a.z;
-
-	return *this;
-}
-
-inline Vec3& Vec3::operator/=(float a) {
-	float inva = 1.0f / a;
-	x *= inva;
-	y *= inva;
-	z *= inva;
-
+	x += a.x; y += a.y; z += a.z;
 	return *this;
 }
 
 inline Vec3& Vec3::operator-=(const Vec3& a) {
-	x -= a.x;
-	y -= a.y;
-	z -= a.z;
-
+	x -= a.x; y -= a.y; z -= a.z;
 	return *this;
 }
 
-inline Vec3& Vec3::operator*=(float a) {
-	x *= a;
-	y *= a;
-	z *= a;
-
+inline Vec3& Vec3::operator/=(const Vec3& a) {
+	x /= a.x; y /= a.y; z /= a.z;
 	return *this;
 }
 
@@ -307,18 +322,9 @@ inline bool Vec3::compare(const Vec3& a) const {
 }
 
 inline bool Vec3::compare(const Vec3& a, float epsilon) const {
-	if (roFAbs(x - a.x) > epsilon) {
-		return false;
-	}
-
-	if (roFAbs(y - a.y) > epsilon) {
-		return false;
-	}
-
-	if (roFAbs(z - a.z) > epsilon) {
-		return false;
-	}
-
+	if (roFAbs(x - a.x) > epsilon) return false;
+	if (roFAbs(y - a.y) > epsilon) return false;
+	if (roFAbs(z - a.z) > epsilon) return false;
 	return true;
 }
 
@@ -328,6 +334,10 @@ inline bool Vec3::operator==(const Vec3& a) const {
 
 inline bool Vec3::operator!=(const Vec3& a) const {
 	return !compare(a);
+}
+
+inline float Vec3::dot(const Vec3& a) const {
+	return x * a.x + y * a.y + z * a.z;
 }
 
 inline float Vec3::normalizeFast(void) {
@@ -456,78 +466,77 @@ inline void Vec4::copyTo(float* p4f) const {
 	p4f[2] = w;
 }
 
-inline Vec4 Vec4::operator-() const {
-	return Vec4(-x, -y, -z, -w);
+inline Vec4& Vec4::operator+=(float a) {
+	x += a;	y += a; z += a; w += a;
+	return *this;
 }
 
-inline Vec4 Vec4::operator-(const Vec4& a) const {
-	return Vec4(x - a.x, y - a.y, z - a.z, w - a.w);
+inline Vec4& Vec4::operator-=(float a) {
+	x -= a;	y -= a; z -= a; w -= a;
+	return *this;
 }
 
-inline float Vec4::operator*(const Vec4& a) const {
-	return x * a.x + y * a.y + z * a.z + w * a.w;
+inline Vec4& Vec4::operator*=(float a) {
+	x *= a; y *= a; z *= a;  w *= a;
+	return *this;
 }
 
-inline Vec4 Vec4::operator*(float a) const {
-	return Vec4(x * a, y * a, z * a, w * a);
+inline Vec4& Vec4::operator/=(float a) {
+	return operator*=(1.0f / a);
 }
 
-inline Vec4 Vec4::operator/(float a) const {
-	float inva = 1.0f / a;
-	return Vec4(x * inva, y * inva, z * inva, w * inva);
+inline Vec4 operator+(float a, const Vec4& b) {
+	return Vec4(b.x + a, b.y + a, b.z + a, b.w + a);
+}
+
+inline Vec4 operator+(const Vec4& a, float b) {
+	return b + a;
+}
+
+inline Vec4 operator-(float a, const Vec4& b) {
+	return Vec4(b.x - a, b.y - a, b.z - a, b.w - a);
+}
+
+inline Vec4 operator-(const Vec4& a, float b) {
+	return Vec4(a.x - b, a.y - b, a.z - b, a.w - b);
 }
 
 inline Vec4 operator*(float a, const Vec4& b) {
 	return Vec4(b.x * a, b.y * a, b.z * a, b.w * a);
 }
 
+inline Vec4 operator*(const Vec4& a, float b) {
+	return b * a;
+}
+
+inline Vec4 operator/(const Vec4& a, float b) {
+	return a * (1.0f / b);
+}
+
+inline Vec4 Vec4::operator-() const {
+	return Vec4(-x, -y, -z, -w);
+}
+
 inline Vec4 Vec4::operator+(const Vec4& a) const {
 	return Vec4(x + a.x, y + a.y, z + a.z, w + a.w);
 }
 
+inline Vec4 Vec4::operator-(const Vec4& a) const {
+	return Vec4(x - a.x, y - a.y, z - a.z, w - a.w);
+}
+
 inline Vec4& Vec4::operator+=(const Vec4& a) {
-	x += a.x;
-	y += a.y;
-	z += a.z;
-	w += a.w;
-
-	return *this;
-}
-
-inline Vec4& Vec4::operator/=(const Vec4& a) {
-	x /= a.x;
-	y /= a.y;
-	z /= a.z;
-	w /= a.w;
-
-	return *this;
-}
-
-inline Vec4& Vec4::operator/=(float a) {
-	float inva = 1.0f / a;
-	x *= inva;
-	y *= inva;
-	z *= inva;
-	w *= inva;
-
+	x += a.x; y += a.y; z += a.z; w += a.w;
 	return *this;
 }
 
 inline Vec4& Vec4::operator-=(const Vec4& a) {
-	x -= a.x;
-	y -= a.y;
-	z -= a.z;
-	w -= a.w;
-
+	x -= a.x; y -= a.y; z -= a.z; w -= a.w;
 	return *this;
 }
 
-inline Vec4& Vec4::operator*=(float a) {
-	x *= a;
-	y *= a;
-	z *= a;
-	w *= a;
-
+inline Vec4& Vec4::operator/=(const Vec4& a) {
+	x /= a.x; y /= a.y; z /= a.z; w /= a.w;
 	return *this;
 }
 
@@ -536,22 +545,10 @@ inline bool Vec4::compare(const Vec4& a) const {
 }
 
 inline bool Vec4::compare(const Vec4& a, float epsilon) const {
-	if (roFAbs(x - a.x) > epsilon) {
-		return false;
-	}
-
-	if (roFAbs(y - a.y) > epsilon) {
-		return false;
-	}
-
-	if (roFAbs(z - a.z) > epsilon) {
-		return false;
-	}
-
-	if (roFAbs(w - a.w) > epsilon) {
-		return false;
-	}
-
+	if (roFAbs(x - a.x) > epsilon) return false;
+	if (roFAbs(y - a.y) > epsilon) return false;
+	if (roFAbs(z - a.z) > epsilon) return false;
+	if (roFAbs(w - a.w) > epsilon) return false;
 	return true;
 }
 
@@ -561,6 +558,10 @@ inline bool Vec4::operator==(const Vec4& a) const {
 
 inline bool Vec4::operator!=(const Vec4& a) const {
 	return !compare(a);
+}
+
+inline float Vec4::dot(const Vec4& a) const {
+	return x * a.x + y * a.y + z * a.z + w * a.w;
 }
 
 inline float Vec4::normalizeFast(void) {

@@ -205,7 +205,7 @@ inline void Vec3::orthogonalBasis(Vec3& left, Vec3& up) const {
 inline void Vec3::projectOntoPlane(const Vec3& normal, float overBounce) {
 	float backoff;
 
-	backoff = *this * normal;
+	backoff = dot(normal);
 
 	if (overBounce != 1.0) {
 		if (backoff < 0) {
@@ -225,11 +225,11 @@ inline bool Vec3::projectAlongPlane(const Vec3& normal, float epsilon, float ove
 	cross = this->cross(normal).cross((*this));
 	// normalize so a fixed epsilon can be used
 	cross.normalize();
-	len = normal * cross;
+	len = normal.dot(cross);
 	if (roFAbs(len) < epsilon) {
 		return false;
 	}
-	cross *= overBounce * (normal * (*this)) / len;
+	cross *= overBounce * dot(normal) / len;
 	(*this) -= cross;
 	return true;
 }
