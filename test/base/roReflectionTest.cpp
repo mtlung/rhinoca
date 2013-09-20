@@ -3,8 +3,6 @@
 
 using namespace ro;
 
-class ReflectionTest {};
-
 struct Shape
 {
 	float area;
@@ -12,7 +10,9 @@ struct Shape
 
 struct Circle : public Shape
 {
+	Circle() : pi(3.14f) {}
 	float radius;
+	const float pi;
 };
 
 struct Vector3
@@ -26,46 +26,117 @@ struct Body
 	Vector3 velocity;
 };
 
-TEST_FIXTURE(ReflectionTest, empty)
+struct ContainPointer
 {
-	reflection.Class<bool>("bool");
-	reflection.Class<int>("int");
-	reflection.Class<float>("float");
-	reflection.Class<double>("double");
+	Body* body;
+	const Body* constBody;
+};
 
-	reflection
-		.Class<Vector3>("Vector3")
-		.field("x", &Vector3::x)
-		.field("y", &Vector3::y)
-		.field("z", &Vector3::z);
-
-	reflection
-		.Class<Shape>("Shape")
-		.field("area", &Shape::area);
-
-	reflection
-		.Class<Circle, Shape>("Circle")
-		.field("radius", &Circle::radius);
-
-	reflection
-		.Class<Body>("Body")
-		.field("position", &Body::position)
-		.field("velocity", &Body::velocity);
-
+struct ReflectionTest
+{
+	ReflectionTest()
 	{
-		Type* t = reflection.getType<Vector3>();
-		Vector3 v = { 1, 2, 3 };
-		CHECK_EQUAL(1, *t->getField("x")->getPtr<float>(&v));
-		CHECK_EQUAL(2, *t->getField("y")->getPtr<float>(&v));
+		reflection.Class<bool>("bool");
+		reflection.Class<int>("int");
+		reflection.Class<float>("float");
+		reflection.Class<double>("double");
+
+		reflection
+			.Class<Vector3>("Vector3")
+			.field("x", &Vector3::x)
+			.field("y", &Vector3::y)
+			.field("z", &Vector3::z);
+
+		reflection
+			.Class<Shape>("Shape")
+			.field("area", &Shape::area);
+
+		reflection
+			.Class<Circle, Shape>("Circle")
+			.field("radius", &Circle::radius)
+			.field("pi", &Circle::pi);
+
+		reflection
+			.Class<Body>("Body")
+			.field("position", &Body::position)
+			.field("velocity", &Body::velocity);
+
+		reflection
+			.Class<ContainPointer>("ContainPointer")
+			.field("body", &ContainPointer::body)
+			.field("constBody", &ContainPointer::constBody);
 	}
 
+	~ReflectionTest()
 	{
+		reflection.reset();
+	}
+};
+
+TEST_FIXTURE(ReflectionTest, field)
+{
+	{	// Normal type
 		Type* t = reflection.getType<Circle>();
+
+		Field* f = t->getField("radius");
+		Field* radius = f;
+		CHECK(!f->isConst);
+		CHECK(!f->isPointer);
+		CHECK_EQUAL(reflection.getType<float>(), f->type);
+
+		f = t->getField("pi");
+		Field* pi = f;
+		CHECK(f->isConst);
+		CHECK(!f->isPointer);
+		CHECK_EQUAL(reflection.getType<float>(), f->type);
+
+		// From base class
+		f = t->getField("area");
+		Field* area = f;
+		CHECK(!f->isConst);
+		CHECK(!f->isPointer);
+		CHECK_EQUAL(reflection.getType<float>(), f->type);
+
+		// Check with getPtr
 		Circle c;
 		c.area = 10;
 		c.radius = 2;
 
-		CHECK_EQUAL(10, *t->getField("area")->getPtr<float>(&c));
-		CHECK_EQUAL(2, *t->getField("radius")->getPtr<float>(&c));
+		CHECK_EQUAL(10, *area->getPtr<float>(&c));
+		CHECK_EQUAL(10, *area->getConstPtr<float>(&c));
+		CHECK_EQUAL(2, *radius->getPtr<float>(&c));
+		CHECK_EQUAL(2, *radius->getConstPtr<float>(&c));
+		CHECK(!pi->getPtr<float>(&c));
+		CHECK_EQUAL(3.14f, *pi->getConstPtr<float>(&c));
 	}
+
+	{	// Pointer type
+		Type* t = reflection.getType<ContainPointer>();
+		Field* f = t->getField("body");
+		CHECK(!f->isConst);
+		CHECK(f->isPointer);
+		CHECK_EQUAL(reflection.getType<Body>(), f->type);
+	}
+}
+
+roStatus serialize(Type* t, void* ptr)
+{
+	// Loop for all member field
+	if(!t || !ptr) return roStatus::pointer_is_null;
+
+	for(Field* f = t->fields.begin(); f != t->fields.end(); ++f) {
+
+	}
+
+	return roStatus::ok;
+}
+
+TEST_FIXTURE(ReflectionTest, serialize)
+{
+	Circle c;
+	c.area = 10;
+	c.radius = 2;
+
+	Type* t = reflection.getType<Circle>();
+	serialize(t, &c);
 }

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "roReflection.h"
+#include "roJson.h"
 
 namespace ro {
 
@@ -27,6 +28,25 @@ Field* Type::getField(const char* name)
 		if(i->name == name)
 			return &(*i);
 	return NULL;
+}
+
+struct JsonSerializer
+{
+	JsonWriter writer;
+};
+
+roStatus Field::serialize(Serializer& se)
+{
+	if(!type) return roStatus::pointer_is_null;
+
+	if(type->fields.isEmpty()) {
+
+	}
+	else {
+
+	}
+
+	return roStatus::ok;
 }
 
 void Reflection::reset()

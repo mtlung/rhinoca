@@ -106,6 +106,34 @@ TEST_FIXTURE(MatrixTest, transformVector)
 	}
 }
 
+TEST_FIXTURE(MatrixTest, multiply)
+{
+	CHECK(ma * 2 == md);
+	CHECK(2 * ma == md);
+
+	const Mat4 result(
+		34,  28,  22,  16,
+		178, 156, 134, 112,
+		322, 284, 246, 208,
+		466, 412, 358, 304
+		);
+
+	CHECK(ma * mb == result);
+
+	{	Mat4 m = ma;
+		m = m * mb;
+		CHECK(m == result);
+	}
+
+	Mat4 t = ma;
+	t *= 2;
+	CHECK(t == md);
+
+	t = ma;
+	t *= mb;
+	CHECK(t == result);
+}
+
 TEST_FIXTURE(MatrixTest, determinant)
 {
 	Mat4 a(

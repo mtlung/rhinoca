@@ -11,16 +11,25 @@ namespace ro {
 
 struct Type;
 
+struct Serializer;
+
 struct Field
 {
 	void* getPtr(void* self);
+	const void* getConstPtr(const void* self) const;
 
 	template<class T>
 	T* getPtr(void* self);
 
+	template<class T>
+	const T* getConstPtr(const void* self) const;
+
+	roStatus serialize(Serializer& se);
+
 	String name;
 	Type* type;
 	unsigned offset;
+	bool isConst;
 	bool isPointer;
 };
 
@@ -67,22 +76,37 @@ static Reflection reflection;
 
 inline void* Field::getPtr(void* self)
 {
+	if(isConst) return NULL;
+	return ((char*)self) + offset;
+}
+
+inline const void* Field::getConstPtr(const void* self) const
+{
 	return ((char*)self) + offset;
 }
 
 template<class T>
 T* Field::getPtr(void* self)
 {
+	if(isConst || !type || typeid(T) != *type->typeInfo)
+		return NULL;
+	return (T*)(((char*)self) + offset);
+}
+
+template<class T>
+const T* Field::getConstPtr(const void* self) const
+{
 	if(!type || typeid(T) != *type->typeInfo)
 		return NULL;
 	return (T*)(((char*)self) + offset);
 }
 
-template<class T, class C>
-Type* ExtractMemberType(T C::*m)
-{
-	return reflection.getType<T>();
-};
+template<class T, class C> Type*	reflectionExtractMemberType(T C::*m)	{ return reflection.getType<T>(); }
+template<class T, class C> Type*	reflectionExtractMemberType(T* C::*m)	{ return reflection.getType<T>(); }
+template<class T, class C> bool		reflectionIsMemberPointerType(T C::*m)	{ return false; }
+template<class T, class C> bool		reflectionIsMemberPointerType(T* C::*m)	{ return true; }
+template<class T, class C> bool		reflectionIsMemberConst(T C::*m)		{ return false; }
+template<class T, class C> bool		reflectionIsMemberConst(const T C::*m)	{ return true; }
 
 template<class T>
 struct Klass
@@ -91,7 +115,13 @@ struct Klass
 	Klass& field(const char* name, F f)
 	{
 		unsigned offset = reinterpret_cast<unsigned>(&((T*)(NULL)->*f));
-		Field tmp = { name, ExtractMemberType(f), offset, false };
+		Field tmp = {
+			name,
+			reflectionExtractMemberType(f),
+			offset,
+			reflectionIsMemberConst(f),
+			reflectionIsMemberPointerType(f)
+		};
 		type->fields.pushBack(tmp); // TODO: fields better be sorted according to the offset
 		return *this;
 	}
