@@ -119,24 +119,31 @@ TEST_FIXTURE(ReflectionTest, field)
 	}
 }
 
-roStatus serialize(Type* t, void* ptr)
-{
-	// Loop for all member field
-	if(!t || !ptr) return roStatus::pointer_is_null;
-
-	for(Field* f = t->fields.begin(); f != t->fields.end(); ++f) {
-
-	}
-
-	return roStatus::ok;
-}
-
+#include "../../roar/base/roIOStream.h"
 TEST_FIXTURE(ReflectionTest, serialize)
 {
 	Circle c;
 	c.area = 10;
 	c.radius = 2;
 
-	Type* t = reflection.getType<Circle>();
-	serialize(t, &c);
+	Body body;
+	Vector3 p = { 0, 1, 2 };
+	Vector3 v = { 3, 4, 5 };
+	body.position = p;
+	body.velocity = v;
+
+	JsonRSerializer se;
+	MemoryOStream os;
+	se.writer.setStream(&os);
+	se.writer.beginObject();
+
+	{	Type* t = reflection.getType<Circle>();
+		t->serialize(se, &c);
+	}
+
+	{	Type* t = reflection.getType<Body>();
+		t->serialize(se, &body);
+	}
+
+	se.writer.endObject();
 }
