@@ -9,12 +9,13 @@
 #include <typeinfo>
 
 namespace ro {
+namespace Reflection {
 
 struct Type;
 
-struct RSerializer
+struct Serializer
 {
-	RSerializer() : _name(NULL) {}
+	Serializer() : _name(NULL) {}
 	virtual roStatus serialize_float(void* val) = 0;
 	virtual roStatus serialize_string(void* val) = 0;
 	virtual void beginStruct(const char* name) = 0;
@@ -25,7 +26,7 @@ struct RSerializer
 	const char* _name;
 };
 
-struct JsonRSerializer : public RSerializer
+struct JsonSerializer : public Serializer
 {
 	override roStatus serialize_float(void* val);
 	override roStatus serialize_string(void* val);
@@ -62,19 +63,19 @@ struct Type : public ListNode<Type>
 	Type(const char* name, Type* parent, const std::type_info* typeInfo);
 
 	Field* getField(const char* name);
-	roStatus serialize(RSerializer& se, void* val);
+	roStatus serialize(Serializer& se, void* val);
 
 	String name;
 	Type* parent;
 	const std::type_info* typeInfo;
 	Array<Field> fields;
 	Array<Func> funcs;
-	roStatus (*serializeFunc)(RSerializer& se, Type* type, void* val);
+	roStatus (*serializeFunc)(Serializer& se, Type* type, void* val);
 };
 
 template<class T> struct Klass;
 
-struct Reflection
+struct Registry
 {
 	template<class T>
 	Klass<T> Class(const char* name);
@@ -86,6 +87,7 @@ struct Reflection
 	Type* getType();
 
 	Type* getType(const char* name);
+	Type* getType(const std::type_info& typeInfo);
 
 	void reset();
 
@@ -93,10 +95,11 @@ struct Reflection
 	Types types;
 };
 
-static Reflection reflection;
+static Registry reflection;
 
 #include "roReflection.inl"
 
+}	// namespace Reflection
 }   // namespace ro
 
 #endif	// __roReflection_h__

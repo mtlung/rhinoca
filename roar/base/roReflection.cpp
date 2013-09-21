@@ -3,6 +3,7 @@
 #include "roJson.h"
 
 namespace ro {
+namespace Reflection {
 
 Type::Type(const char* name, Type* parent, const std::type_info* typeInfo)
 	: name(name), parent(parent), typeInfo(typeInfo), serializeFunc(NULL)
@@ -13,12 +14,19 @@ Type::Type(const char* name, Type* parent, const std::type_info* typeInfo)
 	}
 }
 
-Type* Reflection::getType(const char* name)
+Type* Registry::getType(const char* name)
 {
-	Types& types = reflection.types;
 	for(Type* i=types.begin(), *end=types.end(); i != end; i = i->next())
 		if(i->name == name)
 			return &*i;
+	return NULL;
+}
+
+Type* Registry::getType(const std::type_info& typeInfo)
+{
+	for(Type* i = types.begin(); i != types.end(); i = i->next())
+		if(*i->typeInfo == typeInfo)
+			return i;
 	return NULL;
 }
 
@@ -30,18 +38,18 @@ Field* Type::getField(const char* name)
 	return NULL;
 }
 
-roStatus Type::serialize(RSerializer& se, void* val)
+roStatus Type::serialize(Serializer& se, void* val)
 {
 	if(!serializeFunc || !val) return roStatus::pointer_is_null;
 	return (*serializeFunc)(se, this, val);
 }
 
-roStatus reflectionSerialize_float(RSerializer& se, Type* type, void* val)
+roStatus Serialize_float(Serializer& se, Type* type, void* val)
 {
 	return se.serialize_float(val);
 }
 
-roStatus reflectionSerialize_generic(RSerializer& se, Type* type, void* val)
+roStatus Serialize_generic(Serializer& se, Type* type, void* val)
 {
 	if(!type || !val) return roStatus::pointer_is_null;
 
@@ -56,30 +64,31 @@ roStatus reflectionSerialize_generic(RSerializer& se, Type* type, void* val)
 	return roStatus::ok;
 }
 
-void Reflection::reset()
+void Registry::reset()
 {
 	types.destroyAll();
 }
 
-roStatus JsonRSerializer::serialize_float(void* val)
+roStatus JsonSerializer::serialize_float(void* val)
 {
 	if(!val) return roStatus::pointer_is_null;
 	return writer.write(_name, *(float*)val);
 }
 
-roStatus JsonRSerializer::serialize_string(void* val)
+roStatus JsonSerializer::serialize_string(void* val)
 {
 	return roStatus::ok;
 }
 
-void JsonRSerializer::beginStruct(const char* name)
+void JsonSerializer::beginStruct(const char* name)
 {
 	writer.beginObject(name);
 }
 
-void JsonRSerializer::endStruct(const char* name)
+void JsonSerializer::endStruct(const char* name)
 {
 	writer.endObject();
 }
 
+}	// namespace Reflection
 }   // namespace ro

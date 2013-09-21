@@ -2,6 +2,7 @@
 #include "../../roar/base/roReflection.h"
 
 using namespace ro;
+using namespace ro::Reflection;
 
 struct Shape
 {
@@ -132,7 +133,7 @@ TEST_FIXTURE(ReflectionTest, serialize)
 	body.position = p;
 	body.velocity = v;
 
-	JsonRSerializer se;
+	JsonSerializer se;
 	MemoryOStream os;
 	se.writer.setStream(&os);
 	se.writer.beginObject();
@@ -146,4 +147,6 @@ TEST_FIXTURE(ReflectionTest, serialize)
 	}
 
 	se.writer.endObject();
+	char* str = (char*)os.bytePtr();
+	(void)str;
 }

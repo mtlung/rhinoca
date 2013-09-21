@@ -25,21 +25,21 @@ const T* Field::getConstPtr(const void* self) const
 	return (T*)(((char*)self) + offset);
 }
 
-typedef roStatus (*ReflectionSerializeFunc)(RSerializer& se, Type* type, void* val);
-roStatus reflectionSerialize_int8(RSerializer& se, Type* type, void* val);
-roStatus reflectionSerialize_uint8(RSerializer& se, Type* type, void* val);
-roStatus reflectionSerialize_float(RSerializer& se, Type* type, void* val);
-roStatus reflectionSerialize_generic(RSerializer& se, Type* type, void* val);
+typedef roStatus (*SerializeFunc)(Serializer& se, Type* type, void* val);
+roStatus Serialize_int8(Serializer& se, Type* type, void* val);
+roStatus Serialize_uint8(Serializer& se, Type* type, void* val);
+roStatus Serialize_float(Serializer& se, Type* type, void* val);
+roStatus Serialize_generic(Serializer& se, Type* type, void* val);
 
-template<class T>	ReflectionSerializeFunc reflectionGetSerializeFunc(T*) { return reflectionSerialize_generic; }
-inline				ReflectionSerializeFunc reflectionGetSerializeFunc(float*) { return reflectionSerialize_float; }
+template<class T>	SerializeFunc	getSerializeFunc(T*)			{ return Serialize_generic; }
+inline				SerializeFunc	getSerializeFunc(float*)		{ return Serialize_float; }
 
-template<class T, class C> Type*	reflectionExtractMemberType(T C::*m)	{ return reflection.getType<T>(); }
-template<class T, class C> Type*	reflectionExtractMemberType(T* C::*m)	{ return reflection.getType<T>(); }
-template<class T, class C> bool		reflectionIsMemberPointerType(T C::*m)	{ return false; }
-template<class T, class C> bool		reflectionIsMemberPointerType(T* C::*m)	{ return true; }
-template<class T, class C> bool		reflectionIsMemberConst(T C::*m)		{ return false; }
-template<class T, class C> bool		reflectionIsMemberConst(const T C::*m)	{ return true; }
+template<class T, class C> Type*	extractMemberType(T C::*m)		{ return reflection.getType<T>(); }
+template<class T, class C> Type*	extractMemberType(T* C::*m)		{ return reflection.getType<T>(); }
+template<class T, class C> bool		isMemberPointerType(T C::*m)	{ return false; }
+template<class T, class C> bool		isMemberPointerType(T* C::*m)	{ return true; }
+template<class T, class C> bool		isMemberConst(T C::*m)			{ return false; }
+template<class T, class C> bool		isMemberConst(const T C::*m)	{ return true; }
 
 template<class T>
 struct Klass
@@ -50,10 +50,10 @@ struct Klass
 		unsigned offset = reinterpret_cast<unsigned>(&((T*)(NULL)->*f));
 		Field tmp = {
 			name,
-			reflectionExtractMemberType(f),
+			extractMemberType(f),
 			offset,
-			reflectionIsMemberConst(f),
-			reflectionIsMemberPointerType(f)
+			isMemberConst(f),
+			isMemberPointerType(f)
 		};
 		type->fields.pushBack(tmp); // TODO: fields better be sorted according to the offset
 		return *this;
@@ -63,10 +63,10 @@ struct Klass
 };
 
 template<class T>
-Klass<T> Reflection::Class(const char* name)
+Klass<T> Registry::Class(const char* name)
 {
 	Type* type = new Type(name, NULL, &typeid(T));
-	type->serializeFunc = reflectionGetSerializeFunc((T*)NULL);
+	type->serializeFunc = getSerializeFunc((T*)NULL);
 
 	types.pushBack(*type);
 	Klass<T> k = { type };
@@ -74,12 +74,12 @@ Klass<T> Reflection::Class(const char* name)
 }
 
 template<class T, class P>
-Klass<T> Reflection::Class(const char* name)
+Klass<T> Registry::Class(const char* name)
 {
 	Type* parent = getType<P>();
 	assert(parent);
 	Type* type = new Type(name, parent, &typeid(T));
-	type->serializeFunc = reflectionGetSerializeFunc((T*)NULL);
+	type->serializeFunc = getSerializeFunc((T*)NULL);
 
 	types.pushBack(*type);
 	Klass<T> k = { type };
@@ -87,11 +87,7 @@ Klass<T> Reflection::Class(const char* name)
 }
 
 template<class T>
-Type* Reflection::getType()
+Type* Registry::getType()
 {
-	Types& types = reflection.types;
-	for(Type* i = types.begin(); i != types.end(); i = i->next())
-		if(*i->typeInfo == typeid(T))
-			return i;
-	return NULL;
+	return getType(typeid(T));
 }
