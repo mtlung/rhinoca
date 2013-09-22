@@ -12,26 +12,20 @@ namespace ro {
 namespace Reflection {
 
 struct Type;
+struct Field;
 
 struct Serializer
 {
-	Serializer() : _name(NULL) {}
-	virtual roStatus serialize_float(void* val) = 0;
-	virtual roStatus serialize_string(void* val) = 0;
-	virtual void beginStruct(const char* name) = 0;
-	virtual void endStruct(const char* name) = 0;
-	void beginNVP(const char* name) { _name = name; }
-	void endNVP(const char* name) {}
-
-	const char* _name;
+	virtual roStatus serialize_float(Field& field, void* fieldParent) = 0;
+	virtual roStatus serialize_string(Field& field, void* fieldParent) = 0;
+	virtual roStatus serialize_object(Field& field, void* fieldParent) = 0;
 };
 
 struct JsonSerializer : public Serializer
 {
-	override roStatus serialize_float(void* val);
-	override roStatus serialize_string(void* val);
-	override void beginStruct(const char* name);
-	override void endStruct(const char* name);
+	override roStatus serialize_float(Field& field, void* fieldParent);
+	override roStatus serialize_string(Field& field, void* fieldParent);
+	override roStatus serialize_object(Field& field, void* fieldParent);
 	JsonWriter writer;
 };
 
@@ -63,14 +57,14 @@ struct Type : public ListNode<Type>
 	Type(const char* name, Type* parent, const std::type_info* typeInfo);
 
 	Field* getField(const char* name);
-	roStatus serialize(Serializer& se, void* val);
+	roStatus serialize(Serializer& se, const roUtf8* name, void* val);
 
 	String name;
 	Type* parent;
 	const std::type_info* typeInfo;
 	Array<Field> fields;
 	Array<Func> funcs;
-	roStatus (*serializeFunc)(Serializer& se, Type* type, void* val);
+	roStatus (*serializeFunc)(Serializer& se, Field& field, void* fieldParent);
 };
 
 template<class T> struct Klass;

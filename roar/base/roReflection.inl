@@ -25,14 +25,14 @@ const T* Field::getConstPtr(const void* self) const
 	return (T*)(((char*)self) + offset);
 }
 
-typedef roStatus (*SerializeFunc)(Serializer& se, Type* type, void* val);
-roStatus Serialize_int8(Serializer& se, Type* type, void* val);
-roStatus Serialize_uint8(Serializer& se, Type* type, void* val);
-roStatus Serialize_float(Serializer& se, Type* type, void* val);
-roStatus Serialize_generic(Serializer& se, Type* type, void* val);
+typedef roStatus (*SerializeFunc)(Serializer& se, Field& field, void* fieldParent);
+roStatus serialize_int8(Serializer& se, Field& field, void* fieldParent);
+roStatus serialize_uint8(Serializer& se, Field& field, void* fieldParent);
+roStatus serialize_float(Serializer& se, Field& field, void* fieldParent);
+roStatus serialize_generic(Serializer& se, Field& field, void* fieldParent);
 
-template<class T>	SerializeFunc	getSerializeFunc(T*)			{ return Serialize_generic; }
-inline				SerializeFunc	getSerializeFunc(float*)		{ return Serialize_float; }
+template<class T>	SerializeFunc	getSerializeFunc(T*)			{ return serialize_generic; }
+inline				SerializeFunc	getSerializeFunc(float*)		{ return serialize_float; }
 
 template<class T, class C> Type*	extractMemberType(T C::*m)		{ return reflection.getType<T>(); }
 template<class T, class C> Type*	extractMemberType(T* C::*m)		{ return reflection.getType<T>(); }

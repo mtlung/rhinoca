@@ -139,11 +139,11 @@ TEST_FIXTURE(ReflectionTest, serialize)
 	se.writer.beginObject();
 
 	{	Type* t = reflection.getType<Circle>();
-		t->serialize(se, &c);
+		t->serialize(se, "my circle", &c);
 	}
 
 	{	Type* t = reflection.getType<Body>();
-		t->serialize(se, &body);
+		t->serialize(se, "my body", &body);
 	}
 
 	se.writer.endObject();
