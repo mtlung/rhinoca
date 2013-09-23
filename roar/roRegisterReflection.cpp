@@ -39,6 +39,8 @@ roStatus registerReflection()
 		.field("z", &Vec4::z)
 		.field("w", &Vec4::w);
 
+	reflection.Class<Mat4>("Mat4");
+
 	return roStatus::ok;
 }
 

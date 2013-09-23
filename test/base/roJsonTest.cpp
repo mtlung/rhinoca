@@ -310,8 +310,8 @@ TEST_FIXTURE(JsonTest, writer)
 	roByte buf[] = { 0, 1, 2, 3 };
 	writer.write("binary", buf, 4);
 	writer.beginArray();
-		writer.write("a", true);
-		writer.write("b", false);
+		writer.write(true);
+		writer.write(false);
 	writer.endArray();
 	writer.endObject();
 }
