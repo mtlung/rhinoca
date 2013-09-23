@@ -5,6 +5,7 @@
 #include "base/roLog.h"
 #include "base/roMemoryProfiler.h"
 #include "base/roResource.h"
+#include "base/roReflectionFwd.h"
 #include "base/roSocket.h"
 #include "base/roTaskPool.h"
 #include "math/roMath.h"
@@ -101,9 +102,12 @@ Status SubSystems::init()
 	Status st;
 	BsdSocket::initApplication();
 	st = _cpuProfiler.init(); if(!st) return st;
-	st = _memoryProfiler.init(5000); if(!st) return st;
+//	st = _memoryProfiler.init(5000); if(!st) return st;
 
 	_cpuProfiler.enable = false;
+
+	st = registerReflection();
+	if(!st) return st;
 
 	initTaskPool(*this);
 	initRenderDriver(*this);
