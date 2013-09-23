@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "roVector.h"
+#include "../base/roReflection.h"
 
 namespace ro {
 
@@ -236,17 +237,47 @@ inline bool Vec3::projectAlongPlane(const Vec3& normal, float epsilon, float ove
 
 roStatus Reflection::serialize_vec2(Serializer& se, Field& field, void* fieldParent)
 {
-	return roStatus::ok;
+	const Vec2* v = field.getConstPtr<Vec2>(fieldParent);
+	if(!v) return roStatus::pointer_is_null;
+
+	roStatus st = se.beginArray(field, 2);
+	if(!st) return st;
+
+	st = se.serialize(v->x); if(!st) return st;
+	st = se.serialize(v->y); if(!st) return st;
+
+	return se.endArray();
 }
 
 roStatus Reflection::serialize_vec3(Serializer& se, Field& field, void* fieldParent)
 {
-	return roStatus::ok;
+	const Vec3* v = field.getConstPtr<Vec3>(fieldParent);
+	if(!v) return roStatus::pointer_is_null;
+
+	roStatus st = se.beginArray(field, 3);
+	if(!st) return st;
+
+	st = se.serialize(v->x); if(!st) return st;
+	st = se.serialize(v->y); if(!st) return st;
+	st = se.serialize(v->z); if(!st) return st;
+
+	return se.endArray();
 }
 
 roStatus Reflection::serialize_vec4(Serializer& se, Field& field, void* fieldParent)
 {
-	return roStatus::ok;
+	const Vec4* v = field.getConstPtr<Vec4>(fieldParent);
+	if(!v) return roStatus::pointer_is_null;
+
+	roStatus st = se.beginArray(field, 4);
+	if(!st) return st;
+
+	st = se.serialize(v->x); if(!st) return st;
+	st = se.serialize(v->y); if(!st) return st;
+	st = se.serialize(v->z); if(!st) return st;
+	st = se.serialize(v->w); if(!st) return st;
+
+	return se.endArray();
 }
 
 }	// namespace ro

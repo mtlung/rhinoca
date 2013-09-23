@@ -470,7 +470,6 @@ JsonParser::Event::Enum JsonParser::nextEvent()
 //
 JsonWriter::JsonWriter(OStream* stream)
 	: _stream(stream)
-	, _nestedLevel(0)
 {}
 
 void JsonWriter::setStream(OStream* stream)
@@ -536,10 +535,46 @@ static void* _strFormatFunc(const JsonString& val) {
 	return (void*)_strFormat_JsonString;
 }
 
+roStatus JsonWriter::beginObject(const roUtf8* name)
+{
+	roStatus st = flushStrBuf();
+	if(!st) return st;
+
+	if(name)
+		st = strFormat(_strBuf, "\"{}\":{}", JsonString(name), "{");
+	else
+		st = _strBuf.assign("{");
+
+	if(!st) return st;
+	_stateStack.pushBack(_inObject);
+	return st;
+}
+
+roStatus JsonWriter::endObject()
+{
+	roAssert(_stateStack.back() == _inObject);
+	if(!_stream) return roStatus::pointer_is_null;
+
+	if(!_strBuf.isEmpty() && _strBuf.back() == ',')
+		_strBuf.decSize(1);
+
+	roStatus st = flushStrBuf();
+	if(!st) return st;
+
+	if(_stateStack.size() == 1)
+		st = _stream->write("}\0");
+	else
+		st = _strBuf.assign("},");
+
+	if(!st) return st;
+	_stateStack.popBack();
+	return st;
+}
+
 template<typename T>
 static roStatus writeNumbers(JsonWriter& writer, const roUtf8* name, T val)
 {
-	roAssert(writer._nestedLevel > 0);
+	roAssert(writer._stateStack.back() == JsonWriter::_inObject);
 	roStatus st = writer.flushStrBuf();
 	if(!st) return st;
 	return strFormat(writer._strBuf, "\"{}\":{},", JsonString(name), val);
@@ -558,7 +593,7 @@ roStatus JsonWriter::write(const roUtf8* name, double val)		{ return writeNumber
 
 roStatus JsonWriter::write(const roUtf8* name, bool val)
 {
-	roAssert(_nestedLevel > 0);
+	roAssert(_stateStack.back() == _inObject);
 	roStatus st = flushStrBuf();
 	if(!st) return st;
 	return strFormat(_strBuf, "\"{}\":\"{}\",", name, val ? "true" : "false");
@@ -566,7 +601,7 @@ roStatus JsonWriter::write(const roUtf8* name, bool val)
 
 roStatus JsonWriter::write(const roUtf8* name, const roUtf8* val)
 {
-	roAssert(_nestedLevel > 0);
+	roAssert(_stateStack.back() == _inObject);
 	roStatus st = flushStrBuf();
 	if(!st) return st;
 
@@ -575,53 +610,15 @@ roStatus JsonWriter::write(const roUtf8* name, const roUtf8* val)
 
 roStatus JsonWriter::write(const roUtf8* name, const roByte* buf, roSize bufLen)
 {
-	roAssert(_nestedLevel > 0);
+	roAssert(_stateStack.back() == _inObject);
 	roStatus st = flushStrBuf();
 	if(!st) return st;
 
 	return strFormat(_strBuf, "\"{}\":\"{}\",", JsonString(name), JsonString(buf, bufLen));
 }
 
-roStatus JsonWriter::beginObject(const roUtf8* name)
-{
-	roAssert(_nestedLevel > 0 || !name);
-	roStatus st = flushStrBuf();
-	if(!st) return st;
-
-	if(name)
-		st = strFormat(_strBuf, "\"{}\":{}", JsonString(name), "{");
-	else
-		st = _strBuf.assign("{");
-
-	if(!st) return st;
-	++_nestedLevel;
-	return st;
-}
-
-roStatus JsonWriter::endObject()
-{
-	roAssert(_nestedLevel > 0);
-	if(!_stream) return roStatus::pointer_is_null;
-
-	if(!_strBuf.isEmpty() && _strBuf.back() == ',')
-		_strBuf.decSize(1);
-
-	roStatus st = flushStrBuf();
-	if(!st) return st;
-
-	if(_nestedLevel == 1)
-		st = _stream->write("}\0");
-	else
-		st = _strBuf.assign("},");
-
-	if(!st) return st;
-	--_nestedLevel;
-	return st;
-}
-
 roStatus JsonWriter::beginArray(const roUtf8* name)
 {
-	roAssert(_nestedLevel > 0);
 	roStatus st = flushStrBuf();
 	if(!st) return st;
 
@@ -631,13 +628,13 @@ roStatus JsonWriter::beginArray(const roUtf8* name)
 		st = _strBuf.assign("[");
 
 	if(!st) return st;
-	++_nestedLevel;
+	_stateStack.pushBack(_inArray);
 	return st;
 }
 
 roStatus JsonWriter::endArray()
 {
-	roAssert(_nestedLevel > 0);
+	roAssert(_stateStack.back() == _inArray);
 	if(!_stream) return roStatus::pointer_is_null;
 
 	if(!_strBuf.isEmpty() && _strBuf.back() == ',')
@@ -649,9 +646,54 @@ roStatus JsonWriter::endArray()
 	st = _strBuf.assign("],");
 	if(!st) return st;
 
-	--_nestedLevel;
-	roAssert(_nestedLevel > 0);
+	_stateStack.popBack();
 	return st;
+}
+
+template<typename T>
+static roStatus writeNumbers(JsonWriter& writer, T val)
+{
+	roAssert(writer._stateStack.back() == JsonWriter::_inArray);
+	roStatus st = writer.flushStrBuf();
+	if(!st) return st;
+	return strFormat(writer._strBuf, "{},", val);
+}
+
+roStatus JsonWriter::write(roInt8 val)		{ return writeNumbers(*this, val); }
+roStatus JsonWriter::write(roInt16 val)		{ return writeNumbers(*this, val); }
+roStatus JsonWriter::write(roInt32 val)		{ return writeNumbers(*this, val); }
+roStatus JsonWriter::write(roInt64 val)		{ return writeNumbers(*this, val); }
+roStatus JsonWriter::write(roUint8 val)		{ return writeNumbers(*this, val); }
+roStatus JsonWriter::write(roUint16 val)	{ return writeNumbers(*this, val); }
+roStatus JsonWriter::write(roUint32 val)	{ return writeNumbers(*this, val); }
+roStatus JsonWriter::write(roUint64 val)	{ return writeNumbers(*this, val); }
+roStatus JsonWriter::write(float val)		{ return writeNumbers(*this, val); }
+roStatus JsonWriter::write(double val)		{ return writeNumbers(*this, val); }
+
+roStatus JsonWriter::write(bool val)
+{
+	roAssert(_stateStack.back() == _inArray);
+	roStatus st = flushStrBuf();
+	if(!st) return st;
+	return strFormat(_strBuf, "\"{}\",", val ? "true" : "false");
+}
+
+roStatus JsonWriter::write(const roUtf8* val)
+{
+	roAssert(_stateStack.back() == _inArray);
+	roStatus st = flushStrBuf();
+	if(!st) return st;
+
+	return strFormat(_strBuf, "\"{}\",", JsonString(val));
+}
+
+roStatus JsonWriter::write(const roByte* buf, roSize bufLen)
+{
+	roAssert(_stateStack.back() == _inArray);
+	roStatus st = flushStrBuf();
+	if(!st) return st;
+
+	return strFormat(_strBuf, "\"{}\",", JsonString(buf, bufLen));
 }
 
 }   // namespace ro

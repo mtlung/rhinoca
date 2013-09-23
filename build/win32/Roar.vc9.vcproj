@@ -500,6 +500,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roReflectionFwd.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roResource.cpp"
 				>
 			</File>
@@ -963,6 +967,10 @@
 					UsePrecompiledHeader="1"
 				/>
 			</FileConfiguration>
+		</File>
+		<File
+			RelativePath="..\..\roar\roRegisterReflection.cpp"
+			>
 		</File>
 		<File
 			RelativePath="..\..\roar\roSubSystems.cpp"

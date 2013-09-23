@@ -90,10 +90,26 @@ struct JsonWriter : private NonCopyable
 
 	void setStream(OStream* stream);
 
-	roStatus beginObject(const roUtf8* name=NULL);
-	roStatus endObject();
+// For array
 	roStatus beginArray(const roUtf8* name=NULL);
 	roStatus endArray();
+	roStatus write(bool val);
+	roStatus write(roInt8 val);
+	roStatus write(roInt16 val);
+	roStatus write(roInt32 val);
+	roStatus write(roInt64 val);
+	roStatus write(roUint8 val);
+	roStatus write(roUint16 val);
+	roStatus write(roUint32 val);
+	roStatus write(roUint64 val);
+	roStatus write(float val);
+	roStatus write(double val);
+	roStatus write(const roUtf8* val);
+	roStatus write(const roByte* buf, roSize bufLen);
+
+// For object
+	roStatus beginObject(const roUtf8* name=NULL);
+	roStatus endObject();
 	roStatus write(const roUtf8* name, bool val);
 	roStatus write(const roUtf8* name, roInt8 val);
 	roStatus write(const roUtf8* name, roInt16 val);
@@ -112,7 +128,8 @@ struct JsonWriter : private NonCopyable
 	roStatus flushStrBuf();
 	OStream* _stream;
 	String _strBuf;
-	roSize _nestedLevel;
+	enum State { _inObject, _inArray };
+	Array<State> _stateStack;
 };  // JsonWriter
 
 }   // namespace ro

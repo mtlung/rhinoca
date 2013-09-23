@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "../../roar/base/roReflection.h"
+#include "../../roar/math/roVector.h"
 
 using namespace ro;
 using namespace ro::Reflection;
@@ -26,15 +27,10 @@ struct Circle : public Shape
 	const float pi;
 };
 
-struct Vector3
-{
-	float x, y, z;
-};
-
 struct Body
 {
-	Vector3 position;
-	Vector3 velocity;
+	Vec3 position;
+	Vec3 velocity;
 };
 
 struct ContainPointer
@@ -56,11 +52,6 @@ struct ReflectionTest
 			.field("vStr", &BasicTypes::vStr)
 			.field("vCStr", &BasicTypes::vCStr)
 			.field("vString", &BasicTypes::vString);
-
-		reflection.Class<Vector3>("Vector3")
-			.field("x", &Vector3::x)
-			.field("y", &Vector3::y)
-			.field("z", &Vector3::z);
 
 		reflection.Class<Shape>("Shape")
 			.field("area", &Shape::area);
@@ -151,6 +142,11 @@ TEST_FIXTURE(ReflectionTest, serialize)
 		t->serialize(se, "Basic types", &basicTypes);
 	}
 
+	{	Vec3 v(1, 2, 3);
+		Type* t = reflection.getType<Vec3>();
+		t->serialize(se, "Vec3 type", &v);
+	}
+
 	{	Circle c;
 		c.area = 10;
 		c.radius = 2;
@@ -160,10 +156,8 @@ TEST_FIXTURE(ReflectionTest, serialize)
 	}
 
 	{	Body body;
-		Vector3 p = { 0, 1, 2 };
-		Vector3 v = { 3, 4, 5 };
-		body.position = p;
-		body.velocity = v;
+		body.position = Vec3(0, 1, 2);
+		body.velocity = Vec3(3, 4, 5);
 
 		Type* t = reflection.getType<Body>();
 		t->serialize(se, "my body", &body);

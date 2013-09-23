@@ -22,6 +22,8 @@ struct Serializer
 	virtual roStatus serialize_double(Field& field, void* fieldParent) = 0;
 	virtual roStatus serialize_string(Field& field, void* fieldParent) = 0;
 	virtual roStatus serialize_object(Field& field, void* fieldParent) = 0;
+	virtual roStatus serialize(float val) = 0;
+	virtual roStatus serialize(const roUtf8* val) = 0;
 	virtual roStatus beginArray(Field& field, roSize count) = 0;
 	virtual roStatus endArray() = 0;
 };
@@ -34,6 +36,8 @@ struct JsonSerializer : public Serializer
 	override roStatus serialize_double(Field& field, void* fieldParent);
 	override roStatus serialize_string(Field& field, void* fieldParent);
 	override roStatus serialize_object(Field& field, void* fieldParent);
+	override roStatus serialize(float val);
+	override roStatus serialize(const roUtf8* val);
 	override roStatus beginArray(Field& field, roSize count);
 	override roStatus endArray();
 	JsonWriter writer;

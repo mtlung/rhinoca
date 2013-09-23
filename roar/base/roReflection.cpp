@@ -132,6 +132,16 @@ roStatus JsonSerializer::serialize_object(Field& field, void* fieldParent)
 	return roStatus::ok;
 }
 
+roStatus JsonSerializer::serialize(float val)
+{
+	return writer.write(val);
+}
+
+roStatus JsonSerializer::serialize(const roUtf8* val)
+{
+	return writer.write(val);
+}
+
 roStatus JsonSerializer::beginArray(Field& field, roSize count)
 {
 	return writer.beginArray(field.name.c_str());
