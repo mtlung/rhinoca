@@ -5,6 +5,7 @@
 #include "roAtomic.h"
 #include "roMemory.h"
 #include "roMutex.h"
+#include "roReflection.h"
 #include "roStringUtility.h"
 #include "roTypeCast.h"
 #include "roUtility.h"
@@ -563,5 +564,15 @@ bool ConstString::operator==(const StringHash& rhs) const	{ return hash() == rhs
 bool ConstString::operator==(const ConstString& rhs) const	{ return hash() == rhs.hash(); }
 bool ConstString::operator> (const ConstString& rhs) const	{ return hash() > rhs.hash(); }
 bool ConstString::operator< (const ConstString& rhs) const	{ return hash() < rhs.hash(); }
+
+roStatus Reflection::serialize_roString(Serializer& se, Field& field, void* fieldParent)
+{
+	Field f = field;	// TODO: Optimize this copying
+	const String* string = f.getConstPtr<String>(fieldParent);
+	if(!string) return roStatus::pointer_is_null;
+	const char* str = string->c_str();
+	field.offset = 0;
+	return Reflection::serialize_string(se, field, (void*)(&str));
+}
 
 }	// namespace ro

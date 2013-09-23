@@ -4,6 +4,16 @@
 using namespace ro;
 using namespace ro::Reflection;
 
+struct BasicTypes
+{
+	roUint8		vUint8;
+	float		vFloat;
+	double		vDouble;
+	char*		vStr;
+	const char*	vCStr;
+	String		vString;
+};
+
 struct Shape
 {
 	float area;
@@ -38,32 +48,44 @@ struct ReflectionTest
 	ReflectionTest()
 	{
 		reflection.Class<bool>("bool");
-		reflection.Class<int>("int");
+		reflection.Class<roInt8>("int8");
+		reflection.Class<roUint8>("uint8");
+		reflection.Class<roInt16>("int16");
+		reflection.Class<roUint16>("uint16");
+		reflection.Class<roInt32>("int32");
+		reflection.Class<roUint32>("uint32");
+		reflection.Class<roInt64>("int64");
+		reflection.Class<roUint64>("uint64");
 		reflection.Class<float>("float");
 		reflection.Class<double>("double");
+		reflection.Class<char*>("string");
+		reflection.Class<String>("string");
 
-		reflection
-			.Class<Vector3>("Vector3")
+		reflection.Class<BasicTypes>("BasicTypes")
+			.field("vUint8", &BasicTypes::vUint8)
+			.field("vFloat", &BasicTypes::vFloat)
+			.field("vDouble", &BasicTypes::vDouble)
+			.field("vStr", &BasicTypes::vStr)
+			.field("vCStr", &BasicTypes::vCStr)
+			.field("vString", &BasicTypes::vString);
+
+		reflection.Class<Vector3>("Vector3")
 			.field("x", &Vector3::x)
 			.field("y", &Vector3::y)
 			.field("z", &Vector3::z);
 
-		reflection
-			.Class<Shape>("Shape")
+		reflection.Class<Shape>("Shape")
 			.field("area", &Shape::area);
 
-		reflection
-			.Class<Circle, Shape>("Circle")
+		reflection.Class<Circle, Shape>("Circle")
 			.field("radius", &Circle::radius)
 			.field("pi", &Circle::pi);
 
-		reflection
-			.Class<Body>("Body")
+		reflection.Class<Body>("Body")
 			.field("position", &Body::position)
 			.field("velocity", &Body::velocity);
 
-		reflection
-			.Class<ContainPointer>("ContainPointer")
+		reflection.Class<ContainPointer>("ContainPointer")
 			.field("body", &ContainPointer::body)
 			.field("constBody", &ContainPointer::constBody);
 	}
@@ -123,26 +145,39 @@ TEST_FIXTURE(ReflectionTest, field)
 #include "../../roar/base/roIOStream.h"
 TEST_FIXTURE(ReflectionTest, serialize)
 {
-	Circle c;
-	c.area = 10;
-	c.radius = 2;
-
-	Body body;
-	Vector3 p = { 0, 1, 2 };
-	Vector3 v = { 3, 4, 5 };
-	body.position = p;
-	body.velocity = v;
-
 	JsonSerializer se;
 	MemoryOStream os;
 	se.writer.setStream(&os);
 	se.writer.beginObject();
 
-	{	Type* t = reflection.getType<Circle>();
+	{	BasicTypes basicTypes = {
+			1u,
+			1.23f,
+			4.56,
+			"Hello world 1",
+			"Hello world 2",
+			"Hello world 3"
+		};
+
+		Type* t = reflection.getType<BasicTypes>();
+		t->serialize(se, "Basic types", &basicTypes);
+	}
+
+	{	Circle c;
+		c.area = 10;
+		c.radius = 2;
+
+		Type* t = reflection.getType<Circle>();
 		t->serialize(se, "my circle", &c);
 	}
 
-	{	Type* t = reflection.getType<Body>();
+	{	Body body;
+		Vector3 p = { 0, 1, 2 };
+		Vector3 v = { 3, 4, 5 };
+		body.position = p;
+		body.velocity = v;
+
+		Type* t = reflection.getType<Body>();
 		t->serialize(se, "my body", &body);
 	}
 

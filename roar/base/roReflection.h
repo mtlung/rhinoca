@@ -16,14 +16,20 @@ struct Field;
 
 struct Serializer
 {
+	virtual roStatus serialize_int8(Field& field, void* fieldParent) = 0;
+	virtual roStatus serialize_uint8(Field& field, void* fieldParent) = 0;
 	virtual roStatus serialize_float(Field& field, void* fieldParent) = 0;
+	virtual roStatus serialize_double(Field& field, void* fieldParent) = 0;
 	virtual roStatus serialize_string(Field& field, void* fieldParent) = 0;
 	virtual roStatus serialize_object(Field& field, void* fieldParent) = 0;
 };
 
 struct JsonSerializer : public Serializer
 {
+	override roStatus serialize_int8(Field& field, void* fieldParent);
+	override roStatus serialize_uint8(Field& field, void* fieldParent);
 	override roStatus serialize_float(Field& field, void* fieldParent);
+	override roStatus serialize_double(Field& field, void* fieldParent);
 	override roStatus serialize_string(Field& field, void* fieldParent);
 	override roStatus serialize_object(Field& field, void* fieldParent);
 	JsonWriter writer;

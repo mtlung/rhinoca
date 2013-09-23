@@ -47,9 +47,29 @@ roStatus Type::serialize(Serializer& se, const roUtf8* name, void* val)
 	return (*serializeFunc)(se, field, val);
 }
 
+roStatus serialize_int8(Serializer& se, Field& field, void* fieldParent)
+{
+	return se.serialize_int8(field, fieldParent);
+}
+
+roStatus serialize_uint8(Serializer& se, Field& field, void* fieldParent)
+{
+	return se.serialize_uint8(field, fieldParent);
+}
+
 roStatus serialize_float(Serializer& se, Field& field, void* fieldParent)
 {
 	return se.serialize_float(field, fieldParent);
+}
+
+roStatus serialize_double(Serializer& se, Field& field, void* fieldParent)
+{
+	return se.serialize_double(field, fieldParent);
+}
+
+roStatus serialize_string(Serializer& se, Field& field, void* fieldParent)
+{
+	return se.serialize_string(field, fieldParent);
 }
 
 roStatus serialize_generic(Serializer& se, Field& field, void* fieldParent)
@@ -62,16 +82,34 @@ void Registry::reset()
 	types.destroyAll();
 }
 
+roStatus JsonSerializer::serialize_int8(Field& field, void* fieldParent)
+{
+	if(!fieldParent) return roStatus::pointer_is_null;
+	return writer.write(field.name.c_str(), *reinterpret_cast<const roInt8*>(field.getConstPtr(fieldParent)));
+}
+
+roStatus JsonSerializer::serialize_uint8(Field& field, void* fieldParent)
+{
+	if(!fieldParent) return roStatus::pointer_is_null;
+	return writer.write(field.name.c_str(), *reinterpret_cast<const roUint8*>(field.getConstPtr(fieldParent)));
+}
+
 roStatus JsonSerializer::serialize_float(Field& field, void* fieldParent)
 {
 	if(!fieldParent) return roStatus::pointer_is_null;
 	return writer.write(field.name.c_str(), *reinterpret_cast<const float*>(field.getConstPtr(fieldParent)));
 }
 
+roStatus JsonSerializer::serialize_double(Field& field, void* fieldParent)
+{
+	if(!fieldParent) return roStatus::pointer_is_null;
+	return writer.write(field.name.c_str(), *reinterpret_cast<const double*>(field.getConstPtr(fieldParent)));
+}
+
 roStatus JsonSerializer::serialize_string(Field& field, void* fieldParent)
 {
 	if(!fieldParent) return roStatus::pointer_is_null;
-	return roStatus::ok;
+	return writer.write(field.name.c_str(), *(const char**)(field.getConstPtr(fieldParent)));
 }
 
 roStatus JsonSerializer::serialize_object(Field& field, void* fieldParent)
