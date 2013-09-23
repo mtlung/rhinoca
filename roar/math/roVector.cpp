@@ -234,4 +234,19 @@ inline bool Vec3::projectAlongPlane(const Vec3& normal, float epsilon, float ove
 	return true;
 }
 
+roStatus Reflection::serialize_vec2(Serializer& se, Field& field, void* fieldParent)
+{
+	return roStatus::ok;
+}
+
+roStatus Reflection::serialize_vec3(Serializer& se, Field& field, void* fieldParent)
+{
+	return roStatus::ok;
+}
+
+roStatus Reflection::serialize_vec4(Serializer& se, Field& field, void* fieldParent)
+{
+	return roStatus::ok;
+}
+
 }	// namespace ro

@@ -4,6 +4,9 @@
 #include "roStatus.h"
 
 namespace ro {
+
+roStatus registerReflection();
+
 namespace Reflection {
 
 struct Type;

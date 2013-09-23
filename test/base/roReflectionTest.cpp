@@ -47,19 +47,7 @@ struct ReflectionTest
 {
 	ReflectionTest()
 	{
-		reflection.Class<bool>("bool");
-		reflection.Class<roInt8>("int8");
-		reflection.Class<roUint8>("uint8");
-		reflection.Class<roInt16>("int16");
-		reflection.Class<roUint16>("uint16");
-		reflection.Class<roInt32>("int32");
-		reflection.Class<roUint32>("uint32");
-		reflection.Class<roInt64>("int64");
-		reflection.Class<roUint64>("uint64");
-		reflection.Class<float>("float");
-		reflection.Class<double>("double");
-		reflection.Class<char*>("string");
-		reflection.Class<String>("string");
+		ro::registerReflection();
 
 		reflection.Class<BasicTypes>("BasicTypes")
 			.field("vUint8", &BasicTypes::vUint8)

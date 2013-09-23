@@ -1,7 +1,6 @@
 #ifndef __roString_h__
 #define __roString_h__
 
-#include "roReflectionFwd.h"
 #include "roStatus.h"
 #include "roStringHash.h"
 #include "roUtility.h"
@@ -149,12 +148,6 @@ struct ConstString
 #endif
 };	// ConstString
 
-namespace Reflection {
-
-roStatus serialize_roString(Serializer& se, Field& field, void* fieldParent);
-inline SerializeFunc getSerializeFunc(String*) { return serialize_roString; }
-
-}	// namespace Reflection
 }	// namespace ro
 
 inline void roSwap(ro::String& lsh, ro::String& rhs)
@@ -169,5 +162,16 @@ inline void roSwap(ro::ConstString& lsh, ro::ConstString& rhs)
 	roSwap(lsh._debugStr, rhs._debugStr);
 #endif
 }
+
+#include "roReflectionFwd.h"
+
+namespace ro {
+namespace Reflection {
+
+roStatus serialize_roString(Serializer& se, Field& field, void* fieldParent);
+inline SerializeFunc getSerializeFunc(String*) { return serialize_roString; }
+
+}	// namespace Reflection
+}	// namespace ro
 
 #endif	// __roString_h__

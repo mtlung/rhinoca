@@ -5,6 +5,8 @@
 namespace ro {
 namespace Reflection {
 
+Registry reflection;
+
 Type::Type(const char* name, Type* parent, const std::type_info* typeInfo)
 	: name(name), parent(parent), typeInfo(typeInfo), serializeFunc(NULL)
 {
@@ -128,6 +130,16 @@ roStatus JsonSerializer::serialize_object(Field& field, void* fieldParent)
 	writer.endObject();
 
 	return roStatus::ok;
+}
+
+roStatus JsonSerializer::beginArray(Field& field, roSize count)
+{
+	return writer.beginArray(field.name.c_str());
+}
+
+roStatus JsonSerializer::endArray()
+{
+	return writer.endArray();
 }
 
 }	// namespace Reflection

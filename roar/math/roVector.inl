@@ -603,3 +603,18 @@ inline float Vec4::normalize(void) {
 }
 
 }	// namespace ro
+
+#include "../base/roReflectionFwd.h"
+
+namespace ro{
+namespace Reflection {
+
+roStatus serialize_vec2(Serializer& se, Field& field, void* fieldParent);
+roStatus serialize_vec3(Serializer& se, Field& field, void* fieldParent);
+roStatus serialize_vec4(Serializer& se, Field& field, void* fieldParent);
+inline SerializeFunc getSerializeFunc(Vec2*) { return serialize_vec2; }
+inline SerializeFunc getSerializeFunc(Vec3*) { return serialize_vec3; }
+inline SerializeFunc getSerializeFunc(Vec4*) { return serialize_vec4; }
+
+}	// namespace Reflection
+}	// namespace ro
