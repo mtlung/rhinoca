@@ -25,50 +25,21 @@ const T* Field::getConstPtr(const void* self) const
 	return (T*)(((char*)self) + offset);
 }
 
-typedef roStatus (*SerializeFunc)(Serializer& se, Field& field, void* fieldParent);
-roStatus serialize_int8(Serializer& se, Field& field, void* fieldParent);
-roStatus serialize_uint8(Serializer& se, Field& field, void* fieldParent);
-roStatus serialize_float(Serializer& se, Field& field, void* fieldParent);
-roStatus serialize_double(Serializer& se, Field& field, void* fieldParent);
-roStatus serialize_string(Serializer& se, Field& field, void* fieldParent);
-roStatus serialize_generic(Serializer& se, Field& field, void* fieldParent);
-
-template<class T>	SerializeFunc	getSerializeFunc(T*)					{ return serialize_generic; }
-inline				SerializeFunc	getSerializeFunc(roInt8*)				{ return serialize_int8; }
-inline				SerializeFunc	getSerializeFunc(roUint8*)				{ return serialize_uint8; }
-inline				SerializeFunc	getSerializeFunc(float*)				{ return serialize_float; }
-inline				SerializeFunc	getSerializeFunc(double*)				{ return serialize_double; }
-inline				SerializeFunc	getSerializeFunc(char**)				{ return serialize_string; }
-
-template<class T, class C>	Type*	extractMemberType(T C::*m)				{ return reflection.getType<T>(); }
-template<class T, class C>	Type*	extractMemberType(T* C::*m)				{ return reflection.getType<T>(); }		// Most of the time we don't care the type is pointer or not
-template<class C>			Type*	extractMemberType(char* C::*m)			{ return reflection.getType<char*>(); }
-template<class C>			Type*	extractMemberType(const char* C::*m)	{ return reflection.getType<char*>(); }
-template<class T, class C>	bool	isMemberPointerType(T C::*m)			{ return false; }
-template<class T, class C>	bool	isMemberPointerType(T* C::*m)			{ return true; }
-template<class T, class C>	bool	isMemberConst(T C::*m)					{ return false; }
-template<class T, class C>	bool	isMemberConst(const T C::*m)			{ return true; }
-
 template<class T>
 struct Klass
 {
 	template<class F>
 	Klass& field(const char* name, F f)
 	{
-		unsigned offset = reinterpret_cast<unsigned>(&((T*)(NULL)->*f));
-		Field tmp = {
-			name,
-			extractMemberType(f),
-			offset,
-			isMemberConst(f),
-			isMemberPointerType(f)
-		};
+		Field tmp;
+		extractField(*this, tmp, name, f, f);
 		roAssert("Type not found when registering member field" && tmp.type);
 		type->fields.pushBack(tmp); // TODO: fields better be sorted according to the offset
 		return *this;
 	}
 
 	Type* type;
+	Registry* registry;
 };
 
 template<class T>
@@ -78,7 +49,7 @@ Klass<T> Registry::Class(const char* name)
 	type->serializeFunc = getSerializeFunc((T*)NULL);
 
 	types.pushBack(*type);
-	Klass<T> k = { type };
+	Klass<T> k = { type, this };
 	return k;
 }
 
@@ -91,7 +62,7 @@ Klass<T> Registry::Class(const char* name)
 	type->serializeFunc = getSerializeFunc((T*)NULL);
 
 	types.pushBack(*type);
-	Klass<T> k = { type };
+	Klass<T> k = { type, this };
 	return k;
 }
 
@@ -99,4 +70,57 @@ template<class T>
 Type* Registry::getType()
 {
 	return getType(typeid(T));
+}
+
+
+// Below are designed for extending the reflection system
+
+typedef roStatus (*SerializeFunc)(Serializer& se, Field& field, void* fieldParent);
+roStatus serialize_int8(Serializer& se, Field& field, void* fieldParent);
+roStatus serialize_uint8(Serializer& se, Field& field, void* fieldParent);
+roStatus serialize_float(Serializer& se, Field& field, void* fieldParent);
+roStatus serialize_double(Serializer& se, Field& field, void* fieldParent);
+roStatus serialize_string(Serializer& se, Field& field, void* fieldParent);
+roStatus serialize_generic(Serializer& se, Field& field, void* fieldParent);
+
+template<class T>	SerializeFunc	getSerializeFunc(T*)								{ return serialize_generic; }
+inline				SerializeFunc	getSerializeFunc(roInt8*)							{ return serialize_int8; }
+inline				SerializeFunc	getSerializeFunc(roUint8*)							{ return serialize_uint8; }
+inline				SerializeFunc	getSerializeFunc(float*)							{ return serialize_float; }
+inline				SerializeFunc	getSerializeFunc(double*)							{ return serialize_double; }
+inline				SerializeFunc	getSerializeFunc(char**)							{ return serialize_string; }
+
+template<class T, class C>	Type*	extractMemberType(Registry& r, T C::*m)				{ return r.getType<T>(); }
+template<class T, class C>	Type*	extractMemberType(Registry& r, T* C::*m)			{ return r.getType<T>(); }		// Most of the time we don't care the type is pointer or not
+template<class C>			Type*	extractMemberType(Registry& r, char* C::*m)			{ return r.getType<char*>(); }
+template<class C>			Type*	extractMemberType(Registry& r, const char* C::*m)	{ return r.getType<char*>(); }
+template<class T, class C>	bool	isMemberPointerType(T C::*m)						{ return false; }
+template<class T, class C>	bool	isMemberPointerType(T* C::*m)						{ return true; }
+template<class T, class C>	bool	isMemberConst(T C::*m)								{ return false; }
+template<class T, class C>	bool	isMemberConst(const T C::*m)						{ return true; }
+
+template<class T> struct DisableResolution { typedef void Ret; };	// Use this to disable default extractField() when ambiguous happen
+
+template<class T, class F, class C>
+void extractField(Klass<C>& klass, Field& outField, const char* name, F f, T C::*m, typename DisableResolution<T>::Ret* dummy=NULL)
+{
+	Registry* registry = klass.registry;
+	roAssert(registry);
+	unsigned offset = reinterpret_cast<unsigned>(&((C*)(NULL)->*f));
+	Field tmp = {
+		name,
+		extractMemberType(*registry, f),
+		offset,
+		isMemberConst(f),
+		isMemberPointerType(f)
+	};
+	outField = tmp;
+}
+
+template<class T>
+Type* RegisterTemplateArgument(Registry& registry, T* dummy=NULL)
+{
+	Type* type = registry.getType<T>();
+	roAssert("Type not found when registering" && type);
+	return type;
 }

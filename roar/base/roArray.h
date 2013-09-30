@@ -282,6 +282,6 @@ public:
 
 }	// namespace ro
 
-#include "roArray.inl"
-
 #endif	// __roArray_h__
+
+#include "roArray.inl"

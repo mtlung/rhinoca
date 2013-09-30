@@ -1,6 +1,7 @@
 #ifndef __roReflection_h__
 #define __roReflection_h__
 
+#include "roReflectionFwd.h"
 #include "roArray.h"
 #include "roString.h"
 #include "roLinkList.h"
@@ -10,9 +11,6 @@
 
 namespace ro {
 namespace Reflection {
-
-struct Type;
-struct Field;
 
 struct Serializer
 {
@@ -70,18 +68,18 @@ struct Type : public ListNode<Type>
 {
 	Type(const char* name, Type* parent, const std::type_info* typeInfo);
 
-	Field* getField(const char* name);
-	roStatus serialize(Serializer& se, const roUtf8* name, void* val);
+	Registry*	getRegistry	();	// The registry which contain this Type
+	Field*		getField	(const char* name);
+	roStatus	serialize	(Serializer& se, const roUtf8* name, void* val);
 
 	String name;
 	Type* parent;
 	const std::type_info* typeInfo;
+	Array<Type*> templateArgTypes;
 	Array<Field> fields;
 	Array<Func> funcs;
 	roStatus (*serializeFunc)(Serializer& se, Field& field, void* fieldParent);
 };
-
-template<class T> struct Klass;
 
 struct Registry
 {

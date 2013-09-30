@@ -11,8 +11,11 @@ namespace Reflection {
 
 struct Type;
 struct Field;
+struct Registry;
 struct Serializer;
-struct Field;
+
+template<class T> struct Klass;
+template<class T> struct DisableResolution;
 
 typedef roStatus (*SerializeFunc)(Serializer& se, Field& field, void* fieldParent);
 

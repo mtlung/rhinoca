@@ -32,6 +32,11 @@ Type* Registry::getType(const std::type_info& typeInfo)
 	return NULL;
 }
 
+Registry* Type::getRegistry()
+{
+	return roContainerof(Registry, types, getList());
+}
+
 Field* Type::getField(const char* name)
 {
 	for(Field* i=fields.begin(), *end=fields.end(); i != end; ++i)
@@ -87,31 +92,36 @@ void Registry::reset()
 roStatus JsonSerializer::serialize_int8(Field& field, void* fieldParent)
 {
 	if(!fieldParent) return roStatus::pointer_is_null;
-	return writer.write(field.name.c_str(), *reinterpret_cast<const roInt8*>(field.getConstPtr(fieldParent)));
+	const roInt8* val = reinterpret_cast<const roInt8*>(field.getConstPtr(fieldParent));
+	return field.name.isEmpty() ? writer.write(*val) : writer.write(field.name.c_str(), *val);
 }
 
 roStatus JsonSerializer::serialize_uint8(Field& field, void* fieldParent)
 {
 	if(!fieldParent) return roStatus::pointer_is_null;
-	return writer.write(field.name.c_str(), *reinterpret_cast<const roUint8*>(field.getConstPtr(fieldParent)));
+	const roUint8* val = reinterpret_cast<const roUint8*>(field.getConstPtr(fieldParent));
+	return field.name.isEmpty() ? writer.write(*val) : writer.write(field.name.c_str(), *val);
 }
 
 roStatus JsonSerializer::serialize_float(Field& field, void* fieldParent)
 {
 	if(!fieldParent) return roStatus::pointer_is_null;
-	return writer.write(field.name.c_str(), *reinterpret_cast<const float*>(field.getConstPtr(fieldParent)));
+	const float* val = reinterpret_cast<const float*>(field.getConstPtr(fieldParent));
+	return field.name.isEmpty() ? writer.write(*val) : writer.write(field.name.c_str(), *val);
 }
 
 roStatus JsonSerializer::serialize_double(Field& field, void* fieldParent)
 {
 	if(!fieldParent) return roStatus::pointer_is_null;
-	return writer.write(field.name.c_str(), *reinterpret_cast<const double*>(field.getConstPtr(fieldParent)));
+	const double* val = reinterpret_cast<const double*>(field.getConstPtr(fieldParent));
+	return field.name.isEmpty() ? writer.write(*val) : writer.write(field.name.c_str(), *val);
 }
 
 roStatus JsonSerializer::serialize_string(Field& field, void* fieldParent)
 {
 	if(!fieldParent) return roStatus::pointer_is_null;
-	return writer.write(field.name.c_str(), *(const char**)(field.getConstPtr(fieldParent)));
+	const char** val = (const char**)(field.getConstPtr(fieldParent));
+	return field.name.isEmpty() ? writer.write(*val) : writer.write(field.name.c_str(), *val);
 }
 
 roStatus JsonSerializer::serialize_object(Field& field, void* fieldParent)
@@ -119,7 +129,8 @@ roStatus JsonSerializer::serialize_object(Field& field, void* fieldParent)
 	Type* type = field.type;
 	if(!type) return roStatus::pointer_is_null;
 
-	writer.beginObject(field.name.c_str());
+	const char* name = field.name.isEmpty() ? NULL : field.name.c_str();
+	writer.beginObject(name);
 
 	for(Field* f=type->fields.begin(), *end=type->fields.end(); f != end; ++f) {
 		if(!f->type) return roStatus::pointer_is_null;
@@ -144,7 +155,7 @@ roStatus JsonSerializer::serialize(const roUtf8* val)
 
 roStatus JsonSerializer::beginArray(Field& field, roSize count)
 {
-	return writer.beginArray(field.name.c_str());
+	return writer.beginArray(field.name.isEmpty() ? NULL : field.name.c_str());
 }
 
 roStatus JsonSerializer::endArray()

@@ -5,6 +5,10 @@
 using namespace ro;
 using namespace ro::Reflection;
 
+namespace ro {
+
+}
+
 struct BasicTypes
 {
 	roUint8		vUint8;
@@ -31,6 +35,13 @@ struct Body
 {
 	Vec3 position;
 	Vec3 velocity;
+};
+
+struct Container
+{
+	Array<roUint8> intArray;
+	Array<Body> bodies;
+	Array<Array<float> > floatArray2D;
 };
 
 struct ContainPointer
@@ -63,6 +74,11 @@ struct ReflectionTest
 		reflection.Class<Body>("Body")
 			.field("position", &Body::position)
 			.field("velocity", &Body::velocity);
+
+		reflection.Class<Container>("Container")
+			.field("intArray", &Container::intArray)
+			.field("bodies", &Container::bodies)
+			.field("floatArray2D", &Container::floatArray2D);
 
 		reflection.Class<ContainPointer>("ContainPointer")
 			.field("body", &ContainPointer::body)
@@ -112,6 +128,28 @@ TEST_FIXTURE(ReflectionTest, field)
 		CHECK_EQUAL(3.14f, *pi->getConstPtr<float>(&c));
 	}
 
+	{	// Array type
+		Type* t = reflection.getType<Container>();
+		Field* f = t->getField("intArray");
+		
+		Type* t1 = f->type;
+		Type* t2 = f->type->templateArgTypes.front();
+		CHECK_EQUAL("Array<roUint8>", t1->name.c_str());
+		CHECK_EQUAL("roUint8", t2->name.c_str());
+	}
+
+	{	// Array of array
+		Type* t = reflection.getType<Container>();
+		Field* f = t->getField("floatArray2D");
+
+		Type* t1 = f->type;
+		Type* t2 = t1->templateArgTypes.front();
+		Type* t3 = t2->templateArgTypes.front();
+		CHECK_EQUAL("Array<Array<float>>", t1->name.c_str());
+		CHECK_EQUAL("Array<float>", t2->name.c_str());
+		CHECK_EQUAL("float", t3->name.c_str());
+	}
+
 	{	// Pointer type
 		Type* t = reflection.getType<ContainPointer>();
 		Field* f = t->getField("body");
@@ -128,6 +166,27 @@ TEST_FIXTURE(ReflectionTest, serialize)
 	MemoryOStream os;
 	se.writer.setStream(&os);
 	se.writer.beginObject();
+
+	{	Container container;
+		container.intArray.pushBack(1);
+		container.intArray.pushBack(2);
+		container.intArray.pushBack(3);
+
+		container.bodies.pushBack(Body());
+
+		Array<float> af1;
+		af1.pushBack(11);
+		af1.pushBack(12);
+		container.floatArray2D.pushBack(af1);
+
+		Array<float> af2;
+		af2.pushBack(21);
+		af2.pushBack(22);
+		container.floatArray2D.pushBack(af2);
+
+		Type* t = reflection.getType<Container>();
+		t->serialize(se, "My container", &container);
+	}
 
 	{	BasicTypes basicTypes = {
 			1u,

@@ -5,7 +5,7 @@
 #include "base/roLog.h"
 #include "base/roMemoryProfiler.h"
 #include "base/roResource.h"
-#include "base/roReflectionFwd.h"
+#include "base/roReflection.h"
 #include "base/roSocket.h"
 #include "base/roTaskPool.h"
 #include "math/roMath.h"
@@ -160,6 +160,8 @@ void SubSystems::shutdown()
 	_cpuProfiler.shutdown();
 	_memoryProfiler.shutdown();
 	BsdSocket::closeApplication();
+
+	Reflection::reflection.reset();
 }
 
 void SubSystems::tick()

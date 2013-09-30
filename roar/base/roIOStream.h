@@ -69,6 +69,8 @@ struct MemoryOStream : public OStream
 	roByte*				bytePtr			() { return _buf.castedPtr<roByte>(); }
 	roSize				size			() const { return _buf.sizeInByte(); }
 
+	void				clear			() { _buf.clear(); }
+
 // Private:
 	ByteArray _buf;
 };

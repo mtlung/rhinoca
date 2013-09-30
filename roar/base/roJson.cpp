@@ -540,8 +540,10 @@ roStatus JsonWriter::beginObject(const roUtf8* name)
 	roStatus st = flushStrBuf();
 	if(!st) return st;
 
-	if(name)
+	if(name) {
+		roAssert(_stateStack.back() == JsonWriter::_inObject);
 		st = strFormat(_strBuf, "\"{}\":{}", JsonString(name), "{");
+	}
 	else
 		st = _strBuf.assign("{");
 
@@ -622,8 +624,10 @@ roStatus JsonWriter::beginArray(const roUtf8* name)
 	roStatus st = flushStrBuf();
 	if(!st) return st;
 
-	if(name)
+	if(name) {
+		roAssert(_stateStack.back() == _inObject);
 		st = strFormat(_strBuf, "\"{}\":[", JsonString(name));
+	}
 	else
 		st = _strBuf.assign("[");
 

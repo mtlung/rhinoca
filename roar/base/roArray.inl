@@ -1,3 +1,6 @@
+#ifndef __roArray_inl__
+#define __roArray_inl__
+
 template<class T> inline
 void roSwap(ro::IArray<T>& lhs, ro::IArray<T>& rhs)
 {
@@ -459,3 +462,95 @@ Status ExtArray<T>::reserve(roSize newCapacity, bool force)
 }
 
 }	// namespace ro
+
+#endif	// __roArray_inl__
+
+// Only enable the reflection section if you include roReflection.h first
+#ifdef __roReflection_h__
+#	ifndef __roArray_inl_reflection__
+#	define __roArray_inl_reflection__
+
+#include "roReflectionFwd.h"
+#include "roStringFormat.h"
+
+namespace ro {
+namespace Reflection {
+
+template<class T>
+roStatus serialize_Array(Serializer& se, Field& field, void* fieldParent)
+{
+	const Array<T>* a = field.getConstPtr<Array<T> >(fieldParent);
+	if(!a) return roStatus::pointer_is_null;
+
+	roStatus st = se.beginArray(field, a->size());
+	if(!st) return st;
+
+	if(field.type->templateArgTypes.isEmpty())
+		return roStatus::index_out_of_range;
+
+	Type* innerType = field.type->templateArgTypes.front();
+	if(!innerType) return roStatus::pointer_is_null;
+
+	Field f = {
+		"",
+		innerType,
+		0,
+		field.isConst,
+		false
+	};
+
+	for(Array<T>::const_iterator i=a->begin(); i!=a->end(); ++i)
+		st = innerType->serializeFunc(se, f, (void*)i);
+
+	return se.endArray();
+}
+
+template<class T> struct DisableResolution<Array<T> > {};
+
+template<class T>
+Type* RegisterTemplateArgument(Registry& registry, Array<T>* dummy=NULL)
+{
+	Type* type = registry.getType<Array<T> >();
+	if(type)
+		return type;
+
+	Type* innerType = RegisterTemplateArgument(registry, (T*)NULL);
+	roAssert(innerType);
+
+	String name;
+	strFormat(name, "Array<{}>", innerType->name);
+
+	Klass<Array<T> > klass = registry.Class<Array<T> >(name.c_str());
+	klass.type->serializeFunc = serialize_Array<T>;
+	klass.type->templateArgTypes.pushBack(innerType);
+
+	return klass.type;
+}
+
+template<class T, class F, class C>
+void extractField(const Klass<C>& klass, Field& outField, const char* name, F f, Array<T> C::*m)
+{
+	Registry* registry = klass.registry;
+	roAssert(registry);
+
+	// Register the array type if not yet done so
+	Type* type = RegisterTemplateArgument(*registry, (Array<T>*)NULL);
+
+	unsigned offset = reinterpret_cast<unsigned>(&((C*)(NULL)->*f));
+	Field tmp = {
+		name,
+		type,
+		offset,
+		isMemberConst(f),
+		isMemberPointerType(f)
+	};
+
+	roAssert("Type not found when registering Array member field" && !type->templateArgTypes.isEmpty());
+	outField = tmp;
+}
+
+}	// namespace Reflection
+}	// namespace ro
+
+#	endif
+#endif	// __roReflection_h__
