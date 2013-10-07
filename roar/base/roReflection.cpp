@@ -79,6 +79,7 @@ roStatus serialize_string(Serializer& se, Field& field, void* fieldParent)
 	return se.serialize_string(field, fieldParent);
 }
 
+// Serialization of object goes here, if not been customized
 roStatus serialize_generic(Serializer& se, Field& field, void* fieldParent)
 {
 	return se.serialize_object(field, fieldParent);
@@ -87,80 +88,6 @@ roStatus serialize_generic(Serializer& se, Field& field, void* fieldParent)
 void Registry::reset()
 {
 	types.destroyAll();
-}
-
-roStatus JsonSerializer::serialize_int8(Field& field, void* fieldParent)
-{
-	if(!fieldParent) return roStatus::pointer_is_null;
-	const roInt8* val = reinterpret_cast<const roInt8*>(field.getConstPtr(fieldParent));
-	return field.name.isEmpty() ? writer.write(*val) : writer.write(field.name.c_str(), *val);
-}
-
-roStatus JsonSerializer::serialize_uint8(Field& field, void* fieldParent)
-{
-	if(!fieldParent) return roStatus::pointer_is_null;
-	const roUint8* val = reinterpret_cast<const roUint8*>(field.getConstPtr(fieldParent));
-	return field.name.isEmpty() ? writer.write(*val) : writer.write(field.name.c_str(), *val);
-}
-
-roStatus JsonSerializer::serialize_float(Field& field, void* fieldParent)
-{
-	if(!fieldParent) return roStatus::pointer_is_null;
-	const float* val = reinterpret_cast<const float*>(field.getConstPtr(fieldParent));
-	return field.name.isEmpty() ? writer.write(*val) : writer.write(field.name.c_str(), *val);
-}
-
-roStatus JsonSerializer::serialize_double(Field& field, void* fieldParent)
-{
-	if(!fieldParent) return roStatus::pointer_is_null;
-	const double* val = reinterpret_cast<const double*>(field.getConstPtr(fieldParent));
-	return field.name.isEmpty() ? writer.write(*val) : writer.write(field.name.c_str(), *val);
-}
-
-roStatus JsonSerializer::serialize_string(Field& field, void* fieldParent)
-{
-	if(!fieldParent) return roStatus::pointer_is_null;
-	const char** val = (const char**)(field.getConstPtr(fieldParent));
-	return field.name.isEmpty() ? writer.write(*val) : writer.write(field.name.c_str(), *val);
-}
-
-roStatus JsonSerializer::serialize_object(Field& field, void* fieldParent)
-{
-	Type* type = field.type;
-	if(!type) return roStatus::pointer_is_null;
-
-	const char* name = field.name.isEmpty() ? NULL : field.name.c_str();
-	writer.beginObject(name);
-
-	for(Field* f=type->fields.begin(), *end=type->fields.end(); f != end; ++f) {
-		if(!f->type) return roStatus::pointer_is_null;
-		roStatus st = f->type->serializeFunc(*this, *f, fieldParent);
-		if(!st) return st;
-	}
-
-	writer.endObject();
-
-	return roStatus::ok;
-}
-
-roStatus JsonSerializer::serialize(float val)
-{
-	return writer.write(val);
-}
-
-roStatus JsonSerializer::serialize(const roUtf8* val)
-{
-	return writer.write(val);
-}
-
-roStatus JsonSerializer::beginArray(Field& field, roSize count)
-{
-	return writer.beginArray(field.name.isEmpty() ? NULL : field.name.c_str());
-}
-
-roStatus JsonSerializer::endArray()
-{
-	return writer.endArray();
 }
 
 }	// namespace Reflection

@@ -36,13 +36,15 @@ struct JsonParser : private NonCopyable
 	void parseInplace(roUtf8* source);
 
 	Event::Enum		nextEvent();
+	Event::Enum		currentEvent()			{ return _event; }
+	Event::Enum		getCurrentProcessNext() { Event::Enum e = _event; nextEvent(); return e; }
 
-	bool			getBool()		{ roAssert(_event == Event::Bool); return _boolVal; }
-	const roUtf8*	getName()		{ roAssert(_event == Event::Name); return _stringVal; }
-	const roUtf8*	getString()		{ roAssert(_event == Event::String); return _stringVal; }
-	roInt64			getInt64()		{ roAssert(_event == Event::Integer64); return _int64Val; }
-	roUint64		getUint64()		{ roAssert(_event == Event::UInteger64); return _uint64Val; }
-	double			getDouble()		{ roAssert(_event == Event::Double); return _doubleVal; }
+	bool			getBool()				{ roAssert(_event == Event::Bool); return _boolVal; }
+	const roUtf8*	getName()				{ roAssert(_event == Event::Name); return _stringVal; }
+	const roUtf8*	getString()				{ roAssert(_event == Event::String); return _stringVal; }
+	roInt64			getInt64()				{ roAssert(_event == Event::Integer64); return _int64Val; }
+	roUint64		getUint64()				{ roAssert(_event == Event::UInteger64); return _uint64Val; }
+	double			getDouble()				{ roAssert(_event == Event::Double); return _doubleVal; }
 
 	template<typename T>
 	roStatus		getNumber(T& val);

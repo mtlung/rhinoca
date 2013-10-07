@@ -570,9 +570,16 @@ roStatus Reflection::serialize_roString(Serializer& se, Field& field, void* fiel
 	Field f = field;	// TODO: Optimize this copying
 	const String* string = f.getConstPtr<String>(fieldParent);
 	if(!string) return roStatus::pointer_is_null;
+	f.offset = 0;
+
 	const char* str = string->c_str();
-	field.offset = 0;
-	return Reflection::serialize_string(se, field, (void*)(&str));
+	roStatus st = Reflection::serialize_string(se, f, (void*)(&str));
+	if(!st) return st;
+
+	if(se.isReading)
+		st = const_cast<String*>(string)->assign(str);
+
+	return st;
 }
 
 }	// namespace ro

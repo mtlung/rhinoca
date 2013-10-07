@@ -14,31 +14,27 @@ namespace Reflection {
 
 struct Serializer
 {
-	virtual roStatus serialize_int8(Field& field, void* fieldParent) = 0;
-	virtual roStatus serialize_uint8(Field& field, void* fieldParent) = 0;
-	virtual roStatus serialize_float(Field& field, void* fieldParent) = 0;
-	virtual roStatus serialize_double(Field& field, void* fieldParent) = 0;
-	virtual roStatus serialize_string(Field& field, void* fieldParent) = 0;
-	virtual roStatus serialize_object(Field& field, void* fieldParent) = 0;
-	virtual roStatus serialize(float val) = 0;
-	virtual roStatus serialize(const roUtf8* val) = 0;
-	virtual roStatus beginArray(Field& field, roSize count) = 0;
-	virtual roStatus endArray() = 0;
-};
+	virtual roStatus beginArchive		() = 0;
+	virtual roStatus endArchive			() = 0;
+	virtual roStatus serialize_int8		(Field& field, void* fieldParent) = 0;
+	virtual roStatus serialize_uint8	(Field& field, void* fieldParent) = 0;
+	virtual roStatus serialize_float	(Field& field, void* fieldParent) = 0;
+	virtual roStatus serialize_double	(Field& field, void* fieldParent) = 0;
+	virtual roStatus serialize_string	(Field& field, void* fieldParent) = 0;
+	virtual roStatus serialize_object	(Field& field, void* fieldParent) = 0;
+	virtual roStatus beginArray			(Field& field, roSize count) = 0;
+	virtual roStatus endArray			() = 0;
 
-struct JsonSerializer : public Serializer
-{
-	override roStatus serialize_int8(Field& field, void* fieldParent);
-	override roStatus serialize_uint8(Field& field, void* fieldParent);
-	override roStatus serialize_float(Field& field, void* fieldParent);
-	override roStatus serialize_double(Field& field, void* fieldParent);
-	override roStatus serialize_string(Field& field, void* fieldParent);
-	override roStatus serialize_object(Field& field, void* fieldParent);
-	override roStatus serialize(float val);
-	override roStatus serialize(const roUtf8* val);
-	override roStatus beginArray(Field& field, roSize count);
-	override roStatus endArray();
-	JsonWriter writer;
+	virtual roStatus serialize			(float& val) = 0;
+
+// Writer interface
+	virtual roStatus serialize			(const roUtf8* val) = 0;
+
+// Reader interface
+	// For reader to poll if the array is ended
+	virtual bool	 isArrayEnded		() = 0;
+
+	bool isReading;
 };
 
 struct Field

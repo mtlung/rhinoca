@@ -33,6 +33,7 @@ struct Circle : public Shape
 
 struct Body
 {
+	Body() : position(0.0f), velocity(0.0f) {}
 	Vec3 position;
 	Vec3 velocity;
 };
@@ -41,6 +42,7 @@ struct Container
 {
 	Array<roUint8> intArray;
 	Array<Body> bodies;
+	TinyArray<roUint8, 4> tinyArray;
 	Array<Array<float> > floatArray2D;
 };
 
@@ -78,6 +80,7 @@ struct ReflectionTest
 		reflection.Class<Container>("Container")
 			.field("intArray", &Container::intArray)
 			.field("bodies", &Container::bodies)
+			.field("tinyArray", &Container::tinyArray)
 			.field("floatArray2D", &Container::floatArray2D);
 
 		reflection.Class<ContainPointer>("ContainPointer")
@@ -134,7 +137,7 @@ TEST_FIXTURE(ReflectionTest, field)
 		
 		Type* t1 = f->type;
 		Type* t2 = f->type->templateArgTypes.front();
-		CHECK_EQUAL("Array<roUint8>", t1->name.c_str());
+		CHECK_EQUAL("IArray<roUint8>", t1->name.c_str());
 		CHECK_EQUAL("roUint8", t2->name.c_str());
 	}
 
@@ -145,8 +148,8 @@ TEST_FIXTURE(ReflectionTest, field)
 		Type* t1 = f->type;
 		Type* t2 = t1->templateArgTypes.front();
 		Type* t3 = t2->templateArgTypes.front();
-		CHECK_EQUAL("Array<Array<float>>", t1->name.c_str());
-		CHECK_EQUAL("Array<float>", t2->name.c_str());
+		CHECK_EQUAL("IArray<IArray<float>>", t1->name.c_str());
+		CHECK_EQUAL("IArray<float>", t2->name.c_str());
 		CHECK_EQUAL("float", t3->name.c_str());
 	}
 
@@ -160,69 +163,101 @@ TEST_FIXTURE(ReflectionTest, field)
 }
 
 #include "../../roar/base/roIOStream.h"
+#include "../../roar/base/roJsonSerializer.h"
 TEST_FIXTURE(ReflectionTest, serialize)
 {
-	JsonSerializer se;
 	MemoryOStream os;
-	se.writer.setStream(&os);
-	se.writer.beginObject();
 
-	{	Container container;
-		container.intArray.pushBack(1);
-		container.intArray.pushBack(2);
-		container.intArray.pushBack(3);
+	// Write
+	{	JsonOutputSerializer ose;
+		ose.writer.setStream(&os);
+		ose.beginArchive();
 
-		container.bodies.pushBack(Body());
+		{	Container container;
+			container.intArray.pushBack(1);
+			container.intArray.pushBack(2);
+			container.intArray.pushBack(3);
 
-		Array<float> af1;
-		af1.pushBack(11);
-		af1.pushBack(12);
-		container.floatArray2D.pushBack(af1);
+			Body body;
+			body.position = Vec3(1.0f);
+			body.velocity = Vec3(2.0f);
+			container.bodies.pushBack(body);
 
-		Array<float> af2;
-		af2.pushBack(21);
-		af2.pushBack(22);
-		container.floatArray2D.pushBack(af2);
+			container.tinyArray.pushBack(1);
+			container.tinyArray.pushBack(2);
 
-		Type* t = reflection.getType<Container>();
-		t->serialize(se, "My container", &container);
+			Array<float> af1;
+			af1.pushBack(11);
+			af1.pushBack(12);
+			container.floatArray2D.pushBack(af1);
+
+			Array<float> af2;
+			af2.pushBack(21);
+			af2.pushBack(22);
+			container.floatArray2D.pushBack(af2);
+
+			Type* t = reflection.getType<Container>();
+			t->serialize(ose, "My container", &container);
+		}
+
+		{	BasicTypes basicTypes = {
+				1u,
+				1.23f,
+				4.56,
+				"Hello world 1",
+				"Hello world 2",
+				"Hello world 3"
+			};
+
+			Type* t = reflection.getType<BasicTypes>();
+			t->serialize(ose, "Basic types", &basicTypes);
+		}
+
+		{	Vec3 v(1, 2, 3);
+			Type* t = reflection.getType<Vec3>();
+			t->serialize(ose, "Vec3 type", &v);
+		}
+
+		{	Circle c;
+			c.area = 10;
+			c.radius = 2;
+
+			Type* t = reflection.getType<Circle>();
+			t->serialize(ose, "my circle", &c);
+		}
+
+		ose.endArchive();
+		char* str = (char*)os.bytePtr();
+		CHECK(str);
 	}
 
-	{	BasicTypes basicTypes = {
-			1u,
-			1.23f,
-			4.56,
-			"Hello world 1",
-			"Hello world 2",
-			"Hello world 3"
-		};
+	// Read
+	{
+		JsonInputSerializer ise;
+		ise.parser.parse((const roUtf8*)os.bytePtr());
+		ise.beginArchive();
 
-		Type* t = reflection.getType<BasicTypes>();
-		t->serialize(se, "Basic types", &basicTypes);
+		{	Container container;
+			Type* t = reflection.getType<Container>();
+			t->serialize(ise, "My container", &container);
+		}
+
+		{	BasicTypes basicTypes;
+			Type* t = reflection.getType<BasicTypes>();
+			t->serialize(ise, "Basic types", &basicTypes);
+		}
+
+		{	Vec3 v;
+			Type* t = reflection.getType<Vec3>();
+			t->serialize(ise, "Vec3 type", &v);
+		}
+
+		{	Circle c;
+			Type* t = reflection.getType<Circle>();
+			t->serialize(ise, "my circle", &c);
+			t = t;
+		}
+
+		ise.endArchive();
 	}
-
-	{	Vec3 v(1, 2, 3);
-		Type* t = reflection.getType<Vec3>();
-		t->serialize(se, "Vec3 type", &v);
-	}
-
-	{	Circle c;
-		c.area = 10;
-		c.radius = 2;
-
-		Type* t = reflection.getType<Circle>();
-		t->serialize(se, "my circle", &c);
-	}
-
-	{	Body body;
-		body.position = Vec3(0, 1, 2);
-		body.velocity = Vec3(3, 4, 5);
-
-		Type* t = reflection.getType<Body>();
-		t->serialize(se, "my body", &body);
-	}
-
-	se.writer.endObject();
-	char* str = (char*)os.bytePtr();
-	(void)str;
 }

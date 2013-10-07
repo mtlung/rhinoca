@@ -479,7 +479,7 @@ namespace Reflection {
 template<class T>
 roStatus serialize_Array(Serializer& se, Field& field, void* fieldParent)
 {
-	const Array<T>* a = field.getConstPtr<Array<T> >(fieldParent);
+	const IArray<T>* a = field.getConstPtr<IArray<T> >(fieldParent);
 	if(!a) return roStatus::pointer_is_null;
 
 	roStatus st = se.beginArray(field, a->size());
@@ -499,28 +499,49 @@ roStatus serialize_Array(Serializer& se, Field& field, void* fieldParent)
 		false
 	};
 
-	for(Array<T>::const_iterator i=a->begin(); i!=a->end(); ++i)
-		st = innerType->serializeFunc(se, f, (void*)i);
+	if(se.isReading) {
+		IArray<T>* a = field.getPtr<IArray<T> >(fieldParent);
+		a->clear();
+
+		while(!se.isArrayEnded()) {
+			a->incSize(1);	// TODO: Make some hints for reserve
+			st = innerType->serializeFunc(se, f, &a->back());
+			if(!st) return st;
+		}
+	}
+	else {
+		for(IArray<T>::const_iterator i=a->begin(); i!=a->end(); ++i) {
+			st = innerType->serializeFunc(se, f, (void*)i);
+			if(!st) return st;
+		}
+	}
 
 	return se.endArray();
 }
 
+template<class T> struct DisableResolution<IArray<T> > {};
 template<class T> struct DisableResolution<Array<T> > {};
+template<class T, roSize N> struct DisableResolution<TinyArray<T, N> > {};
+
+template<class T> struct ReduceToIArray { typedef T Ret; };
+template<class T> struct ReduceToIArray<Array<T> > { typedef IArray<T> Ret; };
+template<class T, roSize N> struct ReduceToIArray<TinyArray<T, N> > { typedef IArray<T> Ret; };
 
 template<class T>
-Type* RegisterTemplateArgument(Registry& registry, Array<T>* dummy=NULL)
+Type* RegisterTemplateArgument(Registry& registry, IArray<T>* dummy=NULL)
 {
-	Type* type = registry.getType<Array<T> >();
+	Type* type = registry.getType<IArray<T> >();
 	if(type)
 		return type;
 
-	Type* innerType = RegisterTemplateArgument(registry, (T*)NULL);
+	typedef typename ReduceToIArray<T>::Ret ReducedType;
+	Type* innerType = RegisterTemplateArgument(registry, (ReducedType*)NULL);
 	roAssert(innerType);
 
 	String name;
-	strFormat(name, "Array<{}>", innerType->name);
+	strFormat(name, "IArray<{}>", innerType->name);
 
-	Klass<Array<T> > klass = registry.Class<Array<T> >(name.c_str());
+	Klass<IArray<T> > klass = registry.Class<IArray<T> >(name.c_str());
 	klass.type->serializeFunc = serialize_Array<T>;
 	klass.type->templateArgTypes.pushBack(innerType);
 
@@ -528,13 +549,13 @@ Type* RegisterTemplateArgument(Registry& registry, Array<T>* dummy=NULL)
 }
 
 template<class T, class F, class C>
-void extractField(const Klass<C>& klass, Field& outField, const char* name, F f, Array<T> C::*m)
+void extractField_IArray(const Klass<C>& klass, Field& outField, const char* name, F f)
 {
 	Registry* registry = klass.registry;
 	roAssert(registry);
 
 	// Register the array type if not yet done so
-	Type* type = RegisterTemplateArgument(*registry, (Array<T>*)NULL);
+	Type* type = RegisterTemplateArgument(*registry, (IArray<T>*)NULL);
 
 	unsigned offset = reinterpret_cast<unsigned>(&((C*)(NULL)->*f));
 	Field tmp = {
@@ -545,8 +566,20 @@ void extractField(const Klass<C>& klass, Field& outField, const char* name, F f,
 		isMemberPointerType(f)
 	};
 
-	roAssert("Type not found when registering Array member field" && !type->templateArgTypes.isEmpty());
+	roAssert("Type not found when registering IArray member field" && !type->templateArgTypes.isEmpty());
 	outField = tmp;
+}
+
+template<class T, class F, class C>
+void extractField(const Klass<C>& klass, Field& outField, const char* name, F f, Array<T> C::*m)
+{
+	extractField_IArray<T, F, C>(klass, outField, name, f);
+}
+
+template<class T, class F, class C, roSize N>
+void extractField(const Klass<C>& klass, Field& outField, const char* name, F f, TinyArray<T, N> C::*m)
+{
+	extractField_IArray<T, F, C>(klass, outField, name, f);
 }
 
 }	// namespace Reflection

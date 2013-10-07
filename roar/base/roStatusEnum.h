@@ -23,6 +23,8 @@ roStatusEnum( timed_out )
 roStatusEnum( data_corrupted )
 roStatusEnum( end_of_data )
 roStatusEnum( in_progress )
+roStatusEnum( can_read_only )
+roStatusEnum( type_mismatch )
 
 // String
 roStatusEnum( string_encoding_error )
@@ -56,6 +58,17 @@ roStatusEnum( http_error )
 roStatusEnum( http_invalid_uri )
 roStatusEnum( http_unknow_size )
 roStatusEnum( http_404_not_found )
+
+// Json
+roStatusEnum( json_missing_root_object )
+roStatusEnum( json_expect_object_begin )
+roStatusEnum( json_expect_object_end )
+roStatusEnum( json_expect_object_name )
+roStatusEnum( json_expect_array_begin )
+roStatusEnum( json_expect_array_end )
+
+// Serialization
+roStatusEnum( serialization_member_mismatch )
 
 // Image
 roStatusEnum( image_invalid_header )

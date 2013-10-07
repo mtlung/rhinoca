@@ -237,7 +237,7 @@ inline bool Vec3::projectAlongPlane(const Vec3& normal, float epsilon, float ove
 
 roStatus Reflection::serialize_vec2(Serializer& se, Field& field, void* fieldParent)
 {
-	const Vec2* v = field.getConstPtr<Vec2>(fieldParent);
+	Vec2* v = (Vec2*)field.getConstPtr<Vec2>(fieldParent);
 	if(!v) return roStatus::pointer_is_null;
 
 	roStatus st = se.beginArray(field, 2);
@@ -251,7 +251,7 @@ roStatus Reflection::serialize_vec2(Serializer& se, Field& field, void* fieldPar
 
 roStatus Reflection::serialize_vec3(Serializer& se, Field& field, void* fieldParent)
 {
-	const Vec3* v = field.getConstPtr<Vec3>(fieldParent);
+	Vec3* v = (Vec3*)field.getConstPtr<Vec3>(fieldParent);
 	if(!v) return roStatus::pointer_is_null;
 
 	roStatus st = se.beginArray(field, 3);
@@ -266,7 +266,7 @@ roStatus Reflection::serialize_vec3(Serializer& se, Field& field, void* fieldPar
 
 roStatus Reflection::serialize_vec4(Serializer& se, Field& field, void* fieldParent)
 {
-	const Vec4* v = field.getConstPtr<Vec4>(fieldParent);
+	Vec4* v = (Vec4*)field.getConstPtr<Vec4>(fieldParent);
 	if(!v) return roStatus::pointer_is_null;
 
 	roStatus st = se.beginArray(field, 4);
