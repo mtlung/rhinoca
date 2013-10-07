@@ -467,6 +467,11 @@ JsonParser::Event::Enum JsonParser::nextEvent()
 	return _event;
 }
 
+bool JsonParser::isNumber(Event::Enum e)
+{
+	return e == Event::Integer64 || e == Event::UInteger64 || e == Event::Double;
+}
+
 //
 JsonWriter::JsonWriter(OStream* stream)
 	: _stream(stream)

@@ -124,6 +124,61 @@ TEST_FIXTURE(JsonTest, parse_basicType)
 	CHECK_EQUAL(JsonParser::Event::End, parser.nextEvent());
 }
 
+TEST_FIXTURE(JsonTest, get_generic_number)
+{
+	JsonParser parser;
+	parser.parse("[-123, 256, 1.23, 3.5e38]");
+	parser.nextEvent();
+
+	{	CHECK(parser.isNumber(parser.nextEvent()));
+
+		roInt8 i8;
+		CHECK(parser.getNumber(i8));
+		CHECK_EQUAL(-123, i8);
+
+		roUint8 u8;
+		CHECK(!parser.getNumber(u8));
+
+		float f;
+		CHECK(parser.getNumber(f));
+		CHECK_EQUAL(-123, f);
+	}
+
+	{	CHECK(parser.isNumber(parser.nextEvent()));
+
+		roUint8 u8;
+		CHECK(!parser.getNumber(u8));
+
+		roInt16 i16;
+		CHECK(parser.getNumber(i16));
+		CHECK_EQUAL(256, i16);
+	}
+
+	{	CHECK(parser.isNumber(parser.nextEvent()));
+
+		roInt8 i8;
+		CHECK(!parser.getNumber(i8));
+
+		float f;
+		CHECK(parser.getNumber(f));
+		CHECK_EQUAL(1.23f, f);
+
+		double d;
+		CHECK(parser.getNumber(d));
+		CHECK_EQUAL(1.23, d);
+	}
+
+	{	CHECK(parser.isNumber(parser.nextEvent()));
+
+		float f;
+		CHECK(!parser.getNumber(f));
+
+		double d;
+		CHECK(parser.getNumber(d));
+		CHECK_EQUAL(3.5e38, d);
+	}
+}
+
 TEST_FIXTURE(JsonTest, parse_array)
 {
 	{	// Object as root

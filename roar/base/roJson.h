@@ -3,6 +3,7 @@
 
 #include "roArray.h"
 #include "roString.h"
+#include "roTypeCast.h"
 #include "roNonCopyable.h"
 
 namespace ro {
@@ -42,6 +43,10 @@ struct JsonParser : private NonCopyable
 	roInt64			getInt64()		{ roAssert(_event == Event::Integer64); return _int64Val; }
 	roUint64		getUint64()		{ roAssert(_event == Event::UInteger64); return _uint64Val; }
 	double			getDouble()		{ roAssert(_event == Event::Double); return _doubleVal; }
+
+	template<typename T>
+	roStatus		getNumber(T& val);
+	bool			isNumber(Event::Enum e);
 
 	roSize			getObjectMemberCount()	{ roAssert(_event == Event::EndObject); return _MemberCount; }
 	roSize			getArrayElementCount()	{ roAssert(_event == Event::EndArray); return _ElementCount; }
@@ -131,6 +136,22 @@ struct JsonWriter : private NonCopyable
 	enum State { _inObject, _inArray };
 	Array<State> _stateStack;
 };  // JsonWriter
+
+
+template<typename T>
+roStatus JsonParser::getNumber(T& val)
+{
+	if(_event == Event::Integer64)
+		return roSafeAssign(val, getInt64());
+
+	if(_event == Event::UInteger64)
+		return roSafeAssign(val, getUint64());
+
+	if(_event == Event::Double)
+		return roSafeAssign(val, getDouble());
+
+	return roStatus::type_mismatch;
+}
 
 }   // namespace ro
 
