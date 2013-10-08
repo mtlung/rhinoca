@@ -42,6 +42,7 @@ struct JsonParser : private NonCopyable
 	bool			getBool()				{ roAssert(_event == Event::Bool); return _boolVal; }
 	const roUtf8*	getName()				{ roAssert(_event == Event::Name); return _stringVal; }
 	const roUtf8*	getString()				{ roAssert(_event == Event::String); return _stringVal; }
+	roSize			getStringLen()			{ roAssert(_event == Event::String); return _stringValLen; }
 	roInt64			getInt64()				{ roAssert(_event == Event::Integer64); return _int64Val; }
 	roUint64		getUint64()				{ roAssert(_event == Event::UInteger64); return _uint64Val; }
 	double			getDouble()				{ roAssert(_event == Event::Double); return _doubleVal; }
@@ -85,7 +86,7 @@ struct JsonParser : private NonCopyable
 	bool (JsonParser::*_nextFunc)();
 
 	bool		_boolVal;
-	roUtf8*		_stringVal;
+	roUtf8*		_stringVal;		roSize		_stringValLen;
 	roInt64		_int64Val;		roUint64	_uint64Val;
 	double		_doubleVal;
 	roSize		_MemberCount;	roSize		_ElementCount;

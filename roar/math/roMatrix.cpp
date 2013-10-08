@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "roMatrix.h"
+#include "../base/roReflection.h"
 #include "../base/roUtility.h"
 #include "../platform/roCompiler.h"
 #include "../platform/roOS.h"
@@ -413,6 +414,22 @@ Mat4 makePrespectiveMat4(float fovyDeg, float acpectWidthOverHeight, float zNear
 	m.m32 = -1;							// Perspective division
 
 	return m;
+}
+
+roStatus Reflection::serialize_mat4(Serializer& se, Field& field, void* fieldParent)
+{
+	Mat4* m = (Mat4*)field.getConstPtr<Vec4>(fieldParent);
+	if(!m) return roStatus::pointer_is_null;
+
+	roStatus st = se.beginArray(field, m->rows() * m->columns());
+	if(!st) return st;
+
+	for(roSize i=0, end=m->rows() * m->columns(); i<end; ++i) {
+		st = se.serialize(*(m->data + i));
+		if(!st) return st;
+	}
+
+	return se.endArray();
 }
 
 }	// namespace ro

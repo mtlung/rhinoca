@@ -142,3 +142,14 @@ inline void Mat4::toIdentity() {
 }
 
 }	// namespace ro
+
+#include "../base/roReflectionFwd.h"
+
+namespace ro {
+namespace Reflection {
+
+roStatus serialize_mat4(Serializer& se, Field& field, void* fieldParent);
+inline SerializeFunc getSerializeFunc(Mat4*) { return serialize_mat4; }
+
+}	// namespace Reflection
+}	// namespace ro

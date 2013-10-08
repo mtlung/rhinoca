@@ -606,7 +606,7 @@ inline float Vec4::normalize(void) {
 
 #include "../base/roReflectionFwd.h"
 
-namespace ro{
+namespace ro {
 namespace Reflection {
 
 roStatus serialize_vec2(Serializer& se, Field& field, void* fieldParent);

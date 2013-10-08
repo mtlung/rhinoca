@@ -45,10 +45,13 @@ struct Klass
 template<class T>
 Klass<T> Registry::Class(const char* name)
 {
-	Type* type = new Type(name, NULL, &typeid(T));
-	type->serializeFunc = getSerializeFunc((T*)NULL);
+	Type* type = getType<T>();
+	if(!type) {
+		type = new Type(name, NULL, &typeid(T));
+		types.pushBack(*type);
+	}
 
-	types.pushBack(*type);
+	type->serializeFunc = getSerializeFunc((T*)NULL);
 	Klass<T> k = { type, this };
 	return k;
 }
@@ -58,10 +61,13 @@ Klass<T> Registry::Class(const char* name)
 {
 	Type* parent = getType<P>();
 	assert(parent);
-	Type* type = new Type(name, parent, &typeid(T));
-	type->serializeFunc = getSerializeFunc((T*)NULL);
+	Type* type = getType<T>();
+	if(!type) {
+		type = new Type(name, parent, &typeid(T));
+		types.pushBack(*type);
+	}
 
-	types.pushBack(*type);
+	type->serializeFunc = getSerializeFunc((T*)NULL);
 	Klass<T> k = { type, this };
 	return k;
 }

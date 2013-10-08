@@ -84,9 +84,19 @@ roStatus JsonOutputSerializer::serialize(float& val)
 	return writer.write(val);
 }
 
-roStatus JsonOutputSerializer::serialize(const roUtf8* val)
+roStatus JsonOutputSerializer::serialize(double& val)
 {
 	return writer.write(val);
+}
+
+roStatus JsonOutputSerializer::serialize(const roUtf8*& val)
+{
+	return writer.write(val);
+}
+
+roStatus JsonOutputSerializer::serialize(roByte*& val, roSize& size)
+{
+	return writer.write(val, size);
 }
 
 bool JsonOutputSerializer::isArrayEnded()
@@ -233,6 +243,35 @@ roStatus JsonInputSerializer::serialize(float& val)
 	roStatus st = parser.getNumber(val);
 	if(!st) return st;
 	parser.nextEvent();
+	return roStatus::ok;
+}
+
+roStatus JsonInputSerializer::serialize(double& val)
+{
+	roStatus st = parser.getNumber(val);
+	if(!st) return st;
+	parser.nextEvent();
+	return roStatus::ok;
+}
+
+roStatus JsonInputSerializer::serialize(const roUtf8*& val)
+{
+	if(parser.currentEvent() != JsonParser::Event::String)
+		return roStatus::json_expect_string;
+
+	val = parser.getString();
+	parser.nextEvent();
+	return roStatus::ok;
+}
+
+roStatus JsonInputSerializer::serialize(roByte*& val, roSize& size)
+{
+	if(parser.currentEvent() != JsonParser::Event::String)
+		return roStatus::json_expect_string;
+
+	val = (roByte*)parser.getString();
+	size = parser.getStringLen();
+
 	return roStatus::ok;
 }
 

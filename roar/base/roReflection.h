@@ -26,9 +26,9 @@ struct Serializer
 	virtual roStatus endArray			() = 0;
 
 	virtual roStatus serialize			(float& val) = 0;
-
-// Writer interface
-	virtual roStatus serialize			(const roUtf8* val) = 0;
+	virtual roStatus serialize			(double& val) = 0;
+	virtual roStatus serialize			(const roUtf8*& val) = 0;
+	virtual roStatus serialize			(roByte*& val, roSize& size) = 0;
 
 // Reader interface
 	// For reader to poll if the array is ended

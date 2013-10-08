@@ -22,9 +22,9 @@ struct JsonOutputSerializer : public Serializer
 	override roStatus	endArray		();
 
 	override roStatus	serialize		(float& val);
-
-// Writer interface
-	override roStatus	serialize		(const roUtf8* val);
+	override roStatus	serialize		(double& val);
+	override roStatus	serialize		(const roUtf8*& val);
+	override roStatus	serialize		(roByte*& val, roSize& size);
 
 // Reader interface
 	override bool		isArrayEnded	();
@@ -47,9 +47,9 @@ struct JsonInputSerializer : public Serializer
 	override roStatus	endArray		();
 
 	override roStatus	serialize		(float& val);
-
-// Writer interface
-	override roStatus	serialize		(const roUtf8* val)	{ return roStatus::not_supported; }
+	override roStatus	serialize		(double& val);
+	override roStatus	serialize		(const roUtf8*& val);	// Be care that the returned string will get destroyed very soon
+	override roStatus	serialize		(roByte*& val, roSize& size);
 
 // Reader interface
 	override bool		isArrayEnded	();

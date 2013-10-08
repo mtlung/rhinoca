@@ -66,6 +66,8 @@ roStatusEnum( json_expect_object_end )
 roStatusEnum( json_expect_object_name )
 roStatusEnum( json_expect_array_begin )
 roStatusEnum( json_expect_array_end )
+roStatusEnum( json_expect_string )
+roStatusEnum( json_expect_number )
 
 // Serialization
 roStatusEnum( serialization_member_mismatch )

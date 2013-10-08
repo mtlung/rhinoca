@@ -91,3 +91,5 @@ struct LinkList : public _LinkList
 }	// namespace ro
 
 #endif	// __roLinklist_h__
+
+#include "roLinkList.inl"

@@ -21,7 +21,7 @@ roStatus registerReflection()
 	reflection.Class<roUint64>("roUint64");
 	reflection.Class<float>("float");
 	reflection.Class<double>("double");
-	reflection.Class<char*>("string");
+	reflection.Class<char*>("char*");
 	reflection.Class<String>("string");
 
 	reflection.Class<Vec2>("Vec2")

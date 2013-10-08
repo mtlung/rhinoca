@@ -38,12 +38,22 @@ struct Body
 	Vec3 velocity;
 };
 
+struct MyListNode : public ListNode<MyListNode>
+{
+	MyListNode() {}
+	MyListNode(const roUtf8* name) : name(name) {}
+	String name;
+};
+
+typedef LinkList<MyListNode> MyLinkList;
+
 struct Container
 {
 	Array<roUint8> intArray;
 	Array<Body> bodies;
 	TinyArray<roUint8, 4> tinyArray;
 	Array<Array<float> > floatArray2D;
+	MyLinkList linkList;
 };
 
 struct ContainPointer
@@ -77,11 +87,15 @@ struct ReflectionTest
 			.field("position", &Body::position)
 			.field("velocity", &Body::velocity);
 
+		reflection.Class<MyListNode>("MyListNode")
+			.field("name", &MyListNode::name);
+
 		reflection.Class<Container>("Container")
 			.field("intArray", &Container::intArray)
 			.field("bodies", &Container::bodies)
 			.field("tinyArray", &Container::tinyArray)
-			.field("floatArray2D", &Container::floatArray2D);
+			.field("floatArray2D", &Container::floatArray2D)
+			.field("linkList", &Container::linkList);
 
 		reflection.Class<ContainPointer>("ContainPointer")
 			.field("body", &ContainPointer::body)
@@ -195,6 +209,8 @@ TEST_FIXTURE(ReflectionTest, serialize)
 			af2.pushBack(21);
 			af2.pushBack(22);
 			container.floatArray2D.pushBack(af2);
+
+			container.linkList.pushBack(*new MyListNode("I am list node"));
 
 			Type* t = reflection.getType<Container>();
 			t->serialize(ose, "My container", &container);

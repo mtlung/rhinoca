@@ -294,6 +294,7 @@ bool JsonParser::_parseStringImpl()
 	}
 
 	_stringVal = first;
+	_stringValLen = last - first;
 	return true;
 }
 
