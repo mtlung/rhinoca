@@ -16,8 +16,15 @@ struct Serializer
 {
 	virtual roStatus beginArchive		() = 0;
 	virtual roStatus endArchive			() = 0;
+	virtual roStatus serialize_bool		(Field& field, void* fieldParent) = 0;
 	virtual roStatus serialize_int8		(Field& field, void* fieldParent) = 0;
+	virtual roStatus serialize_int16	(Field& field, void* fieldParent) = 0;
+	virtual roStatus serialize_int32	(Field& field, void* fieldParent) = 0;
+	virtual roStatus serialize_int64	(Field& field, void* fieldParent) = 0;
 	virtual roStatus serialize_uint8	(Field& field, void* fieldParent) = 0;
+	virtual roStatus serialize_uint16	(Field& field, void* fieldParent) = 0;
+	virtual roStatus serialize_uint32	(Field& field, void* fieldParent) = 0;
+	virtual roStatus serialize_uint64	(Field& field, void* fieldParent) = 0;
 	virtual roStatus serialize_float	(Field& field, void* fieldParent) = 0;
 	virtual roStatus serialize_double	(Field& field, void* fieldParent) = 0;
 	virtual roStatus serialize_string	(Field& field, void* fieldParent) = 0;

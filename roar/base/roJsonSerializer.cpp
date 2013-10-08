@@ -14,33 +14,25 @@ roStatus JsonOutputSerializer::endArchive()
 	return writer.endObject();
 }
 
-roStatus JsonOutputSerializer::serialize_int8(Field& field, void* fieldParent)
+template<class T>
+roStatus _serialize(JsonWriter& writer, Field& field, void* fieldParent)
 {
 	if(!fieldParent) return roStatus::pointer_is_null;
-	const roInt8* val = reinterpret_cast<const roInt8*>(field.getConstPtr(fieldParent));
+	const T* val = reinterpret_cast<const T*>(field.getConstPtr(fieldParent));
 	return field.name.isEmpty() ? writer.write(*val) : writer.write(field.name.c_str(), *val);
 }
 
-roStatus JsonOutputSerializer::serialize_uint8(Field& field, void* fieldParent)
-{
-	if(!fieldParent) return roStatus::pointer_is_null;
-	const roUint8* val = reinterpret_cast<const roUint8*>(field.getConstPtr(fieldParent));
-	return field.name.isEmpty() ? writer.write(*val) : writer.write(field.name.c_str(), *val);
-}
-
-roStatus JsonOutputSerializer::serialize_float(Field& field, void* fieldParent)
-{
-	if(!fieldParent) return roStatus::pointer_is_null;
-	const float* val = reinterpret_cast<const float*>(field.getConstPtr(fieldParent));
-	return field.name.isEmpty() ? writer.write(*val) : writer.write(field.name.c_str(), *val);
-}
-
-roStatus JsonOutputSerializer::serialize_double(Field& field, void* fieldParent)
-{
-	if(!fieldParent) return roStatus::pointer_is_null;
-	const double* val = reinterpret_cast<const double*>(field.getConstPtr(fieldParent));
-	return field.name.isEmpty() ? writer.write(*val) : writer.write(field.name.c_str(), *val);
-}
+roStatus JsonOutputSerializer::serialize_bool(Field& field, void* fieldParent)	{ return _serialize<bool>(writer, field, fieldParent); }
+roStatus JsonOutputSerializer::serialize_int8(Field& field, void* fieldParent)	{ return _serialize<roInt8>(writer, field, fieldParent); }
+roStatus JsonOutputSerializer::serialize_int16(Field& field, void* fieldParent)	{ return _serialize<roInt16>(writer, field, fieldParent); }
+roStatus JsonOutputSerializer::serialize_int32(Field& field, void* fieldParent)	{ return _serialize<roInt32>(writer, field, fieldParent); }
+roStatus JsonOutputSerializer::serialize_int64(Field& field, void* fieldParent)	{ return _serialize<roInt64>(writer, field, fieldParent); }
+roStatus JsonOutputSerializer::serialize_uint8(Field& field, void* fieldParent)	{ return _serialize<roUint8>(writer, field, fieldParent); }
+roStatus JsonOutputSerializer::serialize_uint16(Field& field, void* fieldParent){ return _serialize<roUint16>(writer, field, fieldParent); }
+roStatus JsonOutputSerializer::serialize_uint32(Field& field, void* fieldParent){ return _serialize<roUint32>(writer, field, fieldParent); }
+roStatus JsonOutputSerializer::serialize_uint64(Field& field, void* fieldParent){ return _serialize<roUint64>(writer, field, fieldParent); }
+roStatus JsonOutputSerializer::serialize_float(Field& field, void* fieldParent)	{ return _serialize<float>(writer, field, fieldParent); }
+roStatus JsonOutputSerializer::serialize_double(Field& field, void* fieldParent){ return _serialize<double>(writer, field, fieldParent); }
 
 roStatus JsonOutputSerializer::serialize_string(Field& field, void* fieldParent)
 {
@@ -106,23 +98,6 @@ bool JsonOutputSerializer::isArrayEnded()
 }
 
 
-struct JsonValue
-{
-	JsonValue* parent;
-	JsonParser::Event::Enum event;
-
-	const roUtf8* name;
-
-	union Value
-	{
-		roInt64 i;
-		roUint64 u;
-		float f;
-		double d;
-		const roUtf8* s;
-	} value;
-};
-
 roStatus JsonInputSerializer::beginArchive()
 {
 	JsonParser::Event::Enum e = parser.nextEvent();
@@ -136,53 +111,42 @@ roStatus JsonInputSerializer::endArchive()
 	return e == JsonParser::Event::EndObject ? roStatus::ok : roStatus::json_missing_root_object;
 }
 
-roStatus JsonInputSerializer::serialize_int8(Field& field, void* fieldParent)
+roStatus JsonInputSerializer::serialize_bool(Field& field, void* fieldParent)
 {
 	if(!fieldParent) return roStatus::pointer_is_null;
-	roInt8* val = reinterpret_cast<roInt8*>(field.getPtr(fieldParent));
+	bool* val = reinterpret_cast<bool*>(field.getPtr(fieldParent));
 	if(!val) return roStatus::pointer_is_null;
 
-	roStatus st = checkName(field); if(!st) return st;
-	parser.getNumber(*val); if(!st) return st;
+	roStatus st = _checkName(field); if(!st) return st;
+	*val = parser.getBool();
 	parser.nextEvent();
 	return roStatus::ok;
 }
 
-roStatus JsonInputSerializer::serialize_uint8(Field& field, void* fieldParent)
+template<class T>
+roStatus _serialize(JsonInputSerializer& se, Field& field, void* fieldParent)
 {
 	if(!fieldParent) return roStatus::pointer_is_null;
-	roUint8* val = reinterpret_cast<roUint8*>(field.getPtr(fieldParent));
+	T* val = reinterpret_cast<T*>(field.getPtr(fieldParent));
 	if(!val) return roStatus::pointer_is_null;
 
-	roStatus st = checkName(field); if(!st) return st;
-	parser.getNumber(*val); if(!st) return st;
-	parser.nextEvent();
+	roStatus st = se._checkName(field); if(!st) return st;
+	se.parser.getNumber(*val); if(!st) return st;
+	se.parser.nextEvent();
 	return roStatus::ok;
 }
 
-roStatus JsonInputSerializer::serialize_float(Field& field, void* fieldParent)
-{
-	if(!fieldParent) return roStatus::pointer_is_null;
-	float* val = reinterpret_cast<float*>(field.getPtr(fieldParent));
-	if(!val) return roStatus::pointer_is_null;
+roStatus JsonInputSerializer::serialize_int8(Field& field, void* fieldParent)	{ return _serialize<roInt8>(*this, field, fieldParent); }
+roStatus JsonInputSerializer::serialize_int16(Field& field, void* fieldParent)	{ return _serialize<roInt16>(*this, field, fieldParent); }
+roStatus JsonInputSerializer::serialize_int32(Field& field, void* fieldParent)	{ return _serialize<roInt32>(*this, field, fieldParent); }
+roStatus JsonInputSerializer::serialize_int64(Field& field, void* fieldParent)	{ return _serialize<roInt64>(*this, field, fieldParent); }
+roStatus JsonInputSerializer::serialize_uint8(Field& field, void* fieldParent)	{ return _serialize<roUint8>(*this, field, fieldParent); }
+roStatus JsonInputSerializer::serialize_uint16(Field& field, void* fieldParent)	{ return _serialize<roUint16>(*this, field, fieldParent); }
+roStatus JsonInputSerializer::serialize_uint32(Field& field, void* fieldParent)	{ return _serialize<roUint32>(*this, field, fieldParent); }
+roStatus JsonInputSerializer::serialize_uint64(Field& field, void* fieldParent)	{ return _serialize<roUint64>(*this, field, fieldParent); }
+roStatus JsonInputSerializer::serialize_float(Field& field, void* fieldParent)	{ return _serialize<float>(*this, field, fieldParent); }
+roStatus JsonInputSerializer::serialize_double(Field& field, void* fieldParent)	{ return _serialize<double>(*this, field, fieldParent); }
 
-	roStatus st = checkName(field); if(!st) return st;
-	parser.getNumber(*val); if(!st) return st;
-	parser.nextEvent();
-	return roStatus::ok;
-}
-
-roStatus JsonInputSerializer::serialize_double(Field& field, void* fieldParent)
-{
-	if(!fieldParent) return roStatus::pointer_is_null;
-	double* val = reinterpret_cast<double*>(field.getPtr(fieldParent));
-	if(!val) return roStatus::pointer_is_null;
-
-	roStatus st = checkName(field); if(!st) return st;
-	parser.getNumber(*val); if(!st) return st;
-	parser.nextEvent();
-	return roStatus::ok;
-}
 
 roStatus JsonInputSerializer::serialize_string(Field& field, void* fieldParent)
 {
@@ -190,7 +154,7 @@ roStatus JsonInputSerializer::serialize_string(Field& field, void* fieldParent)
 	const roUtf8** val = reinterpret_cast<const roUtf8**>(field.getPtr(fieldParent));
 	if(!val) return roStatus::pointer_is_null;
 
-	roStatus st = checkName(field); if(!st) return st;
+	roStatus st = _checkName(field); if(!st) return st;
 	*val = parser.getString();
 	parser.nextEvent();
 	return roStatus::ok;
@@ -201,7 +165,7 @@ roStatus JsonInputSerializer::serialize_object(Field& field, void* fieldParent)
 	Type* type = field.type;
 	if(!type) return roStatus::pointer_is_null;
 
-	roStatus st = checkName(field); if(!st) return st;
+	roStatus st = _checkName(field); if(!st) return st;
 
 	if(parser.getCurrentProcessNext() != JsonParser::Event::BeginObject)
 		return roStatus::json_expect_object_begin;
@@ -222,7 +186,7 @@ roStatus JsonInputSerializer::serialize_object(Field& field, void* fieldParent)
 
 roStatus JsonInputSerializer::beginArray(Field& field, roSize count)
 {
-	roStatus st = checkName(field); if(!st) return st;
+	roStatus st = _checkName(field); if(!st) return st;
 
 	if(parser.getCurrentProcessNext() != JsonParser::Event::BeginArray)
 		return roStatus::json_expect_array_begin;
@@ -280,7 +244,7 @@ bool JsonInputSerializer::isArrayEnded()
 	return parser.currentEvent() == JsonParser::Event::EndArray;
 }
 
-roStatus JsonInputSerializer::checkName(Field& field)
+roStatus JsonInputSerializer::_checkName(Field& field)
 {
 	const char* name = field.name.isEmpty() ? NULL : field.name.c_str();
 	if(!name) return roStatus::ok;
