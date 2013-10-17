@@ -377,6 +377,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\test\base\roRegexTest.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\test\base\roResourceTest.cpp"
 				>
 			</File>

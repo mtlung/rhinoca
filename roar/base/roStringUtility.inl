@@ -85,6 +85,27 @@ inline char* roStrrChr(char* sz, char ch)
 	return NULL;
 }
 
+inline char* roStrChrCase(char* sz, char ch)
+{
+	char c = roToLower(ch);
+	for( ; *sz; ++sz) {
+		if(roToLower(*sz) == c) return sz;
+	}
+	return NULL;
+}
+
+inline char* roStrrChrCase(char* sz, char ch)
+{
+	roSize len = roStrLen(sz);
+	if(len == 0) return NULL;
+	char* s = &sz[len - 1];
+	char c = roToLower(ch);
+	for( ; s > sz; --s) {
+		if(roToLower(*s) == c) return s;
+	}
+	return NULL;
+}
+
 inline const char* roStrChr(const char* sz, char ch)
 {
 	return roStrChr((char*)sz, ch);

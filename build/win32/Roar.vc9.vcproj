@@ -416,6 +416,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roJsonSerializer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roJsonSerializer.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roLinkList.cpp"
 				>
 			</File>
@@ -501,6 +509,14 @@
 			</File>
 			<File
 				RelativePath="..\..\roar\base\roReflectionFwd.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roRegex.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roRegex.h"
 				>
 			</File>
 			<File

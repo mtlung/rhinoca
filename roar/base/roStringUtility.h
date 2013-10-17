@@ -15,6 +15,8 @@ inline int		roStrnCaseCmp	(const char* s1, const char* s2, roSize n);
 
 inline char*	roStrChr		(char* sz, char ch);
 inline char*	roStrrChr		(char* sz, char ch);
+inline char*	roStrChrCase	(char* sz, char ch);
+inline char*	roStrrChrCase	(char* sz, char ch);
 
 char*			roStrStr		(char* a, const char* b);
 char*			roStrnStr		(char* a, roSize aLen, const char* b);
