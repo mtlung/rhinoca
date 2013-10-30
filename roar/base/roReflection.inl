@@ -38,6 +38,12 @@ struct Klass
 		return *this;
 	}
 
+	template<class F>
+	Klass& func(const char* name, F f)
+	{
+		return *this;
+	}
+
 	Type* type;
 	Registry* registry;
 };

@@ -72,9 +72,9 @@ TEST_FIXTURE(JsonTest, parse_basicType)
 	TEST_DOUBLE("1.234E+10", 1.234E+10);
 	TEST_DOUBLE("1.234E-10", 1.234E-10);
 	TEST_DOUBLE("1.79769e+308", 1.79769e+308);
-//	TEST_DOUBLE("2.22507e-308", 2.22507e-308);	// TODO: underflow
+//	TEST_DOUBLE("2.22507e-308", 2.22507e-308);	// TODO: report underflow instead of getting zero
 	TEST_DOUBLE("-1.79769e+308", -1.79769e+308);
-//	TEST_DOUBLE("-2.22507e-308", -2.22507e-308);	// TODO: underflow
+//	TEST_DOUBLE("-2.22507e-308", -2.22507e-308);	// TODO: report underflow instead of getting zero
 	TEST_DOUBLE("18446744073709551616", 18446744073709551616.0);	// 2^64 (max of uint64_t + 1, force to use double)
 	TEST_DOUBLE("-9223372036854775809", -9223372036854775809.0);	// -2^63 - 1(min of int64_t + 1, force to use double)
 
@@ -246,7 +246,7 @@ TEST_FIXTURE(JsonTest, parse_array)
 
 TEST_FIXTURE(JsonTest, parse_error)
 {
-	{	// Forgot to call pase()
+	{	// Forgot to call parse()
 		JsonParser parser;
 		CHECK_EQUAL(JsonParser::Event::Error, parser.nextEvent());
 	}

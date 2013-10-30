@@ -37,11 +37,20 @@ struct Serializer
 	virtual roStatus serialize			(const roUtf8*& val) = 0;
 	virtual roStatus serialize			(roByte*& val, roSize& size) = 0;
 
+// Array specialization for better performance
+	virtual roStatus serialize			(float* valArray, roSize inoutCount) = 0;
+
 // Reader interface
 	// For reader to poll if the array is ended
 	virtual bool	 isArrayEnded		() = 0;
 
 	bool isReading;
+};
+
+struct Enum
+{
+	String name;
+	int value;
 };
 
 struct Field

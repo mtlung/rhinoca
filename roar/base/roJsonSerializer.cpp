@@ -91,6 +91,16 @@ roStatus JsonOutputSerializer::serialize(roByte*& val, roSize& size)
 	return writer.write(val, size);
 }
 
+roStatus JsonOutputSerializer::serialize(float* valArray, roSize count)
+{
+	for(roSize i=0; i<count; ++i) {
+		roStatus st = writer.write(valArray[i]);
+		if(!st) return st;
+	}
+
+	return roStatus::ok;
+}
+
 bool JsonOutputSerializer::isArrayEnded()
 {
 	roAssert(false);
@@ -235,6 +245,17 @@ roStatus JsonInputSerializer::serialize(roByte*& val, roSize& size)
 
 	val = (roByte*)parser.getString();
 	size = parser.getStringLen();
+
+	return roStatus::ok;
+}
+
+roStatus JsonInputSerializer::serialize(float* valArray, roSize count)
+{
+	for(roSize i=0; i<count; ++i) {
+		roStatus st = parser.getNumber(valArray[i]);
+		if(!st) return st;
+		parser.nextEvent();
+	}
 
 	return roStatus::ok;
 }

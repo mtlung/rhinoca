@@ -257,9 +257,8 @@ roStatus Reflection::serialize_vec3(Serializer& se, Field& field, void* fieldPar
 	roStatus st = se.beginArray(field, 3);
 	if(!st) return st;
 
-	st = se.serialize(v->x); if(!st) return st;
-	st = se.serialize(v->y); if(!st) return st;
-	st = se.serialize(v->z); if(!st) return st;
+	st = se.serialize(v->data, 3);
+	if(!st) return st;
 
 	return se.endArray();
 }
@@ -272,10 +271,8 @@ roStatus Reflection::serialize_vec4(Serializer& se, Field& field, void* fieldPar
 	roStatus st = se.beginArray(field, 4);
 	if(!st) return st;
 
-	st = se.serialize(v->x); if(!st) return st;
-	st = se.serialize(v->y); if(!st) return st;
-	st = se.serialize(v->z); if(!st) return st;
-	st = se.serialize(v->w); if(!st) return st;
+	st = se.serialize(v->data, 4);
+	if(!st) return st;
 
 	return se.endArray();
 }

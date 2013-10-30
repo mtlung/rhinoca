@@ -33,6 +33,8 @@ struct JsonOutputSerializer : public Serializer
 	override roStatus	serialize		(const roUtf8*& val);
 	override roStatus	serialize		(roByte*& val, roSize& size);
 
+	override roStatus	serialize		(float* valArray, roSize count);
+
 // Reader interface
 	override bool		isArrayEnded	();
 
@@ -64,6 +66,8 @@ struct JsonInputSerializer : public Serializer
 	override roStatus	serialize		(double& val);
 	override roStatus	serialize		(const roUtf8*& val);	// Be care that the returned string will get destroyed very soon
 	override roStatus	serialize		(roByte*& val, roSize& size);
+
+	override roStatus	serialize		(float* valArray, roSize count);
 
 // Reader interface
 	override bool		isArrayEnded	();
