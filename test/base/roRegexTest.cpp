@@ -5,10 +5,28 @@ using namespace ro;
 
 struct RegexTest {};
 
-// strScan(str, "http://{:i}\.{com|org}(\::z)?{(/:i)*}", domain, ending, port, path);
+// strScan(str, "http://(:i)\.(com|org)(\::z)?((/:i)*)", domain, ending, port, path);
 TEST_FIXTURE(RegexTest, test)
 {
 	const roUtf8* testData[][4] = {
+		{ "^(b+|a){1,2}c",			"",		"bc",											"bc`b" },
+
+		{ "a|b|c",					"",		"a",											"a" },
+		{ "[a-c]*d",				"",		"ad",											"ad" },
+		{ "a{1,2}",					"",		"a",											"a" },
+		{ "[abc]d",					"",		"bd",											"bd" },
+		{ "(a)?b",					"",		"b",											"b" },
+		{ "a?b",					"",		"b",											"b" },
+		{ "(a*)*b",					"",		"b",											"b" },
+		{ "(a)*b",					"",		"aab",											"aab" },
+		{ "(a)*b",					"",		"ab",											"ab" },
+		{ "(a*)b",					"",		"ab",											"ab" },
+		{ "(a)b",					"",		"ab",											"ab" },
+		{ "a*b",					"",		"ab",											"ab" },
+		{ "a*",						"",		"aa",											"aa" },
+		{ "abc",					"",		"abc",											"abc" },
+
+		{ "^(b+|a){1,2}c",			"",		"bc",											"bc`b" },
 
 		{ "^xxx[0-9]*$",			"",		"xxx",											"xxx" },
 		{ "[a-c0-9]", "", "9", "9" },
@@ -30,6 +48,9 @@ TEST_FIXTURE(RegexTest, test)
 		{ NULL,						"",		">>abczz",										NULL },
 
 //		{ "^(b+?|a){1,2}?c",		"",		"bc",											"bc`b" },	// NOTE: +? is lazy +
+
+//		{ "^(b+|a){1,2}c",			"",		"bc",											"bc`b" },
+//		{ NULL,						"",		"bbc",											"bbc`bb" },
 
 		{ "^[ab\\]cde]",			"",		"athing",										"a" },
 		{ NULL,						"",		"bthing",										"b" },
@@ -89,7 +110,9 @@ TEST_FIXTURE(RegexTest, test)
 		{ NULL,						"",		"*** Failers",									NULL },
 		{ NULL,						"",		"xxx",											NULL },
 
-//		{ "^.+[0-9][0-9][0-9]$",	"",		"x123",											"x123" },
+		{ "^.+[0-9][0-9][0-9]$",	"",		"x123",											"x123" },
+
+		{ "a?a?aa",					"",		"aa",											"aa" },
 
 		{ "(012|abc|lung)+",		"",		"abclung",										"abclung`lung" },
 		{ "abc|def",	"i","Abc", "Abc" },
@@ -108,21 +131,21 @@ TEST_FIXTURE(RegexTest, test)
 
 		const roUtf8* result = testData[i][3];
 		if(result) {
-			if(regex.bracketResult.isEmpty()) {
+			if(regex.result.isEmpty()) {
 				CHECK_EQUAL("", regStr);
 			}
-			if(!regex.bracketResult.isEmpty()) {
+			if(!regex.result.isEmpty()) {
 				String str;
-				for(roSize i=0; i<regex.bracketResult.size(); ++i) {
-					str += regex.bracketResult[i];
-					if(i != regex.bracketResult.size() - 1)
+				for(roSize i=0; i<regex.result.size(); ++i) {
+					str += regex.result[i];
+					if(i != regex.result.size() - 1)
 						str += "`";
 				}
 				CHECK_EQUAL(result, str.c_str());
 			}
 		}
 		else
-			CHECK(regex.bracketResult.isEmpty());
+			CHECK(regex.result.isEmpty());
 	}
 
 	regex.match("", "ab*");

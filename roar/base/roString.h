@@ -88,6 +88,19 @@ struct String
 };	// String
 
 
+struct RangedString
+{
+	RangedString() : begin(NULL), end(NULL) {}
+	RangedString(const roUtf8* s) : begin(s), end(s + roStrLen(s)) {}
+	RangedString(const roUtf8* b, const roUtf8* e) : begin(b), end(e) { roAssert(end >= begin); }
+
+	operator String() { return String(begin, end - begin); }
+
+	const roUtf8* begin;
+	const roUtf8* end;
+};	// RangedString
+
+
 // ----------------------------------------------------------------------
 
 ///	A string class that ensure only one memory block is allocated for each unique string,

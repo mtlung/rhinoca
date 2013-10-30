@@ -22,23 +22,9 @@ struct Regex : private NonCopyable
 
 	bool match(const roUtf8* s, const roUtf8* f, const char* options=NULL);
 
-// Private
-	struct SaveState;
-	bool match_raw(const roUtf8*& s, const char*& f);
-	bool match_charClass(const roUtf8*& s, const roUtf8*& f);
-	bool match_repeat_or(const roUtf8*& s, const roUtf8*& f, roSize nestedLevel, SaveState& ss);
-	bool match_shortcut(const roUtf8*& s, const roUtf8*& f);
-	bool match_shortcut_identifier(const roUtf8*& s, const roUtf8*& f);
-	bool match_group(const roUtf8*& s, const roUtf8*& f, roSize nestedLevel);
-	bool match_beginOfString(const roUtf8*& s, const roUtf8*& f);
-	bool match_endOfString(const roUtf8*& s, const roUtf8*& f);
-	bool _match(const roUtf8*& s, const roUtf8*& f, roSize nestedLevel);
-
-	bool (*charCmpFunc)(char c1, char c2);
-	char* (*strChrFunc)(char* sz, char ch);
-	const roUtf8* _sBegin, *_fBegin;
-	const roUtf8* _matchBegin, *_matchEnd;
-	Array<String> bracketResult;
+// Attributes
+	bool isDebug;
+	Array<RangedString> result;
 };
 
 }   // namespace ro

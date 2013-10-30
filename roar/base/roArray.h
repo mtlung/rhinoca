@@ -74,6 +74,7 @@ struct IArray
 
 	bool		isInRange(int i) const			{ return i >= 0 && roSize(i) < size(); }
 	bool		isInRange(roSize i) const		{ return i < size(); }
+	bool		isInRange(void* p) const		{ return p >= castedPtr<roByte>() && p < (castedPtr<roByte>() + sizeInByte()); }
 
 	void		swap(IArray& rhs)				{ roSwap(_size, rhs._size); roSwap(_capacity, rhs._capacity); roSwap(_data, rhs._data); }
 
