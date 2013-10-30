@@ -326,6 +326,14 @@ bool String::operator==(const String& rhs) const
 }
 
 
+RangedString::operator String()
+{
+	if(begin && end && (end > begin))
+		return String(begin, end - begin);
+	return String();
+}
+
+
 // ----------------------------------------------------------------------
 
 struct ConstString::Node

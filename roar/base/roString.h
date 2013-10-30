@@ -94,7 +94,7 @@ struct RangedString
 	RangedString(const roUtf8* s) : begin(s), end(s + roStrLen(s)) {}
 	RangedString(const roUtf8* b, const roUtf8* e) : begin(b), end(e) { roAssert(end >= begin); }
 
-	operator String() { return String(begin, end - begin); }
+	operator String();
 
 	const roUtf8* begin;
 	const roUtf8* end;

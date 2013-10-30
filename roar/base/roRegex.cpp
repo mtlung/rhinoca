@@ -47,7 +47,7 @@ struct Graph;
 struct Edge
 {
 	RangedString f;
-	bool (*func)(Graph& graph, Edge& edge, RangedString&);
+	bool (*func)(Graph& graph, Node& node, Edge& edge, RangedString&);
 	roPtrInt nextNode;
 };	// Edge
 
@@ -56,6 +56,7 @@ struct Node
 	roUint32 edgeCount;
 	RangedString debugStr;
 	roUint32 repeatMin, repeatMax;
+	void* userdata;
 	Edge edges;
 
 	roSize sizeInBytes() const
@@ -83,9 +84,7 @@ struct Node
 	{
 		bool isValidEdge = isValid(edge);
 		roAssert(isValidEdge);
-		if(!isValidEdge)
-			return false;
-
+		if(!isValidEdge) return false;
 		edge.nextNode = (roByte*)(&node) - (roByte*)(&edge);
 		return true;
 	}
@@ -93,9 +92,7 @@ struct Node
 	bool redirect(Node& from, Node& to)
 	{
 		Edge* edge = findEdge(from);
-		if(!edge)
-			return false;
-
+		if(!edge) return false;
 		return directEdgeToNode(*edge, to);
 	}
 
@@ -109,7 +106,7 @@ struct Node
 	}
 };	// Node
 
-bool loop_repeat(Graph& graph, Edge& edge, RangedString& s)
+bool loop_repeat(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
 	// Prevent endless loop, for instance: "(a*)*b" with "b"
 	// Where nothing for inner a* to match but it regarded as success since it is '*'
@@ -122,11 +119,11 @@ bool loop_repeat(Graph& graph, Edge& edge, RangedString& s)
 	return true;
 }
 
-bool loop_exit(Graph& graph, Edge& edge, RangedString& s) { return true; }
-bool node_begin(Graph& graph, Edge& edge, RangedString& s) { return true; }
-bool node_end(Graph& graph, Edge& edge, RangedString& s) { return true; }
-bool pass_though(Graph& graph, Edge& edge, RangedString& s) { return true; }
-bool alternation(Graph& graph, Edge& edge, RangedString& s) { return true; }
+bool loop_exit(Graph& graph, Node& node, Edge& edge, RangedString& s) { return true; }
+bool node_begin(Graph& graph, Node& node, Edge& edge, RangedString& s) { return true; }
+bool node_end(Graph& graph, Node& node, Edge& edge, RangedString& s) { return true; }
+bool pass_though(Graph& graph, Node& node, Edge& edge, RangedString& s) { return true; }
+bool alternation(Graph& graph, Node& node, Edge& edge, RangedString& s) { return true; }
 
 bool parse_nodes(Graph& graph, const RangedString& f);
 
@@ -167,21 +164,18 @@ struct Graph
 		if(!nodes.insert(endNodeOffset, (roByte*)&node, byteSize)) return NULL;
 		currentNode = nodeFromAbsOffset(endNodeOffset);
 
-		*((roByte**)&endNode) += byteSize;
-
 		// If the buffer get re-allocated, try to adjust the pointers
 		roByte* newBuffBegin = nodes.typedPtr();
 		if(newBuffBegin != buffBegin) {
 			roPtrInt byteOffset = newBuffBegin - buffBegin;	// NOTE: Will roPtrInt get out of range?
-
-			*((roByte**)&endNode) += byteOffset;
-
 			va_list vl;
 			va_start(vl, argCount);
 			for(roSize i=0; i<argCount; ++i)
 				*(va_arg(vl, roByte**)) += byteOffset;
 			va_end(vl);
 		}
+
+		endNode = nodeFromAbsOffset(nodes.sizeInByte() - sizeof(Node));
 
 		// Initialize all edges pointing to a valid node location anyway, to avoid crash
 		for(roSize i=0; i<node.edgeCount; ++i) {
@@ -259,15 +253,19 @@ struct Graph
 	bool (*charCmpFunc)(char c1, char c2);
 };	// Graph
 
-bool group_begin(Graph& graph, Edge& edge, RangedString& s) {
+bool group_begin(Graph& graph, Node& node, Edge& edge, RangedString& s)
+{
+	graph.regex->result[(roSize)node.userdata].begin = s.begin;
 	return ++graph.nestedGroupLevel, true;
 }
-bool group_end(Graph& graph, Edge& edge, RangedString& s) {
+bool group_end(Graph& graph, Node& node, Edge& edge, RangedString& s)
+{
 	roAssert(graph.nestedGroupLevel > 0);
+	graph.regex->result[(roSize)node.userdata].end = s.begin;
 	return --graph.nestedGroupLevel, true;
 }
 
-bool match_raw(Graph& graph, Edge& edge, RangedString& s_)
+bool match_raw(Graph& graph, Node& node, Edge& edge, RangedString& s_)
 {
 	const roUtf8* f = edge.f.begin;
 	const roUtf8* fend = edge.f.end;
@@ -294,7 +292,7 @@ bool match_raw(Graph& graph, Edge& edge, RangedString& s_)
 	return true;
 }
 
-bool match_charClass(Graph& graph, Edge& edge, RangedString& s)
+bool match_charClass(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
 	const roUtf8* i = edge.f.begin;
 
@@ -325,12 +323,12 @@ bool match_charClass(Graph& graph, Edge& edge, RangedString& s)
 	return exclusion ? !inList : inList;
 }
 
-bool match_beginOfString(Graph& graph, Edge& edge, RangedString& s)
+bool match_beginOfString(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
 	return (s.begin == graph.srcString.begin);
 }
 
-bool match_endOfString(Graph& graph, Edge& edge, RangedString& s)
+bool match_endOfString(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
 	return (s.begin == graph.srcString.end);
 }
@@ -487,12 +485,15 @@ bool parse_group(Graph& graph, const RangedString& f, const roUtf8*& i)
 	roAssert(end > begin);
 
 	roSize prevNodeOffset, beginNodeOffset;
+	roSize groupIndex = graph.regex->result.size();
 
 	{	// Add starting node
 		Node beginNode = { 1, RangedString("(") };
 		beginNode.edges.func = group_begin;
 		prevNodeOffset = graph.absOffsetFromNode(*graph.currentNode);
 		beginNodeOffset = graph.absOffsetFromNode(*graph.push(beginNode));
+
+		graph.currentNode->userdata = (void*)groupIndex;
 	}
 
 	if(!parse_nodes(graph, RangedString(begin, end)))
@@ -502,6 +503,9 @@ bool parse_group(Graph& graph, const RangedString& f, const roUtf8*& i)
 		Node endNode = { 1, RangedString(")") };
 		endNode.edges.func = group_end;
 		graph.push(endNode);
+
+		graph.currentNode->userdata = (void*)groupIndex;
+		graph.regex->result.incSize(1);
 	}
 
 	Node* prevNode = graph.nodeFromAbsOffset(prevNodeOffset);
@@ -606,7 +610,7 @@ bool matchNodes(Graph& graph, Node& node, RangedString& s)
 		if(edge.func == node_end)
 			return true;
 
-		if(!(*edge.func)(graph, edge, s))
+		if(!(*edge.func)(graph, *pNode, edge, s))
 			return false;
 
 		pNode = graph.followEdge(edge);
@@ -619,7 +623,7 @@ bool matchNodes(Graph& graph, Node& node, RangedString& s)
 		if(edge.func == node_end)
 			return true;
 
-		if((*edge.func)(graph, edge, s)) {
+		if((*edge.func)(graph, *pNode, edge, s)) {
 			Node* nextNode = graph.followEdge(edge);
 			if(!nextNode)
 				continue;
@@ -679,12 +683,12 @@ bool Regex::match(const roUtf8* s, const roUtf8* f, const char* options)
 	}
 
 	// Parsing
+	result.clear();
 	parse_nodes(graph, regString);
 	if(isDebug)
 		debugNodes(graph);
 
 	// Matching
-	result.clear();
 	if(matchNodes(graph, (Node&)graph.nodes.front(), srcString)) {
 		result.insert(0, RangedString(graph.srcString.begin, srcString.begin));
 		return true;
