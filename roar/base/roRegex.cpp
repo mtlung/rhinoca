@@ -55,8 +55,7 @@ struct Node
 {
 	roUint32 edgeCount;
 	RangedString debugStr;
-	roUint32 repeatMin, repeatMax;
-	void* userdata;
+	void* userdata[3];
 	Edge edges;
 
 	roSize sizeInBytes() const
@@ -120,6 +119,29 @@ bool loop_repeat(Graph& graph, Node& node, Edge& edge, RangedString& s)
 }
 
 bool loop_exit(Graph& graph, Node& node, Edge& edge, RangedString& s) { return true; }
+
+bool counted_loop_repeat(Graph& graph, Node& node, Edge& edge, RangedString& s)
+{
+	roSize max = (roSize)node.userdata[1];
+	roSize& count = (roSize&)node.userdata[2];
+
+	if(count < max)
+		return ++count, loop_repeat(graph, node, edge, s);
+	else
+		return false;
+}
+
+bool counted_loop_exit(Graph& graph, Node& node, Edge& edge, RangedString& s)
+{
+	roSize min = (roSize)node.userdata[0];
+	roSize& count = (roSize&)node.userdata[2];
+
+	if(count < min)
+		return count = 0, false;
+	else
+		return count = 0, true;
+}
+
 bool node_begin(Graph& graph, Node& node, Edge& edge, RangedString& s) { return true; }
 bool node_end(Graph& graph, Node& node, Edge& edge, RangedString& s) { return true; }
 bool pass_though(Graph& graph, Node& node, Edge& edge, RangedString& s) { return true; }
@@ -257,13 +279,13 @@ struct Graph
 bool group_begin(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
 	edge.f.begin = s.begin;
-	graph.tmpResult[(roSize)node.userdata] = s.begin;
+	graph.tmpResult[(roSize)node.userdata[0]] = s.begin;
 	return ++graph.nestedGroupLevel, true;
 }
 bool group_end(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
 	roAssert(graph.nestedGroupLevel > 0);
-	roSize idx = (roSize)node.userdata;
+	roSize idx = (roSize)node.userdata[0];
 	graph.regex->result[idx] = RangedString(graph.tmpResult[idx], s.begin);
 	return --graph.nestedGroupLevel, true;
 }
@@ -359,7 +381,6 @@ bool parse_repeatition(Graph& graph, Node* prevNode, Node* beginNode, Node* endN
 		roVerify(loopNode->directEdgeToNode(loopNode->edge(0), *beginNode));
 
 		loopNode->edge(1).func = loop_exit;
-
 		roVerify(prevNode->redirect(*beginNode, *loopNode));
 	}
 	else if(escaped == '{') {
@@ -374,15 +395,21 @@ bool parse_repeatition(Graph& graph, Node* prevNode, Node* beginNode, Node* endN
 				return false;
 		}
 
+		Node node = { 2, RangedString("*") };
+		Node* loopNode = graph.push(node, 3, &prevNode, &beginNode, &endNode);
+		loopNode->edge(0).func = counted_loop_repeat;
+		roVerify(loopNode->directEdgeToNode(loopNode->edge(0), *beginNode));
+
+		loopNode->edge(1).func = counted_loop_exit;
+		roVerify(prevNode->redirect(*beginNode, *loopNode));
+
 		if(min > max) max = min;
-//		node.repeatMin = 0;
-//		node.repeatMax = 0;
+		loopNode->userdata[0] = (void*)min;
+		loopNode->userdata[1] = (void*)max;
+		loopNode->userdata[2] = (void*)0;
 	}
-	else {
-//		node.repeatMin = 1;
-//		node.repeatMax = 1;
+	else
 		return true;
-	}
 
 	++i;
 	return true;
@@ -496,7 +523,7 @@ bool parse_group(Graph& graph, const RangedString& f, const roUtf8*& i)
 		prevNodeOffset = graph.absOffsetFromNode(*graph.currentNode);
 		beginNodeOffset = graph.absOffsetFromNode(*graph.push(beginNode));
 
-		graph.currentNode->userdata = (void*)groupIndex;
+		graph.currentNode->userdata[0] = (void*)groupIndex;
 	}
 
 	if(!parse_nodes(graph, RangedString(begin, end)))
@@ -507,7 +534,7 @@ bool parse_group(Graph& graph, const RangedString& f, const roUtf8*& i)
 		endNode.edges.func = group_end;
 		graph.push(endNode);
 
-		graph.currentNode->userdata = (void*)groupIndex;
+		graph.currentNode->userdata[0] = (void*)groupIndex;
 		graph.regex->result.incSize(1);
 		graph.tmpResult.incSize(1);
 	}
