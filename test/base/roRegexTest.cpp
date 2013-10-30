@@ -9,19 +9,22 @@ struct RegexTest {};
 TEST_FIXTURE(RegexTest, test)
 {
 	const roUtf8* testData[][4] = {
+		{ "(a)*b",					"",		"aab",											"aab`a" },
+		{ "(abc)d",					"",		"abcd",											"abcd`abc" },
+
 		{ "^(b+|a){1,2}c",			"",		"bc",											"bc`b" },
 
 		{ "a|b|c",					"",		"a",											"a" },
 		{ "[a-c]*d",				"",		"ad",											"ad" },
 		{ "a{1,2}",					"",		"a",											"a" },
 		{ "[abc]d",					"",		"bd",											"bd" },
-		{ "(a)?b",					"",		"b",											"b" },
+		{ "(a)?b",					"",		"b",											"b`" },
 		{ "a?b",					"",		"b",											"b" },
-		{ "(a*)*b",					"",		"b",											"b" },
-		{ "(a)*b",					"",		"aab",											"aab" },
-		{ "(a)*b",					"",		"ab",											"ab" },
-		{ "(a*)b",					"",		"ab",											"ab" },
-		{ "(a)b",					"",		"ab",											"ab" },
+		{ "(a*)*b",					"",		"b",											"b`" },
+		{ "(a)*b",					"",		"aab",											"aab`a" },
+		{ "(a)*b",					"",		"ab",											"ab`a" },
+		{ "(a*)b",					"",		"ab",											"ab`a" },
+		{ "(a)b",					"",		"ab",											"ab`a" },
 		{ "a*b",					"",		"ab",											"ab" },
 		{ "a*",						"",		"aa",											"aa" },
 		{ "abc",					"",		"abc",											"abc" },

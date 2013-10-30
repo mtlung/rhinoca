@@ -251,17 +251,20 @@ struct Graph
 	RangedString regString;
 	RangedString srcString;
 	bool (*charCmpFunc)(char c1, char c2);
+	Array<const roUtf8*> tmpResult;
 };	// Graph
 
 bool group_begin(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
-	graph.regex->result[(roSize)node.userdata].begin = s.begin;
+	edge.f.begin = s.begin;
+	graph.tmpResult[(roSize)node.userdata] = s.begin;
 	return ++graph.nestedGroupLevel, true;
 }
 bool group_end(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
 	roAssert(graph.nestedGroupLevel > 0);
-	graph.regex->result[(roSize)node.userdata].end = s.begin;
+	roSize idx = (roSize)node.userdata;
+	graph.regex->result[idx] = RangedString(graph.tmpResult[idx], s.begin);
 	return --graph.nestedGroupLevel, true;
 }
 
@@ -506,6 +509,7 @@ bool parse_group(Graph& graph, const RangedString& f, const roUtf8*& i)
 
 		graph.currentNode->userdata = (void*)groupIndex;
 		graph.regex->result.incSize(1);
+		graph.tmpResult.incSize(1);
 	}
 
 	Node* prevNode = graph.nodeFromAbsOffset(prevNodeOffset);
@@ -684,6 +688,7 @@ bool Regex::match(const roUtf8* s, const roUtf8* f, const char* options)
 
 	// Parsing
 	result.clear();
+	graph.tmpResult.clear();
 	parse_nodes(graph, regString);
 	if(isDebug)
 		debugNodes(graph);
