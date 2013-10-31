@@ -9,7 +9,42 @@ struct RegexTest {};
 TEST_FIXTURE(RegexTest, test)
 {
 	const roUtf8* testData[][4] = {
-		{ "(a)*b",					"",		"aab",											"aab`a" },
+		{ "a{3}",	"",		"aaaa",						NULL },
+
+		{ "a*abc?xyz+pqr{3}ab{2,}xy{4,5}pq{0,6}AB{0,}zz",	"",		"abxyzpqrrrabbxyyyypqAzz",						"abxyzpqrrrabbxyyyypqAzz" },
+		{ NULL,												"",		"aabxyzpqrrrabbxyyyypqAzz",						"aabxyzpqrrrabbxyyyypqAzz" },
+		{ NULL,												"",		"aaabxyzpqrrrabbxyyyypqAzz",					"aaabxyzpqrrrabbxyyyypqAzz" },
+		{ NULL,												"",		"aaaabxyzpqrrrabbxyyyypqAzz",					"aaaabxyzpqrrrabbxyyyypqAzz" },
+		{ NULL,												"",		"abcxyzpqrrrabbxyyyypqAzz",						"abcxyzpqrrrabbxyyyypqAzz" },
+		{ NULL,												"",		"aabcxyzpqrrrabbxyyyypqAzz",					"aabcxyzpqrrrabbxyyyypqAzz" },
+		{ NULL,												"",		"aaabcxyzpqrrrabbxyyyypAzz",					"aaabcxyzpqrrrabbxyyyypAzz" },
+		{ NULL,												"",		"aaabcxyzpqrrrabbxyyyypqAzz",					"aaabcxyzpqrrrabbxyyyypqAzz" },
+		{ NULL,												"",		"aaabcxyzpqrrrabbxyyyypqqAzz",					"aaabcxyzpqrrrabbxyyyypqqAzz" },
+		{ NULL,												"",		"aaabcxyzpqrrrabbxyyyypqqqAzz",					"aaabcxyzpqrrrabbxyyyypqqqAzz" },
+		{ NULL,												"",		"aaabcxyzpqrrrabbxyyyypqqqqAzz",				"aaabcxyzpqrrrabbxyyyypqqqqAzz" },
+		{ NULL,												"",		"aaabcxyzpqrrrabbxyyyypqqqqqAzz",				"aaabcxyzpqrrrabbxyyyypqqqqqAzz" },
+		{ NULL,												"",		"aaabcxyzpqrrrabbxyyyypqqqqqqAzz",				"aaabcxyzpqrrrabbxyyyypqqqqqqAzz" },
+		{ NULL,												"",		"aaaabcxyzpqrrrabbxyyyypqAzz",					"aaaabcxyzpqrrrabbxyyyypqAzz" },
+		{ NULL,												"",		"abxyzzpqrrrabbxyyyypqAzz",						"abxyzzpqrrrabbxyyyypqAzz" },
+		{ NULL,												"",		"aabxyzzzpqrrrabbxyyyypqAzz",					"aabxyzzzpqrrrabbxyyyypqAzz" },
+		{ NULL,												"",		"aaabxyzzzzpqrrrabbxyyyypqAzz",					"aaabxyzzzzpqrrrabbxyyyypqAzz" },
+		{ NULL,												"",		"aaaabxyzzzzpqrrrabbxyyyypqAzz",				"aaaabxyzzzzpqrrrabbxyyyypqAzz" },
+		{ NULL,												"",		"abcxyzzpqrrrabbxyyyypqAzz",					"abcxyzzpqrrrabbxyyyypqAzz" },
+		{ NULL,												"",		"aabcxyzzzpqrrrabbxyyyypqAzz",					"aabcxyzzzpqrrrabbxyyyypqAzz" },
+		{ NULL,												"",		"aaabcxyzzzzpqrrrabbxyyyypqAzz",				"aaabcxyzzzzpqrrrabbxyyyypqAzz" },
+		{ NULL,												"",		"aaaabcxyzzzzpqrrrabbxyyyypqAzz",				"aaaabcxyzzzzpqrrrabbxyyyypqAzz" },
+		{ NULL,												"",		"aaaabcxyzzzzpqrrrabbbxyyyypqAzz",				"aaaabcxyzzzzpqrrrabbbxyyyypqAzz" },
+		{ NULL,												"",		"aaaabcxyzzzzpqrrrabbbxyyyyypqAzz",				"aaaabcxyzzzzpqrrrabbbxyyyyypqAzz" },
+		{ NULL,												"",		"aaabcxyzpqrrrabbxyyyypABzz",					"aaabcxyzpqrrrabbxyyyypABzz" },
+		{ NULL,												"",		"aaabcxyzpqrrrabbxyyyypABBzz",					"aaabcxyzpqrrrabbxyyyypABBzz" },
+//		{ NULL,												"",		">>>aaabxyzpqrrrabbxyyyypqAzz",					"aaabxyzpqrrrabbxyyyypqAzz" },
+//		{ NULL,												"",		">aaaabxyzpqrrrabbxyyyypqAzz",					"aaaabxyzpqrrrabbxyyyypqAzz" },
+//		{ NULL,												"",		">>>>abcxyzpqrrrabbxyyyypqAzz",					"abcxyzpqrrrabbxyyyypqAzz" },
+		{ NULL,												"",		"*** Failers",									NULL },
+		{ NULL,												"",		"abxyzpqrrabbxyyyypqAzz",						NULL },
+		{ NULL,												"",		"abxyzpqrrrrabbxyyyypqAzz",						NULL },
+
+		{ "(a)*b",											"",		"aab",											"aab`a" },
 		{ "(abc)d",					"",		"abcd",											"abcd`abc" },
 
 		{ "^(b+|a){1,2}c",			"",		"bc",											"bc`b" },
@@ -32,8 +67,6 @@ TEST_FIXTURE(RegexTest, test)
 		{ "^(b+|a){1,2}c",			"",		"bc",											"bc`b" },
 
 		{ "^xxx[0-9]*$",			"",		"xxx",											"xxx" },
-		{ "[a-c0-9]", "", "9", "9" },
-		{ "[^1]", "", "abc", "a" },
 		{ "the quick brown fox",	"",		"the quick brown fox",							"the quick brown fox" },
 		{ NULL,						"",		"the quick brown FOX",							NULL },
 		{ NULL,						"",		"What do you know about the quick brown fox?",	"the quick brown fox" },
@@ -52,8 +85,8 @@ TEST_FIXTURE(RegexTest, test)
 
 //		{ "^(b+?|a){1,2}?c",		"",		"bc",											"bc`b" },	// NOTE: +? is lazy +
 
-//		{ "^(b+|a){1,2}c",			"",		"bc",											"bc`b" },
-//		{ NULL,						"",		"bbc",											"bbc`bb" },
+		{ "^(b+|a){1,2}c",			"",		"bc",											"bc`b" },
+		{ NULL,						"",		"bbc",											"bbc`bb" },
 
 		{ "^[ab\\]cde]",			"",		"athing",										"a" },
 		{ NULL,						"",		"bthing",										"b" },
@@ -117,6 +150,8 @@ TEST_FIXTURE(RegexTest, test)
 
 		{ "a?a?aa",					"",		"aa",											"aa" },
 
+		{ "[a-c0-9]", "", "9", "9" },
+		{ "[^1]", "", "abc", "a" },
 		{ "(012|abc|lung)+",		"",		"abclung",										"abclung`lung" },
 		{ "abc|def",	"i","Abc", "Abc" },
 		{ "abc|ha|def", "",	"def", "def" },

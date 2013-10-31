@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "roRegex.h"
 #include "roLog.h"
+#include "roTypeOf.h"
 
 // Reference:
 // Regular Expression Matching Can Be Simple And Fast
@@ -125,8 +126,8 @@ bool counted_loop_repeat(Graph& graph, Node& node, Edge& edge, RangedString& s)
 	roSize max = (roSize)node.userdata[1];
 	roSize& count = (roSize&)node.userdata[2];
 
-	if(count < max)
-		return ++count, loop_repeat(graph, node, edge, s);
+	if((count++) < max)
+		return loop_repeat(graph, node, edge, s);
 	else
 		return false;
 }
@@ -136,7 +137,7 @@ bool counted_loop_exit(Graph& graph, Node& node, Edge& edge, RangedString& s)
 	roSize min = (roSize)node.userdata[0];
 	roSize& count = (roSize&)node.userdata[2];
 
-	if(count < min)
+	if((count - 1) < min)	// count -1 because we enter counted_loop_repeat at the very beginning
 		return count = 0, false;
 	else
 		return count = 0, true;
@@ -328,19 +329,26 @@ bool match_charClass(Graph& graph, Node& node, Edge& edge, RangedString& s)
 
 	bool inList = false;
 	for(; i<edge.f.end; ++i) {
+		roUtf8 escaped = doEscape(i);
+
 		// Character range
 		if(i[1] == '-' && (i + 2) != edge.f.end) {
+			i += 2;
+			roUtf8 escaped2 = doEscape(i);
+			roAssert(i < edge.f.end);
 			roUtf8 l = roToLower(c);
 			roUtf8 u = roToUpper(c);
-			if((l >= i[0] && l <= i[2]) || (u >= i[0] && u <= i[2])) {
+			if((l >= escaped && l <= escaped2) || (u >= escaped && u <= escaped2)) {
 				inList = true;
 				break;
 			}
 		}
 		// Single character
-		else if(graph.charCmpFunc(c, i[0])) {
-			inList = true;
-			break;
+		else {
+			if(graph.charCmpFunc(c, escaped)) {
+				inList = true;
+				break;
+			}
 		}
 	}
 
@@ -384,10 +392,13 @@ bool parse_repeatition(Graph& graph, Node* prevNode, Node* beginNode, Node* endN
 		roVerify(prevNode->redirect(*beginNode, *loopNode));
 	}
 	else if(escaped == '{') {
+		const roUtf8* iBegin = i;
 		roSize min = 0, max = 0;
 		int ss = sscanf(i, "{%u,%u", &min, &max);
 		if(ss == 0)
 			return false;
+		if(ss == 1)
+			max = ro::TypeOf<roSize>::valueMax();
 
 		// Scan for '}'
 		while(*(++i) != '}') {
@@ -395,7 +406,7 @@ bool parse_repeatition(Graph& graph, Node* prevNode, Node* beginNode, Node* endN
 				return false;
 		}
 
-		Node node = { 2, RangedString("*") };
+		Node node = { 2, RangedString(iBegin, i+1) };
 		Node* loopNode = graph.push(node, 3, &prevNode, &beginNode, &endNode);
 		loopNode->edge(0).func = counted_loop_repeat;
 		roVerify(loopNode->directEdgeToNode(loopNode->edge(0), *beginNode));
@@ -716,9 +727,13 @@ bool Regex::match(const roUtf8* s, const roUtf8* f, const char* options)
 	// Parsing
 	result.clear();
 	graph.tmpResult.clear();
-	parse_nodes(graph, regString);
-	if(isDebug)
-		debugNodes(graph);
+	if(!parse_nodes(graph, regString))
+		return false;
+
+	if(true || isDebug) {
+//		roLog("debug", "%s, %s\n", f, s);
+//		debugNodes(graph);
+	}
 
 	// Matching
 	if(matchNodes(graph, (Node&)graph.nodes.front(), srcString)) {
