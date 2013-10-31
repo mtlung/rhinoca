@@ -137,7 +137,7 @@ bool counted_loop_exit(Graph& graph, Node& node, Edge& edge, RangedString& s)
 	roSize min = (roSize)node.userdata[0];
 	roSize& count = (roSize&)node.userdata[2];
 
-	if((count - 1) < min)	// count -1 because we enter counted_loop_repeat at the very beginning
+	if(count < (min + 1))	// min +1 because we enter counted_loop_repeat at the very beginning
 		return count = 0, false;
 	else
 		return count = 0, true;
@@ -392,19 +392,35 @@ bool parse_repeatition(Graph& graph, Node* prevNode, Node* beginNode, Node* endN
 		roVerify(prevNode->redirect(*beginNode, *loopNode));
 	}
 	else if(escaped == '{') {
-		const roUtf8* iBegin = i;
+		const roUtf8* iBegin = i++;
+		const roUtf8* pMin = i;
+		const roUtf8* pMax = NULL;
 		roSize min = 0, max = 0;
-		int ss = sscanf(i, "{%u,%u", &min, &max);
-		if(ss == 0)
-			return false;
-		if(ss == 1)
-			max = ro::TypeOf<roSize>::valueMax();
 
-		// Scan for '}'
-		while(*(++i) != '}') {
-			if(i >= f.end)
-				return false;
+		for(; roIsDigit(*i); ++i);
+		if(i == pMin)	// No number after '{'
+			return false;
+
+		if(*i == ',') {
+			pMax = ++i;
+			for(; roIsDigit(*i); ++i);
 		}
+
+		if(*i != '}')
+			return false;
+
+		roVerify(sscanf(pMin, "%u", &min) == 1);
+
+		// No max was given, use the biggest number instead
+		if(pMax == i)
+			max = ro::TypeOf<roSize>::valueMax();
+		else if(pMax == NULL)
+			max = min;
+		else
+			roVerify(sscanf(pMax, "%u", &max) == 1);
+
+		if(min > max)	// Consider as parsing error
+			return false;
 
 		Node node = { 2, RangedString(iBegin, i+1) };
 		Node* loopNode = graph.push(node, 3, &prevNode, &beginNode, &endNode);
@@ -414,7 +430,6 @@ bool parse_repeatition(Graph& graph, Node* prevNode, Node* beginNode, Node* endN
 		loopNode->edge(1).func = counted_loop_exit;
 		roVerify(prevNode->redirect(*beginNode, *loopNode));
 
-		if(min > max) max = min;
 		loopNode->userdata[0] = (void*)min;
 		loopNode->userdata[1] = (void*)max;
 		loopNode->userdata[2] = (void*)0;

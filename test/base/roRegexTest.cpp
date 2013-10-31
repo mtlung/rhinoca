@@ -9,7 +9,39 @@ struct RegexTest {};
 TEST_FIXTURE(RegexTest, test)
 {
 	const roUtf8* testData[][4] = {
-		{ "a{3}",	"",		"aaaa",						NULL },
+		{ "^(b+|a){1,2}c",			"",		"abbac",											"bc`b" },
+
+		{ "(a)*b",											"",		"aab",											"aab`a" },
+		{ "(abc)d",					"",		"abcd",											"abcd`abc" },
+
+		{ "^(b+|a){1,2}c",			"",		"bc",											"bc`b" },
+
+		{ "a|b|c",					"",		"a",											"a" },
+		{ "[a-c]*d",				"",		"ad",											"ad" },
+		{ "a{1,2}",					"",		"a",											"a" },
+		{ "[abc]d",					"",		"bd",											"bd" },
+		{ "(a)?b",					"",		"b",											"b`" },
+		{ "a?b",					"",		"b",											"b" },
+		{ "(a*)*b",					"",		"b",											"b`" },
+		{ "(a)*b",					"",		"aab",											"aab`a" },
+		{ "(a)*b",					"",		"ab",											"ab`a" },
+		{ "(a*)b",					"",		"ab",											"ab`a" },
+		{ "(a)b",					"",		"ab",											"ab`a" },
+		{ "a*b",					"",		"ab",											"ab" },
+		{ "a*",						"",		"aa",											"aa" },
+		{ "abc",					"",		"abc",											"abc" },
+
+		{ "^(b+|a){1,2}c",			"",		"bc",											"bc`b" },
+
+		{ "^xxx[0-9]*$",			"",		"xxx",											"xxx" },
+		{ "the quick brown fox",	"",		"the quick brown fox",							"the quick brown fox" },
+		{ NULL,						"",		"the quick brown FOX",							NULL },
+		{ NULL,						"",		"What do you know about the quick brown fox?",	"the quick brown fox" },
+		{ NULL,						"",		"What do you know about THE QUICK BROWN FOX?",	NULL },
+		{ "The quick brown fox",	"i",	"the quick brown fox",							"the quick brown fox" },
+		{ NULL,						"i",	"The quick brown FOX",							"The quick brown FOX" },
+		{ NULL,						"i",	"What do you know about the quick brown fox?",	"the quick brown fox" },
+		{ NULL,						"i",	"What do you know about THE QUICK BROWN FOX?",	"THE QUICK BROWN FOX" },
 
 		{ "a*abc?xyz+pqr{3}ab{2,}xy{4,5}pq{0,6}AB{0,}zz",	"",		"abxyzpqrrrabbxyyyypqAzz",						"abxyzpqrrrabbxyyyypqAzz" },
 		{ NULL,												"",		"aabxyzpqrrrabbxyyyypqAzz",						"aabxyzpqrrrabbxyyyypqAzz" },
@@ -44,38 +76,6 @@ TEST_FIXTURE(RegexTest, test)
 		{ NULL,												"",		"abxyzpqrrabbxyyyypqAzz",						NULL },
 		{ NULL,												"",		"abxyzpqrrrrabbxyyyypqAzz",						NULL },
 
-		{ "(a)*b",											"",		"aab",											"aab`a" },
-		{ "(abc)d",					"",		"abcd",											"abcd`abc" },
-
-		{ "^(b+|a){1,2}c",			"",		"bc",											"bc`b" },
-
-		{ "a|b|c",					"",		"a",											"a" },
-		{ "[a-c]*d",				"",		"ad",											"ad" },
-		{ "a{1,2}",					"",		"a",											"a" },
-		{ "[abc]d",					"",		"bd",											"bd" },
-		{ "(a)?b",					"",		"b",											"b`" },
-		{ "a?b",					"",		"b",											"b" },
-		{ "(a*)*b",					"",		"b",											"b`" },
-		{ "(a)*b",					"",		"aab",											"aab`a" },
-		{ "(a)*b",					"",		"ab",											"ab`a" },
-		{ "(a*)b",					"",		"ab",											"ab`a" },
-		{ "(a)b",					"",		"ab",											"ab`a" },
-		{ "a*b",					"",		"ab",											"ab" },
-		{ "a*",						"",		"aa",											"aa" },
-		{ "abc",					"",		"abc",											"abc" },
-
-		{ "^(b+|a){1,2}c",			"",		"bc",											"bc`b" },
-
-		{ "^xxx[0-9]*$",			"",		"xxx",											"xxx" },
-		{ "the quick brown fox",	"",		"the quick brown fox",							"the quick brown fox" },
-		{ NULL,						"",		"the quick brown FOX",							NULL },
-		{ NULL,						"",		"What do you know about the quick brown fox?",	"the quick brown fox" },
-		{ NULL,						"",		"What do you know about THE QUICK BROWN FOX?",	NULL },
-		{ "The quick brown fox",	"i",	"the quick brown fox",							"the quick brown fox" },
-		{ NULL,						"i",	"The quick brown FOX",							"The quick brown FOX" },
-		{ NULL,						"i",	"What do you know about the quick brown fox?",	"the quick brown fox" },
-		{ NULL,						"i",	"What do you know about THE QUICK BROWN FOX?",	"THE QUICK BROWN FOX" },
-
 		{ "^(abc){1,2}zz",			"",		"abczz",										"abczz`abc" },
 		{ NULL,						"",		"abcabczz",										"abcabczz`abc" },
 		{ NULL,						"",		"*** Failers",									NULL },
@@ -87,6 +87,15 @@ TEST_FIXTURE(RegexTest, test)
 
 		{ "^(b+|a){1,2}c",			"",		"bc",											"bc`b" },
 		{ NULL,						"",		"bbc",											"bbc`bb" },
+		{ NULL,						"",		"bbbc",											"bbbc`bbb" },
+		{ NULL,						"",		"bac",											"bac`a" },
+		{ NULL,						"",		"bbac",											"bbac`a" },
+		{ NULL,						"",		"aac",											"aac`a" },
+		{ NULL,						"",		"abbbbbbbbbbbc",								"abbbbbbbbbbbc`bbbbbbbbbbb" },
+		{ NULL,						"",		"bbbbbbbbbbbac",								"bbbbbbbbbbbac`a" },
+		{ NULL,						"",		"*** Failers",									NULL },
+		{ NULL,						"",		"aaac",											NULL },
+		{ NULL,						"",		"abbbbbbbbbbbac",								NULL },
 
 		{ "^[ab\\]cde]",			"",		"athing",										"a" },
 		{ NULL,						"",		"bthing",										"b" },
