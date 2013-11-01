@@ -5,6 +5,35 @@
 
 namespace ro {
 
+/// C# like string formatting
+/// strFormat(str, "{}, {}, {}", 1, 1.2, "hello"); -> "1, 1.2, Hello"
+///
+/// Option string can be specified inside {}
+/// strFormat(str, "{lp5 }", 123); -> "  123"	// Pad on left with ' ' until len = 5
+/// strFormat(str, "{rp5-}", 123); -> "123--"	// Pad on right with '-' until len = 5
+
+/// Support user type, take Pair as an example
+/// template<class T> struct Pair;
+///
+/// template<class T>
+/// BeaconStatus formatPairToString(String& str, Pair<T>* pair, const ubiChar* options) {
+///		return strFormat(str, "{}, {}", pair->first, pair->second);
+/// }
+/// template<class T>
+/// void* _strFormatFunc(const  Pair<T>& val) {
+///		return (void*)formatPairToString<Pair<T> >;
+/// }
+///
+/// Pair<int> pair = { 1, 2 };
+/// strFormat(str, "{}", pair);
+
+template<class T1>
+roStatus strFormat(String& str, const roUtf8* format, const T1& t1);
+
+
+//////////////////////////////////////////////////////////////////////////
+// Below are implementation details
+
 void strPaddingLeft			(String& str, roUtf8 c, roSize totalLen);
 void strPaddingRight		(String& str, roUtf8 c, roSize totalLen);
 
@@ -107,12 +136,6 @@ inline const void* _strFormatArg(const T& val) {
 
 #define _EXPAND(x) _strFormatFunc(x), _strFormatArg(x)
 
-/// C# like string formatting
-/// strFormat(str, "{}, {}, {}", 1, 1.2, "hello"); -> "1, 1.2, Hello"
-///
-/// Option string can be specified inside {}
-/// strFormat(str, "{lp5 }", 123); -> "  123"	// Pad on left with ' ' until len = 5
-/// strFormat(str, "{rp5-}", 123); -> "123--"	// Pad on right with '-' until len = 5
 roStatus _strFormat(String& str, const roUtf8* format, roSize argCount, ...);
 
 template<class T1>

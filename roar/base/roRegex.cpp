@@ -6,6 +6,10 @@
 // Reference:
 // Regular Expression Matching Can Be Simple And Fast
 // http://swtch.com/~rsc/regexp/regexp1.html
+// Regular expression to NFA visualization
+// http://hackingoff.com/compilers/regular-expression-to-nfa-dfa
+// A JavaScript and regular expression centric blog
+// http://blog.stevenlevithan.com
 
 namespace ro {
 
@@ -285,7 +289,9 @@ bool group_begin(Graph& graph, Node& node, Edge& edge, RangedString& s)
 }
 bool group_end(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
-	roAssert(graph.nestedGroupLevel > 0);
+	if(graph.nestedGroupLevel == 0)	// It's it the path of back tracking
+		return false;
+
 	roSize idx = (roSize)node.userdata[0];
 	graph.regex->result[idx] = RangedString(graph.tmpResult[idx], s.begin);
 	return --graph.nestedGroupLevel, true;
@@ -368,30 +374,39 @@ bool match_endOfString(Graph& graph, Node& node, Edge& edge, RangedString& s)
 
 bool parse_repeatition(Graph& graph, Node* prevNode, Node* beginNode, Node* endNode, const RangedString& f, const roUtf8*& i)
 {
-	char escaped = doEscape(i);
-	if(escaped == '?') {
+	if(i[0] == '?') {
 		Edge edge = { RangedString(), pass_though, 0 };
 		Edge* newEdge = graph.pushEdge(beginNode, edge, 1, &endNode);
 		roVerify(beginNode->directEdgeToNode(*newEdge, *endNode));
 	}
-	else if(escaped == '+') {
+	else if(i[0] == '+') {
+		bool greedy = (i[1] != '?');
+		if(!greedy) ++i;
+		roSize edge0Idx = greedy ? 0 : 1;
+		roSize edge1Idx = greedy ? 1 : 0;
+
 		Node node = { 2, RangedString("+") };
 		Node* loopNode = graph.push(node, 3, &prevNode, &beginNode, &endNode);
-		loopNode->edge(0).func = loop_repeat;
-		roVerify(loopNode->directEdgeToNode(loopNode->edge(0), *beginNode));
+		loopNode->edge(edge0Idx).func = loop_repeat;
+		roVerify(loopNode->directEdgeToNode(loopNode->edge(edge0Idx), *beginNode));
 
-		loopNode->edge(1).func = loop_exit;
+		loopNode->edge(edge1Idx).func = loop_exit;
 	}
-	else if(escaped == '*') {
+	else if(i[0] == '*') {
+		bool greedy = (i[1] != '?');
+		if(!greedy) ++i;
+		roSize edge0Idx = greedy ? 0 : 1;
+		roSize edge1Idx = greedy ? 1 : 0;
+
 		Node node = { 2, RangedString("*") };
 		Node* loopNode = graph.push(node, 3, &prevNode, &beginNode, &endNode);
-		loopNode->edge(0).func = loop_repeat;
-		roVerify(loopNode->directEdgeToNode(loopNode->edge(0), *beginNode));
+		loopNode->edge(edge0Idx).func = loop_repeat;
+		roVerify(loopNode->directEdgeToNode(loopNode->edge(edge0Idx), *beginNode));
 
-		loopNode->edge(1).func = loop_exit;
+		loopNode->edge(edge1Idx).func = loop_exit;
 		roVerify(prevNode->redirect(*beginNode, *loopNode));
 	}
-	else if(escaped == '{') {
+	else if(i[0] == '{') {
 		const roUtf8* iBegin = i++;
 		const roUtf8* pMin = i;
 		const roUtf8* pMax = NULL;
@@ -409,10 +424,17 @@ bool parse_repeatition(Graph& graph, Node* prevNode, Node* beginNode, Node* endN
 		if(*i != '}')
 			return false;
 
+		const roUtf8* pClose = i;
+
+		bool greedy = (i[1] != '?');
+		if(!greedy) ++i;
+		roSize edge0Idx = greedy ? 0 : 1;
+		roSize edge1Idx = greedy ? 1 : 0;
+
 		roVerify(sscanf(pMin, "%u", &min) == 1);
 
 		// No max was given, use the biggest number instead
-		if(pMax == i)
+		if(pMax == pClose)
 			max = ro::TypeOf<roSize>::valueMax();
 		else if(pMax == NULL)
 			max = min;
@@ -424,10 +446,10 @@ bool parse_repeatition(Graph& graph, Node* prevNode, Node* beginNode, Node* endN
 
 		Node node = { 2, RangedString(iBegin, i+1) };
 		Node* loopNode = graph.push(node, 3, &prevNode, &beginNode, &endNode);
-		loopNode->edge(0).func = counted_loop_repeat;
-		roVerify(loopNode->directEdgeToNode(loopNode->edge(0), *beginNode));
+		loopNode->edge(edge0Idx).func = counted_loop_repeat;
+		roVerify(loopNode->directEdgeToNode(loopNode->edge(edge0Idx), *beginNode));
 
-		loopNode->edge(1).func = counted_loop_exit;
+		loopNode->edge(edge1Idx).func = counted_loop_exit;
 		roVerify(prevNode->redirect(*beginNode, *loopNode));
 
 		loopNode->userdata[0] = (void*)min;
@@ -713,7 +735,7 @@ void debugNodes(Graph& graph)
 		for(roSize j=0; j<node->edgeCount; ++j) {
 			Node* nextNode = graph.followEdge(node->edge(j));
 			roSize idx = nodePtrs.find(nextNode) - nodePtrs.typedPtr();
-			roLog("debug", "  edge %d -> node %d\n", j, idx);
+			roLog("debug", "  edge -> node %d\n", idx);
 		}
 	}
 	roLog("debug", "\n");
@@ -746,7 +768,7 @@ bool Regex::match(const roUtf8* s, const roUtf8* f, const char* options)
 		return false;
 
 	if(true || isDebug) {
-//		roLog("debug", "%s, %s\n", f, s);
+		roLog("debug", "%s, %s\n", f, s);
 //		debugNodes(graph);
 	}
 
