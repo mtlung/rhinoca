@@ -348,6 +348,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\roar\base\roBlockAllocator.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\base\roBlockAllocator.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\base\roByteOrder.h"
 				>
 			</File>
@@ -945,6 +953,18 @@
 			</File>
 			<File
 				RelativePath="..\..\roar\gui\roGuiWindow.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="network"
+			>
+			<File
+				RelativePath="..\..\roar\network\roHttpServer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\network\roHttpServer.h"
 				>
 			</File>
 		</Filter>

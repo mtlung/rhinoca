@@ -39,11 +39,12 @@ void JsonParser::_skipWhiteSpace()
 
 bool JsonParser::_unInitializedCallback()
 {
-	return _onError("Please call parse()");
+	return _onError(roStatus::not_initialized, "Please call parse()");
 }
 
-bool JsonParser::_onError(const roUtf8* errMsg)
+bool JsonParser::_onError(roStatus st, const roUtf8* errMsg)
 {
+	_status = st;
 	_errStr = errMsg;
 	return false;
 }
@@ -54,7 +55,7 @@ bool JsonParser::_parseRoot()
 	switch(*_it) {
 		case '{': return _parseBeginObject();
 		case '[': return _parseBeginArray();
-		default: return _onError("Expecting object or array as root");
+		default: return _onError(roStatus::json_parse_error, "Expecting object or array as root");
 	}
 }
 
@@ -79,7 +80,7 @@ bool JsonParser::_parseEndObject()
 {
 	roAssert(*_it == '}');
 	if(_stack.isEmpty() || _stack.back().event != Event::BeginObject)
-		return _onError("unexpected '}'");
+		return _onError(roStatus::json_parse_error, "unexpected '}'");
 
 	++_it;
 	_MemberCount = _stack.back().elementCount;
@@ -119,7 +120,7 @@ bool JsonParser::_parseEndArray()
 {
 	roAssert(*_it == ']');
 	if(_stack.isEmpty() || _stack.back().event != Event::BeginArray)
-		return _onError("unexpected ']'");
+		return _onError(roStatus::json_parse_error, "unexpected ']'");
 
 	++_it;
 	_ElementCount = _stack.back().elementCount;
@@ -165,7 +166,7 @@ bool JsonParser::_valueEnd()
 	else if(*_it == ']')
 		_nextFunc = &JsonParser::_parseEndArray;
 	else
-		return _onError("Expecting ',}]'");
+		return _onError(roStatus::json_parse_error, "Expecting ',}]'");
 
 	_stack.back().elementCount++;
 	return true;
@@ -178,7 +179,7 @@ bool JsonParser::_parseName()
 
 	_skipWhiteSpace();
 	if(*_it != ':')
-		return _onError("Expecting ':'");
+		return _onError(roStatus::json_parse_error, "Expecting ':'");
 
 	++_it;
 	_event = Event::Name;
@@ -220,7 +221,7 @@ static bool parseHex4(roUtf8* it, unsigned& codepoint)
 bool JsonParser::_parseStringImpl()
 {
 	if(*_it != '"')
-		return _onError("Expecting '\"'");
+		return _onError(roStatus::json_parse_error, "Expecting '\"'");
 
 	++_it;
 	roUtf8* first = _it;
@@ -472,6 +473,12 @@ JsonParser::Event::Enum JsonParser::nextEvent()
 bool JsonParser::isNumber(Event::Enum e)
 {
 	return e == Event::Integer64 || e == Event::UInteger64 || e == Event::Double;
+}
+
+bool JsonValue::isNumber()
+{
+	typedef JsonParser::Event Event;
+	return type == Event::Integer64 || type == Event::UInteger64 || type == Event::Double;
 }
 
 static JsonValue* _parse(JsonParser& parser, JsonValue* parentNode, BlockAllocator& allocator)

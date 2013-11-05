@@ -60,6 +60,7 @@ roStatusEnum( http_unknow_size )
 roStatusEnum( http_404_not_found )
 
 // Json
+roStatusEnum( json_parse_error )
 roStatusEnum( json_missing_root_object )
 roStatusEnum( json_expect_object_begin )
 roStatusEnum( json_expect_object_end )

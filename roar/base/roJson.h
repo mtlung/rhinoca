@@ -72,12 +72,13 @@ struct JsonParser : private NonCopyable
 	bool			_parseStringImpl();
 	bool			_parseNumber();
 	bool			_parseNullTrueFalse();
-	bool			_onError(const roUtf8* errMsg);
+	bool			_onError(roStatus st, const roUtf8* errMsg);
 
 	roUtf8*		_str;
 	roUtf8*		_it;
 	String		_tmpStr;
 	String		_errStr;
+	roStatus	_status;
 	Event::Enum	_event;
 
 	struct _StackElement { Event::Enum event; roSize elementCount; };
@@ -113,6 +114,10 @@ struct JsonValue
 	};
 
 	JsonParser::Event::Enum type;
+
+	template<typename T>
+	roStatus	getNumber(T& val);
+	bool		isNumber();
 };	// JsonValue
 
 struct BlockAllocator;
@@ -180,6 +185,21 @@ roStatus JsonParser::getNumber(T& val)
 
 	if(_event == Event::Double)
 		return roSafeAssign(val, getDouble());
+
+	return roStatus::type_mismatch;
+}
+
+template<typename T>
+roStatus JsonValue::getNumber(T& val)
+{
+	if(type == JsonParser::Event::Integer64)
+		return roSafeAssign(val, int64Val);
+
+	if(type == JsonParser::Event::UInteger64)
+		return roSafeAssign(val, uint64Val);
+
+	if(type == JsonParser::Event::Double)
+		return roSafeAssign(val, doubleVal);
 
 	return roStatus::type_mismatch;
 }
