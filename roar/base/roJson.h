@@ -92,6 +92,34 @@ struct JsonParser : private NonCopyable
 	roSize		_MemberCount;	roSize		_ElementCount;
 };	// JsonParser
 
+// A simple structure for Dom style parsing
+struct JsonValue
+{
+	JsonValue* parent;
+	JsonValue* nextSibling;
+	JsonValue* firstChild;
+	JsonValue* lastChild;
+
+	const roUtf8* name;					// Null for non object member
+	union
+	{
+		bool			boolVal;
+		const roUtf8*	stringVal;
+		roInt64			int64Val;
+		roUint64		uint64Val;
+		double			doubleVal;
+		roSize			arraySize;		// For type == BeginArray
+		roSize			memberCount;	// For type == BeginObject
+	};
+
+	JsonParser::Event::Enum type;
+};	// JsonValue
+
+struct BlockAllocator;
+
+// Dom style parsing
+JsonValue* jsonParseInplace(roUtf8* source, BlockAllocator& allocator, String* errorStr=NULL);
+
 struct JsonWriter : private NonCopyable
 {
 	JsonWriter(OStream* stream=NULL);

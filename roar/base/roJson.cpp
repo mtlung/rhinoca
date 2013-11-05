@@ -2,6 +2,7 @@
 #include "roJson.h"
 #include "roIOStream.h"
 #include "roStringFormat.h"
+#include "roBlockAllocator.h"
 #include "../Math/roMath.h"
 
 namespace ro {
@@ -473,6 +474,102 @@ bool JsonParser::isNumber(Event::Enum e)
 	return e == Event::Integer64 || e == Event::UInteger64 || e == Event::Double;
 }
 
+static JsonValue* _parse(JsonParser& parser, JsonValue* parentNode, BlockAllocator& allocator)
+{
+	typedef JsonParser::Event Event;
+	JsonValue* newValue = NULL;
+
+	while(true) {
+		JsonParser::Event::Enum e = parser.nextEvent();
+		if(e == JsonParser::Event::EndObject) return newValue;
+		if(e == JsonParser::Event::EndArray) return newValue;
+		if(e == JsonParser::Event::End) return newValue;
+		if(e == JsonParser::Event::Error) return NULL;
+
+		newValue = allocator.malloc(sizeof(JsonValue)).cast<JsonValue>();
+		if(!newValue) {
+			parser._event = JsonParser::Event::Error;
+			parser._errStr = "Out of memory";
+			return NULL;
+		}
+
+		roZeroMemory(newValue, sizeof(JsonValue));
+		if(e == Event::Name) {
+			newValue->name = parser.getName();
+			e = parser.nextEvent();
+		}
+
+		newValue->type = e;
+		newValue->parent = parentNode;
+		if(!parentNode->firstChild)
+			parentNode->firstChild = newValue;
+		else
+			parentNode->lastChild->nextSibling = newValue;
+		parentNode->lastChild = newValue;
+
+		switch(e) {
+		case Event::Null:
+			break;
+		case Event::Bool:
+			newValue->boolVal = parser.getBool();
+			break;
+		case Event::String:
+			newValue->stringVal = parser.getString();
+			break;
+		case Event::Integer64 :
+			newValue->int64Val = parser.getInt64();
+			break;
+		case Event::UInteger64 :
+			newValue->uint64Val = parser.getUint64();
+			break;
+		case Event::Double :
+			newValue->doubleVal = parser.getDouble();
+			break;
+
+		case Event::BeginObject:
+			_parse(parser, newValue, allocator);
+			break;
+		case Event::BeginArray:
+			_parse(parser, newValue, allocator);
+			break;
+
+		default:
+			roAssert(false);
+			return NULL;
+		}
+
+		++parentNode->memberCount;
+	}
+
+	return newValue;
+}
+
+JsonValue* jsonParseInplace(roUtf8* source, BlockAllocator& allocator, String* errorStr)
+{
+	JsonParser parser;
+	parser.parseInplace(source);
+
+	JsonValue* ret = NULL;
+	JsonValue* dummyRoot = allocator.malloc(sizeof(JsonValue)).cast<JsonValue>();
+
+	if(dummyRoot) {
+		roZeroMemory(dummyRoot, sizeof(JsonValue));
+		ret = _parse(parser, dummyRoot, allocator);
+	}
+	else {
+		parser._event = JsonParser::Event::Error;
+		parser._errStr = "Out of memory";
+	}
+
+	if(errorStr && parser.currentEvent() == JsonParser::Event::Error)
+		*errorStr = parser.getErrorMessage();
+
+	if(ret)
+		ret->parent = NULL;
+
+	return ret;
+}
+
 //
 JsonWriter::JsonWriter(OStream* stream)
 	: _stream(stream)
@@ -604,7 +701,7 @@ roStatus JsonWriter::write(const roUtf8* name, bool val)
 	roAssert(_stateStack.back() == _inObject);
 	roStatus st = flushStrBuf();
 	if(!st) return st;
-	return strFormat(_strBuf, "\"{}\":\"{}\",", name, val ? "true" : "false");
+	return strFormat(_strBuf, "\"{}\":{},", name, val ? "true" : "false");
 }
 
 roStatus JsonWriter::write(const roUtf8* name, const roUtf8* val)
@@ -685,7 +782,7 @@ roStatus JsonWriter::write(bool val)
 	roAssert(_stateStack.back() == _inArray);
 	roStatus st = flushStrBuf();
 	if(!st) return st;
-	return strFormat(_strBuf, "\"{}\",", val ? "true" : "false");
+	return strFormat(_strBuf, "{},", val ? "true" : "false");
 }
 
 roStatus JsonWriter::write(const roUtf8* val)

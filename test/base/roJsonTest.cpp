@@ -371,6 +371,41 @@ TEST_FIXTURE(JsonTest, writer)
 	writer.endObject();
 }
 
+#include "../../roar/base/roBlockAllocator.h"
+
+TEST_FIXTURE(JsonTest, dom_parsing)
+{
+	String str =
+		"{\"menu\": {"
+		"	\"id\": \"file\","
+		"		\"value\": \"File\","
+		"		\"popup\": {"
+		"			\"menuitem\": ["
+		"			{\"value\": \"New\", \"onclick\": \"CreateNewDoc()\"},"
+		"			{\"value\": \"Open\", \"onclick\": \"OpenDoc()\"},"
+		"			{\"value\": \"Close\", \"onclick\": \"CloseDoc()\"}"
+		"			]"
+		"	}"
+		"}}";
+
+	BlockAllocator allocator(sizeof(JsonValue) * 64);
+	JsonValue* json = jsonParseInplace(str.c_str(), allocator);
+
+	CHECK_EQUAL(JsonParser::Event::BeginObject, json->type);
+	CHECK_EQUAL(1, json->memberCount);
+}
+
+TEST_FIXTURE(JsonTest, dom_parsing_error)
+{
+	String str = "";	// Root must be object or array
+	String errorStr;
+
+	BlockAllocator allocator(sizeof(JsonValue) * 64);
+	JsonValue* json = jsonParseInplace(str.c_str(), allocator, &errorStr);
+
+	CHECK(!json);
+}
+
 #include "../../roar/base/roRawFileSystem.h"
 
 TEST_FIXTURE(JsonTest, parse_bigFile)

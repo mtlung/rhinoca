@@ -141,7 +141,7 @@ roStatus _serialize(JsonInputSerializer& se, Field& field, void* fieldParent)
 	if(!val) return roStatus::pointer_is_null;
 
 	roStatus st = se._checkName(field); if(!st) return st;
-	se.parser.getNumber(*val); if(!st) return st;
+	st = se.parser.getNumber(*val); if(!st) return st;
 	se.parser.nextEvent();
 	return roStatus::ok;
 }
