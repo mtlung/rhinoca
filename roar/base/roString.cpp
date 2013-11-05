@@ -299,6 +299,21 @@ String& String::operator+=(const String& str)
 	return *this += str._str();
 }
 
+Status String::operator*=(roSize count)
+{
+	if(count == 0) {
+		clear();
+		return Status::ok;
+	}
+
+	roSize orgSize = size();
+	Status st = resize(orgSize * count);
+	if(!st) return st;
+	for(roSize i=1; i<count; ++i)
+		roMemcpy(_str() + i * orgSize, _str() + (i - 1) * orgSize, orgSize);
+	return st;
+}
+
 Status String::fromUtf16(const roUint16* src, roSize maxSrcLen)
 {
 	roSize len = 0;
@@ -326,11 +341,16 @@ bool String::operator==(const String& rhs) const
 }
 
 
-RangedString::operator String()
+String RangedString::toString() const
 {
 	if(begin && end && (end > begin))
 		return String(begin, end - begin);
 	return String();
+}
+
+RangedString::operator String()
+{
+	return toString();
 }
 
 

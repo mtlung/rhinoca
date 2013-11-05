@@ -51,6 +51,8 @@ struct String
 	String&		operator+=	(const char* str);
 	String&		operator+=	(const String& str);
 
+	Status		operator*=	(roSize count);
+
 	Status		fromUtf16	(const roUint16* src, roSize maxSrcLen=roSize(-1));
 	Status		toUtf16		(roUint16* dst, roSize& dstLen);
 
@@ -94,6 +96,7 @@ struct RangedString
 	RangedString(const roUtf8* s) : begin(s), end(s + roStrLen(s)) {}
 	RangedString(const roUtf8* b, const roUtf8* e) : begin(b), end(e) { roAssert(end >= begin); }
 
+	String toString() const;
 	operator String();
 
 	const roUtf8* begin;
