@@ -225,7 +225,7 @@ TEST_FIXTURE(RegexTest, test)
 		{ NULL,						"i",	"0zzz",											NULL },
 		{ NULL,						"i",	"gzzz",											NULL },
 		{ NULL,						"i",	"fed\x20",										NULL },
-		{ NULL,						"i",	"Any old rubbish",								NULL },
+		{ NULL,						"i",	"Any old rubbish",								NULL },*/
 
 		{ "^.*\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$",	"",		"",						NULL },
 		{ NULL,						"",		".1.2.3",										".1.2.3`1`2`3" },
@@ -233,7 +233,7 @@ TEST_FIXTURE(RegexTest, test)
 		{ NULL,						"",		"*** Failers",									NULL },
 		{ NULL,						"",		".1.2.3333",									NULL },
 		{ NULL,						"",		"1.2.3",										NULL },
-		{ NULL,						"",		"1234.2.3",										NULL },*/
+		{ NULL,						"",		"1234.2.3",										NULL },
 
 //		{ "^(?=ab(de))(abd)(e)",	"",		"abde",											"abde`de`abd`e" },
 

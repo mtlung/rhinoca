@@ -12,6 +12,8 @@
 // http://blog.stevenlevithan.com
 // Perl regular expression cheat sheet
 // http://ult-tex.net/info/perl/
+// .Net regex quick reference
+// http://msdn.microsoft.com/en-us/library/az24scfc%28v=vs.110%29.aspx
 
 namespace ro {
 
@@ -19,7 +21,7 @@ namespace {
 
 static const char* symbols = "*+?|{}()[]^$";
 static const char* escapes[] = { "nrtvf^*+?.|{}()[].", "\n\r\t\v\f^*+?.|{}()[]." };
-static const char* shorcut = "sSbBdDwWnAZG";
+static const char* charClass = "sSdDwW";
 static const char* repeatition = "?+*{";
 
 static bool charCmp(char c1, char c2) { return c1 == c2; }
@@ -373,6 +375,24 @@ bool match_charSet(Graph& graph, Node& node, Edge& edge, RangedString& s)
 	return exclusion ? !inList : inList;
 }
 
+bool match_charClass(Graph& graph, Node& node, Edge& edge, RangedString& s)
+{
+	if(s.begin >= s.end)
+		return false;
+
+	roUtf8 c = *s.begin;
+	switch(*edge.f.begin) {
+	case 'd':
+		if(c >= '0' && c <= '9')
+			return ++s.begin, true;
+		break;
+	default:
+		break;
+	}
+
+	return false;
+}
+
 bool match_beginOfString(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
 	return (s.begin == graph.srcString.begin);
@@ -556,6 +576,26 @@ bool parse_charSet(Graph& graph, const RangedString& f, const roUtf8*& i)
 	return true;
 }
 
+bool parse_charClass(Graph& graph, const RangedString& f, const roUtf8*& i)
+{
+	if(*i != '\\') return false;
+	if(!roStrChr(charClass, i[1]))
+		return false;
+
+	Node node = { 1, RangedString(i, i+2) };
+	node.edges.f = RangedString(i+1, i+2);
+	node.edges.func = match_charClass;
+
+	Node* prevNode = graph.currentNode;
+	Node* beginNode = graph.push(node, 1, &prevNode);
+	Node* endNode = graph.endNode;
+
+	i += 2;
+	parse_repeatition(graph, prevNode, beginNode, endNode, f, i);
+
+	return true;
+}
+
 bool parse_group(Graph& graph, const RangedString& f, const roUtf8*& i)
 {
 	if(*i != '(') return false;
@@ -626,6 +666,7 @@ bool parse_nodes_impl(Graph& graph, const RangedString& f)
 	for(const roUtf8* i = f.begin; i < f.end; )
 	{
 		bool b;
+		ret |= b = parse_charClass(graph, f, i);			if(b) continue;
 		ret |= b = parse_raw(graph, f, i);					if(b) continue;
 		ret |= b = parse_charSet(graph, f, i);				if(b) continue;
 		ret |= b = parse_group(graph, f, i);				if(b) continue;
