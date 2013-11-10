@@ -9,14 +9,11 @@ struct RegexTest {};
 TEST_FIXTURE(RegexTest, test)
 {
 	const roUtf8* testData[][4] = {
-		{ "^(b+?|a){1,2}?c",		"",		"bc",											"bc`b" },	// NOTE: +? is lazy +
 		{ "<.*>",					"",		"<img>def</img>",								"<img>def</img>" },
 		{ "<.*?>",					"",		"<img>def</img>",								"<img>" },
 
 		{ "(a)*b",					"",		"aab",											"aab`a" },
 		{ "(abc)d",					"",		"abcd",											"abcd`abc" },
-
-		{ "^(b+|a){1,2}c",			"",		"bc",											"bc`b" },
 
 		{ "a|b|c",					"",		"a",											"a" },
 		{ "[a-c]*d",				"",		"ad",											"ad" },
@@ -32,8 +29,6 @@ TEST_FIXTURE(RegexTest, test)
 		{ "a*b",					"",		"ab",											"ab" },
 		{ "a*",						"",		"aa",											"aa" },
 		{ "abc",					"",		"abc",											"abc" },
-
-		{ "^(b+|a){1,2}c",			"",		"bc",											"bc`b" },
 
 		{ "^xxx[0-9]*$",			"",		"xxx",											"xxx" },
 		{ "the quick brown fox",	"",		"the quick brown fox",							"the quick brown fox" },
@@ -71,9 +66,9 @@ TEST_FIXTURE(RegexTest, test)
 		{ NULL,						"",		"aaaabcxyzzzzpqrrrabbbxyyyyypqAzz",				"aaaabcxyzzzzpqrrrabbbxyyyyypqAzz" },
 		{ NULL,						"",		"aaabcxyzpqrrrabbxyyyypABzz",					"aaabcxyzpqrrrabbxyyyypABzz" },
 		{ NULL,						"",		"aaabcxyzpqrrrabbxyyyypABBzz",					"aaabcxyzpqrrrabbxyyyypABBzz" },
-//		{ NULL,						"",		">>>aaabxyzpqrrrabbxyyyypqAzz",					"aaabxyzpqrrrabbxyyyypqAzz" },
-//		{ NULL,						"",		">aaaabxyzpqrrrabbxyyyypqAzz",					"aaaabxyzpqrrrabbxyyyypqAzz" },
-//		{ NULL,						"",		">>>>abcxyzpqrrrabbxyyyypqAzz",					"abcxyzpqrrrabbxyyyypqAzz" },
+		{ NULL,						"",		">>>aaabxyzpqrrrabbxyyyypqAzz",					"aaabxyzpqrrrabbxyyyypqAzz" },
+		{ NULL,						"",		">aaaabxyzpqrrrabbxyyyypqAzz",					"aaaabxyzpqrrrabbxyyyypqAzz" },
+		{ NULL,						"",		">>>>abcxyzpqrrrabbxyyyypqAzz",					"abcxyzpqrrrabbxyyyypqAzz" },
 		{ NULL,						"",		"*** Failers",									NULL },
 		{ NULL,						"",		"abxyzpqrrabbxyyyypqAzz",						NULL },
 		{ NULL,						"",		"abxyzpqrrrrabbxyyyypqAzz",						NULL },
@@ -108,6 +103,24 @@ TEST_FIXTURE(RegexTest, test)
 		{ NULL,						"",		"*** Failers",									NULL },
 		{ NULL,						"",		"aaac",											NULL },
 		{ NULL,						"",		"abbbbbbbbbbbac",								NULL },
+
+		{ "^(b+|a){1,2}?bc",		"",		"bbc",											"bbc`b" },
+
+		{ "^(b*|ba){1,2}?bc",		"",		"babc",											"babc`ba" },
+		{ NULL,						"",		"bbabc",										"bbabc`ba" },
+		{ NULL,						"",		"bababc",										"bababc`ba" },
+		{ NULL,						"",		"*** Failers",									NULL },
+		{ NULL,						"",		"bababbc",										NULL },
+		{ NULL,						"",		"babababc",										NULL },
+
+		{ "^(ba|b*){1,2}?bc",		"",		"babc",											"babc`ba" },
+		{ NULL,						"",		"bbabc",										"bbabc`ba" },
+		{ NULL,						"",		"bababc",										"bababc`ba" },
+		{ NULL,						"",		"*** Failers",									NULL },
+		{ NULL,						"",		"bababbc",										NULL },
+		{ NULL,						"",		"babababc",										NULL },
+
+//		{ "\\ca\\cA\\c[\\c{\\c:",	"",		"\\x01\\x01\\e;z",								"\\x01\\x01\\x1b;z" },
 
 		{ "^[ab\\]cde]",			"",		"athing",										"a" },
 		{ NULL,						"",		"bthing",										"b" },
@@ -147,6 +160,10 @@ TEST_FIXTURE(RegexTest, test)
 		{ NULL,						"",		"dthing",										NULL },
 		{ NULL,						"",		"ething",										NULL },
 
+//		{ "^\\",					"",		"",												"\\x81" },
+
+//		{ "^ÿ",						"",		"ÿ",											"\\xff" },
+
 		{ "^[0-9]+$",				"",		"0",											"0" },
 		{ NULL,						"",		"1",											"1" },
 		{ NULL,						"",		"2",											"2" },
@@ -162,12 +179,63 @@ TEST_FIXTURE(RegexTest, test)
 		{ NULL,						"",		"*** Failers",									NULL },
 		{ NULL,						"",		"abc",											NULL },
 
+		{ "^.*nter",				"",		"enter",										"enter" },
+		{ NULL,						"",		"inter",										"inter" },
+		{ NULL,						"",		"uponter",										"uponter" },
+
 		{ "^xxx[0-9]+$",			"",		"xxx0",											"xxx0" },
 		{ NULL,						"",		"xxx1234",										"xxx1234" },
 		{ NULL,						"",		"*** Failers",									NULL },
 		{ NULL,						"",		"xxx",											NULL },
 
 		{ "^.+[0-9][0-9][0-9]$",	"",		"x123",											"x123" },
+		{ NULL,						"",		"xx123",										"xx123" },
+		{ NULL,						"",		"123456",										"123456" },
+		{ NULL,						"",		"*** Failers",									NULL },
+		{ NULL,						"",		"123",											NULL },
+		{ NULL,						"",		"x1234",										"x1234" },
+
+		{ "^.+?[0-9][0-9][0-9]$",	"",		"x123",											"x123" },
+		{ NULL,						"",		"xx123",										"xx123" },
+		{ NULL,						"",		"123456",										"123456" },
+		{ NULL,						"",		"*** Failers",									NULL },
+		{ NULL,						"",		"123",											NULL },
+		{ NULL,						"",		"x1234",										"x1234" },
+
+		{ "^([^!]+)!(.+)=apquxz\\.ixr\\.zzz\\.ac\\.uk$",	"",		"",						NULL },
+		{ NULL,						"",		"abc!pqr=apquxz.ixr.zzz.ac.uk",					"abc!pqr=apquxz.ixr.zzz.ac.uk`abc`pqr" },
+		{ NULL,						"",		"*** Failers",									NULL },
+		{ NULL,						"",		"!pqr=apquxz.ixr.zzz.ac.uk",					NULL },
+		{ NULL,						"",		"abc!=apquxz.ixr.zzz.ac.uk",					NULL },
+		{ NULL,						"",		"abc!pqr=apquxz:ixr.zzz.ac.uk",					NULL },
+		{ NULL,						"",		"abc!pqr=apquxz.ixr.zzz.ac.ukk",				NULL },
+
+		{ ":",						"",		"Well, we need a colon: somewhere",				":" },
+		{ NULL,						"",		"*** Fail if we don't",							NULL },
+
+/*		{ "([\\da-f:]+)$",			"i",	"0abc",											"0abc`0abc" },
+		{ NULL,						"i",	"abc",											"abc`abc" },
+		{ NULL,						"i",	"fed",											"fed`fed" },
+		{ NULL,						"i",	"E",											"E`E" },
+		{ NULL,						"i",	"::",											"::`::" },
+		{ NULL,						"i",	"5f03:12C0::932e",								"5f03:12C0::932e`5f03:12C0::932e" },
+		{ NULL,						"i",	"fed def",										"def`def" },
+		{ NULL,						"i",	"Any old stuff",								"ff`ff" },
+		{ NULL,						"i",	"*** Failers",									NULL },
+		{ NULL,						"i",	"0zzz",											NULL },
+		{ NULL,						"i",	"gzzz",											NULL },
+		{ NULL,						"i",	"fed\x20",										NULL },
+		{ NULL,						"i",	"Any old rubbish",								NULL },
+
+		{ "^.*\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$",	"",		"",						NULL },
+		{ NULL,						"",		".1.2.3",										".1.2.3`1`2`3" },
+		{ NULL,						"",		"A.12.123.0",									"A.12.123.0`12`123`0" },
+		{ NULL,						"",		"*** Failers",									NULL },
+		{ NULL,						"",		".1.2.3333",									NULL },
+		{ NULL,						"",		"1.2.3",										NULL },
+		{ NULL,						"",		"1234.2.3",										NULL },*/
+
+//		{ "^(?=ab(de))(abd)(e)",	"",		"abde",											"abde`de`abd`e" },
 
 		{ "a?a?aa",					"",		"aa",											"aa" },
 

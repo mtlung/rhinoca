@@ -10,6 +10,8 @@
 // http://hackingoff.com/compilers/regular-expression-to-nfa-dfa
 // A JavaScript and regular expression centric blog
 // http://blog.stevenlevithan.com
+// Perl regular expression cheat sheet
+// http://ult-tex.net/info/perl/
 
 namespace ro {
 
@@ -60,7 +62,7 @@ struct Node
 {
 	roUint32 edgeCount;
 	RangedString debugStr;
-	void* userdata[3];
+	void* userdata[4];
 	Edge edges;
 
 	roSize sizeInBytes() const
@@ -127,8 +129,8 @@ bool loop_exit(Graph& graph, Node& node, Edge& edge, RangedString& s) { return t
 
 bool counted_loop_repeat(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
-	roSize max = (roSize)node.userdata[1];
-	roSize& count = (roSize&)node.userdata[2];
+	roSize& count = (roSize&)node.userdata[0];
+	roSize max = (roSize)node.userdata[2];
 
 	if((count++) < max)
 		return loop_repeat(graph, node, edge, s);
@@ -138,10 +140,10 @@ bool counted_loop_repeat(Graph& graph, Node& node, Edge& edge, RangedString& s)
 
 bool counted_loop_exit(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
-	roSize min = (roSize)node.userdata[0];
-	roSize& count = (roSize&)node.userdata[2];
+	roSize& count = (roSize&)node.userdata[0];
+	roSize min = (roSize)node.userdata[1];
 
-	if(count < (min + 1))	// min +1 because we enter counted_loop_repeat at the very beginning
+	if(count < min)
 		return count = 0, false;
 	else
 		return count = 0, true;
@@ -159,6 +161,7 @@ struct Graph
 	Graph()
 		: regex(NULL)
 		, nestedGroupLevel(0)
+		, branchLevel(0)
 		, charCmpFunc(NULL)
 	{
 		{	// Create the begin node
@@ -275,25 +278,33 @@ struct Graph
 	Node* currentNode;
 	Node* endNode;
 	roSize nestedGroupLevel;
+	roSize branchLevel;
 	RangedString regString;
 	RangedString srcString;
 	bool (*charCmpFunc)(char c1, char c2);
-	Array<const roUtf8*> tmpResult;
+	Array<roSize> resultEndNodeOffset;
 };	// Graph
 
 bool group_begin(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
 	edge.f.begin = s.begin;
-	graph.tmpResult[(roSize)node.userdata[0]] = s.begin;
+	node.userdata[0] = (void*)s.begin;
+	node.userdata[3] = (void*)graph.branchLevel;
 	return ++graph.nestedGroupLevel, true;
 }
 bool group_end(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
-	if(graph.nestedGroupLevel == 0)	// It's it the path of back tracking
-		return false;
+	roAssert(graph.nestedGroupLevel > 0);
+	roSize beginNodeOffset = (roSize)node.userdata[0];
+	Node* beginNode = graph.nodeFromAbsOffset(beginNodeOffset);
 
-	roSize idx = (roSize)node.userdata[0];
-	graph.regex->result[idx] = RangedString(graph.tmpResult[idx], s.begin);
+	// Commit the data in beginNode
+	// This check prevent altering the begin of string during back-tracking
+	// Test case: "(b+|a){1,2}?bc" "bbc"
+	if((void*)graph.branchLevel >= beginNode->userdata[3])
+		beginNode->userdata[1] = beginNode->userdata[0];
+	beginNode->userdata[2] = (void*)s.begin;
+
 	return --graph.nestedGroupLevel, true;
 }
 
@@ -324,7 +335,7 @@ bool match_raw(Graph& graph, Node& node, Edge& edge, RangedString& s_)
 	return true;
 }
 
-bool match_charClass(Graph& graph, Node& node, Edge& edge, RangedString& s)
+bool match_charSet(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
 	const roUtf8* i = edge.f.begin;
 
@@ -452,9 +463,9 @@ bool parse_repeatition(Graph& graph, Node* prevNode, Node* beginNode, Node* endN
 		loopNode->edge(edge1Idx).func = counted_loop_exit;
 		roVerify(prevNode->redirect(*beginNode, *loopNode));
 
-		loopNode->userdata[0] = (void*)min;
-		loopNode->userdata[1] = (void*)max;
-		loopNode->userdata[2] = (void*)0;
+		loopNode->userdata[0] = (void*)0;
+		loopNode->userdata[1] = (void*)min;
+		loopNode->userdata[2] = (void*)max;
 	}
 	else
 		return true;
@@ -508,7 +519,7 @@ bool parse_raw(Graph& graph, const RangedString& f, const roUtf8*& i)
 	return true;
 }
 
-bool parse_charClass(Graph& graph, const RangedString& f, const roUtf8*& i)
+bool parse_charSet(Graph& graph, const RangedString& f, const roUtf8*& i)
 {
 	if(*i != '[') return false;
 	const roUtf8* begin = ++i;
@@ -534,7 +545,7 @@ bool parse_charClass(Graph& graph, const RangedString& f, const roUtf8*& i)
 
 	Node node = { 1, RangedString(begin-1, end+1) };
 	node.edges.f = RangedString(begin, end);
-	node.edges.func = match_charClass;
+	node.edges.func = match_charSet;
 
 	Node* prevNode = graph.currentNode;
 	Node* beginNode = graph.push(node, 1, &prevNode);
@@ -563,15 +574,13 @@ bool parse_group(Graph& graph, const RangedString& f, const roUtf8*& i)
 	roAssert(end > begin);
 
 	roSize prevNodeOffset, beginNodeOffset;
-	roSize groupIndex = graph.regex->result.size();
 
 	{	// Add starting node
 		Node beginNode = { 1, RangedString("(") };
 		beginNode.edges.func = group_begin;
 		prevNodeOffset = graph.absOffsetFromNode(*graph.currentNode);
 		beginNodeOffset = graph.absOffsetFromNode(*graph.push(beginNode));
-
-		graph.currentNode->userdata[0] = (void*)groupIndex;
+		graph.resultEndNodeOffset.pushBack(beginNodeOffset);
 	}
 
 	if(!parse_nodes(graph, RangedString(begin, end)))
@@ -580,11 +589,8 @@ bool parse_group(Graph& graph, const RangedString& f, const roUtf8*& i)
 	{	// Add end node
 		Node endNode = { 1, RangedString(")") };
 		endNode.edges.func = group_end;
+		endNode.userdata[0] = (void*)beginNodeOffset;
 		graph.push(endNode);
-
-		graph.currentNode->userdata[0] = (void*)groupIndex;
-		graph.regex->result.incSize(1);
-		graph.tmpResult.incSize(1);
 	}
 
 	Node* prevNode = graph.nodeFromAbsOffset(prevNodeOffset);
@@ -621,7 +627,7 @@ bool parse_nodes_impl(Graph& graph, const RangedString& f)
 	{
 		bool b;
 		ret |= b = parse_raw(graph, f, i);					if(b) continue;
-		ret |= b = parse_charClass(graph, f, i);			if(b) continue;
+		ret |= b = parse_charSet(graph, f, i);				if(b) continue;
 		ret |= b = parse_group(graph, f, i);				if(b) continue;
 		ret |= b = parse_match_beginOfString(graph, f, i);	if(b) continue;
 		ret |= b = parse_match_endOfString(graph, f, i);	if(b) continue;
@@ -639,6 +645,7 @@ bool parse_nodes(Graph& graph, const RangedString& f)
 	TinyArray<roSize, 16> absOffsets;
 
 	roSize beginNodeOffset = graph.absOffsetFromNode(*graph.currentNode);
+	bool firstEncounter = true;
 
 	// Scan till next '|' or till end
 	while(true) {
@@ -646,6 +653,16 @@ bool parse_nodes(Graph& graph, const RangedString& f)
 			((i[0] == '|' && i[-1] != '\\') || i == f.end)
 		)
 		{
+			// Add alternate node for the first encountered '|', adding this
+			// extra node help preventing un-necessary interaction with '(' node
+			if(i[0] == '|' && firstEncounter) {
+				Node node = { 1, RangedString("|") };
+				node.edges.func = alternation;
+				graph.push(node);
+				beginNodeOffset = graph.absOffsetFromNode(*graph.currentNode);
+				firstEncounter = false;
+			}
+
 			if(!parse_nodes_impl(graph, RangedString(begin, i)))
 				return false;
 
@@ -687,10 +704,20 @@ bool matchNodes(Graph& graph, Node& node, RangedString& s)
 	{
 		Edge& edge = pNode->edges;
 		if(edge.func == node_end)
-			return true;
+			return --graph.branchLevel, true;
+
+		if(graph.regex->isDebug) {
+			String ident = " ";
+			ident *= graph.branchLevel;
+			roLog("debug", "Matching %s%s against %s\n",
+				ident.c_str(),
+				pNode->debugStr.toString().c_str(),
+				s.toString().c_str()
+			);
+		}
 
 		if(!(*edge.func)(graph, *pNode, edge, s))
-			return false;
+			return --graph.branchLevel, false;
 
 		pNode = graph.followEdge(edge);
 	}
@@ -698,23 +725,30 @@ bool matchNodes(Graph& graph, Node& node, RangedString& s)
 	// Call recursively if there is branching
 	for(roSize i=0; i<pNode->edgeCount; ++i) {
 		const roUtf8* sBackup = s.begin;
+		roSize levelBackup = graph.nestedGroupLevel;
+		void* userdataBackup = pNode->userdata[0];
+
 		Edge& edge = (&pNode->edges)[i];
 		if(edge.func == node_end)
-			return true;
+			return --graph.branchLevel, true;
 
 		if((*edge.func)(graph, *pNode, edge, s)) {
 			Node* nextNode = graph.followEdge(edge);
 			if(!nextNode)
 				continue;
+
+			++graph.branchLevel;
 			if(matchNodes(graph, *nextNode, s))
-				return true;
+				return --graph.branchLevel, true;
 		}
 
 		// Edge fail, restore the string and try another edge
 		s.begin = sBackup;
+		graph.nestedGroupLevel = levelBackup;
+		pNode->userdata[0] = userdataBackup;
 	}
 
-	return false;
+	return --graph.branchLevel, false;
 }
 
 void debugNodes(Graph& graph)
@@ -763,19 +797,34 @@ bool Regex::match(const roUtf8* s, const roUtf8* f, const char* options)
 
 	// Parsing
 	result.clear();
-	graph.tmpResult.clear();
 	if(!parse_nodes(graph, regString))
 		return false;
 
-	if(true || isDebug) {
+	if(isDebug) {
 		roLog("debug", "%s, %s\n", f, s);
-//		debugNodes(graph);
+		debugNodes(graph);
 	}
 
+	result.resize(graph.resultEndNodeOffset.size() + 1);
+
 	// Matching
-	if(matchNodes(graph, (Node&)graph.nodes.front(), srcString)) {
-		result.insert(0, RangedString(graph.srcString.begin, srcString.begin));
-		return true;
+	while(srcString.begin < srcString.end) {
+		const roUtf8* currentBegin = srcString.begin;
+
+		if(matchNodes(graph, (Node&)graph.nodes.front(), srcString)) {
+			result[0] = RangedString(currentBegin, srcString.begin);
+
+			for(roSize i=0; i<graph.resultEndNodeOffset.size(); ++i) {
+				Node* node = graph.nodeFromAbsOffset(graph.resultEndNodeOffset[i]);
+				RangedString str = RangedString((roUtf8*)node->userdata[1], (roUtf8*)node->userdata[2]);
+				result[i + 1] = str;
+			}
+
+			return true;
+		}
+
+		// If not match found, try start at next character in the string
+		++srcString.begin;
 	}
 
 	result.clear();
