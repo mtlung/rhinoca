@@ -19,10 +19,11 @@ namespace ro {
 
 namespace {
 
-static const char* symbols = "*+?|{}()[]^$";
-static const char* escapes[] = { "nrtvf^*+?.|{}()[].", "\n\r\t\v\f^*+?.|{}()[]." };
-static const char* charClass = "sSdDwW";
-static const char* repeatition = "?+*{";
+static const char* str_symbols = "*+?|{}()[]^$";
+static const char* str_escapes[] = { "nrtvf^*+?.|{}()[].", "\n\r\t\v\f^*+?.|{}()[]." };
+static const char* str_charClass = "bdDsSwW";
+static const char* str_repeatition = "?+*{";
+static const char* str_whiteSpace = " \t\r\n\v\f";
 
 static bool charCmp(char c1, char c2) { return c1 == c2; }
 static bool charCaseCmp(char c1, char c2) { return roToLower(c1) == roToLower(c2); }
@@ -31,20 +32,16 @@ static bool charCaseCmp(char c1, char c2) { return roToLower(c1) == roToLower(c2
 char doEscape(const roUtf8*& str)
 {
 	if(*str != '\\') return *str;
-	const char* i = roStrChr(escapes[0], str[1]);
+	const char* i = roStrChr(str_escapes[0], str[1]);
 	if(!i) return '\0';
-	return ++str, escapes[1][i - escapes[0]];
+	return ++str, str_escapes[1][i - str_escapes[0]];
 }
 
 // Will eat '\' on successful scan
 bool scanMeta(const roUtf8*& str, char c)
 {
 	if(*str != '\\') return *str == c;
-	const char* i = roStrChr(escapes[0], str[1]);
-	if(!i) return false;
-	if(escapes[1][i - escapes[0]] == c)
-		return ++str, true;
-	return false;
+	return ++str, false;
 }
 
 }	// namespace
@@ -287,6 +284,9 @@ struct Graph
 	Array<roSize> resultEndNodeOffset;
 };	// Graph
 
+//////////////////////////////////////////////////////////////////////////
+// Matching
+
 bool group_begin(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
 	edge.f.begin = s.begin;
@@ -337,6 +337,58 @@ bool match_raw(Graph& graph, Node& node, Edge& edge, RangedString& s_)
 	return true;
 }
 
+static bool isWordChar(char c)
+{
+	return roIsAlpha(c) || roIsDigit(c) || c == '_';
+}
+
+bool match_charClass(char f, RangedString& s)
+{
+	roUtf8 c = *s.begin;
+	switch(f) {
+	case 'd':
+		if(roIsDigit(c)) return true;
+		break;
+	case 'D':
+		if(!roIsDigit(c)) return true;
+		break;
+	case 's':
+		if(roStrChr(str_whiteSpace, c)) return true;
+		break;
+	case 'S':
+		if(!roStrChr(str_whiteSpace, c)) return true;
+		break;
+	case 'w':
+		if(isWordChar(c)) return true;
+		break;
+	case 'W':
+		if(!isWordChar(c)) return true;
+		break;
+	default:
+		break;
+	}
+
+	return false;
+}
+
+bool match_charClass(Graph& graph, Node& node, Edge& edge, RangedString& s)
+{
+	if(s.begin >= s.end)
+		return false;
+
+	if(match_charClass(*edge.f.begin, s))
+		return ++s.begin, true;
+
+	return false;
+}
+
+static bool isCharSet(const roUtf8* f)
+{
+	if(f[0] != '\\')
+		return false;
+	return roStrChr(str_charClass, f[1]) != NULL;
+}
+
 bool match_charSet(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
 	const roUtf8* i = edge.f.begin;
@@ -351,13 +403,21 @@ bool match_charSet(Graph& graph, Node& node, Edge& edge, RangedString& s)
 		roUtf8 escaped = doEscape(i);
 
 		// Character range
-		if(i[1] == '-' && (i + 2) != edge.f.end) {
+		if((i + 2) < edge.f.end && i[1] == '-') {
 			i += 2;
 			roUtf8 escaped2 = doEscape(i);
 			roAssert(i < edge.f.end);
 			roUtf8 l = roToLower(c);
 			roUtf8 u = roToUpper(c);
 			if((l >= escaped && l <= escaped2) || (u >= escaped && u <= escaped2)) {
+				inList = true;
+				break;
+			}
+		}
+		// Character class
+		else if((i + 1) < edge.f.end && isCharSet(i)) {
+			++i;
+			if(match_charClass(*i, s)) {
 				inList = true;
 				break;
 			}
@@ -375,24 +435,6 @@ bool match_charSet(Graph& graph, Node& node, Edge& edge, RangedString& s)
 	return exclusion ? !inList : inList;
 }
 
-bool match_charClass(Graph& graph, Node& node, Edge& edge, RangedString& s)
-{
-	if(s.begin >= s.end)
-		return false;
-
-	roUtf8 c = *s.begin;
-	switch(*edge.f.begin) {
-	case 'd':
-		if(c >= '0' && c <= '9')
-			return ++s.begin, true;
-		break;
-	default:
-		break;
-	}
-
-	return false;
-}
-
 bool match_beginOfString(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
 	return (s.begin == graph.srcString.begin);
@@ -402,6 +444,9 @@ bool match_endOfString(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
 	return (s.begin == graph.srcString.end);
 }
+
+//////////////////////////////////////////////////////////////////////////
+// Parsing
 
 bool parse_repeatition(Graph& graph, Node* prevNode, Node* beginNode, Node* endNode, const RangedString& f, const roUtf8*& i)
 {
@@ -496,21 +541,25 @@ bool parse_repeatition(Graph& graph, Node* prevNode, Node* beginNode, Node* endN
 
 bool parse_raw(Graph& graph, const RangedString& f, const roUtf8*& i)
 {
-	if(roStrChr(symbols, *i))
+	if(roStrChr(str_symbols, *i))
 		return false;
 
 	// Search for end of raw string
 	const roUtf8* end2 = i;
 	for(; end2 < f.end; ++end2) {
-		if(roStrChr(symbols, *end2))
+		if(roStrChr(str_symbols, *end2))
 			break;
+		if(isCharSet(end2))
+			break;
+		if(*end2 == '\\')	// Go though any escape character
+			++end2;
 	}
 
 	roAssert(end2 != i);
 	const roUtf8* end1 = end2;
 
 	// See if any repetition follow the string, if yes we divide the string into 2 parts
-	if(end2 != f.end && roStrChr(repeatition, *end2))
+	if(end2 != f.end && roStrChr(str_repeatition, *end2))
 		end1 = end2 - 1;
 
 	// Deal with first part
@@ -579,7 +628,7 @@ bool parse_charSet(Graph& graph, const RangedString& f, const roUtf8*& i)
 bool parse_charClass(Graph& graph, const RangedString& f, const roUtf8*& i)
 {
 	if(*i != '\\') return false;
-	if(!roStrChr(charClass, i[1]))
+	if(!roStrChr(str_charClass, i[1]))
 		return false;
 
 	Node node = { 1, RangedString(i, i+2) };
@@ -792,7 +841,12 @@ bool matchNodes(Graph& graph, Node& node, RangedString& s)
 	return --graph.branchLevel, false;
 }
 
-void debugNodes(Graph& graph)
+Regex::Regex()
+	: isDebug(true)
+{
+}
+
+static void debugNodes(Graph& graph)
 {
 	TinyArray<Node*, 64> nodePtrs;
 	roSize offset = 0;
@@ -814,11 +868,6 @@ void debugNodes(Graph& graph)
 		}
 	}
 	roLog("debug", "\n");
-}
-
-Regex::Regex()
-	: isDebug(false)
-{
 }
 
 bool Regex::match(const roUtf8* s, const roUtf8* f, const char* options)
@@ -851,6 +900,8 @@ bool Regex::match(const roUtf8* s, const roUtf8* f, const char* options)
 	// Matching
 	while(srcString.begin < srcString.end) {
 		const roUtf8* currentBegin = srcString.begin;
+		graph.branchLevel = 0;
+		graph.nestedGroupLevel = 0;
 
 		if(matchNodes(graph, (Node&)graph.nodes.front(), srcString)) {
 			result[0] = RangedString(currentBegin, srcString.begin);
@@ -864,8 +915,8 @@ bool Regex::match(const roUtf8* s, const roUtf8* f, const char* options)
 			return true;
 		}
 
-		// If not match found, try start at next character in the string
-		++srcString.begin;
+		// If no match found, try start at next character in the string
+		srcString.begin = currentBegin + 1;
 	}
 
 	result.clear();

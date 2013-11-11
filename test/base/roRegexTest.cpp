@@ -9,6 +9,8 @@ struct RegexTest {};
 TEST_FIXTURE(RegexTest, test)
 {
 	const roUtf8* testData[][4] = {
+		{ "^\\*\\.[a-z]([a-z\\-\\d]*[a-z\\d]+)?(\\.[a-z])*$", "",		"*.a",	"*.a```" },
+
 		{ "<.*>",					"",		"<img>def</img>",								"<img>def</img>" },
 		{ "<.*?>",					"",		"<img>def</img>",								"<img>" },
 
@@ -213,7 +215,7 @@ TEST_FIXTURE(RegexTest, test)
 		{ ":",						"",		"Well, we need a colon: somewhere",				":" },
 		{ NULL,						"",		"*** Fail if we don't",							NULL },
 
-/*		{ "([\\da-f:]+)$",			"i",	"0abc",											"0abc`0abc" },
+		{ "([\\da-f:]+)$",			"i",	"0abc",											"0abc`0abc" },
 		{ NULL,						"i",	"abc",											"abc`abc" },
 		{ NULL,						"i",	"fed",											"fed`fed" },
 		{ NULL,						"i",	"E",											"E`E" },
@@ -225,7 +227,7 @@ TEST_FIXTURE(RegexTest, test)
 		{ NULL,						"i",	"0zzz",											NULL },
 		{ NULL,						"i",	"gzzz",											NULL },
 		{ NULL,						"i",	"fed\x20",										NULL },
-		{ NULL,						"i",	"Any old rubbish",								NULL },*/
+		{ NULL,						"i",	"Any old rubbish",								NULL },
 
 		{ "^.*\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$",	"",		"",						NULL },
 		{ NULL,						"",		".1.2.3",										".1.2.3`1`2`3" },
@@ -234,6 +236,33 @@ TEST_FIXTURE(RegexTest, test)
 		{ NULL,						"",		".1.2.3333",									NULL },
 		{ NULL,						"",		"1.2.3",										NULL },
 		{ NULL,						"",		"1234.2.3",										NULL },
+
+		{ "^(\\d+)\\s+IN\\s+SOA\\s+(\\S+)\\s+(\\S+)\\s*\\(\\s*$",	"",		"",				NULL },
+		{ NULL,						"",		"1 IN SOA non-sp1 non-sp2(",					"1 IN SOA non-sp1 non-sp2(`1`non-sp1`non-sp2" },
+		{ NULL,						"",		"1    IN    SOA    non-sp1    non-sp2   (",		"1    IN    SOA    non-sp1    non-sp2   (`1`non-sp1`non-sp2" },
+		{ NULL,						"",		"*** Failers",									NULL },
+		{ NULL,						"",		"1IN SOA non-sp1 non-sp2(",						NULL },
+
+		{ "^[a-zA-Z\\d][a-zA-Z\\d\\-]*(\\.[a-zA-Z\\d][a-zA-z\\d\\-]*)*\\.$",	"",	"",		NULL },
+		{ NULL,						"",		"a.",											"a.`" },
+		{ NULL,						"",		"Z.",											"Z.`" },
+		{ NULL,						"",		"2.",											"2.`" },
+		{ NULL,						"",		"ab-c.pq-r.",									"ab-c.pq-r.`.pq-r" },
+		{ NULL,						"",		"sxk.zzz.ac.uk.",								"sxk.zzz.ac.uk.`.uk" },
+		{ NULL,						"",		"x-.y-.",										"x-.y-.`.y-" },
+		{ NULL,						"",		"*** Failers",									NULL },
+		{ NULL,						"",		"-abc.peq.",									NULL },
+
+		{ "^\\*\\.[a-z]([a-z\\-\\d]*[a-z\\d]+)?(\\.[a-z]([a-z\\-\\d]*[a-z\\d]+)?)*$","","",	NULL },
+		{ NULL,						"",		"*.a",											"*.a```" },
+		{ NULL,						"",		"*.b0-a",										"*.b0-a`0-a``" },
+		{ NULL,						"",		"*.c3-b.c",										"*.c3-b.c`3-b`.c`" },
+		{ NULL,						"",		"*.c-a.b-c",									"*.c-a.b-c`-a`.b-c`-c" },
+		{ NULL,						"",		"*** Failers",									NULL },
+		{ NULL,						"",		"*.0",											NULL },
+		{ NULL,						"",		"*.a-",											NULL },
+		{ NULL,						"",		"*.a-b.c-",										NULL },
+		{ NULL,						"",		"*.c-a.0-c",									NULL },
 
 //		{ "^(?=ab(de))(abd)(e)",	"",		"abde",											"abde`de`abd`e" },
 
