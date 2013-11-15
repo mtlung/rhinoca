@@ -6,9 +6,11 @@
 namespace ro {
 
 ///	A simple ring buffer
+/// Note that this class is not thread safe,
+/// you can't doing read and write on different threads
 struct RingBuffer
 {
-	RingBuffer() { clear(); }
+	RingBuffer() { softLimit = 0; hardLimit = 0; clear(); }
 
 	roStatus	write(roSize maxSizeToWrite, roByte*& writePtr);
 	void		commitWrite(roSize written);
@@ -23,6 +25,15 @@ struct RingBuffer
 	void		flushWrite();
 
 	void		clear();
+
+	roSize		memoryUsage() const;
+
+	// When soft memory usage limit is reached, it should try to free some unused memory and
+	// return BeaconStatus::retry_later for the Write() function
+	roSize		softLimit;
+
+	// When hard memory usage limit is reached, the write() function will return error.
+	roSize		hardLimit;
 
 // Private
 	Array<roByte>& _rBuf() { return _buffers[_rBufIdx]; }
@@ -52,6 +63,7 @@ inline roByte* RingBuffer::read(roSize& maxSizeToRead)
 {
 	roAssert(_rPos <= _rBuf().size());
 
+	// No more to read from read buffer, swap with write buffer
 	if(_rBuf().size() - _rPos == 0) {
 		roSwap(_rBufIdx, _wBufIdx);
 		_rPos = _wPos = 0;
@@ -69,6 +81,18 @@ inline void RingBuffer::commitRead(roSize read)
 {
 	roAssert(_rPos + read <= _rBuf().size());
 	_rPos += read;
+
+	roSize memUsage = memoryUsage();
+	roAssert(memUsage >= _rPos);
+	if(softLimit > 0 && memUsage >= softLimit && 
+		(memUsage - _rPos) < softLimit	// See if we can have enough space to free and reach below soft limit
+	) {
+		roSize newSize = _rBuf().size() - _rPos;
+		roMemmov(&_rBuf()[0], &_rBuf()[0] + _rPos, newSize);
+		_rPos = 0;
+		_rBuf().resize(newSize);
+		_rBuf().condense();
+	}
 }
 
 inline void RingBuffer::flushWrite()
@@ -90,6 +114,11 @@ inline void RingBuffer::clear()
 	_rPos = _wPos = 0;
 	_rBuf().clear();
 	_wBuf().clear();
+}
+
+inline roSize RingBuffer::memoryUsage() const
+{
+	return _buffers[0].capacity() + _buffers[1].capacity();
 }
 
 }	// namespace ro

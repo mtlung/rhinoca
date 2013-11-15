@@ -74,6 +74,14 @@ struct RecursiveMutex : private NonCopyable
 #endif
 };	// RecursiveMutex
 
+/// NullMutex
+struct NullMutex : private NonCopyable
+{
+	void lock() {}
+	void unlock() {}
+	bool tryLock() {}
+};	// NullMutex
+
 
 // ----------------------------------------------------------------------
 

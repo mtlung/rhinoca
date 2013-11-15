@@ -9,6 +9,7 @@ using namespace ro;
 TEST(RingBufferTest)
 {
 	RingBuffer ringBuffer;
+	ringBuffer.softLimit = 512;
 	static const roSize chunkSize = 64;
 	Random<UniformRandom> rand;					// For control purpose
 	Random<UniformRandom> dataGen1, dataGen2;	// For verification purpose
@@ -29,11 +30,12 @@ TEST(RingBufferTest)
 		}
 
 		// Read the buffer and verify it match with the deterministic sequence
-		roSize readIterCount = rand.minMax(0u, 11u);
+		roSize readIterCount = rand.minMax(0u, 21u);
 		for(roSize iter2=0; iter2<readIterCount; ++iter2)
 		{
-			roSize bytesRead = rand.minMax(0u, 2048u);
+			roSize bytesRead = 0;
 			roByte* readPtr = ringBuffer.read(bytesRead);
+			bytesRead = rand.minMax(0u, bytesRead);
 			for(roSize i=0; i<bytesRead; ++i) {
 				if(readPtr[i] != dataGen2.minMax(0u, 128u))
 					goto Fail;

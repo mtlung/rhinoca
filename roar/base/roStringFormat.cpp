@@ -205,7 +205,7 @@ roStatus _strFormatImpl(String& str, const roUtf8* format, FormatArg* args, roSi
 				}
 				else {
 					roAssert(false && "string format str accessing out of bound param");
-					const roUtf8 errorStr[] = "[invalid]";
+					static const roUtf8 errorStr[] = "[invalid]";
 					str.append(errorStr, roCountof(errorStr));
 				}
 

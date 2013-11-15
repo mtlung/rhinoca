@@ -347,7 +347,7 @@ template<class T> roFORCEINLINE
 Status Array<T>::reserve(roSize newCapacity, bool force)
 {
 	newCapacity = roMaxOf2(newCapacity, this->size());
-	if(newCapacity == 0) return Status::ok;
+	if(newCapacity == 0 && !force) return Status::ok;
 
 	if(!force && this->_capacity >= newCapacity)
 		return Status::ok;
@@ -355,7 +355,7 @@ Status Array<T>::reserve(roSize newCapacity, bool force)
 	T* newPtr = NULL;
 	if(TypeOf<T>::isPOD()) {
 		newPtr = roRealloc(this->_data, this->_capacity * sizeof(T), newCapacity * sizeof(T));
-		if(!newPtr) return Status::not_enough_memory;
+		if(newCapacity && !newPtr) return Status::not_enough_memory;
 	}
 	else {
 		newPtr = roMalloc(newCapacity * sizeof(T));

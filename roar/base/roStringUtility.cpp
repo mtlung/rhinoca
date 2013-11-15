@@ -87,7 +87,7 @@ void roStrReverse(char *str, roSize len)
 // ----------------------------------------------------------------------
 
 template<class T>
-static roStatus _parseNumber(const char* p, T& ret)
+static roStatus _parseNumber(const char* p, T& ret, const char** newp=NULL)
 {
 	// Skip white spaces
 	static const char _whiteSpace[] = " \t\r\n";
@@ -117,6 +117,7 @@ static roStatus _parseNumber(const char* p, T& ret)
 		i = *(p++) - '0';
 	else {
 		if(hasLeadingZeros) {
+			if(newp) *newp = p;
 			ret = i;
 			return roStatus::ok;
 		}
@@ -149,6 +150,7 @@ static roStatus _parseNumber(const char* p, T& ret)
 			i *= (T)-1;
 	}
 
+	if(newp) *newp = p;
 	ret = i;
 	return roStatus::ok;
 }
@@ -210,6 +212,38 @@ roStatus roStrTo(const char* str, roUint32& ret) {
 
 roStatus roStrTo(const char* str, roUint64& ret) {
 	return _parseNumber(str, ret);
+}
+
+roStatus roStrTo(const char* str, const char*& newPos, roInt8& ret) {
+	return _parseNumber(str, ret, &newPos);
+}
+
+roStatus roStrTo(const char* str, const char*& newPos, roInt16& ret) {
+	return _parseNumber(str, ret, &newPos);
+}
+
+roStatus roStrTo(const char* str, const char*& newPos, roInt32& ret) {
+	return _parseNumber(str, ret, &newPos);
+}
+
+roStatus roStrTo(const char* str, const char*& newPos, roInt64& ret) {
+	return _parseNumber(str, ret, &newPos);
+}
+
+roStatus roStrTo(const char* str, const char*& newPos, roUint8& ret) {
+	return _parseNumber(str, ret, &newPos);
+}
+
+roStatus roStrTo(const char* str, const char*& newPos, roUint16& ret) {
+	return _parseNumber(str, ret, &newPos);
+}
+
+roStatus roStrTo(const char* str, const char*& newPos, roUint32& ret) {
+	return _parseNumber(str, ret, &newPos);
+}
+
+roStatus roStrTo(const char* str, const char*& newPos, roUint64& ret) {
+	return _parseNumber(str, ret, &newPos);
 }
 
 bool roStrToBool(const char* str, bool defaultValue) {
@@ -369,7 +403,7 @@ roSize roToString(char* str, roSize strBufSize, roUint32 val, const char* option
 roSize roToString(char* str, roSize strBufSize, roUint64 val_, const char* option)
 {
 	roSize written = 0;
-	roInt64 val = val_;
+	roUint64 val = val_;
 
 	if(!str) {
 		do {

@@ -25,6 +25,7 @@ roStatusEnum( end_of_data )
 roStatusEnum( in_progress )
 roStatusEnum( can_read_only )
 roStatusEnum( type_mismatch )
+roStatusEnum( retry_later )
 
 // String
 roStatusEnum( string_encoding_error )
