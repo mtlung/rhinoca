@@ -9,7 +9,7 @@ struct RegexTest {};
 TEST_FIXTURE(RegexTest, test)
 {
 	const roUtf8* testData[][4] = {
-		{ "^\\*\\.[a-z]([a-z\\-\\d]*[a-z\\d]+)?(\\.[a-z])*$", "",		"*.a",	"*.a```" },
+		{ "a(1)?2*", "",		"a",	"a```" },
 
 		{ "<.*>",					"",		"<img>def</img>",								"<img>def</img>" },
 		{ "<.*?>",					"",		"<img>def</img>",								"<img>" },
@@ -268,6 +268,10 @@ TEST_FIXTURE(RegexTest, test)
 
 		{ "a?a?aa",					"",		"aa",											"aa" },
 
+		{ "",						"",		"",												NULL },
+		{ "()",						"",		"",												NULL },
+		{ "a1?2*",					"",		"a",											"a" },
+
 		{ "[a-c0-9]", "", "9", "9" },
 		{ "[^1]", "", "abc", "a" },
 		{ "(012|abc|lung)+",		"",		"abclung",										"abclung`lung" },
@@ -302,10 +306,8 @@ TEST_FIXTURE(RegexTest, test)
 		}
 		else
 			CHECK(regex.result.isEmpty());
+		return;
 	}
 
-	regex.match("", "ab*");
-	regex.match("ababc", "ab*");
-	regex.match("ab", "(abc)?ab");
 	regex.match("http://yahoo.com", "http://{:i}\\.{com|org}(\\::z)?{(/:i)*}");
 }

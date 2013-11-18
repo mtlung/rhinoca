@@ -75,16 +75,6 @@ struct Node
 		return (&edges)[i];
 	}
 
-	Edge* findEdge(Node& node)
-	{
-		for(roSize i=0; i<edgeCount; ++i) {
-			Edge& e = (&edges)[i];
-			if(reinterpret_cast<Node*>(((roByte*)&e) + e.nextNode) == &node)
-				return &e;
-		}
-		return NULL;
-	}
-
 	bool directEdgeToNode(Edge& edge, Node& node)
 	{
 		bool isValidEdge = isValid(edge);
@@ -96,9 +86,17 @@ struct Node
 
 	bool redirect(Node& from, Node& to)
 	{
-		Edge* edge = findEdge(from);
-		if(!edge) return false;
-		return directEdgeToNode(*edge, to);
+		bool ok = false;
+		for(roSize i=0; i<edgeCount; ++i) {
+			Edge& e = (&edges)[i];
+			if(reinterpret_cast<Node*>(((roByte*)&e) + e.nextNode) == &from) {
+				if(!directEdgeToNode(e, to))
+					return false;
+				else
+					ok = true;
+			}
+		}
+		return ok;
 	}
 
 	bool isValid(Edge& edge)
@@ -149,7 +147,7 @@ bool counted_loop_exit(Graph& graph, Node& node, Edge& edge, RangedString& s)
 }
 
 bool node_begin(Graph& graph, Node& node, Edge& edge, RangedString& s) { return true; }
-bool node_end(Graph& graph, Node& node, Edge& edge, RangedString& s) { return true; }
+bool node_end(Graph& graph, Node& node, Edge& edge, RangedString& s);
 bool pass_though(Graph& graph, Node& node, Edge& edge, RangedString& s) { return true; }
 bool alternation(Graph& graph, Node& node, Edge& edge, RangedString& s) { return true; }
 
@@ -286,6 +284,15 @@ struct Graph
 
 //////////////////////////////////////////////////////////////////////////
 // Matching
+
+bool node_end(Graph& graph, Node& node, Edge& edge, RangedString& s)
+{
+	// NOTE: This line is to prevent the optimizer to merge node_end and node_begin
+	// together into the same function
+	graph.branchLevel = 0;
+
+	return true;
+}
 
 bool group_begin(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
@@ -660,7 +667,7 @@ bool parse_group(Graph& graph, const RangedString& f, const roUtf8*& i)
 	}
 
 	const roUtf8* end = i;
-	roAssert(end > begin);
+	roAssert(end >= begin);
 
 	roSize prevNodeOffset, beginNodeOffset;
 
