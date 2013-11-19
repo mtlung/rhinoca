@@ -4,9 +4,28 @@
 
 using namespace ro;
 
+struct RingBufferTest {};
+
+TEST_FIXTURE(RingBufferTest, empty)
+{
+	{
+		RingBuffer ringBuffer;
+	}
+
+	{	RingBuffer ringBuffer;
+		roByte* writePtr = NULL;
+		CHECK(ringBuffer.write(0, writePtr));
+		ringBuffer.commitWrite(0);
+
+		roSize readSize = 0;
+		CHECK(!ringBuffer.read(readSize));
+		CHECK_EQUAL(0u, readSize);
+	}
+}
+
 // Write a deterministic sequence of bytes, and read them back to see if
 // the sequence is still the same
-TEST(RingBufferTest)
+TEST_FIXTURE(RingBufferTest, random)
 {
 	RingBuffer ringBuffer;
 	ringBuffer.softLimit = 512;

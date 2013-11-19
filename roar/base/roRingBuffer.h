@@ -47,8 +47,13 @@ struct RingBuffer
 inline roStatus RingBuffer::write(roSize maxSizeToWrite, roByte*& writePtr)
 {
 	roAssert(_wPos == _wBuf().size() && "Call commitWrite() for each write()");
-	roStatus st = _wBuf().incSizeNoInit(maxSizeToWrite); if(!st) return st;
-	writePtr = &_wBuf()[_wPos];
+
+	if(maxSizeToWrite == 0)
+		writePtr = NULL;
+	else {
+		roStatus st = _wBuf().incSizeNoInit(maxSizeToWrite); if(!st) return st;
+		writePtr = &_wBuf()[_wPos];
+	}
 	return roStatus::ok;
 }
 
