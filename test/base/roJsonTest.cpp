@@ -9,9 +9,18 @@ class JsonTest {};
 TEST_FIXTURE(JsonTest, parse_empty)
 {
     JsonParser parser;
-	parser.parse("{}");
 
 	JsonParser::Event::Enum e;
+	CHECK_EQUAL(JsonParser::Event::Error, parser.nextEvent());
+
+	parser.parseInplace("");
+	CHECK_EQUAL(JsonParser::Event::Error, parser.nextEvent());
+
+	parser.parseInplace(NULL);
+	CHECK_EQUAL(JsonParser::Event::Error, parser.nextEvent());
+
+	parser.parse("{}");
+
 	e = parser.nextEvent();
 	CHECK_EQUAL(JsonParser::Event::BeginObject, e);
 
@@ -413,7 +422,7 @@ TEST_FIXTURE(JsonTest, parse_bigFile)
 	void* file = NULL;
 	Status st = rawFileSystemOpenFile("test.json", file);
 
-	while(rawFileSystemReadWillBlock(file, roUint64(-1))) {}
+	while(st && rawFileSystemReadWillBlock(file, roUint64(-1))) {}
 
 	roUint64 size;
 	char* buf = rawFileSystemGetBuffer(file, roUint64(-1), size);

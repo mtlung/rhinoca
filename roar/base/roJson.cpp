@@ -19,6 +19,9 @@ void JsonParser::parse(const roUtf8* source)
 
 void JsonParser::parseInplace(roUtf8* source)
 {
+	if(!source)
+		source = "";
+
 	if(source != _tmpStr.c_str()) {
 		_tmpStr.clear();
 		_tmpStr.condense();

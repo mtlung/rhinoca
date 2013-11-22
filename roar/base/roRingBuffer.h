@@ -5,24 +5,28 @@
 
 namespace ro {
 
-///	A simple ring buffer
-/// Note that this class is not thread safe,
-/// you can't doing read and write on different threads
+/// A simple FIFO byte buffer
+/// For optimal memory usage, read all the buffer when ever possible.
+/// Note that this class is not thread safe, you can't doing read and write on different threads
 struct RingBuffer
 {
 	RingBuffer() { softLimit = 0; hardLimit = 0; clear(); }
 
-	roStatus	write(roSize maxSizeToWrite, roByte*& writePtr);
+	roStatus	write(roSize maxSizeToWrite, roByte*& outWritePtr);
 	void		commitWrite(roSize written);
 
 	/// Since we have multiple internal buffers, we need to keep calling read() until it returns NULL.
 	/// If you need to get all the readable data in one go, call flushWrite() before read().
-	roByte*		read(roSize& maxSizeToRead);
+	roByte*		read(roSize& outReadSize);
+
+	/// Ensure the specified amount of data is available and contiguous
+	roStatus	atomicRead(roSize& inoutReadSize, roByte*& outReadPtr);
 	void		commitRead(roSize read);
 
 	/// Put all content in the write buffer to the read buffer.
 	/// Useful when you want to get all readable data as a single contiguous block of memory.
-	void		flushWrite();
+	roStatus	flushWrite();
+	roStatus	flushWrite(roSize sizeToFlush);
 
 	void		clear();
 
@@ -40,46 +44,63 @@ struct RingBuffer
 	Array<roByte>& _wBuf() { return _buffers[_wBufIdx]; }
 
 	roSize _rBufIdx, _wBufIdx;
-	roSize _rPos, _wPos;
+	roSize _rPos, _wBeg, _wEnd;
 	Array<roByte> _buffers[2];	/// Two buffers, one for read and one for write
 };	// RingBuffer
 
 inline roStatus RingBuffer::write(roSize maxSizeToWrite, roByte*& writePtr)
 {
-	roAssert(_wPos == _wBuf().size() && "Call commitWrite() for each write()");
+	roAssert(_wEnd == _wBuf().size() && "Call commitWrite() for each write()");
 
 	if(maxSizeToWrite == 0)
 		writePtr = NULL;
 	else {
 		roStatus st = _wBuf().incSizeNoInit(maxSizeToWrite); if(!st) return st;
-		writePtr = &_wBuf()[_wPos];
+		writePtr = &_wBuf()[_wEnd];
 	}
 	return roStatus::ok;
 }
 
 inline void RingBuffer::commitWrite(roSize written)
 {
-	roAssert(_wPos + written <= _wBuf().size());
-	_wPos += written;
-	roVerify(_wBuf().resizeNoInit(_wPos));
+	roAssert(_wEnd + written <= _wBuf().size());
+	_wEnd += written;
+	roVerify(_wBuf().resizeNoInit(_wEnd));
 }
 
-inline roByte* RingBuffer::read(roSize& maxSizeToRead)
+inline roByte* RingBuffer::read(roSize& outReadSize)
 {
 	roAssert(_rPos <= _rBuf().size());
 
 	// No more to read from read buffer, swap with write buffer
 	if(_rBuf().size() - _rPos == 0) {
 		roSwap(_rBufIdx, _wBufIdx);
-		_rPos = _wPos = 0;
+		_rPos = _wBeg;
+		_wBeg = _wEnd = 0;
 		_wBuf().clear();
 	}
 
-	maxSizeToRead = _rBuf().size() - _rPos;
-	if(!maxSizeToRead)
+	outReadSize = _rBuf().size() - _rPos;
+	if(!outReadSize)
 		return NULL;
 
 	return &_rBuf()[_rPos];
+}
+
+inline roStatus RingBuffer::atomicRead(roSize& inoutReadSize, roByte*& outReadPtr)
+{
+	roSize rBufSize = _rBuf().size() - _rPos;
+	roSize wBufSize = _wEnd - _wBeg;
+	if(inoutReadSize > (rBufSize + wBufSize))
+		return roStatus::not_enough_data;
+
+	if(rBufSize < inoutReadSize) {
+		roStatus st = flushWrite(inoutReadSize - rBufSize);
+		if(!st) return st;
+	}
+
+	outReadPtr = read(inoutReadSize);
+	return roStatus::ok;
 }
 
 inline void RingBuffer::commitRead(roSize read)
@@ -100,23 +121,40 @@ inline void RingBuffer::commitRead(roSize read)
 	}
 }
 
-inline void RingBuffer::flushWrite()
+inline roStatus RingBuffer::flushWrite()
 {
+	return flushWrite(_wEnd - _wBeg);
+}
+
+inline roStatus RingBuffer::flushWrite(roSize sizeToFlush)
+{
+	roAssert(_wEnd >= _wBeg);
+
 	if(_rBufIdx == _wBufIdx)
-		return;
+		return roStatus::ok;
+
 	Array<roByte>& rb = _rBuf();
 	Array<roByte>& wb = _wBuf();
 
-	rb.insert(rb.size(), wb.begin(), wb.begin() + _wPos);
-	_wPos = 0;
-	wb.clear();
+	sizeToFlush = roMinOf2(sizeToFlush, _wEnd - _wBeg);
+	roStatus st = rb.insert(rb.size(), wb.begin() + _wBeg, sizeToFlush);
+	if(!st) return st;
+
+	_wBeg += sizeToFlush;
+
+	if(_wBeg == _wEnd) {
+		_wBeg = _wEnd = 0;
+		wb.clear();
+	}
+
+	return roStatus::ok;
 }
 
 inline void RingBuffer::clear()
 {
 	_rBufIdx = 0;
 	_wBufIdx = 1;
-	_rPos = _wPos = 0;
+	_rPos = _wBeg = _wEnd = 0;
 	_rBuf().clear();
 	_wBuf().clear();
 }

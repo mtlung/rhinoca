@@ -23,6 +23,41 @@ TEST_FIXTURE(RingBufferTest, empty)
 	}
 }
 
+TEST_FIXTURE(RingBufferTest, atomicRead)
+{
+	// Write something
+	RingBuffer ringBuffer;
+	roByte* writePtr = NULL;
+	CHECK(ringBuffer.write(2, writePtr));
+	writePtr[0] = 0;
+	writePtr[1] = 1;
+	ringBuffer.commitWrite(2);
+
+	// Read some but not all
+	roSize readSize = 0;
+	roByte* readPtr = ringBuffer.read(readSize);
+	CHECK_EQUAL(2u, readSize);
+	ringBuffer.commitRead(1u);
+
+	// Then write some more
+	CHECK(ringBuffer.write(2, writePtr));
+	writePtr[0] = 2;
+	writePtr[1] = 3;
+	ringBuffer.commitWrite(2);
+
+	// Then try to read 2 bytes atomically
+	readSize = 2;
+	CHECK(ringBuffer.atomicRead(readSize, readPtr));
+	CHECK_EQUAL(1u, readPtr[0]);
+	CHECK_EQUAL(2u, readPtr[1]);
+	ringBuffer.commitRead(readSize);
+
+	readSize = 2;
+	CHECK(ringBuffer.atomicRead(readSize, readPtr) == roStatus::not_enough_data);
+
+	ringBuffer.flushWrite(1);
+}
+
 // Write a deterministic sequence of bytes, and read them back to see if
 // the sequence is still the same
 TEST_FIXTURE(RingBufferTest, random)
