@@ -140,7 +140,7 @@ static bool _initRenderTarget(ContextImpl* impl, const DXGI_SWAP_CHAIN_DESC& swa
 	// Create depth - stencil buffer
 	// reference: http://www.dx11.org.uk/3dcube.htm
 	D3D11_TEXTURE2D_DESC depthDesc;
-	ZeroMemory(&depthDesc, sizeof(depthDesc));
+	roMemZeroStruct(depthDesc);
 	depthDesc.Width = swapChainDesc.BufferDesc.Width;
 	depthDesc.Height = swapChainDesc.BufferDesc.Height;
 	depthDesc.MipLevels = 1;
@@ -162,7 +162,7 @@ static bool _initRenderTarget(ContextImpl* impl, const DXGI_SWAP_CHAIN_DESC& swa
 	}
 
 	D3D11_DEPTH_STENCIL_VIEW_DESC depthViewDesc;
-	ZeroMemory(&depthViewDesc, sizeof(depthViewDesc));
+	roMemZeroStruct(depthViewDesc);
 	depthViewDesc.Format = depthDesc.Format;
 	depthViewDesc.ViewDimension = swapChainDesc.SampleDesc.Count == 1 ? D3D11_DSV_DIMENSION_TEXTURE2D : D3D11_DSV_DIMENSION_TEXTURE2DMS;
 	depthViewDesc.Texture2D.MipSlice = 0;
@@ -203,7 +203,7 @@ bool _initDriverContext_DX11(roRDriverContext* self, void* platformSpecificWindo
 
 	// Create device and swap chain
 	DXGI_SWAP_CHAIN_DESC swapChainDesc;
-	ZeroMemory(&swapChainDesc, sizeof(swapChainDesc));
+	roMemZeroStruct(swapChainDesc);
 	swapChainDesc.BufferCount = 1;
 	swapChainDesc.BufferDesc.Width = impl->width;
 	swapChainDesc.BufferDesc.Height = impl->height;

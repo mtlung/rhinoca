@@ -9,6 +9,8 @@ void roMemmov(void* dst, const void* src, roSize size);
 void roZeroMemory(void* dst, roSize size);
 void roSwapMemory(void* p1, void* p2, roSize size);
 
+#define roMemZeroStruct(dst) roZeroMemory(&dst, sizeof(dst))
+
 /// The generic version of swap
 template<typename T> inline
 void roSwap(T& lhs, T& rhs) { T tmp(lhs); lhs = rhs; rhs = tmp; }

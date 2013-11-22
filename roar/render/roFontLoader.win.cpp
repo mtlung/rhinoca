@@ -70,7 +70,7 @@ FontData::FontData()
 	, currentTextureIdx(0)
 	, dstX(0), dstY(0)
 {
-	roZeroMemory(&tm, sizeof(tm));
+	roMemZeroStruct(tm);
 }
 
 struct Request

@@ -180,7 +180,7 @@ bool _initDriverContext_GL(roRDriverContext* self, void* platformSpecificWindow)
 	impl->height = info.rcClient.bottom - info.rcClient.top;
 
 	PIXELFORMATDESCRIPTOR pfd;
-	::ZeroMemory(&pfd, sizeof(pfd));
+	roMemZeroStruct(pfd);
 	pfd.nVersion = 1;
 	pfd.nSize = sizeof(pfd);
 	pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;

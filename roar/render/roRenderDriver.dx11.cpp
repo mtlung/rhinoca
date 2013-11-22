@@ -395,7 +395,7 @@ static void _setBlendState(roRDriverBlendState* state)
 	if(!dxState)
 	{
 		D3D11_BLEND_DESC desc;
-		ZeroMemory(&desc, sizeof(desc));
+		roMemZeroStruct(desc);
 
 		desc.AlphaToCoverageEnable = false;
 		desc.IndependentBlendEnable = false;
@@ -546,7 +546,7 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 	if(!dxState)
 	{
 		D3D11_DEPTH_STENCIL_DESC desc;
-		ZeroMemory(&desc, sizeof(desc));
+		roMemZeroStruct(desc);
 
 		// Set up the description of the stencil state.
 		desc.DepthEnable = state->enableDepthTest;

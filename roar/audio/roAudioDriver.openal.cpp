@@ -95,7 +95,7 @@ struct AudioLoader : public Task, NonCopyable
 	{
 		roAssert(b && mgr);
 		if(b) b->loader = this;
-		roZeroMemory(&format, sizeof(format));
+		roMemZeroStruct(format);
 	}
 
 	void requestPcm(unsigned pcmPos)

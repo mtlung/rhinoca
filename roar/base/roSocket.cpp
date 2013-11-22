@@ -76,7 +76,7 @@ typedef BsdSocket::ErrorCode ErrorCode;
 
 SockAddr::SockAddr()
 {
-	roZeroMemory(_sockAddr, sizeof(_sockAddr));
+	roMemZeroStruct(*_sockAddr);
 	asSockAddr().sa_family = AF_INET;
 	setIp(ipLoopBack());
 }
@@ -88,7 +88,7 @@ SockAddr::SockAddr(const sockaddr& addr)
 
 SockAddr::SockAddr(roUint32 ip, roUint16 port)
 {
-	roZeroMemory(_sockAddr, sizeof(_sockAddr));
+	roMemZeroStruct(*_sockAddr);
 	asSockAddr().sa_family = AF_INET;
 	setIp(ip);
 	setPort(port);
@@ -113,7 +113,7 @@ bool SockAddr::parse(const char* ip, roUint16 port)
 	struct addrinfo hints;
 	struct addrinfo* res = NULL;
 
-	roZeroMemory(&hints, sizeof(addrinfo));
+	roMemZeroStruct(hints);
 	hints.ai_family = AF_INET;
 
 	static _NetworkStarter _networkStarter;

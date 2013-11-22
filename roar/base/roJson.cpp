@@ -503,7 +503,7 @@ static JsonValue* _parse(JsonParser& parser, JsonValue* parentNode, BlockAllocat
 			return NULL;
 		}
 
-		roZeroMemory(newValue, sizeof(JsonValue));
+		roMemZeroStruct(*newValue);
 		if(e == Event::Name) {
 			newValue->name = parser.getName();
 			e = parser.nextEvent();
@@ -563,7 +563,7 @@ JsonValue* jsonParseInplace(roUtf8* source, BlockAllocator& allocator, String* e
 	JsonValue* dummyRoot = allocator.malloc(sizeof(JsonValue)).cast<JsonValue>();
 
 	if(dummyRoot) {
-		roZeroMemory(dummyRoot, sizeof(JsonValue));
+		roMemZeroStruct(*dummyRoot);
 		ret = _parse(parser, dummyRoot, allocator);
 	}
 	else {

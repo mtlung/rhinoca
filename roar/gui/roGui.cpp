@@ -279,8 +279,8 @@ struct guiStates
 guiStates::guiStates()
 {
 	canvas = NULL;
-	roZeroMemory(&mouseState, sizeof(mouseState));
-	roZeroMemory(&mouseCapturedState, sizeof(mouseCapturedState));
+	roMemZeroStruct(mouseState);
+	roMemZeroStruct(mouseCapturedState);
 	mousePulse = false;
 	frameCount = 0;
 	mouseCapturedObject = NULL;

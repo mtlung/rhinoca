@@ -330,7 +330,7 @@ roSize StackWalker::stackWalk_v3(void** address, roSize maxCount, roUint64* outH
 		else
 		{
 			// Otherwise, call upon RtlVirtualUnwind to execute the unwind for us.
-			RtlZeroMemory(&nvContext, sizeof(KNONVOLATILE_CONTEXT_POINTERS));
+			roMemZeroStruct(nvContext);
 			_RtlVirtualUnwind(0, imageBase, ctx.Rip, runtimeFunction, &ctx, &handlerData,
 				&establisherFrame, &nvContext);
 		}
