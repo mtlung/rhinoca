@@ -40,7 +40,7 @@ TEST_FIXTURE(RegexTest, test)
 		{ NULL,							"i",	"What do you know about the quick brown fox?",	"the quick brown fox" },
 		{ NULL,							"i",	"What do you know about THE QUICK BROWN FOX?",	"THE QUICK BROWN FOX" },
 
-		{ "a*abc?xyz+pqr{3}ab{2,}xy{4,5}pq{0,6}AB{0,}zz",	"",		"abxyzpqrrrabbxyyyypqAzz",						"abxyzpqrrrabbxyyyypqAzz" },
+		{ "a*abc?xyz+pqr{3}ab{2,}xy{4,5}pq{0,6}AB{0,}zz",	"",	"abxyzpqrrrabbxyyyypqAzz",		"abxyzpqrrrabbxyyyypqAzz" },
 		{ NULL,							"",		"aabxyzpqrrrabbxyyyypqAzz",						"aabxyzpqrrrabbxyyyypqAzz" },
 		{ NULL,							"",		"aaabxyzpqrrrabbxyyyypqAzz",					"aaabxyzpqrrrabbxyyyypqAzz" },
 		{ NULL,							"",		"aaaabxyzpqrrrabbxyyyypqAzz",					"aaaabxyzpqrrrabbxyyyypqAzz" },
@@ -202,7 +202,7 @@ TEST_FIXTURE(RegexTest, test)
 		{ NULL,							"",		"123",											NULL },
 		{ NULL,							"",		"x1234",										"x1234" },
 
-		{ "^([^!]+)!(.+)=apquxz\\.ixr\\.zzz\\.ac\\.uk$",	"",		"",						NULL },
+		{ "^([^!]+)!(.+)=apquxz\\.ixr\\.zzz\\.ac\\.uk$",	"",		"",							NULL },
 		{ NULL,							"",		"abc!pqr=apquxz.ixr.zzz.ac.uk",					"abc!pqr=apquxz.ixr.zzz.ac.uk`abc`pqr" },
 		{ NULL,							"",		"*** Failers",									NULL },
 		{ NULL,							"",		"!pqr=apquxz.ixr.zzz.ac.uk",					NULL },
@@ -227,7 +227,7 @@ TEST_FIXTURE(RegexTest, test)
 		{ NULL,							"i",	"fed\x20",										NULL },
 		{ NULL,							"i",	"Any old rubbish",								NULL },
 
-		{ "^.*\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$",	"",		"",						NULL },
+		{ "^.*\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$",	"",		"",							NULL },
 		{ NULL,							"",		".1.2.3",										".1.2.3`1`2`3" },
 		{ NULL,							"",		"A.12.123.0",									"A.12.123.0`12`123`0" },
 		{ NULL,							"",		"*** Failers",									NULL },
@@ -235,13 +235,13 @@ TEST_FIXTURE(RegexTest, test)
 		{ NULL,							"",		"1.2.3",										NULL },
 		{ NULL,							"",		"1234.2.3",										NULL },
 
-		{ "^(\\d+)\\s+IN\\s+SOA\\s+(\\S+)\\s+(\\S+)\\s*\\(\\s*$",	"",		"",				NULL },
+		{ "^(\\d+)\\s+IN\\s+SOA\\s+(\\S+)\\s+(\\S+)\\s*\\(\\s*$",	"",		"",					NULL },
 		{ NULL,							"",		"1 IN SOA non-sp1 non-sp2(",					"1 IN SOA non-sp1 non-sp2(`1`non-sp1`non-sp2" },
 		{ NULL,							"",		"1    IN    SOA    non-sp1    non-sp2   (",		"1    IN    SOA    non-sp1    non-sp2   (`1`non-sp1`non-sp2" },
 		{ NULL,							"",		"*** Failers",									NULL },
 		{ NULL,							"",		"1IN SOA non-sp1 non-sp2(",						NULL },
 
-		{ "^[a-zA-Z\\d][a-zA-Z\\d\\-]*(\\.[a-zA-Z\\d][a-zA-z\\d\\-]*)*\\.$",	"",	"",		NULL },
+		{ "^[a-zA-Z\\d][a-zA-Z\\d\\-]*(\\.[a-zA-Z\\d][a-zA-z\\d\\-]*)*\\.$",	"",	"",			NULL },
 		{ NULL,							"",		"a.",											"a.`" },
 		{ NULL,							"",		"Z.",											"Z.`" },
 		{ NULL,							"",		"2.",											"2.`" },
@@ -251,7 +251,7 @@ TEST_FIXTURE(RegexTest, test)
 		{ NULL,							"",		"*** Failers",									NULL },
 		{ NULL,							"",		"-abc.peq.",									NULL },
 
-		{ "^\\*\\.[a-z]([a-z\\-\\d]*[a-z\\d]+)?(\\.[a-z]([a-z\\-\\d]*[a-z\\d]+)?)*$","","",	NULL },
+		{ "^\\*\\.[a-z]([a-z\\-\\d]*[a-z\\d]+)?(\\.[a-z]([a-z\\-\\d]*[a-z\\d]+)?)*$","","",		NULL },
 		{ NULL,							"",		"*.a",											"*.a```" },
 		{ NULL,							"",		"*.b0-a",										"*.b0-a`0-a``" },
 		{ NULL,							"",		"*.c3-b.c",										"*.c3-b.c`3-b`.c`" },
@@ -271,6 +271,116 @@ TEST_FIXTURE(RegexTest, test)
 		{ "^[\\da-f](\\.[\\da-f])*$",	"i",	"a.b.c.d",										"a.b.c.d`.d" },
 		{ NULL,							"i",	"A.B.C.D",										"A.B.C.D`.D" },
 		{ NULL,							"i",	"a.b.c.1.2.3.C",								"a.b.c.1.2.3.C`.C" },
+
+		{ "^\\\".*\\\"\\s*(;.*)?$",		"",		"\"1234\"",										"\"1234\"`" },
+		{ NULL,							"",		"\"abcd\" ;",									"\"abcd\" ;`;" },
+		{ NULL,							"",		"\"\" ; rhubarb",								"\"\" ; rhubarb`; rhubarb" },
+		{ NULL,							"",		"*** Failers",									NULL },
+		{ NULL,							"",		"\"1234\" : things",							NULL },
+
+//		{ "   ^    a   (?# begins with a)  b\\sc (?# then b c) $ (?# then end)", "", "",		"" },	// ?# comment
+//		{ NULL,							"",		"ab c",											"ab c`ab c" },
+//		{ NULL,							"",		"*** Failers",									NULL },
+//		{ NULL,							"",		"abc",											NULL },
+//		{ NULL,							"",		"ab cde",										NULL },
+
+//		{ "(?x)   ^    a   (?# begins with a)  b\\sc (?# then b c) $ (?# then end)", "", "",	"" },
+//		{ NULL,							"",		"ab c",											"ab c`ab c" },
+//		{ NULL,							"",		"*** Failers",									NULL },
+//		{ NULL,							"",		"abc",											NULL },
+//		{ NULL,							"",		"ab cde",										NULL },
+
+//		{ "   a\ b[c ]d       $",		"x",	"a bcd",										"a bcd" },	// Free spacing mode
+//		{ NULL,							"x",	"a b d",										"a b d" },
+//		{ NULL,							"x",	"*** Failers",									NULL },
+//		{ NULL,							"x",	"abcd",											NULL },
+//		{ NULL,							"x",	"ab d",											NULL },
+
+		{ "^(a(b(c)))(d(e(f)))(h(i(j)))(k(l(m)))$",	"",	"",										NULL },
+		{ NULL,							"",		"abcdefhijklm",									"abcdefhijklm`abc`bc`c`def`ef`f`hij`ij`j`klm`lm`m" },
+
+//		{ "^(?:a(b(c)))(?:d(e(f)))(?:h(i(j)))(?:k(l(m)))$",	"",	"",								NULL },
+//		{ NULL,							"",		"abcdefhijklm",									"abcdefhijklm`bc`c`ef`f`ij`j`lm`m" },
+
+//		{ "^[\\w][\\W][\\s][\\S][\\d][\\D][\\b][\\n][\\c]][\\022]",	"",	"",						NULL },
+//		{ NULL,							"",		"a+ Z0+\\x08\n\\x1d\\x12",						"a+ Z0+\\x08\\x0a\\x1d\\x12" },
+
+		{ "^[.^$|()*+?{,}]+",			"",		".^$(*+)|{?,?}",								".^$(*+)|{?,?}" },
+
+		{ "^a*\\w",						"",		"z",											"z" },
+		{ NULL,							"",		"az",											"az" },
+		{ NULL,							"",		"aaaz",											"aaaz" },
+		{ NULL,							"",		"a",											"a" },
+		{ NULL,							"",		"aa",											"aa" },
+		{ NULL,							"",		"aaaa",											"aaaa" },
+		{ NULL,							"",		"a+",											"a" },
+		{ NULL,							"",		"aa+",											"aa" },
+
+		{ "^a*?\\w",					"",		"z",											"z" },
+		{ NULL,							"",		"az",											"a" },
+		{ NULL,							"",		"aaaz",											"a" },
+		{ NULL,							"",		"a",											"a" },
+		{ NULL,							"",		"aa",											"a" },
+		{ NULL,							"",		"aaaa",											"a" },
+		{ NULL,							"",		"a+",											"a" },
+		{ NULL,							"",		"aa+",											"a" },
+
+		{ "^a+\\w",						"",		"az",											"az" },
+		{ NULL,							"",		"aaaz",											"aaaz" },
+		{ NULL,							"",		"aa",											"aa" },
+		{ NULL,							"",		"aaaa",											"aaaa" },
+		{ NULL,							"",		"aa+",											"aa" },
+
+		{ "^a?\\w",						"",		"az",											"az" },
+		{ NULL,							"",		"aaaz",											"aa" },
+		{ NULL,							"",		"aa",											"aa" },
+		{ NULL,							"",		"aaaa",											"aa" },
+		{ NULL,							"",		"aa+",											"aa" },
+
+		{ "^\\d{8}\\w{2,}",				"",		"1234567890",									"1234567890" },
+		{ NULL,							"",		"12345678ab",									"12345678ab" },
+		{ NULL,							"",		"12345678__",									"12345678__" },
+		{ NULL,							"",		"*** Failers",									NULL },
+		{ NULL,							"",		"1234567",										NULL },
+
+		{ "^[aeiou\\d]{4,5}$",			"",		"uoie",											"uoie" },
+		{ NULL,							"",		"1234",											"1234" },
+		{ NULL,							"",		"12345",										"12345" },
+		{ NULL,							"",		"aaaaa",										"aaaaa" },
+		{ NULL,							"",		"*** Failers",									NULL },
+		{ NULL,							"",		"123456",										NULL },
+
+		{ "^[aeiou\\d]{4,5}?",			"",		"uoie",											"uoie" },
+		{ NULL,							"",		"1234",											"1234" },
+		{ NULL,							"",		"12345",										"1234" },
+		{ NULL,							"",		"aaaaa",										"aaaa" },
+		{ NULL,							"",		"123456",										"1234" },
+
+//		{ "\\A(abc|def)=(\\1){2,3}\\Z",	"",		"abc=abcabc",									"abc=abcabc`abc`abc" },	// \A begin of string, \Z end of string, \1 backref
+//		{ NULL,							"",		"def=defdefdef",								"def=defdefdef`def`def" },
+//		{ NULL,							"",		"*** Failers",									NULL },
+//		{ NULL,							"",		"abc=defdef",									NULL },
+
+//		{ "^(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)\\11*(\\3\\4)\\1(?#)2$",	"",	"",					NULL },
+//		{ NULL,							"",		"abcdefghijkcda2",								"abcdefghijkcda2`a`b`c`d`e`f`g`h`i`j`k`cd" },
+//		{ NULL,							"",		"abcdefghijkkkkcda2",							"abcdefghijkkkkcda2`a`b`c`d`e`f`g`h`i`j`k`cd" },
+
+		{ "(cat(a(ract|tonic)|erpillar)) \\1()2(3)", "", "",									NULL },
+//		{ NULL,							"",		"cataract cataract23",							"cataract cataract23`cataract`aract`ract``3" },
+//		{ NULL,							"",		"catatonic catatonic23",						"catatonic catatonic23`catatonic`atonic`tonic``3" },
+//		{ NULL,							"",		"caterpillar caterpillar23",					"caterpillar caterpillar23`caterpillar`erpillar```3" },
+
+		{ "^From +([^ ]+) +[a-zA-Z][a-zA-Z][a-zA-Z] +[a-zA-Z][a-zA-Z][a-zA-Z] +[0-9]?[0-9] +[0-9][0-9]:[0-9][0-9]",	"",	"",	NULL },
+		{ NULL,							"",		"From abcd  Mon Sep 01 12:33:02 1997",			"From abcd  Mon Sep 01 12:33`abcd" },
+
+		{ "^From\\s+\\S+\\s+([a-zA-Z]{3}\\s+){2}\\d{1,2}\\s+\\d\\d:\\d\\d",	"",	"",				NULL },
+		{ NULL,							"",		"From abcd  Mon Sep 01 12:33:02 1997",			"From abcd  Mon Sep 01 12:33`Sep " },
+		{ NULL,							"",		"From abcd  Mon Sep  1 12:33:02 1997",			"From abcd  Mon Sep  1 12:33`Sep  " },
+		{ NULL,							"",		"*** Failers",									NULL },
+		{ NULL,							"",		"From abcd  Sep 01 12:33:02 1997",				NULL },
+
+//		{ "^12.34",						"s",	"12\n34",										"12\\x0a34" },	// PCRE_DOTALL mode
+//		{ NULL,							"s",	"12\r34",										"12\\x0d34" },
 
 		{ "a?a?aa",						"",		"aa",											"aa" },
 
@@ -302,9 +412,9 @@ TEST_FIXTURE(RegexTest, test)
 			}
 			if(!regex.result.isEmpty()) {
 				String str;
-				for(roSize i=0; i<regex.result.size(); ++i) {
-					str += regex.result[i];
-					if(i != regex.result.size() - 1)
+				for(roSize j=0; j<regex.result.size(); ++j) {
+					str += regex.result[j];
+					if(j != regex.result.size() - 1)
 						str += "`";
 				}
 				CHECK_EQUAL(result, str.c_str());

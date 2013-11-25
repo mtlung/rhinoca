@@ -20,7 +20,7 @@ namespace ro {
 namespace {
 
 static const char* str_symbols = "*+?|{}()[]^$";
-static const char* str_escapes[] = { "nrtvf^*+-?.|{}()[].", "\n\r\t\v\f^*+-?.|{}()[]." };
+static const char* str_escapes[] = { "nrtvf", "\n\r\t\v\f" };
 static const char* str_charClass = "bdDsSwW";
 static const char* str_repeatition = "?+*{";
 static const char* str_whiteSpace = " \t\r\n\v\f";
@@ -32,13 +32,20 @@ static bool charCaseCmp(char c1, char c2) { return roToLower(c1) == roToLower(c2
 char doEscape(const roUtf8*& str)
 {
 	if(*str != '\\') return *str;
+
+
 	const char* i = roStrChr(str_escapes[0], str[1]);
-	if(!i) return '\0';
-	return ++str, str_escapes[1][i - str_escapes[0]];
+	if(i) return ++str, str_escapes[1][i - str_escapes[0]];
+
+	// Make sure we won't touch character class
+	i = roStrChr(str_charClass, str[1]);
+	if(i) return '\0';
+
+	return *(++str);
 }
 
 // Will eat '\' on successful scan
-bool scanMeta(const roUtf8*& str, char c)
+char scanMeta(const roUtf8*& str, char c)
 {
 	if(*str != '\\') return *str == c;
 	return ++str, false;
@@ -742,7 +749,8 @@ bool parse_nodes_impl(Graph& graph, const RangedString& f)
 
 bool parse_nodes(Graph& graph, const RangedString& f)
 {
-	roSize bracketCount = 0;
+	roSize bracketCount1 = 0;
+	roSize bracketCount2 = 0;
 	const roUtf8* i = f.begin;
 	const roUtf8* begin = f.begin;
 	TinyArray<roSize, 16> absOffsets;
@@ -751,9 +759,15 @@ bool parse_nodes(Graph& graph, const RangedString& f)
 	bool firstEncounter = true;
 
 	// Scan till next '|' or till end
-	while(true) {
-		if( bracketCount == 0 &&
-			((i[0] == '|' && i[-1] != '\\') || i == f.end)
+	for(;i <= f.end; ++i)
+	{
+		if(*i == '\\') {
+			++i;
+			continue;
+		}
+
+		if( bracketCount1 == 0 && bracketCount2 == 0 &&
+			((i[-1] != '\\' && i[0] == '|') || i == f.end)
 		)
 		{
 			// Add alternate node for the first encountered '|', adding this
@@ -773,11 +787,11 @@ bool parse_nodes(Graph& graph, const RangedString& f)
 			absOffsets.pushBack(graph.absOffsetFromNode(*graph.currentNode));
 		}
 
-		bracketCount += scanMeta(i, '(') ? 1 : 0;
-		bracketCount -= scanMeta(i, ')') ? 1 : 0;
-
-		if((i++) == f.end)
-			break;
+		bracketCount1 += (*i == '(') ? 1 : 0;
+		bracketCount1 -= (*i == ')') ? 1 : 0;
+		bracketCount2 += (*i == '[') ? 1 : 0;
+		// Due to the complexing of handling ']' in character set, we simply make a check before decrement
+		bracketCount2 -= (*i == ']' && bracketCount2) ? 1 : 0;
 	}
 
 	// If there were alternation, adjust the edges

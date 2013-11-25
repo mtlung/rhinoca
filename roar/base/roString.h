@@ -58,6 +58,8 @@ struct String
 
 	bool		operator==	(const char* rhs) const;
 	bool		operator==	(const String& rhs) const;
+	bool		operator!=	(const char* rhs) const		{ return !(*this == rhs); }
+	bool		operator!=	(const String& rhs) const	{ return !(*this == rhs); }
 
 	bool		isInRange	(int i) const		{ return i >= 0 && roSize(i) < size(); }
 	bool		isInRange	(roSize i) const	{ return i < size(); }
