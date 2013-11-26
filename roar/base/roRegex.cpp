@@ -330,6 +330,15 @@ bool group_end(Graph& graph, Node& node, Edge& edge, RangedString& s)
 	return --graph.nestedGroupLevel, true;
 }
 
+bool nonCaptureGroup_begin(Graph& graph, Node& node, Edge& edge, RangedString& s)
+{
+	return true;
+}
+bool nonCaptureGroup_end(Graph& graph, Node& node, Edge& edge, RangedString& s)
+{
+	return true;
+}
+
 bool match_raw(Graph& graph, Node& node, Edge& edge, RangedString& s_)
 {
 	const roUtf8* f = edge.f.begin;
@@ -670,6 +679,14 @@ bool parse_group(Graph& graph, const RangedString& f, const roUtf8*& i)
 	if(*i != '(') return false;
 	const roUtf8* begin = ++i;
 
+	// Check for non-capturing group
+	bool capturing = true;
+	if(i[0] == '?' && i[1] == ':') {
+		i += 2;
+		begin = i;
+		capturing = false;
+	}
+
 	// Look for corresponding ')'
 	for(roSize parenthesesCount = 1; true; ++i) {
 		char escaped = doEscape(i);
@@ -686,10 +703,12 @@ bool parse_group(Graph& graph, const RangedString& f, const roUtf8*& i)
 
 	{	// Add starting node
 		Node beginNode = { 1, RangedString("(") };
-		beginNode.edges.func = group_begin;
+		beginNode.edges.func = capturing ? group_begin : nonCaptureGroup_begin;
 		prevNodeOffset = graph.absOffsetFromNode(*graph.currentNode);
 		beginNodeOffset = graph.absOffsetFromNode(*graph.push(beginNode));
-		graph.resultEndNodeOffset.pushBack(beginNodeOffset);
+
+		if(capturing)
+			graph.resultEndNodeOffset.pushBack(beginNodeOffset);
 	}
 
 	if(!parse_nodes(graph, RangedString(begin, end)))
@@ -697,7 +716,7 @@ bool parse_group(Graph& graph, const RangedString& f, const roUtf8*& i)
 
 	{	// Add end node
 		Node endNode = { 1, RangedString(")") };
-		endNode.edges.func = group_end;
+		endNode.edges.func = capturing ? group_end : nonCaptureGroup_end;
 		endNode.userdata[0] = (void*)beginNodeOffset;
 		graph.push(endNode);
 	}

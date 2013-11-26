@@ -28,6 +28,9 @@ struct RingBuffer
 	roStatus	flushWrite();
 	roStatus	flushWrite(roSize sizeToFlush);
 
+	// Re-claim unused memory in the read buffer
+	void		compactReadBuffer();
+
 	void		clear();
 
 	roSize		memoryUsage() const;
@@ -148,6 +151,15 @@ inline roStatus RingBuffer::flushWrite(roSize sizeToFlush)
 	}
 
 	return roStatus::ok;
+}
+
+inline void RingBuffer::compactReadBuffer()
+{
+	Array<roByte>& rb = _rBuf();
+	roSize size = rb.size() - _rPos;
+	roMemmov(rb.begin(), rb.begin() + _rPos, size);
+	rb.resize(size);
+	_rPos = 0;
 }
 
 inline void RingBuffer::clear()

@@ -299,8 +299,8 @@ TEST_FIXTURE(RegexTest, test)
 		{ "^(a(b(c)))(d(e(f)))(h(i(j)))(k(l(m)))$",	"",	"",										NULL },
 		{ NULL,							"",		"abcdefhijklm",									"abcdefhijklm`abc`bc`c`def`ef`f`hij`ij`j`klm`lm`m" },
 
-//		{ "^(?:a(b(c)))(?:d(e(f)))(?:h(i(j)))(?:k(l(m)))$",	"",	"",								NULL },
-//		{ NULL,							"",		"abcdefhijklm",									"abcdefhijklm`bc`c`ef`f`ij`j`lm`m" },
+		{ "^(?:a(b(c)))(?:d(e(f)))(?:h(i(j)))(?:k(l(m)))$",	"",	"",								NULL },
+		{ NULL,							"",		"abcdefhijklm",									"abcdefhijklm`bc`c`ef`f`ij`j`lm`m" },
 
 //		{ "^[\\w][\\W][\\s][\\S][\\d][\\D][\\b][\\n][\\c]][\\022]",	"",	"",						NULL },
 //		{ NULL,							"",		"a+ Z0+\\x08\n\\x1d\\x12",						"a+ Z0+\\x08\\x0a\\x1d\\x12" },
