@@ -6,12 +6,16 @@ namespace Reflection {
 
 roStatus JsonOutputSerializer::beginArchive()
 {
+	writer.beginDocument();
 	return writer.beginObject();
 }
 
 roStatus JsonOutputSerializer::endArchive()
 {
-	return writer.endObject();
+	roStatus st = writer.endObject();
+	if(!st) return st;
+	writer.endDocument();
+	return st;
 }
 
 template<class T>

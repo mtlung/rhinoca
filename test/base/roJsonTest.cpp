@@ -309,8 +309,16 @@ TEST_FIXTURE(JsonTest, parse_error)
 
 TEST_FIXTURE(JsonTest, writer_empty1)
 {
-    JsonWriter writer;
-    MemoryOStream os;
+    {	JsonWriter writer;
+		MemoryOStream os;
+	}
+
+    {	JsonWriter writer;
+		MemoryOStream os;
+		writer.setStream(&os);
+		writer.beginDocument();
+		writer.endDocument();
+	}
 }
 
 TEST_FIXTURE(JsonTest, writer_empty2)
@@ -319,8 +327,10 @@ TEST_FIXTURE(JsonTest, writer_empty2)
     MemoryOStream os;
 
     writer.setStream(&os);
+	writer.beginDocument();
     writer.beginObject();
     writer.endObject();
+	writer.endDocument();
 }
 
 TEST_FIXTURE(JsonTest, writer_numeric)
@@ -329,6 +339,7 @@ TEST_FIXTURE(JsonTest, writer_numeric)
     MemoryOStream os;
 
     writer.setStream(&os);
+	writer.beginDocument();
     writer.beginObject();
         writer.write("int8", (roInt8)1);
         writer.write("int16", (roInt16)2);
@@ -341,6 +352,7 @@ TEST_FIXTURE(JsonTest, writer_numeric)
         writer.write("float", 1.23f);
         writer.write("double", 1.23);
     writer.endObject();
+	writer.endDocument();
 
     CHECK_EQUAL((roUtf8*)os._buf.bytePtr(), "{\"int8\":1,\"int16\":2,\"int32\":3,\"int64\":4,\"uint8\":1,\"uint16\":2,\"uint32\":3,\"uint64\":4,\"float\":1.23,\"double\":1.23}");
 }
@@ -351,6 +363,7 @@ TEST_FIXTURE(JsonTest, writer)
 	MemoryOStream os;
 
 	writer.setStream(&os);
+	writer.beginDocument();
 	writer.beginObject();
 	writer.write("firstName\n", "John\t");
 	writer.write("lastName", "Smith");
@@ -378,6 +391,7 @@ TEST_FIXTURE(JsonTest, writer)
 		writer.write(false);
 	writer.endArray();
 	writer.endObject();
+	writer.endDocument();
 }
 
 #include "../../roar/base/roBlockAllocator.h"

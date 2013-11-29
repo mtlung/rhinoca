@@ -583,11 +583,31 @@ JsonValue* jsonParseInplace(roUtf8* source, BlockAllocator& allocator, String* e
 //
 JsonWriter::JsonWriter(OStream* stream)
 	: _stream(stream)
+	, _beginDocument(false)
 {}
+
+JsonWriter::~JsonWriter()
+{
+	roAssert(!_beginDocument);
+}
 
 void JsonWriter::setStream(OStream* stream)
 {
 	_stream = stream;
+}
+
+void JsonWriter::beginDocument()
+{
+	roAssert(_stream);
+	_beginDocument = true;
+	_strBuf.clear();
+}
+
+void JsonWriter::endDocument()
+{
+	_beginDocument = false;
+	roAssert(_stateStack.size() == 0);
+	roAssert(_strBuf.isEmpty());
 }
 
 roStatus JsonWriter::flushStrBuf()

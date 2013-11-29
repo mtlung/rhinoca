@@ -266,12 +266,18 @@ TEST_FIXTURE(ReflectionTest, serialize)
 		{	Vec3 v;
 			Type* t = reflection.getType<Vec3>();
 			t->serialize(ise, "Vec3 type", &v);
+			double a = 3. / 10;
+			CHECK_EQUAL(1, v.x);
+			CHECK_EQUAL(2, v.y);
+			CHECK_EQUAL(3, v.z);
 		}
 
 		{	Circle c;
 			Type* t = reflection.getType<Circle>();
 			t->serialize(ise, "my circle", &c);
-			t = t;
+
+			CHECK_EQUAL(10, c.area);
+			CHECK_EQUAL(2, c.radius);
 		}
 
 		ise.endArchive();

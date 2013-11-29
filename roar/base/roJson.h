@@ -128,8 +128,13 @@ JsonValue* jsonParseInplace(roUtf8* source, BlockAllocator& allocator, String* e
 struct JsonWriter : private NonCopyable
 {
 	JsonWriter(OStream* stream=NULL);
+	~JsonWriter();
 
 	void setStream(OStream* stream);
+
+	void beginDocument();
+	void endDocument();
+	void Reset();
 
 // For array
 	roStatus beginArray(const roUtf8* name=NULL);
@@ -168,6 +173,7 @@ struct JsonWriter : private NonCopyable
 // Private
 	roStatus flushStrBuf();
 	OStream* _stream;
+	bool _beginDocument;
 	String _strBuf;
 	enum State { _inObject, _inArray };
 	Array<State> _stateStack;
