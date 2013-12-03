@@ -6,6 +6,7 @@
 
 namespace ro {
 
+// Reference: http://fgiesen.wordpress.com/2011/11/21/buffer-centric-io/
 struct IStream : private NonCopyable
 {
 	enum SeekOrigin {
@@ -14,15 +15,28 @@ struct IStream : private NonCopyable
 		SeekOrigin_End		= 2
 	};
 
+			IStream();
 	virtual ~IStream() {}
-	virtual bool		readWillBlock	(roUint64 bytesToRead) = 0;
-	virtual Status		read			(void* buffer, roUint64 bytesToRead, roUint64& bytesRead) = 0;
-	virtual Status		atomicRead		(void* buffer, roUint64 bytesToRead);
-	virtual Status		size			(roUint64& bytes) const = 0;
+	virtual bool		readWillBlock	(roUint64 bytesToRead) { return false; }
+	virtual Status		size			(roUint64& bytes) { return roStatus::not_supported; }
 	virtual roUint64	posRead			() const = 0;
 	virtual Status		seekRead		(roInt64 offset, SeekOrigin origin) { return roStatus::not_supported; }
 	virtual void		closeRead		() {}
-};
+
+			Status		read			(void* buffer, roUint64 bytesToRead, roUint64& bytesRead);
+			Status		atomicRead		(void* buffer, roUint64 bytesToRead);
+
+// Typed read function
+	template<class T>
+			Status		read			(T& val) { return atomicRead(&val, sizeof(T)); }
+
+// Attributes
+	Status	st;
+	roByte*	_begin;
+	roByte*	_current;
+	roByte*	_end;
+	Status (*_next)(IStream& s);
+};	// IStream
 
 struct OStream : private NonCopyable
 {
@@ -48,16 +62,9 @@ struct MemoryIStream : public IStream
 	MemoryIStream(roByte* buffer=NULL, roSize size=0);
 
 			void		reset			(roByte* buffer=NULL, roSize size=0);
-	virtual bool		readWillBlock	(roUint64 bytesToRead) { return false; }
-	virtual Status		read			(void* buffer, roUint64 bytesToRead, roUint64& bytesRead);
-	virtual Status		size			(roUint64& bytes) const { bytes = _size; return roStatus::ok; }
-	virtual roUint64	posRead			() const { return _current - _buffer; }
+	virtual Status		size			(roUint64& bytes) const;
+	virtual roUint64	posRead			() const { return _current - _begin; }
 	virtual Status		seekRead		(roInt64 offset, SeekOrigin origin);
-
-	// Private:
-	roByte* _buffer;
-	roByte* _current;
-	roSize _size;
 };
 
 struct MemoryOStream : public OStream

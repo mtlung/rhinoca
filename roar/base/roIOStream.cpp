@@ -5,38 +5,31 @@
 
 namespace ro {
 
-Status IStream::atomicRead(void* buffer, roUint64 bytesToRead)
+IStream::IStream()
 {
-	roUint64 bytesRead = 0;
-	Status st = read(buffer, bytesToRead, bytesRead);
-	if(!st) return st;
-	if(bytesRead < bytesToRead) return Status::file_ended;
-	return st;
+	_begin = _current = _end = NULL;
+	_next = NULL;
 }
 
-MemoryIStream::MemoryIStream(roByte* buffer, roSize size)
+Status IStream::read(void* buffer, roUint64 bytesToRead, roUint64& bytesRead)
 {
-	reset(buffer, size);
-}
-
-void MemoryIStream::reset(roByte* buffer, roSize size)
-{
-	_buffer = buffer;
-	_current = buffer;
-	_size = size;
-}
-
-Status MemoryIStream::read(void* buffer, roUint64 bytesToRead, roUint64& bytesRead)
-{
-	roAssert(_current >= _buffer);
-	roSize remains = roAssertSub(_size, roSize(_current - _buffer));
-	if(remains == 0) return Status::file_ended;
-
-	if(!buffer && bytesToRead == 0)
+	if(bytesToRead == 0)
 		return roStatus::ok;
 
-	if(!buffer)
+	if(!buffer || !_current)
 		return roStatus::pointer_is_null;
+
+	if(_current == _end) {
+		if(!_next) return roStatus::pointer_is_null;
+		Status st = (*_next)(*this);
+		if(!st) return st;
+	}
+
+	roAssert(_current >= _begin && _current <= _end);
+	roSize remains = roSize(_end - _current);
+
+	if(remains == 0)
+		return Status::file_ended;
 
 	roSize toRead = clamp_cast<roSize>(bytesToRead);
 	toRead = roMinOf2(toRead, remains);
@@ -48,26 +41,61 @@ Status MemoryIStream::read(void* buffer, roUint64 bytesToRead, roUint64& bytesRe
 	return roStatus::ok;
 }
 
+Status IStream::atomicRead(void* buffer, roUint64 bytesToRead)
+{
+	roUint64 bytesRead = 0;
+	Status st = read(buffer, bytesToRead, bytesRead);
+	if(!st) return st;
+	if(bytesRead < bytesToRead) return Status::file_ended;
+	return st;
+}
+
+static Status _next_eof(IStream& s)
+{
+	return Status::end_of_data;
+}
+
+MemoryIStream::MemoryIStream(roByte* buffer, roSize size)
+{
+	_next = _next_eof;
+	reset(buffer, size);
+}
+
+void MemoryIStream::reset(roByte* buffer, roSize size)
+{
+	_begin = buffer;
+	_current = buffer;
+	_end = _begin + size;
+}
+
+Status MemoryIStream::size(roUint64& bytes) const
+{
+	bytes = _end - _begin;
+	return roStatus::ok;
+}
+
 Status MemoryIStream::seekRead(roInt64 offset, SeekOrigin origin)
 {
+	roAssert(_current >= _begin && _current <= _end);
+	roSize size = _end - _begin;
 	if(origin == SeekOrigin_Begin) {
-		if(offset < 0 || roIsGreater(offset, _size)) return Status::file_seek_error;
-		_current = _buffer + offset;
+		if(offset < 0 || roIsGreater(offset, size)) return Status::file_seek_error;
+		_current = _begin + offset;
 	}
 	else if(origin == SeekOrigin_Current) {
-		roAssert(_current >= _buffer);
-		roSize currentOffset = _current - _buffer;
-		roSize remains = roAssertSub(_size, currentOffset);
+		roAssert(_current >= _begin);
+		roSize currentOffset = _current - _begin;
+		roSize remains = roAssertSub(size, currentOffset);
 		if(roIsGreater(offset, remains)) return Status::file_seek_error;
 		if(roIsGreater(-offset, currentOffset)) return Status::file_seek_error;
 		_current += offset;
 	}
 	else if(origin == SeekOrigin_End) {
-		if(offset < 0 || roIsGreater(offset, _size)) return Status::file_seek_error;
-		_current = _buffer + (_size - offset);
+		if(offset < 0 || roIsGreater(offset, size)) return Status::file_seek_error;
+		_current = _begin + (size - offset);
 	}
 
-	roAssert(_current >= _buffer && _current <= _buffer + _size);
+	roAssert(_current >= _begin && _current <= _end);
 
 	return roStatus::ok;
 }
@@ -124,5 +152,6 @@ Status MemorySeekableOStream::seekWrite(roInt64 offset, SeekOrigin origin)
 
 	return roStatus::ok;
 }
+
 
 }   // namespace ro
