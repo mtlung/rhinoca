@@ -252,6 +252,8 @@ struct RandomIOStreamTest
 
 TEST_FIXTURE(RandomIOStreamTest, rawFile)
 {
+	openHttpIStream("http://google.com:80/index.html", s);
+
 	CHECK(openRawFileIStream("Test.vc9.vcproj", s));
 	CHECK(loadReferenceContent());
 	for(roSize i=0; i<128; ++i) {

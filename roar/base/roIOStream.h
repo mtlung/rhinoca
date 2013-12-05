@@ -52,10 +52,10 @@ struct IStream : private NonCopyable
 			Status		skip			(roUint64 bytes);
 
 // Attributes
-	Status	st;
 	roByte*	begin;
 	roByte*	current;
 	roByte*	end;
+	mutable Status st;
 
 	// Concrete class should implement this function to adjust the buffer pointers
 	// to fulfill the read size requested as close as possible.
@@ -123,7 +123,8 @@ struct MemorySeekableOStream : public OStream
 	roSize _pos;
 };
 
-Status openRawFileIStream(roUtf8* path, AutoPtr<IStream>& stream);
+Status openRawFileIStream	(roUtf8* path, AutoPtr<IStream>& stream);
+Status openHttpIStream		(roUtf8* url, AutoPtr<IStream>& stream);
 
 }   // namespace ro
 

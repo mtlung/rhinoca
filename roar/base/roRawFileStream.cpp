@@ -174,6 +174,9 @@ Status RawFileIStream::size(roUint64& bytes) const
 
 roUint64 RawFileIStream::posRead() const
 {
+	if(!_handle)
+		st = Status::file_not_open;
+
 	LARGE_INTEGER largeInt;
 	largeInt.LowPart = _overlap.Offset;
 	largeInt.HighPart = _overlap.OffsetHigh;
@@ -248,8 +251,6 @@ struct RawFileIStream : public IStream
 	virtual roUint64	posRead			() const;
 	virtual Status		seekRead		(roInt64 offset, SeekOrigin origin);
 	virtual void		closeRead		();
-
-	void reset();
 
 	FILE*		_file;
 	RingBuffer	_ringBuf;
@@ -337,7 +338,12 @@ Status RawFileIStream::size(roUint64& bytes) const
 
 roUint64 RawFileIStream::posRead() const
 {
-	return 0;
+	if(!_file) {
+		st = Status::file_not_open;
+		return 0;
+	}
+
+	return ftell(_file);
 }
 
 Status RawFileIStream::seekRead(roInt64 offset, SeekOrigin origin)
