@@ -337,6 +337,9 @@ bool String::operator==(const char* rhs) const
 
 bool String::operator==(const String& rhs) const
 {
+	if(size() != rhs.size())
+		return false;
+
 	return roStrCmp(_str(), rhs._str()) == 0;
 }
 

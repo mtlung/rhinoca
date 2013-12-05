@@ -23,6 +23,8 @@ struct RingBuffer
 	roStatus	atomicRead(roSize& inoutReadSize, roByte*& outReadPtr);
 	void		commitRead(roSize read);
 
+	roSize		totalReadable() const;
+
 	/// Put all content in the write buffer to the read buffer.
 	/// Useful when you want to get all readable data as a single contiguous block of memory.
 	roStatus	flushWrite();
@@ -43,12 +45,12 @@ struct RingBuffer
 	roSize		hardLimit;
 
 // Private
-	Array<roByte>& _rBuf() { return _buffers[_rBufIdx]; }
-	Array<roByte>& _wBuf() { return _buffers[_wBufIdx]; }
+	Array<roByte>& _rBuf() const { return _buffers[_rBufIdx]; }
+	Array<roByte>& _wBuf() const { return _buffers[_wBufIdx]; }
 
 	roSize _rBufIdx, _wBufIdx;
 	roSize _rPos, _wBeg, _wEnd;
-	Array<roByte> _buffers[2];	/// Two buffers, one for read and one for write
+	mutable Array<roByte> _buffers[2];	/// Two buffers, one for read and one for write
 };	// RingBuffer
 
 inline roStatus RingBuffer::write(roSize maxSizeToWrite, roByte*& writePtr)
@@ -79,6 +81,7 @@ inline roByte* RingBuffer::read(roSize& outReadSize)
 	if(_rBuf().size() - _rPos == 0) {
 		roSwap(_rBufIdx, _wBufIdx);
 		_rPos = _wBeg;
+		_rBuf().resize(_wEnd);
 		_wBeg = _wEnd = 0;
 		_wBuf().clear();
 	}
@@ -122,6 +125,13 @@ inline void RingBuffer::commitRead(roSize read)
 		_rBuf().resize(newSize);
 		_rBuf().condense();
 	}
+}
+
+inline roSize RingBuffer::totalReadable() const
+{
+	roSize rBufSize = _rBuf().size() - _rPos;
+	roSize wBufSize = _wEnd - _wBeg;
+	return rBufSize + wBufSize;
 }
 
 inline roStatus RingBuffer::flushWrite()
