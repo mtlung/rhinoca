@@ -18,15 +18,21 @@ void		roFree(void* ptr);
 namespace ro {
 
 struct DefaultAllocator;
+extern DefaultAllocator defaultAllocator;
 
 template<class T>
 struct AutoPtr
 {
-	AutoPtr(T* p, DefaultAllocator& a);
+	AutoPtr()								: _p(NULL), _allocator(NULL) {}
+	AutoPtr(T* p, DefaultAllocator& a)		: _p(p), _allocator(&a) {}
 	AutoPtr(const AutoPtr& rhs)				: _p(const_cast<AutoPtr&>(rhs).unref()), _allocator(rhs._allocator) {}
 	~AutoPtr()								{ deleteObject(); }
 
 	void		ref(T* p)					{ deleteObject(); _p = p; }
+
+	template<class U>
+	void		takeOver(AutoPtr<U>& rhs)	{ ref(static_cast<T*>(rhs._p)); rhs.unref(); _allocator = rhs._allocator; }
+
 	T*			unref()						{ T* t = _p; _p = NULL; return t; }
 	void		deleteObject();
 
@@ -39,7 +45,7 @@ struct AutoPtr
 	const T&	operator*() const			{ return *_p; }
 
 	T* _p;
-	DefaultAllocator& _allocator;
+	DefaultAllocator* _allocator;
 
 private:
 	void operator=(const AutoPtr&);
@@ -73,11 +79,29 @@ struct DefaultAllocator
 };
 
 template<class T>
-AutoPtr<T>::AutoPtr(T* p, DefaultAllocator& a) : _p(p), _allocator(a) {}
+void AutoPtr<T>::deleteObject()
+{
+	if(!_p)
+		return;
 
-template<class T>
-void AutoPtr<T>::deleteObject() { if(_p) { _allocator.deleteObj(_p); _p = NULL; } }
+	roAssert(_allocator);
+	if(_allocator)
+		_allocator->deleteObj(_p);
+	_p = NULL;
+}
 
 }	// namespace ro
+
+template<class T>
+void roSwap(ro::AutoPtr<T>& lhs, ro::AutoPtr<T>& rhs)
+{
+	T* tmpp = lhs._p;
+	lhs._p = rhs._p;
+	rhs._p = tmpp;
+
+	ro::DefaultAllocator* tmpa = lhs._allocator;
+	lhs._allocator = rhs._allocator;
+	rhs._allocator = tmpa;
+}
 
 #endif	// __roMemory_h__

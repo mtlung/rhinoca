@@ -2,7 +2,7 @@
 #define __roIOStream_h__
 
 #include "roArray.h"
-#include "roNonCopyable.h"
+#include "roMemory.h"
 
 namespace ro {
 
@@ -16,26 +16,51 @@ struct IStream : private NonCopyable
 	};
 
 			IStream();
-	virtual ~IStream() {}
-	virtual bool		readWillBlock	(roUint64 bytesToRead) { return false; }
-	virtual Status		size			(roUint64& bytes) { return roStatus::not_supported; }
+	virtual ~IStream() { closeRead(); }
+
+// Core interface that must be implement
+
+	// Check if reading this amount of data will cause other read functions to block.
+	// It also trigger a read request so async read would begin in the background.
+	// Note that it will return false if there was NOT enough data or any error occurred.
+	virtual bool		readWillBlock	(roUint64 minBytesToRead) { return false; }
+
+	virtual Status		size			(roUint64& bytes) const { return roStatus::not_supported; }
 	virtual roUint64	posRead			() const = 0;
 	virtual Status		seekRead		(roInt64 offset, SeekOrigin origin) { return roStatus::not_supported; }
 	virtual void		closeRead		() {}
 
-			Status		read			(void* buffer, roUint64 bytesToRead, roUint64& bytesRead);
-			Status		atomicRead		(void* buffer, roUint64 bytesToRead);
+// Standard helper functions, may consider make it virtual to maximize performance
 
-// Typed read function
+	// Try to read the requested amount of data, and report how much was actually read.
+			Status		read			(void* buffer, roUint64 maxBytesToRead, roUint64& actualBytesRead);
+
+	// Typed read function
 	template<class T>
 			Status		read			(T& val) { return atomicRead(&val, sizeof(T)); }
 
+	// Try to read the requested amount of data, return failure (and nothing is touched) if not enough data.
+			Status		atomicRead		(void* buffer, roUint64 bytesToRead);
+
+	// Get pointer to buffer that ready to read.
+			Status		peek			(roByte*& outBuf, roSize& outBytesReady);
+
+	// Ensure the requested amount of data will be available contiguously.
+	// It may report size that is bigger than you requested.
+			Status		atomicPeek		(roByte*& outBuf, roUint64& inoutMinBytesToPeek);
+
+			Status		skip			(roUint64 bytes);
+
 // Attributes
 	Status	st;
-	roByte*	_begin;
-	roByte*	_current;
-	roByte*	_end;
-	Status (*_next)(IStream& s);
+	roByte*	begin;
+	roByte*	current;
+	roByte*	end;
+
+	// Concrete class should implement this function to adjust the buffer pointers
+	// to fulfill the read size requested as close as possible.
+	// Client could keep calling this function to get the desired readable size.
+	Status (*_next)(IStream& s, roUint64 suggestedBytesToRead);
 };	// IStream
 
 struct OStream : private NonCopyable
@@ -63,7 +88,7 @@ struct MemoryIStream : public IStream
 
 			void		reset			(roByte* buffer=NULL, roSize size=0);
 	virtual Status		size			(roUint64& bytes) const;
-	virtual roUint64	posRead			() const { return _current - _begin; }
+	virtual roUint64	posRead			() const { return current - begin; }
 	virtual Status		seekRead		(roInt64 offset, SeekOrigin origin);
 };
 
@@ -97,6 +122,8 @@ struct MemorySeekableOStream : public OStream
 	ByteArray _buf;
 	roSize _pos;
 };
+
+Status openRawFileIStream(roUtf8* path, AutoPtr<IStream>& stream);
 
 }   // namespace ro
 

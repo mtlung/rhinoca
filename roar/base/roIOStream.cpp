@@ -7,35 +7,38 @@ namespace ro {
 
 IStream::IStream()
 {
-	_begin = _current = _end = NULL;
+	begin = current = end = NULL;
 	_next = NULL;
+	st = Status::ok;
 }
 
 Status IStream::read(void* buffer, roUint64 bytesToRead, roUint64& bytesRead)
 {
-	if(bytesToRead == 0)
+	if(bytesToRead == 0) {
+		bytesRead = 0;
 		return roStatus::ok;
-
-	if(!buffer || !_current)
-		return roStatus::pointer_is_null;
-
-	if(_current == _end) {
-		if(!_next) return roStatus::pointer_is_null;
-		Status st = (*_next)(*this);
-		if(!st) return st;
 	}
 
-	roAssert(_current >= _begin && _current <= _end);
-	roSize remains = roSize(_end - _current);
+	if(current >= end)
+		st = (*_next)(*this, bytesToRead);
+
+	if(current >= end)
+		return st;
+
+	if(!buffer || !current)
+		return roStatus::pointer_is_null;
+
+	roAssert(current >= begin && current <= end);
+	roSize remains = roSize(end - current);
 
 	if(remains == 0)
 		return Status::file_ended;
 
 	roSize toRead = clamp_cast<roSize>(bytesToRead);
 	toRead = roMinOf2(toRead, remains);
-	roMemcpy(buffer, _current, toRead);
+	roMemcpy(buffer, current, toRead);
 
-	_current += toRead;
+	current += toRead;
 	bytesRead = toRead;
 
 	return roStatus::ok;
@@ -43,14 +46,56 @@ Status IStream::read(void* buffer, roUint64 bytesToRead, roUint64& bytesRead)
 
 Status IStream::atomicRead(void* buffer, roUint64 bytesToRead)
 {
-	roUint64 bytesRead = 0;
-	Status st = read(buffer, bytesToRead, bytesRead);
+	roByte* ptr = NULL;
+	roUint64 size = bytesToRead;
+	st = atomicPeek(ptr, size);
 	if(!st) return st;
-	if(bytesRead < bytesToRead) return Status::file_ended;
+
+	st = read(buffer, bytesToRead, size);
+	roAssert(size == bytesToRead);
+
 	return st;
 }
 
-static Status _next_eof(IStream& s)
+Status IStream::peek(roByte*& outBuf, roSize& outPeekSize)
+{
+	// Giving _next() a size of 0 to let it decide how much to put
+	if(current >= end)
+		st = (*_next)(*this, 1u);
+
+	if(current >= end)
+		return st;
+
+	outBuf = current;
+	outPeekSize = end - current;
+	return st = Status::ok;
+}
+
+Status IStream::atomicPeek(roByte*& outBuf, roUint64& inoutMinBytesToPeek)
+{
+	while(st && (end - current) < inoutMinBytesToPeek)
+		st = (*_next)(*this, inoutMinBytesToPeek);
+
+	if((end - current) >= inoutMinBytesToPeek) {
+		outBuf = current;
+		inoutMinBytesToPeek = end - current;
+		st = Status::ok;
+	}
+
+	return st;
+}
+
+Status IStream::skip(roUint64 bytes)
+{
+	if(end - current >= bytes) {
+		current += bytes;
+		return st = Status::ok;
+	}
+
+	return seekRead(bytes, SeekOrigin_Current);
+}
+
+static Status _next_eof(IStream& s, roUint64 bytesToRead)
 {
 	return Status::end_of_data;
 }
@@ -63,39 +108,39 @@ MemoryIStream::MemoryIStream(roByte* buffer, roSize size)
 
 void MemoryIStream::reset(roByte* buffer, roSize size)
 {
-	_begin = buffer;
-	_current = buffer;
-	_end = _begin + size;
+	begin = buffer;
+	current = buffer;
+	end = begin + size;
 }
 
 Status MemoryIStream::size(roUint64& bytes) const
 {
-	bytes = _end - _begin;
+	bytes = end - begin;
 	return roStatus::ok;
 }
 
 Status MemoryIStream::seekRead(roInt64 offset, SeekOrigin origin)
 {
-	roAssert(_current >= _begin && _current <= _end);
-	roSize size = _end - _begin;
+	roAssert(current >= begin && current <= end);
+	roSize size = end - begin;
 	if(origin == SeekOrigin_Begin) {
 		if(offset < 0 || roIsGreater(offset, size)) return Status::file_seek_error;
-		_current = _begin + offset;
+		current = begin + offset;
 	}
 	else if(origin == SeekOrigin_Current) {
-		roAssert(_current >= _begin);
-		roSize currentOffset = _current - _begin;
+		roAssert(current >= begin);
+		roSize currentOffset = current - begin;
 		roSize remains = roAssertSub(size, currentOffset);
 		if(roIsGreater(offset, remains)) return Status::file_seek_error;
 		if(roIsGreater(-offset, currentOffset)) return Status::file_seek_error;
-		_current += offset;
+		current += offset;
 	}
 	else if(origin == SeekOrigin_End) {
 		if(offset < 0 || roIsGreater(offset, size)) return Status::file_seek_error;
-		_current = _begin + (size - offset);
+		current = begin + (size - offset);
 	}
 
-	roAssert(_current >= _begin && _current <= _end);
+	roAssert(current >= begin && current <= end);
 
 	return roStatus::ok;
 }

@@ -168,16 +168,16 @@ struct ConstString
 
 }	// namespace ro
 
-inline void roSwap(ro::String& lsh, ro::String& rhs)
+inline void roSwap(ro::String& lhs, ro::String& rhs)
 {
-	roSwap(lsh._cstr, rhs._cstr);
+	roSwap(lhs._cstr, rhs._cstr);
 }
 
-inline void roSwap(ro::ConstString& lsh, ro::ConstString& rhs)
+inline void roSwap(ro::ConstString& lhs, ro::ConstString& rhs)
 {
-	roSwap(lsh._node, rhs._node);
+	roSwap(lhs._node, rhs._node);
 #if roDEBUG
-	roSwap(lsh._debugStr, rhs._debugStr);
+	roSwap(lhs._debugStr, rhs._debugStr);
 #endif
 }
 

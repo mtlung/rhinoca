@@ -20,6 +20,8 @@ void roFree(void* ptr)
 
 namespace ro {
 
+DefaultAllocator defaultAllocator;
+
 roBytePtr DefaultAllocator::malloc(roSize size)
 {
 	return ::malloc(size);

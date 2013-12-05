@@ -1,9 +1,11 @@
 #include "pch.h"
 #include "../../roar/base/roIOStream.h"
+#include "../../roar/base/roString.h"
+#include "../../roar/math/roRandom.h"
 
 using namespace ro;
 
-class IOStreamTest {};
+struct IOStreamTest {};
 
 TEST_FIXTURE(IOStreamTest, memoryIStream)
 {
@@ -108,4 +110,153 @@ TEST_FIXTURE(IOStreamTest, memorySeekableOStream)
 	CHECK_EQUAL(os.size(), os.posWrite());
 	CHECK(os.seekWrite(os.size(), OStream::SeekOrigin_End));
 	CHECK_EQUAL(0u, os.posWrite());
+}
+
+struct RandomIOStreamTest
+{
+	Status loadReferenceContent()
+	{
+		// Load the stream at once as a reference content
+		roUint64 size;
+		Status st = s->size(size);
+		if(!st) return st;
+
+		st = expected.resize(static_cast<roSize>(size));
+		if(!st) return st;
+
+		st = s->atomicRead(expected.c_str(), size);
+		return st;
+	}
+
+	Status randomRead()
+	{
+		typedef Status (RandomIOStreamTest::*TestFunc)();
+		TestFunc func[] = {
+			&RandomIOStreamTest::_readWillBlock,
+			&RandomIOStreamTest::_peek,
+			&RandomIOStreamTest::_atomicPeek,
+			&RandomIOStreamTest::_read,
+			&RandomIOStreamTest::_atomicRead,
+			&RandomIOStreamTest::_assertPointers,
+		};
+
+		actual.clear();
+
+		// Do random operations on the stream to load the content
+		Status st = Status::ok;
+		for(roSize i=0; st; ++i)
+		{
+			roSize funcIdx = rand.beginEnd(0u, roCountof(func));
+			st = (this->*func[funcIdx])();
+		}
+
+		if(st == Status::file_ended)
+			st = Status::ok;
+
+		return st;
+	}
+
+	bool verify()
+	{
+		return actual == expected;
+	}
+
+	Status _readWillBlock()
+	{
+		s->readWillBlock(rand.minMax(0u, 10u));
+		return Status::ok;
+	}
+
+	Status _peek()
+	{
+		roByte* buf = NULL;
+		roSize bytesReady = rand.minMax(0u, 10u);
+		Status st = s->peek(buf, bytesReady);
+		if(!st) return st;
+
+		// If there is no error, we should always get something
+		if(!buf || bytesReady == 0)
+			return Status::unit_test_fail;
+
+		if(roSize(s->end - s->current) < bytesReady)
+			return Status::unit_test_fail;
+
+		return st;
+	}
+
+	Status _atomicPeek()
+	{
+		roByte* buf = NULL;
+		roSize bytesToPeek = rand.minMax(0u, 10u);
+		Status st = s->peek(buf, bytesToPeek);
+		if(!st) return st;
+
+		if(roSize(s->end - s->current) < bytesToPeek)
+			return Status::unit_test_fail;
+
+		return st;
+	}
+
+	Status _atomicRead()
+	{
+		char buf[16];
+		roUint64 bytesToRead = rand.minMax(0u, sizeof(buf));
+
+		Status st = s->atomicRead(buf, bytesToRead);
+
+		// If the file is already ended, just ignore it
+		if(st == Status::file_ended)
+			return Status::ok;
+
+		if(!st)
+			return st;
+
+		return actual.append(buf, static_cast<roSize>(bytesToRead));
+	}
+
+	Status _read()
+	{
+		char buf[16];
+		roUint64 maxBytesToRead = rand.minMax(0u, sizeof(buf));
+		roUint64 actualBytesRead;
+
+		Status st = s->read(buf, maxBytesToRead, actualBytesRead);
+		if(!st)
+			return st;
+
+		if(actualBytesRead > maxBytesToRead)
+			return Status::unit_test_fail;
+
+		st = actual.append(buf, static_cast<roSize>(actualBytesRead));
+		if(!st) return st;
+
+		return st;
+	}
+
+	Status _assertPointers()
+	{
+		if(s->st == Status::file_ended)
+			return Status::ok;
+
+		if(!(s->begin <= s->current && s->current <= s->end))
+			return Status::unit_test_fail;
+
+		return Status::ok;
+	}
+
+	String actual;
+	String expected;
+	AutoPtr<IStream> s;
+	Random<UniformRandom> rand;
+};
+
+TEST_FIXTURE(RandomIOStreamTest, rawFile)
+{
+	CHECK(openRawFileIStream("Test.vc9.vcproj", s));
+	CHECK(loadReferenceContent());
+	for(roSize i=0; i<128; ++i) {
+		CHECK(openRawFileIStream("Test.vc9.vcproj", s));
+		CHECK(randomRead());
+		CHECK(verify());
+	}
 }

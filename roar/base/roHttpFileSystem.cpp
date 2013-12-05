@@ -15,8 +15,6 @@
 
 namespace ro {
 
-static DefaultAllocator _allocator;
-
 // Perform character encoding
 // http://www.blooberry.com/indexdot/html/topics/urlencoding.htm
 static const char* _encode[] = { "%20", "%22", "%23", "%24", "%25", "%26", "%3C", "%3E" };
@@ -71,7 +69,7 @@ enum HttpState {
 /// http://curl.haxx.se/libcurl/competitors.html
 struct HttpStream
 {
-	~HttpStream() { _allocator.free(buffer); }
+	~HttpStream() { defaultAllocator.free(buffer); }
 	BsdSocket socket;
 	char* buffer;
 	HttpState state;
@@ -112,7 +110,7 @@ static Status prepareForRead(HttpStream& s, roUint64 readSize)
 	// Enlarge the buffer if necessary
 	if(s.bufCapacity < s.bufSize + size + reserveForNull) {
 		// TODO: realloc perform copy for the whole buffer while it's not necessary here.
-		roBytePtr p = _allocator.realloc(s.buffer, s.bufCapacity, s.bufSize + size + reserveForNull);
+		roBytePtr p = defaultAllocator.realloc(s.buffer, s.bufCapacity, s.bufSize + size + reserveForNull);
 		if(!p) return s.status = Status::not_enough_memory;
 		s.buffer = p;
 		s.bufCapacity = s.bufSize + size + reserveForNull;
@@ -225,7 +223,7 @@ static Status _readFromSocket(HttpStream& s, roSize size, roSize* bytesRead=NULL
 
 Status httpFileSystemOpenFile(const char* uri, void*& outFile)
 {
-	AutoPtr<HttpStream> s = _allocator.newObj<HttpStream>();
+	AutoPtr<HttpStream> s = defaultAllocator.newObj<HttpStream>();
 
 	Status st = _makeConnection(*s, uri); if(!st) return st;
 
@@ -533,7 +531,7 @@ Status httpFileSystemSeek(void* file, roInt64 offset, FileSystem::SeekOrigin ori
 void httpFileSystemCloseFile(void* file)
 {
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
-	_allocator.deleteObj(s);
+	defaultAllocator.deleteObj(s);
 }
 
 roBytePtr httpFileSystemGetBuffer(void* file, roUint64 requestSize, roUint64& readableSize)
@@ -559,7 +557,7 @@ void httpFileSystemTakeBuffer(void* file)
 	HttpStream* s = reinterpret_cast<HttpStream*>(file);
 	if(!s || s->state == State_Error || s->lastReadSize == 0) return;
 
-	roBytePtr newBuf = _allocator.malloc(s->bufCapacity);
+	roBytePtr newBuf = defaultAllocator.malloc(s->bufCapacity);
 	s->buffer = newBuf;
 
 	if(!newBuf) {
@@ -574,7 +572,7 @@ void httpFileSystemTakeBuffer(void* file)
 
 void httpFileSystemUntakeBuffer(void* file, roBytePtr buf)
 {
-	_allocator.free(buf);
+	defaultAllocator.free(buf);
 }
 
 void* httpFileSystemOpenDir(const char* uri)
