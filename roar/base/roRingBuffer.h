@@ -76,12 +76,13 @@ inline void RingBuffer::commitWrite(roSize written)
 inline roByte* RingBuffer::read(roSize& outReadSize)
 {
 	roAssert(_rPos <= _rBuf().size());
+	roAssert(_wEnd == _wBuf().size() && "Call commitWrite() for each write()");
 
 	// No more to read from read buffer, swap with write buffer
 	if(_rBuf().size() - _rPos == 0) {
+		_wBuf().resize(_wEnd);	// Just in-case write() and commitWrite() didn't match
 		roSwap(_rBufIdx, _wBufIdx);
 		_rPos = _wBeg;
-		_rBuf().resize(_wEnd);
 		_wBeg = _wEnd = 0;
 		_wBuf().clear();
 	}

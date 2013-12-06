@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "roIOStream.h"
 #include "roRingBuffer.h"
+#include "roTaskPool.h"
 #include "roTypeCast.h"
 #include "roCpuProfiler.h"
 #include "../platform/roPlatformHeaders.h"
@@ -83,6 +84,7 @@ CheckProgress:
 	DWORD transferred = 0;
 	if(_readInProgress) {
 		if(!GetOverlappedResult(_handle, &_overlap, &transferred, false)) {
+			_ringBuf.commitWrite(0);
 			if(GetLastError() == ERROR_IO_PENDING)
 				return st = Status::in_progress, true;
 
@@ -138,7 +140,10 @@ static Status _next_RawFileIStream(IStream& s, roUint64 bytesToRead)
 
 	while(self.st && self._ringBuf.totalReadable() < bytesToRead) {
 		CpuProfilerScope cpuProfilerScope("rawFileIStream waiting");
-		if(self.readWillBlock(bytesToRead)) continue;	// TODO: Do something else useful instead of loop?
+		if(self.readWillBlock(bytesToRead)) {
+			TaskPool::yield();	// TODO: Do something useful here instead of yield
+			continue;
+		}
 	}
 
 	roSize readableSize = 0;
@@ -302,6 +307,8 @@ static Status _next_RawFileIStream(IStream& s, roUint64 bytesToRead)
 			if(bytesRead == 0)
 				self.st = Status::file_ended;
 		}
+		else
+			self._ringBuf.commitWrite(0);
 	}
 
 	roSize readableSize = 0;

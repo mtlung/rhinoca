@@ -55,6 +55,10 @@ roStatusEnum( file_is_empty )
 
 // Network
 roStatusEnum( net_error )
+roStatusEnum( net_resolve_host_fail )
+roStatusEnum( net_cannont_connect )
+roStatusEnum( net_connection_lost )
+roStatusEnum( net_not_connected )
 
 // Http
 roStatusEnum( http_error )

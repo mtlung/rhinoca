@@ -116,9 +116,16 @@ struct RandomIOStreamTest
 {
 	Status loadReferenceContent()
 	{
+		if(!s.ptr())
+			return Status::pointer_is_null;
+
 		// Load the stream at once as a reference content
 		roUint64 size;
-		Status st = s->size(size);
+
+		Status st;
+		do {
+			st = s->size(size);
+		} while(st == Status::in_progress);
 		if(!st) return st;
 
 		st = expected.resize(static_cast<roSize>(size));
@@ -130,6 +137,9 @@ struct RandomIOStreamTest
 
 	Status randomRead()
 	{
+		if(!s.ptr())
+			return Status::pointer_is_null;
+
 		typedef Status (RandomIOStreamTest::*TestFunc)();
 		TestFunc func[] = {
 			&RandomIOStreamTest::_readWillBlock,
@@ -252,7 +262,9 @@ struct RandomIOStreamTest
 
 TEST_FIXTURE(RandomIOStreamTest, rawFile)
 {
-	openHttpIStream("http://google.com:80/index.html", s);
+//	CHECK(openHttpIStream("http://localhost.com", s));
+	CHECK(openHttpIStream("http://localhost:8081/", s));
+	CHECK(loadReferenceContent());
 
 	CHECK(openRawFileIStream("Test.vc9.vcproj", s));
 	CHECK(loadReferenceContent());

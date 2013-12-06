@@ -19,6 +19,7 @@ inline char*	roStrChrCase	(char* sz, char ch);
 inline char*	roStrrChrCase	(char* sz, char ch);
 
 char*			roStrStr		(char* a, const char* b);
+char*			roStrStr		(char* a, const char* aEnd, const char* b);
 char*			roStrnStr		(char* a, roSize aLen, const char* b);
 char*			roStrrStr		(char* a, const char* b);
 char*			roStrrnStr		(char* a, roSize aLen, const char* b);

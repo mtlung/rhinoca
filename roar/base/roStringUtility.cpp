@@ -23,6 +23,11 @@ char* roStrStr(char* a, const char* b)
 	return NULL;
 }
 
+char* roStrStr(char* a, const char* aEnd, const char* b)
+{
+	return roStrnStr(a, aEnd - a, b);
+}
+
 char* roStrnStr(char* a, roSize aLen, const char* b)
 {
 	char* sa = a;

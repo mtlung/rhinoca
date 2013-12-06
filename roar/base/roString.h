@@ -101,6 +101,8 @@ struct RangedString
 	String toString() const;
 	operator String();
 
+	roSize size() const { return end - begin; }
+
 	const roUtf8* begin;
 	const roUtf8* end;
 };	// RangedString
