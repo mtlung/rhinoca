@@ -65,6 +65,23 @@ char* roStrrnStr(char* a, roSize aLen, const char* b)
 	return NULL;
 }
 
+char* roStrStrCase(char* a, const char* b)
+{
+	char* sa = a;
+	const char* sb = b;
+	if(*b == 0) return NULL;
+	for( ; *a; ++a) {
+		sa = a;
+		sb = b;
+		for(;;) {
+			if(*sb == 0) return a;	// Found
+			if(roToLower(*sb) != roToLower(*sa)) break;
+			++sa; ++sb;
+		}
+	}
+	return NULL;
+}
+
 void roToLower(char* str)
 {
 	while(*str != '\0') {

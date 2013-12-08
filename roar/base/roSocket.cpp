@@ -252,6 +252,7 @@ ErrorCode BsdSocket::closeApplication()
 
 BsdSocket::BsdSocket()
 	: lastError(0)
+	, _isBlockingMode(true)
 {
 	roStaticAssert(sizeof(socket_t) == sizeof(_fd));
 	setFd(INVALID_SOCKET);
@@ -292,14 +293,19 @@ ErrorCode BsdSocket::setBlocking(bool block)
 {
 #if roOS_WIN
 	unsigned long a = block ? 0 : 1;
-	return lastError =
+	lastError =
 		ioctlsocket(fd(), FIONBIO, &a) == OK ?
 		OK : getLastError();
 #else
-	return lastError =
+	lastError =
 		fcntl(fd(), F_SETFL, fcntl(fd(), F_GETFL) | O_NONBLOCK) != -1 ?
 		OK : getLastError();
 #endif
+
+	if(lastError == OK)
+		_isBlockingMode = block;
+
+	return lastError;
 }
 
 ErrorCode BsdSocket::setNoDelay(bool b)
@@ -365,6 +371,44 @@ ErrorCode BsdSocket::connect(const SockAddr& endPoint)
 	return lastError =
 		::connect(fd(), &addr, sizeof(addr)) == OK ?
 		OK : getLastError();
+}
+
+ErrorCode BsdSocket::select(bool& checkRead, bool& checkWrite, bool& checkError)
+{
+	fd_set readSet, writeSet, errorSet;
+	FD_ZERO(&readSet);
+	FD_ZERO(&writeSet);
+	FD_ZERO(&errorSet);
+	SOCKET s = (SOCKET)fd();
+	FD_SET(s, &readSet);
+	FD_SET(s, &writeSet);
+	FD_SET(s, &errorSet);
+
+	timeval timeout;
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 0;
+
+	int ret = ::select(1,
+		checkRead ? &readSet : NULL,
+		checkWrite ? &writeSet : NULL,
+		checkError ? &errorSet : NULL,
+		&timeout
+	);
+
+	checkRead &= (FD_ISSET(s, &readSet) != 0);
+	checkWrite &= (FD_ISSET(s, &writeSet) != 0);
+	checkError &= (FD_ISSET(s, &errorSet) != 0);
+
+	lastError = ret < 0 ? getLastError() : OK;
+
+	// If check error is requested and there is really an error occured
+	if(ret > 0 && checkError) {
+		socklen_t len = sizeof(lastError);
+		if(getsockopt(s, SOL_SOCKET, SO_ERROR, (char*)&lastError, &len) != 0)
+			lastError = getLastError();
+	}
+
+	return lastError;
 }
 
 int BsdSocket::send(const void* data, roSize len, int flags)
@@ -468,6 +512,11 @@ ErrorCode BsdSocket::close()
 #else
 	return lastError = OK;
 #endif
+}
+
+bool BsdSocket::isBlockingMode() const
+{
+	return _isBlockingMode;
 }
 
 SockAddr BsdSocket::remoteEndPoint() const

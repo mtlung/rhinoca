@@ -198,6 +198,9 @@ Status String::insert(roSize idx, const char* str, roSize count)
 	if(idx > size_)
 		return Status::invalid_parameter;
 
+	if(count == 0)
+		return Status::ok;
+
 	roSize movCount = size_ - idx;
 	resize(size_ + count);
 	char* p = c_str();

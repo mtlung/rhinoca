@@ -14,6 +14,7 @@ typedef roPtrInt socket_t;
 #	define EALREADY		WSAEALREADY		// Operation already in progress
 #	define ECONNABORTED	WSAECONNABORTED	// Software caused connection abort
 #	define ECONNRESET	WSAECONNRESET	// Connection reset by peer
+#	define ECONNREFUSED	WSAECONNREFUSED	// Connection refused
 #	define EHOSTDOWN	WSAEHOSTDOWN	// Host is down
 #	define EHOSTUNREACH	WSAEHOSTUNREACH	// No route to host
 #	define EINPROGRESS	WSAEINPROGRESS	// Operation now in progress
@@ -115,6 +116,9 @@ struct BsdSocket : NonCopyable
 	/// Establishes a connection to a remote host.
 	ErrorCode	connect				(const SockAddr& endPoint);
 
+	/// A simple select function that operate only on this socket.
+	ErrorCode	select				(bool& checkRead, bool& checkWrite, bool& checkError);
+
 	int			send				(const void* data, roSize len, int flags=0);								///< Returns -1 for any error
 	int			receive				(void* buf, roSize len, int flags=0);										///< Returns -1 for any error
 	int			sendTo				(const void* data, roSize len, const SockAddr& destEndPoint, int flags=0);	///< Returns -1 for any error
@@ -133,7 +137,9 @@ struct BsdSocket : NonCopyable
 
 // Attributes
 	/// Whether the socket is bound to a specific local port.
-	bool		IsBound				() const;
+	bool		isBound				() const;
+
+	bool		isBlockingMode		() const;
 
 	///	Gets an SockAddr that contains the local IP address and port number to which your socket is bounded
 	///	Throw if the socket is not bounded
@@ -160,6 +166,7 @@ struct BsdSocket : NonCopyable
 // Private
 	ErrorCode	_setOption			(int level, int opt, const void* p, roSize size);
 	char _fd[sizeof(void*)];	///< File descriptor
+	bool _isBlockingMode;
 };	// BsdSocket
 
 }	// namespace ro

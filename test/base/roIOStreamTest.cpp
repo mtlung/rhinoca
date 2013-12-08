@@ -126,12 +126,30 @@ struct RandomIOStreamTest
 		do {
 			st = s->size(size);
 		} while(st == Status::in_progress);
-		if(!st) return st;
 
-		st = expected.resize(static_cast<roSize>(size));
-		if(!st) return st;
+		if(st == Status::not_supported) {
+			roByte* buf = NULL;
+			roSize bytesToPeek = 0;
 
-		st = s->atomicRead(expected.c_str(), size);
+			do {
+				Status st = s->peek(buf, bytesToPeek);
+				if(st == Status::file_ended)
+					return Status::ok;
+
+				st = expected.append((char*)buf, bytesToPeek);
+				if(!st) return st;
+				s->skip(bytesToPeek);
+			} while(st);
+		}
+		else {
+			if(!st) return st;
+
+			st = expected.resize(static_cast<roSize>(size));
+			if(!st) return st;
+
+			st = s->atomicRead(expected.c_str(), size);
+		}
+
 		return st;
 	}
 
@@ -262,8 +280,9 @@ struct RandomIOStreamTest
 
 TEST_FIXTURE(RandomIOStreamTest, rawFile)
 {
-//	CHECK(openHttpIStream("http://localhost.com", s));
-	CHECK(openHttpIStream("http://localhost:8081/", s));
+//	CHECK(openHttpIStream("http://localhost", s));
+//	CHECK(openHttpIStream("http://localhost:8081", s));
+	CHECK(openHttpIStream("http://gov.hk.com", s));
 	CHECK(loadReferenceContent());
 
 	CHECK(openRawFileIStream("Test.vc9.vcproj", s));

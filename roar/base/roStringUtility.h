@@ -24,6 +24,8 @@ char*			roStrnStr		(char* a, roSize aLen, const char* b);
 char*			roStrrStr		(char* a, const char* b);
 char*			roStrrnStr		(char* a, roSize aLen, const char* b);
 
+char*			roStrStrCase	(char* a, const char* b);
+
 inline char		roToLower		(char c);
 inline char		roToUpper		(char c);
 

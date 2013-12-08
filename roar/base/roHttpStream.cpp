@@ -9,11 +9,14 @@
 #include "roTypeCast.h"
 #include "roCpuProfiler.h"
 
+// Reference:
+// http://royal.pingdom.com/2012/08/15/fun-and-unusual-http-response-headers/
 namespace ro {
 
 struct HttpIStream : public IStream
 {
 	HttpIStream();
+	~HttpIStream();
 
 			Status		open			(const roUtf8* path);
 	virtual bool		readWillBlock	(roUint64 bytesToRead);
@@ -22,9 +25,20 @@ struct HttpIStream : public IStream
 	virtual Status		seekRead		(roInt64 offset, SeekOrigin origin);
 	virtual void		closeRead		();
 
-			Status		setError		();
-			Status		setError		(Status s);
+	Status		_connect			();
+	Status		_waitConnect		();
+	Status		_sendRequest		();
+	Status		_readFromSocket		(roUint64 bytesToRead);
+	Status		_readResponse		();
+	Status		_readContent		(roUint64 bytesToRead);
+	Status		_readChunkSize		(roUint64 bytesToRead);
+	Status		_readChunkedContent	(roUint64 bytesToRead);
+	Status		setError			();
+	Status		setError			(Status s);
 
+	bool		_debug;
+	bool		_chunked;
+	bool		_deflate;
 	String		_host;
 	String		_path;
 	BsdSocket	_socket;
@@ -32,19 +46,34 @@ struct HttpIStream : public IStream
 	String		_requestStr;
 
 	Status		_httpHeaderStatus;
+	Status		_contentLengthSattus;
+	roUint32	_responseCode;
 	roUint64	_fileSize;
 	RingBuffer	_ringBuf;
 };	// HttpIStream
 
-static Status _http_connect(IStream& s, roUint64 bytesToRead);
-static Status _http_sendRequest(IStream& s, roUint64 bytesToRead);
-static Status _http_readResponse(IStream& s, roUint64 bytesToRead);
+static Status _http_connect(IStream& s, roUint64 bytesToRead)			{ return static_cast<HttpIStream&>(s)._connect(); }
+static Status _http_wait_connect(IStream& s, roUint64 bytesToRead)		{ return static_cast<HttpIStream&>(s)._waitConnect(); }
+static Status _http_sendRequest(IStream& s, roUint64 bytesToRead)		{ return static_cast<HttpIStream&>(s)._sendRequest(); }
+static Status _http_readResponse(IStream& s, roUint64 bytesToRead)		{ return static_cast<HttpIStream&>(s)._readResponse(); }
+static Status _http_readContent(IStream& s, roUint64 bytesToRead)		{ return static_cast<HttpIStream&>(s)._readContent(bytesToRead); }
+static Status _http_readChunkSize(IStream& s, roUint64 bytesToRead)		{ return static_cast<HttpIStream&>(s)._readChunkSize(bytesToRead); }
+//static Status _http_readChunkedContent(IStream& s, roUint64 bytesToRead){ return static_cast<HttpIStream&>(s)._readChunkedContent(bytesToRead); }
 static Status _http_error(IStream& s, roUint64 bytesToRead);
 
 HttpIStream::HttpIStream()
 {
+	_debug = true;
 	_next = _http_sendRequest;
 	_httpHeaderStatus = Status::net_not_connected;
+
+	roVerify(BsdSocket::initApplication() == 0);
+}
+
+HttpIStream::~HttpIStream()
+{
+	closeRead();
+	roVerify(BsdSocket::closeApplication() == 0);
 }
 
 Status HttpIStream::setError()
@@ -65,7 +94,7 @@ Status HttpIStream::setError(Status s)
 Status HttpIStream::open(const roUtf8* url)
 {
 	Regex regex;
-	if(!regex.match(url, "^http://([^/]+)(.*)")) {
+	if(!regex.match(url, "^\\s*http://([^/]+)(.*)")) {
 		roLog("error", "Invalid url: %s\n", url);
 		return Status::http_invalid_uri;
 	}
@@ -84,101 +113,130 @@ bool HttpIStream::readWillBlock(roUint64 size)
 	return false;
 }
 
-static Status _http_connect(IStream& s, roUint64 bytesToRead)
+Status HttpIStream::_connect()
 {
-	HttpIStream& self = static_cast<HttpIStream&>(s);
-	BsdSocket& socket = self._socket;
-	String& host = self._host;
+	if(_debug)
+		roLog("debug", "HttpIStream: connect to %s\n", _host.c_str());
 
-	self._fileSize = 0;
-	self._ringBuf.clear();
+	roVerify(_socket.close() == 0);
+
+	// Create socket
+	roVerify(_socket.create(BsdSocket::TCP) == 0);
+	_socket.setBlocking(false);
+
+	_fileSize = 0;
+	_ringBuf.clear();
 
 	// Parse socket address
-	if(self._path.isEmpty())
-		self._path += "/";
+	if(_path.isEmpty())
+		_path += "/";
 
 	// NOTE: Currently this host resolving operation is blocking
 	bool parseOk = false;
-	if(host.find(':') != String::npos)
-		parseOk = self._sockAddr.parse(host.c_str());
+	if(_host.find(':') != String::npos)
+		parseOk = _sockAddr.parse(_host.c_str());
 	else
-		parseOk = self._sockAddr.parse(host.c_str(), 80);
+		parseOk = _sockAddr.parse(_host.c_str(), 80);
 
 	if(!parseOk) {
-		roLog("error", "Fail to resolve host %s\n", host.c_str());
+		roLog("error", "Fail to resolve host %s\n", _host.c_str());
 		return Status::net_resolve_host_fail;
 	}
 
-	// Create socket
-	roVerify(socket.create(BsdSocket::TCP) == 0);
-	socket.setBlocking(false);
-
 	// Make connection
-	int ret = socket.connect(self._sockAddr);
-	if(ret != 0 && !BsdSocket::inProgress(socket.lastError)) {
-		roLog("error", "Connection to %s failed\n", host.c_str());
-		return self.setError(Status::net_cannont_connect);
+	int ret = _socket.connect(_sockAddr);
+
+	if(ret != 0 && !BsdSocket::inProgress(_socket.lastError)) {
+		roLog("error", "Connection to %s failed\n", _host.c_str());
+		return setError(Status::net_cannont_connect);
+	}
+
+	_next = _http_wait_connect;
+	return (*_next)(*this, 0);
+}
+
+Status HttpIStream::_waitConnect()
+{
+	bool readable = false;
+	bool writable = true;
+	bool hasError = true;
+	int ret = _socket.select(readable, writable, hasError);
+	(void)ret;
+
+	if(!writable && !hasError)
+		return st = Status::in_progress;
+	else if(!writable && hasError) {
+		roLog("error", "Connection to %s failed\n", _host.c_str());
+		return setError(Status::net_cannont_connect);
+	}
+
+	if(_debug) {
+		roLog("debug", "HttpIStream: %s connected\n", _host.c_str());
+		roLog("debug", "HttpIStream: GET %s\n", _path.c_str());
 	}
 
 	const char getFmt[] =
 		"GET {} HTTP/1.1\r\n"
 		"Host: {}\r\n"	// Required for http 1.1
 		"User-Agent: The Roar Engine\r\n"
-//		"Range: bytes=0-64\r\n"
+		"Range: bytes=0-64\r\n"
 		"\r\n";
 
-	self._requestStr.clear();
-	strFormat(self._requestStr, getFmt, self._path.c_str(), self._host.c_str());
+	_requestStr.clear();
+	strFormat(_requestStr, getFmt, _path.c_str(), _host.c_str());
 
-	return _http_sendRequest(s, bytesToRead);
+	_next = _http_sendRequest;
+	return (*_next)(*this, 0);
 }
 
-static Status _http_sendRequest(IStream& s, roUint64 bytesToRead)
+Status HttpIStream::_sendRequest()
 {
-	HttpIStream& self = static_cast<HttpIStream&>(s);
-	BsdSocket& socket = self._socket;
-	String& requestStr = self._requestStr;
+	roAssert(!_requestStr.isEmpty());
 
-	roAssert(!requestStr.isEmpty());
+	int ret = _socket.send(_requestStr.c_str(), _requestStr.size());
+	if(ret < 0 && !BsdSocket::inProgress(_socket.lastError))
+		return setError(Status::net_error);
 
-	int ret = socket.send(requestStr.c_str(), requestStr.size());
-	if(ret == 0 || (ret < 0 && socket.lastError == ENOTCONN))
-		return self.setError(Status::net_not_connected);
-
-	if(ret < 0 && !BsdSocket::inProgress(socket.lastError))
-		return self.setError(Status::net_error);
-
-	self._next = _http_readResponse;
-	return self.st;
+	_next = _http_readResponse;
+	return st;
 }
 
-static Status _http_readFromSocket(IStream& s, roUint64 bytesToRead)
+Status HttpIStream::_readFromSocket(roUint64 bytesToRead)
 {
-	HttpIStream& self = static_cast<HttpIStream&>(s);
-	BsdSocket& socket = self._socket;
-
 	roSize byteSize = 0;
-	self.st = roSafeAssign(byteSize, bytesToRead);
-	if(!self.st) return self.setError();
+	st = roSafeAssign(byteSize, bytesToRead);
+	if(!st) return setError();
 
 	roByte* wPtr = NULL;
-	self.st = self._ringBuf.write(byteSize, wPtr);
-	if(!self.st) return self.setError();
+	st = _ringBuf.write(byteSize, wPtr);
+	if(!st) return setError();
 
-	int ret = socket.receive(wPtr, byteSize);
-	self._ringBuf.commitWrite(ret > 0 ? ret : 0);
+	int ret = _socket.receive(wPtr, byteSize);
+	_ringBuf.commitWrite(ret > 0 ? ret : 0);
 
-	if(ret < 0 && BsdSocket::inProgress(socket.lastError))
-		return self.setError(Status::in_progress);
+	if(ret < 0 && BsdSocket::inProgress(_socket.lastError))
+		return setError(Status::in_progress);
 	if(ret < 0)
-		return self.setError(Status::net_error);
+		return setError(Status::net_error);
 	if(ret == 0)
-		return self.setError(Status::file_ended);
+		return setError(Status::file_ended);
 
-	return self.st;
+	return st;
 }
 
-static Status _parseHttpHeader(char* buf, roSize bufSize, roSize& headerSize, IArray<char*>& name, IArray<char*>& value)
+struct HttpResponseHeader
+{
+	Status		parse		(char* buf, roSize bufSize, roSize& headerSize);
+	const char*	findValue	(const char* name);
+
+	struct Pair {
+		char* name;
+		char* value;
+	};
+	TinyArray<Pair, 16> nvp;
+};
+
+Status HttpResponseHeader::parse(char* buf, roSize bufSize, roSize& headerSize)
 {
 	// Check if header complete
 	static const char headerTerminator[] = "\r\n\r\n";
@@ -191,83 +249,160 @@ static Status _parseHttpHeader(char* buf, roSize bufSize, roSize& headerSize, IA
 	messageContent += 4;
 	headerSize = messageContent - buf;
 
+	nvp.clear();
+
 	// Tokenize the string by new line
 	for(char* begin = buf, *end = NULL; end + 2 < messageContent; )
 	{
 		end = roStrStr(buf, messageContent, "\r\n");
 		*end = '\0';
 
+		Pair pair = { NULL };
+
 		// Split by ':'
-		name.pushBack(begin);
+		pair.name = begin;
 		char* p = roStrStr(begin, end, ":");
 		if(p) {
 			*p = '\0';
 			++p;
 		}
-		value.pushBack(p);
+		pair.value = p;
+		Status st = nvp.pushBack(pair);
+		if(!st) return st;
 
 		begin = end += 2;
 	}
 
-	if(name.isEmpty())
+	if(nvp.isEmpty())
 		return Status::http_error;
 
 	return Status::ok;
 }
 
-static Status _http_readResponse(IStream& s, roUint64 bytesToRead)
+const char*	HttpResponseHeader::findValue(const char* name)
 {
-	HttpIStream& self = static_cast<HttpIStream&>(s);
-	BsdSocket& socket = self._socket;
+	for(roSize i=0; i<nvp.size(); ++i) {
+		if(roStrCaseCmp(nvp[i].name, name) == 0)
+			return nvp[i].value;
+	}
+	return NULL;
+}
 
-	self.st = _http_readFromSocket(s, 1024);
-	if(!self.st) return self.setError();
+Status HttpIStream::_readResponse()
+{
+	st = _readFromSocket(1024);
+	if(!st) return setError();
 
 	roSize readSize = 0;
-	roByte* rPtr = self._ringBuf.read(readSize);
+	roByte* rPtr = _ringBuf.read(readSize);
 
 	roSize headerSize = 0;
-	TinyArray<char*, 16> name, value;
-	self.st = _parseHttpHeader((char*)rPtr, readSize, headerSize, name, value);
-	if(!self.st) return self.setError();
+	HttpResponseHeader responseHeader;
+	st = responseHeader.parse((char*)rPtr, readSize, headerSize);
+	if(!st) return setError();
 
 	{	// Parse response
 		Regex regex;
-		if(!regex.match(name[0], "^HTTP/([\\d\\.]+)[ ]+(\\d+)")) {
-			roLog("error", "Invalid http response header: %s\n", name[0]);
-			return self.setError(Status::http_error);
+		if(!regex.match(responseHeader.nvp[0].name, "^HTTP/([\\d\\.]+)[ ]+(\\d+)")) {
+			roLog("error", "Invalid http response header: %s\n", responseHeader.nvp[0].name);
+			return setError(Status::http_error);
 		}
 
 		regex.result[2].end = '\0';
-		int serverRetCode = roStrToInt32(regex.result[2].begin, 0);
+		_responseCode = roStrToUint32(regex.result[2].begin, 0);
 
-		if(serverRetCode == 200)			// Ok
+		if(_responseCode == 200)			// Ok
 		{
+			_chunked = false;
+			_deflate = false;
 
+			// Reference: http://www.iana.org/assignments/http-parameters/http-parameters.xhtml
+			const char* encoding = responseHeader.findValue("Transfer-Encoding");
+			if(encoding) {
+				_chunked = roStrStrCase((char*)encoding, "chunked");
+				_deflate = roStrStrCase((char*)encoding, "deflate");
+			}
+
+			const char* contentLength = responseHeader.findValue("Content-Length");
+			if(contentLength) {
+				if(sscanf(contentLength, "%*[ \t]%u", &_fileSize) != 1)
+					st = _contentLengthSattus = Status::http_error;
+				else
+					_contentLengthSattus = Status::ok;
+			}
+			else
+				_contentLengthSattus = Status::not_supported;
+
+			if(_chunked)
+				_next = _http_readChunkSize;
+			else
+				_next = _http_readContent;
 		}
-		else if(serverRetCode == 206)		// Partial Content
+		else if(_responseCode == 206)		// Partial Content
 		{
-			serverRetCode = 206;
+			_responseCode = 206;
 		}
 		else if(
-			serverRetCode == 301 ||			// Moved Permanently
-			serverRetCode == 302			// Found (http redirect)
+			_responseCode == 301 ||			// Moved Permanently
+			_responseCode == 302			// Found (http redirect)
 		)
 		{
-			self._next = _http_connect;
-			self.st = Status::in_progress;
+			_next = _http_connect;
+			st = Status::in_progress;
+
+			const char* location = responseHeader.findValue("Location");
+			if(!location)
+				return setError(Status::http_error);
+
+			return open(location);
 		}
 		else
 		{
-			self.st = Status::http_error;
-			roLog("error", "Http stream receive server error code '%d'\n", serverRetCode);
+			st = Status::http_error;
+			roLog("error", "Http stream receive server error code '%d'\n", _responseCode);
 		}
 	}
 
-	self._ringBuf.commitRead(headerSize);
+	_ringBuf.commitRead(headerSize);
 
-	if(!self.st) return self.setError();
-	return self.st;
+	_httpHeaderStatus = st;
+	if(!st) return setError();
+	return st;
+}
+
+Status HttpIStream::_readContent(roUint64 bytesToRead)
+{
+	st = _readFromSocket(bytesToRead);
+
+	roSize readableSize = 0;
+	st = roSafeAssign(readableSize, bytesToRead);
+	if(!st) return st;
+
+	begin = _ringBuf.read(readableSize);
+	current = begin;
+	end = begin + readableSize;
+
+	return st;
+}
+
+Status HttpIStream::_readChunkSize(roUint64 bytesToRead)
+{
+	return st;
+}
+
+Status HttpIStream::_readChunkedContent(roUint64 bytesToRead)
+{
+	st = _readFromSocket(bytesToRead);
+
+	roSize readableSize = 0;
+	st = roSafeAssign(readableSize, bytesToRead);
+	if(!st) return st;
+
+	begin = _ringBuf.read(readableSize);
+	current = begin;
+	end = begin + readableSize;
+
+	return st;
 }
 
 static Status _http_error(IStream& s, roUint64 bytesToRead)
@@ -283,6 +418,9 @@ Status HttpIStream::size(roUint64& bytes) const
 
 	if(!_httpHeaderStatus)
 		return _httpHeaderStatus;
+
+	if(!_contentLengthSattus)
+		return _contentLengthSattus;
 
 	bytes = self._fileSize;
 	return st = Status::ok;
@@ -300,6 +438,8 @@ Status HttpIStream::seekRead(roInt64 offset, SeekOrigin origin)
 
 void HttpIStream::closeRead()
 {
+	_socket.close();
+	_ringBuf.clear();
 }
 
 Status openHttpIStream(roUtf8* url, AutoPtr<IStream>& stream)
@@ -308,7 +448,8 @@ Status openHttpIStream(roUtf8* url, AutoPtr<IStream>& stream)
 	if(!s.ptr()) return Status::not_enough_memory;
 
 	Status st = s->open(url);
-	if(!st) return st;
+	if(!st && st != Status::in_progress)
+		return st;
 
 	stream.takeOver(s);
 	return st;
