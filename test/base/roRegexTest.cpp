@@ -382,6 +382,11 @@ TEST_FIXTURE(RegexTest, test)
 //		{ "^12.34",						"s",	"12\n34",										"12\\x0a34" },	// PCRE_DOTALL mode
 //		{ NULL,							"s",	"12\r34",										"12\\x0d34" },
 
+		{ "^http://([^/]+)(.*)",		"",		"http://localhost",								"http://localhost`localhost`" },
+		{ NULL,							"",		"http://localhost/",							"http://localhost/`localhost`/" },
+		{ NULL,							"",		"http://localhost/index.html",					"http://localhost/index.html`localhost`/index.html" },
+		{ NULL,							"",		"ftp://localhost",								NULL },
+
 		{ "a?a?aa",						"",		"aa",											"aa" },
 
 		{ "",							"",		"",												NULL },

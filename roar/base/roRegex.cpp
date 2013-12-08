@@ -422,6 +422,9 @@ bool match_charSet(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
 	const roUtf8* i = edge.f.begin;
 
+	if(s.begin == s.end)
+		return false;
+
 	roUtf8 c = *s.begin;
 	bool exclusion= false;
 	if(*i == '^')
