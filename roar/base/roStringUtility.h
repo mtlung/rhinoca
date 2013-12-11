@@ -53,6 +53,18 @@ roStatus	roStrTo			(const char* str, roUint16& ret);
 roStatus	roStrTo			(const char* str, roUint32& ret);
 roStatus	roStrTo			(const char* str, roUint64& ret);
 
+roStatus	roStrTo			(const char* str, roSize len, bool& ret);
+roStatus	roStrTo			(const char* str, roSize len, float& ret);
+roStatus	roStrTo			(const char* str, roSize len, double& ret);
+roStatus	roStrTo			(const char* str, roSize len, roInt8& ret);
+roStatus	roStrTo			(const char* str, roSize len, roInt16& ret);
+roStatus	roStrTo			(const char* str, roSize len, roInt32& ret);
+roStatus	roStrTo			(const char* str, roSize len, roInt64& ret);
+roStatus	roStrTo			(const char* str, roSize len, roUint8& ret);
+roStatus	roStrTo			(const char* str, roSize len, roUint16& ret);
+roStatus	roStrTo			(const char* str, roSize len, roUint32& ret);
+roStatus	roStrTo			(const char* str, roSize len, roUint64& ret);
+
 roStatus	roStrTo			(const char* str, const char*& newPos, bool& ret);
 roStatus	roStrTo			(const char* str, const char*& newPos, float& ret);
 roStatus	roStrTo			(const char* str, const char*& newPos, double& ret);

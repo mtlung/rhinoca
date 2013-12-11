@@ -109,11 +109,21 @@ void roStrReverse(char *str, roSize len)
 // ----------------------------------------------------------------------
 
 template<class T>
-static roStatus _parseNumber(const char* p, T& ret, const char** newp=NULL)
+static roStatus _parseNumber(const char* p, const char* end, T& ret, const char** newp=NULL)
 {
+	if(!p)
+		return roStatus::pointer_is_null;
+
+	if(p >= end && end)
+		return roStatus::string_parsing_error;
+
 	// Skip white spaces
 	static const char _whiteSpace[] = " \t\r\n";
-	while(roStrChr(_whiteSpace, *p)) { ++p; }
+	while(roStrChr(_whiteSpace, *p)) {
+		++p;
+		if(p >= end && end)
+			return roStatus::string_parsing_error;
+	}
 
 	const bool neg = (*p) == '-';
 
@@ -121,11 +131,23 @@ static roStatus _parseNumber(const char* p, T& ret, const char** newp=NULL)
 		return roStatus::string_to_number_overflow;
 
 	if(neg) ++p;
-	while(roStrChr(_whiteSpace, *p)) { ++p; }
+	if(p >= end && end)
+		return roStatus::string_parsing_error;
+
+	while(roStrChr(_whiteSpace, *p)) {
+		++p;
+		if(p >= end && end)
+			return roStatus::string_parsing_error;
+	}
 
 	// Skip leading zeros
 	bool hasLeadingZeros = false;
-	while(*p == '0') { hasLeadingZeros = true; ++p; }
+	while(*p == '0') {
+		hasLeadingZeros = true;
+		++p;
+		if(p >= end && end)
+			return roStatus::string_parsing_error;
+	}
 
 	static const T preOverMax = ro::TypeOf<T>::valueMax() / 10;
 	static const char preOverMax2 = char(ro::TypeOf<T>::valueMax() % 10) + '0';
@@ -135,8 +157,11 @@ static roStatus _parseNumber(const char* p, T& ret, const char** newp=NULL)
 	T i = 0;
 
 	// Ensure there is really some numbers in the string
-	if(*p >= '1' && *p <= '9')
+	if(*p >= '1' && *p <= '9') {
 		i = *(p++) - '0';
+		if(p >= end && end)
+			return roStatus::string_parsing_error;
+	}
 	else {
 		if(hasLeadingZeros) {
 			if(newp) *newp = p;
@@ -148,7 +173,7 @@ static roStatus _parseNumber(const char* p, T& ret, const char** newp=NULL)
 
 	if(ro::TypeOf<T>::isUnsigned() || !neg)
 	{
-		while(roIsDigit(*p)) {
+		while(roIsDigit(*p) && (p < end || !end)) {
 			if(i >= preOverMax) {
 				if(i != preOverMax || *p > preOverMax2)
 					return roStatus::string_to_number_overflow;
@@ -159,7 +184,7 @@ static roStatus _parseNumber(const char* p, T& ret, const char** newp=NULL)
 	}
 	else
 	{
-		while(roIsDigit(*p)) {
+		while(roIsDigit(*p) && (p < end || !end)) {
 			if(i >= preUnderMin) {
 				if(i != preUnderMin || *p > preUnderMin2)
 					return roStatus::string_to_number_overflow;
@@ -205,67 +230,128 @@ roStatus roStrTo(const char* str, double& ret) {
 }
 
 roStatus roStrTo(const char* str, roInt8& ret) {
-	return _parseNumber(str, ret);
+	return _parseNumber(str, NULL, ret);
 }
 
 roStatus roStrTo(const char* str, roInt16& ret) {
-	return _parseNumber(str, ret);
+	return _parseNumber(str, NULL, ret);
 }
 
 roStatus roStrTo(const char* str, roInt32& ret) {
-	return _parseNumber(str, ret);
+	return _parseNumber(str, NULL, ret);
 }
 
 roStatus roStrTo(const char* str, roInt64& ret) {
-	return _parseNumber(str, ret);
+	return _parseNumber(str, NULL, ret);
 }
 
 roStatus roStrTo(const char* str, roUint8& ret) {
-	return _parseNumber(str, ret);
+	return _parseNumber(str, NULL, ret);
 }
 
 roStatus roStrTo(const char* str, roUint16& ret) {
-	return _parseNumber(str, ret);
+	return _parseNumber(str, NULL, ret);
 }
 
 roStatus roStrTo(const char* str, roUint32& ret) {
-	return _parseNumber(str, ret);
+	return _parseNumber(str, NULL, ret);
 }
 
 roStatus roStrTo(const char* str, roUint64& ret) {
-	return _parseNumber(str, ret);
+	return _parseNumber(str, NULL, ret);
+}
+
+roStatus roStrTo(const char* str, roSize len, bool& ret)
+{
+	if(len == 4 && roStrCaseCmp(str, "true") == 0) {
+		ret = true;
+		return roStatus::ok;
+	}
+	else if(len == 5 && roStrCaseCmp(str, "false") == 0) {
+		ret = false;
+		return roStatus::ok;
+	}
+
+	roUint64 tmp;
+	roStatus st = roStrTo(str, len, tmp);
+	if(!st) return st;
+
+	ret = (tmp == 1);
+	return roStatus::ok;
+}
+
+roStatus roStrTo(const char* str, roSize len, float& ret) {
+	return roStatus::not_implemented;
+//	return sscanf(str, "%f", &ret) == 1 ? roStatus::ok : roStatus::string_parsing_error;
+}
+
+roStatus roStrTo(const char* str, roSize len, double& ret) {
+	return roStatus::not_implemented;
+//	return sscanf(str, "%lf", &ret) == 1 ? roStatus::ok : roStatus::string_parsing_error;
+}
+
+roStatus roStrTo(const char* str, roSize len, roInt8& ret) {
+	return _parseNumber(str, str + len, ret);
+}
+
+roStatus roStrTo(const char* str, roSize len, roInt16& ret) {
+	return _parseNumber(str, str + len, ret);
+}
+
+roStatus roStrTo(const char* str, roSize len, roInt32& ret) {
+	return _parseNumber(str, str + len, ret);
+}
+
+roStatus roStrTo(const char* str, roSize len, roInt64& ret) {
+	return _parseNumber(str, str + len, ret);
+}
+
+roStatus roStrTo(const char* str, roSize len, roUint8& ret) {
+	return _parseNumber(str, str + len, ret);
+}
+
+roStatus roStrTo(const char* str, roSize len, roUint16& ret) {
+	return _parseNumber(str, str + len, ret);
+}
+
+roStatus roStrTo(const char* str, roSize len, roUint32& ret) {
+	return _parseNumber(str, str + len, ret);
+}
+
+roStatus roStrTo(const char* str, roSize len, roUint64& ret) {
+	return _parseNumber(str, str + len, ret);
 }
 
 roStatus roStrTo(const char* str, const char*& newPos, roInt8& ret) {
-	return _parseNumber(str, ret, &newPos);
+	return _parseNumber(str, NULL, ret, &newPos);
 }
 
 roStatus roStrTo(const char* str, const char*& newPos, roInt16& ret) {
-	return _parseNumber(str, ret, &newPos);
+	return _parseNumber(str, NULL, ret, &newPos);
 }
 
 roStatus roStrTo(const char* str, const char*& newPos, roInt32& ret) {
-	return _parseNumber(str, ret, &newPos);
+	return _parseNumber(str, NULL, ret, &newPos);
 }
 
 roStatus roStrTo(const char* str, const char*& newPos, roInt64& ret) {
-	return _parseNumber(str, ret, &newPos);
+	return _parseNumber(str, NULL, ret, &newPos);
 }
 
 roStatus roStrTo(const char* str, const char*& newPos, roUint8& ret) {
-	return _parseNumber(str, ret, &newPos);
+	return _parseNumber(str, NULL, ret, &newPos);
 }
 
 roStatus roStrTo(const char* str, const char*& newPos, roUint16& ret) {
-	return _parseNumber(str, ret, &newPos);
+	return _parseNumber(str, NULL, ret, &newPos);
 }
 
 roStatus roStrTo(const char* str, const char*& newPos, roUint32& ret) {
-	return _parseNumber(str, ret, &newPos);
+	return _parseNumber(str, NULL, ret, &newPos);
 }
 
 roStatus roStrTo(const char* str, const char*& newPos, roUint64& ret) {
-	return _parseNumber(str, ret, &newPos);
+	return _parseNumber(str, NULL, ret, &newPos);
 }
 
 bool roStrToBool(const char* str, bool defaultValue) {

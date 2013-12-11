@@ -22,10 +22,33 @@ struct Regex : private NonCopyable
 
 	bool match(const roUtf8* s, const roUtf8* f, const char* options=NULL);
 
+	template<typename T>
+	Status getValue(roSize index, T& value);
+
+	template<typename T>
+	T getValueWithDefault(roSize index, T defaultValue);
+
 // Attributes
 	bool isDebug;
 	Array<RangedString> result;
 };
+
+template<typename T>
+Status Regex::getValue(roSize index, T& value)
+{
+	if(!result.isInRange(index))
+		return Status::index_out_of_range;
+
+	return roStrTo(result[index].begin, result[index].size(), value);
+}
+
+template<typename T>
+T Regex::getValueWithDefault(roSize index, T defaultValue)
+{
+	T value;
+	Status st = getValue(index, value);
+	return st ? value : defaultValue;
+}
 
 }   // namespace ro
 

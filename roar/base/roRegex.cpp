@@ -4,10 +4,12 @@
 #include "roTypeOf.h"
 
 // Reference:
+// Online regex test platform
+// http://regexpal.com/
 // Regular Expression Matching Can Be Simple And Fast
 // http://swtch.com/~rsc/regexp/regexp1.html
 // Regular expression to NFA visualization
-// http://hackingoff.com/compilers/regular-expression-to-nfa-dfa
+// http://hackingoff.com/compilers/regular-expression-to-nfa-dfa	
 // A JavaScript and regular expression centric blog
 // http://blog.stevenlevithan.com
 // Perl regular expression cheat sheet
