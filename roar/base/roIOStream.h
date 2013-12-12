@@ -123,8 +123,8 @@ struct MemorySeekableOStream : public OStream
 	roSize _pos;
 };
 
-Status openRawFileIStream	(roUtf8* path, AutoPtr<IStream>& stream);
-Status openHttpIStream		(roUtf8* url, AutoPtr<IStream>& stream);
+Status openRawFileIStream	(roUtf8* path, AutoPtr<IStream>& stream, bool blocking=false);
+Status openHttpIStream		(roUtf8* url, AutoPtr<IStream>& stream, bool blocking=false);
 
 }   // namespace ro
 

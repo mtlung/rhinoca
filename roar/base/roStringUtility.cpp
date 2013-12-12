@@ -145,7 +145,7 @@ static roStatus _parseNumber(const char* p, const char* end, T& ret, const char*
 	while(*p == '0') {
 		hasLeadingZeros = true;
 		++p;
-		if(p >= end && end)
+		if(p > end && end)
 			return roStatus::string_parsing_error;
 	}
 
@@ -159,7 +159,7 @@ static roStatus _parseNumber(const char* p, const char* end, T& ret, const char*
 	// Ensure there is really some numbers in the string
 	if(*p >= '1' && *p <= '9') {
 		i = *(p++) - '0';
-		if(p >= end && end)
+		if(p > end && end)
 			return roStatus::string_parsing_error;
 	}
 	else {

@@ -11,6 +11,8 @@
 
 // Reference:
 // http://royal.pingdom.com/2012/08/15/fun-and-unusual-http-response-headers/
+// http://www3.ntu.edu.sg/home/ehchua/programming/webprogramming/http_basics.html
+// http://www.staroceans.net/e-book/O%27Reilly%20-%20HTTP%20-%20The%20Definitive%20Guide.pdf
 namespace ro {
 
 struct HttpIStream : public IStream
@@ -33,6 +35,7 @@ struct HttpIStream : public IStream
 	Status		_readContent		(roUint64 bytesToRead);
 	Status		_readChunkSize		(roUint64 bytesToRead);
 	Status		_readChunkedContent	(roUint64 bytesToRead);
+	Status		_readPartialContent	(roUint64 bytesToRead);
 	Status		setError			();
 	Status		setError			(Status s);
 
@@ -59,6 +62,7 @@ static Status _http_readResponse(IStream& s, roUint64 bytesToRead)		{ return sta
 static Status _http_readContent(IStream& s, roUint64 bytesToRead)		{ return static_cast<HttpIStream&>(s)._readContent(bytesToRead); }
 static Status _http_readChunkSize(IStream& s, roUint64 bytesToRead)		{ return static_cast<HttpIStream&>(s)._readChunkSize(bytesToRead); }
 //static Status _http_readChunkedContent(IStream& s, roUint64 bytesToRead){ return static_cast<HttpIStream&>(s)._readChunkedContent(bytesToRead); }
+static Status _http_readPartialContent(IStream& s, roUint64 bytesToRead){ return static_cast<HttpIStream&>(s)._readPartialContent(bytesToRead); }
 static Status _http_error(IStream& s, roUint64 bytesToRead);
 
 HttpIStream::HttpIStream()
@@ -110,7 +114,14 @@ Status HttpIStream::open(const roUtf8* url)
 
 bool HttpIStream::readWillBlock(roUint64 size)
 {
-	return false;
+	if(_ringBuf.totalReadable() >= size)
+		return false;
+
+	st = (*_next)(*this, size);
+	if(st)
+		return _ringBuf.totalReadable() >= size;
+
+	return st == Status::in_progress;
 }
 
 Status HttpIStream::_connect()
@@ -178,8 +189,17 @@ Status HttpIStream::_waitConnect()
 	const char getFmt[] =
 		"GET {} HTTP/1.1\r\n"
 		"Host: {}\r\n"	// Required for http 1.1
+		"Connection: keep-alive\r\n"
 		"User-Agent: The Roar Engine\r\n"
-		"Range: bytes=0-64\r\n"
+		"Accept-Encoding: deflate\r\n"
+		"Range: bytes=0-128\r\n"
+		"\r\n";
+
+		"GET {} HTTP/1.1\r\n"
+		"Host: {}\r\n"	// Required for http 1.1
+		"User-Agent: The Roar Engine\r\n"
+		"Accept-Encoding: deflate\r\n"
+		"Range: bytes=129-\r\n"
 		"\r\n";
 
 	_requestStr.clear();
@@ -308,8 +328,7 @@ Status HttpIStream::_readResponse()
 			return setError(Status::http_error);
 		}
 
-		regex.result[2].end = '\0';
-		_responseCode = roStrToUint32(regex.result[2].begin, 0);
+		_responseCode = regex.getValueWithDefault(2, 0);
 
 		if(_responseCode == 200)			// Ok
 		{
@@ -319,8 +338,8 @@ Status HttpIStream::_readResponse()
 			// Reference: http://www.iana.org/assignments/http-parameters/http-parameters.xhtml
 			const char* encoding = responseHeader.findValue("Transfer-Encoding");
 			if(encoding) {
-				_chunked = roStrStrCase((char*)encoding, "chunked");
-				_deflate = roStrStrCase((char*)encoding, "deflate");
+				_chunked = roStrStrCase((char*)encoding, "chunked") != NULL;
+				_deflate = roStrStrCase((char*)encoding, "deflate") != NULL;
 			}
 
 			const char* contentLength = responseHeader.findValue("Content-Length");
@@ -340,7 +359,19 @@ Status HttpIStream::_readResponse()
 		}
 		else if(_responseCode == 206)		// Partial Content
 		{
-			_responseCode = 206;
+			const char* range = responseHeader.findValue("Content-Range");
+			Regex regex;
+			if(!regex.match(range, "^\\s*(bytes)\\s+([\\d]+)\\s*-\\s*([\\d]+)\\s*/([\\d]+)")) {
+				roLog("error", "Invalid Content-Range: %s\n", range);
+				return setError(Status::http_error);
+			}
+
+			roUint64 rangeBegin, rangeEnd;
+			st = regex.getValue(2, rangeBegin);
+			st = regex.getValue(3, rangeEnd);
+
+			_contentLengthSattus = st = regex.getValue(4, _fileSize);
+			_next = _http_readPartialContent;
 		}
 		else if(
 			_responseCode == 301 ||			// Moved Permanently
@@ -356,10 +387,15 @@ Status HttpIStream::_readResponse()
 
 			return open(location);
 		}
+		else if(_responseCode == 416)		// Requested Range not satisfiable
+		{
+			roLog("error", "Http 416: Requested Range not satisfiable");
+			st = Status::http_error;
+		}
 		else
 		{
-			st = Status::http_error;
 			roLog("error", "Http stream receive server error code '%d'\n", _responseCode);
+			st = Status::http_error;
 		}
 	}
 
@@ -391,6 +427,21 @@ Status HttpIStream::_readChunkSize(roUint64 bytesToRead)
 }
 
 Status HttpIStream::_readChunkedContent(roUint64 bytesToRead)
+{
+	st = _readFromSocket(bytesToRead);
+
+	roSize readableSize = 0;
+	st = roSafeAssign(readableSize, bytesToRead);
+	if(!st) return st;
+
+	begin = _ringBuf.read(readableSize);
+	current = begin;
+	end = begin + readableSize;
+
+	return st;
+}
+
+Status HttpIStream::_readPartialContent(roUint64 bytesToRead)
 {
 	st = _readFromSocket(bytesToRead);
 
@@ -442,13 +493,19 @@ void HttpIStream::closeRead()
 	_ringBuf.clear();
 }
 
-Status openHttpIStream(roUtf8* url, AutoPtr<IStream>& stream)
+Status openHttpIStream(roUtf8* url, AutoPtr<IStream>& stream, bool blocking)
 {
 	AutoPtr<HttpIStream> s = defaultAllocator.newObj<HttpIStream>();
 	if(!s.ptr()) return Status::not_enough_memory;
 
 	Status st = s->open(url);
-	if(!st && st != Status::in_progress)
+
+	if(blocking && st == Status::in_progress) {
+		while(s->readWillBlock(1)) {}
+		st = s->st;
+	}
+
+	if(!st)
 		return st;
 
 	stream.takeOver(s);

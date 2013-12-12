@@ -382,13 +382,20 @@ void RawFileIStream::closeRead()
 
 #endif
 
-Status openRawFileIStream(roUtf8* path, AutoPtr<IStream>& stream)
+Status openRawFileIStream(roUtf8* path, AutoPtr<IStream>& stream, bool blocking)
 {
 	AutoPtr<RawFileIStream> s = defaultAllocator.newObj<RawFileIStream>();
 	if(!s.ptr()) return Status::not_enough_memory;
 
 	Status st = s->open(path);
-	if(!st) return st;
+
+	if(blocking && st == Status::in_progress) {
+		while(s->readWillBlock(1)) {}
+		st = s->st;
+	}
+
+	if(!st)
+		return st;
 
 	stream.takeOver(s);
 	return st;

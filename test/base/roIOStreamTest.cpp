@@ -282,7 +282,8 @@ TEST_FIXTURE(RandomIOStreamTest, rawFile)
 {
 //	CHECK(openHttpIStream("http://localhost", s));
 //	CHECK(openHttpIStream("http://localhost:8081", s));
-	CHECK(openHttpIStream("http://gov.hk.com", s));
+//	CHECK(openHttpIStream("http://hrtb", s));
+	CHECK(openHttpIStream("http://sin-nx-lty02.ubisoft.org/static-data/map3/2/0/0.png", s, true));
 	CHECK(loadReferenceContent());
 
 	CHECK(openRawFileIStream("Test.vc9.vcproj", s));
