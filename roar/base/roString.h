@@ -8,6 +8,8 @@
 
 namespace ro {
 
+struct RangedString;
+
 ///	A light weight replacement for std::string
 /// Assume using UTF-8 encoding
 struct String
@@ -16,10 +18,12 @@ struct String
 	String(const char* str);
 	String(const char* str, roSize count);
 	String(const String& str);
+	String(const RangedString& rangedStr);
 	~String();
 
 	String& operator=(const char* str);
 	String& operator=(const String& str);
+	String& operator=(const RangedString& rangedStr);
 
 // Operations
 	Status		resize		(roSize size);
@@ -50,6 +54,7 @@ struct String
 
 	String&		operator+=	(const char* str);
 	String&		operator+=	(const String& str);
+	String&		operator+=	(const RangedString& rangedStr);
 
 	Status		operator*=	(roSize count);
 
@@ -58,8 +63,10 @@ struct String
 
 	bool		operator==	(const char* rhs) const;
 	bool		operator==	(const String& rhs) const;
+	bool		operator==	(const RangedString& rhs) const;
 	bool		operator!=	(const char* rhs) const		{ return !(*this == rhs); }
 	bool		operator!=	(const String& rhs) const	{ return !(*this == rhs); }
+	bool		operator!=	(const RangedString& rhs) const	{ return !(*this == rhs); }
 
 	bool		isInRange	(int i) const		{ return i >= 0 && roSize(i) < size(); }
 	bool		isInRange	(roSize i) const	{ return i < size(); }
@@ -70,6 +77,7 @@ struct String
 
 	char*		c_str		()			{ return _str(); }
 	const char*	c_str		() const	{ return _str(); }
+	const char*	end			() const	{ return _str() + _size(); }
 
 	char& operator[]		(roSize index) { roAssert(index < _size()); return _str()[index]; }
 	const char& operator[]	(roSize index) const { roAssert(index < _size()); return _str()[index]; }

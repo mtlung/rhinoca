@@ -43,6 +43,12 @@ String::String(const String& str)
 	roVerify(assign(str._str(), str.size()));
 }
 
+String::String(const RangedString& rangedStr)
+	: _cstr(const_cast<char*>(_emptyString))
+{
+	roVerify(assign(rangedStr.begin, rangedStr.size()));
+}
+
 String::~String()
 {
 	clear();
@@ -59,6 +65,12 @@ String& String::operator=(const String& str)
 {
 	String tmp(str);
 	roSwap(*this, tmp);
+	return *this;
+}
+
+String& String::operator=(const RangedString& rangedStr)
+{
+	roVerify(assign(rangedStr.begin, rangedStr.size()));
 	return *this;
 }
 
@@ -302,6 +314,18 @@ String& String::operator+=(const String& str)
 	return *this += str._str();
 }
 
+String& String::operator+=(const RangedString& rangedStr)
+{
+	if(const roSize len = rangedStr.size()) {
+		const roSize oldLen = _size();
+		resize(oldLen + len);
+		char* p = _str();
+		for(roSize i=0; i<len; ++i)
+			p[oldLen + i] = rangedStr.begin[i];
+	}
+	return *this;
+}
+
 Status String::operator*=(roSize count)
 {
 	if(count == 0) {
@@ -344,6 +368,14 @@ bool String::operator==(const String& rhs) const
 		return false;
 
 	return roStrCmp(_str(), rhs._str()) == 0;
+}
+
+bool String::operator==(const RangedString& rhs) const
+{
+	if(size() != rhs.size())
+		return false;
+
+	return roStrnCmp(_str(), rhs.begin, size()) == 0;
 }
 
 

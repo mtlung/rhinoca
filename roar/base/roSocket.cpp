@@ -286,6 +286,7 @@ ErrorCode BsdSocket::create(SocketType type)
 	}
 #endif
 
+	roAssert(fd() != INVALID_SOCKET);
 	return lastError = OK;
 }
 
