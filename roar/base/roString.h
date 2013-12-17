@@ -107,10 +107,17 @@ struct RangedString
 	RangedString(const roUtf8* s) : begin(s), end(s + roStrLen(s)) {}
 	RangedString(const roUtf8* b, const roUtf8* e) : begin(b), end(e) { roAssert(end >= begin); }
 
-	String toString() const;
-	operator String();
+	String		toString() const;
+	operator	String();
 
-	roSize size() const { return end - begin; }
+	roSize		size() const { return end - begin; }
+
+	bool		operator==	(const char* rhs) const;
+	bool		operator==	(const String& rhs) const;
+	bool		operator==	(const RangedString& rhs) const;
+	bool		operator!=	(const char* rhs) const		{ return !(*this == rhs); }
+	bool		operator!=	(const String& rhs) const	{ return !(*this == rhs); }
+	bool		operator!=	(const RangedString& rhs) const	{ return !(*this == rhs); }
 
 	const roUtf8* begin;
 	const roUtf8* end;

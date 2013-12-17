@@ -391,6 +391,27 @@ RangedString::operator String()
 	return toString();
 }
 
+bool RangedString::operator==(const char* rhs) const
+{
+	return roStrnCmp(begin, rhs, size()) == 0;
+}
+
+bool RangedString::operator==(const String& rhs) const
+{
+	if(size() != rhs.size())
+		return false;
+
+	return roStrnCmp(begin, rhs.c_str(), size()) == 0;
+}
+
+bool RangedString::operator==(const RangedString& rhs) const
+{
+	if(size() != rhs.size())
+		return false;
+
+	return roStrnCmp(begin, rhs.begin, size()) == 0;
+}
+
 
 // ----------------------------------------------------------------------
 
