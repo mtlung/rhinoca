@@ -26,13 +26,15 @@ struct Regex : private NonCopyable
 	template<typename T>
 	Status getValue(roSize index, T& value);
 
+	Status getValue(roSize index, RangedString& str);
+
 	template<typename T>
 	T getValueWithDefault(roSize index, T defaultValue);
 
 // Attributes
 	bool isDebug;
 	Array<RangedString> result;
-};
+};	// Regex
 
 template<typename T>
 Status Regex::getValue(roSize index, T& value)

@@ -979,4 +979,12 @@ bool Regex::match(RangedString srcString, RangedString regString, const char* op
 	return false;
 }
 
+Status Regex::getValue(roSize index, RangedString& str)
+{
+	if(!result.isInRange(index))
+		return Status::index_out_of_range;
+	str = result[index];
+	return Status::ok;
+}
+
 }   // namespace ro

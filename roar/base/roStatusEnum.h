@@ -63,6 +63,7 @@ roStatusEnum( net_not_connected )
 // Http
 roStatusEnum( http_error )
 roStatusEnum( http_invalid_uri )
+roStatusEnum( http_header_error )
 roStatusEnum( http_unknow_size )
 roStatusEnum( http_404_not_found )
 
