@@ -477,6 +477,14 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="network"
+			>
+			<File
+				RelativePath="..\..\test\network\roHttpTest.cpp"
+				>
+			</File>
+		</Filter>
 		<File
 			RelativePath="..\..\test\main.cpp"
 			>

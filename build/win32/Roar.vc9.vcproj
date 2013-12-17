@@ -968,6 +968,14 @@
 			Name="network"
 			>
 			<File
+				RelativePath="..\..\roar\network\roHttp.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\roar\network\roHttp.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\roar\network\roHttpServer.cpp"
 				>
 			</File>
