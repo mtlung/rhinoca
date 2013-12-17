@@ -100,6 +100,7 @@ struct String
 };	// String
 
 
+/// RangedString didn't own the string data, just store the begin and end pointers.
 struct RangedString
 {
 	RangedString() : begin(NULL), end(NULL) {}

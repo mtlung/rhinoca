@@ -173,6 +173,23 @@ void _strFormat_str(String& str, const String* val, const roUtf8* options)
 	_strFormat_utf8(str, val->c_str(), options);
 }
 
+void _strFormat_rangedStr(String& str, const RangedString* val, const roUtf8* options)
+{
+	if(!val) return;
+
+	roSize len = val->size();
+
+	roSize padLen = 0;
+	roUtf8 padding;
+	if(sscanf(options, "pl%u%c", &padLen, &padding) == 2 && padLen > len)
+		str.append(padding, padLen - len);
+
+	str.append(val->begin, len);
+
+	if(sscanf(options, "pr%u%c", &padLen, &padding) == 2 && padLen > len)
+		str.append(padding, padLen - len);
+}
+
 typedef bool (*FUNC)(String& str, const void* param, const roUtf8* options);
 
 struct FormatArg

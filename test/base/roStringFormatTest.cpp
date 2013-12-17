@@ -73,6 +73,10 @@ TEST_FIXTURE(StringFormatTest, printf)
 
 	str.clear(); strFormat(str, "{} {}", String("Hello world!"), 456);
 	CHECK(str == "Hello world! 456");
+
+	const roUtf8* kStr = "Const string!!!!";
+	str.clear(); strFormat(str, "{},{}", RangedString(kStr, kStr + 5), RangedString(kStr + 6, kStr + 12));
+	CHECK(str == "Const,string");
 }
 
 TEST_FIXTURE(StringFormatTest, printf_padding)

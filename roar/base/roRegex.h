@@ -21,6 +21,7 @@ struct Regex : private NonCopyable
 	Regex();
 
 	bool match(const roUtf8* s, const roUtf8* f, const char* options=NULL);
+	bool match(RangedString s, RangedString f, const char* options=NULL);
 
 	template<typename T>
 	Status getValue(roSize index, T& value);

@@ -55,6 +55,7 @@ void _strFormat_uint32ptr	(String& str, roUint32* val, const roUtf8* options);
 void _strFormat_uint64ptr	(String& str, roUint64* val, const roUtf8* options);
 void _strFormat_utf8		(String& str, const roUtf8* val, const roUtf8* options);
 void _strFormat_str			(String& str, const String* val, const roUtf8* options);
+void _strFormat_rangedStr	(String& str, const RangedString* val, const roUtf8* options);
 
 inline void* _strFormatFunc(roInt8 val) {
 	return (void*)_strFormat_int8;
@@ -91,6 +92,9 @@ inline void* _strFormatFunc(const roUtf8* val) {
 }
 inline void* _strFormatFunc(const String& val) {
 	return (void*)_strFormat_str;
+}
+inline void* _strFormatFunc(const RangedString& val) {
+	return (void*)_strFormat_rangedStr;
 }
 
 inline const void* _strFormatArg(roInt8 val) {

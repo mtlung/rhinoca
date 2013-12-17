@@ -926,6 +926,11 @@ bool Regex::match(const roUtf8* s, const roUtf8* f, const char* options)
 	RangedString regString(f, f + roStrLen(f));
 	RangedString srcString(s, s + roStrLen(s));
 
+	return match(srcString, regString, options);
+}
+
+bool Regex::match(RangedString srcString, RangedString regString, const char* options)
+{
 	Graph graph;
 	graph.regex = this;
 	graph.regString = regString;
@@ -942,7 +947,7 @@ bool Regex::match(const roUtf8* s, const roUtf8* f, const char* options)
 		return false;
 
 	if(isDebug) {
-		roLog("debug", "%s, %s\n", f, s);
+		roLog("debug", "%s, %s\n", regString.toString().c_str(), srcString.toString().c_str());
 		debugNodes(graph);
 	}
 
