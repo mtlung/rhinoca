@@ -2,279 +2,167 @@
 #include "roHttp.h"
 #include "../base/roLog.h"
 #include "../base/roRegex.h"
-#include "../base/roStringFormat.h"
 #include "../base/roTypeCast.h"
 #include "../base/roUtility.h"
 
 namespace ro {
 
-//////////////////////////////////////////////////////////////////////////
-// HttpRequest
-
-Status HttpRequest::addField(const char* option, const char* value)
+struct IFifoWrite
 {
-	return strFormat(requestString, "{}: {}\r\n", option, value);
+	virtual roStatus	requestWrite		(roSize maxSizeToWrite, roByte*& outWritePtr) = 0;
+	virtual void		commitWrite			(roSize written) = 0;
+	virtual bool		keepWrite			() const = 0;
+};
+
+struct IFifoRead
+{
+	virtual roStatus	requestRead			(roSize& outReadSize, roByte*& outReadPtr) = 0;
+	virtual void		commitRead			(roSize read) = 0;
+	virtual void		contentReadBegin	() = 0;
+};
+
+struct SizedFifoRingBuf : public IFifoWrite, public IFifoRead
+{
+	SizedFifoRingBuf();
+
+	override roStatus	requestWrite		(roSize maxSizeToWrite, roByte*& outWritePtr)	{ return ringBuffer->write(maxSizeToWrite, outWritePtr); }
+	override void		commitWrite			(roSize written);
+	override bool		keepWrite			() const										{ return !contentBegin || bytesAlreadyWritten < expectedEnd; }
+	override void		contentReadBegin	()												{ contentBegin = true; expectedEnd += bytesAlreadyRead; }
+	override roStatus	requestRead			(roSize& outReadSize, roByte*& outReadPtr);
+	override void		commitRead			(roSize read);
+
+	RingBuffer*	ringBuffer;
+	bool		contentBegin;
+	roUint64	expectedEnd;
+	roUint64	bytesAlreadyWritten;
+	roUint64	bytesAlreadyRead;
+};	// SizedFifoRingBuf
+
+SizedFifoRingBuf::SizedFifoRingBuf()
+	: ringBuffer(NULL)
+	, contentBegin(false)
+	, expectedEnd(0)
+	, bytesAlreadyWritten(0)
+	, bytesAlreadyRead(0)
+{}
+
+void SizedFifoRingBuf::commitWrite(roSize written)
+{
+	ringBuffer->commitWrite(written);
+	bytesAlreadyWritten += written;
 }
 
-Status HttpRequest::addField(HeaderField::Enum option, const char* value)
+roStatus SizedFifoRingBuf::requestRead(roSize& outReadSize, roByte*& outReadPtr)
 {
-	switch(option) {
-	case HeaderField::Accept:
-		return addField("Accept", value);
-	case HeaderField::AcceptCharset:
-		return addField("Accept-Charset", value);
-	case HeaderField::AcceptEncoding:
-		return addField("Accept-Encoding", value);
-	case HeaderField::AcceptLanguage:
-		return addField("Accept-Language", value);
-	case HeaderField::Authorization:
-		return addField("Authorization", value);
-	case HeaderField::CacheControl:
-		return addField("Cache-Control", value);
-	case HeaderField::Connection:
-		return addField("Connection", value);
-	case HeaderField::Cookie:
-		return addField("Cookie", value);
-	case HeaderField::ContentMD5:
-		return addField("Content-MD5", value);
-	case HeaderField::ContentType:
-		return addField("Content-Type", value);
-	case HeaderField::Expect:
-		return addField("Expect", value);
-	case HeaderField::From:
-		return addField("From", value);
-	case HeaderField::Host:
-		return addField("Host", value);
-	case HeaderField::Origin:
-		return addField("Origin", value);
-	case HeaderField::Pragma:
-		return addField("Pragma", value);
-	case HeaderField::ProxyAuthorization:
-		return addField("Proxy-Authorization", value);
-	case HeaderField::Referer:
-		return addField("Referer", value);
-	case HeaderField::UserAgent:
-		return addField("UserAgent", value);
-	case HeaderField::Via:
-		return addField("Via", value);
-	}
+	roAssert(bytesAlreadyRead <= expectedEnd);
 
-	return Status::invalid_parameter;
+	if(contentBegin && bytesAlreadyRead >= expectedEnd)
+		return Status::end_of_data;
+
+	outReadPtr = ringBuffer->read(outReadSize);
+	return Status::ok;
 }
 
-Status HttpRequest::addField(HeaderField::Enum option, roUint64 value)
+void SizedFifoRingBuf::commitRead(roSize read)
 {
-	switch(option) {
-	case HeaderField::ContentLength:
-		return strFormat(requestString, "{}: {}\r\n", "Content-Length", value);
-	case HeaderField::MaxForwards:
-		return strFormat(requestString, "{}: {}\r\n", "Max-Forwards", value);
-	case HeaderField::Range:
-		return strFormat(requestString, "Range: bytes={}-\r\n", value);
-	}
-
-	return Status::invalid_parameter;
+	ringBuffer->commitRead(read);
+	bytesAlreadyRead += read;
 }
-
-Status HttpRequest::addField(HeaderField::Enum option, roUint64 value1, roUint64 value2)
-{
-	switch(option) {
-	case HeaderField::Range:
-		return strFormat(requestString, "Range: bytes={}-{}\r\n", value1, value2);
-	}
-
-	return Status::invalid_parameter;
-}
-
-
-//////////////////////////////////////////////////////////////////////////
-// HttpResponse
-
-bool HttpResponse::getField(const char* option, RangedString& value)
-{
-	char* begin = responseString.c_str();
-
-	while(begin < responseString.end())
-	{
-		// Tokenize the string by new line
-		char* end = roStrStr(begin, responseString.end(), "\r\n");
-
-		if(begin == end)
-			break;
-
-		// Split by ':'
-		char* p = roStrStr(begin, end, ":");
-
-		if(p && roStrStrCase(begin, p, option)) {
-			++p;
-
-			// Skip space
-			while(*p == ' ') ++p;
-
-			value = RangedString(p, end);
-			return true;
-		}
-
-		begin = end + 2;
-	}
-
-	return false;
-}
-
-bool HttpResponse::getField(HeaderField::Enum option, RangedString& value)
-{
-	switch(option) {
-	case HeaderField::AccessControlAllowOrigin:
-		return getField("Access-Control-Allow-Origin", value);
-	case HeaderField::AcceptRanges:
-		return getField("Accept-Ranges", value);
-	case HeaderField::Allow:
-		return getField("Allow", value);
-	case HeaderField::CacheControl:
-		return getField("Cache-Control", value);
-	case HeaderField::Connection:
-		return getField("Connection", value);
-	case HeaderField::ContentEncoding:
-		return getField("Content-Encoding", value);
-	case HeaderField::ContentLanguage:
-		return getField("Content-Language", value);
-	case HeaderField::ContentLocation:
-		return getField("Content-Location", value);
-	case HeaderField::ContentMD5:
-		return getField("Content-MD5", value);
-	case HeaderField::ContentDisposition:
-		return getField("Content-Disposition", value);
-	case HeaderField::ContentType:
-		return getField("Content-Type", value);
-	case HeaderField::ETag:
-		return getField("ETag", value);
-	case HeaderField::Link:
-		return getField("Link", value);
-	case HeaderField::Location:
-		return getField("Location", value);
-	case HeaderField::Pragma:
-		return getField("Pragma", value);
-	case HeaderField::ProxyAuthenticate:
-		return getField("Proxy-Authenticate", value);
-	case HeaderField::Refresh:
-		return getField("Refresh", value);
-	case HeaderField::RetryAfter:
-		return getField("RetryAfter", value);
-	case HeaderField::Server:
-		return getField("Server", value);
-	case HeaderField::SetCookie:
-		return getField("Set-Cookie", value);
-	case HeaderField::Status:
-		return getField("Status", value);
-	case HeaderField::StrictTransportSecurity:
-		return getField("Strict-Transport-Security", value);
-	case HeaderField::Trailer:
-		return getField("Trailer", value);
-	case HeaderField::TransferEncoding:
-		return getField("TransferEncoding", value);
-	case HeaderField::Vary:
-		return getField("Vary", value);
-	case HeaderField::Version:
-		{	Regex regex;
-			regex.match(responseString.c_str(), "^HTTP/([\\d\\.]+)", "i");
-			return regex.getValue(1, value);
-		}
-		return getField("Vary", value);
-	case HeaderField::Via:
-		return getField("Via", value);
-	case HeaderField::WWWAuthenticate:
-		return getField("WWWAuthenticate", value);
-	}
-
-	return false;
-}
-
-bool HttpResponse::getField(HeaderField::Enum option, roUint64& value)
-{
-	Regex regex;
-	bool ok = false;
-	RangedString str;
-
-	switch(option) {
-	case HeaderField::Age:
-		ok = getField("Age", str);
-		break;
-	case HeaderField::ContentLength:
-		ok = getField("Content-Length", str);
-		break;
-	case HeaderField::Status:
-		ok = regex.match(responseString.c_str(), "^HTTP/[\\d\\.]+[ ]+(\\d\\d\\d)", "i");
-		if(regex.getValue(1, value))
-			return true;
-
-		ok = getField("Status", str);
-		break;
-	}
-
-	if(!ok)
-		return false;
-
-	return roStrTo(str.begin, str.size(), value);
-}
-
-bool HttpResponse::getField(HeaderField::Enum option, roUint64& value1, roUint64& value2, roUint64& value3)
-{
-	Regex regex;
-	RangedString str;
-
-	switch(option) {
-	case HeaderField::ContentRange:
-		getField("Content-Range", str);
-		regex.match(str, "^\\s*bytes\\s+([\\d]+)\\s*-\\s*([\\d]+)\\s*/([\\d]+)");
-		if(!regex.getValue(1, value1)) return false;
-		if(!regex.getValue(2, value2)) return false;
-		return regex.getValue(3, value3);
-	}
-
-	return false;
-}
-
 
 //////////////////////////////////////////////////////////////////////////
 // HttpClient
 
-HttpClient::HttpClient()
+struct HttpClient::Connection
 {
-	debug = false;
-	roVerify(BsdSocket::initApplication() == 0);
+	Connection();
+
+	Status		connect(const char* hostAndPort);
+	Status		update();
+
+	Status		_readFromSocket(roUint64 bytesToRead);
+	Status		_parseResponseHeader();
+
+	Status		_funcWaitConnect();
+	Status		_funcSendRequest();
+	Status		_funcReadResponse();
+	Status		_funcProcessResponse();
+	Status		_funcReadBody();
+	Status		_funcIdle();
+	Status		_funcAborted();
+
+	typedef Status (Connection::*NextFunc)();
+	NextFunc	_nextFunc;
+
+	bool		debug;
+	String		host;
+	String		requestString;
+
+	bool		_chunked;
+	roUint64	_contentLength;
+
+	BsdSocket	_socket;
+	SockAddr	_sockAddr;
+	Request*	_request;
+
+	IFifoWrite*	_iWrite;
+	IFifoRead*	_iRead;
+
+	SizedFifoRingBuf _normalDecoder;
+
+	RingBuffer	ringBuf;
+};	// HttpClient::Connection
+
+HttpClient::Request::Request()
+	: httpClient(NULL)
+	, connection(NULL)
+{
 }
 
-HttpClient::~HttpClient()
+Status HttpClient::Request::update()
 {
-	roVerify(BsdSocket::closeApplication() == 0);
+	return connection->update();
 }
 
-void HttpClient::Response::reset()
+Status HttpClient::Request::requestRead(roSize& outReadSize, roByte*& outReadPtr)
 {
-	statusCode = 0;
-	keepAlive.name = RangedString();
-	location = RangedString();
-	transferEncoding = RangedString();
-	contentType = RangedString();
-	contentRange = RangedString();
-	string.clear();
+	Status st = connection->_iRead->requestRead(outReadSize, outReadPtr);
+	return st;
 }
 
-Status HttpClient::performGet(const char* resourceName)
+void HttpClient::Request::commitRead(roSize read)
 {
-	const char getFmt[] =
-		"GET {} HTTP/1.1\r\n"
-		"Host: {}\r\n"	// Required for http 1.1
-		"Connection: keep-alive\r\n"
-		"User-Agent: The Roar Engine\r\n"
-		"Accept-Encoding: deflate\r\n"
-//		"Range: bytes=0-128\r\n"
-		"\r\n";
-
-	return strFormat(requestString, getFmt, resourceName, host.c_str());
+	return connection->_iRead->commitRead(read);
 }
 
-Status HttpClient::connect(const char* hostAndPort)
+void HttpClient::Request::removeThis()
+{
+	httpClient = NULL;
+	connection = NULL;
+}
+
+HttpClient::Connection::Connection()
+	: _request(NULL)
+	, _iWrite(NULL)
+	, _iRead(NULL)
+{
+	_normalDecoder.ringBuffer = &ringBuf;
+
+	_iWrite = &_normalDecoder;
+	_iRead = &_normalDecoder;
+}
+
+Status HttpClient::Connection::update()
+{
+	Status st;
+	st = _funcSendRequest();
+	if(!st && st != Status::in_progress) return st;
+
+	st = (this->*_nextFunc)();
+	return st;
+}
+
+Status HttpClient::Connection::connect(const char* hostAndPort)
 {
 	Status st;
 
@@ -312,17 +200,17 @@ roEXCP_TRY
 		roLog("debug", "HttpClient: connecting to %s\n", host.c_str());
 
 roEXCP_CATCH
-	_nextFunc = &HttpClient::_funcAborted;
+	_nextFunc = &Connection::_funcAborted;
 	return st;
 
 roEXCP_END
 	requestString.clear();
 
-	_nextFunc = &HttpClient::_funcWaitConnect;
+	_nextFunc = &Connection::_funcWaitConnect;
 	return (this->*_nextFunc)();
 }
 
-Status HttpClient::_funcWaitConnect()
+Status HttpClient::Connection::_funcWaitConnect()
 {
 	Status st;
 
@@ -342,18 +230,18 @@ roEXCP_TRY
 	}
 
 	if(debug)
-		roLog("debug", "HttpClient: host connected\n");
+		roLog("debug", "HttpClient: host %s connected\n", host.c_str());
 
 roEXCP_CATCH
-	_nextFunc = &HttpClient::_funcAborted;
+	_nextFunc = &Connection::_funcAborted;
 	return st;
 
 roEXCP_END
-	_nextFunc = &HttpClient::_funcReadResponse;
+	_nextFunc = &Connection::_funcReadResponse;
 	return Status::in_progress;
 }
 
-Status HttpClient::_funcSendRequest()
+Status HttpClient::Connection::_funcSendRequest()
 {
 	Status st;
 
@@ -361,7 +249,7 @@ roEXCP_TRY
 	if(requestString.isEmpty())
 		return Status::ok;
 
-	if(_nextFunc == &HttpClient::_funcWaitConnect)
+	if(_nextFunc == &Connection::_funcWaitConnect)
 		return Status::in_progress;
 
 	int ret = _socket.send(requestString.c_str(), requestString.size());
@@ -376,25 +264,25 @@ roEXCP_TRY
 	requestString.erase(0, ret);
 
 roEXCP_CATCH
-	_nextFunc = &HttpClient::_funcAborted;
+	_nextFunc = &Connection::_funcAborted;
 	return st;
 
 roEXCP_END
 	return (this->*_nextFunc)();
 }
 
-Status HttpClient::_readFromSocket(roUint64 bytesToRead)
+Status HttpClient::Connection::_readFromSocket(roUint64 bytesToRead)
 {
 	roSize byteSize = 0;
 	Status st = roSafeAssign(byteSize, bytesToRead);
 	if(!st) return st;
 
 	roByte* wPtr = NULL;
-	st = ringBuf.write(byteSize, wPtr);
+	st = _iWrite->requestWrite(byteSize, wPtr);
 	if(!st) return st;
 
 	int ret = _socket.receive(wPtr, byteSize);
-	ringBuf.commitWrite(ret > 0 ? ret : 0);
+	_iWrite->commitWrite(ret > 0 ? ret : 0);
 
 	if(ret < 0 && BsdSocket::inProgress(_socket.lastError))
 		return Status::in_progress;
@@ -406,46 +294,7 @@ Status HttpClient::_readFromSocket(roUint64 bytesToRead)
 	return st;
 }
 
-Status HttpClient::Response::parse(const RangedString& str)
-{
-	reset();
-	string = str;
-
-	char* begin = string.c_str();
-
-	// Parse the start line
-	{	char* end = roStrStr(begin, string.end(), "\r\n");
-		Regex regex;
-		if(!regex.match(string.c_str(), "^HTTP/([\\d\\.]+)[ ]+(\\d+)"))
-			return Status::http_header_error;
-
-		statusCode = regex.getValueWithDefault(2, roUint16(0));
-		begin = end + 2;
-	}
-
-	// Tokenize the string by new line
-	while(begin < string.end())
-	{
-		// Split by ':'
-		char* end = roStrStr(begin, string.end(), "\r\n");
-		char* p = roStrStr(begin, end, ":");
-
-		if(begin == end)
-			break;
-
-		if(!p)
-			return Status::http_header_error;
-
-		RangedString name = RangedString(begin, p);
-		RangedString value = RangedString(++p, end);
-
-		begin = end + 2;
-	}
-
-	return Status::ok;
-}
-
-Status HttpClient::_funcReadResponse()
+Status HttpClient::Connection::_funcReadResponse()
 {
 	Status st;
 
@@ -458,7 +307,11 @@ roEXCP_TRY
 	if(!st) roEXCP_THROW;
 
 	roSize readSize = 0;
-	char* rPtr = (char*)ringBuf.read(readSize);
+	roByte* rBytePtr = NULL;
+	st = _iRead->requestRead(readSize, rBytePtr);
+	if(!st) roEXCP_THROW;
+
+	char* rPtr = (char*)rBytePtr;
 
 	// Check if header complete
 	static const char headerTerminator[] = "\r\n\r\n";
@@ -479,43 +332,57 @@ roEXCP_TRY
 	messageContent += 4;
 	roSize headerSize = messageContent - rPtr;
 
-	ringBuf.commitRead(headerSize);
-
-	// Parse the header response into individual elements
-	st = response.parse(RangedString(rPtr, rPtr + headerSize));
-	if(!st) roEXCP_THROW;
+	_request->responseHeader.string.assign(rPtr, headerSize);
+	_iRead->commitRead(headerSize);
+	_iRead->contentReadBegin();
+	ringBuf.compactReadBuffer();	// NOTE: Not really necessary
 
 	if(debug)
-		roLog("debug", "HttpClient received response:\n%s\n", response.string.c_str());
+		roLog("debug", "HttpClient received response:\n%s\n", _request->responseHeader.string.c_str());
 
 roEXCP_CATCH
-	_nextFunc = &HttpClient::_funcAborted;
+	_nextFunc = &Connection::_funcAborted;
 	return st;
 
 roEXCP_END
-	_nextFunc = &HttpClient::_funcProcessResponse;
+	_nextFunc = &Connection::_funcProcessResponse;
 	return (this->*_nextFunc)();
 }
 
-Status HttpClient::_parseResponseHeader()
-{
-	return Status::ok;
-}
-
-Status HttpClient::_funcProcessResponse()
+Status HttpClient::Connection::_funcProcessResponse()
 {
 	Status st;
 
 roEXCP_TRY
-	switch(response.statusCode)
+	roUint64 statusCode = 0;
+	if(!_request->responseHeader.getField(HttpResponseHeader::HeaderField::Status, statusCode)) {
+		st = Status::http_header_error;
+		roEXCP_THROW;
+	}
+
+	switch(statusCode)
 	{
 	case 200:	// Ok
-		break;
+	{	_contentLength = 0;
+		if(_request->responseHeader.getField(HttpResponseHeader::HeaderField::ContentLength, _contentLength)) {
+			_iWrite = &_normalDecoder;
+			_iRead = &_normalDecoder;
+			_normalDecoder.expectedEnd += _contentLength;
+		}
+
+		RangedString contentEncoding;
+		_request->responseHeader.getField(HttpResponseHeader::HeaderField::ContentEncoding, contentEncoding);
+
+		_nextFunc = &Connection::_funcReadBody;
+	}	break;
 	case 206:	// Partial Content
 		break;
 	case 301:	// Moved Permanently
 	case 302:	// Found (http redirect)
 //		return connect();
+		break;
+	case 404:	// Not found
+		_nextFunc = &Connection::_funcReadBody;
 		break;
 	case 416:	// Requested Range not satisfiable
 		break;
@@ -524,18 +391,23 @@ roEXCP_TRY
 	}
 
 roEXCP_CATCH
-	_nextFunc = &HttpClient::_funcAborted;
+	_nextFunc = &Connection::_funcAborted;
 	return st;
 
 roEXCP_END
 	return (this->*_nextFunc)();
 }
 
-Status HttpClient::_funcReadBody()
+Status HttpClient::Connection::_funcReadBody()
 {
 	Status st;
 
 roEXCP_TRY
+	if(!_iWrite->keepWrite()) {
+		_nextFunc = &Connection::_funcIdle;
+		return (this->*_nextFunc)();
+	}
+
 	st = _readFromSocket(1024);
 
 	if(st == Status::in_progress)
@@ -543,30 +415,64 @@ roEXCP_TRY
 
 	if(!st) roEXCP_THROW;
 
-	roSize readSize = 0;
-	char* rPtr = (char*)ringBuf.read(readSize);
-
 roEXCP_CATCH
-	_nextFunc = &HttpClient::_funcAborted;
+	_nextFunc = &Connection::_funcAborted;
 	return st;
 
 roEXCP_END
 	return (this->*_nextFunc)();
 }
 
-Status HttpClient::update()
+Status HttpClient::Connection::_funcIdle()
 {
-	Status st;
-	st = _funcSendRequest();
-	if(!st && st != Status::in_progress) return st;
+	return Status::ok;
+}
 
-	st = (this->*_nextFunc)();
+Status HttpClient::Connection::_funcAborted()
+{
+	return Status::ok;
+}
+
+HttpClient::HttpClient()
+{
+	debug = false;
+	roVerify(BsdSocket::initApplication() == 0);
+}
+
+HttpClient::~HttpClient()
+{
+	roVerify(BsdSocket::closeApplication() == 0);
+}
+
+Status HttpClient::perform(Request& request, const HttpRequestHeader& requestHeader)
+{
+	RangedString host, resource;
+	if(!requestHeader.getField(HttpRequestHeader::HeaderField::Host, host))
+		return Status::http_header_error;
+
+	if(!requestHeader.getField(HttpRequestHeader::HeaderField::Resource, resource))
+		return Status::http_header_error;
+
+	// Look for existing connection suitable for this request
+	Connection* connection = NULL;
+	Status st = _getConnection(String(host).c_str(), connection);
+
+	if(st || st == Status::in_progress) {
+		roAssert(connection);
+		request.connection = connection;
+		connection->_request = &request;
+		connection->requestString = requestHeader.string;
+		connection->requestString += "\r\n";
+	}
+
 	return st;
 }
 
-Status HttpClient::_funcAborted()
+Status HttpClient::_getConnection(const char* hostAndPort, Connection*& connection)
 {
-	return Status::ok;
+	connection = new Connection;
+
+	return connection->connect(hostAndPort);
 }
 
 Status HttpClient::splitUrl(const char* url, RangedString& protocol, RangedString& host, RangedString& path)

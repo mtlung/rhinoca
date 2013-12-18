@@ -2,6 +2,7 @@
 #define __roLinklist_h__
 
 #include "roNonCopyable.h"
+#include "../platform/roCompiler.h"
 
 namespace ro {
 
@@ -14,7 +15,7 @@ struct _ListNode
 	_ListNode() : _list(NULL), _prev(NULL), _next(NULL) {}
 	virtual ~_ListNode();
 	virtual void destroyThis();
-	void removeThis();
+	virtual void removeThis();
 
 	_LinkList* _list;
 	_ListNode* _prev;
@@ -31,7 +32,7 @@ struct ListNode : public _ListNode
 	T*				next() const		{ return (T*)_next; }
 	T*				prev() const		{ return (T*)_prev; }
 
-	void			removeThis()		{ _ListNode::removeThis(); }
+	override void	removeThis()		{ _ListNode::removeThis(); }
 	override void	destroyThis()		{ _ListNode::destroyThis(); }
 };	// ListNode
 

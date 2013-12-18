@@ -1,13 +1,14 @@
 #ifndef __network_roHttp_h__
 #define __network_roHttp_h__
 
+#include "../base/roLinkList.h"
 #include "../base/roRingBuffer.h"
 #include "../base/roSocket.h"
 #include "../base/roString.h"
 
 namespace ro {
 
-struct HttpRequest
+struct HttpRequestHeader
 {
 	struct HeaderField { enum Enum {
 		Accept,					// Accept: text/plain
@@ -28,6 +29,7 @@ struct HttpRequest
 		Host,					// Host: en.wikipedia.org:80
 		MaxForwards,			// Max-Forwards: 10
 		Origin,					// Origin: http://www.example-social-network.com
+		Resource,				// GET /index.html HTTP/1.1
 		Pragma,					// Pragma: no-cache
 		ProxyAuthorization,		// Proxy-Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
 		Range,					// Range: bytes=500-999
@@ -36,16 +38,20 @@ struct HttpRequest
 		Via						// Via: 1.0 fred, 1.1 example.com (Apache/1.1)
 	}; };
 
+	/// Functions for composing requestString
 	Status makeGet	(const char* resource);
-	Status addField(const char* option, const char* value);
-	Status addField(HeaderField::Enum option, const char* value);
-	Status addField(HeaderField::Enum option, roUint64 value);
-	Status addField(HeaderField::Enum option, roUint64 value1, roUint64 value2);
+	Status addField	(const char* option, const char* value);
+	Status addField	(HeaderField::Enum option, const char* value);
+	Status addField	(HeaderField::Enum option, roUint64 value);
+	Status addField	(HeaderField::Enum option, roUint64 value1, roUint64 value2);
 
-	String requestString;
-};	// HttpRequest
+	bool getField(const char* option, RangedString& value) const;
+	bool getField(HeaderField::Enum option, RangedString& value) const;
 
-struct HttpResponse
+	String string;
+};	// HttpRequestHeader
+
+struct HttpResponseHeader
 {
 	struct HeaderField { enum Enum {
 		AccessControlAllowOrigin,	// Access-Control-Allow-Origin: *
@@ -85,13 +91,14 @@ struct HttpResponse
 		WWWAuthenticate,			// WWW-Authenticate: Basic
 	}; };
 
-	bool getField(const char* option, RangedString& value);
-	bool getField(HeaderField::Enum option, RangedString& value);
-	bool getField(HeaderField::Enum option, roUint64& value);
-	bool getField(HeaderField::Enum option, roUint64& value1, roUint64& value2, roUint64& value3);
+	/// Parse and get information from responseString
+	bool getField(const char* option, RangedString& value) const;
+	bool getField(HeaderField::Enum option, RangedString& value) const;
+	bool getField(HeaderField::Enum option, roUint64& value) const;
+	bool getField(HeaderField::Enum option, roUint64& value1, roUint64& value2, roUint64& value3) const;
 
-	String responseString;
-};	// HttpResponse
+	String string;
+};	// HttpResponseHeader
 
 struct HttpOptions
 {
@@ -106,74 +113,41 @@ struct HttpClient
 	HttpClient();
 	~HttpClient();
 
+	struct Connection;
+
+	struct Request : public ro::ListNode<HttpClient::Request>
+	{
+		Request();
+
+		Status			update		();
+		Status			requestRead	(roSize& outReadSize, roByte*& outReadPtr);
+		void			commitRead	(roSize read);
+		override void	removeThis	();
+
+		HttpClient*			httpClient;
+		Connection*			connection;
+		HttpResponseHeader	responseHeader;
+	};	// HttpClient::Request
+
 // Operations
-	Status	connect(const char* hostAndPort);
-	Status	closeWrite();
-	Status	closeRead();
+	/// Perform the required (GET, POST) operation.
+	/// You can issue new request on the same Request object, which will then pipelined.
+	/// Support to call it from multiple threads.
+	Status	perform(Request& request, const HttpRequestHeader& requestHeader);
 
-	Status	performGet(const char* resourceName);
-	Status	sendRequest(const char* request);
-
-	Status	update();
+	Status	_getConnection(const char* hostAndPort, Connection*& connection);
 
 	static Status splitUrl(const char* url, RangedString& protocol, RangedString& host, RangedString& path);
 
 // Attributes
-	template<class T>
-	struct NVP
-	{
-		RangedString	name;
-		T				value;
-	};
-
-	struct Response
-	{
-		void			reset();
-		Status			parse(const RangedString& str);
-
-		roUint16		statusCode;
-
-		NVP<bool>		keepAlive;
-
-		RangedString	location;
-
-		RangedString	transferEncoding;
-		bool			chunked, compress, deflate, gzip;
-
-		RangedString	contentType;
-		NVP<roUint64>	contentLength;
-
-		RangedString	contentRange;
-		roUint64		rangeBegin, rangeEnd, rangeTotal;
-
-		String			string;
-	};	// Response
-
-	bool		debug;
-	String		host;
-	String		requestString;
-	Response	response;
-	RingBuffer	ringBuf;
+	bool						debug;
+	LinkList<Request>			requests;
+	TinyArray<Connection*, 16>	connections;
 
 // Private
 	static const roSize _maxUrlSize = 2 * 1024;
 	static const roSize _maxHeaderSize = 4 * 1024;
 
-	Status		_funcWaitConnect();
-	Status		_funcSendRequest();
-	Status		_funcReadResponse();
-	Status		_funcProcessResponse();
-	Status		_funcReadBody();
-	Status		_funcAborted();
-
-	Status		_readFromSocket(roUint64 bytesToRead);
-	Status		_parseResponseHeader();
-
-	typedef Status (HttpClient::*NextFunc)();
-	NextFunc	_nextFunc;
-
-	BsdSocket	_socket;
-	SockAddr	_sockAddr;
 };	// HttpClient
 
 struct HttpServer
