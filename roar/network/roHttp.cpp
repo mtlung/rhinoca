@@ -360,27 +360,34 @@ roEXCP_TRY
 		roEXCP_THROW;
 	}
 
+	RangedString rangedString;
+
 	switch(statusCode)
 	{
 	case 200:	// Ok
-	{	_contentLength = 0;
+		_contentLength = 0;
 		if(_request->responseHeader.getField(HttpResponseHeader::HeaderField::ContentLength, _contentLength)) {
 			_iWrite = &_normalDecoder;
 			_iRead = &_normalDecoder;
 			_normalDecoder.expectedEnd += _contentLength;
 		}
 
-		RangedString contentEncoding;
-		_request->responseHeader.getField(HttpResponseHeader::HeaderField::ContentEncoding, contentEncoding);
+		_request->responseHeader.getField(HttpResponseHeader::HeaderField::ContentEncoding, rangedString);
 
 		_nextFunc = &Connection::_funcReadBody;
-	}	break;
+		break;
 	case 206:	// Partial Content
 		break;
 	case 301:	// Moved Permanently
 	case 302:	// Found (http redirect)
-//		return connect();
-		break;
+	{	_request->responseHeader.getField(HttpResponseHeader::HeaderField::Location, rangedString);
+		RangedString protocol, host, path;
+		st = HttpClient::splitUrl(rangedString, protocol, host, path);
+		if(!st)
+			roEXCP_THROW;
+
+		return connect(host.toString().c_str());
+	}	break;
 	case 404:	// Not found
 		_nextFunc = &Connection::_funcReadBody;
 		break;
@@ -475,7 +482,7 @@ Status HttpClient::_getConnection(const char* hostAndPort, Connection*& connecti
 	return connection->connect(hostAndPort);
 }
 
-Status HttpClient::splitUrl(const char* url, RangedString& protocol, RangedString& host, RangedString& path)
+Status HttpClient::splitUrl(const RangedString& url, RangedString& protocol, RangedString& host, RangedString& path)
 {
 	Regex regex;
 	if(!regex.match(url, "^\\s*([A-Za-z]+)://([^/]+)([^\\r\\n]*)"))

@@ -976,11 +976,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\roar\network\roHttpServer.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\roar\network\roHttpServer.h"
+				RelativePath="..\..\roar\network\roHttpHeader.cpp"
 				>
 			</File>
 		</Filter>

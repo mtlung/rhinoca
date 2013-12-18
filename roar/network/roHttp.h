@@ -137,7 +137,7 @@ struct HttpClient
 
 	Status	_getConnection(const char* hostAndPort, Connection*& connection);
 
-	static Status splitUrl(const char* url, RangedString& protocol, RangedString& host, RangedString& path);
+	static Status splitUrl(const RangedString& url, RangedString& protocol, RangedString& host, RangedString& path);
 
 // Attributes
 	bool						debug;
