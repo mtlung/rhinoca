@@ -96,16 +96,23 @@ roSize& String::_capacity() const
 Status String::_reserve(roSize size, bool forceRealloc)
 {
 	roSize currentCap = _capacity();
-	roSize desiredBytes = sizeof(roSize) * 2 + roSize(size * 1.5) + 1;
 
-	if(currentCap < desiredBytes || forceRealloc) {
-		roSize currentSize = _size();
-		char* newPtr = _allocator.realloc(currentCap ? _cstr : NULL, currentCap, desiredBytes);
-		if(!newPtr) return Status::not_enough_memory;
-		_cstr = newPtr;
-		_capacity() = desiredBytes;
-		_size() = currentSize;
-	}
+	if(currentCap >= size && !forceRealloc)
+		return Status::ok;
+
+	roSize currentSize = _size();
+	roSize newCapacity = roMaxOf2(roSize(size * 1.5) + 1, 8u);
+	roSize headerSize = sizeof(roSize) * 2;
+	roSize takeCareNullTerminator = 1;
+	char* newPtr = _allocator.realloc(
+		currentCap ? _cstr : NULL,
+		headerSize + currentCap + takeCareNullTerminator,
+		headerSize + newCapacity + takeCareNullTerminator
+	);
+	if(!newPtr) return Status::not_enough_memory;
+	_cstr = newPtr;
+	_capacity() = newCapacity;
+	_size() = currentSize;
 
 	return Status::ok;
 }

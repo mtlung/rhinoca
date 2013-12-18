@@ -286,7 +286,7 @@ struct Graph
 	}
 
 	Regex* regex;
-	Array<roByte> nodes;
+	TinyArray<roByte, 2048> nodes;
 	Node* currentNode;
 	Node* endNode;
 	roSize nestedGroupLevel;
@@ -294,7 +294,7 @@ struct Graph
 	RangedString regString;
 	RangedString srcString;
 	bool (*charCmpFunc)(char c1, char c2);
-	Array<roSize> resultEndNodeOffset;
+	TinyArray<roSize, 16> resultEndNodeOffset;
 };	// Graph
 
 //////////////////////////////////////////////////////////////////////////

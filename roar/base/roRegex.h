@@ -33,7 +33,7 @@ struct Regex : private NonCopyable
 
 // Attributes
 	bool isDebug;
-	Array<RangedString> result;
+	TinyArray<RangedString, 16> result;
 };	// Regex
 
 template<typename T>
