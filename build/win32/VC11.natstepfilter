@@ -1,0 +1,6 @@
+Put the following into C:\Program Files[ (x86)]\Microsoft Visual Studio 11.0\Common7\Packages\Debugger\Visualizers\default.natstepfilter
+
+  <Function><Name>roStatus.*</Name><Action>NoStepInto</Action></Function>
+  <Function><Name>ro::IArray.*</Name><Action>NoStepInto</Action></Function>
+  <Function><Name>ro::SharedPtr.*</Name><Action>NoStepInto</Action></Function>
+  <Function><Name>ro::String.*</Name><Action>NoStepInto</Action></Function>
