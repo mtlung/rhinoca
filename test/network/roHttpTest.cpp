@@ -69,20 +69,31 @@ TEST_FIXTURE(HttpTest, responseHeader)
 TEST_FIXTURE(HttpTest, http)
 {
 	HttpRequestHeader requestHeader;
-//	requestHeader.makeGet("/static-data/map3/2/0/0.png");
-//	requestHeader.addField(HttpRequestHeader::HeaderField::Host, "sin-nx-lty02.ubisoft.org");
-	requestHeader.makeGet("/");
-	requestHeader.addField(HttpRequestHeader::HeaderField::Host, "mdc-web-tomcat17.ubisoft.org");
+	requestHeader.makeGet("/static-data/map3/2/0/0.png");
+	requestHeader.addField(HttpRequestHeader::HeaderField::Host, "sin-nx-lty02.ubisoft.org");
+//	requestHeader.makeGet("/");
+//	requestHeader.addField(HttpRequestHeader::HeaderField::Host, "mdc-web-tomcat17.ubisoft.org");
 
 	HttpClient::Request request;
 
 	HttpClient client;
 	client.perform(request, requestHeader);
 
+	Array<roByte> buffer;
+
 	Status st;
 	do {
 		st = request.update();
+
+		roSize size = 0;
+		roByte* rPtr = NULL;
+		CHECK(request.requestRead(size, rPtr));
+		CHECK(buffer.insert(buffer.size(), rPtr, size));
+		request.commitRead(size);
+
 	} while(st || st == Status::in_progress);
+
+	CHECK(!buffer.isEmpty());
 }
 
 TEST_FIXTURE(HttpTest, http2)
