@@ -91,6 +91,43 @@ roUint16	roStrToUint16	(const char* str, roUint16 defaultValue);
 roUint32	roStrToUint32	(const char* str, roUint32 defaultValue);
 roUint64	roStrToUint64	(const char* str, roUint64 defaultValue);
 
+bool		roStrToBool		(const char* str, roSize len, bool defaultValue);
+float		roStrToFloat	(const char* str, roSize len, float defaultValue);
+double		roStrToDouble	(const char* str, roSize len, double defaultValue);
+roInt8		roStrToInt8		(const char* str, roSize len, roInt8 defaultValue);
+roInt16		roStrToInt16	(const char* str, roSize len, roInt16 defaultValue);
+roInt32		roStrToInt32	(const char* str, roSize len, roInt32 defaultValue);
+roInt64		roStrToInt64	(const char* str, roSize len, roInt64 defaultValue);
+roUint8		roStrToUint8	(const char* str, roSize len, roUint8 defaultValue);
+roUint16	roStrToUint16	(const char* str, roSize len, roUint16 defaultValue);
+roUint32	roStrToUint32	(const char* str, roSize len, roUint32 defaultValue);
+roUint64	roStrToUint64	(const char* str, roSize len, roUint64 defaultValue);
+
+roStatus	roHexStrTo		(const char* str, roUint8& ret);
+roStatus	roHexStrTo		(const char* str, roUint16& ret);
+roStatus	roHexStrTo		(const char* str, roUint32& ret);
+roStatus	roHexStrTo		(const char* str, roUint64& ret);
+
+roStatus	roHexStrTo		(const char* str, roSize len, roUint8& ret);
+roStatus	roHexStrTo		(const char* str, roSize len, roUint16& ret);
+roStatus	roHexStrTo		(const char* str, roSize len, roUint32& ret);
+roStatus	roHexStrTo		(const char* str, roSize len, roUint64& ret);
+
+roStatus	roHexStrTo		(const char* str, const char*& newPos, roUint8& ret);
+roStatus	roHexStrTo		(const char* str, const char*& newPos, roUint16& ret);
+roStatus	roHexStrTo		(const char* str, const char*& newPos, roUint32& ret);
+roStatus	roHexStrTo		(const char* str, const char*& newPos, roUint64& ret);
+
+roUint64	roHexStrToUint8	(const char* str, roUint64 defaultValue);
+roUint64	roHexStrToUint16(const char* str, roUint64 defaultValue);
+roUint64	roHexStrToUint32(const char* str, roUint64 defaultValue);
+roUint64	roHexStrToUint64(const char* str, roUint64 defaultValue);
+
+roUint8		roHexStrToUint8	(const char* str, roSize len, roUint8 defaultValue);
+roUint16	roHexStrToUint16(const char* str, roSize len, roUint16 defaultValue);
+roUint32	roHexStrToUint32(const char* str, roSize len, roUint32 defaultValue);
+roUint64	roHexStrToUint64(const char* str, roSize len, roUint64 defaultValue);
+
 
 // ----------------------------------------------------------------------
 // Different data types to string

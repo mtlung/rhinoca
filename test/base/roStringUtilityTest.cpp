@@ -5,6 +5,46 @@
 
 struct StringUtilityTest {};
 
+TEST_FIXTURE(StringUtilityTest, rangedString)
+{
+	// Success cases
+	CHECK_EQUAL(0,		roStrToInt8("0",	1, 123));
+	CHECK_EQUAL(0,		roStrToInt8("0  ",	3, 123));
+	CHECK_EQUAL(0,		roStrToInt8("  0",	3, 123));
+	CHECK_EQUAL(0,		roStrToInt8("  0  ",5, 123));
+	CHECK_EQUAL(0,		roStrToInt8("-0",	2, 123));
+
+	CHECK_EQUAL(0,		roStrToInt8("00",	2, 123));
+	CHECK_EQUAL(0,		roStrToInt8(" 00",	3, 123));
+	CHECK_EQUAL(0,		roStrToInt8("00 ",	3, 123));
+	CHECK_EQUAL(0,		roStrToInt8(" 00 ",	4, 123));
+
+	CHECK_EQUAL(23,		roStrToInt8("23",	2, 123));
+	CHECK_EQUAL(23,		roStrToInt8("23 ",	3, 123));
+	CHECK_EQUAL(23,		roStrToInt8("  23",	4, 123));
+	CHECK_EQUAL(23,		roStrToInt8(" 23 ",	4, 123));
+	CHECK_EQUAL(-23,	roStrToInt8("-23",	3, 123));
+	CHECK_EQUAL(-23,	roStrToInt8("-23 ",	4, 123));
+	CHECK_EQUAL(-23,	roStrToInt8(" -23",	4, 123));
+	CHECK_EQUAL(-23,	roStrToInt8(" -23 ",5, 123));
+
+	CHECK_EQUAL(-12,	roStrToInt8(" -123 ",4, 123));
+	CHECK_EQUAL(-123,	roStrToInt8(" -123 ",5, 123));
+
+	CHECK_EQUAL(206,	roStrToUint64("206",3, 123));
+
+	// Fail cases
+	CHECK_EQUAL(123,	roStrToInt8("",		0, 123));
+	CHECK_EQUAL(123,	roStrToInt8(" 0",	0, 123));
+	CHECK_EQUAL(123,	roStrToInt8(" 0",	1, 123));
+	CHECK_EQUAL(123,	roStrToInt8(" 0 ",	1, 123));
+	CHECK_EQUAL(123,	roStrToInt8("-",	1, 123));
+	CHECK_EQUAL(123,	roStrToInt8(" -",	2, 123));
+	CHECK_EQUAL(123,	roStrToInt8("- ",	2, 123));
+	CHECK_EQUAL(123,	roStrToInt8(" - ",	3, 123));
+	CHECK_EQUAL(123,	roStrToInt8("abc",	3, 123));
+}
+
 TEST_FIXTURE(StringUtilityTest, integer8)
 {
 	const roInt32 max8 = ro::TypeOf<roInt8>::valueMax();
@@ -87,6 +127,28 @@ TEST_FIXTURE(StringUtilityTest, integer64)
 	CHECK_EQUAL(0u,		roStrToUint64("-1", 0));
 	CHECK_EQUAL(maxU64,	roStrToUint64(" 18446744073709551615", 0));
 	CHECK_EQUAL(0u,		roStrToUint64(" 18446744073709551616", 0));
+}
+
+TEST_FIXTURE(StringUtilityTest, parseHex)
+{
+	CHECK_EQUAL(0,		roHexStrToUint64("0",	1, 123));
+	CHECK_EQUAL(0,		roHexStrToUint64("0  ",	3, 123));
+	CHECK_EQUAL(0,		roHexStrToUint64("  0",	3, 123));
+	CHECK_EQUAL(1,		roHexStrToUint64("1",	1, 123));
+	CHECK_EQUAL(2,		roHexStrToUint64("2",	1, 123));
+	CHECK_EQUAL(10,		roHexStrToUint64("a",	1, 123));
+	CHECK_EQUAL(15,		roHexStrToUint64("f",	1, 123));
+	CHECK_EQUAL(10,		roHexStrToUint64("A",	1, 123));
+	CHECK_EQUAL(15,		roHexStrToUint64("F",	1, 123));
+
+	CHECK_EQUAL(123,	roHexStrToUint64("g",	1, 123));
+	CHECK_EQUAL(123,	roHexStrToUint64("G",	1, 123));
+	CHECK_EQUAL(123,	roHexStrToUint64("x",	1, 123));
+	CHECK_EQUAL(123,	roHexStrToUint64("X",	1, 123));
+	CHECK_EQUAL(123,	roHexStrToUint64("z",	1, 123));
+	CHECK_EQUAL(123,	roHexStrToUint64("Z",	1, 123));
+
+	CHECK_EQUAL(255,	roHexStrToUint64("fF",	2, 123));
 }
 
 TEST_FIXTURE(StringUtilityTest, toString)

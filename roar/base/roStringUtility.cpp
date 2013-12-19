@@ -142,8 +142,7 @@ static roStatus _parseNumber(const char* p, const char* end, T& ret, const char*
 	// Skip white spaces
 	static const char _whiteSpace[] = " \t\r\n";
 	while(roStrChr(_whiteSpace, *p)) {
-		++p;
-		if(p >= end && end)
+		if(++p >= end && end)
 			return roStatus::string_parsing_error;
 	}
 
@@ -157,18 +156,18 @@ static roStatus _parseNumber(const char* p, const char* end, T& ret, const char*
 		return roStatus::string_parsing_error;
 
 	while(roStrChr(_whiteSpace, *p)) {
-		++p;
-		if(p >= end && end)
+		if(++p >= end && end)
 			return roStatus::string_parsing_error;
 	}
+
+	T i = 0;
 
 	// Skip leading zeros
 	bool hasLeadingZeros = false;
 	while(*p == '0') {
 		hasLeadingZeros = true;
-		++p;
-		if(p > end && end)
-			return roStatus::string_parsing_error;
+		if(++p >= end && end)
+			goto Done;
 	}
 
 	static const T preOverMax = ro::TypeOf<T>::valueMax() / 10;
@@ -176,48 +175,30 @@ static roStatus _parseNumber(const char* p, const char* end, T& ret, const char*
 	static const T preUnderMin = -(roInt64)(ro::TypeOf<T>::valueMin() / 10);
 	static const char preUnderMin2 = '0' - char(ro::TypeOf<T>::valueMin() % 10);
 
-	T i = 0;
-
-	// Ensure there is really some numbers in the string
-	if(*p >= '1' && *p <= '9') {
-		i = *(p++) - '0';
-		if(p > end && end)
-			return roStatus::string_parsing_error;
+	T preCheck;
+	char preCheck2;
+	if(ro::TypeOf<T>::isUnsigned() || !neg) {
+		preCheck = preOverMax;
+		preCheck2 = preOverMax2;
 	}
 	else {
-		if(hasLeadingZeros) {
-			if(newp) *newp = p;
-			ret = i;
-			return roStatus::ok;
-		}
-		return roStatus::string_to_number_sign_mistmatch;
+		preCheck = preUnderMin;
+		preCheck2 = preUnderMin2;
 	}
 
-	if(ro::TypeOf<T>::isUnsigned() || !neg)
-	{
-		while(roIsDigit(*p) && (p < end || !end)) {
-			if(i >= preOverMax) {
-				if(i != preOverMax || *p > preOverMax2)
-					return roStatus::string_to_number_overflow;
-			}
-			i = i * 10 + (*p - '0');
-			++p;
-		}
+	while((p < end || !end) && roIsDigit(*p)) {
+		if(i >= preCheck && (i != preCheck || *p > preCheck2))
+			return roStatus::string_to_number_overflow;
+		i = i * 10 + (*p - '0');
+		++p;
 	}
-	else
-	{
-		while(roIsDigit(*p) && (p < end || !end)) {
-			if(i >= preUnderMin) {
-				if(i != preUnderMin || *p > preUnderMin2)
-					return roStatus::string_to_number_overflow;
-			}
-			i = i * 10 + (*p - '0');
-			++p;
-		}
 
-		if(neg)
-			i *= (T)-1;
-	}
+	if(neg)
+		i *= (T)-1;
+
+Done:
+	if(i == 0 && !hasLeadingZeros)
+		return roStatus::string_parsing_error;
 
 	if(newp) *newp = p;
 	ret = i;
@@ -420,6 +401,197 @@ roUint64 roStrToUint64(const char* str, roUint64 defaultValue) {
 	roUint64 ret; return roStrTo(str, ret) ? ret : defaultValue;
 }
 
+bool roStrToBool(const char* str, roSize len, bool defaultValue) {
+	bool ret; return roStrTo(str, len, ret) ? ret : defaultValue;
+}
+
+float roStrToFloat(const char* str, roSize len, float defaultValue) {
+	float ret; return roStrTo(str, len, ret) ? ret : defaultValue;
+}
+
+double roStrToDouble(const char* str, roSize len, double defaultValue) {
+	double ret; return roStrTo(str, len, ret) ? ret : defaultValue;
+}
+
+roInt8 roStrToInt8(const char* str, roSize len, roInt8 defaultValue) {
+	roInt8 ret; return roStrTo(str, len, ret) ? ret : defaultValue;
+}
+
+roInt16 roStrToInt16(const char* str, roSize len, roInt16 defaultValue) {
+	roInt16 ret; return roStrTo(str, len, ret) ? ret : defaultValue;
+}
+
+roInt32 roStrToInt32(const char* str, roSize len, roInt32 defaultValue) {
+	roInt32 ret; return roStrTo(str, len, ret) ? ret : defaultValue;
+}
+
+roInt64 roStrToInt64(const char* str, roSize len, roInt64 defaultValue) {
+	roInt64 ret; return roStrTo(str, len, ret) ? ret : defaultValue;
+}
+
+roUint8 roStrToUint8(const char* str, roSize len, roUint8 defaultValue) {
+	roUint8 ret; return roStrTo(str, len, ret) ? ret : defaultValue;
+}
+
+roUint16 roStrToUint16(const char* str, roSize len, roUint16 defaultValue) {
+	roUint16 ret; return roStrTo(str, len, ret) ? ret : defaultValue;
+}
+
+roUint32 roStrToUint32(const char* str, roSize len, roUint32 defaultValue) {
+	roUint32 ret; return roStrTo(str, len, ret) ? ret : defaultValue;
+}
+
+roUint64 roStrToUint64(const char* str, roSize len, roUint64 defaultValue) {
+	roUint64 ret; return roStrTo(str, len, ret) ? ret : defaultValue;
+}
+
+static char _hexCharValue(char h)
+{
+	if(roIsDigit(h))
+		return h - '0';
+
+	char lower = roToLower(h);
+	if((lower - 'a' + 0u) <= ('f' - 'a' + 0u))
+		return lower - 'a' + 10;
+
+	return -1;
+}
+
+template<class T>
+static roStatus _parseHex(const char* p, const char* end, T& ret, const char** newp=NULL)
+{
+	if(!p)
+		return roStatus::pointer_is_null;
+
+	if(p >= end && end)
+		return roStatus::string_parsing_error;
+
+	// Skip white spaces
+	static const char _whiteSpace[] = " \t\r\n";
+	while(roStrChr(_whiteSpace, *p)) {
+		if(++p >= end && end)
+			return roStatus::string_parsing_error;
+	}
+
+	while(roStrChr(_whiteSpace, *p)) {
+		if(++p >= end && end)
+			return roStatus::string_parsing_error;
+	}
+
+	T i = 0;
+
+	// Skip leading zeros
+	bool hasLeadingZeros = false;
+	while(*p == '0') {
+		hasLeadingZeros = true;
+		if(++p >= end && end)
+			goto Done;
+	}
+
+	// TODO: Deal with 0x
+
+	static const T preOverMax = ro::TypeOf<T>::valueMax() / 16;
+	static const char preOverMax2 = char(ro::TypeOf<T>::valueMax() % 16) + '0';
+
+	while((p < end || !end)) {
+		char val = _hexCharValue(*p);
+		if(val < 0)
+			break;
+
+		if(i >= preOverMax && (i != preOverMax || val > preOverMax2))
+			return roStatus::string_to_number_overflow;
+		i = i * 16 + val;
+		++p;
+	}
+
+Done:
+	if(i == 0 && !hasLeadingZeros)
+		return roStatus::string_parsing_error;
+
+	if(newp) *newp = p;
+	ret = i;
+	return roStatus::ok;
+}
+
+roStatus roHexStrTo(const char* str, roUint8& ret) {
+	return _parseHex(str, NULL, ret);
+}
+
+roStatus roHexStrTo(const char* str, roUint16& ret) {
+	return _parseHex(str, NULL, ret);
+}
+
+roStatus roHexStrTo(const char* str, roUint32& ret) {
+	return _parseHex(str, NULL, ret);
+}
+
+roStatus roHexStrTo(const char* str, roUint64& ret) {
+	return _parseHex(str, NULL, ret);
+}
+
+roStatus roHexStrTo(const char* str, roSize len, roUint8& ret) {
+	return _parseHex(str, str + len, ret);
+}
+
+roStatus roHexStrTo(const char* str, roSize len, roUint16& ret) {
+	return _parseHex(str, str + len, ret);
+}
+
+roStatus roHexStrTo(const char* str, roSize len, roUint32& ret) {
+	return _parseHex(str, str + len, ret);
+}
+
+roStatus roHexStrTo(const char* str, roSize len, roUint64& ret) {
+	return _parseHex(str, str + len, ret);
+}
+
+roStatus roHexStrTo(const char* str, const char*& newPos, roUint8& ret) {
+	return _parseHex(str, NULL, ret, &newPos);
+}
+
+roStatus roHexStrTo(const char* str, const char*& newPos, roUint16& ret) {
+	return _parseHex(str, NULL, ret, &newPos);
+}
+
+roStatus roHexStrTo(const char* str, const char*& newPos, roUint32& ret) {
+	return _parseHex(str, NULL, ret, &newPos);
+}
+
+roStatus roHexStrTo(const char* str, const char*& newPos, roUint64& ret) {
+	return _parseHex(str, NULL, ret, &newPos);
+}
+
+roUint8 roHexStrToUint8(const char* str, roUint8 defaultValue) {
+	roUint8 ret; return roHexStrTo(str, ret) ? ret : defaultValue;
+}
+
+roUint16 roHexStrToUint16(const char* str, roUint16 defaultValue) {
+	roUint16 ret; return roHexStrTo(str, ret) ? ret : defaultValue;
+}
+
+roUint32 roHexStrToUin32(const char* str, roUint32 defaultValue) {
+	roUint32 ret; return roHexStrTo(str, ret) ? ret : defaultValue;
+}
+
+roUint64 roHexStrToUint64(const char* str, roUint64 defaultValue) {
+	roUint64 ret; return roHexStrTo(str, ret) ? ret : defaultValue;
+}
+
+roUint8 roHexStrToUint8(const char* str, roSize len, roUint8 defaultValue) {
+	roUint8 ret; return roHexStrTo(str, len, ret) ? ret : defaultValue;
+}
+
+roUint16 roHexStrToUint16(const char* str, roSize len, roUint16 defaultValue) {
+	roUint16 ret; return roHexStrTo(str, len, ret) ? ret : defaultValue;
+}
+
+roUint32 roHexStrToUint32(const char* str, roSize len, roUint32 defaultValue) {
+	roUint32 ret; return roHexStrTo(str, len, ret) ? ret : defaultValue;
+}
+
+roUint64 roHexStrToUint64(const char* str, roSize len, roUint64 defaultValue) {
+	roUint64 ret; return roHexStrTo(str, len, ret) ? ret : defaultValue;
+}
 
 // ----------------------------------------------------------------------
 
