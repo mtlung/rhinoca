@@ -20,10 +20,19 @@ TEST_FIXTURE(HttpTest, requestHeader)
 		"GET /index.html HTTP/1.1\r\n"
 		"Host: localhost:8080\r\n"
 		"Connection: keep-alive\r\n"
-		"UserAgent: Roar Game Engine\r\n"
+		"User-Agent: Roar Game Engine\r\n"
 		"Accept-Encoding: deflate\r\n"
 		"Range: bytes=0-128\r\n";
 
+	CHECK_EQUAL(expected, header.string.c_str());
+
+	header.removeField("accept-Encoding");
+	header.removeField(HttpRequestHeader::HeaderField::Connection);
+	header.removeField("host");
+	header.removeField("range");
+	header.removeField("User-Agent");
+
+	expected = "GET /index.html HTTP/1.1\r\n";
 	CHECK_EQUAL(expected, header.string.c_str());
 }
 
@@ -111,4 +120,22 @@ TEST_FIXTURE(HttpTest, http2)
 	do {
 		st = http.update();
 	} while(st || st == Status::in_progress);*/
+}
+
+TEST_FIXTURE(HttpTest, server)
+{
+	HttpServer server;
+	CHECK(server.init());
+
+	HttpClient client;
+	HttpClient::Request request;
+	HttpRequestHeader requestHeader;
+	requestHeader.makeGet("/static-data/map3/2/0/0.png");
+	requestHeader.addField(HttpRequestHeader::HeaderField::Host, "localhost");
+	client.perform(request, requestHeader);
+
+	while(true) {
+		CHECK(server.update());
+		CHECK(request.update());
+	}
 }

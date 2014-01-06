@@ -11,7 +11,7 @@ namespace ro {
 struct HttpRequestHeader
 {
 	struct HeaderField { enum Enum {
-		Accept,					// Accept: text/plain
+		Accept = 0,				// Accept: text/plain
 		AcceptCharset,			// Accept-Charset: utf-8
 		AcceptEncoding,			// Accept-Encoding: gzip, deflate
 		AcceptLanguage,			// Accept-Language: en-US
@@ -39,11 +39,14 @@ struct HttpRequestHeader
 	}; };
 
 	/// Functions for composing requestString
-	Status makeGet	(const char* resource);
-	Status addField	(const char* option, const char* value);
-	Status addField	(HeaderField::Enum option, const char* value);
-	Status addField	(HeaderField::Enum option, roUint64 value);
-	Status addField	(HeaderField::Enum option, roUint64 value1, roUint64 value2);
+	Status	makeGet		(const char* resource);
+	Status	addField	(const char* field, const char* value);
+	Status	addField	(HeaderField::Enum field, const char* value);
+	Status	addField	(HeaderField::Enum field, roUint64 value);
+	Status	addField	(HeaderField::Enum field, roUint64 value1, roUint64 value2);
+
+	void	removeField	(const char* field);
+	void	removeField	(HeaderField::Enum field);
 
 	bool getField(const char* option, RangedString& value) const;
 	bool getField(HeaderField::Enum option, RangedString& value) const;
@@ -147,14 +150,32 @@ struct HttpClient
 // Private
 	static const roSize _maxUrlSize = 2 * 1024;
 	static const roSize _maxHeaderSize = 4 * 1024;
-
 };	// HttpClient
 
 struct HttpServer
 {
+	HttpServer();
+	~HttpServer();
+
+	struct Connection : public ro::ListNode<HttpServer::Connection>
+	{
+		Connection();
+
+		Status			update		();
+
+		RingBuffer	ringBuf;
+		BsdSocket socket;
+	};	// HttpServer::Connection
+
+	Status	init();
+	Status	update();
+	Status	(*onRequest)(BsdSocket& socket, HttpRequestHeader& request);
+
+	LinkList<Connection> activeConnections;
+	LinkList<Connection> pooledConnections;
 
 // Private
-	BsdSocket	_socket;
+	BsdSocket	_socketListen;
 };	// HttpServer
 
 }   // namespace ro

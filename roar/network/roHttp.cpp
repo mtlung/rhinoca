@@ -37,16 +37,15 @@ struct HttpClient::Connection
 	bool		debug;
 	String		host;
 	String		requestString;
+	RingBuffer	ringBuf;
 
 	BsdSocket	_socket;
 	SockAddr	_sockAddr;
 	Request*	_request;
 
-	IDecoder*	_iDecoder;
-
-	SizedDecoder _normalDecoder;
-
-	RingBuffer	ringBuf;
+	IDecoder*		_iDecoder;	// Always point to one of the decoder below:
+	SizedDecoder	_sizedDecoder;
+	ChunkedDecoder	_chunkedDecoder;
 };	// HttpClient::Connection
 
 HttpClient::Request::Request()
@@ -81,9 +80,9 @@ HttpClient::Connection::Connection()
 	: _request(NULL)
 	, _iDecoder(NULL)
 {
-	_normalDecoder.ringBuffer = &ringBuf;
+	_sizedDecoder.ringBuffer = &ringBuf;
 
-	_iDecoder = &_normalDecoder;
+	_iDecoder = &_sizedDecoder;
 }
 
 Status HttpClient::Connection::update()
@@ -267,8 +266,8 @@ roEXCP_TRY
 	roSize headerSize = messageContent - rPtr;
 
 	_request->responseHeader.string.assign(rPtr, headerSize);
-	_normalDecoder.commitRead(headerSize);
-	_normalDecoder.contentReadBegin();
+	_sizedDecoder.commitRead(headerSize);
+	_sizedDecoder.contentReadBegin();
 	ringBuf.compactReadBuffer();	// NOTE: Not really necessary
 
 	if(debug)
@@ -302,8 +301,8 @@ roEXCP_TRY
 		{
 			roUint64 contentLength = 0;
 			if(_request->responseHeader.getField(HttpResponseHeader::HeaderField::ContentLength, contentLength)) {
-				_iDecoder = &_normalDecoder;
-				_normalDecoder.expectedEnd += contentLength;
+				_iDecoder = &_sizedDecoder;
+				_sizedDecoder.expectedEnd += contentLength;
 			}
 
 			_request->responseHeader.getField(HttpResponseHeader::HeaderField::ContentEncoding, rangedString);

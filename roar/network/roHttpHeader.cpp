@@ -8,66 +8,53 @@ namespace ro {
 //////////////////////////////////////////////////////////////////////////
 // HttpRequestHeader
 
+static const StaticArray<char*, 25>  _requestEnumStringMapping = {
+	"Accept",
+	"Accept-Charset",
+	"Accept-Encoding",
+	"Accept-Language",
+	"Accept-Datetime",
+	"Authorization",
+	"Cache-Control",
+	"Connection",
+	"Cookie",
+	"Content-Length",
+	"Content-MD5",
+	"Content-Type",
+	"Date",
+	"Expect",
+	"From",
+	"Host",
+	"Max-Forwards",
+	"Origin",
+	"Resource",
+	"Pragma",
+	"Proxy-Authorization",
+	"Range",
+	"Referer",
+	"User-Agent",
+	"Via",
+};
+
 Status HttpRequestHeader::makeGet(const char* resource)
 {
 	string.clear();
 	return strFormat(string, "GET {} HTTP/1.1\r\n", resource);
 }
 
-Status HttpRequestHeader::addField(const char* option, const char* value)
+Status HttpRequestHeader::addField(const char* field, const char* value)
 {
-	return strFormat(string, "{}: {}\r\n", option, value);
+	return strFormat(string, "{}: {}\r\n", field, value);
 }
 
-Status HttpRequestHeader::addField(HeaderField::Enum option, const char* value)
+Status HttpRequestHeader::addField(HeaderField::Enum field, const char* value)
 {
-	switch(option) {
-	case HeaderField::Accept:
-		return addField("Accept", value);
-	case HeaderField::AcceptCharset:
-		return addField("Accept-Charset", value);
-	case HeaderField::AcceptEncoding:
-		return addField("Accept-Encoding", value);
-	case HeaderField::AcceptLanguage:
-		return addField("Accept-Language", value);
-	case HeaderField::Authorization:
-		return addField("Authorization", value);
-	case HeaderField::CacheControl:
-		return addField("Cache-Control", value);
-	case HeaderField::Connection:
-		return addField("Connection", value);
-	case HeaderField::Cookie:
-		return addField("Cookie", value);
-	case HeaderField::ContentMD5:
-		return addField("Content-MD5", value);
-	case HeaderField::ContentType:
-		return addField("Content-Type", value);
-	case HeaderField::Expect:
-		return addField("Expect", value);
-	case HeaderField::From:
-		return addField("From", value);
-	case HeaderField::Host:
-		return addField("Host", value);
-	case HeaderField::Origin:
-		return addField("Origin", value);
-	case HeaderField::Pragma:
-		return addField("Pragma", value);
-	case HeaderField::ProxyAuthorization:
-		return addField("Proxy-Authorization", value);
-	case HeaderField::Referer:
-		return addField("Referer", value);
-	case HeaderField::UserAgent:
-		return addField("UserAgent", value);
-	case HeaderField::Via:
-		return addField("Via", value);
-	}
-
-	return Status::invalid_parameter;
+	return addField(_requestEnumStringMapping[field], value);
 }
 
-Status HttpRequestHeader::addField(HeaderField::Enum option, roUint64 value)
+Status HttpRequestHeader::addField(HeaderField::Enum field, roUint64 value)
 {
-	switch(option) {
+	switch(field) {
 	case HeaderField::ContentLength:
 		return strFormat(string, "{}: {}\r\n", "Content-Length", value);
 	case HeaderField::MaxForwards:
@@ -79,9 +66,9 @@ Status HttpRequestHeader::addField(HeaderField::Enum option, roUint64 value)
 	return Status::invalid_parameter;
 }
 
-Status HttpRequestHeader::addField(HeaderField::Enum option, roUint64 value1, roUint64 value2)
+Status HttpRequestHeader::addField(HeaderField::Enum field, roUint64 value1, roUint64 value2)
 {
-	switch(option) {
+	switch(field) {
 	case HeaderField::Range:
 		return strFormat(string, "Range: bytes={}-{}\r\n", value1, value2);
 	}
@@ -89,7 +76,34 @@ Status HttpRequestHeader::addField(HeaderField::Enum option, roUint64 value1, ro
 	return Status::invalid_parameter;
 }
 
-static bool _getField(const String& string, const char* option, RangedString& value)
+void HttpRequestHeader::removeField(const char* field)
+{
+	char* begin = const_cast<char*>(string.c_str());
+
+	while(begin < string.end())
+	{
+		// Tokenize the string by new line
+		char* end = roStrStr(begin, string.end(), "\r\n");
+
+		if(begin == end)
+			break;
+
+		char* p = roStrStrCase(begin, end, field);
+		if(p) {
+			string.erase(p - string.c_str(), end - p + 2);
+			return;
+		}
+
+		begin = end + 2;
+	}
+}
+
+void HttpRequestHeader::removeField(HeaderField::Enum field)
+{
+	removeField(_requestEnumStringMapping[field]);
+}
+
+static bool _getField(const String& string, const char* field, RangedString& value)
 {
 	char* begin = const_cast<char*>(string.c_str());
 
@@ -104,7 +118,7 @@ static bool _getField(const String& string, const char* option, RangedString& va
 		// Split by ':'
 		char* p = roStrStr(begin, end, ":");
 
-		if(p && roStrStrCase(begin, p, option)) {
+		if(p && roStrStrCase(begin, p, field)) {
 			++p;
 
 			// Skip space
@@ -120,14 +134,14 @@ static bool _getField(const String& string, const char* option, RangedString& va
 	return false;
 }
 
-bool HttpRequestHeader::getField(const char* option, RangedString& value) const
+bool HttpRequestHeader::getField(const char* field, RangedString& value) const
 {
-	return _getField(string, option, value);
+	return _getField(string, field, value);
 }
 
-bool HttpRequestHeader::getField(HeaderField::Enum option, RangedString& value) const
+bool HttpRequestHeader::getField(HeaderField::Enum field, RangedString& value) const
 {
-	switch(option) {
+	switch(field) {
 	case HeaderField::Host:
 		return getField("Host", value);
 	case HeaderField::Resource:
@@ -144,90 +158,72 @@ bool HttpRequestHeader::getField(HeaderField::Enum option, RangedString& value) 
 //////////////////////////////////////////////////////////////////////////
 // HttpResponseHeader
 
-bool HttpResponseHeader::getField(const char* option, RangedString& value) const
+static const StaticArray<char*, 35>  _responseEnumStringMapping = {
+	"Access-Control-Allow-Origin",
+	"Accept-Ranges",
+	"Age",
+	"Allow",
+	"Cache-Control",
+	"Connection",
+	"Content-Encoding",
+	"Content-Language",
+	"Content-Length",
+	"Content-Location",
+	"Content-MD5",
+	"Content-Disposition",
+	"Content-Range",
+	"Content-Type",
+	"Date",
+	"ETag",
+	"Expires",
+	"Last-Modified",
+	"Link",
+	"Location",
+	"P3P",
+	"Pragma",
+	"Proxy-Authenticate",
+	"Refresh",
+	"Retry-After",
+	"Server",
+	"Set-Cookie",
+	"Status",
+	"Strict-Transport-Security",
+	"Trailer",
+	"Transfer-Encoding",
+	"Vary",
+	"Version",
+	"Via",
+	"WWW-Authenticate",
+};
+
+bool HttpResponseHeader::getField(const char* field, RangedString& value) const
 {
-	return _getField(string, option, value);
+	return _getField(string, field, value);
 }
 
-bool HttpResponseHeader::getField(HeaderField::Enum option, RangedString& value) const
+bool HttpResponseHeader::getField(HeaderField::Enum field, RangedString& value) const
 {
-	switch(option) {
-	case HeaderField::AccessControlAllowOrigin:
-		return getField("Access-Control-Allow-Origin", value);
-	case HeaderField::AcceptRanges:
-		return getField("Accept-Ranges", value);
-	case HeaderField::Allow:
-		return getField("Allow", value);
-	case HeaderField::CacheControl:
-		return getField("Cache-Control", value);
-	case HeaderField::Connection:
-		return getField("Connection", value);
-	case HeaderField::ContentEncoding:
-		return getField("Content-Encoding", value);
-	case HeaderField::ContentLanguage:
-		return getField("Content-Language", value);
-	case HeaderField::ContentLocation:
-		return getField("Content-Location", value);
-	case HeaderField::ContentMD5:
-		return getField("Content-MD5", value);
-	case HeaderField::ContentDisposition:
-		return getField("Content-Disposition", value);
-	case HeaderField::ContentType:
-		return getField("Content-Type", value);
-	case HeaderField::ETag:
-		return getField("ETag", value);
-	case HeaderField::Link:
-		return getField("Link", value);
-	case HeaderField::Location:
-		return getField("Location", value);
-	case HeaderField::Pragma:
-		return getField("Pragma", value);
-	case HeaderField::ProxyAuthenticate:
-		return getField("Proxy-Authenticate", value);
-	case HeaderField::Refresh:
-		return getField("Refresh", value);
-	case HeaderField::RetryAfter:
-		return getField("RetryAfter", value);
-	case HeaderField::Server:
-		return getField("Server", value);
-	case HeaderField::SetCookie:
-		return getField("Set-Cookie", value);
-	case HeaderField::Status:
-		return getField("Status", value);
-	case HeaderField::StrictTransportSecurity:
-		return getField("Strict-Transport-Security", value);
-	case HeaderField::Trailer:
-		return getField("Trailer", value);
-	case HeaderField::TransferEncoding:
-		return getField("TransferEncoding", value);
-	case HeaderField::Vary:
-		return getField("Vary", value);
+	switch(field) {
 	case HeaderField::Version:
 		{	Regex regex;
 			regex.match(string.c_str(), "^HTTP/([\\d\\.]+)", "i");
 			return regex.getValue(1, value);
 		}
-	case HeaderField::Via:
-		return getField("Via", value);
-	case HeaderField::WWWAuthenticate:
-		return getField("WWWAuthenticate", value);
 	}
 
-	return false;
+	return getField(_responseEnumStringMapping[field], value);
 }
 
-bool HttpResponseHeader::getField(HeaderField::Enum option, roUint64& value) const
+bool HttpResponseHeader::getField(HeaderField::Enum field, roUint64& value) const
 {
 	Regex regex;
 	bool ok = false;
 	RangedString str;
 
-	switch(option) {
+	switch(field) {
 	case HeaderField::Age:
-		ok = getField("Age", str);
-		break;
 	case HeaderField::ContentLength:
-		ok = getField("Content-Length", str);
+		ok = getField(_responseEnumStringMapping[field], str);
 		break;
 	case HeaderField::Status:
 		ok = regex.match(string.c_str(), "^HTTP/[\\d\\.]+[ ]+(\\d\\d\\d)", "i");
@@ -244,12 +240,12 @@ bool HttpResponseHeader::getField(HeaderField::Enum option, roUint64& value) con
 	return roStrTo(str.begin, str.size(), value);
 }
 
-bool HttpResponseHeader::getField(HeaderField::Enum option, roUint64& value1, roUint64& value2, roUint64& value3) const
+bool HttpResponseHeader::getField(HeaderField::Enum field, roUint64& value1, roUint64& value2, roUint64& value3) const
 {
 	Regex regex;
 	RangedString str;
 
-	switch(option) {
+	switch(field) {
 	case HeaderField::ContentRange:
 		getField("Content-Range", str);
 		regex.match(str, "^\\s*bytes\\s+([\\d]+)\\s*-\\s*([\\d]+)\\s*/([\\d]+)");
