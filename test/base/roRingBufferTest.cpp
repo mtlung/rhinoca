@@ -79,7 +79,7 @@ TEST_FIXTURE(RingBufferTest, random)
 
 			roSize writeCount = rand.minMax(0u, chunkSize);
 			for(roSize i=0; i<writeCount; ++i)
-				writePtr[i] = dataGen1.minMax(0u, 128u);
+				writePtr[i] = dataGen1.minMax<roByte>(0u, 128u);
 			ringBuffer.commitWrite(writeCount);
 		}
 

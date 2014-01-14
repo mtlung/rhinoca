@@ -13,5 +13,4 @@ TEST(DateTimeTest)
 
 	String str;
 	CHECK(strFormat(str, "{}", t));
-	const roUtf8* s = str.c_str();
 }

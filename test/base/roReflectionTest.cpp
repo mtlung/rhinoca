@@ -27,6 +27,7 @@ struct Shape
 struct Circle : public Shape
 {
 	Circle() : pi(3.14f) {}
+	Circle& operator=(const Circle& rhs) { radius = rhs.radius; return *this; }
 	float radius;
 	const float pi;
 };
@@ -266,7 +267,6 @@ TEST_FIXTURE(ReflectionTest, serialize)
 		{	Vec3 v;
 			Type* t = reflection.getType<Vec3>();
 			t->serialize(ise, "Vec3 type", &v);
-			double a = 3. / 10;
 			CHECK_EQUAL(1, v.x);
 			CHECK_EQUAL(2, v.y);
 			CHECK_EQUAL(3, v.z);

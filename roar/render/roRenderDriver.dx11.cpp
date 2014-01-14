@@ -11,9 +11,9 @@
 #include "../base/roTypeCast.h"
 
 #include <dxgi.h>
+#include <d3d11.h>
 #include <D3Dcompiler.h>
 #include <D3DX11async.h>
-#include <stddef.h>	// For offsetof
 #include <stdio.h>	// For sscanf
 
 // DirectX stuffs
@@ -615,7 +615,7 @@ static void _setTextureState(roRDriverTextureState* states, roSize stateCount, u
 		if(state.hash == 0) {
 			state.hash = (void*)_hash(
 				&state.filter,
-				sizeof(roRDriverTextureState) - offsetof(roRDriverTextureState, roRDriverTextureState::filter)
+				sizeof(roRDriverTextureState) - roOffsetof(roRDriverTextureState, roRDriverTextureState::filter)
 			);
 		}
 

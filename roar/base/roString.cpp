@@ -101,7 +101,7 @@ Status String::_reserve(roSize size, bool forceRealloc)
 		return Status::ok;
 
 	roSize currentSize = _size();
-	roSize newCapacity = roMaxOf2(roSize(size * 1.5) + 1, 8u);
+	roSize newCapacity = roMaxOf2<roSize>(roSize(size * 1.5) + 1, 8u);
 	roSize headerSize = sizeof(roSize) * 2;
 	roSize takeCareNullTerminator = 1;
 	char* newPtr = _allocator.realloc(

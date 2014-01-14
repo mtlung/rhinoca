@@ -45,7 +45,7 @@ namespace CppTestHarness
 #endif
 
 	template<typename T>
-	inline bool IsSigned(T t) { return false; }
+	inline bool IsSigned(T) { return false; }
 	inline bool IsSigned(int8_t) { return true; }
 	inline bool IsSigned(int16_t) { return true; }
 	inline bool IsSigned(int32_t) { return true; }

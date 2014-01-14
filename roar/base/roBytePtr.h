@@ -37,7 +37,7 @@ struct roBytePtr
 	friend roBytePtr	operator+(roBytePtr lhs, roPtrInt rhs)	{ return lhs.ptr + rhs; }
 	friend roBytePtr	operator+(roPtrInt lhs, roBytePtr rhs)	{ return lhs + rhs.ptr; }
 
-	friend roPtrInt	operator-(roBytePtr lhs, roBytePtr rhs) { return lhs.ptr - rhs.ptr; }
+	friend roPtrInt		operator-(roBytePtr lhs, roBytePtr rhs)	{ return lhs.ptr - rhs.ptr; }
 
 	friend bool			operator< (roBytePtr lhs, roBytePtr rhs) { return lhs.ptr <  rhs.ptr; }
 	friend bool			operator> (roBytePtr lhs, roBytePtr rhs) { return lhs.ptr >  rhs.ptr; }

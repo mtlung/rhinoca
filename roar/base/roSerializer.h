@@ -91,8 +91,8 @@ template<class T> inline Status serializePrimitive(Serializer& s, T& v)
 		s._w.ref<T>() = roHostToSe(v);
 	else {
 		T tmp = roHostToSe(v);
-		roBytePtr p = &tmp;
-		roBytePtr w = s._w;
+		roByte* p = reinterpret_cast<roByte*>(&tmp);
+		roByte* w = s._w;
 		for(roSize i=0; i<sizeof(T); ++i)
 			*w++ = *p++;
 	}
@@ -107,8 +107,8 @@ template<class T> inline Status serializePrimitive(Deserializer& s, T& v)
 		v = roSeToHost(s._r.ref<T>());
 	else {
 		T tmp;
-		roBytePtr p = &tmp;
-		roBytePtr r = s._r;
+		roByte* p = reinterpret_cast<roByte*>(&tmp);
+		roByte* r = s._r;
 		for(roSize i=0; i<sizeof(T); ++i)
 			*p++ = *r++;
 		v = roSeToHost(tmp);

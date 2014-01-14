@@ -130,7 +130,7 @@ Status serializeIoVary(Deserializer& s, roUint32& v)
 	for(;;)
 	{
 		st = s._checkRemain(1); if(!st) return st;
-		t = *s._r;
+		t = s._r.ref<roUint8>();
 		v |= (roUint32)(t & 0x7F) << bit;
 		s._advance(1);
 
@@ -157,7 +157,7 @@ Status serializeIoVary(Deserializer& s, roUint64& v)
 	for(;;)
 	{
 		st = s._checkRemain(1); if(!st) return st;
-		t = *s._r;
+		t = s._r.ref<roUint8>();
 		v |= (roUint64)(t & 0x7F) << bit;
 		s._advance(1);
 
