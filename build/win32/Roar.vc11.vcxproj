@@ -1,0 +1,363 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{2F12C86F-7242-45B3-8E6B-D359A8EDBD09}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>Roar</RootNamespace>
+    <ProjectName>Roar</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>$(ProjectName)d</TargetName>
+    <IntDir>tmp/$(ProjectName)/$(PlatformName)/$(Configuration)/</IntDir>
+    <OutDir>../../lib/$(PlatformName)/</OutDir>
+    <IncludePath>$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath);$(DXSDK_DIR)\Lib\x64</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <TargetName>$(ProjectName)d</TargetName>
+    <IntDir>tmp/$(ProjectName)/$(PlatformName)/$(Configuration)/</IntDir>
+    <OutDir>../../lib/$(PlatformName)/</OutDir>
+    <IncludePath>$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath);$(DXSDK_DIR)\Lib\x86</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IntDir>tmp/$(ProjectName)/$(PlatformName)/$(Configuration)/</IntDir>
+    <OutDir>../../lib/$(PlatformName)/</OutDir>
+    <IncludePath>$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath);$(DXSDK_DIR)\Lib\x86</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IntDir>tmp/$(ProjectName)/$(PlatformName)/$(Configuration)/</IntDir>
+    <OutDir>../../lib/$(PlatformName)/</OutDir>
+    <IncludePath>$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath);$(DXSDK_DIR)\Lib\x64</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <SmallerTypeCheck>true</SmallerTypeCheck>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <MinimalRebuild>false</MinimalRebuild>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <SmallerTypeCheck>true</SmallerTypeCheck>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <MinimalRebuild>false</MinimalRebuild>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <StringPooling>true</StringPooling>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <StringPooling>true</StringPooling>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\roar\audio\roAudioDriver.h" />
+    <ClInclude Include="..\..\roar\audio\roAudioDriver.openal.windows.functionList.h" />
+    <ClInclude Include="..\..\roar\audio\roAudioDriver.openal.windows.h" />
+    <ClInclude Include="..\..\roar\audio\roMp3Loader.openal.h" />
+    <ClInclude Include="..\..\roar\audio\roOggLoader.openal.h" />
+    <ClInclude Include="..\..\roar\audio\roWaveLoader.openal.h" />
+    <ClInclude Include="..\..\roar\audio\stb_vorbis.h" />
+    <ClInclude Include="..\..\roar\base\roAlgorithm.h" />
+    <ClInclude Include="..\..\roar\base\roArray.h" />
+    <ClInclude Include="..\..\roar\base\roAtomic.h" />
+    <ClInclude Include="..\..\roar\base\roBlockAllocator.h" />
+    <ClInclude Include="..\..\roar\base\roByteOrder.h" />
+    <ClInclude Include="..\..\roar\base\roBytePtr.h" />
+    <ClInclude Include="..\..\roar\base\roCachedVal.h" />
+    <ClInclude Include="..\..\roar\base\roComPtr.h" />
+    <ClInclude Include="..\..\roar\base\roCondVar.h" />
+    <ClInclude Include="..\..\roar\base\roCpuProfiler.h" />
+    <ClInclude Include="..\..\roar\base\roDateTime.h" />
+    <ClInclude Include="..\..\roar\base\roFileSystem.h" />
+    <ClInclude Include="..\..\roar\base\roFuncPatcher.h" />
+    <ClInclude Include="..\..\roar\base\roHttpFileSystem.h" />
+    <ClInclude Include="..\..\roar\base\roIOStream.h" />
+    <ClInclude Include="..\..\roar\base\roJson.h" />
+    <ClInclude Include="..\..\roar\base\roJsonSerializer.h" />
+    <ClInclude Include="..\..\roar\base\roLinkList.h" />
+    <ClInclude Include="..\..\roar\base\roLog.h" />
+    <ClInclude Include="..\..\roar\base\roMap.h" />
+    <ClInclude Include="..\..\roar\base\roMemory.h" />
+    <ClInclude Include="..\..\roar\base\roMemoryProfiler.h" />
+    <ClInclude Include="..\..\roar\base\roMutex.h" />
+    <ClInclude Include="..\..\roar\base\roNonCopyable.h" />
+    <ClInclude Include="..\..\roar\base\roObjectTable.h" />
+    <ClInclude Include="..\..\roar\base\roParser.h" />
+    <ClInclude Include="..\..\roar\base\roRawFileSystem.h" />
+    <ClInclude Include="..\..\roar\base\roReflection.h" />
+    <ClInclude Include="..\..\roar\base\roReflectionFwd.h" />
+    <ClInclude Include="..\..\roar\base\roRegex.h" />
+    <ClInclude Include="..\..\roar\base\roResource.h" />
+    <ClInclude Include="..\..\roar\base\roRingBuffer.h" />
+    <ClInclude Include="..\..\roar\base\roSafeInteger.h" />
+    <ClInclude Include="..\..\roar\base\roSerializer.h" />
+    <ClInclude Include="..\..\roar\base\roSharedPtr.h" />
+    <ClInclude Include="..\..\roar\base\roSocket.h" />
+    <ClInclude Include="..\..\roar\base\roStackWalker.h" />
+    <ClInclude Include="..\..\roar\base\roStatus.h" />
+    <ClInclude Include="..\..\roar\base\roStatusEnum.h" />
+    <ClInclude Include="..\..\roar\base\roStopWatch.h" />
+    <ClInclude Include="..\..\roar\base\roString.h" />
+    <ClInclude Include="..\..\roar\base\roStringFormat.h" />
+    <ClInclude Include="..\..\roar\base\roStringHash.h" />
+    <ClInclude Include="..\..\roar\base\roStringUtility.h" />
+    <ClInclude Include="..\..\roar\base\roTaskPool.h" />
+    <ClInclude Include="..\..\roar\base\roTextResource.h" />
+    <ClInclude Include="..\..\roar\base\roTypeCast.h" />
+    <ClInclude Include="..\..\roar\base\roTypeOf.h" />
+    <ClInclude Include="..\..\roar\base\roUtility.h" />
+    <ClInclude Include="..\..\roar\base\roWeakPtr.h" />
+    <ClInclude Include="..\..\roar\gui\roGui.h" />
+    <ClInclude Include="..\..\roar\gui\roGuiButton.h" />
+    <ClInclude Include="..\..\roar\gui\roGuiCheckBox.h" />
+    <ClInclude Include="..\..\roar\gui\roGuiLabel.h" />
+    <ClInclude Include="..\..\roar\gui\roGuiLayout.h" />
+    <ClInclude Include="..\..\roar\gui\roGuiPanel.h" />
+    <ClInclude Include="..\..\roar\gui\roGuiScrollbar.h" />
+    <ClInclude Include="..\..\roar\gui\roGuiTabArea.h" />
+    <ClInclude Include="..\..\roar\gui\roGuiTextArea.h" />
+    <ClInclude Include="..\..\roar\gui\roGuiWindow.h" />
+    <ClInclude Include="..\..\roar\input\roInputDriver.h" />
+    <ClInclude Include="..\..\roar\math\roMath.h" />
+    <ClInclude Include="..\..\roar\math\roMatrix.h" />
+    <ClInclude Include="..\..\roar\math\roRandom.h" />
+    <ClInclude Include="..\..\roar\math\roRect.h" />
+    <ClInclude Include="..\..\roar\math\roVector.h" />
+    <ClInclude Include="..\..\roar\network\roHttp.h" />
+    <ClInclude Include="..\..\roar\network\roHttpContentDecoder.h" />
+    <ClInclude Include="..\..\roar\pch.h" />
+    <ClInclude Include="..\..\roar\platform\roCompiler.h" />
+    <ClInclude Include="..\..\roar\platform\roCompiler.vc.h" />
+    <ClInclude Include="..\..\roar\platform\roCpu.h" />
+    <ClInclude Include="..\..\roar\platform\roOS.h" />
+    <ClInclude Include="..\..\roar\platform\roOS.win.h" />
+    <ClInclude Include="..\..\roar\platform\roPlatformHeaders.h" />
+    <ClInclude Include="..\..\roar\render\roCanvas.h" />
+    <ClInclude Include="..\..\roar\render\roColor.h" />
+    <ClInclude Include="..\..\roar\render\roFont.h" />
+    <ClInclude Include="..\..\roar\render\roRenderDriver.h" />
+    <ClInclude Include="..\..\roar\render\roSprite.h" />
+    <ClInclude Include="..\..\roar\render\roTexture.h" />
+    <ClInclude Include="..\..\roar\render\shivavg\openvg.h" />
+    <ClInclude Include="..\..\roar\render\shivavg\shArrayBase.h" />
+    <ClInclude Include="..\..\roar\render\shivavg\shArrays.h" />
+    <ClInclude Include="..\..\roar\render\shivavg\shContext.h" />
+    <ClInclude Include="..\..\roar\render\shivavg\shDefs.h" />
+    <ClInclude Include="..\..\roar\render\shivavg\shGeometry.h" />
+    <ClInclude Include="..\..\roar\render\shivavg\shPaint.h" />
+    <ClInclude Include="..\..\roar\render\shivavg\shPath.h" />
+    <ClInclude Include="..\..\roar\render\shivavg\shVectors.h" />
+    <ClInclude Include="..\..\roar\render\shivavg\vgu.h" />
+    <ClInclude Include="..\..\roar\roSubSystems.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\roar\audio\roAudioDriver.openal.cpp" />
+    <ClCompile Include="..\..\roar\audio\stb_vorbis.cpp" />
+    <ClCompile Include="..\..\roar\base\roBlockAllocator.cpp" />
+    <ClCompile Include="..\..\roar\base\roCondVar.cpp" />
+    <ClCompile Include="..\..\roar\base\roCpuProfiler.cpp" />
+    <ClCompile Include="..\..\roar\base\roDateTime.cpp" />
+    <ClCompile Include="..\..\roar\base\roFileSystem.cpp" />
+    <ClCompile Include="..\..\roar\base\roHttpFileSystem.cpp" />
+    <ClCompile Include="..\..\roar\base\roHttpStream.cpp" />
+    <ClCompile Include="..\..\roar\base\roIOStream.cpp" />
+    <ClCompile Include="..\..\roar\base\roJson.cpp" />
+    <ClCompile Include="..\..\roar\base\roJsonSerializer.cpp" />
+    <ClCompile Include="..\..\roar\base\roLinkList.cpp" />
+    <ClCompile Include="..\..\roar\base\roLog.cpp" />
+    <ClCompile Include="..\..\roar\base\roMap.cpp" />
+    <ClCompile Include="..\..\roar\base\roMemory.cpp" />
+    <ClCompile Include="..\..\roar\base\roMemoryProfiler.cpp" />
+    <ClCompile Include="..\..\roar\base\roMutex.cpp" />
+    <ClCompile Include="..\..\roar\base\roParser.cpp" />
+    <ClCompile Include="..\..\roar\base\roRawFileStream.cpp" />
+    <ClCompile Include="..\..\roar\base\roRawFileSystem.cpp" />
+    <ClCompile Include="..\..\roar\base\roReflection.cpp" />
+    <ClCompile Include="..\..\roar\base\roRegex.cpp" />
+    <ClCompile Include="..\..\roar\base\roResource.cpp" />
+    <ClCompile Include="..\..\roar\base\roSerializer.cpp" />
+    <ClCompile Include="..\..\roar\base\roSocket.cpp" />
+    <ClCompile Include="..\..\roar\base\roStatus.cpp" />
+    <ClCompile Include="..\..\roar\base\roStopWatch.cpp" />
+    <ClCompile Include="..\..\roar\base\roString.cpp" />
+    <ClCompile Include="..\..\roar\base\roStringFormat.cpp" />
+    <ClCompile Include="..\..\roar\base\roStringUtility.cpp" />
+    <ClCompile Include="..\..\roar\base\roTaskPool.cpp" />
+    <ClCompile Include="..\..\roar\base\roTextResource.cpp" />
+    <ClCompile Include="..\..\roar\base\roUtility.cpp" />
+    <ClCompile Include="..\..\roar\gui\roGui.cpp" />
+    <ClCompile Include="..\..\roar\input\roInputDriver.windows.cpp" />
+    <ClCompile Include="..\..\roar\math\roMath.cpp" />
+    <ClCompile Include="..\..\roar\math\roMatrix.cpp" />
+    <ClCompile Include="..\..\roar\math\roVector.cpp" />
+    <ClCompile Include="..\..\roar\network\roHttp.cpp" />
+    <ClCompile Include="..\..\roar\network\roHttpHeader.cpp" />
+    <ClCompile Include="..\..\roar\network\roHttpServer.cpp" />
+    <ClCompile Include="..\..\roar\pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\platform\roCompiler.vc.cpp" />
+    <ClCompile Include="..\..\roar\render\roBmpLoader.cpp" />
+    <ClCompile Include="..\..\roar\render\roCanvas.cpp" />
+    <ClCompile Include="..\..\roar\render\roColor.cpp" />
+    <ClCompile Include="..\..\roar\render\roFont.cpp" />
+    <ClCompile Include="..\..\roar\render\roFontLoader.win.cpp" />
+    <ClCompile Include="..\..\roar\render\roImageLoader.windows.cpp" />
+    <ClCompile Include="..\..\roar\render\roJpegLoader.cpp" />
+    <ClCompile Include="..\..\roar\render\roPngLoader.cpp" />
+    <ClCompile Include="..\..\roar\render\roRenderDriver.cpp" />
+    <ClCompile Include="..\..\roar\render\roRenderDriver.dx11.cpp" />
+    <ClCompile Include="..\..\roar\render\roRenderDriver.dx11.windows.cpp" />
+    <ClCompile Include="..\..\roar\render\roRenderDriver.gl.cpp" />
+    <ClCompile Include="..\..\roar\render\roRenderDriver.gl.windows.cpp" />
+    <ClCompile Include="..\..\roar\render\roSprite.cpp" />
+    <ClCompile Include="..\..\roar\render\roTexture.cpp" />
+    <ClCompile Include="..\..\roar\render\shivavg\shArrays.cpp" />
+    <ClCompile Include="..\..\roar\render\shivavg\shContext.cpp" />
+    <ClCompile Include="..\..\roar\render\shivavg\shGeometry.cpp" />
+    <ClCompile Include="..\..\roar\render\shivavg\shPaint.cpp" />
+    <ClCompile Include="..\..\roar\render\shivavg\shParams.cpp" />
+    <ClCompile Include="..\..\roar\render\shivavg\shPath.cpp" />
+    <ClCompile Include="..\..\roar\render\shivavg\shPipeline.cpp" />
+    <ClCompile Include="..\..\roar\render\shivavg\shVectors.cpp" />
+    <ClCompile Include="..\..\roar\render\shivavg\shVgu.cpp" />
+    <ClCompile Include="..\..\roar\roRegisterReflection.cpp" />
+    <ClCompile Include="..\..\roar\roSubSystems.cpp" />
+    <ClCompile Include="..\..\roar\roSubSystems.windows.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\roar\base\roArray.inl" />
+    <None Include="..\..\roar\base\roLinkList.inl" />
+    <None Include="..\..\roar\base\roReflection.inl" />
+    <None Include="..\..\roar\base\roStringUtility.inl" />
+    <None Include="..\..\roar\input\roInputDriver.ime.windows.inl" />
+    <None Include="..\..\roar\math\roMatrix.inl" />
+    <None Include="..\..\roar\math\roVector.inl" />
+    <None Include="..\..\roar\render\roRenderDriver.dx11.inl" />
+    <None Include="..\..\roar\render\roRenderDriver.gl.inl" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

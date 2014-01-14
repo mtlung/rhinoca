@@ -16,7 +16,7 @@ TEST_FIXTURE(RandomTest, uniform)
 
 		for(roSize i=0; i<1000000; ++i)
 		{
-			roSize index = rand.beginEnd(0u, bucket.size());
+			roSize index = rand.beginEnd<roSize>(0u, bucket.size());
 			bucket[index]++;
 		}
 

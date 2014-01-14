@@ -1,0 +1,563 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\roar\pch.cpp" />
+    <ClCompile Include="..\..\roar\roRegisterReflection.cpp" />
+    <ClCompile Include="..\..\roar\roSubSystems.cpp" />
+    <ClCompile Include="..\..\roar\roSubSystems.windows.cpp" />
+    <ClCompile Include="..\..\roar\base\roBlockAllocator.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roCondVar.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roCpuProfiler.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roDateTime.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roFileSystem.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roHttpFileSystem.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roHttpStream.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roIOStream.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roJson.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roJsonSerializer.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roLinkList.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roLog.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roMap.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roMemory.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roMemoryProfiler.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roMutex.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roParser.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roRawFileStream.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roRawFileSystem.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roReflection.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roRegex.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roResource.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roSerializer.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roSocket.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roStatus.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roStopWatch.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roString.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roStringFormat.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roStringUtility.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roTaskPool.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roTextResource.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roUtility.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\math\roMath.cpp">
+      <Filter>math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\math\roMatrix.cpp">
+      <Filter>math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\math\roVector.cpp">
+      <Filter>math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\platform\roCompiler.vc.cpp">
+      <Filter>platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\network\roHttp.cpp">
+      <Filter>network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\network\roHttpHeader.cpp">
+      <Filter>network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\network\roHttpServer.cpp">
+      <Filter>network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\gui\roGui.cpp">
+      <Filter>gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\audio\roAudioDriver.openal.cpp">
+      <Filter>audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\audio\stb_vorbis.cpp">
+      <Filter>audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\input\roInputDriver.windows.cpp">
+      <Filter>input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\roBmpLoader.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\roCanvas.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\roColor.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\roFont.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\roFontLoader.win.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\roImageLoader.windows.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\roJpegLoader.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\roPngLoader.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\roRenderDriver.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\roRenderDriver.dx11.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\roRenderDriver.dx11.windows.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\roRenderDriver.gl.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\roRenderDriver.gl.windows.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\roSprite.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\roTexture.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\shivavg\shArrays.cpp">
+      <Filter>render\shivavg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\shivavg\shContext.cpp">
+      <Filter>render\shivavg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\shivavg\shGeometry.cpp">
+      <Filter>render\shivavg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\shivavg\shPaint.cpp">
+      <Filter>render\shivavg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\shivavg\shParams.cpp">
+      <Filter>render\shivavg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\shivavg\shPath.cpp">
+      <Filter>render\shivavg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\shivavg\shPipeline.cpp">
+      <Filter>render\shivavg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\shivavg\shVectors.cpp">
+      <Filter>render\shivavg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\render\shivavg\shVgu.cpp">
+      <Filter>render\shivavg</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\roar\pch.h" />
+    <ClInclude Include="..\..\roar\roSubSystems.h" />
+    <ClInclude Include="..\..\roar\base\roAlgorithm.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roArray.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roAtomic.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roBlockAllocator.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roByteOrder.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roBytePtr.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roCachedVal.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roComPtr.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roCondVar.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roCpuProfiler.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roDateTime.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roFileSystem.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roFuncPatcher.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roHttpFileSystem.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roIOStream.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roJson.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roJsonSerializer.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roLinkList.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roLog.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roMap.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roMemory.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roMemoryProfiler.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roMutex.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roNonCopyable.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roObjectTable.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roParser.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roRawFileSystem.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roReflection.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roReflectionFwd.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roRegex.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roResource.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roRingBuffer.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roSafeInteger.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roSerializer.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roSharedPtr.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roSocket.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roStackWalker.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roStatus.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roStatusEnum.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roStopWatch.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roString.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roStringFormat.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roStringHash.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roStringUtility.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roTaskPool.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roTextResource.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roTypeCast.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roTypeOf.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roUtility.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roWeakPtr.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\math\roMath.h">
+      <Filter>math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\math\roMatrix.h">
+      <Filter>math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\math\roRandom.h">
+      <Filter>math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\math\roRect.h">
+      <Filter>math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\math\roVector.h">
+      <Filter>math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\platform\roPlatformHeaders.h">
+      <Filter>platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\platform\roCompiler.h">
+      <Filter>platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\platform\roCompiler.vc.h">
+      <Filter>platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\platform\roCpu.h">
+      <Filter>platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\platform\roOS.h">
+      <Filter>platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\platform\roOS.win.h">
+      <Filter>platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\network\roHttp.h">
+      <Filter>network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\network\roHttpContentDecoder.h">
+      <Filter>network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\gui\roGui.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\gui\roGuiButton.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\gui\roGuiCheckBox.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\gui\roGuiLabel.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\gui\roGuiLayout.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\gui\roGuiPanel.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\gui\roGuiScrollbar.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\gui\roGuiTabArea.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\gui\roGuiTextArea.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\gui\roGuiWindow.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\audio\roAudioDriver.h">
+      <Filter>audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\audio\roAudioDriver.openal.windows.functionList.h">
+      <Filter>audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\audio\roAudioDriver.openal.windows.h">
+      <Filter>audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\audio\roMp3Loader.openal.h">
+      <Filter>audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\audio\roOggLoader.openal.h">
+      <Filter>audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\audio\roWaveLoader.openal.h">
+      <Filter>audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\audio\stb_vorbis.h">
+      <Filter>audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\input\roInputDriver.h">
+      <Filter>input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\render\roCanvas.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\render\roColor.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\render\roFont.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\render\roRenderDriver.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\render\roSprite.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\render\roTexture.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\render\shivavg\openvg.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\render\shivavg\shArrayBase.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\render\shivavg\shArrays.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\render\shivavg\shContext.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\render\shivavg\shDefs.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\render\shivavg\shGeometry.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\render\shivavg\shPaint.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\render\shivavg\shPath.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\render\shivavg\shVectors.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\render\shivavg\vgu.h">
+      <Filter>render\shivavg</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="base">
+      <UniqueIdentifier>{96a4b043-c095-4803-9b5d-44fcfd9a9de0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="math">
+      <UniqueIdentifier>{9ff7ef50-4f10-4ed2-92e6-ef7bcc31bf68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="platform">
+      <UniqueIdentifier>{361ec007-8e54-43dd-b376-6adec11a6a83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="network">
+      <UniqueIdentifier>{e556910e-bd2f-48f9-a9df-c6c6f76bd94f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gui">
+      <UniqueIdentifier>{aa8cdc14-8b5b-4eec-8296-8f59a9e72865}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="audio">
+      <UniqueIdentifier>{6f78861a-bb52-4dbe-a0ce-953667168757}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="input">
+      <UniqueIdentifier>{05e1c1ec-3b02-4f4b-8e0c-f26a8d6f8f7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="render">
+      <UniqueIdentifier>{af791778-624d-4a71-b352-3866ea7e15d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="render\shivavg">
+      <UniqueIdentifier>{d7b3f4d3-5811-424a-ad44-aecb98f05929}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\roar\base\roArray.inl">
+      <Filter>base</Filter>
+    </None>
+    <None Include="..\..\roar\base\roLinkList.inl">
+      <Filter>base</Filter>
+    </None>
+    <None Include="..\..\roar\base\roReflection.inl">
+      <Filter>base</Filter>
+    </None>
+    <None Include="..\..\roar\base\roStringUtility.inl">
+      <Filter>base</Filter>
+    </None>
+    <None Include="..\..\roar\math\roMatrix.inl">
+      <Filter>math</Filter>
+    </None>
+    <None Include="..\..\roar\math\roVector.inl">
+      <Filter>math</Filter>
+    </None>
+    <None Include="..\..\roar\input\roInputDriver.ime.windows.inl">
+      <Filter>input</Filter>
+    </None>
+    <None Include="..\..\roar\render\roRenderDriver.dx11.inl">
+      <Filter>render</Filter>
+    </None>
+    <None Include="..\..\roar\render\roRenderDriver.gl.inl">
+      <Filter>render</Filter>
+    </None>
+  </ItemGroup>
+</Project>

@@ -3,7 +3,9 @@
 
 void _roAssert(const wchar_t* expression, const wchar_t* file, unsigned line)
 {
+#if roDEBUG
 	_wassert(expression, file, line);
+#endif
 }
 
 void roDebugBreak(bool doBreak)

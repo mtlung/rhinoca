@@ -77,7 +77,7 @@ TEST_FIXTURE(RingBufferTest, random)
 			roByte* writePtr;
 			CHECK(ringBuffer.write(chunkSize, writePtr));
 
-			roSize writeCount = rand.minMax(0u, chunkSize);
+			roSize writeCount = rand.minMax<roSize>(0u, chunkSize);
 			for(roSize i=0; i<writeCount; ++i)
 				writePtr[i] = dataGen1.minMax<roByte>(0u, 128u);
 			ringBuffer.commitWrite(writeCount);
@@ -89,7 +89,7 @@ TEST_FIXTURE(RingBufferTest, random)
 		{
 			roSize bytesRead = 0;
 			roByte* readPtr = ringBuffer.read(bytesRead);
-			bytesRead = rand.minMax(0u, bytesRead);
+			bytesRead = rand.minMax<roSize>(0u, bytesRead);
 			for(roSize i=0; i<bytesRead; ++i) {
 				if(readPtr[i] != dataGen2.minMax(0u, 128u))
 					goto Fail;

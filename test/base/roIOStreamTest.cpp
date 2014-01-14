@@ -174,7 +174,7 @@ struct RandomIOStreamTest
 		Status st = Status::ok;
 		for(roSize i=0; st; ++i)
 		{
-			roSize funcIdx = rand.beginEnd(0u, roCountof(func));
+			roSize funcIdx = rand.beginEnd<roSize>(0u, roCountof(func));
 			st = (this->*func[funcIdx])();
 		}
 
@@ -228,7 +228,7 @@ struct RandomIOStreamTest
 	Status _atomicRead()
 	{
 		char buf[16];
-		roUint64 bytesToRead = rand.minMax(0u, sizeof(buf));
+		roUint64 bytesToRead = rand.minMax<roUint64>(0u, sizeof(buf));
 
 		Status st = s->atomicRead(buf, bytesToRead);
 
@@ -245,7 +245,7 @@ struct RandomIOStreamTest
 	Status _read()
 	{
 		char buf[16];
-		roUint64 maxBytesToRead = rand.minMax(0u, sizeof(buf));
+		roUint64 maxBytesToRead = rand.minMax<roUint64>(0u, sizeof(buf));
 		roUint64 actualBytesRead;
 
 		Status st = s->read(buf, maxBytesToRead, actualBytesRead);
