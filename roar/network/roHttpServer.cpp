@@ -13,12 +13,12 @@ namespace ro {
 HttpServer::HttpServer()
 	: onRequest(NULL)
 {
-
+	roVerify(BsdSocket::initApplication() == 0);
 }
 
 HttpServer::~HttpServer()
 {
-
+	roVerify(BsdSocket::closeApplication() == 0);
 }
 
 Status HttpServer::init()
@@ -98,6 +98,13 @@ Status HttpServer::Connection::update()
 	// We need to read more till we see the header terminator
 	if(!messageContent)
 		return Status::in_progress;
+
+	HttpRequestHeader header;
+	header.string = String(rPtr, messageContent - rPtr);
+
+	// Determine the operation
+	RangedString resourceStr;
+	header.getField(HttpRequestHeader::HeaderField::Resource, resourceStr);
 
 	return Status::ok;
 }

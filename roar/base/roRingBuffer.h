@@ -15,6 +15,9 @@ struct RingBuffer
 	roStatus	write(roSize maxSizeToWrite, roByte*& outWritePtr);
 	void		commitWrite(roSize written);
 
+	/// Transfer all the data in this buffer to another buffer
+	roStatus	writeTo(RingBuffer& buf);
+
 	/// Since we have multiple internal buffers, we need to keep calling read() until it returns NULL.
 	/// If you need to get all the readable data in one go, call flushWrite() before read().
 	roByte*		read(roSize& outReadSize);
@@ -71,6 +74,28 @@ inline void RingBuffer::commitWrite(roSize written)
 	roAssert(_wEnd + written <= _wBuf().size());
 	_wEnd += written;
 	roVerify(_wBuf().resizeNoInit(_wEnd));
+}
+
+inline roStatus RingBuffer::writeTo(RingBuffer& buf)
+{
+	roSize totalReadableSize = totalReadable();
+	roSize writeRemain = totalReadableSize;
+	roByte* wPtr = NULL;
+	roStatus st = buf.write(totalReadableSize, wPtr);
+	if(!st) return st;
+
+	while(writeRemain) {
+		roSize readSize = 0;
+		roByte* rPtr = read(readSize);
+		roAssert(rPtr);	// If writeRemain > 0, rPtr should not be null
+		roMemcpy(wPtr, rPtr, readSize);
+		roAssert(writeRemain >= readSize);
+		writeRemain -= readSize;
+		commitRead(readSize);
+	}
+
+	buf.commitWrite(totalReadableSize);
+	return roStatus::ok;
 }
 
 inline roByte* RingBuffer::read(roSize& outReadSize)
