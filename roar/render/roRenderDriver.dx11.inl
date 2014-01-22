@@ -96,7 +96,7 @@ struct roRDriverShaderImpl : public roRDriverShader, NonCopyable
 {
 	ComPtr<ID3D11DeviceChild> dxShader;
 
-	Array<roByte> shaderBlob;
+	ByteArray shaderBlob;
 	TinyArray<InputParam, 8> inputParams;
 	TinyArray<ShaderResourceBinding, 8> shaderResourceBindings;
 };
@@ -106,7 +106,7 @@ struct InputLayout
 	ZeroInit<unsigned> hash;
 	ZeroInit<float> lastUsedTime;
 
-	Ptr<Array<roByte> > shaderBlob;
+	Ptr<ByteArray > shaderBlob;
 
 	ComPtr<ID3D11InputLayout> layout;
 	TinyArray<D3D11_INPUT_ELEMENT_DESC, 8> inputDescs;

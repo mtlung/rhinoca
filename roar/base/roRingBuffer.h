@@ -48,12 +48,12 @@ struct RingBuffer
 	roSize		hardLimit;
 
 // Private
-	Array<roByte>& _rBuf() const { return _buffers[_rBufIdx]; }
-	Array<roByte>& _wBuf() const { return _buffers[_wBufIdx]; }
+	ByteArray&	_rBuf() const { return _buffers[_rBufIdx]; }
+	ByteArray&	_wBuf() const { return _buffers[_wBufIdx]; }
 
 	roSize _rBufIdx, _wBufIdx;
 	roSize _rPos, _wBeg, _wEnd;
-	mutable Array<roByte> _buffers[2];	/// Two buffers, one for read and one for write
+	mutable ByteArray _buffers[2];	/// Two buffers, one for read and one for write
 };	// RingBuffer
 
 inline roStatus RingBuffer::write(roSize maxSizeToWrite, roByte*& writePtr)
@@ -172,8 +172,8 @@ inline roStatus RingBuffer::flushWrite(roSize sizeToFlush)
 	if(_rBufIdx == _wBufIdx)
 		return roStatus::ok;
 
-	Array<roByte>& rb = _rBuf();
-	Array<roByte>& wb = _wBuf();
+	ByteArray& rb = _rBuf();
+	ByteArray& wb = _wBuf();
 
 	sizeToFlush = roMinOf2(sizeToFlush, _wEnd - _wBeg);
 	roStatus st = rb.insert(rb.size(), wb.begin() + _wBeg, sizeToFlush);
@@ -191,7 +191,7 @@ inline roStatus RingBuffer::flushWrite(roSize sizeToFlush)
 
 inline void RingBuffer::compactReadBuffer()
 {
-	Array<roByte>& rb = _rBuf();
+	ByteArray& rb = _rBuf();
 	roSize size = rb.size() - _rPos;
 	roMemmov(rb.begin(), rb.begin() + _rPos, size);
 	rb.resize(size);

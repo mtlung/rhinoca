@@ -42,7 +42,7 @@ struct WaveLoader : public AudioLoader
 	void commitData(TaskPool* taskPool);
 	void abort(TaskPool* taskPool);
 
-	Array<roByte> pcmData;
+	ByteArray pcmData;
 	WaveFormatExtensible formatEx;
 
 	void (WaveLoader::*nextFun)(TaskPool*);

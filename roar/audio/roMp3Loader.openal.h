@@ -49,7 +49,7 @@ struct Mp3Loader : public AudioLoader
 
 	mpg123_handle* mpg;
 	unsigned curPcmPos;
-	Array<roByte> pcmData;
+	ByteArray pcmData;
 	Array<unsigned> pcmRequestShadow;
 
 	void (Mp3Loader::*nextFun)(TaskPool*);

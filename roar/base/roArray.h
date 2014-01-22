@@ -201,9 +201,9 @@ struct ExtArray : public IArray<T>
 	Status reserve(roSize newCapacity, bool force=false);
 };	// ExtArray
 
-typedef IArray<roUint8> IByteArray;
-typedef Array<roUint8> ByteArray;
-typedef TinyArray<roUint8, 64> TinyByteArray;
+typedef IArray<roByte> IByteArray;
+typedef Array<roByte> ByteArray;
+typedef TinyArray<roByte, 64> TinyByteArray;
 
 
 // ----------------------------------------------------------------------

@@ -32,7 +32,7 @@ struct OggLoader : public AudioLoader
 
 	unsigned curPcmPos;
 	RingBuffer ringBuffer;
-	Array<roByte> pcmData;
+	ByteArray pcmData;
 	Array<unsigned> pcmRequestShadow;
 
 	// Variables for sample per byte estimation, which in turn is used for seeking.
