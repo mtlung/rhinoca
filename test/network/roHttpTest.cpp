@@ -9,7 +9,7 @@ TEST_FIXTURE(HttpTest, requestHeader)
 {
 	HttpRequestHeader header;
 
-	CHECK(header.makeGet("/index.html"));
+	CHECK(header.make(HttpRequestHeader::Method::Get, "/index.html"));
 	CHECK(header.addField(HttpRequestHeader::HeaderField::Host, "localhost:8080"));
 	CHECK(header.addField(HttpRequestHeader::HeaderField::Connection, "keep-alive"));
 	CHECK(header.addField(HttpRequestHeader::HeaderField::UserAgent, "Roar Game Engine"));
@@ -25,6 +25,7 @@ TEST_FIXTURE(HttpTest, requestHeader)
 		"Range: bytes=0-128\r\n";
 
 	CHECK_EQUAL(expected, header.string.c_str());
+	CHECK_EQUAL(HttpRequestHeader::Method::Get, header.getMethod());
 
 	header.removeField("accept-Encoding");
 	header.removeField(HttpRequestHeader::HeaderField::Connection);
@@ -78,9 +79,9 @@ TEST_FIXTURE(HttpTest, responseHeader)
 TEST_FIXTURE(HttpTest, http)
 {
 	HttpRequestHeader requestHeader;
-	requestHeader.makeGet("/static-data/map3/2/0/0.png");
+	requestHeader.make(HttpRequestHeader::Method::Get, "/static-data/map3/2/0/0.png");
 	requestHeader.addField(HttpRequestHeader::HeaderField::Host, "sin-nx-lty02.ubisoft.org");
-//	requestHeader.makeGet("/");
+//	requestHeader.make(HttpRequestHeader::Method::Get, "/");
 //	requestHeader.addField(HttpRequestHeader::HeaderField::Host, "mdc-web-tomcat17.ubisoft.org");
 
 	HttpClient::Request request;
@@ -88,7 +89,7 @@ TEST_FIXTURE(HttpTest, http)
 	HttpClient client;
 	client.perform(request, requestHeader);
 
-	Array<roByte> buffer;
+	ByteArray buffer;
 
 	Status st;
 	do {
@@ -130,7 +131,7 @@ TEST_FIXTURE(HttpTest, server)
 	HttpClient client;
 	HttpClient::Request request;
 	HttpRequestHeader requestHeader;
-	requestHeader.makeGet("/static-data/map3/2/0/0.png");
+	requestHeader.make(HttpRequestHeader::Method::Get, "/static-data/map3/2/0/0.png");
 	requestHeader.addField(HttpRequestHeader::HeaderField::Host, "localhost");
 	client.perform(request, requestHeader);
 

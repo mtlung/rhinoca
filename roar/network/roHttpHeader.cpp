@@ -36,10 +36,22 @@ static const StaticArray<char*, 25>  _requestEnumStringMapping = {
 	"Via",
 };
 
-Status HttpRequestHeader::makeGet(const char* resource)
+static const StaticArray<char*, 9>  _methodEnumStringMapping = {
+	"Get",
+	"Head" ,
+	"Post",
+	"Put",
+	"Delete",
+	"Connect",
+	"Options",
+	"Trace",
+	"Invalid",
+};
+
+Status HttpRequestHeader::make(Method::Enum method, const char* resource)
 {
 	string.clear();
-	return strFormat(string, "GET {} HTTP/1.1\r\n", resource);
+	return strFormat(string, "{} {} HTTP/1.1\r\n", _methodEnumStringMapping[method], resource);
 }
 
 Status HttpRequestHeader::addField(const char* field, const char* value)
@@ -101,6 +113,17 @@ void HttpRequestHeader::removeField(const char* field)
 void HttpRequestHeader::removeField(HeaderField::Enum field)
 {
 	removeField(_requestEnumStringMapping[field]);
+}
+
+HttpRequestHeader::Method::Enum HttpRequestHeader::getMethod() const
+{
+	for(roSize i=0; i<_methodEnumStringMapping.size(); ++i) {
+		char* method = roStrStrCase(const_cast<char*>(string.c_str()), _methodEnumStringMapping[i]);
+		if(method && method == string.c_str())
+			return static_cast<Method::Enum>(i);
+	}
+
+	return Method::Invalid;
 }
 
 static bool _getField(const String& string, const char* field, RangedString& value)

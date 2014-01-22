@@ -10,6 +10,19 @@ namespace ro {
 
 struct HttpRequestHeader
 {
+	// http://www.tutorialspoint.com/http/http_methods.htm
+	struct Method { enum Enum {
+		Get,
+		Head, 
+		Post,
+		Put,
+		Delete,
+		Connect,
+		Options,
+		Trace,
+		Invalid,
+	}; };
+
 	struct HeaderField { enum Enum {
 		Accept = 0,				// Accept: text/plain
 		AcceptCharset,			// Accept-Charset: utf-8
@@ -28,6 +41,7 @@ struct HttpRequestHeader
 		From,					// From: user@example.com
 		Host,					// Host: en.wikipedia.org:80
 		MaxForwards,			// Max-Forwards: 10
+		Method,					// GET / HEAD / POST / PUT / DELETE / CONNECT / OPTIONS or TRACE
 		Origin,					// Origin: http://www.example-social-network.com
 		Resource,				// GET /index.html HTTP/1.1
 		Pragma,					// Pragma: no-cache
@@ -39,17 +53,19 @@ struct HttpRequestHeader
 	}; };
 
 	/// Functions for composing requestString
-	Status	makeGet		(const char* resource);
-	Status	addField	(const char* field, const char* value);
-	Status	addField	(HeaderField::Enum field, const char* value);
-	Status	addField	(HeaderField::Enum field, roUint64 value);
-	Status	addField	(HeaderField::Enum field, roUint64 value1, roUint64 value2);
+	Status		make		(Method::Enum method, const char* resource);
+	Status		addField	(const char* field, const char* value);
+	Status		addField	(HeaderField::Enum field, const char* value);
+	Status		addField	(HeaderField::Enum field, roUint64 value);
+	Status		addField	(HeaderField::Enum field, roUint64 value1, roUint64 value2);
 
-	void	removeField	(const char* field);
-	void	removeField	(HeaderField::Enum field);
+	void		removeField	(const char* field);
+	void		removeField	(HeaderField::Enum field);
 
-	bool getField(const char* option, RangedString& value) const;
-	bool getField(HeaderField::Enum option, RangedString& value) const;
+	Method::Enum	getMethod	() const;
+
+	bool		getField	(const char* option, RangedString& value) const;
+	bool		getField	(HeaderField::Enum option, RangedString& value) const;
 
 	String string;
 };	// HttpRequestHeader
@@ -161,15 +177,15 @@ struct HttpServer
 	{
 		Connection();
 
-		Status			update		();
+		Status		update		();
 
 		RingBuffer	ringBuf;
-		BsdSocket socket;
+		BsdSocket	socket;
 	};	// HttpServer::Connection
 
 	Status	init();
 	Status	update();
-	Status	(*onRequest)(BsdSocket& socket, HttpRequestHeader& request);
+	Status	(*onRequest)(Connection& connection, HttpRequestHeader& request);
 
 	LinkList<Connection> activeConnections;
 	LinkList<Connection> pooledConnections;

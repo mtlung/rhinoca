@@ -21,6 +21,8 @@ HttpServer::~HttpServer()
 	roVerify(BsdSocket::closeApplication() == 0);
 }
 
+static Status _onRequest(HttpServer::Connection& connection, HttpRequestHeader& request);
+
 Status HttpServer::init()
 {
 	if(_socketListen.create(BsdSocket::TCP) != 0)
@@ -36,6 +38,8 @@ Status HttpServer::init()
 	if(_socketListen.setBlocking(false) != 0)
 		return Status::net_error;
 
+	onRequest = _onRequest;
+
 	return Status::ok;
 }
 
@@ -49,6 +53,7 @@ Status HttpServer::update()
 		BsdSocket::ErrorCode e = _socketListen.accept(c.socket);
 		if(e == 0) {
 			c.removeThis();
+			c.socket.setBlocking(false);
 			activeConnections.pushBack(c);
 		}
 		else if(!BsdSocket::inProgress(e)) {
@@ -68,6 +73,18 @@ Status HttpServer::update()
 HttpServer::Connection::Connection()
 {
 
+}
+
+static Status _onRequest(HttpServer::Connection& connection, HttpRequestHeader& request)
+{
+	HttpRequestHeader::Method::Enum method = request.getMethod();
+	switch(method) {
+	case HttpRequestHeader::Method::Get:
+	default:
+		return Status::not_implemented;
+	}
+
+	return Status::ok;
 }
 
 Status HttpServer::Connection::update()
@@ -99,14 +116,20 @@ Status HttpServer::Connection::update()
 	if(!messageContent)
 		return Status::in_progress;
 
+	ringBuf.commitRead(messageContent - rPtr + (sizeof(headerTerminator) - 1));
+
 	HttpRequestHeader header;
 	header.string = String(rPtr, messageContent - rPtr);
 
-	// Determine the operation
+	// Get the http request header
 	RangedString resourceStr;
 	header.getField(HttpRequestHeader::HeaderField::Resource, resourceStr);
 
-	return Status::ok;
+	HttpServer* server = roContainerof(HttpServer, activeConnections, getList());
+	if(!server->onRequest)
+		return Status::pointer_is_null;
+
+	return (*server->onRequest)(*this, header);
 }
 
 }	// namespace ro
