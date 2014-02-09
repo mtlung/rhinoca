@@ -48,5 +48,7 @@ T roClampMin(T x, T min) { return x < min ? min : x; }
 template<class T>
 T roClampMax(T x, T max) { return x > max ? max : x; }
 
+#define roFourCC(a,b,c,d) ( (roUint32) (((d)<<24) | ((c)<<16) | ((b)<<8) | (a)) )
+
 
 #endif	// __roUtility_h__

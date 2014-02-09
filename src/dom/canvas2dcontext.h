@@ -18,16 +18,16 @@ public:
 	~CanvasRenderingContext2D();
 
 // Operations
-	override void bind(JSContext* cx, JSObject* parent);
+	void bind(JSContext* cx, JSObject* parent) override;
 
 	static void registerClass(JSContext* cx, JSObject* parent);
 
 // Attributes
-	override unsigned width() const { return _canvas.width(); }
-	override unsigned height() const { return _canvas.width(); }
-	override void setWidth(unsigned width);
-	override void setHeight(unsigned height);
-	override ro::Texture* texture();
+	unsigned width() const override { return _canvas.width(); }
+	unsigned height() const override { return _canvas.width(); }
+	void setWidth(unsigned width) override;
+	void setHeight(unsigned height) override;
+	ro::Texture* texture();
 
 	static JSClass jsClass;
 

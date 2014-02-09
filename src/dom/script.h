@@ -13,9 +13,9 @@ public:
 	~HTMLScriptElement();
 
 // Operations
-	override void bind(JSContext* cx, JSObject* parent);
+	void bind(JSContext* cx, JSObject* parent) override;
 
-	override void onParserEndElement();
+	void onParserEndElement() override;
 
 	bool runScript(const char* code, const char* srcPath=NULL, unsigned lineNumber=0);
 
@@ -28,7 +28,7 @@ public:
 	void setSrc(const char* uri);
 	const char* src() const;	/// The path of the js file, not the context of the script
 
-	override const ro::ConstString& tagName() const;
+	const ro::ConstString& tagName() const override;
 
 	ro::TextResourcePtr _src;
 

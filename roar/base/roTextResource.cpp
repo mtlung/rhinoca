@@ -25,7 +25,7 @@ struct TextLoader : public Task
 		if(stream) fileSystem.closeFile(stream);
 	}
 
-	override void run(TaskPool* taskPool);
+	void run(TaskPool* taskPool) override;
 
 	void load(TaskPool* taskPool);
 	void convert(TaskPool* taskPool);

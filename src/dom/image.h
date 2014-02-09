@@ -14,7 +14,7 @@ public:
 	~HTMLImageElement();
 
 // Operations
-	override void bind(JSContext* cx, JSObject* parent);
+	void bind(JSContext* cx, JSObject* parent) override;
 
 	static void registerClass(JSContext* cx, JSObject* parent);
 	static Element* factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser);
@@ -25,20 +25,20 @@ public:
 
 	void setSrc(const char* uri);
 
-	override unsigned width() const;
-	override unsigned height() const;
+	unsigned width() const override;
+	unsigned height() const override;
 
 	unsigned naturalWidth() const;
 	unsigned naturalHeight() const;
 
-	override void setWidth(unsigned w);
-	override void setHeight(unsigned h);
+	void setWidth(unsigned w) override;
+	void setHeight(unsigned h) override;
 
 	/// Use enum values as seen in Render::Driver::SamplerState
 	/// Can be MIN_MAG_LINEAR (default) or MIN_MAG_POINT
 	int filter;
 
-	override const ro::ConstString& tagName() const;
+	const ro::ConstString& tagName() const override;
 
 	static JSClass jsClass;
 };	// HTMLImageElement

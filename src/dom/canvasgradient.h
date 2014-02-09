@@ -12,7 +12,7 @@ public:
 	~CanvasGradient();
 
 // Operations
-	override void bind(JSContext* cx, JSObject* parent);
+	void bind(JSContext* cx, JSObject* parent) override;
 
 	void createLinear(float xStart, float yStart, float xEnd, float yEnd);
 

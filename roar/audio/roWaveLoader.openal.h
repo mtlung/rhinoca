@@ -34,7 +34,7 @@ struct WaveLoader : public AudioLoader
 		if(stream) fileSystem.closeFile(stream);
 	}
 
-	override void run(TaskPool* taskPool);
+	void run(TaskPool* taskPool) override;
 
 	void loadHeader(TaskPool* taskPool);
 	void commitHeader(TaskPool* taskPool);

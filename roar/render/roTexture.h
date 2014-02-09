@@ -13,7 +13,7 @@ struct Texture : public ro::Resource
 	virtual ~Texture();
 
 // Attributes
-	override ConstString resourceType() const { return "Texture"; }
+	ConstString resourceType() const override { return "Texture"; }
 
 	/// Logical width/height, useful in 2D rendering
 	unsigned width() const;

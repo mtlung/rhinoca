@@ -102,13 +102,13 @@ struct FontImpl : public Font
 		if(hdc) ::DeleteDC(hdc);
 	}
 
-	override bool setStyle(const char* styleStr);
+	bool setStyle(const char* styleStr) override;
 
-	override roStatus measure(const roUtf8* str, roSize maxStrLen, float maxWidth, TextMetrics& metrics) const;
+	roStatus measure(const roUtf8* str, roSize maxStrLen, float maxWidth, TextMetrics& metrics) const override;
 
-	override float getLineSpacing() const;
+	float getLineSpacing() const override;
 
-	override void draw(const roUtf8* str, roSize maxStrLen, float x, float y, float maxWidth, Canvas&);
+	void draw(const roUtf8* str, roSize maxStrLen, float x, float y, float maxWidth, Canvas&) override;
 
 	HDC hdc;	/// It is used when drawing text
 
@@ -155,7 +155,7 @@ public:
 		if(hdc) ::DeleteDC(hdc);
 	}
 
-	override void run(TaskPool* taskPool);
+	void run(TaskPool* taskPool) override;
 
 protected:
 	void checkRequest(TaskPool* taskPool);

@@ -14,7 +14,7 @@ public:
 	~ImageData();
 
 // Operations
-	override void bind(JSContext* cx, JSObject* parent);
+	void bind(JSContext* cx, JSObject* parent) override;
 
 	void init(JSContext* cx, unsigned w, unsigned h, const unsigned char* rawData=NULL);
 

@@ -11,7 +11,7 @@ struct TextResource : public ro::Resource
 	explicit TextResource(const char* uri);
 
 // Attributes
-	override ConstString resourceType() const { return "Text"; }
+	ConstString resourceType() const override { return "Text"; }
 
 	ro::String data;
 };	// TextResource

@@ -16,11 +16,11 @@ public:
 	~HTMLCanvasElement();
 
 // Operations
-	override void bind(JSContext* cx, JSObject* parent);
+	void bind(JSContext* cx, JSObject* parent) override;
 
 	void createContext(const char* ctxName);
 
-	override void render(CanvasRenderingContext2D* virtualCanvas);
+	void render(CanvasRenderingContext2D* virtualCanvas) override;
 
 	static void registerClass(JSContext* cx, JSObject* parent);
 	static Element* factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser);
@@ -43,13 +43,13 @@ public:
 
 	ro::Texture* texture();
 
-	override unsigned width() const { return _width; }
-	override unsigned height() const { return _height; }
+	unsigned width() const override { return _width; }
+	unsigned height() const override { return _height; }
 
-	override void setWidth(unsigned width);
-	override void setHeight(unsigned height);
+	void setWidth(unsigned width) override;
+	void setHeight(unsigned height) override;
 
-	override const ro::ConstString& tagName() const;
+	const ro::ConstString& tagName() const override;
 
 	static JSClass jsClass;
 

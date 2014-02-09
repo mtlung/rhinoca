@@ -54,7 +54,8 @@ struct SimpleConnector : public Task
 {
 	SimpleConnector(const SockAddr& ep) : endPoint(ep) {}
 
-	override void run(TaskPool* taskPool) throw() {
+	void run(TaskPool* taskPool) override
+	{
 		BsdSocket s;
 		roVerify(0 == s.create(BsdSocket::TCP));
 		bool connected = false;

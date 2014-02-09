@@ -112,7 +112,7 @@ public:
 		if(stream) fileSystem.closeFile(stream);
 	}
 
-	override void run(TaskPool* taskPool);
+	void run(TaskPool* taskPool) override;
 
 protected:
 	void initWic(TaskPool* taskPool);

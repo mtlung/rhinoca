@@ -12,7 +12,7 @@ public:
 	~MouseEvent();
 
 // Operations
-	override void bind(JSContext* cx, JSObject* parent);
+	void bind(JSContext* cx, JSObject* parent) override;
 
 // Attributes
 	int screenX, screenY;

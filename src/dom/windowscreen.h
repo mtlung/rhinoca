@@ -14,7 +14,7 @@ public:
 	explicit WindowScreen(Window* window);
 
 // Operations
-	override void bind(JSContext* cx, JSObject* parent);
+	void bind(JSContext* cx, JSObject* parent) override;
 
 // Attributes
 	Window* window;

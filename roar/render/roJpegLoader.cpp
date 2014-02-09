@@ -51,7 +51,7 @@ struct JpegLoader : public Task
 		delete jpegStream;
 	}
 
-	override void run(TaskPool* taskPool);
+	void run(TaskPool* taskPool) override;
 
 	void loadHeader(TaskPool* taskPool);
 	void initTexture(TaskPool* taskPool);

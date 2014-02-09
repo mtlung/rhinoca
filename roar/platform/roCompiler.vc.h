@@ -51,10 +51,12 @@ void _roDebugBreak(bool doBreak=true);
 #define roDebugBreak _roDebugBreak
 
 // Source code annotation
-#if !defined(__midl) && defined(_PREFAST_) 
-#	define override __declspec("__override")
-#else
-#	define override virtual
+#if !roCPP11 && _MSC_VER < 1800
+#	if !defined(__midl) && defined(_PREFAST_) 
+#		define override __declspec("__override")
+#	else
+#		define override virtual
+#	endif
 #endif
 
 // Force inline

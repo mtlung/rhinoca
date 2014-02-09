@@ -617,7 +617,7 @@ namespace {
 class CallbackTask : public Task
 {
 public:
-	override void run(TaskPool* taskPool)
+	void run(TaskPool* taskPool) override
 	{
 		callback(taskPool, userData);
 		_allocator.deleteObj(this);

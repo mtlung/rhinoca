@@ -33,7 +33,7 @@ struct PngLoader : public Task
 		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 	}
 
-	override void run(TaskPool* taskPool);
+	void run(TaskPool* taskPool) override;
 
 	void processData(TaskPool* taskPool);
 	void loadHeader();

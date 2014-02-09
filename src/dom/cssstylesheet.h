@@ -21,7 +21,7 @@ public:
 
 	CSSStyleRule* getRuleAt(unsigned index);
 
-	override void bind(JSContext* cx, JSObject* parent);
+	void bind(JSContext* cx, JSObject* parent) override;
 
 // Attributes
 	ro::LinkList<CSSStyleRule> rules;

@@ -22,7 +22,7 @@ public:
 	TimerCallback();
 	~TimerCallback();
 
-	override void bind(JSContext* cx, JSObject* parent);
+	void bind(JSContext* cx, JSObject* parent) override;
 
 	void removeThis();
 
@@ -46,7 +46,7 @@ public:
 	FrameRequestCallback();
 	~FrameRequestCallback();
 
-	override void bind(JSContext* cx, JSObject* parent);
+	void bind(JSContext* cx, JSObject* parent) override;
 
 	void removeThis();
 
@@ -64,7 +64,7 @@ public:
 	~Window();
 
 // Operations
-	override void bind(JSContext* cx, JSObject* parent);
+	void bind(JSContext* cx, JSObject* parent) override;
 
 	void dispatchEvent(Event* e);
 
@@ -104,7 +104,7 @@ public:
 	static JSClass jsClass;
 
 protected:
-	override JSObject* getJSObject() { return jsObject; }
+	JSObject* getJSObject() override { return jsObject; }
 };	// Window
 
 }	// namespace Dom

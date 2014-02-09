@@ -1,6 +1,10 @@
 #ifndef __roCompiler_h__
 #define __roCompiler_h__
 
+#if __cplusplus > 199711L
+#	define roCPP11 1
+#endif
+
 #ifdef	_MSC_VER
 #	include "roCompiler.vc.h"
 #endif

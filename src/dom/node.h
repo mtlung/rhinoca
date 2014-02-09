@@ -24,7 +24,7 @@ public:
 	virtual ~Node();
 
 // Operations
-	override void bind(JSContext* cx, JSObject* parent);
+	void bind(JSContext* cx, JSObject* parent) override;
 	JSObject* createPrototype();
 
 	/// Appends a new child node to the end of the list of children.
@@ -57,10 +57,10 @@ public:
 	virtual void tick(float dt) {}
 
 protected:
-	override JSObject* getJSObject() { return jsObject; }
-	override EventTarget* eventTargetTraverseUp();
-	override void eventTargetAddReference();
-	override void eventTargetReleaseReference();
+	JSObject* getJSObject() override { return jsObject; }
+	EventTarget* eventTargetTraverseUp() override;
+	void eventTargetAddReference() override;
+	void eventTargetReleaseReference() override;
 
 // Attributes
 public:

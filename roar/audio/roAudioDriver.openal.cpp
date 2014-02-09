@@ -260,7 +260,7 @@ struct roAudioDriverImpl : public roAudioDriver, public Task
 		alcMakeContextCurrent(alContext);
 	}
 
-	override void run(TaskPool* taskPool);
+	void run(TaskPool* taskPool) override;
 
 	TaskId taskReady;
 	ALCcontext* alContext;

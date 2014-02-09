@@ -30,7 +30,7 @@ public:
 	/// Callback when the HTML parser read the closing tag for this element
 	virtual void onParserEndElement() {}
 
-	override void render(CanvasRenderingContext2D* virtualCanvas);
+	void render(CanvasRenderingContext2D* virtualCanvas) override;
 
 // Attributes
 	ro::ConstString id;

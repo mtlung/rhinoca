@@ -19,7 +19,7 @@ public:
 	~NodeList();
 
 // Operations
-	override void bind(JSContext* cx, JSObject* parent);
+	void bind(JSContext* cx, JSObject* parent) override;
 
 	Node* item(unsigned index);
 

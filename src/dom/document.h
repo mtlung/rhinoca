@@ -21,7 +21,7 @@ public:
 	~HTMLDocument();
 
 // Operations
-	override void bind(JSContext* cx, JSObject* parent);
+	void bind(JSContext* cx, JSObject* parent) override;
 
 	Element* createElement(const char* eleType);
 
@@ -35,7 +35,7 @@ public:
 	Event* createEvent(const char* type);
 
 protected:
-	override EventTarget* eventTargetTraverseUp();
+	EventTarget* eventTargetTraverseUp() override;
 
 public:
 // Attributes

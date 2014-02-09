@@ -17,7 +17,7 @@ public:
 	~CSSStyleRule();
 
 // Operations
-	override void bind(JSContext* cx, JSObject* parent);
+	void bind(JSContext* cx, JSObject* parent) override;
 
 	/// Loop for the Element tree and assign the style for those element match with the selector.
 	void selectorMatch(Element* tree);

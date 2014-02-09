@@ -13,9 +13,9 @@ public:
 	~HTMLStyleElement();
 
 // Operations
-	override void bind(JSContext* cx, JSObject* parent);
+	void bind(JSContext* cx, JSObject* parent) override;
 
-	override void onParserEndElement();
+	void onParserEndElement() override;
 
 	static Element* factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser);
 
@@ -34,7 +34,7 @@ public:
 
 	char* source;
 
-	override const ro::ConstString& tagName() const;
+	const ro::ConstString& tagName() const override;
 
 	static JSClass jsClass;
 };	// HTMLStyleElement

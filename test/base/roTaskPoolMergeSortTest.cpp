@@ -89,7 +89,7 @@ static void mergeSortMultiThread(int* data, int* scratch, roSize begin, roSize e
 			: _data(data), _scratch(scratch), _begin(begin), _end(end), _workCount(workCount)
 		{}
 
-		override void run(TaskPool* taskPool)
+		void run(TaskPool* taskPool) override
 		{
 			mergeSortMultiThread(_data, _scratch, _begin, _end, *taskPool, _workCount * 2);
 			delete this;
@@ -106,7 +106,7 @@ static void mergeSortMultiThread(int* data, int* scratch, roSize begin, roSize e
 			: _data(data), _scratch(scratch), _left(left), _leftEnd(leftEnd), _right(right), _rightEnd(rightEnd)
 		{}
 
-		override void run(TaskPool* taskPool)
+		void run(TaskPool* taskPool) override
 		{
 			merge(_data, _scratch, _left, _leftEnd, _right, _rightEnd);
 			delete this;
@@ -123,7 +123,7 @@ static void mergeSortMultiThread(int* data, int* scratch, roSize begin, roSize e
 			: _t1(t1), _t2(t2)
 		{}
 
-		override void run(TaskPool* taskPool)
+		void run(TaskPool* taskPool) override
 		{
 			taskPool->wait(_t1);
 			taskPool->wait(_t2);

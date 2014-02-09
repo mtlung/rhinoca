@@ -9,7 +9,7 @@ class MyResource : public Resource
 {
 public:
 	MyResource(const char* uri) : Resource(uri), dummyData(0) {}
-	override ConstString resourceType() const { return "MyResource"; }
+	ConstString resourceType() const override { return "MyResource"; }
 	int dummyData;
 };
 
@@ -26,7 +26,7 @@ bool load(ResourceManager* mgr, Resource* resource)
 	{
 	public:
 		LoadTask(MyResource* r) : resource(r) {}
-		override void run(TaskPool* taskPool)
+		void run(TaskPool* taskPool) override
 		{
 			resource->dummyData = 123;
 			delete this;
@@ -39,7 +39,7 @@ bool load(ResourceManager* mgr, Resource* resource)
 	{
 	public:
 		CommitTask(MyResource* r) : resource(r) {}
-		override void run(TaskPool* taskPool)
+		void run(TaskPool* taskPool) override
 		{
 			resource->state = Resource::Loaded;
 			delete this;

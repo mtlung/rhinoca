@@ -11,7 +11,7 @@ class MyTask : public Task
 {
 public:
 	MyTask(int id=0) : _id(id) {}
-	override void run(TaskPool* taskPool)
+	void run(TaskPool* taskPool) override
 	{
 		float val =0.1f;
 		for(roSize i=0; i<10000; ++i)
@@ -142,7 +142,7 @@ TEST_FIXTURE(TaskPoolTest, dependencyDeadLock)
 	class DummyTask : public Task
 	{
 	public:
-		override void run(TaskPool* taskPool)
+		void run(TaskPool* taskPool) override
 		{
 //			printf("%u %u\n", thisId, TaskPool::threadId());
 		}

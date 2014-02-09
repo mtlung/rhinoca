@@ -138,10 +138,10 @@ struct HttpClient
 	{
 		Request();
 
-		Status			update		();
-		Status			requestRead	(roSize& outReadSize, roByte*& outReadPtr);
-		void			commitRead	(roSize read);
-		override void	removeThis	();
+		Status	update		();
+		Status	requestRead	(roSize& outReadSize, roByte*& outReadPtr);
+		void	commitRead	(roSize read);
+		void	removeThis	() override;
 
 		HttpClient*			httpClient;
 		Connection*			connection;

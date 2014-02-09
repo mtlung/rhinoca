@@ -12,12 +12,12 @@ public:
 	~HTMLBodyElement();
 
 // Operations
-	override void bind(JSContext* cx, JSObject* parent);
+	void bind(JSContext* cx, JSObject* parent) override;
 
 	static Element* factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser);
 
 // Attributes
-	override const ro::ConstString& tagName() const;
+	const ro::ConstString& tagName() const override;
 
 	static JSClass jsClass;
 };	// HTMLBodyElement

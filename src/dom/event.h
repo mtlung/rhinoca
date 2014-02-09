@@ -19,7 +19,7 @@ public:
 	Event();
 
 // Operations
-	override void bind(JSContext* cx, JSObject* parent);
+	void bind(JSContext* cx, JSObject* parent) override;
 	JSObject* createPrototype();
 
 	/// Stop the event from bubbling up
@@ -71,13 +71,13 @@ public:
 
 	JSBool init(jsval stringOrFunc);
 
-	override void handleEvent(Event* evt, JSObject* self);
+	void handleEvent(Event* evt, JSObject* self) override;
 
 	jsval getJsVal();
 
 protected:
-	override void* identifier() { return JSVAL_TO_OBJECT(_jsClosure); }
-	override void jsTrace(JSTracer* trc);
+	void* identifier() override { return JSVAL_TO_OBJECT(_jsClosure); }
+	void jsTrace(JSTracer* trc) override;
 
 	JSContext* _jsContext;
 	jsval _jsClosure;		///< The js function closure to be invoked
@@ -90,7 +90,7 @@ public:
 	ElementAttributeEventListener(JSContext* ctx, const char* eventAttributeName);
 
 protected:
-	override void* identifier() { return (void*)_eventAttributeName.hash(); }
+	void* identifier() override { return (void*)_eventAttributeName.hash(); }
 	ro::ConstString _eventAttributeName;
 };	// JsFunctionEventListener
 

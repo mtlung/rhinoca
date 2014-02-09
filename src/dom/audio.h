@@ -18,31 +18,31 @@ public:
 	~HTMLAudioElement();
 
 // Operations
-	override void bind(JSContext* cx, JSObject* parent);
+	void bind(JSContext* cx, JSObject* parent) override;
 
 	static void registerClass(JSContext* cx, JSObject* parent);
 	static Element* factoryCreate(Rhinoca* rh, const char* type, XmlParser* parser);
 
-	override void play();
-	override void pause();
+	void play() override;
+	void pause() override;
 
-	override Node* cloneNode(bool recursive);
+	Node* cloneNode(bool recursive) override;
 
-	override void tick(float dt);
+	void tick(float dt) override;
 
 // Attributes
-	override const ro::ConstString& tagName() const;
+	const ro::ConstString& tagName() const override;
 
 	static JSClass jsClass;
 
-	override const char* src() const;
-	override void setSrc(const char* uri);
+	const char* src() const override;
+	void setSrc(const char* uri) override;
 
-	override double currentTime() const;
-	override void setCurrentTime(double time);
+	double currentTime() const override;
+	void setCurrentTime(double time) override;
 
-	override bool loop() const;
-	override void setLoop(bool loop);
+	bool loop() const override;
+	void setLoop(bool loop) override;
 
 	roADriverSoundSource* _sound;
 };	// HTMLAudioElement

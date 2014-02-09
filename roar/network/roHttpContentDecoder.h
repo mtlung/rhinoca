@@ -20,13 +20,13 @@ struct SizedDecoder : public IDecoder
 {
 	SizedDecoder();
 
-	override Status	requestWrite		(roSize maxSizeToWrite, roByte*& outWritePtr);
-	override void	commitWrite			(roSize written);
-	override bool	keepWrite			() const;
-	override Status	requestRead			(roSize& outReadSize, roByte*& outReadPtr);
-	override void	commitRead			(roSize read);
+	Status	requestWrite	(roSize maxSizeToWrite, roByte*& outWritePtr) override;
+	void	commitWrite		(roSize written) override;
+	bool	keepWrite		() const override;
+	Status	requestRead		(roSize& outReadSize, roByte*& outReadPtr) override;
+	void	commitRead		(roSize read) override;
 
-			 void	contentReadBegin	();
+	void	contentReadBegin();
 
 	RingBuffer*	ringBuffer;
 	bool		contentBegin;
@@ -39,11 +39,11 @@ struct ChunkedDecoder : public IDecoder
 {
 	ChunkedDecoder();
 
-	override Status	requestWrite		(roSize maxSizeToWrite, roByte*& outWritePtr);
-	override void	commitWrite			(roSize written);
-	override bool	keepWrite			() const;
-	override Status	requestRead			(roSize& outReadSize, roByte*& outReadPtr);
-	override void	commitRead			(roSize read);
+	Status	requestWrite	(roSize maxSizeToWrite, roByte*& outWritePtr) override;
+	void	commitWrite		(roSize written) override;
+	bool	keepWrite		() const override;
+	Status	requestRead		(roSize& outReadSize, roByte*& outReadPtr) override;
+	void	commitRead		(roSize read) override;
 
 	RingBuffer*	ringBuffer;
 	bool		ended;

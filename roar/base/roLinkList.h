@@ -27,13 +27,13 @@ struct ListNode : public _ListNode
 {
 	ListNode() {}
 
-	bool			isInList() const	{ return _list != NULL; }
-	LinkList<T>*	getList() const		{ return static_cast<LinkList<T>*>(_list); }
-	T*				next() const		{ return (T*)_next; }
-	T*				prev() const		{ return (T*)_prev; }
+	bool			isInList() const		{ return _list != NULL; }
+	LinkList<T>*	getList() const			{ return static_cast<LinkList<T>*>(_list); }
+	T*				next() const			{ return (T*)_next; }
+	T*				prev() const			{ return (T*)_prev; }
 
-	override void	removeThis()		{ _ListNode::removeThis(); }
-	override void	destroyThis()		{ _ListNode::destroyThis(); }
+	void			removeThis() override	{ _ListNode::removeThis(); }
+	void			destroyThis() override	{ _ListNode::destroyThis(); }
 };	// ListNode
 
 struct _LinkList : private NonCopyable

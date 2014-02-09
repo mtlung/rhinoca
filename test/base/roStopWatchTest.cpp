@@ -17,7 +17,7 @@ class MyTask : public Task
 public:
 	MyTask(roSize multiplier) { countMultiplier = multiplier; }
 
-	override void run(TaskPool* taskPool)
+	void run(TaskPool* taskPool) override
 	{
 		StopWatch watch;
 		double mindt = +TypeOf<double>::valueMax();

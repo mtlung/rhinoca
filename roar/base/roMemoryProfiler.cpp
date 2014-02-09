@@ -65,7 +65,7 @@ struct Array_VirtualAlloc : public IArray<T>
 {
 	Array_VirtualAlloc() { this->_data = NULL; this->_capacity = 0; }
 	~Array_VirtualAlloc() { this->clear(); reserve(0, true); }
-	override Status reserve(roSize newSize, bool force=false);
+	Status reserve(roSize newSize, bool force=false) override;
 };	// TinyArray
 
 template<class T>
