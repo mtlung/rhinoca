@@ -81,33 +81,30 @@ public:
 
 TextService::TextService()
 {
-	// Initialize COM
-	::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-
 	_hWnd = 0;
 	refCount = 0;
 	sink = NULL;
 	currentCompositionView = NULL;
-
 	_acpStart = _acpEnd = 0;
-
-	AddRef();
 }
 
 TextService::~TextService()
 {
 	roAssert(!_cpThreadMgr && !_cpDocMgr && "call close() before destory");
-	::CoUninitialize();
 }
 
 roStatus TextService::init()
 {
 	roStatus st;
 
+	// Initialize COM
+	HRESULT hr = ::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+	if(FAILED(hr)) return st;
+
 	_hWnd = ::GetActiveWindow();
 
     // Register with TSF...
-	HRESULT hr = ::CoCreateInstance(CLSID_TF_ThreadMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfThreadMgr, (void**)&_cpThreadMgr);
+	hr = ::CoCreateInstance(CLSID_TF_ThreadMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfThreadMgr, (void**)&_cpThreadMgr);
 	if(FAILED(hr) || !_cpThreadMgr) return st;
 
 	TfClientId clientId;
@@ -120,10 +117,12 @@ roStatus TextService::init()
 
 	if(FAILED(_cpDocMgr->Push(_cpContext))) return st;
 
-    ITfDocumentMgr* pDocumentMgrPrev;
+    ITfDocumentMgr* pDocumentMgrPrev = NULL;
     _cpThreadMgr->AssociateFocus(_hWnd, _cpDocMgr, &pDocumentMgrPrev);
     if(pDocumentMgrPrev)
         pDocumentMgrPrev->Release();
+
+	AddRef();
 
 	return roStatus::ok;
 }
@@ -135,6 +134,8 @@ void TextService::close()
 
 	_cpThreadMgr = NULL;
 	_cpDocMgr = NULL;
+
+	::CoUninitialize();
 
 	Release();
 }

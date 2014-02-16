@@ -279,6 +279,8 @@ static bool _setRenderTargets(roRDriverTexture** textures, roSize targetCount, b
 	for(unsigned i=0; i<targetCount; ++i)
 	{
 		roRDriverTextureImpl* tex = static_cast<roRDriverTextureImpl*>(textures[i]);
+		if(!tex)
+			continue;
 
 		// Create depth stencil view
 		if(tex->format == roRDriverTextureFormat_DepthStencil)
@@ -1513,7 +1515,7 @@ static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const c
 	ComPtr<ID3D11ShaderReflection> reflector;
 	D3DReflect(p, size, IID_ID3D11ShaderReflection, (void**)&reflector.ptr);
 
-	D3D11_SHADER_DESC shaderDesc;
+	D3D11_SHADER_DESC shaderDesc = {0};
 	reflector->GetDesc(&shaderDesc);
 
 	for(unsigned i=0; i<shaderDesc.InputParameters; ++i)
@@ -1589,7 +1591,7 @@ bool _initShaderFromBlob(roRDriverShader* self, roRDriverShaderType type, const 
 	roRDriverShaderImpl* impl = static_cast<roRDriverShaderImpl*>(self);
 	if(!ctx || !impl || !blob || blobSize == 0) return false;
 
-	HRESULT hr = -1;
+	HRESULT hr = E_FAIL;
 
 	const roByte* blobEnd = blob + blobSize;
 	roUint32 originalBlobSize = *((roUint32*)blob);

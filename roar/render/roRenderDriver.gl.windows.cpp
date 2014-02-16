@@ -175,6 +175,7 @@ bool _initDriverContext_GL(roRDriverContext* self, void* platformSpecificWindow)
 	HDC hDc = impl->hDc = ::GetDC(hWnd);
 
 	WINDOWINFO info;
+	roMemZeroStruct(info);
 	::GetWindowInfo(hWnd, &info);
 	impl->width = info.rcClient.right - info.rcClient.left;
 	impl->height = info.rcClient.bottom - info.rcClient.top;

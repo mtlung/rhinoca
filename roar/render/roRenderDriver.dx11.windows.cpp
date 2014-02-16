@@ -192,6 +192,7 @@ bool _initDriverContext_DX11(roRDriverContext* self, void* platformSpecificWindo
 	HWND hWnd = impl->hWnd = reinterpret_cast<HWND>(platformSpecificWindow);
 
 	WINDOWINFO info;
+	roMemZeroStruct(info);
 	::GetWindowInfo(hWnd, &info);
 	impl->width = info.rcClient.right - info.rcClient.left;
 	impl->height = info.rcClient.bottom - info.rcClient.top;

@@ -67,7 +67,7 @@ Status RawFileIStream::open(const roUtf8* path)
 bool RawFileIStream::readWillBlock(roUint64 size)
 {
 	if(!_handle)
-		Status::file_not_open;
+		return st = Status::file_not_open, false;
 
 	if(_ringBuf.totalReadable() >= size)
 		return false;
@@ -167,7 +167,7 @@ static Status _next_RawFileIStream(IStream& s, roUint64 bytesToRead)
 Status RawFileIStream::size(roUint64& bytes) const
 {
 	if(!_handle)
-		Status::file_not_open;
+		return Status::file_not_open;
 
 	LARGE_INTEGER fileSize;
 	if(!GetFileSizeEx(_handle, &fileSize))
@@ -179,8 +179,10 @@ Status RawFileIStream::size(roUint64& bytes) const
 
 roUint64 RawFileIStream::posRead() const
 {
-	if(!_handle)
+	if(!_handle) {
 		st = Status::file_not_open;
+		return 0;
+	}
 
 	LARGE_INTEGER largeInt;
 	largeInt.LowPart = _overlap.Offset;
@@ -192,7 +194,7 @@ roUint64 RawFileIStream::posRead() const
 Status RawFileIStream::seekRead(roInt64 offset, SeekOrigin origin)
 {
 	if(!_handle)
-		Status::file_not_open;
+		return Status::file_not_open;
 
 	LARGE_INTEGER absOffset = { 0 };
 	if(origin == SeekOrigin_Begin) {
