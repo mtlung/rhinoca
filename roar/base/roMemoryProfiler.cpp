@@ -98,7 +98,7 @@ Status Array_VirtualAlloc<T>::reserve(roSize newCapacity, bool force)
 	if(_data) for(roSize i=0; i<_size; ++i)
 		(_data[i]).~T();
 	if(_data)
-		::VirtualFree(_data, _capacity * sizeof(T), MEM_RELEASE);
+		::VirtualFree(_data, 0, MEM_RELEASE);
 
 	_data = newPtr;
 	_capacity = roundUpSize / sizeof(T);

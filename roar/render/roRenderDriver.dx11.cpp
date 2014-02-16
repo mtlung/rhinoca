@@ -13,7 +13,6 @@
 #include <dxgi.h>
 #include <d3d11.h>
 #include <D3Dcompiler.h>
-#include <D3DX11async.h>
 #include <stdio.h>	// For sscanf
 
 // DirectX stuffs
@@ -1473,17 +1472,15 @@ static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const c
 	ID3D10Blob* shaderBlob = NULL, *errorMessage = NULL;
 	const char* shaderProfile = _getShaderTarget(ctx->dxDevice, type);
 
-	HRESULT hr = D3DX11CompileFromMemory(
+	HRESULT hr = D3DCompile(
 		sources[0], strlen(sources[0]), NULL,
 		NULL,			// D3D10_SHADER_MACRO
 		NULL,			// LPD3D10INCLUDE
 		"main",			// Entry point
 		shaderProfile,	// Shader profile
 		D3D10_SHADER_ENABLE_STRICTNESS, 0,
-		NULL,			// ID3DX11ThreadPump, for async loading
 		&shaderBlob,
-		&errorMessage,
-		NULL
+		&errorMessage
 	);
 
 	if(FAILED(hr)) {
