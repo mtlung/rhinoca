@@ -55,7 +55,7 @@ void _roDebugBreak(bool doBreak=true);
 #	if !defined(__midl) && defined(_PREFAST_) 
 #		define override __declspec("__override")
 #	else
-#		define override virtual
+#		define override
 #	endif
 #endif
 

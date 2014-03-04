@@ -60,6 +60,8 @@ struct IStream : private NonCopyable
 	// Concrete class should implement this function to adjust the buffer pointers
 	// to fulfill the read size requested as close as possible.
 	// Client could keep calling this function to get the desired readable size.
+	// Why make it a function pointer instead of a virtual function callback?
+	// because this way we can construct a state machine inside the stream easily.
 	Status (*_next)(IStream& s, roUint64 suggestedBytesToRead);
 };	// IStream
 

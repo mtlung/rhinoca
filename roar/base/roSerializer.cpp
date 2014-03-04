@@ -51,45 +51,45 @@ Status serializeIoVary(Serializer& s, roUint32& v_)
 
 	if(v < (1<<(7*1))) {
 		st = s._checkRemain(1); if(!st) return st;
-		s._w[0] = (roUint8) (v >> (7*0));
+		s._w[0] = 0xFF & (v >> (7*0));
 		s._advance(1);
 		return st;
 	}
 
 	if(v < (1<<(7*2))) {
 		st = s._checkRemain(2); if(!st) return st;
-		s._w[0] = (roUint8) (v >> (7*0) | 0x80);
-		s._w[1] = (roUint8) (v >> (7*1));
+		s._w[0] = 0xFF & (v >> (7*0) | 0x80);
+		s._w[1] = 0xFF & (v >> (7*1));
 		s._advance(2);
 		return st;
 	}
 
 	if(v < (1<<(7*3))) {
 		st = s._checkRemain(3); if(!st) return st;
-		s._w[0] = (roUint8) (v >> (7*0) | 0x80);
-		s._w[1] = (roUint8) (v >> (7*1) | 0x80);
-		s._w[2] = (roUint8) (v >> (7*2));
+		s._w[0] = 0xFF & (v >> (7*0) | 0x80);
+		s._w[1] = 0xFF & (v >> (7*1) | 0x80);
+		s._w[2] = 0xFF & (v >> (7*2));
 		s._advance(3);
 		return st;
 	}
 
 	if(v < (1<<(7*4))) {
 		st = s._checkRemain(4); if(!st) return st;
-		s._w[0] = (roUint8) (v >> (7*0) | 0x80);
-		s._w[1] = (roUint8) (v >> (7*1) | 0x80);
-		s._w[2] = (roUint8) (v >> (7*2) | 0x80);
-		s._w[3] = (roUint8) (v >> (7*3));
+		s._w[0] = 0xFF & (v >> (7*0) | 0x80);
+		s._w[1] = 0xFF & (v >> (7*1) | 0x80);
+		s._w[2] = 0xFF & (v >> (7*2) | 0x80);
+		s._w[3] = 0xFF & (v >> (7*3));
 		s._advance(4);
 		return st;
 	}
 
 	else {
 		st = s._checkRemain(5); if(!st) return st;
-		s._w[0] = (roUint8) (v >> (7*0) | 0x80);
-		s._w[1] = (roUint8) (v >> (7*1) | 0x80);
-		s._w[2] = (roUint8) (v >> (7*2) | 0x80);
-		s._w[3] = (roUint8) (v >> (7*3) | 0x80);
-		s._w[4] = (roUint8) (v >> (7*4));
+		s._w[0] = 0xFF & (v >> (7*0) | 0x80);
+		s._w[1] = 0xFF & (v >> (7*1) | 0x80);
+		s._w[2] = 0xFF & (v >> (7*2) | 0x80);
+		s._w[3] = 0xFF & (v >> (7*3) | 0x80);
+		s._w[4] = 0xFF & (v >> (7*4));
 		s._advance(5);
 		return st;
 	}
@@ -107,7 +107,7 @@ Status serializeIoVary(Serializer& s, roUint64& v_)
 	for(i=0; i<roSize((sizeof(v) * 8)/7); ++i) {
 		if(v >= (1ULL<<(7*(i+1)))) {
 			st = s._checkRemain(1); if(!st) return st;
-			s._w[0] = (roUint8) (v >> (7*i) | 0x80);
+			s._w[0] = 0xFF & ((v >> (7*i) | 0x80) & 0xFF);
 			s._advance(1);
 		}
 		else
@@ -115,7 +115,7 @@ Status serializeIoVary(Serializer& s, roUint64& v_)
 	}
 
 	st = s._checkRemain(1); if(!st) return st;
-	s._w[0] = (roUint8) (v >> (7*i));
+	s._w[0] = 0xFF & (v >> (7*i));
 	s._advance(1);
 
 	return st;

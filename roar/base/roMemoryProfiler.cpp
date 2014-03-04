@@ -221,7 +221,7 @@ Status MemoryProfiler::init(roUint16 listeningPort)
 
 	{	// Send our process id to the client
 		DWORD pid = GetCurrentProcessId();
-		_profiler->_acceptorSocket.send(&pid, sizeof(pid));
+		_acceptorSocket.send(&pid, sizeof(pid));
 	}
 
 	if(_acceptorSocket.setBlocking(true) != 0) return Status::net_error;

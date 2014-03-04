@@ -155,7 +155,7 @@ struct Canvas
 		roRDriverTexture* tex;
 		roUint16 quadCount;
 		struct Range { roUint16 begin, end; };
-		ro::Array<Range> range;
+		ro::TinyArray<Range, 64> range;
 	};
 	ro::Array<PerTextureQuadList> _perTextureQuadList;
 

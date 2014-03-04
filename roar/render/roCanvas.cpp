@@ -371,7 +371,7 @@ void Canvas::_flushDrawImageBatch()
 
 		// Build the index buffer
 		roUint16 iIdx = 0;
-		ro::Array<PerTextureQuadList::Range>& ranges = _perTextureQuadList[i].range;
+		ro::IArray<PerTextureQuadList::Range>& ranges = _perTextureQuadList[i].range;
 		_mappedIBuffer = (roUint16*)_driver->mapBuffer(_iBuffer, roRDriverMapUsage_Write, 0, indexBufSize);
 		for(roSize j=0; j<ranges.size(); ++j) {
 			for(roUint16 k=ranges[j].begin; k<ranges[j].end; ++k) {

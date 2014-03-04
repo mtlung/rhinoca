@@ -230,7 +230,7 @@ Status IArray<T>::insertUnique(roSize idx, const T& val)
 }
 
 template<class T>
-Status IArray<T>::insertSorted(const T&val)
+Status IArray<T>::insertSorted(const T& val)
 {
 	if(T* p = roLowerBound(_data, _size, val)) {
 		roAssert(!(*p < val));
