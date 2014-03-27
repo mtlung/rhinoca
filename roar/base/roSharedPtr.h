@@ -71,6 +71,8 @@ template<class CounterType>
 struct SharedObject
 {
 	SharedObject() : _refCount(0) {}
+
+protected:
 	virtual ~SharedObject() {}
 
 	friend void sharedPtrAddRef(SharedObject* p) {

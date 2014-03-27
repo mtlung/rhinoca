@@ -46,8 +46,8 @@ typedef unsigned char roByte;
 #define roFORCEINLINE inline __forceinline
 
 // Offset of
-#define roOffsetOf(s, m) __builtin_offsetof(s, m)
-#define roContainerOf(s, m, pm) ({const typeof(((s*)0)->m)*__mptr=(pm); (s*)((char*)__mptr - roOffsetOf(s,m));})
+#define roOffsetof(s, m) __builtin_offsetof(s, m)
+#define roContainerof(s, m, pm) ({const typeof(((s*)0)->m)*__mptr=(pm); (s*)((char*)__mptr - roOffsetof(s,m));})
 
 // Printf style compiler check
 #define roPRINTF_FORMAT_PARAM

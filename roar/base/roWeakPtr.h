@@ -5,7 +5,9 @@
 
 namespace ro {
 
-/// Not thread safe
+/// Not thread safe.
+/// The problem with making it thread safe was, even we add lock in ~WeakObject(),
+/// the object is already partially destroyed.
 template<class T>
 struct WeakPtr
 {

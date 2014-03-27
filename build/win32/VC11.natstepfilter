@@ -1,4 +1,4 @@
-Put the following into C:\Program Files[ (x86)]\Microsoft Visual Studio 11.0\Common7\Packages\Debugger\Visualizers\default.natstepfilter
+Put the following into C:\Users\username\Documents\Visual Studio 2012\Visualizers\default.natstepfilter
 
   <Function><Name>roStatus.*</Name><Action>NoStepInto</Action></Function>
   <Function><Name>ro::IArray.*</Name><Action>NoStepInto</Action></Function>
