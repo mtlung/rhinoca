@@ -206,6 +206,9 @@
     <ClCompile Include="..\..\roar\render\shivavg\shVgu.cpp">
       <Filter>render\shivavg</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\roar\base\roCoroutine.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\roar\pch.h" />
@@ -501,6 +504,9 @@
     <ClInclude Include="..\..\roar\render\shivavg\vgu.h">
       <Filter>render\shivavg</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\roar\base\roCoroutine.h">
+      <Filter>base</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="base">
@@ -559,5 +565,10 @@
     <None Include="..\..\roar\render\roRenderDriver.gl.inl">
       <Filter>render</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="..\..\roar\base\roCoroutine.win64.asm">
+      <Filter>base</Filter>
+    </MASM>
   </ItemGroup>
 </Project>

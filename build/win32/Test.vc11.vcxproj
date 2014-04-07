@@ -22,6 +22,7 @@
     <ClCompile Include="..\..\test\base\roAlgorithmTest.cpp" />
     <ClCompile Include="..\..\test\base\roArrayPerformanceTest.cpp" />
     <ClCompile Include="..\..\test\base\roArrayTest.cpp" />
+    <ClCompile Include="..\..\test\base\roCoRoutineTest.cpp" />
     <ClCompile Include="..\..\test\base\roDateTimeTest.cpp" />
     <ClCompile Include="..\..\test\base\roFileSystemTest.cpp" />
     <ClCompile Include="..\..\test\base\roIOStreamTest.cpp" />
@@ -95,6 +96,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -220,5 +222,6 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
   </ImportGroup>
 </Project>

@@ -53,6 +53,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -126,6 +127,8 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <MASM />
+    <Lib />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -184,6 +187,7 @@
     <ClInclude Include="..\..\roar\base\roCachedVal.h" />
     <ClInclude Include="..\..\roar\base\roComPtr.h" />
     <ClInclude Include="..\..\roar\base\roCondVar.h" />
+    <ClInclude Include="..\..\roar\base\roCoroutine.h" />
     <ClInclude Include="..\..\roar\base\roCpuProfiler.h" />
     <ClInclude Include="..\..\roar\base\roDateTime.h" />
     <ClInclude Include="..\..\roar\base\roFileSystem.h" />
@@ -273,6 +277,7 @@
     <ClCompile Include="..\..\roar\audio\stb_vorbis.cpp" />
     <ClCompile Include="..\..\roar\base\roBlockAllocator.cpp" />
     <ClCompile Include="..\..\roar\base\roCondVar.cpp" />
+    <ClCompile Include="..\..\roar\base\roCoroutine.cpp" />
     <ClCompile Include="..\..\roar\base\roCpuProfiler.cpp" />
     <ClCompile Include="..\..\roar\base\roDateTime.cpp" />
     <ClCompile Include="..\..\roar\base\roFileSystem.cpp" />
@@ -357,7 +362,11 @@
     <None Include="..\..\roar\render\roRenderDriver.dx11.inl" />
     <None Include="..\..\roar\render\roRenderDriver.gl.inl" />
   </ItemGroup>
+  <ItemGroup>
+    <MASM Include="..\..\roar\base\roCoroutine.win64.asm" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
   </ImportGroup>
 </Project>
