@@ -85,6 +85,7 @@
 #define CORO_H
 
 //#define CORO_ASM 1
+//#define CORO_FIBER 1
 
 #if __cplusplus
 extern "C" {
@@ -354,15 +355,10 @@ struct coro_context
 #  define coro_longjmp(env) _longjmp ((env), 1)
 # elif CORO_LOSER
 #  define coro_jmp_buf      jmp_buf
-#if roCPU_x86_64
 extern "C" int roSetJmp(jmp_buf);
 extern "C" void roLongJmp(jmp_buf, int);
 #  define coro_setjmp(env)  roSetJmp (env)
 #  define coro_longjmp(env) roLongJmp ((env), 1)
-#else
-#  define coro_setjmp(env)  setjmp (env)
-#  define coro_longjmp(env) longjmp ((env), 1)
-#endif
 # else
 #  define coro_jmp_buf      sigjmp_buf
 #  define coro_setjmp(env)  sigsetjmp (env, 0)

@@ -6,6 +6,14 @@ using namespace ro;
 
 struct CoroutineTest {};
 
+namespace {
+
+struct DymmyCoroutine : public Coroutine {
+	virtual void run() override {}
+};
+
+}
+
 TEST_FIXTURE(CoroutineTest, empty)
 {
 	{	CoroutineScheduler scheduler;
@@ -20,7 +28,7 @@ TEST_FIXTURE(CoroutineTest, empty)
 		scheduler.update();
 	}
 
-	Producer producer;
+	DymmyCoroutine producer;
 }
 
 namespace {
@@ -98,4 +106,60 @@ TEST_FIXTURE(CoroutineTest, producerConsumer)
 	CHECK_EQUAL(1, consumer.result[0]);
 	CHECK_EQUAL(2, consumer.result[1]);
 	CHECK_EQUAL(3, consumer.result[2]);
+}
+
+namespace {
+
+// Test if the run() function can handle construction and destruction of Coroutine
+struct SpawnCoroutine : public Coroutine
+{
+	SpawnCoroutine() : counter(0)
+	{
+		++maxInstanceCount;
+		roVerify(initStack());
+	}
+
+	virtual void run() override
+	{
+		SpawnCoroutine* newCoroutine = new SpawnCoroutine;
+		printf("%d\n", counter);
+		if(counter > 0) {
+			--counter;
+			newCoroutine->counter = counter;
+			scheduler->add(*newCoroutine);
+		}
+
+		{	SpawnCoroutine dummy;
+			scheduler->add(dummy);
+			// Can be destructed immediately given the coroutine haven't been run()
+		}
+
+		// Yield a few times
+		yield();
+		yield();
+		yield();
+
+		delete this;
+	}
+
+	int counter;
+	static roSize maxInstanceCount;
+};
+
+roSize SpawnCoroutine::maxInstanceCount = 0;
+
+}
+
+TEST_FIXTURE(CoroutineTest, spawnCoroutineInCoroutine)
+{
+	CoroutineScheduler scheduler;
+	scheduler.init();
+
+	SpawnCoroutine* spawner = new SpawnCoroutine;
+	spawner->counter = 300;
+
+	scheduler.add(*spawner);
+	scheduler.update();
+
+	CHECK_EQUAL(5, SpawnCoroutine::maxInstanceCount);
 }

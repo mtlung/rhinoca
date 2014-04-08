@@ -9,32 +9,42 @@
 
 namespace ro {
 
+__declspec(thread) static Coroutine* _currentCoroutine = NULL;
+
 static void coroutineFunc(void* userData)
 {
 	Coroutine* coroutine = reinterpret_cast<Coroutine*>(userData);
 	roAssert(coroutine);
 	roAssert(coroutine->scheduler);
 
+	CoroutineScheduler* scheduler = coroutine->scheduler;
+	coro_context* contextToTransfer = &coroutine->_context;
+
+	_currentCoroutine = coroutine;
 	coroutine->_isInRun = true;
 	coroutine->_isActive = true;
 	coroutine->_runningThreadId = TaskPool::threadId();
 
 	coroutine->run();
 
-	coroutine->_isInRun = false;
-	coroutine->_isActive = false;
-	coroutine->_runningThreadId = 0;
-
-	// TODO: Detect if coroutine had been deleted
+	_currentCoroutine = NULL;
+	if(scheduler->_destroiedCoroutine == coroutine)
+		contextToTransfer = &scheduler->_contextToDestroy;
+	else {
+		coroutine->_isInRun = false;
+		coroutine->_isActive = false;
+		coroutine->_runningThreadId = 0;
+	}
 
 	// Switch back to CoroutineScheduler
-	coro_transfer(&coroutine->_context, &coroutine->scheduler->context);
+	coro_transfer(contextToTransfer, &scheduler->context);
 }
 
 __declspec(thread) CoroutineScheduler* tlsInstance = NULL;
 
 CoroutineScheduler::CoroutineScheduler()
 	: current(NULL)
+	, _destroiedCoroutine(NULL)
 {}
 
 void CoroutineScheduler::init(roSize stackSize)
@@ -65,7 +75,24 @@ void CoroutineScheduler::update()
 
 		if(!co->scheduler) {
 			co->_backupStack.clear();
-			coro_create(&co->_context, coroutineFunc, (void*)co, _stack.bytePtr(), _stack.sizeInByte());
+
+			roByte* stackPtr = NULL;
+			roSize stackSize = 0;
+
+			if(co->_ownStack.isEmpty()) {
+				stackPtr = _stack.bytePtr();
+				stackSize = _stack.sizeInByte();
+			}
+			else {
+				stackPtr = co->_ownStack.bytePtr();
+				stackSize = _stack.sizeInByte();co->_ownStack.sizeInByte();
+			}
+
+			// Check for alignment
+			roSize alignemt = sizeof(void*);
+			roByte* alignedStackPtr = (roByte*)(((roPtrInt(stackPtr) - 1) / alignemt) * alignemt + alignemt);
+			stackSize -= (alignedStackPtr - stackPtr);
+			coro_create(&co->_context, coroutineFunc, (void*)co, alignedStackPtr, stackSize);
 		}
 
 		// Copy stack from backup to running stack
@@ -75,10 +102,18 @@ void CoroutineScheduler::update()
 			co->_backupStack.clear();
 		}
 
+		_currentCoroutine = co;
 		co->scheduler = this;
 		co->_isActive = true;
 		co->removeThis();
 		coro_transfer(&context, &co->_context);
+
+		if(_destroiedCoroutine == co) {
+			_destroiedCoroutine = NULL;
+			coro_destroy(&_contextToDestroy);
+		}
+
+		_currentCoroutine = NULL;
 		current = NULL;
 	}
 
@@ -109,10 +144,31 @@ Coroutine::Coroutine()
 
 Coroutine::~Coroutine()
 {
-	if(_isInRun)
-		roLog("error", "Please let coroutine '%s' finish, before it is destroyed\n", debugName.c_str());
-	roAssert(!_isInRun);
-	coro_destroy(&_context);
+	if(_isInRun && _isActive) {	// Calling "delete this" inside run()
+		scheduler->_destroiedCoroutine = this;
+		scheduler->_contextToDestroy = _context;
+
+		// Prevent _ownStack to be destroyed right now, since we are still running on this stack memory!
+		roSwap(_ownStack, scheduler->_stackToDestroy);
+	}
+	else {
+		if(_isInRun) {
+			roAssert(!_isInRun);
+			roLog("error", "Please let coroutine '%s' finish, before it is destroyed\n", debugName.c_str());
+		}
+
+		coro_destroy(&_context);
+	}
+}
+
+roStatus Coroutine::initStack(roSize stackSize)
+{
+	if(_isInRun || _isActive)
+		return roStatus::assertion;
+
+	_backupStack.clear();
+	_backupStack.condense();
+	return _ownStack.resizeNoInit(stackSize);
 }
 
 void Coroutine::yield()
@@ -145,12 +201,14 @@ void Coroutine::suspend()
 	_isActive = false;
 
 #if !CORO_FIBER
-	// See how much stack we are using
-	roByte* currentStack = (roByte*)_getCurrentStackPtr();
-	roSize stackUsed = (&scheduler->_stack.back()) - currentStack;
+	if(_ownStack.isEmpty()) {
+		// See how much stack we are using
+		roByte* currentStack = (roByte*)_getCurrentStackPtr();
+		roSize stackUsed = (&scheduler->_stack.back()) - currentStack;
 
-	// Backup the current stack
-	_backupStack.assign((&scheduler->_stack.back()) - stackUsed, stackUsed);
+		// Backup the current stack
+		_backupStack.assign((&scheduler->_stack.back()) - stackUsed, stackUsed);
+	}
 #endif
 
 	coro_transfer(&_context, &scheduler->context);
@@ -189,4 +247,53 @@ void Coroutine::resumeOnThread(ThreadId threadId)
 	roAssert(false && "To be implement");
 }
 
+Coroutine* Coroutine::current()
+{
+	return _currentCoroutine;
+}
+
 }	// namespace ro
+
+#if roCOMPILER_VC && roCPU_x86
+__declspec(naked) int roSetJmp(jmp_buf)
+{__asm {
+	mov eax,DWORD PTR [esp+4]
+	mov edx,DWORD PTR [esp+0]
+	mov DWORD PTR [eax+0],ebp
+	mov DWORD PTR [eax+4],ebx
+	mov DWORD PTR [eax+8],edi
+	mov DWORD PTR [eax+12],esi
+	mov DWORD PTR [eax+16],esp
+	mov DWORD PTR [eax+20],edx
+	xor eax,eax
+	ret
+}}
+
+__declspec(naked) void roLongJmp(jmp_buf, int)
+{__asm {
+	mov edx,DWORD PTR [esp+4]
+	mov eax,DWORD PTR [esp+8]
+	mov ebp,DWORD PTR [edx+0]
+	mov ebx,DWORD PTR [edx+4]
+	mov edi,DWORD PTR [edx+8]
+	mov esi,DWORD PTR [edx+12]
+	mov esp,DWORD PTR [edx+16]
+	mov ecx,DWORD PTR [edx+20]
+	test eax,eax
+	jne a
+	inc eax
+a: mov DWORD PTR [esp],ecx
+	ret
+}}
+
+#else
+int roSetJmp(jmp_buf buf)
+{
+	return setJmp(buf);
+}
+
+void roLongJmp(jmp_buf buf, int val)
+{
+	longjmp(buf, val);
+}
+#endif

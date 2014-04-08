@@ -20,6 +20,8 @@ struct Coroutine : public ListNode<Coroutine>
 	Coroutine();
 	~Coroutine();
 
+	roStatus initStack(roSize stackSize = 1024 * 1024);
+
 	virtual void run() = 0;
 
 	void yield();	// Temporary give up the processing ownership
@@ -30,9 +32,13 @@ struct Coroutine : public ListNode<Coroutine>
 	void switchToThread(ThreadId threadId);	// Similar to yield(), but resume on the specific thread
 	void resumeOnThread(ThreadId threadId);
 
+	// Get the current thread's active co-routine, if any
+	static Coroutine* current();
+
 	bool				_isInRun;	// Is inside the run() function
 	bool				_isActive;
 	ThreadId			_runningThreadId;
+	ByteArray			_ownStack;
 	ByteArray			_backupStack;
 	coro_context		_context;
 	ConstString			debugName;
@@ -57,7 +63,10 @@ struct CoroutineScheduler
 	Coroutine* current;
 
 	LinkList<Coroutine> _resumeList;
-	ByteArray _stack;
+	ByteArray			_stack;					// Multiple coroutine run on the same stack. Stack will be copied when switching coroutines
+	void*				_destroiedCoroutine;	// Coroutine that have been destroied in run() function
+	coro_context		_contextToDestroy;		// We have to delay the destruction of context, until we switch back coro to the scheduler
+	ByteArray			_stackToDestroy;
 };	// CoroutineScheduler
 
 }	// namespace ro
