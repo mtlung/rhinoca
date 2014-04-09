@@ -53,21 +53,26 @@ struct CoroutineScheduler
 	void add(Coroutine& coroutine);
 	void addSuspended(Coroutine& coroutine);
 	void update();
+	void requestStop();
+	bool keepRun() const;
 
 	// Yield the current running co-routine and return it's pointer, so you can resume it later on.
 	// Coroutine should not be destroied before run() finish, so it's safe to return Coroutine*
 	static Coroutine* currentCoroutine();
 	static CoroutineScheduler* perThreadScheduler();
 
-	coro_context context;
-	Coroutine* current;
+	coro_context		context;
+	Coroutine*			current;
 
+	bool				_keepRun;
 	LinkList<Coroutine> _resumeList;
 	ByteArray			_stack;					// Multiple coroutine run on the same stack. Stack will be copied when switching coroutines
 	void*				_destroiedCoroutine;	// Coroutine that have been destroied in run() function
 	coro_context		_contextToDestroy;		// We have to delay the destruction of context, until we switch back coro to the scheduler
 	ByteArray			_stackToDestroy;
 };	// CoroutineScheduler
+
+void coSleep(float seconds);
 
 }	// namespace ro
 

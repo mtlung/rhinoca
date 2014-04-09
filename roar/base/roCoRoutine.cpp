@@ -47,10 +47,15 @@ CoroutineScheduler::CoroutineScheduler()
 	, _destroiedCoroutine(NULL)
 {}
 
+static Coroutine* createSleepManager();
+
 void CoroutineScheduler::init(roSize stackSize)
 {
+	_keepRun = true;
 	_stack.resizeNoInit(stackSize);
 	coro_create(&context, NULL, NULL, NULL, 0);
+
+	add(*createSleepManager());
 }
 
 void CoroutineScheduler::add(Coroutine& coroutine)
@@ -118,6 +123,16 @@ void CoroutineScheduler::update()
 	}
 
 	tlsInstance = NULL;
+}
+
+void CoroutineScheduler::requestStop()
+{
+	_keepRun = false;
+}
+
+bool CoroutineScheduler::keepRun() const
+{
+	return _keepRun;
 }
 
 Coroutine* CoroutineScheduler::currentCoroutine()
@@ -254,7 +269,9 @@ Coroutine* Coroutine::current()
 
 }	// namespace ro
 
-#if roCOMPILER_VC && roCPU_x86
+#if roCOMPILER_VC && roOS_WIN64
+// Compiled from asm file
+#elif roCOMPILER_VC && roOS_WIN32
 __declspec(naked) int roSetJmp(jmp_buf)
 {__asm {
 	mov eax,DWORD PTR [esp+4]
@@ -297,3 +314,92 @@ void roLongJmp(jmp_buf buf, int val)
 	longjmp(buf, val);
 }
 #endif
+
+#include "roStopWatch.h"
+
+namespace ro {
+
+struct CoSleepManager;
+
+__declspec(thread) static CoSleepManager* _currentCoSleepManager = NULL;
+
+struct CoSleepManager : public Coroutine
+{
+	struct Entry
+	{
+		float timeToWake;
+		Coroutine* coro;
+		static bool less(const Entry& lhs, const Entry& rhs)
+		{
+			return lhs.timeToWake < rhs.timeToWake;
+		}
+	};
+
+	CoSleepManager()
+	{
+		roAssert(!_currentCoSleepManager);
+		_currentCoSleepManager = this;
+	}
+
+	~CoSleepManager()
+	{
+		roAssert(_currentCoSleepManager == this);
+		_currentCoSleepManager = NULL;
+	}
+
+	void add(Coroutine& co, float seconds)
+	{
+		roAssert(_currentCoSleepManager == this);
+		const float timeToWake = stopWatch.getFloat() + seconds;
+
+		Entry entry = { timeToWake, &co };
+		sortedEntries.insertSorted(entry, Entry::less);
+	}
+
+	virtual void run() override
+	{
+		stopWatch.reset();
+
+		while(scheduler->keepRun() || !sortedEntries.isEmpty()) {
+			const float currentTime = stopWatch.getFloat();
+			while(!sortedEntries.isEmpty()) {
+				const Entry& entry = sortedEntries.front();
+				if(entry.timeToWake > currentTime)
+					break;
+
+				entry.coro->resume();
+				sortedEntries.remove(0);
+			}
+
+			yield();
+			roAssert(_currentCoSleepManager == this);
+		}
+
+		delete this;
+	}
+
+	StopWatch stopWatch;
+	Array<Entry> sortedEntries;
+};
+
+Coroutine* createSleepManager()
+{
+	return new CoSleepManager;
+}
+
+void coSleep(float seconds)
+{
+	Coroutine* coroutine = Coroutine::current();
+	CoSleepManager* sleepMgr = _currentCoSleepManager;
+	roAssert(coroutine && sleepMgr);
+
+	if(seconds == 0) {
+		coroutine->yield();
+		return;
+	}
+
+	sleepMgr->add(*coroutine, seconds);
+	coroutine->suspend();
+}
+
+}	// namespace ro

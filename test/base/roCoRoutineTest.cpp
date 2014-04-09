@@ -122,17 +122,21 @@ struct SpawnCoroutine : public Coroutine
 	virtual void run() override
 	{
 		SpawnCoroutine* newCoroutine = new SpawnCoroutine;
-		printf("%d\n", counter);
 		if(counter > 0) {
 			--counter;
 			newCoroutine->counter = counter;
 			scheduler->add(*newCoroutine);
 		}
+		else
+			scheduler->requestStop();
 
 		{	SpawnCoroutine dummy;
 			scheduler->add(dummy);
 			// Can be destructed immediately given the coroutine haven't been run()
 		}
+
+		// Also test the sleep function
+		coSleep(0.01f);
 
 		// Yield a few times
 		yield();
@@ -156,10 +160,10 @@ TEST_FIXTURE(CoroutineTest, spawnCoroutineInCoroutine)
 	scheduler.init();
 
 	SpawnCoroutine* spawner = new SpawnCoroutine;
-	spawner->counter = 300;
+	spawner->counter = 3;
 
 	scheduler.add(*spawner);
 	scheduler.update();
 
-	CHECK_EQUAL(5, SpawnCoroutine::maxInstanceCount);
+	CHECK_EQUAL(9, SpawnCoroutine::maxInstanceCount);
 }
