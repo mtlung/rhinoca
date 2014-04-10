@@ -20,6 +20,8 @@ struct Coroutine : public ListNode<Coroutine>
 	Coroutine();
 	~Coroutine();
 
+	// Calling initStack is optional; if no private stack assigned,
+	// the shared stack in CoroutineScheduler will be used and swap in/our with _backupStack.
 	roStatus initStack(roSize stackSize = 1024 * 1024);
 
 	virtual void run() = 0;
@@ -35,8 +37,9 @@ struct Coroutine : public ListNode<Coroutine>
 	// Get the current thread's active co-routine, if any
 	static Coroutine* current();
 
-	bool				_isInRun;	// Is inside the run() function
+	bool				_isInRun;		// Is inside the run() function
 	bool				_isActive;
+	bool				_isBackground;	// Background coroutine is used to implement blocking service like sleep and network IO etc
 	ThreadId			_runningThreadId;
 	ByteArray			_ownStack;
 	ByteArray			_backupStack;
@@ -48,12 +51,14 @@ struct Coroutine : public ListNode<Coroutine>
 struct CoroutineScheduler
 {
 	CoroutineScheduler();
+	~CoroutineScheduler();
 
 	void init(roSize statckSize = 1024 * 1024);
 	void add(Coroutine& coroutine);
 	void addSuspended(Coroutine& coroutine);
-	void update();
+	void update(unsigned timeSliceMilliSeconds=0);
 	void requestStop();
+	void stop();
 	bool keepRun() const;
 
 	// Yield the current running co-routine and return it's pointer, so you can resume it later on.
@@ -65,7 +70,9 @@ struct CoroutineScheduler
 	Coroutine*			current;
 
 	bool				_keepRun;
+	roSize				_backgroundCoroCount;
 	LinkList<Coroutine> _resumeList;
+	LinkList<Coroutine> _suspendedList;
 	ByteArray			_stack;					// Multiple coroutine run on the same stack. Stack will be copied when switching coroutines
 	void*				_destroiedCoroutine;	// Coroutine that have been destroied in run() function
 	coro_context		_contextToDestroy;		// We have to delay the destruction of context, until we switch back coro to the scheduler

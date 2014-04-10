@@ -115,14 +115,15 @@ struct SpawnCoroutine : public Coroutine
 {
 	SpawnCoroutine() : counter(0)
 	{
+		debugName = "SpawnCoroutine";
 		++maxInstanceCount;
 		roVerify(initStack());
 	}
 
 	virtual void run() override
 	{
-		SpawnCoroutine* newCoroutine = new SpawnCoroutine;
 		if(counter > 0) {
+			SpawnCoroutine* newCoroutine = new SpawnCoroutine;
 			--counter;
 			newCoroutine->counter = counter;
 			scheduler->add(*newCoroutine);
@@ -135,12 +136,11 @@ struct SpawnCoroutine : public Coroutine
 			// Can be destructed immediately given the coroutine haven't been run()
 		}
 
-		// Also test the sleep function
+		// Also test the sleep function and yield a few times
 		coSleep(0.01f);
-
-		// Yield a few times
 		yield();
-		yield();
+		coSleep(0.01f);
+		coSleep(0);	// sleep 0 is equivalent to yield()
 		yield();
 
 		delete this;

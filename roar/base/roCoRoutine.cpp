@@ -2,6 +2,7 @@
 #include "roCoroutine.h"
 #include "roCoroutine.inc"
 #include "roLog.h"
+#include "roStopWatch.h"
 
 #ifdef _MSC_VER
 #	pragma warning(disable : 4611) // interaction between '_setjmp' and C++ object destruction is non-portable
@@ -34,6 +35,7 @@ static void coroutineFunc(void* userData)
 		coroutine->_isInRun = false;
 		coroutine->_isActive = false;
 		coroutine->_runningThreadId = 0;
+		coroutine->removeThis();
 	}
 
 	// Switch back to CoroutineScheduler
@@ -44,8 +46,15 @@ __declspec(thread) CoroutineScheduler* tlsInstance = NULL;
 
 CoroutineScheduler::CoroutineScheduler()
 	: current(NULL)
+	, _keepRun(false)
+	, _backgroundCoroCount(0)
 	, _destroiedCoroutine(NULL)
 {}
+
+CoroutineScheduler::~CoroutineScheduler()
+{
+	stop();
+}
 
 static Coroutine* createSleepManager();
 
@@ -61,6 +70,7 @@ void CoroutineScheduler::init(roSize stackSize)
 void CoroutineScheduler::add(Coroutine& coroutine)
 {
 	_resumeList.pushBack(coroutine);
+	_backgroundCoroCount += coroutine._isBackground ? 1 : 0;
 }
 
 void CoroutineScheduler::addSuspended(Coroutine& coroutine)
@@ -68,13 +78,16 @@ void CoroutineScheduler::addSuspended(Coroutine& coroutine)
 	coroutine.scheduler = this;
 }
 
-void CoroutineScheduler::update()
+void CoroutineScheduler::update(unsigned timeSliceMilliSeconds)
 {
 	roAssert(!_stack.isEmpty());
 
 	tlsInstance = this;
+	float timerHit = 0;
+	CountDownTimer timer(timeSliceMilliSeconds / 1000.0f);
 
-	while(!_resumeList.isEmpty()) {
+	while(!_resumeList.isEmpty() && (timeSliceMilliSeconds == 0 || !timer.isExpired(timerHit)))
+	{
 		Coroutine* co = &_resumeList.front();
 		current = co;
 
@@ -123,11 +136,28 @@ void CoroutineScheduler::update()
 	}
 
 	tlsInstance = NULL;
+
+	// Wake up all suspended background coroutine
+	if(!keepRun() && _resumeList.isEmpty()) {
+		for(Coroutine* co = _suspendedList.begin(); co != _suspendedList.end();) {
+			Coroutine* next = co->next();
+			if(co->_isBackground)
+				co->resume();
+			co = next;
+		}
+	}
 }
 
 void CoroutineScheduler::requestStop()
 {
 	_keepRun = false;
+}
+
+void CoroutineScheduler::stop()
+{
+	requestStop();
+	while(!_resumeList.isEmpty() || !_suspendedList.isEmpty())
+		update(0);
 }
 
 bool CoroutineScheduler::keepRun() const
@@ -152,6 +182,7 @@ Coroutine::Coroutine()
 	: scheduler(NULL)
 	, _isInRun(false)
 	, _isActive(false)
+	, _isBackground(false)
 	, _runningThreadId(0)
 {
 	coro_create(&_context, NULL, NULL, NULL, 0);
@@ -214,6 +245,10 @@ void Coroutine::suspend()
 	roAssert(_runningThreadId == TaskPool::threadId());
 
 	_isActive = false;
+	
+	// Check if it's already pending for resume (happens in yield)
+	if(getList() != &scheduler->_resumeList)
+		scheduler->_suspendedList.pushBack(*this);
 
 #if !CORO_FIBER
 	if(_ownStack.isEmpty()) {
@@ -234,11 +269,9 @@ void Coroutine::resume()
 	roAssert(_isInRun);
 	roAssert(scheduler);
 
-	if(_isActive)
-		return;
-
 	// Put this Coroutine back to schedule
-	scheduler->_resumeList.pushBack(*this);
+	if(!_isActive)
+		scheduler->_resumeList.moveBack(*this);
 }
 
 void Coroutine::switchToCoroutine(Coroutine& coroutine)
@@ -315,8 +348,6 @@ void roLongJmp(jmp_buf buf, int val)
 }
 #endif
 
-#include "roStopWatch.h"
-
 namespace ro {
 
 struct CoSleepManager;
@@ -337,8 +368,10 @@ struct CoSleepManager : public Coroutine
 
 	CoSleepManager()
 	{
+		_isBackground = true;
 		roAssert(!_currentCoSleepManager);
 		_currentCoSleepManager = this;
+		debugName = "CoSleepManager";
 	}
 
 	~CoSleepManager()
@@ -360,7 +393,8 @@ struct CoSleepManager : public Coroutine
 	{
 		stopWatch.reset();
 
-		while(scheduler->keepRun() || !sortedEntries.isEmpty()) {
+		while(scheduler->keepRun() || !sortedEntries.isEmpty())
+		{
 			const float currentTime = stopWatch.getFloat();
 			while(!sortedEntries.isEmpty()) {
 				const Entry& entry = sortedEntries.front();
@@ -371,7 +405,11 @@ struct CoSleepManager : public Coroutine
 				sortedEntries.remove(0);
 			}
 
-			yield();
+			if(sortedEntries.isEmpty())
+				suspend();
+			else
+				yield();
+
 			roAssert(_currentCoSleepManager == this);
 		}
 
@@ -391,14 +429,14 @@ void coSleep(float seconds)
 {
 	Coroutine* coroutine = Coroutine::current();
 	CoSleepManager* sleepMgr = _currentCoSleepManager;
-	roAssert(coroutine && sleepMgr);
 
-	if(seconds == 0) {
+	if(!coroutine || !sleepMgr || seconds == 0) {
 		coroutine->yield();
 		return;
 	}
 
 	sleepMgr->add(*coroutine, seconds);
+	sleepMgr->resume();
 	coroutine->suspend();
 }
 

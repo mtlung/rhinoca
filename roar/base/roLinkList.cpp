@@ -82,6 +82,30 @@ void _LinkList::insertAfter(_ListNode& newNode, const _ListNode& afterThis)
 	insertBefore(newNode, *afterThis._next);
 }
 
+void _LinkList::moveFront(_ListNode& newNode)
+{
+	newNode.removeThis();
+	pushFront(newNode);
+}
+
+void _LinkList::moveBack(_ListNode& newNode)
+{
+	newNode.removeThis();
+	pushBack(newNode);
+}
+
+void _LinkList::moveBefore(_ListNode& newNode, const _ListNode& beforeThis)
+{
+	newNode.removeThis();
+	insertBefore(newNode, beforeThis);
+}
+
+void _LinkList::moveAfter(_ListNode& newNode, const _ListNode& afterThis)
+{
+	newNode.removeThis();
+	insertAfter(newNode, afterThis);
+}
+
 void _LinkList::removeAll()
 {
 	_ListNode* n;

@@ -48,6 +48,12 @@ struct _LinkList : private NonCopyable
 	void insertBefore(_ListNode& newNode, const _ListNode& beforeThis);
 	void insertAfter(_ListNode& newNode, const _ListNode& afterThis);
 
+	// Similar to the push/insert version, but will try to remove the node from any existing list first
+	void moveFront(_ListNode& newNode);
+	void moveBack(_ListNode& newNode);
+	void moveBefore(_ListNode& newNode, const _ListNode& beforeThis);
+	void moveAfter(_ListNode& newNode, const _ListNode& afterThis);
+
 	void removeAll();
 	void destroyAll();
 
@@ -68,6 +74,11 @@ struct LinkList : public _LinkList
 	using _LinkList::pushBack;
 	using _LinkList::insertBefore;
 	using _LinkList::insertAfter;
+
+	using _LinkList::moveFront;
+	using _LinkList::moveBack;
+	using _LinkList::moveBefore;
+	using _LinkList::moveAfter;
 
 	Node*		getAt(roSize i)	{ return (Node*)_LinkList::getAt(i); }
 
