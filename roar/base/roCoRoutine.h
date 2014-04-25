@@ -26,20 +26,26 @@ struct Coroutine : public ListNode<Coroutine>
 
 	virtual void run() = 0;
 
-	void yield();	// Temporary give up the processing ownership
-	void suspend();	// Give up processing ownership, until someone call resume()
-	void resume();	// Move the Coroutine back on track, after it's has been suspend()
+	void	yield				();	// Temporary give up the processing ownership
+	void*	suspend				();	// Give up processing ownership, until someone call resume().  TODO: Using void* as return value is not type safe
+	void	resume				(void* retValueForSuspend = NULL);	// Move the Coroutine back on track, after it's has been suspend()
 
-	void switchToCoroutine(Coroutine& coroutine);
-	void switchToThread(ThreadId threadId);	// Similar to yield(), but resume on the specific thread
-	void resumeOnThread(ThreadId threadId);
+	void*	suspendWithId		(void* id);
+	void	resumeWithId		(void* id, void* retValueForSuspend = NULL);
+
+	void	switchToCoroutine	(Coroutine& coroutine);
+	void	switchToThread		(ThreadId threadId);	// Similar to yield(), but resume on the specific thread
+	void	resumeOnThread		(ThreadId threadId);
+
+	bool	isSuspended			() const;
 
 	// Get the current thread's active co-routine, if any
 	static Coroutine* current();
 
 	bool				_isInRun;		// Is inside the run() function
 	bool				_isActive;
-	bool				_isBackground;	// Background coroutine is used to implement blocking service like sleep and network IO etc
+	void*				_retValueForSuspend;
+	void*				_suspenderId;	// Only the one who can provide the same id can resume
 	ThreadId			_runningThreadId;
 	ByteArray			_ownStack;
 	ByteArray			_backupStack;
@@ -48,18 +54,24 @@ struct Coroutine : public ListNode<Coroutine>
 	CoroutineScheduler*	scheduler;
 };	// Coroutine
 
+struct BgCoroutine : public Coroutine
+{
+	_ListNode bgNode;
+};
+
 struct CoroutineScheduler
 {
 	CoroutineScheduler();
 	~CoroutineScheduler();
 
-	void init(roSize statckSize = 1024 * 1024);
-	void add(Coroutine& coroutine);
-	void addSuspended(Coroutine& coroutine);
-	void update(unsigned timeSliceMilliSeconds=0);
-	void requestStop();
-	void stop();
-	bool keepRun() const;
+	void init			(roSize statckSize = 1024 * 1024);
+	void add			(Coroutine& coroutine);
+	void addSuspended	(Coroutine& coroutine);
+	void update			(unsigned timeSliceMilliSeconds=0);
+	void requestStop	();
+	void stop			();
+	bool keepRun		() const;
+	bool bgKeepRun		() const;
 
 	// Yield the current running co-routine and return it's pointer, so you can resume it later on.
 	// Coroutine should not be destroied before run() finish, so it's safe to return Coroutine*
@@ -69,10 +81,13 @@ struct CoroutineScheduler
 	coro_context		context;
 	Coroutine*			current;
 
+	struct BackgroundNode : public ListNode<BackgroundNode> {};
+
 	bool				_keepRun;
-	roSize				_backgroundCoroCount;
+	bool				_bgKeepRun;
 	LinkList<Coroutine> _resumeList;
 	LinkList<Coroutine> _suspendedList;
+	LinkList<_ListNode>	_backgroundList;	// For those coroutine that provide very basic service (eg. sleep and IO) should register themself in this list
 	ByteArray			_stack;					// Multiple coroutine run on the same stack. Stack will be copied when switching coroutines
 	void*				_destroiedCoroutine;	// Coroutine that have been destroied in run() function
 	coro_context		_contextToDestroy;		// We have to delay the destruction of context, until we switch back coro to the scheduler

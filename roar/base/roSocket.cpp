@@ -9,8 +9,8 @@
 #include <fcntl.h>
 
 #if roOS_WIN				// Native Windows
-#	undef FD_SETSIZE
-#	define FD_SETSIZE 10240
+//#	undef FD_SETSIZE
+//#	define FD_SETSIZE 10240
 #	include <winsock2.h>
 #	include <ws2tcpip.h>
 #	pragma comment(lib, "Ws2_32.lib")
@@ -402,7 +402,7 @@ ErrorCode BsdSocket::select(bool& checkRead, bool& checkWrite, bool& checkError)
 
 	lastError = ret < 0 ? getLastError() : OK;
 
-	// If check error is requested and there is really an error occured
+	// If check error is requested and there is really an error occurred
 	if(ret > 0 && checkError) {
 		socklen_t len = sizeof(lastError);
 		if(getsockopt(s, SOL_SOCKET, SO_ERROR, (char*)&lastError, &len) != 0)
@@ -550,6 +550,278 @@ const socket_t& BsdSocket::fd() const {
 
 void BsdSocket::setFd(const socket_t& f) {
 	*reinterpret_cast<socket_t*>(_fd) = f;
+}
+
+}	// namespace ro
+
+#include "roCoroutine.h"
+
+namespace ro {
+
+CoSocket::CoSocket() {}
+
+CoSocket::~CoSocket()
+{
+	roVerify(close() == OK);
+}
+
+struct CoSocketManager;
+
+__declspec(thread) static CoSocketManager* _currentCoSocketManager = NULL;
+
+struct CoSocketManager : public BgCoroutine
+{
+	CoSocketManager();
+	~CoSocketManager();
+	virtual void run() override;
+
+	LinkList<CoSocket::Entry> socketList;
+};
+
+static DefaultAllocator _allocator;
+
+CoSocket::ErrorCode CoSocket::create(SocketType type)
+{
+	_onHeap.takeOver(_allocator.newObj<OnHeap>());
+	return Super::create(type);
+}
+
+CoSocket::ErrorCode CoSocket::connect(const SockAddr& endPoint)
+{
+	ErrorCode ret = Super::connect(endPoint);
+
+	Coroutine* coroutine = Coroutine::current();
+	CoSocketManager* socketMgr = _currentCoSocketManager;
+
+	if(!coroutine || !socketMgr)
+		return ret;
+
+	// If we are connected many socket at once, we may end up WSAENOBUFS
+	// For freshly disconnected socket, it's port number cannot be reused within some time (4 mins on windows),
+	// this is called the time wait state.
+	// http://www.catalyst.com/support/knowbase/100262.html
+	while(ret == WSAENOBUFS) {
+		coroutine->yield();
+		ret = Super::connect(endPoint);
+	}
+
+	if(!inProgress(ret))
+		return ret;
+
+	Entry& readEntry = _onHeap->_readEntry;
+
+	// We pipe operation one by one
+	while(readEntry.isInList())
+		coroutine->yield();
+
+	// Prepare for hand over to socket manager
+	readEntry.operation = Connect;
+	readEntry.fd = fd();
+	readEntry.coro = coroutine;
+
+	socketMgr->socketList.pushBack(readEntry);
+	coroutine->suspend();
+	roAssert(readEntry.getList() == &socketMgr->socketList);
+	readEntry.removeThis();
+
+	// Check for connection error
+	socklen_t resultLen = sizeof(ret);
+	getsockopt(fd(), SOL_SOCKET, SO_ERROR, (char*)&ret, &resultLen);
+
+	return ret;
+}
+
+int CoSocket::send(const void* data, roSize len, int flags)
+{
+	roSize remain = len;
+	roSize sent = 0;
+	const char* p = (const char*)data;
+
+	Coroutine* coroutine = Coroutine::current();
+	CoSocketManager* socketMgr = _currentCoSocketManager;
+
+	static const roSize maxChunkSize = 1024 * 1024;
+
+	while(remain > 0) {
+		roSize chunkSize = roMinOf2(remain, maxChunkSize);
+		int ret = ::send(fd(), p, clamp_cast<int>(chunkSize), flags);
+
+		lastError = WSAGetLastError();
+		if(ret <= 0) {
+			if(!inProgress(lastError))
+				return ret;
+
+			Entry& writeEntry = _onHeap->_writeEntry;
+			// We pipe operation one by one
+			while(writeEntry.isInList())
+				coroutine->yield();
+
+			// Prepare for hand over to socket manager
+			writeEntry.operation = Send;
+			writeEntry.fd = fd();
+			writeEntry.coro = coroutine;
+
+			socketMgr->socketList.pushBack(writeEntry);
+			coroutine->suspend();
+			roAssert(writeEntry.getList() == &socketMgr->socketList);
+			writeEntry.removeThis();
+		}
+		// In case winsock never return EINPROGRESS, we divide any huge data into smaller chunk,
+		// other wise even simple memory copy will still make the function block for a long time.
+		else if(remain > maxChunkSize)
+			coroutine->yield();
+
+		remain -= ret;
+		sent += ret;
+		p += ret;
+	}
+
+	return num_cast<int>(sent);
+}
+
+int CoSocket::receive(void* buf, roSize len, int flags)
+{
+	int ret = ::recv(fd(), (char*)buf, clamp_cast<int>(len), flags);
+
+	if(ret > 0)
+		return ret;
+
+	lastError = WSAGetLastError();
+	if(!inProgress(lastError))
+		return ret;
+
+	Coroutine* coroutine = Coroutine::current();
+	CoSocketManager* socketMgr = _currentCoSocketManager;
+
+	Entry& readEntry = _onHeap->_readEntry;
+
+	// We pipe operation one by one
+	while(readEntry.isInList())
+		coroutine->yield();
+
+	// Prepare for hand over to socket manager
+	readEntry.operation = Receive;
+	readEntry.fd = fd();
+	readEntry.coro = coroutine;
+
+	socketMgr->socketList.pushBack(readEntry);
+	coroutine->suspend();
+	roAssert(readEntry.getList() == &socketMgr->socketList);
+	readEntry.removeThis();
+
+	// Read is read
+	ret = ::recv(fd(), (char*)buf, clamp_cast<int>(len), flags);
+	lastError = WSAGetLastError();
+	roAssert(!inProgress(lastError));
+	return ret;
+}
+
+ErrorCode CoSocket::close()
+{
+	shutDownWrite();
+
+	roByte buf[128];
+	while(receive(buf, sizeof(buf)) > 0) {}
+
+	shutDownRead();
+	return Super::close();
+}
+
+BgCoroutine* createSocketManager()
+{
+	return new CoSocketManager;
+}
+
+CoSocketManager::CoSocketManager()
+{
+	roAssert(!_currentCoSocketManager);
+	_currentCoSocketManager = this;
+	debugName = "CoSocketManager";
+}
+
+CoSocketManager::~CoSocketManager()
+{
+	roAssert(_currentCoSocketManager == this);
+	_currentCoSocketManager = NULL;
+}
+
+static void _select(const TinyArray<CoSocket::Entry*, FD_SETSIZE>& socketSet, fd_set& readSet, fd_set& writeSet, fd_set& errorSet)
+{
+	timeval timeout;
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 0;
+
+	int ret = ::select((unsigned)socketSet.size(), &readSet, &writeSet, &errorSet, &timeout);
+
+	for(roSize i=0; i<socketSet.size(); ++i) {
+		CoSocket::Entry& e = *socketSet[i];
+
+		switch (e.operation) {
+		case CoSocket::Connect:
+		case CoSocket::Send:
+			if(FD_ISSET(e.fd, &writeSet))
+				e.coro->resume();
+			break;
+		case CoSocket::Accept:
+		case CoSocket::Receive:
+			if(FD_ISSET(e.fd, &readSet))
+				e.coro->resume();
+			break;
+		}
+
+		if(FD_ISSET(e.fd, &errorSet))
+			e.coro->resume();
+	}
+
+	FD_ZERO(&readSet);
+	FD_ZERO(&writeSet);
+	FD_ZERO(&errorSet);
+}
+
+void CoSocketManager::run()
+{
+	scheduler->_backgroundList.pushBack(bgNode);
+
+	while(scheduler->bgKeepRun() || !socketList.isEmpty())
+	{
+		fd_set readSet, writeSet, errorSet;
+		TinyArray<CoSocket::Entry*, FD_SETSIZE> socketSet;
+		FD_ZERO(&readSet);
+		FD_ZERO(&writeSet);
+		FD_ZERO(&errorSet);
+
+		printf("socketList size: %d\n", socketList.size());
+
+		if(socketList.isEmpty())
+			suspend();
+
+		for(CoSocket::Entry* e = socketList.begin(); e != socketList.end();)
+		{
+			CoSocket::Entry* next = e->next();
+
+			FD_SET((SOCKET)e->fd, &readSet);
+			FD_SET((SOCKET)e->fd, &writeSet);
+			FD_SET((SOCKET)e->fd, &errorSet);
+			socketSet.pushBack(e);
+
+			if(socketSet.size() >= FD_SETSIZE) {
+				_select(socketSet, readSet, writeSet, errorSet);
+				socketSet.clear();
+			}
+
+			e = next;
+		}
+
+		if(!socketSet.isEmpty()) {
+			_select(socketSet, readSet, writeSet, errorSet);
+			socketSet.clear();
+		}
+
+		yield();
+		roAssert(_currentCoSocketManager == this);
+	}
+
+	delete this;
 }
 
 }	// namespace ro

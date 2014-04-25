@@ -47,7 +47,7 @@ __declspec(thread) CoroutineScheduler* tlsInstance = NULL;
 CoroutineScheduler::CoroutineScheduler()
 	: current(NULL)
 	, _keepRun(false)
-	, _backgroundCoroCount(0)
+	, _bgKeepRun(false)
 	, _destroiedCoroutine(NULL)
 {}
 
@@ -56,21 +56,23 @@ CoroutineScheduler::~CoroutineScheduler()
 	stop();
 }
 
-static Coroutine* createSleepManager();
+static BgCoroutine* createSleepManager();
+extern BgCoroutine* createSocketManager();
 
 void CoroutineScheduler::init(roSize stackSize)
 {
 	_keepRun = true;
+	_bgKeepRun = true;
 	_stack.resizeNoInit(stackSize);
 	coro_create(&context, NULL, NULL, NULL, 0);
 
 	add(*createSleepManager());
+	add(*createSocketManager());
 }
 
 void CoroutineScheduler::add(Coroutine& coroutine)
 {
 	_resumeList.pushBack(coroutine);
-	_backgroundCoroCount += coroutine._isBackground ? 1 : 0;
 }
 
 void CoroutineScheduler::addSuspended(Coroutine& coroutine)
@@ -107,7 +109,7 @@ void CoroutineScheduler::update(unsigned timeSliceMilliSeconds)
 			}
 
 			// Check for alignment
-			roSize alignemt = sizeof(void*);
+			roSize alignemt = 2 * sizeof(void*);
 			roByte* alignedStackPtr = (roByte*)(((roPtrInt(stackPtr) - 1) / alignemt) * alignemt + alignemt);
 			stackSize -= (alignedStackPtr - stackPtr);
 			coro_create(&co->_context, coroutineFunc, (void*)co, alignedStackPtr, stackSize);
@@ -139,11 +141,11 @@ void CoroutineScheduler::update(unsigned timeSliceMilliSeconds)
 
 	// Wake up all suspended background coroutine
 	if(!keepRun() && _resumeList.isEmpty()) {
-		for(Coroutine* co = _suspendedList.begin(); co != _suspendedList.end();) {
-			Coroutine* next = co->next();
-			if(co->_isBackground)
-				co->resume();
-			co = next;
+		for(_ListNode* i = _backgroundList.begin(); i != _backgroundList.end();) {
+			_ListNode* next = i->_next;
+			BgCoroutine* bg = roContainerof(BgCoroutine, bgNode, i);
+			bg->resume();
+			i = next;
 		}
 	}
 }
@@ -156,13 +158,22 @@ void CoroutineScheduler::requestStop()
 void CoroutineScheduler::stop()
 {
 	requestStop();
-	while(!_resumeList.isEmpty() || !_suspendedList.isEmpty())
+	while(!_resumeList.isEmpty() || !_suspendedList.isEmpty()) {
 		update(0);
+
+		if((_resumeList.size() + _suspendedList.size()) == _backgroundList.size())
+			_bgKeepRun = false;
+	}
 }
 
 bool CoroutineScheduler::keepRun() const
 {
 	return _keepRun;
+}
+
+bool CoroutineScheduler::bgKeepRun() const
+{
+	return _bgKeepRun;
 }
 
 Coroutine* CoroutineScheduler::currentCoroutine()
@@ -182,7 +193,8 @@ Coroutine::Coroutine()
 	: scheduler(NULL)
 	, _isInRun(false)
 	, _isActive(false)
-	, _isBackground(false)
+	, _retValueForSuspend(NULL)
+	, _suspenderId(NULL)
 	, _runningThreadId(0)
 {
 	coro_create(&_context, NULL, NULL, NULL, 0);
@@ -237,7 +249,7 @@ static void* _getCurrentStackPtr()
 }
 #endif
 
-void Coroutine::suspend()
+void* Coroutine::suspend()
 {
 	roAssert(_isInRun);
 	roAssert(_isActive);
@@ -262,9 +274,13 @@ void Coroutine::suspend()
 #endif
 
 	coro_transfer(&_context, &scheduler->context);
+
+	void* ret = _retValueForSuspend;
+	_retValueForSuspend = NULL;
+	return ret;
 }
 
-void Coroutine::resume()
+void Coroutine::resume(void* retValueForSuspend)
 {
 	roAssert(_isInRun);
 	roAssert(scheduler);
@@ -272,6 +288,20 @@ void Coroutine::resume()
 	// Put this Coroutine back to schedule
 	if(!_isActive)
 		scheduler->_resumeList.moveBack(*this);
+
+	_retValueForSuspend = retValueForSuspend;
+}
+
+void* Coroutine::suspendWithId(void* id)
+{
+	_suspenderId = id;
+	return suspend();
+}
+
+void Coroutine::resumeWithId(void* id, void* retValueForSuspend)
+{
+	roAssert(_suspenderId == id);
+	resume(retValueForSuspend);
 }
 
 void Coroutine::switchToCoroutine(Coroutine& coroutine)
@@ -293,6 +323,11 @@ void Coroutine::switchToThread(ThreadId threadId)
 void Coroutine::resumeOnThread(ThreadId threadId)
 {
 	roAssert(false && "To be implement");
+}
+
+bool Coroutine::isSuspended() const
+{
+	return !_isActive;
 }
 
 Coroutine* Coroutine::current()
@@ -354,7 +389,7 @@ struct CoSleepManager;
 
 __declspec(thread) static CoSleepManager* _currentCoSleepManager = NULL;
 
-struct CoSleepManager : public Coroutine
+struct CoSleepManager : public BgCoroutine
 {
 	struct Entry
 	{
@@ -368,7 +403,6 @@ struct CoSleepManager : public Coroutine
 
 	CoSleepManager()
 	{
-		_isBackground = true;
 		roAssert(!_currentCoSleepManager);
 		_currentCoSleepManager = this;
 		debugName = "CoSleepManager";
@@ -391,9 +425,11 @@ struct CoSleepManager : public Coroutine
 
 	virtual void run() override
 	{
+		scheduler->_backgroundList.pushBack(bgNode);
+
 		stopWatch.reset();
 
-		while(scheduler->keepRun() || !sortedEntries.isEmpty())
+		while(scheduler->bgKeepRun() || !sortedEntries.isEmpty())
 		{
 			const float currentTime = stopWatch.getFloat();
 			while(!sortedEntries.isEmpty()) {
@@ -401,12 +437,12 @@ struct CoSleepManager : public Coroutine
 				if(entry.timeToWake > currentTime)
 					break;
 
-				entry.coro->resume();
+				entry.coro->resumeWithId(this);
 				sortedEntries.remove(0);
 			}
 
 			if(sortedEntries.isEmpty())
-				suspend();
+				suspendWithId(this);
 			else
 				yield();
 
@@ -418,9 +454,9 @@ struct CoSleepManager : public Coroutine
 
 	StopWatch stopWatch;
 	Array<Entry> sortedEntries;
-};
+};	// CoSleepManager
 
-Coroutine* createSleepManager()
+BgCoroutine* createSleepManager()
 {
 	return new CoSleepManager;
 }
@@ -436,8 +472,8 @@ void coSleep(float seconds)
 	}
 
 	sleepMgr->add(*coroutine, seconds);
-	sleepMgr->resume();
-	coroutine->suspend();
+	sleepMgr->resumeWithId(sleepMgr);
+	coroutine->suspendWithId(sleepMgr);
 }
 
 }	// namespace ro

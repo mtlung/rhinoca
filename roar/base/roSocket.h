@@ -171,4 +171,57 @@ struct BsdSocket : NonCopyable
 
 }	// namespace ro
 
+#include "roLinkList.h"
+#include "roMemory.h"
+
+namespace ro {
+
+struct Coroutine;
+
+/// Socket that make use of coroutine
+struct CoSocket : public BsdSocket
+{
+	typedef BsdSocket Super;
+
+	CoSocket();
+	~CoSocket();
+
+	ErrorCode	create		(SocketType type);
+	ErrorCode	connect		(const SockAddr& endPoint);
+	int			send		(const void* data, roSize len, int flags=0);
+	int			receive		(void* buf, roSize len, int flags=0);
+
+	void		requestClose		();
+	ErrorCode	close				();
+
+// Private
+	enum Operation {
+		Connect,
+		Accept,
+		Send,
+		Receive
+	};
+	struct OperationEntry { Operation operation; Coroutine* coro; };
+	OperationEntry _operation;
+
+	struct Entry : public ListNode<Entry>
+	{
+		socket_t	fd;
+		Operation	operation;
+		Coroutine*	coro;
+	};
+
+	// Due to how we allocate stack in Coroutine, we try to avoid CoSocketManager taking
+	// pointer to CoSocket.
+	struct OnHeap
+	{
+		Entry _readEntry;
+		Entry _writeEntry;
+	};
+
+	AutoPtr<OnHeap> _onHeap;
+};	// CoSocket
+
+}	// namespace ro
+
 #endif	// __roSocket_h__

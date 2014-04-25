@@ -32,7 +32,7 @@ struct AutoPtr
 	void		ref(T* p)					{ deleteObject(); _p = p; }
 
 	template<class U>
-	void		takeOver(AutoPtr<U>& rhs)	{ ref(static_cast<T*>(rhs._p)); rhs.unref(); _allocator = rhs._allocator; }
+	void		takeOver(const AutoPtr<U>& rhs)	{ ref(static_cast<T*>(rhs._p)); const_cast<AutoPtr<U>&>(rhs).unref(); _allocator = rhs._allocator; }
 
 	T*			unref()						{ T* t = _p; _p = NULL; return t; }
 	void		deleteObject();

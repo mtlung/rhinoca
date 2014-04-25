@@ -51,7 +51,9 @@
 
 #define roIgnoreRet(x) (x)
 
-#define roStaticAssert(x) typedef char __static_assert_t[(x)]
+#ifndef roStaticAssert
+#	define roStaticAssert(x) typedef char __static_assert_t[(x)]
+#endif
 
 // Types for 32/64 bits compatibility
 template<int> struct _sizetSelector {};
