@@ -555,10 +555,13 @@ void BsdSocket::setFd(const socket_t& f) {
 }	// namespace ro
 
 #include "roCoroutine.h"
+#include "roLog.h"
 
 namespace ro {
 
-CoSocket::CoSocket() {}
+CoSocket::CoSocket()
+	: _isCoBlockingMode(true)
+{}
 
 CoSocket::~CoSocket()
 {
@@ -583,12 +586,69 @@ static DefaultAllocator _allocator;
 CoSocket::ErrorCode CoSocket::create(SocketType type)
 {
 	_onHeap.takeOver(_allocator.newObj<OnHeap>());
-	return Super::create(type);
+	ErrorCode ret = Super::create(type);
+	if(ret == OK)
+		setBlocking(true);
+
+	return ret;
 }
 
-CoSocket::ErrorCode CoSocket::connect(const SockAddr& endPoint)
+CoSocket::ErrorCode CoSocket::setBlocking(bool block)
+{
+	_isCoBlockingMode = block;
+	return Super::setBlocking(false);
+}
+
+CoSocket::ErrorCode CoSocket::accept(CoSocket& socket) const
+{
+	ErrorCode ret = Super::accept(socket);
+	socket._onHeap.takeOver(_allocator.newObj<OnHeap>());
+
+	if(!_isCoBlockingMode)
+		return ret;
+
+	Coroutine* coroutine = Coroutine::current();
+	CoSocketManager* socketMgr = _currentCoSocketManager;
+
+	if(!coroutine || !socketMgr)
+		return ret;
+
+	while(ret == WSAENOBUFS) {
+		coroutine->yield();
+		ret = Super::accept(socket);
+	}
+
+	if(!inProgress(ret))
+		return ret;
+
+	Entry& readEntry = _onHeap->_readEntry;
+
+	// We pipe operation one by one
+	while(readEntry.isInList())
+		coroutine->yield();
+
+	// Prepare for hand over to socket manager
+	readEntry.operation = Accept;
+	readEntry.fd = fd();
+	readEntry.coro = coroutine;
+
+	socketMgr->socketList.pushBack(readEntry);
+	coroutine->suspend();
+	roAssert(readEntry.getList() == &socketMgr->socketList);
+	readEntry.removeThis();
+
+	ret = Super::accept(socket);
+	roAssert(!inProgress(ret));
+
+	return ret;
+}
+
+CoSocket::ErrorCode CoSocket::connect(const SockAddr& endPoint, float timeOut)
 {
 	ErrorCode ret = Super::connect(endPoint);
+
+	if(!_isCoBlockingMode)
+		return ret;
 
 	Coroutine* coroutine = Coroutine::current();
 	CoSocketManager* socketMgr = _currentCoSocketManager;
@@ -614,25 +674,30 @@ CoSocket::ErrorCode CoSocket::connect(const SockAddr& endPoint)
 	while(readEntry.isInList())
 		coroutine->yield();
 
-	// Prepare for hand over to socket manager
-	readEntry.operation = Connect;
-	readEntry.fd = fd();
-	readEntry.coro = coroutine;
+	do {
+		// Prepare for hand over to socket manager
+		readEntry.operation = Connect;
+		readEntry.fd = fd();
+		readEntry.coro = coroutine;
 
-	socketMgr->socketList.pushBack(readEntry);
-	coroutine->suspend();
-	roAssert(readEntry.getList() == &socketMgr->socketList);
-	readEntry.removeThis();
+		socketMgr->socketList.pushBack(readEntry);
+		coroutine->suspend();
+		roAssert(readEntry.getList() == &socketMgr->socketList);
+		readEntry.removeThis();
 
-	// Check for connection error
-	socklen_t resultLen = sizeof(ret);
-	getsockopt(fd(), SOL_SOCKET, SO_ERROR, (char*)&ret, &resultLen);
+		// Check for connection error
+		socklen_t resultLen = sizeof(ret);
+		getsockopt(fd(), SOL_SOCKET, SO_ERROR, (char*)&ret, &resultLen);
+	} while(timeOut > 0);
 
 	return ret;
 }
 
 int CoSocket::send(const void* data, roSize len, int flags)
 {
+	if(!_isCoBlockingMode)
+		return Super::send(data, len, flags);
+
 	roSize remain = len;
 	roSize sent = 0;
 	const char* p = (const char*)data;
@@ -683,6 +748,9 @@ int CoSocket::receive(void* buf, roSize len, int flags)
 {
 	int ret = ::recv(fd(), (char*)buf, clamp_cast<int>(len), flags);
 
+	if(!_isCoBlockingMode)
+		return ret;
+
 	if(ret > 0)
 		return ret;
 
@@ -718,6 +786,8 @@ int CoSocket::receive(void* buf, roSize len, int flags)
 
 ErrorCode CoSocket::close()
 {
+	setBlocking(true);
+
 	shutDownWrite();
 
 	roByte buf[128];
@@ -725,6 +795,11 @@ ErrorCode CoSocket::close()
 
 	shutDownRead();
 	return Super::close();
+}
+
+bool CoSocket::isBlockingMode() const
+{
+	return _isCoBlockingMode;
 }
 
 BgCoroutine* createSocketManager()
@@ -752,6 +827,8 @@ static void _select(const TinyArray<CoSocket::Entry*, FD_SETSIZE>& socketSet, fd
 	timeout.tv_usec = 0;
 
 	int ret = ::select((unsigned)socketSet.size(), &readSet, &writeSet, &errorSet, &timeout);
+	if(ret < 0)
+		roLog("error", "CoSocketManager select function fail\n");
 
 	for(roSize i=0; i<socketSet.size(); ++i) {
 		CoSocket::Entry& e = *socketSet[i];
@@ -790,7 +867,7 @@ void CoSocketManager::run()
 		FD_ZERO(&writeSet);
 		FD_ZERO(&errorSet);
 
-		printf("socketList size: %d\n", socketList.size());
+//		printf("socketList size: %d\n", socketList.size());
 
 		if(socketList.isEmpty())
 			suspend();

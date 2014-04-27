@@ -144,7 +144,7 @@ struct SpawnCoroutine : public Coroutine
 		yield();
 
 		delete this;
-	}
+	}	// run()
 
 	int counter;
 	static roSize maxInstanceCount;
@@ -166,4 +166,98 @@ TEST_FIXTURE(CoroutineTest, spawnCoroutineInCoroutine)
 	scheduler.update();
 
 	CHECK_EQUAL(9, SpawnCoroutine::maxInstanceCount);
+}
+
+#include "../../roar/base/roSocket.h"
+
+namespace {
+
+struct SocketTestServer : public Coroutine
+{
+	virtual void run() override
+	{{
+		roUtf8 buf[128];
+		roSize readSize = 0;
+		int ret = s.receive(buf, sizeof(buf), readSize);
+
+		if(ret > 0) {
+			buf[ret] = 0;
+			printf("id:%u, content: %s", id, buf);
+		}
+
+		s.close();
+	}	delete this;
+	}	// run()
+
+	CoSocket s;
+	roSize id;
+};
+
+static DefaultAllocator _allocator;
+
+struct SocketTestServerAcceptor : public Coroutine
+{
+	virtual void run() override
+	{{
+		CoSocket s;
+		SockAddr anyAddr(SockAddr::ipAny(), 80);
+
+		roVerify(0 == s.create(BsdSocket::TCP));
+		roVerify(0 == s.bind(anyAddr));
+		roVerify(0 == s.listen());
+
+		roSize spawnCount = 0;
+		while(true) {
+			AutoPtr<SocketTestServer> server(_allocator.newObj<SocketTestServer>());
+			if(s.accept(server->s) == 0) {
+				server->id = spawnCount++;
+				scheduler->add(*server);
+				server.unref();
+			}
+			else {
+				spawnCount = spawnCount;
+			}
+		}
+	}	delete this;
+	}	// run()
+};
+
+struct SocketTestClient : public Coroutine
+{
+	virtual void run() override
+	{
+		CoSocket s;
+		SockAddr addr(SockAddr::ipLoopBack(), 80);
+
+		roVerify(0 == s.create(BsdSocket::TCP));
+		int ret = s.connect(addr);
+		if(ret != 0)
+			ret = ret;
+
+		const roUtf8* request = "GET / HTTP/1.1\r\n\r\n";
+		s.send(request, roStrLen(request));
+
+		s.close();
+	}	// run()
+};
+
+}	// namespace
+
+TEST_FIXTURE(CoroutineTest, socket)
+{
+	CoSocket::initApplication();
+
+	CoroutineScheduler scheduler;
+	scheduler.init();
+
+	SocketTestServerAcceptor* server = new SocketTestServerAcceptor;
+	scheduler.add(*server);
+
+	Array<SocketTestClient> clients;
+	clients.resize(1024);
+	for(roSize i=0; i<clients.size(); ++i)
+		scheduler.add(clients[i]);
+
+	scheduler.update();
+	scheduler.stop();
 }

@@ -186,13 +186,17 @@ struct CoSocket : public BsdSocket
 	CoSocket();
 	~CoSocket();
 
-	ErrorCode	create		(SocketType type);
-	ErrorCode	connect		(const SockAddr& endPoint);
-	int			send		(const void* data, roSize len, int flags=0);
-	int			receive		(void* buf, roSize len, int flags=0);
+	ErrorCode	create			(SocketType type);
+	ErrorCode	setBlocking		(bool block);
+	ErrorCode	accept			(CoSocket& socket) const;
+	ErrorCode	connect			(const SockAddr& endPoint, float timeOut=0);
+	int			send			(const void* data, roSize len, int flags=0);
+	int			receive			(void* buf, roSize len, int flags=0);
 
-	void		requestClose		();
-	ErrorCode	close				();
+	void		requestClose	();
+	ErrorCode	close			();
+
+	bool		isBlockingMode	() const;
 
 // Private
 	enum Operation {
@@ -202,7 +206,6 @@ struct CoSocket : public BsdSocket
 		Receive
 	};
 	struct OperationEntry { Operation operation; Coroutine* coro; };
-	OperationEntry _operation;
 
 	struct Entry : public ListNode<Entry>
 	{
@@ -219,7 +222,9 @@ struct CoSocket : public BsdSocket
 		Entry _writeEntry;
 	};
 
-	AutoPtr<OnHeap> _onHeap;
+	bool					_isCoBlockingMode;
+	OperationEntry			_operation;
+	mutable AutoPtr<OnHeap>	_onHeap;
 };	// CoSocket
 
 }	// namespace ro
