@@ -496,6 +496,8 @@ ErrorCode BsdSocket::close()
 	if(fd() == INVALID_SOCKET)
 		return lastError = OK;
 
+	setBlocking(true);
+
 #if roOS_WIN
 	if(::closesocket(fd()) == OK) {
 		setFd(INVALID_SOCKET);
@@ -556,6 +558,7 @@ void BsdSocket::setFd(const socket_t& f) {
 
 #include "roCoroutine.h"
 #include "roLog.h"
+#include "roStopWatch.h"
 
 namespace ro {
 
@@ -645,50 +648,48 @@ CoSocket::ErrorCode CoSocket::accept(CoSocket& socket) const
 
 CoSocket::ErrorCode CoSocket::connect(const SockAddr& endPoint, float timeOut)
 {
-	ErrorCode ret = Super::connect(endPoint);
+	if(!_isCoBlockingMode) {
+		if(timeOut > 0.f)
+			roLog("warn", "A timeOut value specified for non-blocking CoSocket is ignored\n");
 
-	if(!_isCoBlockingMode)
-		return ret;
+		return Super::connect(endPoint);
+	}
 
 	Coroutine* coroutine = Coroutine::current();
 	CoSocketManager* socketMgr = _currentCoSocketManager;
 
 	if(!coroutine || !socketMgr)
-		return ret;
+		return Super::connect(endPoint);
 
 	// If we are connected many socket at once, we may end up WSAENOBUFS
 	// For freshly disconnected socket, it's port number cannot be reused within some time (4 mins on windows),
 	// this is called the time wait state.
 	// http://www.catalyst.com/support/knowbase/100262.html
-	while(ret == WSAENOBUFS) {
-		coroutine->yield();
-		ret = Super::connect(endPoint);
-	}
+	// if(ret == WSAENOBUFS) {}
 
-	if(!inProgress(ret))
-		return ret;
-
-	Entry& readEntry = _onHeap->_readEntry;
-
-	// We pipe operation one by one
-	while(readEntry.isInList())
-		coroutine->yield();
-
+	ErrorCode ret;
+	CountDownTimer timer(timeOut);
 	do {
+		ret = Super::connect(endPoint);
+
+		if(!inProgress(ret) && timeOut <= 0.f)
+			return ret;
+
 		// Prepare for hand over to socket manager
+		Entry& readEntry = _onHeap->_readEntry;
 		readEntry.operation = Connect;
 		readEntry.fd = fd();
 		readEntry.coro = coroutine;
 
 		socketMgr->socketList.pushBack(readEntry);
-		coroutine->suspend();
+		int coRet = (int)coroutine->suspend();
 		roAssert(readEntry.getList() == &socketMgr->socketList);
 		readEntry.removeThis();
 
 		// Check for connection error
 		socklen_t resultLen = sizeof(ret);
 		getsockopt(fd(), SOL_SOCKET, SO_ERROR, (char*)&ret, &resultLen);
-	} while(timeOut > 0);
+	} while(!timer.isExpired() && ret != 0);
 
 	return ret;
 }
@@ -837,17 +838,17 @@ static void _select(const TinyArray<CoSocket::Entry*, FD_SETSIZE>& socketSet, fd
 		case CoSocket::Connect:
 		case CoSocket::Send:
 			if(FD_ISSET(e.fd, &writeSet))
-				e.coro->resume();
+				e.coro->resume(NULL);
 			break;
 		case CoSocket::Accept:
 		case CoSocket::Receive:
 			if(FD_ISSET(e.fd, &readSet))
-				e.coro->resume();
+				e.coro->resume(NULL);
 			break;
 		}
 
 		if(FD_ISSET(e.fd, &errorSet))
-			e.coro->resume();
+			e.coro->resume((void*)-1);
 	}
 
 	FD_ZERO(&readSet);

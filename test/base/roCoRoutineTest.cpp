@@ -182,8 +182,10 @@ struct SocketTestServer : public Coroutine
 
 		if(ret > 0) {
 			buf[ret] = 0;
-			printf("id:%u, content: %s", id, buf);
+//			printf("id:%u, content: %s", id, buf);
 		}
+		else
+			printf("id:%u, read fail", id);
 
 		s.close();
 	}	delete this;
@@ -197,6 +199,8 @@ static DefaultAllocator _allocator;
 
 struct SocketTestServerAcceptor : public Coroutine
 {
+	SocketTestServerAcceptor() : expectedConnectionCount(0) {}
+
 	virtual void run() override
 	{{
 		CoSocket s;
@@ -204,15 +208,16 @@ struct SocketTestServerAcceptor : public Coroutine
 
 		roVerify(0 == s.create(BsdSocket::TCP));
 		roVerify(0 == s.bind(anyAddr));
-		roVerify(0 == s.listen());
+		roVerify(0 == s.listen(1024 * 1024));
 
 		roSize spawnCount = 0;
-		while(true) {
+		while(expectedConnectionCount) {
 			AutoPtr<SocketTestServer> server(_allocator.newObj<SocketTestServer>());
 			if(s.accept(server->s) == 0) {
 				server->id = spawnCount++;
 				scheduler->add(*server);
 				server.unref();
+				--expectedConnectionCount;
 			}
 			else {
 				spawnCount = spawnCount;
@@ -220,25 +225,41 @@ struct SocketTestServerAcceptor : public Coroutine
 		}
 	}	delete this;
 	}	// run()
+
+	roSize expectedConnectionCount;
 };
 
 struct SocketTestClient : public Coroutine
 {
 	virtual void run() override
 	{
+		static roSize sendFailCount = 0;
+		static roSize sendSuccessCount = 0;
+
 		CoSocket s;
 		SockAddr addr(SockAddr::ipLoopBack(), 80);
 
 		roVerify(0 == s.create(BsdSocket::TCP));
-		int ret = s.connect(addr);
-		if(ret != 0)
-			ret = ret;
+		int ret = s.connect(addr, 100000);
+		if(ret == 0)
+			printf("id: %u - connect success!\n", id);
+		else
+			printf("id: %u - connect fail!\n", id);
 
 		const roUtf8* request = "GET / HTTP/1.1\r\n\r\n";
-		s.send(request, roStrLen(request));
+		if(s.send(request, roStrLen(request)) <= 0) {
+			++sendFailCount;
+			printf("id: %u - send fail, count: %u\n", id, sendFailCount);
+		}
+		else {
+			++sendSuccessCount;
+			printf("id: %u - send success, count: %u\n", id, sendSuccessCount);
+		}
 
 		s.close();
 	}	// run()
+
+	roSize id;
 };
 
 }	// namespace
@@ -251,12 +272,15 @@ TEST_FIXTURE(CoroutineTest, socket)
 	scheduler.init();
 
 	SocketTestServerAcceptor* server = new SocketTestServerAcceptor;
+	server->expectedConnectionCount = 1024;
 	scheduler.add(*server);
 
 	Array<SocketTestClient> clients;
-	clients.resize(1024);
-	for(roSize i=0; i<clients.size(); ++i)
+	clients.resize(server->expectedConnectionCount);
+	for(roSize i=0; i<clients.size(); ++i) {
+		clients[i].id = i;
 		scheduler.add(clients[i]);
+	}
 
 	scheduler.update();
 	scheduler.stop();
