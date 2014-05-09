@@ -177,15 +177,13 @@ struct SocketTestServer : public Coroutine
 	virtual void run() override
 	{{
 		roUtf8 buf[128];
-		roSize readSize = 0;
-		int ret = s.receive(buf, sizeof(buf), readSize);
-
-		if(ret > 0) {
-			buf[ret] = 0;
+		roSize readSize = sizeof(buf);
+		if(!s.receive(buf, readSize))
+			printf("id:%u, read fail", id);
+		else {
+			buf[readSize] = 0;
 //			printf("id:%u, content: %s", id, buf);
 		}
-		else
-			printf("id:%u, read fail", id);
 
 		s.close();
 	}	delete this;
@@ -206,14 +204,14 @@ struct SocketTestServerAcceptor : public Coroutine
 		CoSocket s;
 		SockAddr anyAddr(SockAddr::ipAny(), 80);
 
-		roVerify(0 == s.create(BsdSocket::TCP));
-		roVerify(0 == s.bind(anyAddr));
-		roVerify(0 == s.listen(1024 * 1024));
+		roVerify(s.create(BsdSocket::TCP));
+		roVerify(s.bind(anyAddr));
+		roVerify(s.listen(1024 * 1024));
 
 		roSize spawnCount = 0;
 		while(expectedConnectionCount) {
 			AutoPtr<SocketTestServer> server(_allocator.newObj<SocketTestServer>());
-			if(s.accept(server->s) == 0) {
+			if(s.accept(server->s)) {
 				server->id = spawnCount++;
 				scheduler->add(*server);
 				server.unref();
@@ -239,15 +237,15 @@ struct SocketTestClient : public Coroutine
 		CoSocket s;
 		SockAddr addr(SockAddr::ipLoopBack(), 80);
 
-		roVerify(0 == s.create(BsdSocket::TCP));
-		int ret = s.connect(addr, 100000);
-		if(ret == 0)
+		roVerify(s.create(BsdSocket::TCP));
+		if(s.connect(addr, 100000))
 			printf("id: %u - connect success!\n", id);
 		else
 			printf("id: %u - connect fail!\n", id);
 
 		const roUtf8* request = "GET / HTTP/1.1\r\n\r\n";
-		if(s.send(request, roStrLen(request)) <= 0) {
+		roSize len = roStrLen(request);
+		if(!s.send(request, len)) {
 			++sendFailCount;
 			printf("id: %u - send fail, count: %u\n", id, sendFailCount);
 		}
@@ -272,7 +270,7 @@ TEST_FIXTURE(CoroutineTest, socket)
 	scheduler.init();
 
 	SocketTestServerAcceptor* server = new SocketTestServerAcceptor;
-	server->expectedConnectionCount = 1024;
+	server->expectedConnectionCount = 1 * 1024;
 	scheduler.add(*server);
 
 	Array<SocketTestClient> clients;

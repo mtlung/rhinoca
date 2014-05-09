@@ -25,18 +25,13 @@ static Status _onRequest(HttpServer::Connection& connection, HttpRequestHeader& 
 
 Status HttpServer::init()
 {
-	if(_socketListen.create(BsdSocket::TCP) != 0)
-		return Status::net_error;
-
+	roStatus st;
 	SockAddr anyAddr(SockAddr::ipAny(), 80);
-	if(_socketListen.bind(anyAddr) != 0)
-		return Status::net_error;
 
-	if(_socketListen.listen() != 0)
-		return Status::net_error;
-
-	if(_socketListen.setBlocking(false) != 0)
-		return Status::net_error;
+	st = _socketListen.create(BsdSocket::TCP); if(!st) return st;
+	st = _socketListen.bind(anyAddr); if(!st) return st;
+	st = _socketListen.listen(); if(!st) return st;
+	st = _socketListen.setBlocking(false); if(!st) return st;
 
 	onRequest = _onRequest;
 
@@ -50,13 +45,13 @@ Status HttpServer::update()
 			pooledConnections.pushBack(*new Connection);
 
 		Connection& c = pooledConnections.front();
-		BsdSocket::ErrorCode e = _socketListen.accept(c.socket);
-		if(e == 0) {
+		roStatus st = _socketListen.accept(c.socket);
+		if(st) {
 			c.removeThis();
 			c.socket.setBlocking(false);
 			activeConnections.pushBack(c);
 		}
-		else if(!BsdSocket::inProgress(e)) {
+		else if(!BsdSocket::inProgress(st)) {
 			// log error
 		}
 	}
@@ -96,14 +91,14 @@ Status HttpServer::Connection::update()
 	st = ringBuf.write(byteSize, wPtr);
 	if(!st) return st;
 
-	int ret = socket.receive(wPtr, byteSize);
+	st = socket.receive(wPtr, byteSize);
 
-	if(ret == 0) {
+	if(st) {
 		delete this;
 		return Status::ok;
 	}
 
-	ringBuf.commitWrite(ret > 0 ? ret : 0);
+	ringBuf.commitWrite(byteSize);
 
 	// Check if header complete
 	static const char headerTerminator[] = "\r\n\r\n";

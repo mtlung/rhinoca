@@ -2,6 +2,7 @@
 #define __roSocket_h__
 
 #include "roNonCopyable.h"
+#include "roStatus.h"
 #include "../platform/roCompiler.h"
 #include "../platform/roOS.h"
 
@@ -72,7 +73,7 @@ struct SockAddr
 /// http://itamarst.org/writings/win32sockets.html
 struct BsdSocket : NonCopyable
 {
-	///	Zero for no error
+	///	Detailed error code which roStatus didn't capture. Zero for no error
 	typedef int ErrorCode;
 
 	enum SocketType {
@@ -94,33 +95,33 @@ struct BsdSocket : NonCopyable
 	~BsdSocket();
 
 // Operations
-	ErrorCode	create				(SocketType type);
+	roStatus	create				(SocketType type);
 
-	ErrorCode	setBlocking			(bool block);
-	ErrorCode	setNoDelay			(bool b);
-	ErrorCode	setSendTimeout		(float seconds);
-	ErrorCode	setSendBuffSize		(roSize size);
-	ErrorCode	setReceiveBuffSize	(roSize size);
+	roStatus	setBlocking			(bool block);
+	roStatus	setNoDelay			(bool b);
+	roStatus	setSendTimeout		(float seconds);
+	roStatus	setSendBuffSize		(roSize size);
+	roStatus	setReceiveBuffSize	(roSize size);
 
-	ErrorCode	bind				(const SockAddr& endPoint);
+	roStatus	bind				(const SockAddr& endPoint);
 
 	///	Places the socket in a listening state
 	///	\param backlog Specifies the number of incoming connections that can be queued for acceptance
-	ErrorCode	listen				(unsigned backlog=5);
+	roStatus	listen				(unsigned backlog=5);
 
 	///	Creates a new Socket for a newly created connection.
 	///	Accept extracts the first connection on the queue of pending connections on this socket.
 	///	It then returns a the newly connected socket that will handle the actual connection.
-	ErrorCode	accept				(BsdSocket& socket) const;
+	roStatus	accept				(BsdSocket& socket) const;
 
 	/// Establishes a connection to a remote host.
-	ErrorCode	connect				(const SockAddr& endPoint);
+	roStatus	connect				(const SockAddr& endPoint);
 
 	/// A simple select function that operate only on this socket.
 	ErrorCode	select				(bool& checkRead, bool& checkWrite, bool& checkError);
 
-	int			send				(const void* data, roSize len, int flags=0);								///< Returns -1 for any error
-	int			receive				(void* buf, roSize len, int flags=0);										///< Returns -1 for any error
+	roStatus	send				(const void* data, roSize& len, int flags=0);								///< Returns -1 for any error
+	roStatus	receive				(void* buf, roSize& len, int flags=0);										///< Returns -1 for any error
 	int			sendTo				(const void* data, roSize len, const SockAddr& destEndPoint, int flags=0);	///< Returns -1 for any error
 	int			receiveFrom			(void* buf, roSize len, SockAddr& srcEndPoint, int flags=0);				///< Returns -1 for any error
 
@@ -128,12 +129,10 @@ struct BsdSocket : NonCopyable
 	///	an application should use shutDownXXX() to close connection before calling close().
 	///	Reference: See MSDN on ::shutdown
 
-	ErrorCode	shutDownRead		();
-	ErrorCode	shutDownWrite		();
-	ErrorCode	shutDownReadWrite	();
-
-	void		requestClose		();
-	ErrorCode	close				();
+	roStatus	shutDownRead		();
+	roStatus	shutDownWrite		();
+	roStatus	shutDownReadWrite	();
+	roStatus	close				();
 
 // Attributes
 	/// Whether the socket is bound to a specific local port.
@@ -158,13 +157,14 @@ struct BsdSocket : NonCopyable
 	bool		IsError				();
 
 	///	Check the error code whether it indicating a socket operations is in progress.
-	static bool	inProgress			(int code);
+	static bool	inProgress			(roStatus st);
+	static bool isError				(roStatus st);
 
 	const socket_t& fd() const;
 	void setFd(const socket_t& f);
 
 // Private
-	ErrorCode	_setOption			(int level, int opt, const void* p, roSize size);
+	roStatus	_setOption			(int level, int opt, const void* p, roSize size);
 	char _fd[sizeof(void*)];	///< File descriptor
 	bool _isBlockingMode;
 };	// BsdSocket
@@ -186,15 +186,15 @@ struct CoSocket : public BsdSocket
 	CoSocket();
 	~CoSocket();
 
-	ErrorCode	create			(SocketType type);
-	ErrorCode	setBlocking		(bool block);
-	ErrorCode	accept			(CoSocket& socket) const;
-	ErrorCode	connect			(const SockAddr& endPoint, float timeOut=0);
-	int			send			(const void* data, roSize len, int flags=0);
-	int			receive			(void* buf, roSize len, int flags=0);
+	roStatus	create			(SocketType type);
+	roStatus	setBlocking		(bool block);
+	roStatus	accept			(CoSocket& socket) const;
+	roStatus	connect			(const SockAddr& endPoint, float timeOut=0);
+	roStatus	send			(const void* data, roSize& len, int flags=0);
+	roStatus	receive			(void* buf, roSize& len, int flags=0);
 
 	void		requestClose	();
-	ErrorCode	close			();
+	roStatus	close			();
 
 	bool		isBlockingMode	() const;
 

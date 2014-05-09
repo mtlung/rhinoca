@@ -60,6 +60,21 @@ roStatusEnum( net_cannont_connect )
 roStatusEnum( net_connection_lost )
 roStatusEnum( net_not_connected )
 
+roStatusEnum( net_already )		// EALREADY, Operation already in progress
+roStatusEnum( net_connaborted )	// ECONNABORTED, Software caused connection abort
+roStatusEnum( net_connreset )	// ECONNRESET, Connection reset by peer
+roStatusEnum( net_connrefused )	// ECONNREFUSED, Connection refused
+roStatusEnum( net_hostdown )	// EHOSTDOWN, Host is down
+roStatusEnum( net_hostunreach )	// EHOSTUNREACH, No route to host
+roStatusEnum( net_inprogress )	// EINPROGRESS, Operation now in progress
+roStatusEnum( net_netdown )		// ENETDOWN, Network is down
+roStatusEnum( net_netreset )	// ENETRESET, Network dropped connection on reset
+roStatusEnum( net_nobufs )		// ENOBUFS, No buffer space available (recoverable)
+roStatusEnum( net_notconn )		// ENOTCONN, Socket is not connected
+roStatusEnum( net_notsock )		// ENOTSOCK, Socket operation on non-socket
+roStatusEnum( net_timeout )		// ETIMEDOUT, Connection timed out
+roStatusEnum( net_wouldblock )	// EWOULDBLOCK, Operation would block (recoverable)
+
 // Http
 roStatusEnum( http_error )
 roStatusEnum( http_invalid_uri )

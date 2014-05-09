@@ -72,6 +72,34 @@ static int getLastError()
 #endif
 }
 
+static roStatus errorToStatus(BsdSocket::ErrorCode errorCode)
+{
+	switch(errorCode) {
+	case OK:			return roStatus::ok;
+	case EALREADY:		return roStatus::net_already;
+	case ECONNABORTED:	return roStatus::net_connaborted;
+	case ECONNRESET:	return roStatus::net_connreset;
+	case ECONNREFUSED:	return roStatus::net_connrefused;
+	case EHOSTDOWN:		return roStatus::net_hostdown;
+	case EHOSTUNREACH:	return roStatus::net_hostunreach;
+	case EINPROGRESS:	return roStatus::net_inprogress;
+	case ENETDOWN:		return roStatus::net_netdown;
+	case ENETRESET:		return roStatus::net_netreset;
+	case ENOBUFS:		return roStatus::net_nobufs;
+	case ENOTCONN:		return roStatus::net_notconn;
+	case ENOTSOCK:		return roStatus::net_notsock;
+	case ETIMEDOUT:		return roStatus::net_timeout;
+	case EWOULDBLOCK:	return roStatus::net_wouldblock;
+	}
+	return roStatus::net_error;
+}
+
+static roStatus noError(BsdSocket::ErrorCode& detailError)
+{
+	detailError = OK;
+	return roStatus::ok;
+}
+
 typedef BsdSocket::ErrorCode ErrorCode;
 
 SockAddr::SockAddr()
@@ -260,21 +288,21 @@ BsdSocket::BsdSocket()
 
 BsdSocket::~BsdSocket()
 {
-	roVerify(close() == OK);
+	roVerify(close());
 }
 
-ErrorCode BsdSocket::create(SocketType type)
+roStatus BsdSocket::create(SocketType type)
 {
 	// If this socket is not closed yet
 	if(fd() != INVALID_SOCKET)
-		return lastError = -1;
+		return lastError = -1, errorToStatus(lastError);
 
 	switch (type) {
 	case TCP:	setFd(::socket(AF_INET, SOCK_STREAM, 0));	break;
 	case TCP6:	setFd(::socket(AF_INET6, SOCK_STREAM, 0));	break;
 	case UDP:	setFd(::socket(AF_INET, SOCK_DGRAM, 0));	break;
 	case UDP6:	setFd(::socket(AF_INET6, SOCK_DGRAM, 0));	break;
-	default: return lastError = getLastError();
+	default: return getLastError(), errorToStatus(lastError);
 	}
 
 #if !roOS_WIN
@@ -287,10 +315,10 @@ ErrorCode BsdSocket::create(SocketType type)
 #endif
 
 	roAssert(fd() != INVALID_SOCKET);
-	return lastError = OK;
+	return noError(lastError);
 }
 
-ErrorCode BsdSocket::setBlocking(bool block)
+roStatus BsdSocket::setBlocking(bool block)
 {
 #if roOS_WIN
 	unsigned long a = block ? 0 : 1;
@@ -306,16 +334,16 @@ ErrorCode BsdSocket::setBlocking(bool block)
 	if(lastError == OK)
 		_isBlockingMode = block;
 
-	return lastError;
+	return errorToStatus(lastError);
 }
 
-ErrorCode BsdSocket::setNoDelay(bool b)
+roStatus BsdSocket::setNoDelay(bool b)
 {
 	int a = b ? 1 : 0;
 	return _setOption(IPPROTO_TCP, TCP_NODELAY, &a, sizeof(a));
 }
 
-ErrorCode BsdSocket::setSendTimeout(float seconds)
+roStatus BsdSocket::setSendTimeout(float seconds)
 {
 	unsigned s = unsigned(seconds);
 	unsigned us = unsigned((seconds - s) * 1000 * 1000);
@@ -323,36 +351,38 @@ ErrorCode BsdSocket::setSendTimeout(float seconds)
 	return _setOption(SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
 }
 
-ErrorCode BsdSocket::setSendBuffSize(roSize size)
+roStatus BsdSocket::setSendBuffSize(roSize size)
 {
 	int n = 0;
-	if(!roSafeAssign(n, size)) return -1;
+	roStatus st = roSafeAssign(n, size); if(!st) return st;
 	return _setOption(SOL_SOCKET, SO_SNDBUF, &n, sizeof(n));
 }
 
-ErrorCode BsdSocket::setReceiveBuffSize(roSize size)
+roStatus BsdSocket::setReceiveBuffSize(roSize size)
 {
 	int n = 0;
-	if(!roSafeAssign(n, size)) return -1;
+	roStatus st = roSafeAssign(n, size); if(!st) return st;
 	return _setOption(SOL_SOCKET, SO_RCVBUF, &n, sizeof(n));
 }
 
-ErrorCode BsdSocket::bind(const SockAddr& endPoint)
+roStatus BsdSocket::bind(const SockAddr& endPoint)
 {
 	sockaddr addr = endPoint.asSockAddr();
-	return lastError =
+	lastError =
 		::bind(fd(), &addr, sizeof(addr)) == OK ?
 		OK : getLastError();
+	return errorToStatus(lastError);
 }
 
-ErrorCode BsdSocket::listen(unsigned backlog)
+roStatus BsdSocket::listen(unsigned backlog)
 {
-	return lastError =
+	lastError =
 		::listen(fd(), int(backlog)) == OK ?
 		OK : getLastError();
+	return errorToStatus(lastError);
 }
 
-ErrorCode BsdSocket::accept(BsdSocket& socket) const
+roStatus BsdSocket::accept(BsdSocket& socket) const
 {
 	socket_t s;
 	sockaddr addr;
@@ -360,18 +390,19 @@ ErrorCode BsdSocket::accept(BsdSocket& socket) const
 
 	s = ::accept(fd(), &addr, &len);
 	if(s == INVALID_SOCKET)
-		return lastError = getLastError();
+		return lastError = getLastError(), errorToStatus(lastError);
 
 	socket.setFd(s);
-	return lastError = OK;
+	return lastError = OK, roStatus::ok;
 }
 
-ErrorCode BsdSocket::connect(const SockAddr& endPoint)
+roStatus BsdSocket::connect(const SockAddr& endPoint)
 {
 	sockaddr addr = endPoint.asSockAddr();
-	return lastError =
+	lastError =
 		::connect(fd(), &addr, sizeof(addr)) == OK ?
 		OK : getLastError();
+	return errorToStatus(lastError);
 }
 
 ErrorCode BsdSocket::select(bool& checkRead, bool& checkWrite, bool& checkError)
@@ -412,29 +443,34 @@ ErrorCode BsdSocket::select(bool& checkRead, bool& checkWrite, bool& checkError)
 	return lastError;
 }
 
-int BsdSocket::send(const void* data, roSize len, int flags)
+roStatus BsdSocket::send(const void* data, roSize& len, int flags)
 {
 	roSize remain = len;
 	roSize sent = 0;
 	const char* p = (const char*)data;
 	while(remain > 0) {
 		int ret = ::send(fd(), p, clamp_cast<int>(remain), flags);
-		if(ret < 0) {
-			lastError = getLastError();
-			return ret;
-		}
+		if(ret < 0)
+			return lastError = getLastError(), errorToStatus(lastError);
+
 		remain -= ret;
 		sent += ret;
 		p += ret;
 	}
-	return num_cast<int>(sent);
+	len = num_cast<int>(sent);
+	return lastError = OK, roStatus::ok;
 }
 
-int BsdSocket::receive(void* buf, roSize len, int flags)
+roStatus BsdSocket::receive(void* buf, roSize& len, int flags)
 {
 	int ret = ::recv(fd(), (char*)buf, clamp_cast<int>(len), flags);
-	lastError = ret < 0 ? getLastError() : OK;
-	return ret;
+	if(ret < 0) {
+		len = 0;
+		return lastError = getLastError(), errorToStatus(lastError);
+	}
+
+	len = num_cast<roSize>(ret);
+	return lastError = OK, roStatus::ok;
 }
 
 int BsdSocket::sendTo(const void* data, roSize len, const SockAddr& destEndPoint, int flags)
@@ -455,65 +491,65 @@ int BsdSocket::receiveFrom(void* buf, roSize len, SockAddr& srcEndPoint, int fla
 	return ret;
 }
 
-ErrorCode BsdSocket::shutDownRead()
+roStatus BsdSocket::shutDownRead()
 {
 	if(fd() == INVALID_SOCKET || ::shutdown(fd(), SD_RECEIVE) == OK)
-		return lastError = OK;
+		return lastError = OK, roStatus::ok;
 
 #if roOS_WIN
-	return lastError = getLastError();
+	return lastError = getLastError(), errorToStatus(lastError);
 #else
-	return lastError = OK;
+	return lastError = OK, roStatus::ok;
 #endif
 }
 
-ErrorCode BsdSocket::shutDownWrite()
+roStatus BsdSocket::shutDownWrite()
 {
 	if(fd() == INVALID_SOCKET || ::shutdown(fd(), SD_SEND) == OK)
-		return lastError = OK;
+		return lastError = OK, roStatus::ok;
 
 #if roOS_WIN
-	return lastError = getLastError();
+	return lastError = getLastError(), errorToStatus(lastError);
 #else
-	return lastError = OK;
+	return lastError = OK, roStatus::ok;
 #endif
 }
 
-ErrorCode BsdSocket::shutDownReadWrite()
+roStatus BsdSocket::shutDownReadWrite()
 {
 	if(fd() == INVALID_SOCKET || ::shutdown(fd(), SD_BOTH) == OK)
-		return lastError = OK;
+		return lastError = OK, roStatus::ok;
 
 #if roOS_WIN
-	return lastError = getLastError();
+	return lastError = getLastError(), errorToStatus(lastError);
 #else
-	return lastError = OK;
+	return lastError = OK, roStatus::ok;
 #endif
 }
 
-ErrorCode BsdSocket::close()
+roStatus BsdSocket::close()
 {
 	if(fd() == INVALID_SOCKET)
-		return lastError = OK;
+		return lastError = OK, roStatus::ok;
 
-	setBlocking(true);
+	roVerify(setBlocking(true));
 
 #if roOS_WIN
 	if(::closesocket(fd()) == OK) {
 		setFd(INVALID_SOCKET);
-		return lastError = OK;
+		return lastError = OK, roStatus::ok;
 	}
 #else
 	if(::close(fd()) == OK) {
 		setFd(INVALID_SOCKET);
-		return lastError = OK;
+		return lastError = OK, roStatus::ok;
 	}
 #endif
 
 #if roOS_WIN
-	return lastError = getLastError();
+	return lastError = getLastError(), errorToStatus(lastError);
 #else
-	return lastError = OK;
+	return lastError = OK, roStatus::ok;
 #endif
 }
 
@@ -532,18 +568,23 @@ SockAddr BsdSocket::remoteEndPoint() const
 	return SockAddr(addr);
 }
 
-bool BsdSocket::inProgress(int code)
+bool BsdSocket::inProgress(roStatus st)
 {
-	return code == EINPROGRESS || code == EWOULDBLOCK;
+	return st == roStatus::net_inprogress || st == roStatus::net_wouldblock;
 }
 
-ErrorCode BsdSocket::_setOption(int opt, int level, const void* p, roSize size)
+bool BsdSocket::isError(roStatus st)
+{
+	return !st && !inProgress(st);
+}
+
+roStatus BsdSocket::_setOption(int opt, int level, const void* p, roSize size)
 {
 	int n = 0;
-	if(!roSafeAssign(n, size)) return -1;
+	roStatus st = roSafeAssign(n, size); if(!st) return st;
 	int ret = ::setsockopt(fd(), level, opt, (const char*)p, n);
 	lastError = ret < 0 ? getLastError() : OK;
-	return ret;
+	return errorToStatus(lastError);
 }
 
 const socket_t& BsdSocket::fd() const {
@@ -568,7 +609,7 @@ CoSocket::CoSocket()
 
 CoSocket::~CoSocket()
 {
-	roVerify(close() == OK);
+	roVerify(close());
 }
 
 struct CoSocketManager;
@@ -586,43 +627,41 @@ struct CoSocketManager : public BgCoroutine
 
 static DefaultAllocator _allocator;
 
-CoSocket::ErrorCode CoSocket::create(SocketType type)
+roStatus CoSocket::create(SocketType type)
 {
 	_onHeap.takeOver(_allocator.newObj<OnHeap>());
-	ErrorCode ret = Super::create(type);
-	if(ret == OK)
-		setBlocking(true);
-
-	return ret;
+	roStatus st = Super::create(type);
+	if(!st) return st;
+	return setBlocking(true);
 }
 
-CoSocket::ErrorCode CoSocket::setBlocking(bool block)
+roStatus CoSocket::setBlocking(bool block)
 {
 	_isCoBlockingMode = block;
 	return Super::setBlocking(false);
 }
 
-CoSocket::ErrorCode CoSocket::accept(CoSocket& socket) const
+roStatus CoSocket::accept(CoSocket& socket) const
 {
-	ErrorCode ret = Super::accept(socket);
+	roStatus st = Super::accept(socket);
 	socket._onHeap.takeOver(_allocator.newObj<OnHeap>());
 
 	if(!_isCoBlockingMode)
-		return ret;
+		return st;
 
 	Coroutine* coroutine = Coroutine::current();
 	CoSocketManager* socketMgr = _currentCoSocketManager;
 
 	if(!coroutine || !socketMgr)
-		return ret;
+		return st;
 
-	while(ret == WSAENOBUFS) {
+	while(st == roStatus::net_nobufs) {
 		coroutine->yield();
-		ret = Super::accept(socket);
+		st = Super::accept(socket);
 	}
 
-	if(!inProgress(ret))
-		return ret;
+	if(!inProgress(st))
+		return st;
 
 	Entry& readEntry = _onHeap->_readEntry;
 
@@ -640,13 +679,13 @@ CoSocket::ErrorCode CoSocket::accept(CoSocket& socket) const
 	roAssert(readEntry.getList() == &socketMgr->socketList);
 	readEntry.removeThis();
 
-	ret = Super::accept(socket);
-	roAssert(!inProgress(ret));
+	st = Super::accept(socket);
+	roAssert(!inProgress(st));
 
-	return ret;
+	return st;
 }
 
-CoSocket::ErrorCode CoSocket::connect(const SockAddr& endPoint, float timeOut)
+roStatus CoSocket::connect(const SockAddr& endPoint, float timeOut)
 {
 	if(!_isCoBlockingMode) {
 		if(timeOut > 0.f)
@@ -667,13 +706,13 @@ CoSocket::ErrorCode CoSocket::connect(const SockAddr& endPoint, float timeOut)
 	// http://www.catalyst.com/support/knowbase/100262.html
 	// if(ret == WSAENOBUFS) {}
 
-	ErrorCode ret;
+	int ret = SOCKET_ERROR;
 	CountDownTimer timer(timeOut);
 	do {
-		ret = Super::connect(endPoint);
+		roStatus st = Super::connect(endPoint);
 
-		if(!inProgress(ret) && timeOut <= 0.f)
-			return ret;
+		if(!inProgress(st) && timeOut <= 0.f)
+			return st;
 
 		// Prepare for hand over to socket manager
 		Entry& readEntry = _onHeap->_readEntry;
@@ -682,7 +721,7 @@ CoSocket::ErrorCode CoSocket::connect(const SockAddr& endPoint, float timeOut)
 		readEntry.coro = coroutine;
 
 		socketMgr->socketList.pushBack(readEntry);
-		int coRet = (int)coroutine->suspend();
+		coroutine->suspend();
 		roAssert(readEntry.getList() == &socketMgr->socketList);
 		readEntry.removeThis();
 
@@ -691,10 +730,10 @@ CoSocket::ErrorCode CoSocket::connect(const SockAddr& endPoint, float timeOut)
 		getsockopt(fd(), SOL_SOCKET, SO_ERROR, (char*)&ret, &resultLen);
 	} while(!timer.isExpired() && ret != 0);
 
-	return ret;
+	return lastError = ret, errorToStatus(lastError);
 }
 
-int CoSocket::send(const void* data, roSize len, int flags)
+roStatus CoSocket::send(const void* data, roSize& len, int flags)
 {
 	if(!_isCoBlockingMode)
 		return Super::send(data, len, flags);
@@ -708,14 +747,14 @@ int CoSocket::send(const void* data, roSize len, int flags)
 
 	static const roSize maxChunkSize = 1024 * 1024;
 
+	roStatus st;
 	while(remain > 0) {
-		roSize chunkSize = roMinOf2(remain, maxChunkSize);
-		int ret = ::send(fd(), p, clamp_cast<int>(chunkSize), flags);
+		roSize toSend = roMinOf2(remain, maxChunkSize);
+		st = Super::send(data, toSend, flags);
 
-		lastError = WSAGetLastError();
-		if(ret <= 0) {
-			if(!inProgress(lastError))
-				return ret;
+		if(!st) {
+			if(!inProgress(st))
+				return st;
 
 			Entry& writeEntry = _onHeap->_writeEntry;
 			// We pipe operation one by one
@@ -737,27 +776,27 @@ int CoSocket::send(const void* data, roSize len, int flags)
 		else if(remain > maxChunkSize)
 			coroutine->yield();
 
-		remain -= ret;
-		sent += ret;
-		p += ret;
+		remain -= toSend;
+		sent += toSend;
+		p += toSend;
 	}
 
-	return num_cast<int>(sent);
+	return st;
 }
 
-int CoSocket::receive(void* buf, roSize len, int flags)
+roStatus CoSocket::receive(void* buf, roSize& len, int flags)
 {
-	int ret = ::recv(fd(), (char*)buf, clamp_cast<int>(len), flags);
+	roSize inLen = len;
+	roStatus st = Super::receive(buf, len, flags);
 
 	if(!_isCoBlockingMode)
-		return ret;
+		return st;
 
-	if(ret > 0)
-		return ret;
+	if(!inProgress(st))
+		return st;
 
-	lastError = WSAGetLastError();
-	if(!inProgress(lastError))
-		return ret;
+	// No data is ready for read, set back len
+	len = inLen;
 
 	Coroutine* coroutine = Coroutine::current();
 	CoSocketManager* socketMgr = _currentCoSocketManager;
@@ -778,21 +817,22 @@ int CoSocket::receive(void* buf, roSize len, int flags)
 	roAssert(readEntry.getList() == &socketMgr->socketList);
 	readEntry.removeThis();
 
-	// Read is read
-	ret = ::recv(fd(), (char*)buf, clamp_cast<int>(len), flags);
-	lastError = WSAGetLastError();
-	roAssert(!inProgress(lastError));
-	return ret;
+	// Data is now ready for read
+	st = Super::receive(buf, len, flags);
+
+	roAssert(!inProgress(st));
+	return st;
 }
 
-ErrorCode CoSocket::close()
+roStatus CoSocket::close()
 {
 	setBlocking(true);
 
 	shutDownWrite();
 
 	roByte buf[128];
-	while(receive(buf, sizeof(buf)) > 0) {}
+	roSize len;
+	while(len = sizeof(buf), receive(buf, len) && len) {}
 
 	shutDownRead();
 	return Super::close();
@@ -828,8 +868,10 @@ static void _select(const TinyArray<CoSocket::Entry*, FD_SETSIZE>& socketSet, fd
 	timeout.tv_usec = 0;
 
 	int ret = ::select((unsigned)socketSet.size(), &readSet, &writeSet, &errorSet, &timeout);
-	if(ret < 0)
+	if(ret < 0) {
 		roLog("error", "CoSocketManager select function fail\n");
+		return;
+	}
 
 	for(roSize i=0; i<socketSet.size(); ++i) {
 		CoSocket::Entry& e = *socketSet[i];

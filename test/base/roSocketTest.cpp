@@ -22,27 +22,29 @@ protected:
 	}
 
 	// Quickly create a listening socket
-	BsdSocket::ErrorCode listenOn(BsdSocket& s)
+	roStatus listenOn(BsdSocket& s)
 	{
-		if(s.create(BsdSocket::TCP) != 0) return s.lastError;
-		if(s.bind(mAnyAddr) != 0) return s.lastError;
+		roStatus st;
+		st = s.create(BsdSocket::TCP); if(!st) return st;
+		st = s.bind(mAnyAddr); if(!st) return st;
 		return s.listen();
 	}
 
 	//!	Using non-blocking mode to setup a connection quickly
-	BsdSocket::ErrorCode setupConnectedTcpSockets(BsdSocket& listener, BsdSocket& acceptor, BsdSocket& connector)
+	roStatus setupConnectedTcpSockets(BsdSocket& listener, BsdSocket& acceptor, BsdSocket& connector)
 	{
-		if(listenOn(listener) != 0) return listener.lastError;
-		if(listener.setBlocking(false) != 0) return listener.lastError;
+		roStatus st = listenOn(listener); if(!st) return st;
+		st = listener.setBlocking(false); if(!st) return st;
 
-		if(!BsdSocket::inProgress(listener.accept(acceptor))) return listener.lastError;
+		st = listener.accept(acceptor);
+		if(BsdSocket::isError(st)) return st;
 
-		if(connector.create(BsdSocket::TCP) != 0) return listener.lastError;
+		st = connector.create(BsdSocket::TCP); if(!st) return st;
 		while(BsdSocket::inProgress(connector.connect(mLocalAddr))) {}
-		if(connector.setBlocking(false) != 0) return listener.lastError;
+		st = connector.setBlocking(false); if(!st) return st;
 
 		while(BsdSocket::inProgress(listener.accept(acceptor))) {}
-		return acceptor.setBlocking(false);
+		return acceptor.setBlocking(false); if(!st) return st;
 	}
 
 //	Thread mThread;
@@ -57,14 +59,14 @@ struct SimpleConnector : public Task
 	void run(TaskPool* taskPool) override
 	{
 		BsdSocket s;
-		roVerify(0 == s.create(BsdSocket::TCP));
-		bool connected = false;
+		roVerify(s.create(BsdSocket::TCP));
+		roStatus st;
 		while(taskPool->keepRun()) {
-			connected = s.connect(endPoint) == 0;
-
-			if(connected) {
+			if(s.connect(endPoint)) {
 				const char msg[] = "Hello world!";
-				roVerify(sizeof(msg) == s.send(msg, sizeof(msg)));
+				roSize msgSize = sizeof(msg);
+				roVerify(s.send(msg, msgSize));
+				roVerify(msgSize == sizeof(msg));
 				break;
 			}
 		}
@@ -78,10 +80,10 @@ struct SimpleConnector : public Task
 TEST_FIXTURE(BsdSocketTestFixture, BlockingAcceptAndConnect)
 {
 	SockAddr a;
-	a.parse("localhost:2");
+	CHECK(a.parse("localhost:2"));
 	a.ip();
 	BsdSocket s1;
-	CHECK_EQUAL(0, listenOn(s1));
+	CHECK(listenOn(s1));
 
 	SimpleConnector connector(mLocalAddr);
 	TaskPool taskPool;
@@ -89,7 +91,7 @@ TEST_FIXTURE(BsdSocketTestFixture, BlockingAcceptAndConnect)
 	TaskId task = taskPool.addFinalized(&connector, 0, 0, ~taskPool.mainThreadId());
 
 	BsdSocket s2;
-	CHECK_EQUAL(0, s1.accept(s2));
+	CHECK(s1.accept(s2));
 
 	taskPool.wait(task);
 }
@@ -97,12 +99,11 @@ TEST_FIXTURE(BsdSocketTestFixture, BlockingAcceptAndConnect)
 TEST_FIXTURE(BsdSocketTestFixture, NonBlockingAccept)
 {
 	BsdSocket s1;
-	CHECK_EQUAL(0, listenOn(s1));
+	CHECK(listenOn(s1));
 
 	BsdSocket s2;
-	CHECK_EQUAL(0, s1.setBlocking(false));
+	CHECK(s1.setBlocking(false));
 	CHECK(BsdSocket::inProgress(s1.accept(s2)));
-	CHECK(BsdSocket::inProgress(s1.lastError));
 
 	SimpleConnector connector(mLocalAddr);
 	TaskPool taskPool;
@@ -117,7 +118,7 @@ TEST_FIXTURE(BsdSocketTestFixture, NonBlockingAccept)
 TEST_FIXTURE(BsdSocketTestFixture, TCPBlockingSendBlockingRecv)
 {
 	BsdSocket s1;
-	CHECK_EQUAL(0, listenOn(s1));
+	CHECK(listenOn(s1));
 
 	SimpleConnector connector(mLocalAddr);
 	TaskPool taskPool;
@@ -125,12 +126,13 @@ TEST_FIXTURE(BsdSocketTestFixture, TCPBlockingSendBlockingRecv)
 	TaskId task = taskPool.addFinalized(&connector);
 
 	BsdSocket s2;
-	CHECK_EQUAL(0, s1.accept(s2));
+	CHECK(s1.accept(s2));
 
 	char buf[64];
 	// TODO: Use loop for more robust code
-	int receivedSize = s2.receive(buf, sizeof(buf));
-	CHECK(receivedSize <= sizeof(buf));
+	roSize len = sizeof(buf);
+	CHECK(s2.receive(buf, len));
+	CHECK(len <= sizeof(buf));
 
 	CHECK(strcmp("Hello world!", buf) == 0);
 	taskPool.wait(task);
@@ -140,38 +142,40 @@ TEST_FIXTURE(BsdSocketTestFixture, Shutdown)
 {
 	BsdSocket sl, sa, sc;
 	char buf[64];
-	CHECK_EQUAL(0, setupConnectedTcpSockets(sl, sa, sc));
+	CHECK(setupConnectedTcpSockets(sl, sa, sc));
 
-	CHECK_EQUAL(-1, sc.receive(buf, sizeof(buf)));
+	roSize len = sizeof(buf);
+	CHECK(!sc.receive(buf, len));
 
 	// Server shutdown write, client should receive 0
-	CHECK_EQUAL(0, sa.shutDownWrite());
-	CHECK_EQUAL(-1, sa.send(buf, sizeof(buf)));
+	CHECK(sa.shutDownWrite());
+	len = sizeof(buf);
+	CHECK(!sa.send(buf, len));
 
-	int rec;
-	while((rec = sc.receive(buf, sizeof(buf))) == -1) {}
-	CHECK_EQUAL(0, rec);
-	CHECK_EQUAL(0, sc.shutDownRead());
+	while(len = sizeof(buf), sc.receive(buf, len) && len) {}
+	CHECK_EQUAL(0, len);
+	CHECK(sc.shutDownRead());
 
 	// Client shutdown write, server should receive 0
-	CHECK_EQUAL(0, sc.shutDownWrite());
-	CHECK_EQUAL(-1, sc.send(buf, sizeof(buf)));
+	CHECK(sc.shutDownWrite());
+	len = sizeof(buf);
+	CHECK(!sc.send(buf, len));
 
-	while((rec = sa.receive(buf, sizeof(buf))) == -1) {}
-	CHECK_EQUAL(0, rec);
-	CHECK_EQUAL(0, sa.shutDownRead());
+	while(len = sizeof(buf), sc.receive(buf, len) && len) {}
+	CHECK_EQUAL(0, len);
+	CHECK(sa.shutDownRead());
 }
 
 TEST_FIXTURE(BsdSocketTestFixture, Udp)
 {
 	BsdSocket s;
-	CHECK_EQUAL(0, s.create(BsdSocket::UDP));
-	CHECK_EQUAL(0, s.bind(mAnyAddr));
+	CHECK(s.create(BsdSocket::UDP));
+	CHECK(s.bind(mAnyAddr));
 
 	BsdSocket s2;
 	const SockAddr connectorAddr(SockAddr::ipLoopBack(), 4321);	// Explicit end point for verification test
-	CHECK_EQUAL(0, s2.create(BsdSocket::UDP));
-	CHECK_EQUAL(0, s2.bind(connectorAddr));
+	CHECK(s2.create(BsdSocket::UDP));
+	CHECK(s2.bind(connectorAddr));
 	const char msg[] = "Hello world!";
 	CHECK_EQUAL(int(sizeof(msg)), s2.sendTo(msg, sizeof(msg), mLocalAddr));
 

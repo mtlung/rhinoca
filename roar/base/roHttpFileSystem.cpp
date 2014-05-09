@@ -185,12 +185,14 @@ static Status _makeConnection(HttpStream& s, const char* uri)
 	}
 
 	// Create socket
-	roVerify(s.socket.create(BsdSocket::TCP) == 0);
+	s.status = s.socket.create(BsdSocket::TCP);
+	if(!s.status) return s.status;
+
 	s.socket.setBlocking(false);
 
 	// Make connection
-	int ret = s.socket.connect(addr);
-	if(ret != 0 && !BsdSocket::inProgress(s.socket.lastError)) {
+	s.status = s.socket.connect(addr);
+	if(BsdSocket::isError(s.status)) {
 		roLog("error", "Connection to %s failed\n", host.begin());
 		s.state = State_Error;
 		return s.status = Status::http_error;
@@ -206,18 +208,17 @@ static void _closeConnection(HttpStream& s)
 
 static Status _readFromSocket(HttpStream& s, roSize size, roSize* bytesRead=NULL)
 {
-	int ret = 0;
+	roSize inSize = size;
 	Status st = prepareForRead(s, size); if(!st) return st;
-	ret = s.socket.receive(s.buffer + s.bufSize, size);
+	st = s.socket.receive(s.buffer + s.bufSize, size);
 
 	if(bytesRead)
-		*bytesRead = roClampMin(ret, 0);
+		*bytesRead = size;
 
-	if(ret < 0 && BsdSocket::inProgress(s.socket.lastError)) return Status::in_progress;
-	if(ret < 0) return Status::net_error;
-	if(size > 0 && ret == 0) return Status::file_ended;
+	if(!st) return st;
+	if(inSize > 0 && size == 0) return Status::file_ended;
 
-	s.bufSize += ret;
+	s.bufSize += size;
 	return Status::ok;
 }
 
@@ -254,12 +255,13 @@ ConnectionRestart:
 // Send http request
 	if(s->state == State_SendRequest)
 	{
-		int ret = s->socket.send(s->getCmd.c_str(), s->getCmd.size());
-		if(ret < 0 && s->socket.lastError == ENOTCONN)
+		roSize cmdSize = s->getCmd.size();
+		s->status = s->socket.send(s->getCmd.c_str(), cmdSize);
+		if(s->status == roStatus::net_notconn)
 			return true;
 
-		if(ret < 0 && !BsdSocket::inProgress(s->socket.lastError))
-			return s->status = Status::net_error, false;
+		if(BsdSocket::isError(s->status))
+			return false;
 
 		s->state = State_ReadingResponse;
 	}

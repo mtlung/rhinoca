@@ -100,10 +100,12 @@ Status HttpClient::Connection::connect(const char* hostAndPort)
 	Status st;
 
 roEXCP_TRY
-	roVerify(_socket.close() == 0);
+	roVerify(_socket.close());
 
 	// Create socket
-	roVerify(_socket.create(BsdSocket::TCP) == 0);
+	st = _socket.create(BsdSocket::TCP);
+	if(!st) roEXCP_THROW;
+
 	_socket.setBlocking(false);
 
 	// NOTE: Currently this host resolving operation is blocking
@@ -121,11 +123,10 @@ roEXCP_TRY
 	}
 
 	// Make connection
-	int ret = _socket.connect(_sockAddr);
+	st = _socket.connect(_sockAddr);
 
-	if(ret != 0 && !BsdSocket::inProgress(_socket.lastError)) {
+	if(BsdSocket::isError(st)) {
 		roLog("error", "Connection to %s failed\n", host.c_str());
-		st = Status::net_cannont_connect;
 		roEXCP_THROW;
 	}
 
@@ -185,16 +186,15 @@ roEXCP_TRY
 	if(_nextFunc == &Connection::_funcWaitConnect)
 		return Status::in_progress;
 
-	int ret = _socket.send(requestString.c_str(), requestString.size());
-	if(ret < 0 && !BsdSocket::inProgress(_socket.lastError)) {
-		st = Status::net_error;
+	roSize size = requestString.size();
+	st = _socket.send(requestString.c_str(), size);
+	if(BsdSocket::isError(st))
 		roEXCP_THROW;
-	}
 
 	if(debug)
 		roLog("debug", "HttpClient sending request:\n%s\n", requestString.c_str());
 
-	requestString.erase(0, ret);
+	requestString.erase(0, size);
 
 roEXCP_CATCH
 	_nextFunc = &Connection::_funcAborted;
@@ -214,14 +214,11 @@ Status HttpClient::Connection::_readFromSocket(roUint64 bytesToRead)
 	st = _iDecoder->requestWrite(byteSize, wPtr);
 	if(!st) return st;
 
-	int ret = _socket.receive(wPtr, byteSize);
-	_iDecoder->commitWrite(ret > 0 ? ret : 0);
+	st = _socket.receive(wPtr, byteSize);
+	_iDecoder->commitWrite(st ? byteSize : 0);
 
-	if(ret < 0 && BsdSocket::inProgress(_socket.lastError))
-		return Status::in_progress;
-	if(ret < 0)
-		return Status::net_error;
-	if(ret == 0)
+	if(!st) return st;
+	if(bytesToRead!= 0 && byteSize == 0)
 		return Status::file_ended;
 
 	return st;

@@ -168,6 +168,41 @@ struct HttpClient
 	static const roSize _maxHeaderSize = 4 * 1024;
 };	// HttpClient
 
+/*
+	IO with co-routine
+	struct MyTask : coroutine
+	{
+		void operator()()
+		{
+			int a = 0;
+			CORO_REENTER(this)
+			{
+				while(true)
+				{
+					stream.read(buf);
+					CORO_YIELD fun1();
+					int c;
+					CORO_YIELD fun2();
+				}
+			}
+		}
+
+		Stream stream;
+		char buf[1024];
+	}
+ */
+/*	Expected usage:
+	Server srv;
+	srv.create(settings);
+	srv.update();
+
+	void onRequest(Request request, Response response)
+	{
+		response.writeHeader(...);
+		response.writeBuffer();
+	}
+	srv.onRequest = onRequest;
+ */
 struct HttpServer
 {
 	HttpServer();

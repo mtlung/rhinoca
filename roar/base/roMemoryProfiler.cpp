@@ -138,7 +138,9 @@ struct FlowRegulator
 		ScopeRecursiveLock lock(_mutex);
 
 		roSize size = _buffer.sizeInByte();
-		if(roIsNotEqual(socket.send(_buffer.bytePtr(), size), size))
+		roSize sizeSend = size;
+		socket.send(_buffer.bytePtr(), sizeSend);
+		if(sizeSend != size)
 			return false;
 
 		_buffer.clear();
@@ -201,12 +203,13 @@ Status MemoryProfiler::init(roUint16 listeningPort)
 
 	SockAddr addr(SockAddr::ipAny(), listeningPort);
 
-	if(_listeningSocket.create(BsdSocket::TCP) != 0) return Status::net_error;
-	if(_listeningSocket.bind(addr) != 0) return Status::net_error;
-	if(_listeningSocket.listen() != 0) return Status::net_error;
-	if(_listeningSocket.setBlocking(false) != 0) return Status::net_error;
+	roStatus st;
+	st = _listeningSocket.create(BsdSocket::TCP); if(!st) return st;
+	st = _listeningSocket.bind(addr); if(!st) return st;
+	st = _listeningSocket.listen(); if(!st) return st;
+	st = _listeningSocket.setBlocking(false); if(!st) return st;
 
-	if(_acceptorSocket.create(BsdSocket::TCP) != 0) return Status::net_error;
+	st = _acceptorSocket.create(BsdSocket::TCP); if(!st) return st;
 	while(BsdSocket::inProgress(_listeningSocket.accept(_acceptorSocket))) {
 		MSG msg = { 0 };
 		if(::PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
@@ -221,10 +224,12 @@ Status MemoryProfiler::init(roUint16 listeningPort)
 
 	{	// Send our process id to the client
 		DWORD pid = GetCurrentProcessId();
-		_acceptorSocket.send(&pid, sizeof(pid));
+		roSize size = sizeof(pid);
+		_acceptorSocket.send(&pid, size);
 	}
 
-	if(_acceptorSocket.setBlocking(true) != 0) return Status::net_error;
+	st = _acceptorSocket.setBlocking(true);
+	if(!st) return st;
 
 	{	// Patching heap functions
 		void* pAlloc, *pReAlloc, *pFree, *pNtAlloc, *pNtFree;
@@ -413,7 +418,7 @@ void MemoryProfiler::shutdown()
 {
 	_functionPatcher.unpatchAll();
 
-	roVerify(_acceptorSocket.shutDownReadWrite() == 0);
+	roVerify(_acceptorSocket.shutDownReadWrite());
 	_acceptorSocket.close();
 	_listeningSocket.close();
 

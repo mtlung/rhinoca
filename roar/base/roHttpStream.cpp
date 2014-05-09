@@ -129,11 +129,11 @@ Status HttpIStream::_connect()
 	if(_debug)
 		roLog("debug", "HttpIStream: connect to %s\n", _host.c_str());
 
-	roVerify(_socket.close() == 0);
+	roVerify(_socket.close());
 
 	// Create socket
-	roVerify(_socket.create(BsdSocket::TCP) == 0);
-	_socket.setBlocking(false);
+	roStatus st = _socket.create(BsdSocket::TCP); if(!st) return st;
+	st = _socket.setBlocking(false); if(!st) return st;
 
 	_fileSize = 0;
 	_ringBuf.clear();
@@ -155,9 +155,9 @@ Status HttpIStream::_connect()
 	}
 
 	// Make connection
-	int ret = _socket.connect(_sockAddr);
+	st = _socket.connect(_sockAddr);
 
-	if(ret != 0 && !BsdSocket::inProgress(_socket.lastError)) {
+	if(BsdSocket::isError(st)) {
 		roLog("error", "Connection to %s failed\n", _host.c_str());
 		return setError(Status::net_cannont_connect);
 	}
@@ -191,6 +191,7 @@ Status HttpIStream::_waitConnect()
 		"Host: {}\r\n"	// Required for http 1.1
 		"Connection: keep-alive\r\n"
 		"User-Agent: The Roar Engine\r\n"
+		"Connection: keep-alive\r\n"
 		"Accept-Encoding: deflate\r\n"
 		"Range: bytes=0-128\r\n"
 		"\r\n";
@@ -198,6 +199,7 @@ Status HttpIStream::_waitConnect()
 		"GET {} HTTP/1.1\r\n"
 		"Host: {}\r\n"	// Required for http 1.1
 		"User-Agent: The Roar Engine\r\n"
+		"Connection: keep-alive\r\n"
 		"Accept-Encoding: deflate\r\n"
 		"Range: bytes=129-\r\n"
 		"\r\n";
@@ -213,8 +215,9 @@ Status HttpIStream::_sendRequest()
 {
 	roAssert(!_requestStr.isEmpty());
 
-	int ret = _socket.send(_requestStr.c_str(), _requestStr.size());
-	if(ret < 0 && !BsdSocket::inProgress(_socket.lastError))
+	roSize len = _requestStr.size();
+	st = _socket.send(_requestStr.c_str(), len);
+	if(BsdSocket::isError(st))
 		return setError(Status::net_error);
 
 	_next = _http_readResponse;
@@ -231,14 +234,12 @@ Status HttpIStream::_readFromSocket(roUint64 bytesToRead)
 	st = _ringBuf.write(byteSize, wPtr);
 	if(!st) return setError();
 
-	int ret = _socket.receive(wPtr, byteSize);
-	_ringBuf.commitWrite(ret > 0 ? ret : 0);
+	st = _socket.receive(wPtr, byteSize);
+	_ringBuf.commitWrite(byteSize);
 
-	if(ret < 0 && BsdSocket::inProgress(_socket.lastError))
+	if(BsdSocket::isError(st))
 		return setError(Status::in_progress);
-	if(ret < 0)
-		return setError(Status::net_error);
-	if(ret == 0)
+	if(st && byteSize == 0)
 		return setError(Status::file_ended);
 
 	return st;
