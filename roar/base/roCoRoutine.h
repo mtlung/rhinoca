@@ -42,6 +42,7 @@ struct Coroutine : public ListNode<Coroutine>
 	// Get the current thread's active co-routine, if any
 	static Coroutine* current();
 
+// Private
 	bool				_isInRun;		// Is inside the run() function
 	bool				_isActive;
 	void*				_retValueForSuspend;

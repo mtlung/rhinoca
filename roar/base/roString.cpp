@@ -290,7 +290,7 @@ roSize String::rfind(const char* str, roSize offset) const
 	if(l2 > l1) return npos;
 
 	const char* p = _str();
-	for(char* s = _str() + l1 - l2; s >= p; --s)
+	for(const char* s = _str() + l1 - l2; s >= p; --s)
 		if(roStrnCmp(s, str, l2) == 0)
 			return num_cast<roSize>(s - p);
 	return npos;
@@ -396,6 +396,40 @@ String RangedString::toString() const
 RangedString::operator String()
 {
 	return toString();
+}
+
+roSize RangedString::find(char c, roSize offset) const
+{
+	const char* p = begin;
+	const char* ret = roStrChr(p + offset, c);
+	return ret ? ret - p : npos;
+}
+
+roSize RangedString::find(const char* str, roSize offset) const
+{
+	const char* p = begin;
+	const char* ret = roStrStr(p + offset, str);
+	return ret ? ret - p : npos;
+}
+
+roSize RangedString::rfind(char c, roSize offset) const
+{
+	char str[] = { c, '\0' };
+	return rfind(str, offset);
+}
+
+roSize RangedString::rfind(const char* str, roSize offset) const
+{
+	roSize l1 = roMinOf2(offset, size());
+	roSize l2 = roStrLen(str);
+
+	if(l2 > l1) return npos;
+
+	const char* p = begin;
+	for(const char* s = begin + l1 - l2; s >= p; --s)
+		if(roStrnCmp(s, str, l2) == 0)
+			return num_cast<roSize>(s - p);
+	return npos;
 }
 
 bool RangedString::operator==(const char* rhs) const

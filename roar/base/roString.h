@@ -110,7 +110,12 @@ struct RangedString
 	String		toString() const;
 	operator	String();
 
-	roSize		size() const { return end - begin; }
+	roSize		find		(char c, roSize offset=0) const;
+	roSize		find		(const char* str, roSize offset=0) const;
+	roSize		rfind		(char c, roSize offset=0) const;
+	roSize		rfind		(const char* str, roSize offset=0) const;
+
+	roSize		size		() const { return end - begin; }
 
 	bool		operator==	(const char* rhs) const;
 	bool		operator==	(const String& rhs) const;
@@ -118,6 +123,8 @@ struct RangedString
 	bool		operator!=	(const char* rhs) const		{ return !(*this == rhs); }
 	bool		operator!=	(const String& rhs) const	{ return !(*this == rhs); }
 	bool		operator!=	(const RangedString& rhs) const	{ return !(*this == rhs); }
+
+	static const roSize npos = roSize(-1);
 
 	const roUtf8* begin;
 	const roUtf8* end;

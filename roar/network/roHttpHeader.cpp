@@ -37,15 +37,15 @@ static const StaticArray<char*, 25>  _requestEnumStringMapping = {
 };
 
 static const StaticArray<char*, 9>  _methodEnumStringMapping = {
-	"Get",
-	"Head" ,
-	"Post",
-	"Put",
-	"Delete",
-	"Connect",
-	"Options",
-	"Trace",
-	"Invalid",
+	"GET",
+	"HEAD" ,
+	"POST",
+	"PUT",
+	"DELETE",
+	"CONNECT",
+	"OPTIONS",
+	"TRACE",
+	"INVALID",
 };
 
 Status HttpRequestHeader::make(Method::Enum method, const char* resource)
