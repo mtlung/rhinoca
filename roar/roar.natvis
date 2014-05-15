@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+<Type Name="ro::String">
+	<DisplayString>{_cstr+sizeof(roSize)*2, s8b}</DisplayString>
+	<Expand>
+		<Item Name="Size">*(roSize*)_cstr</Item>
+		<Item Name="Capacity">*(roSize*)(_cstr+sizeof(roSize))</Item>
+		<Item Name="Text">_cstr+sizeof(roSize)*2, s8b</Item>
+	</Expand>
+</Type>
+
+<Type Name="ro::RangedString">
+	<DisplayString>{begin,[end-begin]s8b}</DisplayString>
+	<Expand>
+		<Item Name="Length">end - begin</Item>
+		<Item Name="Text">begin,[end-begin]s8b</Item>
+	</Expand>
+</Type>
+
+<Type Name="ro::IArray&lt;*&gt;">
+	<Expand>
+		<Item Name="Size">_size</Item>
+		<Item Name="Capacity">_capacity</Item>
+		<ArrayItems> 
+			<Size>_size</Size> 
+			<ValuePointer>_data</ValuePointer> 
+		</ArrayItems> 
+	</Expand>
+</Type>
+</AutoVisualizer>

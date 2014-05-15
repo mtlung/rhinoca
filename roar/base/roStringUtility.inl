@@ -116,9 +116,24 @@ inline const char* roStrrChr(const char* sz, char ch)
 	return roStrrChr((char*)sz, ch);
 }
 
+inline const char* roStrChrCase(const char* sz, char ch)
+{
+	return roStrChrCase((char*)sz, ch);
+}
+
+inline const char* roStrrChrCase(const char* sz, char ch)
+{
+	return roStrrChrCase((char*)sz, ch);
+}
+
 inline const char* roStrStr(const char* a, const char* b)
 {
 	return roStrStr((char*)a, b);
+}
+
+inline const char* roStrStr(const char* a, const char* aEnd, const char* b)
+{
+	return roStrStr((char*)a, aEnd, b);
 }
 
 inline const char* roStrnStr(const char* a, roSize aLen, const char* b)
@@ -134,6 +149,21 @@ inline const char* roStrrStr(const char* a, const char* b)
 inline const char* roStrrnStr(const char* a, roSize aLen, const char* b)
 {
 	return roStrrnStr((char*)a, aLen, b);
+}
+
+inline const char* roStrStrCase(const char* a, const char* b)
+{
+	return roStrStrCase((char*)a, b);
+}
+
+inline const char* roStrStrCase(const char* a, const char* aEnd, const char* b)
+{
+	return roStrStrCase((char*)a, aEnd, b);
+}
+
+inline const char* roStrnStrCase(const char* a, roSize aLen, const char* b)
+{
+	return roStrnStrCase((char*)a, aLen, b);
 }
 
 // Borrowed from http://code.google.com/p/stringencoders/source/browse/trunk/src/modp_ascii.c
