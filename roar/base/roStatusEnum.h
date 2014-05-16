@@ -57,7 +57,7 @@ roStatusEnum( file_is_empty )
 roStatusEnum( net_error )
 roStatusEnum( net_resolve_host_fail )
 roStatusEnum( net_cannont_connect )
-roStatusEnum( net_connection_lost )
+roStatusEnum( net_connection_close )	// A graceful close
 roStatusEnum( net_not_connected )
 
 roStatusEnum( net_already )		// EALREADY, Operation already in progress
@@ -78,9 +78,10 @@ roStatusEnum( net_wouldblock )	// EWOULDBLOCK, Operation would block (recoverabl
 // Http
 roStatusEnum( http_error )
 roStatusEnum( http_invalid_uri )
-roStatusEnum( http_header_error )
+roStatusEnum( http_bad_header )
 roStatusEnum( http_unknow_size )
 roStatusEnum( http_404_not_found )
+roStatusEnum( http_max_redirect_reached )
 
 // Json
 roStatusEnum( json_parse_error )

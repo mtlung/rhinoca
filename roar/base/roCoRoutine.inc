@@ -87,16 +87,19 @@ static coro_context *new_coro, *create_coro;
 static void
 coro_init (void)
 {
-  volatile coro_func func = coro_init_func;
-  volatile void *arg = coro_init_arg;
-
   coro_transfer (new_coro, create_coro);
 
 #if __GCC_HAVE_DWARF2_CFI_ASM && __amd64
   asm (".cfi_undefined rip");
 #endif
 
+#if 1
+  coro_init_func ((void *)coro_init_arg);
+#else
+  volatile coro_func func = coro_init_func;
+  volatile void *arg = coro_init_arg;
   func ((void *)arg);
+#endif
 
   /* the new coro returned. bad. just abort() for now */
   abort ();

@@ -845,7 +845,9 @@ bool CoSocket::isBlockingMode() const
 
 BgCoroutine* createSocketManager()
 {
-	return new CoSocketManager;
+	CoSocketManager* mgr = new CoSocketManager;
+	mgr->initStack(1024 * 4);
+	return mgr;
 }
 
 CoSocketManager::CoSocketManager()
@@ -909,8 +911,6 @@ void CoSocketManager::run()
 		FD_ZERO(&readSet);
 		FD_ZERO(&writeSet);
 		FD_ZERO(&errorSet);
-
-//		printf("socketList size: %d\n", socketList.size());
 
 		if(socketList.isEmpty())
 			suspend();

@@ -251,7 +251,7 @@ roEXCP_TRY
 	// We need to read more till we see the header terminator
 	if(!messageContent) {
 		if(ringBuf.totalReadable() > _maxHeaderSize) {
-			st = Status::http_header_error;
+			st = Status::http_bad_header;
 			roEXCP_THROW;
 		}
 
@@ -286,7 +286,7 @@ Status HttpClient::Connection::_funcProcessResponse()
 roEXCP_TRY
 	roUint64 statusCode = 0;
 	if(!_request->responseHeader.getField(HttpResponseHeader::HeaderField::Status, statusCode)) {
-		st = Status::http_header_error;
+		st = Status::http_bad_header;
 		roEXCP_THROW;
 	}
 
@@ -390,10 +390,10 @@ Status HttpClient::perform(Request& request, const HttpRequestHeader& requestHea
 {
 	RangedString host, resource;
 	if(!requestHeader.getField(HttpRequestHeader::HeaderField::Host, host))
-		return Status::http_header_error;
+		return Status::http_bad_header;
 
 	if(!requestHeader.getField(HttpRequestHeader::HeaderField::Resource, resource))
-		return Status::http_header_error;
+		return Status::http_bad_header;
 
 	// Look for existing connection suitable for this request
 	Connection* connection = NULL;

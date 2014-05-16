@@ -128,18 +128,19 @@ HttpRequestHeader::Method::Enum HttpRequestHeader::getMethod() const
 
 static bool _getField(const String& string, const char* field, RangedString& value)
 {
-	char* begin = const_cast<char*>(string.c_str());
+	const char* begin = const_cast<char*>(string.c_str());
 
 	while(begin < string.end())
 	{
 		// Tokenize the string by new line
-		char* end = roStrStr(begin, string.end(), "\r\n");
+		const char* end = roStrStr(begin, string.end(), "\r\n");
+		end = end ? end : string.end();
 
 		if(begin == end)
 			break;
 
 		// Split by ':'
-		char* p = roStrStr(begin, end, ":");
+		const char* p = roStrStr(begin, end, ":");
 
 		if(p && roStrStrCase(begin, p, field)) {
 			++p;

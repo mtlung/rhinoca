@@ -132,10 +132,10 @@ roUint64 microSecondsSince1970()
 
 roUint64 microSecondsSince1970()
 {
-    timeval tim;
-    gettimeofday(&tim, NULL);
-    
-    return (roUint64)tim.tv_sec * 1000 + tim.tv_usec;
+	timeval tim;
+	gettimeofday(&tim, NULL);
+	
+	return (roUint64)tim.tv_sec * 1000 + tim.tv_usec;
 }
 
 #endif

@@ -26,14 +26,14 @@ struct IStream : private NonCopyable
 	virtual bool		readWillBlock	(roUint64 minBytesToRead) { return false; }
 
 	virtual Status		size			(roUint64& bytes) const { return roStatus::not_supported; }
-	virtual roUint64	posRead			() const = 0;
+	virtual roUint64	posRead			() { return 0; }
 	virtual Status		seekRead		(roInt64 offset, SeekOrigin origin) { return roStatus::not_supported; }
 	virtual void		closeRead		() {}
 
 // Standard helper functions, may consider make it virtual to maximize performance
 
 	// Try to read the requested amount of data, and report how much was actually read.
-			Status		read			(void* buffer, roUint64 maxBytesToRead, roUint64& actualBytesRead);
+	virtual	Status		read			(void* buffer, roUint64 maxBytesToRead, roUint64& actualBytesRead);
 
 	// Typed read function
 	template<class T>
