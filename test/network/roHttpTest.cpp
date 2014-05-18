@@ -84,7 +84,7 @@ TEST_FIXTURE(HttpTest, http)
 //	requestHeader.make(HttpRequestHeader::Method::Get, "/");
 //	requestHeader.addField(HttpRequestHeader::HeaderField::Host, "mdc-web-tomcat17.ubisoft.org");
 
-	HttpClient::Request request;
+/*	HttpClient::Request request;
 
 	HttpClient client;
 	client.perform(request, requestHeader);
@@ -103,7 +103,7 @@ TEST_FIXTURE(HttpTest, http)
 
 	} while(st || st == Status::in_progress);
 
-	CHECK(!buffer.isEmpty());
+	CHECK(!buffer.isEmpty());*/
 }
 
 TEST_FIXTURE(HttpTest, http2)
@@ -128,7 +128,7 @@ TEST_FIXTURE(HttpTest, server)
 	HttpServer server;
 	CHECK(server.init());
 
-	HttpClient client;
+/*	HttpClient client;
 	HttpClient::Request request;
 	HttpRequestHeader requestHeader;
 	requestHeader.make(HttpRequestHeader::Method::Get, "/static-data/map3/2/0/0.png");
@@ -138,5 +138,5 @@ TEST_FIXTURE(HttpTest, server)
 	while(true) {
 		CHECK(server.update());
 		CHECK(request.update());
-	}
+	}*/
 }

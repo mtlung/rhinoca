@@ -2,6 +2,7 @@
 #define __network_roHttp_h__
 
 #include "../base/roLinkList.h"
+#include "../base/roMap.h"
 #include "../base/roRingBuffer.h"
 #include "../base/roSocket.h"
 #include "../base/roString.h"
@@ -127,82 +128,29 @@ struct HttpOptions
 	}; };
 };	// HttpOptions
 
+struct IStream;
+
+struct HttpConnection : public MapNode<SockAddr, HttpConnection>
+{
+	CoSocket socket;
+};	// HttpConnection
+
+struct HttpConnections
+{
+	roStatus getConnection(const SockAddr& address, HttpConnection*& outConnection);
+	Map<HttpConnection> connections;
+};	// HttpConnections
+
 struct HttpClient
 {
-	HttpClient();
-	~HttpClient();
+	HttpClient() {}
+	~HttpClient() {}
 
-	struct Connection;
-
-	struct Request : public ro::ListNode<HttpClient::Request>
-	{
-		Request();
-
-		Status	update		();
-		Status	requestRead	(roSize& outReadSize, roByte*& outReadPtr);
-		void	commitRead	(roSize read);
-		void	removeThis	() override;
-
-		HttpClient*			httpClient;
-		Connection*			connection;
-		HttpResponseHeader	responseHeader;
-	};	// HttpClient::Request
-
-// Operations
-	/// Perform the required (GET, POST) operation.
-	/// You can issue new request on the same Request object, which will then pipelined.
-	/// Support to call it from multiple threads.
-	Status	perform(Request& request, const HttpRequestHeader& requestHeader);
-
-	Status	_getConnection(const char* hostAndPort, Connection*& connection);
-
-	static Status splitUrl(const RangedString& url, RangedString& protocol, RangedString& host, RangedString& path);
-
-// Attributes
-	bool						debug;
-	LinkList<Request>			requests;
-	TinyArray<Connection*, 16>	connections;
-
-// Private
-	static const roSize _maxUrlSize = 2 * 1024;
-	static const roSize _maxHeaderSize = 4 * 1024;
+	typedef	roStatus	(*ReplyFunc)(const HttpResponseHeader& response, IStream& body, void* userPtr);
+			roStatus	request		(const HttpRequestHeader& header, ReplyFunc replyFunc, void* userPtr=NULL, HttpConnections* connectionPool=NULL);
+	static	roStatus	splitUrl	(const RangedString& url, RangedString& protocol, RangedString& host, RangedString& path);
 };	// HttpClient
 
-/*
-	IO with co-routine
-	struct MyTask : coroutine
-	{
-		void operator()()
-		{
-			int a = 0;
-			CORO_REENTER(this)
-			{
-				while(true)
-				{
-					stream.read(buf);
-					CORO_YIELD fun1();
-					int c;
-					CORO_YIELD fun2();
-				}
-			}
-		}
-
-		Stream stream;
-		char buf[1024];
-	}
- */
-/*	Expected usage:
-	Server srv;
-	srv.create(settings);
-	srv.update();
-
-	void onRequest(Request request, Response response)
-	{
-		response.writeHeader(...);
-		response.writeBuffer();
-	}
-	srv.onRequest = onRequest;
- */
 struct HttpServer
 {
 	HttpServer();
