@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "roMap.h"
+#include "roStringUtility.h"
 
 namespace ro {
 
@@ -303,4 +304,10 @@ Node* _AvlTree::walkR(Node& node)
 	return _walk<Right>(node);
 }
 
-}	// namespace Impl
+int MapComparator<const char*>::compare(const char* key)
+{
+	return roStrCmp(key, _key);
+	return 0;
+}
+
+}	// namespace ro

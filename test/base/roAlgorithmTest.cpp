@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "../../roar/base/roAlgorithm.h"
 #include "../../roar/base/roArray.h"
+#include "../../roar/math/roRandom.h"
 
 using namespace ro;
 
@@ -79,7 +80,7 @@ TEST_FIXTURE(AlgorithmTest, sort)
 	for(int i=0; i<10; ++i) {
 		accending.pushBack(i);
 		decending.insert(0, i);
-		random.insert(rand() % (random.size()+1), i);
+		random.insert(roRandBeginEnd(0u, random.size()), i);
 	}
 
 	{	// Insertion sort

@@ -134,7 +134,7 @@ TEST_FIXTURE(BsdSocketTestFixture, TCPBlockingSendBlockingRecv)
 	CHECK(s2.receive(buf, len));
 	CHECK(len <= sizeof(buf));
 
-	CHECK(strcmp("Hello world!", buf) == 0);
+	CHECK(roStrCmp("Hello world!", buf) == 0);
 	taskPool.wait(task);
 }
 

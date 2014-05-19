@@ -128,6 +128,20 @@ T Random<RandGen, MutexType>::minMax(T min, T max)
 	return min + T(res % roUint32(max - min + 1));
 }
 
+static Random<UniformRandom> _defaultRand;
+
 }	// namespace ro
+
+// Handy short-cut which all use the default settings
+inline float roRandf() { return ro::_defaultRand.randf(); }
+
+// Range = [min, max]
+inline float roRandf(float min, float max) { return ro::_defaultRand.randf(min, max); }
+
+template<class T>
+T roRandBeginEnd(T begin, T end) { return ro::_defaultRand.beginEnd(begin, end); }
+
+template<class T>
+T roRandMinMax(T begin, T end) { return ro::_defaultRand.minMax(begin, end); }
 
 #endif	// __math_roRandom_h__

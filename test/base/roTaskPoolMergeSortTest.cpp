@@ -30,7 +30,7 @@ static void merge(int* data, int* scratch, roSize left, roSize leftEnd, roSize r
 		for(;left < rightEnd && right < rightEnd; ++left) {
 			int val = data[right];
 			if(left >= right || val >= data[left]) continue;
-			memmove(data + left + 1, data + left, sizeof(int) * (right - left));
+			roMemmov(data + left + 1, data + left, sizeof(int) * (right - left));
 			data[left] = val;
 			++right;
 		}
@@ -66,7 +66,7 @@ TEST(TaskPoolSingleThreadMergeSortTest)
 	float dt =  stopWatch.getFloat() - begin;
 
 	if(benchmark)
-		printf("Time for SingleThreadMergeSort: %f\n", dt);
+		roLog("", "Time for SingleThreadMergeSort: %f\n", dt);
 
 	for(rhuint i=1; i<data.size(); ++i)
 		CHECK(data[i-1] <= data[i]);
@@ -163,7 +163,7 @@ TEST(TaskPoolMultiThreadMergeSortTest)
 	float dt =  stopWatch.getFloat() - begin;
 
 	if(benchmark)
-		printf("Time for MultiThreadMergeSort: %f\n", dt);
+		roLog("", "Time for MultiThreadMergeSort: %f\n", dt);
 
 	for(rhuint i=1; i<data.size(); ++i)
 		CHECK(data[i-1] <= data[i]);

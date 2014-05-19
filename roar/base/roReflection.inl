@@ -66,7 +66,7 @@ template<class T, class P>
 Klass<T> Registry::Class(const char* name)
 {
 	Type* parent = getType<P>();
-	assert(parent);
+	roAssert(parent);
 	Type* type = getType<T>();
 	if(!type) {
 		type = new Type(name, parent, &typeid(T));

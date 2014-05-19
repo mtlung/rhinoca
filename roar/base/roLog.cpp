@@ -5,7 +5,8 @@
 static void _defaultLogFunc(const char* type, const char* format, va_list ap)
 {
 	// TODO: These are 2 separate steps, not good when roLog is invoked in multiple threads
-	printf("%s: ", type);
+	if(type && type[0] != '\0')
+		printf("%s: ", type);
 	vprintf(format, ap);
 }
 

@@ -23,12 +23,12 @@ TEST_FIXTURE(InputTest, mouse)
 		float y = driver->mouseAxis(driver, stringHash("mouse y"));
 
 		if(x != mouseX || y != mouseY) {
-			printf("%f, %f\n", mouseX, mouseY);
+			roLog("", "%f, %f\n", mouseX, mouseY);
 			mouseX = x;
 			mouseY = y;
 		}
 
 		if(driver->anyButtonDown(driver, false))
-			printf("Any button\n");
+			roLog("", "Any button\n");
 	}
 }

@@ -170,6 +170,13 @@ template<> struct MapComparator<const unsigned>
 	int _key;
 };	// MapComparator
 
+template<> struct MapComparator<const char*>
+{
+	MapComparator(const char* key) : _key(key) {}
+	int compare(const char* key);
+	const char* _key;
+};	// MapComparator
+
 
 // ----------------------------------------------------------------------
 
