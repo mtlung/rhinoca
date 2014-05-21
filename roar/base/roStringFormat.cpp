@@ -190,6 +190,15 @@ void _strFormat_rangedStr(String& str, const RangedString* val, const roUtf8* op
 		str.append(padding, padLen - len);
 }
 
+void _strFormat_pointer(String& str, const void* val, const roUtf8* options)
+{
+	roSize charCount = roToString(NULL, 0, val);
+	if(charCount == 0) return;
+
+	if(!str.incSize(charCount)) return;
+	roVerify(charCount == roToString(&str.back(charCount-1), charCount, val));
+}
+
 typedef bool (*FUNC)(String& str, const void* param, const roUtf8* options);
 
 struct FormatArg

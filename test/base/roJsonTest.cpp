@@ -8,7 +8,7 @@ class JsonTest {};
 
 TEST_FIXTURE(JsonTest, parse_empty)
 {
-    JsonParser parser;
+	JsonParser parser;
 
 	JsonParser::Event::Enum e;
 	CHECK_EQUAL(JsonParser::Event::Error, parser.nextEvent());
@@ -44,7 +44,7 @@ TEST_FIXTURE(JsonTest, parse_basicType)
 	TEST_INT("true",		true,			Bool,		getBool);
 	TEST_INT("0",			0,				UInteger64,	getUint64);
 	TEST_INT("123",			123,			UInteger64,	getUint64);
-	TEST_INT("2147483648",	2147483648,		UInteger64,	getUint64);	// 2^31 - 1
+	TEST_INT("2147483648",	2147483647,		UInteger64,	getUint64);	// 2^31 - 1
 	TEST_INT("4294967295",	4294967295,		UInteger64,	getUint64);
 	TEST_INT("-123",		-123,			Integer64,	getInt64);
 	TEST_INT("-2147483648",	-2147483648LL,	Integer64,	getInt64);	// -2^31 (min of int)
@@ -309,11 +309,11 @@ TEST_FIXTURE(JsonTest, parse_error)
 
 TEST_FIXTURE(JsonTest, writer_empty1)
 {
-    {	JsonWriter writer;
+	{	JsonWriter writer;
 		MemoryOStream os;
 	}
 
-    {	JsonWriter writer;
+	{	JsonWriter writer;
 		MemoryOStream os;
 		writer.setStream(&os);
 		writer.beginDocument();
@@ -323,38 +323,38 @@ TEST_FIXTURE(JsonTest, writer_empty1)
 
 TEST_FIXTURE(JsonTest, writer_empty2)
 {
-    JsonWriter writer;
-    MemoryOStream os;
+	JsonWriter writer;
+	MemoryOStream os;
 
-    writer.setStream(&os);
+	writer.setStream(&os);
 	writer.beginDocument();
-    writer.beginObject();
-    writer.endObject();
+	writer.beginObject();
+	writer.endObject();
 	writer.endDocument();
 }
 
 TEST_FIXTURE(JsonTest, writer_numeric)
 {
-    JsonWriter writer;
-    MemoryOStream os;
+	JsonWriter writer;
+	MemoryOStream os;
 
-    writer.setStream(&os);
+	writer.setStream(&os);
 	writer.beginDocument();
-    writer.beginObject();
-        writer.write("int8", (roInt8)1);
-        writer.write("int16", (roInt16)2);
-        writer.write("int32", (roInt32)3);
-        writer.write("int64", (roInt64)4);
-        writer.write("uint8", (roUint8)1);
-        writer.write("uint16", (roUint16)2);
-        writer.write("uint32", (roUint32)3);
-        writer.write("uint64", (roUint64)4);
-        writer.write("float", 1.23f);
-        writer.write("double", 1.23);
-    writer.endObject();
+	writer.beginObject();
+		writer.write("int8", (roInt8)1);
+		writer.write("int16", (roInt16)2);
+		writer.write("int32", (roInt32)3);
+		writer.write("int64", (roInt64)4);
+		writer.write("uint8", (roUint8)1);
+		writer.write("uint16", (roUint16)2);
+		writer.write("uint32", (roUint32)3);
+		writer.write("uint64", (roUint64)4);
+		writer.write("float", 1.23f);
+		writer.write("double", 1.23);
+	writer.endObject();
 	writer.endDocument();
 
-    CHECK_EQUAL((roUtf8*)os._buf.bytePtr(), "{\"int8\":1,\"int16\":2,\"int32\":3,\"int64\":4,\"uint8\":1,\"uint16\":2,\"uint32\":3,\"uint64\":4,\"float\":1.23,\"double\":1.23}");
+	CHECK_EQUAL((roUtf8*)os._buf.bytePtr(), "{\"int8\":1,\"int16\":2,\"int32\":3,\"int64\":4,\"uint8\":1,\"uint16\":2,\"uint32\":3,\"uint64\":4,\"float\":1.23,\"double\":1.23}");
 }
 
 TEST_FIXTURE(JsonTest, writer)

@@ -80,7 +80,7 @@ TEST_FIXTURE(AlgorithmTest, sort)
 	for(int i=0; i<10; ++i) {
 		accending.pushBack(i);
 		decending.insert(0, i);
-		random.insert(roRandBeginEnd(0u, random.size()), i);
+		random.insert(roRandBeginEnd(roSize(0), random.size()), i);
 	}
 
 	{	// Insertion sort

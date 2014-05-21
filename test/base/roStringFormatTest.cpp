@@ -54,6 +54,11 @@ TEST_FIXTURE(StringFormatTest, printf)
 	str.clear(); strFormat(str, "{}", TypeOf<roInt64>::valueMax());
 	CHECK(str == "9223372036854775807");
 
+	str.clear(); strFormat(str, "0x{}", (int*)0x1234ABCD);			CHECK(str == "0x1234ABCD");
+	str.clear(); strFormat(str, "0x{}", (const int*)0x1234ABCD);	CHECK(str == "0x1234ABCD");
+	str.clear(); strFormat(str, "0x{}", (void*)0x1234ABCD);			CHECK(str == "0x1234ABCD");
+	str.clear(); strFormat(str, "0x{}", (const void*)0x1234ABCD);	CHECK(str == "0x1234ABCD");
+
 	str.clear(); strFormat(str, "{} {} {} {} {} {} {} {} {} {}",
 		TypeOf<roInt8>::valueMax(),
 		TypeOf<roInt16>::valueMax(),

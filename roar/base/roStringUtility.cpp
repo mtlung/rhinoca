@@ -733,6 +733,39 @@ roSize roToString(char* str, roSize strBufSize, roUint64 val_, const char* optio
 	}
 }
 
+static const char _hexCharTable[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+
+roSize roToString(char* str, roSize strBufSize, const void* ptrVal, const char* option)
+{
+	roSize written = 0;
+	roUint64 val = roUint64(ptrVal);
+
+	if(!str) {
+		do {
+			++written;
+			val /= 16;
+		} while(val);
+		return written;
+	}
+	else {
+		roSize max = strBufSize;
+		do {
+			if(written >= max)
+				return 0;
+
+			str[written++] = _hexCharTable[val % 16];
+			val /= 16;
+		} while(val);
+		roStrReverse(str, written);
+
+		// Write the terminator only when there is space left, as if in printf
+		if(written < strBufSize)
+			str[written] = '\0';
+
+		return written;
+	}
+}
+
 
 // ----------------------------------------------------------------------
 

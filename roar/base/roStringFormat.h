@@ -56,6 +56,7 @@ void _strFormat_uint64ptr	(String& str, roUint64* val, const roUtf8* options);
 void _strFormat_utf8		(String& str, const roUtf8* val, const roUtf8* options);
 void _strFormat_str			(String& str, const String* val, const roUtf8* options);
 void _strFormat_rangedStr	(String& str, const RangedString* val, const roUtf8* options);
+void _strFormat_pointer		(String& str, const void* val, const roUtf8* options);
 
 inline void* _strFormatFunc(roInt8 val) {
 	return (void*)_strFormat_int8;
@@ -81,6 +82,12 @@ inline void* _strFormatFunc(roUint32 val) {
 inline void* _strFormatFunc(roUint64 val) {
 	return sizeof(val) != sizeof(void*) ? (void*)_strFormat_uint64ptr : (void*)_strFormat_uint64;
 }
+inline void* _strFormatFunc(long val) {	// Seems the type 'long' is treated differently such that I need to make overload specially for it
+	return _strFormatFunc(roInt64(val));
+}
+inline void* _strFormatFunc(unsigned long val) {
+	return _strFormatFunc(roUint64(val));
+}
 inline void* _strFormatFunc(float val) {
 	return sizeof(val) != sizeof(void*) ? (void*)_strFormat_floatptr : (void*)_strFormat_float;
 }
@@ -95,6 +102,10 @@ inline void* _strFormatFunc(const String& val) {
 }
 inline void* _strFormatFunc(const RangedString& val) {
 	return (void*)_strFormat_rangedStr;
+}
+template <class T>
+inline void* _strFormatFunc(const T* val) {
+	return (void*)_strFormat_pointer;
 }
 
 inline const void* _strFormatArg(roInt8 val) {
@@ -131,6 +142,14 @@ inline const void* _strFormatArg(roUtf8* val) {
 	return (void*)val;
 }
 inline const void* _strFormatArg(const roUtf8* val) {
+	return (void*)val;
+}
+template <class T>
+inline void* _strFormatArg(T* val) {
+	return (void*)val;
+}
+template <class T>
+inline void* _strFormatArg(const T* val) {
 	return (void*)val;
 }
 template <class T>
