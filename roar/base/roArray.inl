@@ -152,7 +152,8 @@ void IArray<T>::clear()
 template<class T>
 void IArray<T>::condense()
 {
-	reserve(_size, true);
+	if(capacity() > 0)
+		reserve(_size, true);
 }
 
 template<class T> roFORCEINLINE

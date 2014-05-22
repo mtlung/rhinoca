@@ -846,7 +846,7 @@ bool CoSocket::isBlockingMode() const
 BgCoroutine* createSocketManager()
 {
 	CoSocketManager* mgr = new CoSocketManager;
-	mgr->initStack(1024 * 4);
+	mgr->initStack(1024 * 32);
 	return mgr;
 }
 
@@ -855,12 +855,14 @@ CoSocketManager::CoSocketManager()
 	roAssert(!_currentCoSocketManager);
 	_currentCoSocketManager = this;
 	debugName = "CoSocketManager";
+	CoSocket::initApplication();
 }
 
 CoSocketManager::~CoSocketManager()
 {
 	roAssert(_currentCoSocketManager == this);
 	_currentCoSocketManager = NULL;
+	CoSocket::closeApplication();
 }
 
 static void _select(const TinyArray<CoSocket::Entry*, FD_SETSIZE>& socketSet, fd_set& readSet, fd_set& writeSet, fd_set& errorSet)
