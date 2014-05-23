@@ -18,21 +18,22 @@ struct StopWatch
 {
 	StopWatch();
 
-	float	getFloat() const;
-	double	getDouble() const;
-	double	getAndReset();
+	roUint64	getTick() const;
+	float		getFloat() const;
+	double		getDouble() const;
+	double		getAndReset();
 
-	void	reset();
-	void	resetToLastGet();
+	void		reset();
+	void		resetToLastGet();
 
-	void	pause();
-	void	resume();
+	void		pause();
+	void		resume();
 
 // Private
-	mutable roUint64 _lastGetTime;	///< Record when the last get() is called (to prevent negative delta time)
-	roUint64 _startTime;			///< Record when the StopWatch is created
-	double _pauseAccumulate;
-	bool _pause;
+	mutable roUint64	_lastGetTime;	///< Record when the last get() is called (to prevent negative delta time)
+	roUint64			_timeAtResume;	///< Record when the StopWatch is created/resumed
+	roUint64			_timeAtPause;
+	bool				_pause;
 };	// StopWatch
 
 /// Utility to keep track a time out
@@ -76,6 +77,24 @@ struct PeriodicTimer
 	float _getEventTime;	///< Increment on ever call to isTriggered()
 	StopWatch _stopWatch;
 };	// PeriodicTimer
+
+/// Help to achieve a stable target fps by measure the time taken for a task,
+/// and suggest the time remains until the frame end
+struct FrameRateRegulator
+{
+	FrameRateRegulator();
+
+	void	setTargetFraemRate(float targetFps);
+	void	beginTask();
+	void	endTask(float& elapsed, float& timeRemain);
+	float	timeToExpectedFrameEnd() const;
+
+	float		targetFrameTime;
+	float		avgFrameTime;
+	float		refinementFactor;
+	StopWatch	fpsTimer;
+	StopWatch	stopWatch;
+};	// FrameRateRegulator
 
 }	// namespace ro
 

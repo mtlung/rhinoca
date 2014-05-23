@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "roStopWatch.h"
+#include "roUtility.h"
 #include "../platform/roPlatformHeaders.h"
 #include <math.h>
 
@@ -74,7 +75,7 @@ double ticksToSeconds(roUint64 ticks)
 	return ticks * invTicksPerSecond;
 }
 
-roUint64 secondsToTicks(float seconds)
+roUint64 secondsToTicks(double seconds)
 {
 	return roUint64(seconds * ticksPerSecond);
 }
@@ -141,9 +142,16 @@ roUint64 microSecondsSince1970()
 #endif
 
 StopWatch::StopWatch()
-	: _pauseAccumulate(0), _pause(false)
+	: _timeAtPause(0), _pause(false)
 {
 	reset();
+}
+
+roUint64 StopWatch::getTick() const
+{
+	if(_pause) return _timeAtPause;
+	_lastGetTime = ticksSinceProgramStatup();
+	return _lastGetTime - _timeAtResume + _timeAtPause;
 }
 
 float StopWatch::getFloat() const
@@ -153,9 +161,7 @@ float StopWatch::getFloat() const
 
 double StopWatch::getDouble() const
 {
-	if(_pause) return _pauseAccumulate;
-	_lastGetTime = ticksSinceProgramStatup();
-	return ticksToSeconds(_lastGetTime - _startTime) + _pauseAccumulate;
+	return ticksToSeconds(getTick());
 }
 
 double StopWatch::getAndReset()
@@ -167,21 +173,21 @@ double StopWatch::getAndReset()
 
 void StopWatch::reset()
 {
-	_pauseAccumulate = 0;
-	_startTime = ticksSinceProgramStatup();
+	_timeAtPause = 0;
+	_timeAtResume = ticksSinceProgramStatup();
 	// NOTE: _lastGetTime will have a fresh value during the next call of get()
 }
 
 void StopWatch::resetToLastGet()
 {
-	_startTime = _lastGetTime;
-	_pauseAccumulate = 0;
+	_timeAtResume = _lastGetTime;
+	_timeAtPause = 0;
 }
 
 void StopWatch::pause()
 {
 	if(_pause) return;
-	_pauseAccumulate = getDouble();
+	_timeAtPause = getTick();
 	_pause = true;
 }
 
@@ -189,7 +195,7 @@ void StopWatch::resume()
 {
 	if(!_pause) return;
 	_pause = false;	
-	_startTime = ticksSinceProgramStatup();
+	_timeAtResume = ticksSinceProgramStatup();
 }
 
 CountDownTimer::CountDownTimer(float timeOutInSecs)
@@ -214,13 +220,18 @@ bool CountDownTimer::isExpired(float& hint)
 	float current = _stopWatch.getFloat();
 	float queryPerSec = _numQuery / (current - _beginTime);
 
+	if(_numQuery > 1)
+		_numQuery = _numQuery;
+
 	// Update the hint
-	if(hint > queryPerSec)
+	if(hint < queryPerSec)
 		hint = hint * 0.9f + queryPerSec * 0.1f;	// Rise up the hint slowly
 	else
 		hint = hint * 0.5f + queryPerSec * 0.5f;	// Put down the hint fast
 
-	_nextCheckAt = _numQuery + roSize(hint * (_endTime - _beginTime) * 0.2f);
+	_nextCheckAt = _numQuery + roClampMax(
+		(roSize(hint * (_endTime - _beginTime) * 0.2f)), roSize(100)
+	);
 	return current >= _endTime;
 }
 
@@ -249,6 +260,36 @@ bool PeriodicTimer::isTriggered()
 		return true;
 	}
 	return false;
+}
+
+FrameRateRegulator::FrameRateRegulator()
+	: targetFrameTime(0.1f)
+	, avgFrameTime(0)
+	, refinementFactor(0)
+{}
+
+void FrameRateRegulator::setTargetFraemRate(float targetFps)
+{
+	targetFrameTime = 1.0f / targetFps;
+}
+
+void FrameRateRegulator::beginTask()
+{
+	stopWatch.reset();
+	float elapsedSinceLastFrame = (float)fpsTimer.getAndReset();
+
+	if(avgFrameTime == 0)
+		avgFrameTime = elapsedSinceLastFrame;
+	else
+		avgFrameTime = avgFrameTime * 0.5f + elapsedSinceLastFrame * 0.5f;
+
+	refinementFactor += targetFrameTime - avgFrameTime;
+}
+
+void FrameRateRegulator::endTask(float& elapsed, float& timeRemain)
+{
+	elapsed = stopWatch.getFloat();
+	timeRemain = targetFrameTime - elapsed + refinementFactor;
 }
 
 }	// namespace ro
