@@ -140,3 +140,35 @@ TEST_FIXTURE(HttpTest, server)
 		CHECK(request.update());
 	}*/
 }
+
+#include "../../roar/base/roIOStream.h"
+#include "../../roar/base/roTypeCast.h"
+
+roStatus onReply(const HttpResponseHeader& response, IStream& body, void* userPtr)
+{
+	roStatus st;
+
+	roByte buf[512];
+	roUint64 read = 0;
+	String content;
+	do {
+		st = body.read(buf, sizeof(buf), read);
+		content.append((char*)buf, clamp_cast<roSize>(read));
+	} while(st);
+
+	if(st == roStatus::file_ended)
+		st = roStatus::ok;
+
+	return st;
+}
+
+TEST_FIXTURE(HttpTest, client)
+{
+	HttpClient client;
+	HttpRequestHeader header;
+
+	CHECK(header.make(HttpRequestHeader::Method::Get, "/"));
+	CHECK(header.addField(HttpRequestHeader::HeaderField::Host, "localhost:8083"));
+
+	CHECK(client.request(header, onReply));
+}
