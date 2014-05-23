@@ -315,12 +315,13 @@ void CoroutineScheduler::stop()
 		float elapsed, timeRemain;
 		regulator.endTask(elapsed, timeRemain);
 
-		int millSec = int(timeRemain * 1000);
-		if(millSec > 0)
-			TaskPool::sleep(millSec);
-
 		if((_resumeList.size() + _suspendedList.size()) == _backgroundList.size())
 			_bgKeepRun = false;
+		else {
+			int millSec = int(timeRemain * 1000);
+			if(millSec > 0)
+				TaskPool::sleep(millSec);
+		}
 	}
 }
 
@@ -332,6 +333,21 @@ bool CoroutineScheduler::keepRun() const
 bool CoroutineScheduler::bgKeepRun() const
 {
 	return _bgKeepRun;
+}
+
+roSize CoroutineScheduler::taskCount() const
+{
+	return _resumeList.size() + _suspendedList.size();
+}
+
+roSize CoroutineScheduler::activetaskCount() const
+{
+	return _resumeList.size();
+}
+
+roSize CoroutineScheduler::suspendedtaskCount() const
+{
+	return _suspendedList.size();
 }
 
 Coroutine* CoroutineScheduler::currentCoroutine()

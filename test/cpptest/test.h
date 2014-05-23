@@ -34,12 +34,10 @@ struct TestResults : private NonCopyable
 
 struct Test : private NonCopyable
 {
-	void run(TestResults& testResults, roSize repeat);
+	void run(CoroutineScheduler& scheduler, TestResults& testResults, roSize repeat);
 
 protected:
 	Test(const String& testName, const String& filename, int lineNumber = 0);
-
-	CoroutineScheduler coScheduler;
 
 private:
 	friend struct CoroutineTestRunner;
@@ -80,13 +78,14 @@ private:
 	TestReporter*		_testReporter;
 	PrintfTestReporter	_defaultTestReporter;
 	bool				_showTestName;
+	CoroutineScheduler	_coScheduler;
 };	// TestRunner
 
 struct TestLauncher : public MapNode<const char*, TestLauncher>, private NonCopyable
 {
 	typedef Map<TestLauncher> Name2TestMap;
 
-	virtual void launch	(TestResults& results_, roSize repeat) const = 0;
+	virtual void launch	(CoroutineScheduler& scheduler, TestResults& results_, roSize repeat) const = 0;
 
 	// Init and destroy only meaningful for TEST_FIXTURE
 	virtual void init	() const {}
@@ -112,9 +111,9 @@ struct TypedTestLauncher : public TestLauncher
 	{
 	}
 
-	virtual void launch(TestResults& testResults, roSize repeat) const override
+	virtual void launch(CoroutineScheduler& scheduler, TestResults& testResults, roSize repeat) const override
 	{
-		TestClass().run(testResults, repeat);
+		TestClass().run(scheduler, testResults, repeat);
 	}
 };	// TypedTestLauncher
 
@@ -131,11 +130,11 @@ struct TypedTestLauncherEx : public TestLauncher
 		destroy();
 	}
 
-	virtual void launch(TestResults& testResults, roSize repeat) const override
+	virtual void launch(CoroutineScheduler& scheduler, TestResults& testResults, roSize repeat) const override
 	{
 		if(!_testClass)
 			init();
-		_testClass->Run(testResults, repeat);
+		_testClass->Run(scheduler, testResults, repeat);
 	}
 
 	virtual void init() const override

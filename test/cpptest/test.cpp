@@ -64,15 +64,12 @@ void CoroutineTestRunner::run()
 	delete this;
 }
 
-void Test::run(TestResults& testResults, roSize repeat)
+void Test::run(CoroutineScheduler& scheduler, TestResults& testResults, roSize repeat)
 {
-	coScheduler.init();
-
 	for(roSize i=0; i<repeat; ++i)
-		coScheduler.add(*new CoroutineTestRunner(*this, testResults));
+		scheduler.add(*new CoroutineTestRunner(*this, testResults));
 
-	coScheduler.update();
-	coScheduler.stop();
+	scheduler.update();
 
 //	runImpl(testResults);
 
@@ -127,6 +124,7 @@ void PrintfTestReporter::reportSummary(roSize testCount, roSize failureCount)
 TestRunner::TestRunner()
 	: _testReporter(&_defaultTestReporter), _showTestName(false)
 {
+	_coScheduler.init();
 }
 
 void TestRunner::setTestReporter(TestReporter* testReporter)
@@ -144,7 +142,7 @@ bool TestRunner::runTest(const char* name)
 	if(_showTestName)
 		roLog("", "Running test: %s\n", i->getName());
 
-	i->launch(result, 1);
+	i->launch(_coScheduler, result, 1);
 	return !result.failed();
 }
 
@@ -158,7 +156,7 @@ bool TestRunner::runTest(const char* name, roSize repeat)
 	if(_showTestName)
 		roLog("", "Running test: %s for %u times\n", i->getName(), repeat);
 
-	i->launch(result, repeat);
+	i->launch(_coScheduler, result, repeat);
 
 	return !result.failed();
 }
@@ -175,7 +173,7 @@ int TestRunner::runAllTests()
 		if(_showTestName)
 			roLog("", "Running test: %s\n", i->getName());
 
-		i->launch(result, 1);
+		i->launch(_coScheduler, result, 1);
 
 		if(result.failed())
 			++failureCount;
