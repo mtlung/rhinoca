@@ -3,6 +3,7 @@
 
 #include "roArray.h"
 #include "roLinkList.h"
+#include "roStopWatch.h"
 #include "roString.h"
 #include "roTaskPool.h"
 #include "roCoroutine.inl"
@@ -22,6 +23,8 @@ struct Coroutine : public ListNode<Coroutine>
 
 	// Calling initStack is optional; if no private stack assigned,
 	// the shared stack in CoroutineScheduler will be used and swap in/our with _backupStack.
+	// NOTE: When running the program under some tool (Visual Studio's profiler) more stack space
+	// may be needed (at least 32k).
 	roStatus initStack(roSize stackSize = 1024 * 1024);
 
 	virtual void run() = 0;
@@ -53,6 +56,9 @@ struct Coroutine : public ListNode<Coroutine>
 	coro_context		_context;
 	ConstString			debugName;
 	CoroutineScheduler*	scheduler;
+
+	static const bool	_isStackGrowthReverse = true;
+	static const roSize	_stackPadding = sizeof(void*) * 2;	// Keep a padding at the "bottom" of the stack, and tweak it so stack walker won't got confused
 };	// Coroutine
 
 struct BgCoroutine : public Coroutine
@@ -65,7 +71,7 @@ struct CoroutineScheduler
 	CoroutineScheduler();
 	~CoroutineScheduler();
 
-	void init			(roSize statckSize = 1024 * 1024);
+	void init			(roSize statckSize = 2 * 1024 * 1024);
 	void add			(Coroutine& coroutine);
 	void addSuspended	(Coroutine& coroutine);
 	void update			(unsigned timeSliceMilliSeconds=0);
@@ -86,13 +92,15 @@ struct CoroutineScheduler
 
 	bool				_keepRun;
 	bool				_bgKeepRun;
+	bool				_inUpdate;
 	LinkList<Coroutine> _resumeList;
 	LinkList<Coroutine> _suspendedList;
-	LinkList<_ListNode>	_backgroundList;	// For those coroutine that provide very basic service (eg. sleep and IO) should register themself in this list
+	LinkList<_ListNode>	_backgroundList;		// For those coroutine that provide very basic service (eg. sleep and IO) should register themselves in this list
 	ByteArray			_stack;					// Multiple coroutine run on the same stack. Stack will be copied when switching coroutines
 	void*				_destroiedCoroutine;	// Coroutine that have been destroied in run() function
 	coro_context		_contextToDestroy;		// We have to delay the destruction of context, until we switch back coro to the scheduler
 	ByteArray			_stackToDestroy;
+	BgCoroutine*		_sleepManager;
 };	// CoroutineScheduler
 
 void coSleep(float seconds);

@@ -2,13 +2,121 @@
 #include "roCoroutine.h"
 #include "roCoroutine.inc"
 #include "roLog.h"
-#include "roStopWatch.h"
+#include "roStackWalker.h"
 
 #ifdef _MSC_VER
 #	pragma warning(disable : 4611) // interaction between '_setjmp' and C++ object destruction is non-portable
 #endif
 
 namespace ro {
+
+//////////////////////////////////////////////////////////////////////////
+// CoSleepManager
+
+struct CoSleepManager;
+
+__declspec(thread) static CoSleepManager* _currentCoSleepManager = NULL;
+
+struct CoSleepManager : public BgCoroutine
+{
+	struct Entry
+	{
+		roUint64 timeToWake;
+		Coroutine* coro;
+		static bool less(const Entry& lhs, const Entry& rhs)
+		{
+			return lhs.timeToWake < rhs.timeToWake;
+		}
+	};
+
+	CoSleepManager()
+	{
+		roAssert(!_currentCoSleepManager);
+		_currentCoSleepManager = this;
+		debugName = "CoSleepManager";
+	}
+
+	~CoSleepManager()
+	{
+		roAssert(_currentCoSleepManager == this);
+		_currentCoSleepManager = NULL;
+	}
+
+	void add(Coroutine& co, float seconds)
+	{
+		roAssert(_currentCoSleepManager == this);
+		const roUint64 timeToWake = stopWatch.getTick() + secondsToTicks(seconds);
+
+		Entry entry = { timeToWake, &co };
+		sortedEntries.insertSorted(entry, Entry::less);
+	}
+
+	virtual void run() override
+	{
+		scheduler->_backgroundList.pushBack(bgNode);
+
+		stopWatch.reset();
+
+		while(scheduler->bgKeepRun() || !sortedEntries.isEmpty())
+		{
+			const roUint64 currentTime = stopWatch.getTick();
+			while(!sortedEntries.isEmpty()) {
+				const Entry& entry = sortedEntries.front();
+				if(entry.timeToWake > currentTime)
+					break;
+
+				entry.coro->resumeWithId(this);
+				sortedEntries.remove(0);
+			}
+
+			if(sortedEntries.isEmpty())
+				suspendWithId(this);
+			else
+				yield();
+
+			roAssert(_currentCoSleepManager == this);
+		}
+
+		delete this;
+	}
+
+	bool hasTaskToWakeNow() const
+	{
+		if(sortedEntries.isEmpty())
+			return false;
+
+		return sortedEntries.front().timeToWake < stopWatch.getTick();
+	}
+
+	StopWatch	stopWatch;
+	roUint64	timeToWakeup;
+	Array<Entry> sortedEntries;
+};	// CoSleepManager
+
+BgCoroutine* createSleepManager()
+{
+	CoSleepManager* mgr = new CoSleepManager;
+	mgr->initStack(1024 * 32);
+	return mgr;
+}
+
+void coSleep(float seconds)
+{
+	Coroutine* coroutine = Coroutine::current();
+	CoSleepManager* sleepMgr = _currentCoSleepManager;
+
+	if(!coroutine || !sleepMgr || seconds == 0) {
+		coroutine->yield();
+		return;
+	}
+
+	sleepMgr->add(*coroutine, seconds);
+	sleepMgr->resumeWithId(sleepMgr);
+	coroutine->suspendWithId(sleepMgr);
+}
+
+//////////////////////////////////////////////////////////////////////////
+// CoroutineScheduler
 
 __declspec(thread) static Coroutine* _currentCoroutine = NULL;
 
@@ -48,6 +156,7 @@ CoroutineScheduler::CoroutineScheduler()
 	: current(NULL)
 	, _keepRun(false)
 	, _bgKeepRun(false)
+	, _inUpdate(false)
 	, _destroiedCoroutine(NULL)
 {}
 
@@ -56,7 +165,6 @@ CoroutineScheduler::~CoroutineScheduler()
 	stop();
 }
 
-static BgCoroutine* createSleepManager();
 extern BgCoroutine* createSocketManager();
 
 void CoroutineScheduler::init(roSize stackSize)
@@ -83,7 +191,9 @@ void CoroutineScheduler::addSuspended(Coroutine& coroutine)
 void CoroutineScheduler::update(unsigned timeSliceMilliSeconds)
 {
 	roAssert(!_stack.isEmpty());
+	roAssert(!_inUpdate && "this is a non-reentrant function");
 
+	_inUpdate = true;
 	tlsInstance = this;
 	float timerHit = 0;
 	CountDownTimer timer(timeSliceMilliSeconds / 1000.0f);
@@ -105,13 +215,41 @@ void CoroutineScheduler::update(unsigned timeSliceMilliSeconds)
 			}
 			else {
 				stackPtr = co->_ownStack.bytePtr();
-				stackSize = _stack.sizeInByte();co->_ownStack.sizeInByte();
+				stackSize = co->_ownStack.sizeInByte();
 			}
 
+			stackSize = stackSize > Coroutine::_stackPadding ? stackSize - Coroutine::_stackPadding : 0;
+
 			// Check for alignment
-			roSize alignemt = 2 * sizeof(void*);
-			roByte* alignedStackPtr = (roByte*)(((roPtrInt(stackPtr) - 1) / alignemt) * alignemt + alignemt);
-			stackSize -= (alignedStackPtr - stackPtr);
+			const roSize alignment = 2 * sizeof(void*);
+			roByte* alignedStackPtr = NULL;
+			if(Coroutine::_isStackGrowthReverse) {
+				roByte* p = stackPtr + stackSize;
+				alignedStackPtr = (roByte*)(((roPtrInt(p) + alignment) / alignment) * alignment - alignment);
+				stackSize -= (p - alignedStackPtr);
+				alignedStackPtr -= stackSize;
+				roAssert(alignedStackPtr == stackPtr);
+			}
+			else {
+				alignedStackPtr = (roByte*)(((roPtrInt(stackPtr) - alignment) / alignment) * alignment + alignment);
+				stackSize -= (alignedStackPtr - stackPtr);
+			}
+
+#if roCPU_x86
+			// Fake the frame in our stack so the callstack looks calling from CoroutineScheduler::update
+			if(Coroutine::_isStackGrowthReverse) {
+				StackWalker stackWalker;
+				stackWalker.init();
+				void* frame[1];
+				stackWalker.stackWalk(frame, roCountof(frame), NULL);
+				void** stackBottomFrame = (void**)(alignedStackPtr + stackSize);
+				--stackBottomFrame;
+				stackBottomFrame[1] = frame[0];
+			}
+#else
+			// To be implement
+#endif
+
 			coro_create(&co->_context, coroutineFunc, (void*)co, alignedStackPtr, stackSize);
 		}
 
@@ -135,6 +273,13 @@ void CoroutineScheduler::update(unsigned timeSliceMilliSeconds)
 
 		_currentCoroutine = NULL;
 		current = NULL;
+
+		// If the only task left is the sleep manager
+		if(_resumeList.size() == 1) {
+			CoSleepManager* sleepMgr = dynamic_cast<CoSleepManager*>(&_resumeList.front());
+			if(sleepMgr && !sleepMgr->hasTaskToWakeNow())
+				break;
+		}
 	}
 
 	tlsInstance = NULL;
@@ -148,6 +293,8 @@ void CoroutineScheduler::update(unsigned timeSliceMilliSeconds)
 			i = next;
 		}
 	}
+
+	_inUpdate = false;
 }
 
 void CoroutineScheduler::requestStop()
@@ -158,8 +305,21 @@ void CoroutineScheduler::requestStop()
 void CoroutineScheduler::stop()
 {
 	requestStop();
+
+	FrameRateRegulator regulator;
+	regulator.setTargetFraemRate(50);
+
 	while(!_resumeList.isEmpty() || !_suspendedList.isEmpty()) {
-		update(0);
+		regulator.beginTask();
+		update(unsigned(1000.0f * regulator.targetFrameTime));
+		float elapsed, timeRemain;
+		regulator.endTask(elapsed, timeRemain);
+
+		printf("avg: %f, %f\n", regulator.avgFrameTime, timeRemain);
+
+		int millSec = int(timeRemain * 1000);
+		if(millSec > 0)
+			TaskPool::sleep(millSec);
 
 		if((_resumeList.size() + _suspendedList.size()) == _backgroundList.size())
 			_bgKeepRun = false;
@@ -188,6 +348,9 @@ CoroutineScheduler* CoroutineScheduler::perThreadScheduler()
 {
 	return tlsInstance;
 }
+
+//////////////////////////////////////////////////////////////////////////
+// Coroutine
 
 Coroutine::Coroutine()
 	: scheduler(NULL)
@@ -226,7 +389,7 @@ roStatus Coroutine::initStack(roSize stackSize)
 
 	_backupStack.clear();
 	_backupStack.condense();
-	return _ownStack.resizeNoInit(stackSize);
+	return _ownStack.resizeNoInit(stackSize + _stackPadding);
 }
 
 void Coroutine::yield()
@@ -382,98 +545,3 @@ void roLongJmp(jmp_buf buf, int val)
 	longjmp(buf, val);
 }
 #endif
-
-namespace ro {
-
-struct CoSleepManager;
-
-__declspec(thread) static CoSleepManager* _currentCoSleepManager = NULL;
-
-struct CoSleepManager : public BgCoroutine
-{
-	struct Entry
-	{
-		float timeToWake;
-		Coroutine* coro;
-		static bool less(const Entry& lhs, const Entry& rhs)
-		{
-			return lhs.timeToWake < rhs.timeToWake;
-		}
-	};
-
-	CoSleepManager()
-	{
-		roAssert(!_currentCoSleepManager);
-		_currentCoSleepManager = this;
-		debugName = "CoSleepManager";
-	}
-
-	~CoSleepManager()
-	{
-		roAssert(_currentCoSleepManager == this);
-		_currentCoSleepManager = NULL;
-	}
-
-	void add(Coroutine& co, float seconds)
-	{
-		roAssert(_currentCoSleepManager == this);
-		const float timeToWake = stopWatch.getFloat() + seconds;
-
-		Entry entry = { timeToWake, &co };
-		sortedEntries.insertSorted(entry, Entry::less);
-	}
-
-	virtual void run() override
-	{
-		scheduler->_backgroundList.pushBack(bgNode);
-
-		stopWatch.reset();
-
-		while(scheduler->bgKeepRun() || !sortedEntries.isEmpty())
-		{
-			const float currentTime = stopWatch.getFloat();
-			while(!sortedEntries.isEmpty()) {
-				const Entry& entry = sortedEntries.front();
-				if(entry.timeToWake > currentTime)
-					break;
-
-				entry.coro->resumeWithId(this);
-				sortedEntries.remove(0);
-			}
-
-			if(sortedEntries.isEmpty())
-				suspendWithId(this);
-			else
-				yield();
-
-			roAssert(_currentCoSleepManager == this);
-		}
-
-		delete this;
-	}
-
-	StopWatch stopWatch;
-	Array<Entry> sortedEntries;
-};	// CoSleepManager
-
-BgCoroutine* createSleepManager()
-{
-	return new CoSleepManager;
-}
-
-void coSleep(float seconds)
-{
-	Coroutine* coroutine = Coroutine::current();
-	CoSleepManager* sleepMgr = _currentCoSleepManager;
-
-	if(!coroutine || !sleepMgr || seconds == 0) {
-		coroutine->yield();
-		return;
-	}
-
-	sleepMgr->add(*coroutine, seconds);
-	sleepMgr->resumeWithId(sleepMgr);
-	coroutine->suspendWithId(sleepMgr);
-}
-
-}	// namespace ro
