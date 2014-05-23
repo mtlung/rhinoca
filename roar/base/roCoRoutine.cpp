@@ -307,15 +307,13 @@ void CoroutineScheduler::stop()
 	requestStop();
 
 	FrameRateRegulator regulator;
-	regulator.setTargetFraemRate(50);
+	regulator.setTargetFraemRate(20);
 
 	while(!_resumeList.isEmpty() || !_suspendedList.isEmpty()) {
 		regulator.beginTask();
 		update(unsigned(1000.0f * regulator.targetFrameTime));
 		float elapsed, timeRemain;
 		regulator.endTask(elapsed, timeRemain);
-
-		printf("avg: %f, %f\n", regulator.avgFrameTime, timeRemain);
 
 		int millSec = int(timeRemain * 1000);
 		if(millSec > 0)

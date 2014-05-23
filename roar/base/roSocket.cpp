@@ -877,6 +877,7 @@ static void _select(const TinyArray<CoSocket::Entry*, FD_SETSIZE>& socketSet, fd
 		return;
 	}
 
+	bool idle = true;
 	for(roSize i=0; i<socketSet.size(); ++i) {
 		CoSocket::Entry& e = *socketSet[i];
 
@@ -884,22 +885,26 @@ static void _select(const TinyArray<CoSocket::Entry*, FD_SETSIZE>& socketSet, fd
 		case CoSocket::Connect:
 		case CoSocket::Send:
 			if(FD_ISSET(e.fd, &writeSet))
-				e.coro->resume(NULL);
+				e.coro->resume(NULL), idle = false;
 			break;
 		case CoSocket::Accept:
 		case CoSocket::Receive:
 			if(FD_ISSET(e.fd, &readSet))
-				e.coro->resume(NULL);
+				e.coro->resume(NULL), idle = false;
 			break;
 		}
 
 		if(FD_ISSET(e.fd, &errorSet))
-			e.coro->resume((void*)-1);
+			e.coro->resume((void*)-1), idle = false;
 	}
 
 	FD_ZERO(&readSet);
 	FD_ZERO(&writeSet);
 	FD_ZERO(&errorSet);
+
+	// NOTE: We can use coSleep in a BgCoroutine :)
+	if(idle)
+		coSleep(1.0f / 50);
 }
 
 void CoSocketManager::run()
