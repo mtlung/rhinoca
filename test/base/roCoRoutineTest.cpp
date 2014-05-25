@@ -179,7 +179,7 @@ struct SocketTestServer : public Coroutine
 		roUtf8 buf[128];
 		roSize readSize = sizeof(buf);
 		if(!s.receive(buf, readSize))
-			printf("id:%u, read fail", id);
+			roLog(NULL, "id:%u, read fail", id);
 		else {
 			buf[readSize] = 0;
 //			printf("id:%u, content: %s", id, buf);
@@ -239,19 +239,19 @@ struct SocketTestClient : public Coroutine
 
 		roVerify(s.create(BsdSocket::TCP));
 		if(s.connect(addr, 100000))
-			printf("id: %u - connect success!\n", id);
+			roLog(NULL, "id: %u - connect success!\n", id);
 		else
-			printf("id: %u - connect fail!\n", id);
+			roLog(NULL, "id: %u - connect fail!\n", id);
 
 		const roUtf8* request = "GET / HTTP/1.1\r\n\r\n";
 		roSize len = roStrLen(request);
 		if(!s.send(request, len)) {
 			++sendFailCount;
-			printf("id: %u - send fail, count: %u\n", id, sendFailCount);
+			roLog(NULL, "id: %u - send fail, count: %u\n", id, sendFailCount);
 		}
 		else {
 			++sendSuccessCount;
-			printf("id: %u - send success, count: %u\n", id, sendSuccessCount);
+			roLog(NULL, "id: %u - send success, count: %u\n", id, sendSuccessCount);
 		}
 
 		s.close();

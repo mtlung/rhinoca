@@ -65,7 +65,9 @@ struct HttpRequestHeader
 
 	Method::Enum	getMethod	() const;
 
+	bool		getField	(const char* option, String& value) const;
 	bool		getField	(const char* option, RangedString& value) const;
+	bool		getField	(HeaderField::Enum option, String& value) const;
 	bool		getField	(HeaderField::Enum option, RangedString& value) const;
 
 	String string;
@@ -112,7 +114,9 @@ struct HttpResponseHeader
 	}; };
 
 	/// Parse and get information from responseString
+	bool getField(const char* option, String& value) const;
 	bool getField(const char* option, RangedString& value) const;
+	bool getField(HeaderField::Enum option, String& value) const;
 	bool getField(HeaderField::Enum option, RangedString& value) const;
 	bool getField(HeaderField::Enum option, roUint64& value) const;
 	bool getField(HeaderField::Enum option, roUint64& value1, roUint64& value2, roUint64& value3) const;
@@ -143,12 +147,14 @@ struct HttpConnections
 
 struct HttpClient
 {
-	HttpClient() {}
+	HttpClient();
 	~HttpClient() {}
 
 	typedef	roStatus	(*ReplyFunc)(const HttpResponseHeader& response, IStream& body, void* userPtr);
 			roStatus	request		(const HttpRequestHeader& header, ReplyFunc replyFunc, void* userPtr=NULL, HttpConnections* connectionPool=NULL);
 	static	roStatus	splitUrl	(const RangedString& url, RangedString& protocol, RangedString& host, RangedString& path);
+
+	bool	useHttpCompression;
 };	// HttpClient
 
 struct HttpServer

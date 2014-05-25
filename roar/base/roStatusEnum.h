@@ -28,6 +28,7 @@ roStatusEnum( in_progress )
 roStatusEnum( can_read_only )
 roStatusEnum( type_mismatch )
 roStatusEnum( retry_later )
+roStatusEnum( zlib_error )
 
 // String
 roStatusEnum( string_encoding_error )

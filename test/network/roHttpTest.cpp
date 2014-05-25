@@ -156,7 +156,7 @@ roStatus onReply(const HttpResponseHeader& response, IStream& body, void* userPt
 		content.append((char*)buf, clamp_cast<roSize>(read));
 	} while(st);
 
-	if(st == roStatus::file_ended)
+	if(st == roStatus::end_of_data)
 		st = roStatus::ok;
 
 	return st;
@@ -165,10 +165,24 @@ roStatus onReply(const HttpResponseHeader& response, IStream& body, void* userPt
 TEST_FIXTURE(HttpTest, client)
 {
 	HttpClient client;
-	HttpRequestHeader header;
+	client.useHttpCompression = false;
 
+	HttpRequestHeader header;
 	CHECK(header.make(HttpRequestHeader::Method::Get, "/"));
-	CHECK(header.addField(HttpRequestHeader::HeaderField::Host, "localhost:8083"));
+	CHECK(header.addField(HttpRequestHeader::HeaderField::Host, "google.com"));
+
+	CHECK(client.request(header, onReply));
+}
+
+TEST_FIXTURE(HttpTest, client_compression)
+{
+	HttpClient client;
+	client.useHttpCompression = true;
+
+	HttpRequestHeader header;
+	CHECK(header.make(HttpRequestHeader::Method::Get, "/"));
+//	CHECK(header.addField(HttpRequestHeader::HeaderField::Host, "www.whatsmyip.org"));
+	CHECK(header.addField(HttpRequestHeader::HeaderField::Host, "www.baby-kingdom.com"));	// Test chunked compressed
 
 	CHECK(client.request(header, onReply));
 }

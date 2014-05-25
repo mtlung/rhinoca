@@ -95,7 +95,7 @@ TEST_FIXTURE(FileSystemTest, httpFS_read)
 		st = httpFileSystemSize(file, size);
 	} while(st == Status::in_progress);
 	CHECK(st);
-	printf(st.c_str());
+	roLog(NULL, st.c_str());
 	CHECK(size > 0);
 
 	roUint64 bytesRead = 0;

@@ -158,9 +158,29 @@ static bool _getField(const String& string, const char* field, RangedString& val
 	return false;
 }
 
+bool HttpRequestHeader::getField(const char* field, String& value) const
+{
+	RangedString rangedStr;
+	if(!getField(field, rangedStr))
+		return false;
+
+	value = rangedStr;
+	return true;
+}
+
 bool HttpRequestHeader::getField(const char* field, RangedString& value) const
 {
 	return _getField(string, field, value);
+}
+
+bool HttpRequestHeader::getField(HeaderField::Enum field, String& value) const
+{
+	RangedString rangedStr;
+	if(!getField(field, rangedStr))
+		return false;
+
+	value = rangedStr;
+	return true;
 }
 
 bool HttpRequestHeader::getField(HeaderField::Enum field, RangedString& value) const
@@ -220,9 +240,29 @@ static const StaticArray<char*, 35>  _responseEnumStringMapping = {
 	"WWW-Authenticate",
 };
 
+bool HttpResponseHeader::getField(const char* field, String& value) const
+{
+	RangedString rangedStr;
+	if(!getField(field, rangedStr))
+		return false;
+
+	value = rangedStr;
+	return true;
+}
+
 bool HttpResponseHeader::getField(const char* field, RangedString& value) const
 {
 	return _getField(string, field, value);
+}
+
+bool HttpResponseHeader::getField(HeaderField::Enum field, String& value) const
+{
+	RangedString rangedStr;
+	if(!getField(field, rangedStr))
+		return false;
+
+	value = rangedStr;
+	return true;
 }
 
 bool HttpResponseHeader::getField(HeaderField::Enum field, RangedString& value) const

@@ -4,6 +4,7 @@
 #include "../base/roLog.h"
 #include "../base/roRegex.h"
 #include "../base/roTypeCast.h"
+#include "../base/roCompressedStream.h"
 
 namespace ro {
 
@@ -63,15 +64,13 @@ Status HttpClientSizedIStream::size(roUint64& bytes) const
 
 Status HttpClientSizedIStream::read(void* buffer, roUint64 bytesToRead, roUint64& bytesRead)
 {
-	if(bytesToRead == 0) {
-		bytesRead = 0;
-		return roStatus::ok;
-	}
+	bytesRead = 0;
 
-	if(_readPos >= _size) {
-		bytesRead = 0;
-		return Status::file_ended;
-	}
+	if(bytesToRead == 0)
+		return roStatus::ok;
+
+	if(_readPos >= _size)
+		return Status::end_of_data;
 
 	if(current < end) {
 		roUint64 available = end - current;
@@ -176,17 +175,16 @@ Status HttpClientChunkedIStream::_readChunkSize()
 
 	_chunkSize = val;
 	if(val == 0)
-		st = Status::file_ended;
+		st = Status::end_of_data;
 
 	return st;
 }
 
 Status HttpClientChunkedIStream::read(void* buffer, roUint64 bytesToRead, roUint64& bytesRead)
 {
-	if(bytesToRead == 0) {
-		bytesRead = 0;
+	bytesRead = 0;
+	if(bytesToRead == 0)
 		return roStatus::ok;
-	}
 
 	// Try to parse the chunk size
 	if(_posInChunk == _chunkSize) {
@@ -194,10 +192,7 @@ Status HttpClientChunkedIStream::read(void* buffer, roUint64 bytesToRead, roUint
 
 		_posInChunk = 0;
 
-		if(!st) {
-			bytesRead = 0;
-			return st;
-		}
+		if(!st) return st;
 	}
 
 	bytesToRead = roMinOf2(bytesToRead, _chunkSize - _posInChunk);
@@ -222,6 +217,11 @@ Status HttpClientChunkedIStream::read(void* buffer, roUint64 bytesToRead, roUint
 //////////////////////////////////////////////////////////////////////////
 // HttpClient
 
+HttpClient::HttpClient()
+{
+	useHttpCompression = true;
+}
+
 roStatus HttpClient::request(const HttpRequestHeader& orgHeader, ReplyFunc replyFunc, void* userPtr, HttpConnections* connectionPool)
 {
 	roStatus st;
@@ -234,6 +234,8 @@ roEXCP_TRY
 	if(!replyFunc)
 		return roStatus::pointer_is_null;
 
+	String host, resourcePath;
+
 // Loop for location redirection
 const roSize maxRedirect = 10;
 roSize redirectCount = 0;
@@ -242,13 +244,17 @@ while(true) {
 	roSize contentStartPos = 0;
 
 	// Prepare request string
-	RangedString host, resource;
-	{	if(!header.getField(HttpRequestHeader::HeaderField::Host, host)) {
+	{
+		RangedString acceptEncoding;
+		if(useHttpCompression && !header.getField(HttpRequestHeader::HeaderField::AcceptEncoding, acceptEncoding))
+			header.addField(HttpRequestHeader::HeaderField::AcceptEncoding, "gzip");
+
+		if(!header.getField(HttpRequestHeader::HeaderField::Host, host)) {
 			st = roStatus::http_bad_header;
 			roEXCP_THROW;
 		}
 
-		if(!header.getField(HttpRequestHeader::HeaderField::Resource, resource)) {
+		if(!header.getField(HttpRequestHeader::HeaderField::Resource, resourcePath)) {
 			st = roStatus::http_bad_header;
 			roEXCP_THROW;
 		}
@@ -257,14 +263,13 @@ while(true) {
 	// Parse address string
 	SockAddr addr;
 	{	bool parseOk = false;
-		String s(host);
 		if(host.find(':') != String::npos)
-			parseOk = addr.parse(s.c_str());
+			parseOk = addr.parse(host.c_str());
 		else
-			parseOk = addr.parse(s.c_str(), 80);
+			parseOk = addr.parse(host.c_str(), 80);
 
 		if(!parseOk) {
-			roLog("error", "Fail to resolve host %s\n", host.begin);
+			roLog("error", "Fail to resolve host %s\n", host.c_str());
 			st =  Status::net_resolve_host_fail;
 			roEXCP_THROW;
 		}
@@ -365,8 +370,20 @@ while(true) {
 			istream.takeOver(s);
 		}
 		else {
+			// Create a null stream
 			AutoPtr<MemoryIStream> s = _allocator.newObj<MemoryIStream>();
 			istream.takeOver(s);
+		}
+
+		// Any compression?
+		RangedString contentEncoding;
+		if(response.getField(HttpResponseHeader::HeaderField::ContentEncoding, contentEncoding)) {
+			if(contentEncoding.cmpNoCase("gzip") == 0) {
+				AutoPtr<GZipStreamIStream> s = _allocator.newObj<GZipStreamIStream>();
+				s->init(istream);
+				roAssert(!istream.ptr());
+				istream.takeOver(s);
+			}
 		}
 
 		st = (*replyFunc)(response, *istream, userPtr);
@@ -381,16 +398,22 @@ while(true) {
 			roEXCP_THROW;
 		}
 
-		RangedString protocol, host, path;
-		st = HttpClient::splitUrl(redirectLocation, protocol, host, path);
-		if(!st) roEXCP_THROW;
+		RangedString protocol, host_, resourcePath_;
+		st = HttpClient::splitUrl(redirectLocation, protocol, host_, resourcePath_);
+		if(st)
+			host = host_, resourcePath = resourcePath_;
+		else
+			resourcePath = redirectLocation;
 
-		String pathStr = path.toString();
-		if(pathStr.isEmpty())
-			pathStr = "/";
+		if(resourcePath.isEmpty())
+			resourcePath = "/";
+		else if(resourcePath.front() != '/') {
+			st = resourcePath.insert(0, "/");
+			if(!st) roEXCP_THROW;
+		}
 
-		header.make(HttpRequestHeader::Method::Get, pathStr.c_str());
-		header.addField(HttpRequestHeader::HeaderField::Host, host.toString().c_str());
+		header.make(HttpRequestHeader::Method::Get, resourcePath.c_str());
+		header.addField(HttpRequestHeader::HeaderField::Host, host.c_str());
 
 		++redirectCount;
 		if(redirectCount > maxRedirect) {
