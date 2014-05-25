@@ -432,6 +432,16 @@ roSize RangedString::rfind(const char* str, roSize offset) const
 	return npos;
 }
 
+int RangedString::cmpCase(const char* str) const
+{
+	return roStrnCmp(begin, str, size());
+}
+
+int RangedString::cmpNoCase(const char* str) const
+{
+	return roStrnCaseCmp(begin, str, size());
+}
+
 bool RangedString::operator==(const char* rhs) const
 {
 	return roStrnCmp(begin, rhs, size()) == 0;

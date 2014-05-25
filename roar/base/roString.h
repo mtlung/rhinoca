@@ -117,6 +117,9 @@ struct RangedString
 
 	roSize		size		() const { return end - begin; }
 
+	int			cmpCase		(const char* str) const;
+	int			cmpNoCase	(const char* str) const;
+
 	bool		operator==	(const char* rhs) const;
 	bool		operator==	(const String& rhs) const;
 	bool		operator==	(const RangedString& rhs) const;
