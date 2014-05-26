@@ -219,6 +219,7 @@ Status HttpClientChunkedIStream::read(void* buffer, roUint64 bytesToRead, roUint
 
 HttpClient::HttpClient()
 {
+	logLevel = 0;
 	useHttpCompression = true;
 }
 
@@ -279,6 +280,9 @@ while(true) {
 		if(!connectionPool)
 			connectionPool = &dummyPool;
 
+		if(logLevel > 0)
+			roLog("info", "HttpClient - Connecting to %s\n", host.c_str());
+
 		st = connectionPool->getConnection(addr, connection);
 		if(!st) roEXCP_THROW;
 
@@ -290,6 +294,12 @@ while(true) {
 	{	String requestStr = header.string;
 		requestStr += "\r\n";
 		roSize len = requestStr.size();
+
+		if(logLevel > 1)
+			roLog("info", "HttpClient - Sending request string:\n%s", requestStr.c_str());
+		else if(logLevel > 0)
+			roLog("info", "HttpClient - Sending request string\n");
+
 		st = connection->socket.send(requestStr.c_str(), len);
 		if(!st) roEXCP_THROW;
 	}
@@ -302,6 +312,9 @@ while(true) {
 		roSize stepSize = 64;
 		roSize searchIdx = 0;
 		responseStr.reserve(stepSize);
+
+		if(logLevel > 0)
+			roLog("info", "HttpClient - Reading response\n");
 
 		while(true) {
 			roSize len = responseStr._capacity() - responseStr.size();
@@ -336,12 +349,18 @@ while(true) {
 		}
 	}
 
+	if(logLevel > 1)
+		roLog("info", "HttpClient - Response string:\n%s\n", response.string.c_str());
+
 	// Get status code
 	roUint64 statusCode = 0;
 	if(!response.getField(HttpResponseHeader::HeaderField::Status, statusCode)) {
 		st = roStatus::http_bad_header;
 		roEXCP_THROW;
 	}
+
+	if(logLevel > 0)
+		roLog("info", "HttpClient - Status code: %u\n", statusCode);
 
 	// Decode status code
 	switch(statusCode)
@@ -361,6 +380,9 @@ while(true) {
 			s->end = (roByte*)responseStr.c_str() + responseStr.size();
 			s->current = s->begin;
 			istream.takeOver(s);
+
+			if(logLevel > 0)
+				roLog("info", "HttpClient - Content length: %u\n", contentLength);
 		}
 		else if(response.getField(HttpResponseHeader::HeaderField::TransferEncoding, transferEncoding)) {
 			AutoPtr<HttpClientChunkedIStream> s = _allocator.newObj<HttpClientChunkedIStream>(connection->socket);
@@ -383,8 +405,14 @@ while(true) {
 				s->init(istream);
 				roAssert(!istream.ptr());
 				istream.takeOver(s);
+
+				if(logLevel > 0)
+					roLog("info", "HttpClient - Content encoding: %s\n", contentEncoding.toString().c_str());
 			}
 		}
+
+		if(logLevel > 0)
+			roLog("info", "HttpClient - Read body content\n");
 
 		st = (*replyFunc)(response, *istream, userPtr);
 	}	break;
@@ -411,6 +439,9 @@ while(true) {
 			st = resourcePath.insert(0, "/");
 			if(!st) roEXCP_THROW;
 		}
+
+		if(logLevel > 0)
+			roLog("info", "HttpClient - Redirecting to: %s\n", redirectLocation.toString().c_str());
 
 		header.make(HttpRequestHeader::Method::Get, resourcePath.c_str());
 		header.addField(HttpRequestHeader::HeaderField::Host, host.c_str());
@@ -441,9 +472,6 @@ while(true) {
 
 	break;
 }	// End of location redirection loop
-
-//	MemoryIStream stream;
-//	st = (*replyFunc)(response, stream, userPtr);
 
 roEXCP_CATCH
 roEXCP_END

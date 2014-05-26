@@ -206,6 +206,9 @@ Status IArray<T>::insert(roSize idx, const T* srcBegin, const T* srcEnd)
 	roAssert(srcBegin <= srcEnd);
 	roSize inc = srcEnd - srcBegin;
 
+	// Should not insert something from this array to this array
+	roAssert(srcBegin < begin() || srcBegin >= end());
+
 	if(inc == 0) return Status::ok;
 
 	Status st = this->incSize(inc);

@@ -154,6 +154,7 @@ struct HttpClient
 			roStatus	request		(const HttpRequestHeader& header, ReplyFunc replyFunc, void* userPtr=NULL, HttpConnections* connectionPool=NULL);
 	static	roStatus	splitUrl	(const RangedString& url, RangedString& protocol, RangedString& host, RangedString& path);
 
+	roUint8	logLevel;	// 0 for no logging, larger for more
 	bool	useHttpCompression;
 };	// HttpClient
 

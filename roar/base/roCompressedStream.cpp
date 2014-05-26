@@ -27,11 +27,11 @@ Status GZipStreamIStream::init(AutoPtr<IStream>& stream, roSize chunkSize)
 	roMemZeroStruct(_zStream);
 
 	_zStream.zalloc = Z_NULL;
-    _zStream.zfree = Z_NULL;
-    _zStream.opaque = Z_NULL;
-    _zStream.next_in = NULL;
-    _zStream.avail_in = 0;
-    _zStream.next_out = NULL;
+	_zStream.zfree = Z_NULL;
+	_zStream.opaque = Z_NULL;
+	_zStream.next_in = NULL;
+	_zStream.avail_in = 0;
+	_zStream.next_out = NULL;
 
 	const unsigned windowBits = 15;
 	const unsigned enableGzip = 32;
