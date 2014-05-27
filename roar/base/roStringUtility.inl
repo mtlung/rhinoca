@@ -14,6 +14,14 @@ inline roSize roStrLen(const roUtf16* str)
 	return len;
 }
 
+inline roSize roStrLen(const roUtf8* str, roSize strLenMax)
+{
+	if(!str) return 0;
+	roSize len = 0;
+	for(; *str && len < strLenMax; ++str, ++len) {}
+	return len;
+}
+
 inline char* roStrnCpy(char* dst, const char* src, roSize n)
 {
 	char* ret = dst;

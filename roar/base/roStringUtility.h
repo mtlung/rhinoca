@@ -5,6 +5,7 @@
 
 inline roSize	roStrLen		(const roUtf8* str);
 inline roSize	roStrLen		(const roUtf16* str);
+inline roSize	roStrLen		(const roUtf8* str, roSize strLenMax);
 
 inline char*	roStrnCpy		(char* dst, const char* src, roSize n);
 

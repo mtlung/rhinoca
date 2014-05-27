@@ -188,7 +188,7 @@ Status String::assign(const char* str)
 
 Status String::assign(const char* str, roSize count)
 {
-	roAssert(count <= roStrLen(str));
+	roAssert(count <= roStrLen(str, count));
 
 	if(count) {
 		Status st = resize(count); if(!st) return st;
