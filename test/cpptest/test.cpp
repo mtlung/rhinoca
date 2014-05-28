@@ -69,7 +69,7 @@ void Test::run(CoroutineScheduler& scheduler, TestResults& testResults, roSize r
 	for(roSize i=0; i<repeat; ++i)
 		scheduler.add(*new CoroutineTestRunner(*this, testResults));
 
-	scheduler.update();
+	scheduler.runTillAllFinish();
 
 //	runImpl(testResults);
 
@@ -125,6 +125,11 @@ TestRunner::TestRunner()
 	: _testReporter(&_defaultTestReporter), _showTestName(false)
 {
 	_coScheduler.init();
+}
+
+TestRunner::~TestRunner()
+{
+	_coScheduler.stop();
 }
 
 void TestRunner::setTestReporter(TestReporter* testReporter)

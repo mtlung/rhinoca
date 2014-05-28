@@ -58,6 +58,7 @@ struct PrintfTestReporter : public TestReporter
 struct TestRunner
 {
 	TestRunner();
+	~TestRunner();
 
 	void setTestReporter(TestReporter* testReporter);
 

@@ -155,6 +155,24 @@ String buildFailureString(Actual* actual, Expected* expected)
 	return str;
 }
 
+template<typename Actual>
+String buildFailureString(const Actual& actual, const roStatus& expected)
+{
+	String str;
+	roStatus stActual(actual);
+	roVerify(strFormat(str, "Expected {} but got {}", expected.c_str(), stActual.c_str()));
+	return str;
+}
+
+template<typename Expected>
+String buildFailureString(const roStatus& actual, const Expected& expected)
+{
+	String str;
+	roStatus stExpected(expected);
+	roVerify(strFormat(str, "Expected {} but got {}", stExpected.c_str(), actual.c_str()));
+	return str;
+}
+
 String buildFailureString(size_t actual, size_t expected);
 
 template<typename Actual, typename Expected>

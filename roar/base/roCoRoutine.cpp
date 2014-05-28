@@ -302,6 +302,27 @@ void CoroutineScheduler::requestStop()
 	_keepRun = false;
 }
 
+void CoroutineScheduler::runTillAllFinish(float maxFps)
+{
+	FrameRateRegulator regulator;
+	regulator.setTargetFraemRate(maxFps);
+
+	while(!_resumeList.isEmpty() || !_suspendedList.isEmpty()) {
+		regulator.beginTask();
+		update(unsigned(1000.0f * regulator.targetFrameTime));
+		float elapsed, timeRemain;
+		regulator.endTask(elapsed, timeRemain);
+
+		if((_resumeList.size() + _suspendedList.size()) == _backgroundList.size())
+			break;
+		else {
+			int millSec = int(timeRemain * 1000);
+			if(millSec > 0)
+				TaskPool::sleep(millSec);
+		}
+	}
+}
+
 void CoroutineScheduler::stop()
 {
 	requestStop();
