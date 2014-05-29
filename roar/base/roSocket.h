@@ -120,10 +120,10 @@ struct BsdSocket : NonCopyable
 	/// A simple select function that operate only on this socket.
 	ErrorCode	select				(bool& checkRead, bool& checkWrite, bool& checkError);
 
-	roStatus	send				(const void* data, roSize& len, int flags=0);								///< Returns -1 for any error
-	roStatus	receive				(void* buf, roSize& len, int flags=0);										///< Returns -1 for any error
-	int			sendTo				(const void* data, roSize len, const SockAddr& destEndPoint, int flags=0);	///< Returns -1 for any error
-	int			receiveFrom			(void* buf, roSize len, SockAddr& srcEndPoint, int flags=0);				///< Returns -1 for any error
+	roStatus	send				(const void* data, roSize& len, int flags=0);
+	roStatus	receive				(void* buf, roSize& len, int flags=0);
+	roStatus	sendTo				(const void* data, roSize len, const SockAddr& destEndPoint, int flags=0);
+	roStatus	receiveFrom			(void* buf, roSize& len, SockAddr& srcEndPoint, int flags=0);
 
 	///	To assure that all data is sent and received on a connected socket before it is closed,
 	///	an application should use shutDownXXX() to close connection before calling close().
@@ -135,6 +135,8 @@ struct BsdSocket : NonCopyable
 	roStatus	close				();
 
 // Attributes
+	SocketType	socketType			() const;
+
 	/// Whether the socket is bound to a specific local port.
 	bool		isBound				() const;
 
@@ -165,8 +167,9 @@ struct BsdSocket : NonCopyable
 
 // Private
 	roStatus	_setOption			(int level, int opt, const void* p, roSize size);
-	char _fd[sizeof(void*)];	///< File descriptor
-	bool _isBlockingMode;
+	SocketType	_socketType;
+	char		_fd[sizeof(void*)];	///< File descriptor
+	bool		_isBlockingMode;
 };	// BsdSocket
 
 }	// namespace ro
@@ -189,9 +192,12 @@ struct CoSocket : public BsdSocket
 	roStatus	create			(SocketType type);
 	roStatus	setBlocking		(bool block);
 	roStatus	accept			(CoSocket& socket) const;
-	roStatus	connect			(const SockAddr& endPoint, float timeOut=0);
+	roStatus	connect			(const SockAddr& endPoint, float timeout=0);
+
 	roStatus	send			(const void* data, roSize& len, int flags=0);
 	roStatus	receive			(void* buf, roSize& len, int flags=0);
+	roStatus	sendTo			(const void* data, roSize len, const SockAddr& destEndPoint, int flags=0);
+	roStatus	receiveFrom		(void* buf, roSize& len, SockAddr& srcEndPoint, float timeout=0.f, int flags=0);
 
 	void		requestClose	();
 	roStatus	close			();

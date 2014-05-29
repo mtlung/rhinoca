@@ -198,7 +198,7 @@ void SockAddr::setIp(roUint32 ip)
 void SockAddr::asString(String& str) const
 {
 	str.clear();
-	strFormat(str, "{}.{}.{}{}:{}",
+	strFormat(str, "{}.{}.{}.{}:{}",
 		(roUint8)asSockAddr().sa_data[2],
 		(roUint8)asSockAddr().sa_data[3],
 		(roUint8)asSockAddr().sa_data[4],
@@ -280,6 +280,7 @@ ErrorCode BsdSocket::closeApplication()
 
 BsdSocket::BsdSocket()
 	: lastError(0)
+	, _socketType(Undefined)
 	, _isBlockingMode(true)
 {
 	roStaticAssert(sizeof(socket_t) == sizeof(_fd));
@@ -313,6 +314,8 @@ roStatus BsdSocket::create(SocketType type)
 		roVerify(setsockopt(fd(), SOL_SOCKET, SO_NOSIGPIPE, &b, sizeof(b)) == 0);
 	}
 #endif
+
+	_socketType = type;
 
 	roAssert(fd() != INVALID_SOCKET);
 	return noError(lastError);
@@ -473,22 +476,23 @@ roStatus BsdSocket::receive(void* buf, roSize& len, int flags)
 	return lastError = OK, roStatus::ok;
 }
 
-int BsdSocket::sendTo(const void* data, roSize len, const SockAddr& destEndPoint, int flags)
+roStatus BsdSocket::sendTo(const void* data, roSize len, const SockAddr& destEndPoint, int flags)
 {
 	sockaddr addr = destEndPoint.asSockAddr();
 	int ret = ::sendto(fd(), (const char*)data, clamp_cast<int>(len), flags, &addr, sizeof(addr));
 	lastError = ret < 0 ? getLastError() : OK;
-	return ret;
+	return errorToStatus(lastError);
 }
 
-int BsdSocket::receiveFrom(void* buf, roSize len, SockAddr& srcEndPoint, int flags)
+roStatus BsdSocket::receiveFrom(void* buf, roSize& len, SockAddr& srcEndPoint, int flags)
 {
 	sockaddr& addr = srcEndPoint.asSockAddr();
 	socklen_t bufSize = sizeof(addr);
 	int ret = ::recvfrom(fd(), (char*)buf, clamp_cast<int>(len), flags, &addr, &bufSize);
 	roAssert(bufSize == sizeof(addr));
 	lastError = ret < 0 ? getLastError() : OK;
-	return ret;
+	len = ret < 0 ? 0 : ret;
+	return errorToStatus(lastError);
 }
 
 roStatus BsdSocket::shutDownRead()
@@ -551,6 +555,11 @@ roStatus BsdSocket::close()
 #else
 	return lastError = OK, roStatus::ok;
 #endif
+}
+
+BsdSocket::SocketType BsdSocket::socketType() const
+{
+	return _socketType;
 }
 
 bool BsdSocket::isBlockingMode() const
@@ -685,11 +694,11 @@ roStatus CoSocket::accept(CoSocket& socket) const
 	return st;
 }
 
-roStatus CoSocket::connect(const SockAddr& endPoint, float timeOut)
+roStatus CoSocket::connect(const SockAddr& endPoint, float timeout)
 {
 	if(!_isCoBlockingMode) {
-		if(timeOut > 0.f)
-			roLog("warn", "A timeOut value specified for non-blocking CoSocket is ignored\n");
+		if(timeout > 0.f)
+			roLog("warn", "A timeout value specified for non-blocking CoSocket is ignored\n");
 
 		return Super::connect(endPoint);
 	}
@@ -707,11 +716,11 @@ roStatus CoSocket::connect(const SockAddr& endPoint, float timeOut)
 	// if(ret == WSAENOBUFS) {}
 
 	int ret = SOCKET_ERROR;
-	CountDownTimer timer(timeOut);
+	CountDownTimer timer(timeout);
 	do {
 		roStatus st = Super::connect(endPoint);
 
-		if(!inProgress(st) && timeOut <= 0.f)
+		if(!inProgress(st) && timeout <= 0.f)
 			return st;
 
 		// Prepare for hand over to socket manager
@@ -824,15 +833,151 @@ roStatus CoSocket::receive(void* buf, roSize& len, int flags)
 	return st;
 }
 
+roStatus CoSocket::sendTo(const void* data, roSize len, const SockAddr& destEndPoint, int flags)
+{
+	roStatus st = Super::sendTo(data, len, destEndPoint, flags);
+
+	if(!_isCoBlockingMode)
+		return st;
+
+	if(!inProgress(st))
+		return st;
+
+	Coroutine* coroutine = Coroutine::current();
+	CoSocketManager* socketMgr = _currentCoSocketManager;
+
+	Entry& writeEntry = _onHeap->_writeEntry;
+
+	// We pipe operation one by one
+	while(writeEntry.isInList())
+		coroutine->yield();
+
+	// Prepare for hand over to socket manager
+	writeEntry.operation = Send;
+	writeEntry.fd = fd();
+	writeEntry.coro = coroutine;
+
+	socketMgr->socketList.pushBack(writeEntry);
+	coroutine->suspend();
+	roAssert(writeEntry.getList() == &socketMgr->socketList);
+	writeEntry.removeThis();
+
+	// Data is now ready to send
+	st = Super::sendTo(data, len, destEndPoint, flags);
+
+	roAssert(!inProgress(st));
+	return st;
+}
+
+struct TimeoutTracker : public Coroutine, private NonCopyable
+{
+	TimeoutTracker(Coroutine* toWake, float timeoutSeconds)
+		: _toWake(toWake)
+	{
+		_canceled = false;
+		_timedOut = false;
+		_timeoutSeconds = timeoutSeconds;
+		debugName = "TimeOutTracker";
+	}
+
+	void cancel()
+	{
+		_canceled = true;
+		_toWake = NULL;
+	}
+
+	bool isTimedOut() const
+	{
+		return _timedOut;
+	}
+
+	virtual void run() override
+	{
+		coSleep(_timeoutSeconds);
+		_timedOut = true;
+		if(_toWake)
+			_toWake->resume();
+		if(_canceled)
+			delete this;
+	}
+
+	bool _canceled;
+	bool _timedOut;
+	float _timeoutSeconds;
+	Coroutine* _toWake;
+};	// TimeoutTracker
+
+roStatus CoSocket::receiveFrom(void* buf, roSize& len, SockAddr& srcEndPoint, float timeout, int flags)
+{
+	roSize inLen = len;
+	roStatus st = Super::receive(buf, len, flags);
+
+	if(!_isCoBlockingMode)
+		return st;
+
+	if(!inProgress(st))
+		return st;
+
+	// No data is ready for read, set back len
+	len = inLen;
+
+	Coroutine* coroutine = Coroutine::current();
+	CoSocketManager* socketMgr = _currentCoSocketManager;
+
+	if(!coroutine || !socketMgr)
+		return st;
+
+	Entry& readEntry = _onHeap->_readEntry;
+
+	// We pipe operation one by one
+	while(readEntry.isInList())
+		coroutine->yield();
+
+	// Prepare for hand over to socket manager
+	readEntry.operation = Receive;
+	readEntry.fd = fd();
+	readEntry.coro = coroutine;
+
+	AutoPtr<TimeoutTracker> timeoutTracker;
+
+	if(timeout > 0) {
+		timeoutTracker.takeOver(_allocator.newObj<TimeoutTracker>(coroutine, timeout));
+		coroutine->scheduler->add(*timeoutTracker);
+	}
+
+	socketMgr->socketList.pushBack(readEntry);
+	socketMgr->resume();
+	coroutine->suspend();
+	roAssert(readEntry.getList() == &socketMgr->socketList);
+	readEntry.removeThis();
+
+	if(timeoutTracker.ptr()) {
+		if(timeoutTracker->isTimedOut())
+			return roStatus::timed_out;
+		else {
+			timeoutTracker->cancel();
+			timeoutTracker.unref();
+		}
+	}
+
+	// Data is now ready for read
+	st = Super::receive(buf, len, flags);
+
+	roAssert(!inProgress(st));
+	return st;
+}
+
 roStatus CoSocket::close()
 {
 	setBlocking(true);
 
 	shutDownWrite();
 
-	roByte buf[128];
-	roSize len;
-	while(len = sizeof(buf), receive(buf, len) && len) {}
+	if(_socketType == BsdSocket::TCP || _socketType == BsdSocket::TCP6) {
+		roByte buf[128];
+		roSize len;
+		while(len = sizeof(buf), receive(buf, len) && len) {}
+	}
 
 	shutDownRead();
 	return Super::close();
