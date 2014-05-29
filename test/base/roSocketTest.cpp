@@ -177,10 +177,11 @@ TEST_FIXTURE(BsdSocketTestFixture, Udp)
 	CHECK(s2.create(BsdSocket::UDP));
 	CHECK(s2.bind(connectorAddr));
 	const char msg[] = "Hello world!";
-	CHECK_EQUAL(int(sizeof(msg)), s2.sendTo(msg, sizeof(msg), mLocalAddr));
+	CHECK(s2.sendTo(msg, sizeof(msg), mLocalAddr));
 
 	char buf[64];
 	SockAddr srcAddr(SockAddr::ipAny(), 0);
-	CHECK_EQUAL(int(sizeof(msg)), s.receiveFrom(buf, sizeof(buf), srcAddr));
+	roSize len = sizeof(buf);
+	CHECK(s.receiveFrom(buf, len, srcAddr));
 	CHECK(srcAddr == connectorAddr);
 }
