@@ -630,6 +630,7 @@ struct CoSocketManager : public BgCoroutine
 	CoSocketManager();
 	~CoSocketManager();
 	virtual void run() override;
+	void process(CoSocket::Entry& entry);
 
 	LinkList<CoSocket::Entry> socketList;
 };
@@ -683,8 +684,7 @@ roStatus CoSocket::accept(CoSocket& socket) const
 	readEntry.fd = fd();
 	readEntry.coro = coroutine;
 
-	socketMgr->socketList.pushBack(readEntry);
-	coroutine->suspend();
+	socketMgr->process(readEntry);
 	roAssert(readEntry.getList() == &socketMgr->socketList);
 	readEntry.removeThis();
 
@@ -729,8 +729,7 @@ roStatus CoSocket::connect(const SockAddr& endPoint, float timeout)
 		readEntry.fd = fd();
 		readEntry.coro = coroutine;
 
-		socketMgr->socketList.pushBack(readEntry);
-		coroutine->suspend();
+		socketMgr->process(readEntry);
 		roAssert(readEntry.getList() == &socketMgr->socketList);
 		readEntry.removeThis();
 
@@ -775,8 +774,7 @@ roStatus CoSocket::send(const void* data, roSize& len, int flags)
 			writeEntry.fd = fd();
 			writeEntry.coro = coroutine;
 
-			socketMgr->socketList.pushBack(writeEntry);
-			coroutine->suspend();
+			socketMgr->process(writeEntry);
 			roAssert(writeEntry.getList() == &socketMgr->socketList);
 			writeEntry.removeThis();
 		}
@@ -821,8 +819,7 @@ roStatus CoSocket::receive(void* buf, roSize& len, int flags)
 	readEntry.fd = fd();
 	readEntry.coro = coroutine;
 
-	socketMgr->socketList.pushBack(readEntry);
-	coroutine->suspend();
+	socketMgr->process(readEntry);
 	roAssert(readEntry.getList() == &socketMgr->socketList);
 	readEntry.removeThis();
 
@@ -857,8 +854,7 @@ roStatus CoSocket::sendTo(const void* data, roSize len, const SockAddr& destEndP
 	writeEntry.fd = fd();
 	writeEntry.coro = coroutine;
 
-	socketMgr->socketList.pushBack(writeEntry);
-	coroutine->suspend();
+	socketMgr->process(writeEntry);
 	roAssert(writeEntry.getList() == &socketMgr->socketList);
 	writeEntry.removeThis();
 
@@ -945,9 +941,7 @@ roStatus CoSocket::receiveFrom(void* buf, roSize& len, SockAddr& srcEndPoint, fl
 		coroutine->scheduler->add(*timeoutTracker);
 	}
 
-	socketMgr->socketList.pushBack(readEntry);
-	socketMgr->resume();
-	coroutine->suspend();
+	socketMgr->process(readEntry);
 	roAssert(readEntry.getList() == &socketMgr->socketList);
 	readEntry.removeThis();
 
@@ -1008,6 +1002,14 @@ CoSocketManager::~CoSocketManager()
 	roAssert(_currentCoSocketManager == this);
 	_currentCoSocketManager = NULL;
 	CoSocket::closeApplication();
+}
+
+void CoSocketManager::process(CoSocket::Entry& entry)
+{
+	socketList.pushBack(entry);
+	resume();
+	roAssert(entry.coro);
+	entry.coro->suspend();
 }
 
 static void _select(const TinyArray<CoSocket::Entry*, FD_SETSIZE>& socketSet, fd_set& readSet, fd_set& writeSet, fd_set& errorSet)
