@@ -4,10 +4,10 @@
 #include "roArray.h"
 #include "roRegex.h"
 #include "roRingBuffer.h"
-#include "roSocket.h"
 #include "roStringFormat.h"
 #include "roTypeCast.h"
 #include "roCpuProfiler.h"
+#include "../network/roSocket.h"
 
 // Reference:
 // http://royal.pingdom.com/2012/08/15/fun-and-unusual-http-response-headers/

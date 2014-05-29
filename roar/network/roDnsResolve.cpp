@@ -1,8 +1,8 @@
 #include "pch.h"
 #include "roDnsResolve.h"
+#include "roSocket.h"
 #include "../base/roArray.h"
 #include "../base/roLog.h"
-#include "../base/roSocket.h"
 #include "../base/roStopWatch.h"
 #include "../base/roString.h"
 #include "../base/roTypeCast.h"
@@ -323,7 +323,7 @@ roStatus DNSResolver::_getDnsServers()
 
 	// Loop through the services
 	ByteArray buf;
-	DWORD bufLen = buf.size();
+	DWORD bufLen = num_cast<DWORD>(buf.size());
 
 	while(true) {
 		ret = WSALookupServiceNextA(hLookup, LUP_RETURN_NAME|LUP_RETURN_ADDR, &bufLen, (WSAQUERYSETA*)buf.bytePtr());

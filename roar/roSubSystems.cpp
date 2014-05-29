@@ -6,11 +6,11 @@
 #include "base/roMemoryProfiler.h"
 #include "base/roResource.h"
 #include "base/roReflection.h"
-#include "base/roSocket.h"
 #include "base/roTaskPool.h"
 #include "math/roMath.h"
 #include "audio/roAudioDriver.h"
 #include "input/roInputDriver.h"
+#include "network/roSocket.h"
 #include "render/roRenderDriver.h"
 
 namespace ro {

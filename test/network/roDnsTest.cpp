@@ -8,5 +8,5 @@ struct DnsTest {};
 TEST_FIXTURE(DnsTest, basic)
 {
 	roUint32 ip;
-	CHECK_EQUAL(roStatus::ok, roGetHostByName("google.com", ip));
+	CHECK_EQUAL(roStatus::ok, roGetHostByName("localhost", ip));
 }

@@ -1,7 +1,6 @@
 #ifndef __roCpuProfiler_h__
 #define __roCpuProfiler_h__
 
-#include "roSocket.h"
 #include "roStatus.h"
 #include "roStopWatch.h"
 #include "roString.h"

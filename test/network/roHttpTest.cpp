@@ -177,6 +177,7 @@ TEST_FIXTURE(HttpTest, client)
 TEST_FIXTURE(HttpTest, client_compression)
 {
 	HttpClient client;
+	client.logLevel = 2;
 	client.useHttpCompression = true;
 
 	HttpRequestHeader header;

@@ -1,8 +1,8 @@
-#ifndef __roSocket_h__
-#define __roSocket_h__
+#ifndef __network_roSocket_h__
+#define __network_roSocket_h__
 
-#include "roNonCopyable.h"
-#include "roStatus.h"
+#include "../base/roNonCopyable.h"
+#include "../base/roStatus.h"
 #include "../platform/roCompiler.h"
 #include "../platform/roOS.h"
 
@@ -174,8 +174,8 @@ struct BsdSocket : NonCopyable
 
 }	// namespace ro
 
-#include "roLinkList.h"
-#include "roMemory.h"
+#include "../base/roLinkList.h"
+#include "../base/roMemory.h"
 
 namespace ro {
 
@@ -235,4 +235,4 @@ struct CoSocket : public BsdSocket
 
 }	// namespace ro
 
-#endif	// __roSocket_h__
+#endif	// __network_roSocket_h__

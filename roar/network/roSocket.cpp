@@ -1,10 +1,10 @@
 #include "pch.h"
 #include "roSocket.h"
-#include "roAtomic.h"
-#include "roString.h"
-#include "roStringFormat.h"
-#include "roUtility.h"
-#include "roTypeCast.h"
+#include "../base/roAtomic.h"
+#include "../base/roString.h"
+#include "../base/roStringFormat.h"
+#include "../base/roUtility.h"
+#include "../base/roTypeCast.h"
 #include <stdio.h>
 #include <fcntl.h>
 
@@ -606,9 +606,9 @@ void BsdSocket::setFd(const socket_t& f) {
 
 }	// namespace ro
 
-#include "roCoroutine.h"
-#include "roLog.h"
-#include "roStopWatch.h"
+#include "../base/roCoroutine.h"
+#include "../base/roLog.h"
+#include "../base/roStopWatch.h"
 
 namespace ro {
 

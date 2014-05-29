@@ -168,7 +168,7 @@ TEST_FIXTURE(CoroutineTest, spawnCoroutineInCoroutine)
 	CHECK_EQUAL(9, SpawnCoroutine::maxInstanceCount);
 }
 
-#include "../../roar/base/roSocket.h"
+#include "../../roar/network/roSocket.h"
 
 namespace {
 

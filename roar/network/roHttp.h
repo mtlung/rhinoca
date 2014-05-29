@@ -1,10 +1,10 @@
 #ifndef __network_roHttp_h__
 #define __network_roHttp_h__
 
+#include "roSocket.h"
 #include "../base/roLinkList.h"
 #include "../base/roMap.h"
 #include "../base/roRingBuffer.h"
-#include "../base/roSocket.h"
 #include "../base/roString.h"
 
 namespace ro {

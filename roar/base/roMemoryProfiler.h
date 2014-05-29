@@ -1,8 +1,7 @@
 #ifndef __roMemoryProfiler_h__
 #define __roMemoryProfiler_h__
 
-#include "roSocket.h"
-#include "roStatus.h"
+#include "../network/roSocket.h"
 
 namespace ro {
 

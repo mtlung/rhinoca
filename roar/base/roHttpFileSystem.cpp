@@ -2,7 +2,6 @@
 #include "roHttpFileSystem.h"
 #include "roLog.h"
 #include "roArray.h"
-#include "roSocket.h"
 #include "roStopWatch.h"
 #include "roString.h"
 #include "roStringFormat.h"
@@ -10,6 +9,7 @@
 #include "roTaskPool.h"
 #include "roTypeCast.h"
 #include "../math/roMath.h"
+#include "../network/roSocket.h"
 #include "../platform/roPlatformHeaders.h"
 #include <stdio.h>
 
