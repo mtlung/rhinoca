@@ -75,7 +75,7 @@ struct CoroutineScheduler
 	void	add					(Coroutine& coroutine);
 	void	addSuspended		(Coroutine& coroutine);
 	void	update				(unsigned timeSliceMilliSeconds=0);
-	void	runTillAllFinish	(float maxFps=20.f);
+	void	runTillAllFinish	(float maxFps=60.f);
 	void	requestStop			();
 	void	stop				();
 	bool	keepRun				() const;

@@ -3,6 +3,6 @@
 
 #include "../base/roStatus.h"
 
-roStatus roGetHostByName(const roUtf8* hostname, roUint32& ip, float timeout=5.f);
+roStatus roGetHostByName(const roUtf8* hostname, roUint32& ipv4, float timeout=5.f);
 
 #endif	// __network_roDnsResolve_h__

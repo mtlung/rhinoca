@@ -150,7 +150,6 @@ static roStatus _fromDnsNameFormat(String& str)
 	return roStatus::ok;
 }
 
-
 roStatus _readName(String& outStr, roByte* buffer, roByte*& reader, const roByte* readerEnd)
 {
 	if(reader >= readerEnd)

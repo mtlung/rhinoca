@@ -608,7 +608,6 @@ void BsdSocket::setFd(const socket_t& f) {
 
 #include "../base/roCoroutine.h"
 #include "../base/roLog.h"
-#include "../base/roStopWatch.h"
 
 namespace ro {
 
