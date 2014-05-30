@@ -50,8 +50,12 @@ roStatus roGetHostByName(const roUtf8* hostname, roUint32& ipv4, float timeout)
 	if(!hWnd)
 		return roStatus::pointer_is_null;
 
+	// NOTE: We cannot use a stack buffer here since the Coroutine will overwrite the
+	// data written by WSAAsyncGetHostByName (which is running in another true thread)
+	// after coSleep() finish
 	ByteArray buf;
-	buf.resizeNoInit(1024);
+	buf.resizeNoInit(MAXGETHOSTSTRUCT);
+
 	HANDLE hRet = WSAAsyncGetHostByName(
 		hWnd, WM_HOSTRESOLVED,
 		hostname,
