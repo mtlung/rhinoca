@@ -476,7 +476,8 @@ while(true) {
 roEXCP_CATCH
 roEXCP_END
 	// Release connection back to pool
-	connectionPool->connections.insert(*connection);
+	if(connection)
+		connectionPool->connections.insert(*connection);
 
 	return st;
 }

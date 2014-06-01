@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "roSocket.h"
+#include "roDnsResolve.h"
 #include "../base/roAtomic.h"
 #include "../base/roString.h"
 #include "../base/roStringFormat.h"
@@ -133,11 +134,12 @@ struct _NetworkStarter
 	~_NetworkStarter() { BsdSocket::closeApplication(); }
 };
 
-bool SockAddr::parse(const char* ip, roUint16 port)
+roStatus SockAddr::parse(const char* ip, roUint16 port)
 {
 	if(ip == NULL || ip[0] == 0)
-		return false;
+		return roStatus::pointer_is_null;
 
+#if 0
 	struct addrinfo hints;
 	struct addrinfo* res = NULL;
 
@@ -154,25 +156,30 @@ bool SockAddr::parse(const char* ip, roUint16 port)
 
 	roMemcpy(&asSockAddr().sa_data[2], &res->ai_addr->sa_data[2], 4);
 	::freeaddrinfo(res);
+#else
+	roUint32 ipNum;
+	roStatus st = roGetHostByName(ip, ipNum);
+	if(!st) return st;
+#endif
 
 	setPort(port);
 
-	return true;
+	return roStatus::ok;
 }
 
-bool SockAddr::parse(const char* addressAndPort)
+roStatus SockAddr::parse(const char* addressAndPort)
 {
 	String buf(addressAndPort);
 
+	roStatus st;
 	int port;
 	if(sscanf(addressAndPort, "%[^:]:%d", buf.c_str(), &port) != 2)
-		return false;
+		return st;
 
-	if(!roIsValidCast(port, roUint16()))
-		return false;
+	st = roIsValidCast(port, roUint16());
+	if(!st) return st;
 
-	parse(buf.c_str(), num_cast<roUint16>(port));
-	return true;
+	return parse(buf.c_str(), num_cast<roUint16>(port));
 }
 
 roUint16 SockAddr::port() const

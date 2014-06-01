@@ -24,6 +24,9 @@
 // http://www.binarytides.com/dns-query-code-in-c-with-winsock/
 // http://www.tcpipguide.com/free/t_DNSMessageHeaderandQuestionSectionFormat.htm
 
+// API to use:
+// getaddrinfo_a: http://bitsup.blogspot.sg/2008/09/asynchronous-dns-lookups-on-linux-with.html
+
 // Other Async DNS library
 // http://adns.sourceforge.net/
 
@@ -533,7 +536,7 @@ roStatus DNSResolver::resolve(const roUtf8* hostname_, roUint32& ip, float timeo
 			roMemcpy(answers[i].rdata.c_str(), reader, rdata.data_len);
 			reader += rdata.data_len;
 
-			a.sin_addr.s_addr = *(roUint32*)answers[i].rdata.c_str(); //working without ntohl
+			a.sin_addr.s_addr = *(roUint32*)answers[i].rdata.c_str();	// Working without ntohl
 
 			if(logLevel > 0)
 				roLog("\t", "%s %s\n", answers[i].name.c_str(), inet_ntoa(a.sin_addr));

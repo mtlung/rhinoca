@@ -41,8 +41,8 @@ struct SockAddr
 	SockAddr(const sockaddr& addr);
 	SockAddr(roUint32 ip, roUint16 port);
 
-	bool		parse		(const char* ip, roUint16 port);
-	bool		parse		(const char* ipAndPort);		///< Format: "address:port"
+	roStatus	parse		(const char* ip, roUint16 port);
+	roStatus	parse		(const char* ipAndPort);		///< Format: "address:port"
 	void		setIp		(roUint32 ip);
 	void		setPort		(roUint16 port);
 
