@@ -41,6 +41,14 @@
 #	define roDebugBreak(x)
 #endif
 
+#ifndef roSetDataBreakpoint
+#	define roSetDataBreakpoint(idx, addr, size)
+#endif
+
+#ifndef roRemoveDataBreakpoint
+#	define roRemoveDataBreakpoint(idx)
+#endif
+
 #if roDEBUG
 #	define roVerify(x) roAssert(x)
 #	define roIsDebug (true)

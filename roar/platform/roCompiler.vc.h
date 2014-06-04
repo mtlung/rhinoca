@@ -50,6 +50,11 @@ typedef unsigned char roByte;
 void _roDebugBreak(bool doBreak=true);
 #define roDebugBreak _roDebugBreak
 
+bool _roSetDataBreakpoint(unsigned index, void* address, unsigned size);
+bool _roRemoveDataBreakpoint(unsigned index);
+#define roSetDataBreakpoint _roSetDataBreakpoint
+#define roRemoveDataBreakpoint _roRemoveDataBreakpoint
+
 // Source code annotation
 #if !roCPP11 && _MSC_VER < 1800
 #	if !defined(__midl) && defined(_PREFAST_) 
