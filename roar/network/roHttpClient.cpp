@@ -1,10 +1,21 @@
 #include "pch.h"
 #include "roHttp.h"
+#include "../base/roCompressedStream.h"
 #include "../base/roIOStream.h"
 #include "../base/roLog.h"
 #include "../base/roRegex.h"
+#include "../base/roStringFormat.h"
 #include "../base/roTypeCast.h"
-#include "../base/roCompressedStream.h"
+
+// Proxy reference:
+// http://www.mnot.net/blog/2011/07/11/what_proxies_must_do
+// http://stackoverflow.com/questions/10876883/implementing-an-http-proxy
+// Https proxy captured from Wireshark while tring to connect https://sourceforge.net
+// CONNECT mdc-web-tomcat17.ubisoft.org:443 HTTP/1.1\\r\\n
+// Mozilla/5.0 (Windows NT 6.1; WOW64; rv:29.0) Gecko/20100101 Firefox/29.0\r\n
+// Proxy-Connection: keep-alive\r\n
+// Connection: keep-alive\r\n
+// Host: mdc-web-tomcat17.ubisoft.org\r\n
 
 namespace ro {
 
@@ -259,18 +270,34 @@ while(true) {
 			st = roStatus::http_bad_header;
 			roEXCP_THROW;
 		}
+
+		// Make sure the resource path is a full path, when we were using proxy
+		if(!proxy.isEmpty()) {
+			RangedString protocol_, host_, path_;
+			if(!splitUrl(RangedString(resourcePath), protocol_, host_, path_)) {
+				String tmp;
+				st = strFormat(tmp, "http://{}{}", host, resourcePath);
+				if(!st) return st;
+				roSwap(tmp, resourcePath);
+			}
+		}
 	}
 
 	// Parse address string
 	SockAddr addr;
+	String serverToConnect = host;
 	{	bool parseOk = false;
-		if(host.find(':') != String::npos)
-			parseOk = addr.parse(host.c_str());
+
+		if(!proxy.isEmpty())
+			serverToConnect = proxy;
+
+		if(serverToConnect.find(':') != String::npos)
+			parseOk = addr.parse(serverToConnect.c_str());
 		else
-			parseOk = addr.parse(host.c_str(), 80);
+			parseOk = addr.parse(serverToConnect.c_str(), 80);
 
 		if(!parseOk) {
-			roLog("error", "Fail to resolve host %s\n", host.c_str());
+			roLog("error", "Fail to resolve server %s\n", serverToConnect.c_str());
 			st =  Status::net_resolve_host_fail;
 			roEXCP_THROW;
 		}
@@ -281,7 +308,7 @@ while(true) {
 			connectionPool = &dummyPool;
 
 		if(logLevel > 0)
-			roLog("info", "HttpClient - Connecting to %s\n", host.c_str());
+			roLog("info", "HttpClient - Connecting to %s\n", serverToConnect.c_str());
 
 		st = connectionPool->getConnection(addr, connection);
 		if(!st) roEXCP_THROW;
@@ -292,6 +319,7 @@ while(true) {
 
 	// Send request string
 	{	String requestStr = header.string;
+
 		requestStr += "\r\n";
 		roSize len = requestStr.size();
 
@@ -366,8 +394,12 @@ while(true) {
 	switch(statusCode)
 	{
 	case 100:		// Continue
-	case 404:
-	case 200: {		// Ok
+	case 200:		// OK
+	case 400:		// Bad request
+	case 401:		// Unauthorized
+	case 404:		// Not found
+	case 416:		// Requested Range not satisfiable
+	{
 		AutoPtr<IStream> istream;
 
 		roUint64 contentLength = 0;
@@ -427,7 +459,7 @@ while(true) {
 		}
 
 		RangedString protocol, host_, resourcePath_;
-		st = HttpClient::splitUrl(redirectLocation, protocol, host_, resourcePath_);
+		st = splitUrl(redirectLocation, protocol, host_, resourcePath_);
 		if(st)
 			host = host_, resourcePath = resourcePath_;
 		else
@@ -440,11 +472,13 @@ while(true) {
 			if(!st) roEXCP_THROW;
 		}
 
+		if(!proxy.isEmpty())
+			resourcePath = redirectLocation;
+
 		if(logLevel > 0)
 			roLog("info", "HttpClient - Redirecting to: %s\n", redirectLocation.toString().c_str());
 
 		header.make(HttpRequestHeader::Method::Get, resourcePath.c_str());
-		header.addField(HttpRequestHeader::HeaderField::Host, host.c_str());
 
 		++redirectCount;
 		if(redirectCount > maxRedirect) {
@@ -458,14 +492,6 @@ while(true) {
 		// Back to the start of the location redirect loop
 		continue;
 	}	break;
-	case 400:		// Bad request
-	case 401:		// Unauthorized
-		break;
-//	case 404:		// Not found
-//		_nextFunc = &Connection::_funcReadBody;
-		break;
-	case 416:		// Requested Range not satisfiable
-		break;
 	default:
 		break;
 	}
@@ -480,19 +506,6 @@ roEXCP_END
 		connectionPool->connections.insert(*connection);
 
 	return st;
-}
-
-roStatus HttpClient::splitUrl(const RangedString& url, RangedString& protocol, RangedString& host, RangedString& path)
-{
-	Regex regex;
-	if(!regex.match(url, "^\\s*([A-Za-z]+)://([^/]+)([^\\r\\n]*)"))
-		return Status::http_invalid_uri;
-
-	protocol = regex.result[1];
-	host = regex.result[2];
-	path = regex.result[3];
-
-	return Status::ok;
 }
 
 }	// namespace ro

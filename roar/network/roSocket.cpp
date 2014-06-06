@@ -151,7 +151,7 @@ roStatus SockAddr::parse(const char* ip, roUint16 port)
 	int myerrno = ::getaddrinfo(ip, NULL, &hints, &res);
 	if (myerrno != 0) {
 		errno = myerrno;
-		return false;
+		return roStatus::net_error;
 	}
 
 	roMemcpy(&asSockAddr().sa_data[2], &res->ai_addr->sa_data[2], 4);
@@ -160,6 +160,8 @@ roStatus SockAddr::parse(const char* ip, roUint16 port)
 	roUint32 ipNum;
 	roStatus st = roGetHostByName(ip, ipNum);
 	if(!st) return st;
+
+	setIp(ipNum);
 #endif
 
 	setPort(port);

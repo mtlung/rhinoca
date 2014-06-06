@@ -54,7 +54,7 @@ struct HttpRequestHeader
 	}; };
 
 	/// Functions for composing requestString
-	Status		make		(Method::Enum method, const char* resource);
+	Status		make		(Method::Enum method, const char* fullUrl);
 	Status		addField	(const char* field, const char* value);
 	Status		addField	(HeaderField::Enum field, const char* value);
 	Status		addField	(HeaderField::Enum field, roUint64 value);
@@ -124,6 +124,8 @@ struct HttpResponseHeader
 	String string;
 };	// HttpResponseHeader
 
+roStatus splitUrl(const RangedString& url, RangedString& protocol, RangedString& host, RangedString& path);
+
 struct HttpOptions
 {
 	struct Option { enum Enum {
@@ -152,10 +154,10 @@ struct HttpClient
 
 	typedef	roStatus	(*ReplyFunc)(const HttpResponseHeader& response, IStream& body, void* userPtr);
 			roStatus	request		(const HttpRequestHeader& header, ReplyFunc replyFunc, void* userPtr=NULL, HttpConnections* connectionPool=NULL);
-	static	roStatus	splitUrl	(const RangedString& url, RangedString& protocol, RangedString& host, RangedString& path);
 
 	roUint8	logLevel;	// 0 for no logging, larger for more
 	bool	useHttpCompression;
+	String	proxy;
 };	// HttpClient
 
 struct HttpServer

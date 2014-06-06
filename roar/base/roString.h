@@ -104,6 +104,7 @@ struct String
 struct RangedString
 {
 	RangedString() : begin(NULL), end(NULL) {}
+	RangedString(const String& str) : begin(str.c_str()), end(str.c_str() + str.size()) {}
 	RangedString(const roUtf8* s) : begin(s), end(s + roStrLen(s)) {}
 	RangedString(const roUtf8* b, const roUtf8* e) : begin(b), end(e) { roAssert(end >= begin); }
 

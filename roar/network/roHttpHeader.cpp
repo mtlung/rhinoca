@@ -48,10 +48,18 @@ static const StaticArray<char*, 9>  _methodEnumStringMapping = {
 	"INVALID",
 };
 
-Status HttpRequestHeader::make(Method::Enum method, const char* resource)
+Status HttpRequestHeader::make(Method::Enum method, const char* fullUrl)
 {
+	RangedString protocol, host, path;
+
+	Status st = splitUrl(RangedString(fullUrl), protocol, host, path);
+	if(!st) return st;
+
 	string.clear();
-	return strFormat(string, "{} {} HTTP/1.1\r\n", _methodEnumStringMapping[method], resource);
+	st = strFormat(string, "{} {}{} HTTP/1.1\r\n", _methodEnumStringMapping[method], fullUrl, path.size() ? "" : "/");
+	if(!st) return st;
+
+	return addField(HeaderField::Host, String(host).c_str());
 }
 
 Status HttpRequestHeader::addField(const char* field, const char* value)
@@ -319,6 +327,19 @@ bool HttpResponseHeader::getField(HeaderField::Enum field, roUint64& value1, roU
 	}
 
 	return false;
+}
+
+roStatus splitUrl(const RangedString& url, RangedString& protocol, RangedString& host, RangedString& path)
+{
+	Regex regex;
+	if(!regex.match(url, "^\\s*([A-Za-z]+)://([^/]+)([^\\r\\n]*)"))
+		return Status::http_invalid_uri;
+
+	protocol = regex.result[1];
+	host = regex.result[2];
+	path = regex.result[3];
+
+	return Status::ok;
 }
 
 }	// namespace ro
