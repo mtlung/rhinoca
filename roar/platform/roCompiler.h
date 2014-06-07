@@ -89,6 +89,8 @@ template<typename count, int size>
 char (*_roCountofHelper(count (&array)[size]))[size];
 #define roCountof(array) ( sizeof(*_roCountofHelper(array)) )
 
+#define roDelete(p) delete p, p = NULL
+
 namespace ro {
 
 // Make variable zero initialized by default

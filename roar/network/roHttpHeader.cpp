@@ -206,6 +206,15 @@ bool HttpRequestHeader::getField(HeaderField::Enum field, RangedString& value) c
 	return false;
 }
 
+bool HttpRequestHeader::cmpFieldNoCase(HeaderField::Enum option, const char* value) const
+{
+	RangedString str;
+	if(!getField(option, str))
+		return false;
+
+	return str.cmpNoCase(value) == 0;
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 // HttpResponseHeader
@@ -327,6 +336,15 @@ bool HttpResponseHeader::getField(HeaderField::Enum field, roUint64& value1, roU
 	}
 
 	return false;
+}
+
+bool HttpResponseHeader::cmpFieldNoCase(HeaderField::Enum option, const char* value) const
+{
+	RangedString str;
+	if(!getField(option, str))
+		return false;
+
+	return str.cmpNoCase(value) == 0;
 }
 
 roStatus splitUrl(const RangedString& url, RangedString& protocol, RangedString& host, RangedString& path)

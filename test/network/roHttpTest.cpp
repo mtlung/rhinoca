@@ -165,25 +165,40 @@ roStatus onReply(const HttpResponseHeader& response, IStream& body, void* userPt
 TEST_FIXTURE(HttpTest, client)
 {
 	HttpClient client;
-	client.useHttpCompression = false;
-
 	HttpRequestHeader header;
-	CHECK(header.make(HttpRequestHeader::Method::Get, "/"));
-	CHECK(header.addField(HttpRequestHeader::HeaderField::Host, "google.com"));
+	CHECK(header.make(HttpRequestHeader::Method::Get, "http://google.com"));
 
 	CHECK(client.request(header, onReply));
 }
 
-TEST_FIXTURE(HttpTest, client_compression)
+TEST_FIXTURE(HttpTest, compression)
 {
 	HttpClient client;
 	client.logLevel = 2;
 	client.useHttpCompression = true;
 
 	HttpRequestHeader header;
-	CHECK(header.make(HttpRequestHeader::Method::Get, "/"));
-//	CHECK(header.addField(HttpRequestHeader::HeaderField::Host, "www.whatsmyip.org"));
-	CHECK(header.addField(HttpRequestHeader::HeaderField::Host, "www.baby-kingdom.com"));	// Test chunked compressed
 
+	// No chunk
+	CHECK(header.make(HttpRequestHeader::Method::Get, "http://www.whatsmyip.org"));
+	CHECK(client.request(header, onReply));
+
+	// With chunk
+	CHECK(header.make(HttpRequestHeader::Method::Get, "http://baby-kingdom.com"));
+	CHECK(client.request(header, onReply));
+}
+
+TEST_FIXTURE(HttpTest, proxy)
+{
+	HttpClient client;
+	client.logLevel = 2;
+	client.proxy = "157.7.202.27:3128";
+
+	HttpRequestHeader header;
+	CHECK(header.make(HttpRequestHeader::Method::Get, "http://google.com.sg"));
+	CHECK(client.request(header, onReply));
+
+	client.useHttpCompression = true;
+	CHECK(header.make(HttpRequestHeader::Method::Get, "http://www.whatsmyip.org"));
 	CHECK(client.request(header, onReply));
 }

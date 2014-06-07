@@ -7,6 +7,10 @@
 #include "../base/roStringFormat.h"
 #include "../base/roTypeCast.h"
 
+#include "roHttpClientStream.inc"
+
+// Http reference:
+// http://en.wikipedia.org/wiki/List_of_HTTP_header_fields
 // Proxy reference:
 // http://www.mnot.net/blog/2011/07/11/what_proxies_must_do
 // http://stackoverflow.com/questions/10876883/implementing-an-http-proxy
@@ -45,185 +49,6 @@ roStatus HttpConnections::getConnection(const SockAddr& address, HttpConnection*
 	return roStatus::ok;
 }
 
-//////////////////////////////////////////////////////////////////////////
-// HttpClient data streams
-
-struct HttpClientSizedIStream : public IStream
-{
-	HttpClientSizedIStream(const CoSocket& socket, roSize size);
-
-	virtual Status size(roUint64& bytes) const override;
-	virtual	Status read(void* buffer, roUint64 bytesToRead, roUint64& bytesRead) override;
-
-	roSize _size;
-	roSize _readPos;
-	CoSocket& _socket;
-};	// HttpClientSizedIStream
-
-HttpClientSizedIStream::HttpClientSizedIStream(const CoSocket& socket, roSize size)
-	: _socket(const_cast<CoSocket&>(socket))
-{
-	_size = size;
-	_readPos = 0;
-}
-
-Status HttpClientSizedIStream::size(roUint64& bytes) const
-{
-	bytes = _size;
-	return roStatus::ok;
-}
-
-Status HttpClientSizedIStream::read(void* buffer, roUint64 bytesToRead, roUint64& bytesRead)
-{
-	bytesRead = 0;
-
-	if(bytesToRead == 0)
-		return roStatus::ok;
-
-	if(_readPos >= _size)
-		return Status::end_of_data;
-
-	if(current < end) {
-		roUint64 available = end - current;
-		bytesRead = roMinOf2(bytesToRead, available);
-		roMemcpy(buffer, current, clamp_cast<roSize>(bytesRead));
-		current += bytesRead;
-	}
-	else {
-		roSize len = clamp_cast<roSize>(bytesToRead);
-		st = _socket.receive(buffer, len);
-		bytesRead = len;
-	}
-
-	_readPos += clamp_cast<roSize>(bytesRead);
-
-	roAssert(current >= begin && current <= end);
-	return roStatus::ok;
-}
-
-struct HttpClientChunkedIStream : public IStream
-{
-	HttpClientChunkedIStream(const CoSocket& socket);
-
-	virtual	Status read(void* buffer, roUint64 bytesToRead, roUint64& bytesRead) override;
-
-	Status _readChunkSize();
-	Status _readFormBuf(void* buffer, roUint64 bytesToRead, roUint64& bytesRead);
-	Status _readFormSocket(void* buffer, roUint64 bytesToRead, roUint64& bytesRead);
-	Status (HttpClientChunkedIStream::*_innerRead)(void* buffer, roUint64 bytesToRead, roUint64& bytesRead);
-
-	roUint64 _posInChunk;
-	roUint64 _chunkSize;
-	CoSocket& _socket;
-};	// HttpClientChunkedIStream
-
-HttpClientChunkedIStream::HttpClientChunkedIStream(const CoSocket& socket)
-	: _socket(const_cast<CoSocket&>(socket))
-{
-	_posInChunk = 0;
-	_chunkSize = 0;
-	_innerRead = &HttpClientChunkedIStream::_readFormBuf;
-}
-
-Status HttpClientChunkedIStream::_readFormBuf(void* buffer, roUint64 bytesToRead, roUint64& bytesRead)
-{
-	if(bytesToRead == 0) {
-		bytesRead = 0;
-		return roStatus::ok;
-	}
-
-	if(current < end) {
-		roUint64 available = end - current;
-		bytesRead = roMinOf2(bytesToRead, available);
-		roMemcpy(buffer, current, clamp_cast<roSize>(bytesRead));
-		current += bytesRead;
-	}
-	else {
-		_innerRead = &HttpClientChunkedIStream::_readFormSocket;
-		return _readFormSocket(buffer, bytesToRead, bytesRead);
-	}
-
-	roAssert(current >= begin && current <= end);
-	return roStatus::ok;
-}
-
-Status HttpClientChunkedIStream::_readFormSocket(void* buffer, roUint64 bytesToRead, roUint64& bytesRead)
-{
-	roSize size = clamp_cast<roSize>(bytesToRead);
-	Status st = _socket.receive(buffer, size);
-	bytesRead = size;
-	return st;
-}
-
-Status HttpClientChunkedIStream::_readChunkSize()
-{
-	Status st;
-	const roSize maxHexStrSize = 16;
-	char buf[maxHexStrSize + 3];	// 16 for the hex string, two for "\r\n" and one for safety null
-	buf[sizeof(buf) - 1] = '\0';
-	char* p = buf;
-	roUint64 len = 0;
-	roUint64 val = 0;
-
-	while(p - buf < maxHexStrSize) {
-		st = (this->*_innerRead)(p, 1, len);
-		if(!st) return st;
-		if(len == 0) return Status::http_invalid_chunk_size;
-		roAssert(len == 1);
-		++p;
-		const char* newPos = p;
-		st = roHexStrTo(buf, newPos, val);
-		if(!st) return st;
-
-		if(newPos == p - 2) {
-			p -= 2;
-			break;
-		}
-	}
-
-	if(p[0] != '\r' && p[1] != '\n')
-		return Status::http_invalid_chunk_size;
-
-	_chunkSize = val;
-	if(val == 0)
-		st = Status::end_of_data;
-
-	return st;
-}
-
-Status HttpClientChunkedIStream::read(void* buffer, roUint64 bytesToRead, roUint64& bytesRead)
-{
-	bytesRead = 0;
-	if(bytesToRead == 0)
-		return roStatus::ok;
-
-	// Try to parse the chunk size
-	if(_posInChunk == _chunkSize) {
-		st = _readChunkSize();
-
-		_posInChunk = 0;
-
-		if(!st) return st;
-	}
-
-	bytesToRead = roMinOf2(bytesToRead, _chunkSize - _posInChunk);
-	st = (this->*_innerRead)(buffer, bytesToRead, bytesRead);
-	_posInChunk += bytesRead;
-
-	if(!st) return st;
-
-	// Consume th e"\r\n" after each chunk (even for chunk with 0 size)
-	if(_posInChunk == _chunkSize) {
-		char buf[2];
-		roUint64 len = 0;
-		st = (this->*_innerRead)(buf, 2, len);
-		if(st && len != 2)
-			st = Status::http_invalid_chunk_size;
-	}
-
-	roAssert(current >= begin && current <= end);
-	return st;
-}
 
 //////////////////////////////////////////////////////////////////////////
 // HttpClient
@@ -403,7 +228,7 @@ while(true) {
 		AutoPtr<IStream> istream;
 
 		roUint64 contentLength = 0;
-		RangedString transferEncoding;
+		RangedString transferEncoding, tillCloseConnection;
 
 		// Determine the encoding
 		if(response.getField(HttpResponseHeader::HeaderField::ContentLength, contentLength)) {
@@ -418,6 +243,13 @@ while(true) {
 		}
 		else if(response.getField(HttpResponseHeader::HeaderField::TransferEncoding, transferEncoding)) {
 			AutoPtr<HttpClientChunkedIStream> s = _allocator.newObj<HttpClientChunkedIStream>(connection->socket);
+			s->begin = (roByte*)responseStr.c_str() + contentStartPos;
+			s->end = (roByte*)responseStr.c_str() + responseStr.size();
+			s->current = s->begin;
+			istream.takeOver(s);
+		}
+		else if(response.cmpFieldNoCase(HttpResponseHeader::HeaderField::Connection, "close")) {
+			AutoPtr<HttpClientReadTillEndIStream> s = _allocator.newObj<HttpClientReadTillEndIStream>(connection->socket);
 			s->begin = (roByte*)responseStr.c_str() + contentStartPos;
 			s->end = (roByte*)responseStr.c_str() + responseStr.size();
 			s->current = s->begin;
@@ -458,27 +290,12 @@ while(true) {
 			roEXCP_THROW;
 		}
 
-		RangedString protocol, host_, resourcePath_;
-		st = splitUrl(redirectLocation, protocol, host_, resourcePath_);
-		if(st)
-			host = host_, resourcePath = resourcePath_;
-		else
-			resourcePath = redirectLocation;
-
-		if(resourcePath.isEmpty())
-			resourcePath = "/";
-		else if(resourcePath.front() != '/') {
-			st = resourcePath.insert(0, "/");
-			if(!st) roEXCP_THROW;
-		}
-
-		if(!proxy.isEmpty())
-			resourcePath = redirectLocation;
-
+		String str = redirectLocation.toString();
 		if(logLevel > 0)
-			roLog("info", "HttpClient - Redirecting to: %s\n", redirectLocation.toString().c_str());
+			roLog("info", "HttpClient - Redirecting to: %s\n", str.c_str());
 
-		header.make(HttpRequestHeader::Method::Get, resourcePath.c_str());
+		st = header.make(HttpRequestHeader::Method::Get, str.c_str());
+		if(!st) roEXCP_THROW;
 
 		++redirectCount;
 		if(redirectCount > maxRedirect) {
@@ -487,7 +304,10 @@ while(true) {
 		}
 
 		// Release connection back to pool
-		connectionPool->connections.insert(*connection);
+		if(response.cmpFieldNoCase(HttpResponseHeader::HeaderField::Connection, "close"))
+			roDelete(connection);
+		else
+			connectionPool->connections.insert(*connection);
 
 		// Back to the start of the location redirect loop
 		continue;
