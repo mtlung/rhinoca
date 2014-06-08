@@ -76,53 +76,6 @@ TEST_FIXTURE(HttpTest, responseHeader)
 	CHECK_EQUAL(79936u, val3);
 }
 
-TEST_FIXTURE(HttpTest, http)
-{
-	HttpRequestHeader requestHeader;
-	requestHeader.make(HttpRequestHeader::Method::Get, "/static-data/map3/2/0/0.png");
-	requestHeader.addField(HttpRequestHeader::HeaderField::Host, "sin-nx-lty02.ubisoft.org");
-//	requestHeader.make(HttpRequestHeader::Method::Get, "/");
-//	requestHeader.addField(HttpRequestHeader::HeaderField::Host, "mdc-web-tomcat17.ubisoft.org");
-
-/*	HttpClient::Request request;
-
-	HttpClient client;
-	client.perform(request, requestHeader);
-
-	ByteArray buffer;
-
-	Status st;
-	do {
-		st = request.update();
-
-		roSize size = 0;
-		roByte* rPtr = NULL;
-		CHECK(request.requestRead(size, rPtr));
-		CHECK(buffer.insert(buffer.size(), rPtr, size));
-		request.commitRead(size);
-
-	} while(st || st == Status::in_progress);
-
-	CHECK(!buffer.isEmpty());*/
-}
-
-TEST_FIXTURE(HttpTest, http2)
-{
-/*	RangedString protocol, host, path;
-	HttpClient::splitUrl("http://sin-nx-lty02.ubisoft.org/static-data/map3/2/0/0.png", protocol, host, path);
-	HttpClient::splitUrl("ftp://sin-nx-lty02.ubisoft.org", protocol, host, path);
-
-	HttpClient http;
-	http.debug = true;
-	http.connect("sin-nx-lty02.ubisoft.org");
-	http.performGet("/static-data/map3/2/0/0.png");
-
-	Status st;
-	do {
-		st = http.update();
-	} while(st || st == Status::in_progress);*/
-}
-
 TEST_FIXTURE(HttpTest, server)
 {
 	HttpServer server;
@@ -174,7 +127,7 @@ TEST_FIXTURE(HttpTest, client)
 TEST_FIXTURE(HttpTest, compression)
 {
 	HttpClient client;
-	client.logLevel = 2;
+	client.logLevel = 0;
 	client.useHttpCompression = true;
 
 	HttpRequestHeader header;
@@ -201,4 +154,16 @@ TEST_FIXTURE(HttpTest, proxy)
 	client.useHttpCompression = true;
 	CHECK(header.make(HttpRequestHeader::Method::Get, "http://www.whatsmyip.org"));
 	CHECK(client.request(header, onReply));
+}
+
+#include "../../roar/network/roSecureSocket.h"
+
+TEST_FIXTURE(HttpTest, https)
+{
+	SockAddr addr;
+	addr.parse("google.com:443");
+
+	SecureSocket s;
+	s.create();
+	s.connect(addr);
 }

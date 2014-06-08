@@ -54,22 +54,23 @@ struct HttpRequestHeader
 	}; };
 
 	/// Functions for composing requestString
-	Status		make		(Method::Enum method, const char* fullUrl);
-	Status		addField	(const char* field, const char* value);
-	Status		addField	(HeaderField::Enum field, const char* value);
-	Status		addField	(HeaderField::Enum field, roUint64 value);
-	Status		addField	(HeaderField::Enum field, roUint64 value1, roUint64 value2);
+	Status		make			(Method::Enum method, const char* fullUrl);
+	Status		addField		(const char* field, const char* value);
+	Status		addField		(HeaderField::Enum field, const char* value);
+	Status		addField		(HeaderField::Enum field, roUint64 value);
+	Status		addField		(HeaderField::Enum field, roUint64 value1, roUint64 value2);
 
-	void		removeField	(const char* field);
-	void		removeField	(HeaderField::Enum field);
+	void		removeField		(const char* field);
+	void		removeField		(HeaderField::Enum field);
 
 	Method::Enum	getMethod	() const;
 
-	bool		getField	(const char* option, String& value) const;
-	bool		getField	(const char* option, RangedString& value) const;
-	bool		getField	(HeaderField::Enum option, String& value) const;
-	bool		getField	(HeaderField::Enum option, RangedString& value) const;
+	bool		getField		(const char* option, String& value) const;
+	bool		getField		(const char* option, RangedString& value) const;
+	bool		getField		(HeaderField::Enum option, String& value) const;
+	bool		getField		(HeaderField::Enum option, RangedString& value) const;
 
+	bool		cmpFieldNoCase	(HeaderField::Enum option, const char* value) const;
 	String string;
 };	// HttpRequestHeader
 
@@ -114,12 +115,14 @@ struct HttpResponseHeader
 	}; };
 
 	/// Parse and get information from responseString
-	bool getField(const char* option, String& value) const;
-	bool getField(const char* option, RangedString& value) const;
-	bool getField(HeaderField::Enum option, String& value) const;
-	bool getField(HeaderField::Enum option, RangedString& value) const;
-	bool getField(HeaderField::Enum option, roUint64& value) const;
-	bool getField(HeaderField::Enum option, roUint64& value1, roUint64& value2, roUint64& value3) const;
+	bool getField		(const char* option, String& value) const;
+	bool getField		(const char* option, RangedString& value) const;
+	bool getField		(HeaderField::Enum option, String& value) const;
+	bool getField		(HeaderField::Enum option, RangedString& value) const;
+	bool getField		(HeaderField::Enum option, roUint64& value) const;
+	bool getField		(HeaderField::Enum option, roUint64& value1, roUint64& value2, roUint64& value3) const;
+
+	bool cmpFieldNoCase	(HeaderField::Enum option, const char* value) const;
 
 	String string;
 };	// HttpResponseHeader

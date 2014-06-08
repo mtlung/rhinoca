@@ -69,7 +69,7 @@ roStatus SecureSocket::connect(const SockAddr& endPoint)
 	roVerify(_loadSecurityInterface());
 
 	HCERTSTORE hMyCertStore = NULL;
-	hMyCertStore = CertOpenSystemStoreA(0, "CA");
+	hMyCertStore = CertOpenSystemStoreA(0, "MY");
 	// TODO: Log
 
 	PCCERT_CONTEXT pCertContext = NULL;
@@ -95,15 +95,15 @@ roStatus SecureSocket::connect(const SockAddr& endPoint)
 	}
 
 	DWORD dwProtocol = 0;
-	dwProtocol = SP_PROT_PCT1;
-	dwProtocol = SP_PROT_SSL2;
-	dwProtocol = SP_PROT_SSL3;
+//	dwProtocol = SP_PROT_PCT1;
+//	dwProtocol = SP_PROT_SSL2;
+//	dwProtocol = SP_PROT_SSL3;
 //	dwProtocol = SP_PROT_TLS1;
 	SchannelCred.grbitEnabledProtocols = dwProtocol;
 
 	ALG_ID aiKeyExch = 0;
-	aiKeyExch = CALG_RSA_KEYX;
-	aiKeyExch = CALG_DH_EPHEM;
+//	aiKeyExch = CALG_RSA_KEYX;
+//	aiKeyExch = CALG_DH_EPHEM;
 
 	DWORD cSupportedAlgs = 0;
 	ALG_ID rgbSupportedAlgs[16];
@@ -118,6 +118,7 @@ roStatus SecureSocket::connect(const SockAddr& endPoint)
 
 	SchannelCred.dwFlags |= SCH_CRED_NO_DEFAULT_CREDS;
 
+	CtxtHandle hContext;
 	CredHandle hClientCreds;
 	TimeStamp tsExpiry;
 	PSecurityFunctionTableA g_pSSPI = InitSecurityInterfaceA();
@@ -137,7 +138,7 @@ roStatus SecureSocket::connect(const SockAddr& endPoint)
 	}
 
 	// Perform hand shake
-	DWORD dwSSPIFlags =
+	const DWORD dwSSPIFlags =
 		ISC_REQ_SEQUENCE_DETECT   |
 		ISC_REQ_REPLAY_DETECT     |
 		ISC_REQ_CONFIDENTIALITY   |
@@ -145,45 +146,122 @@ roStatus SecureSocket::connect(const SockAddr& endPoint)
 		ISC_REQ_ALLOCATE_MEMORY   |
 		ISC_REQ_STREAM;
 
-	CtxtHandle hContext;
-	DWORD dwSSPIOutFlags;
+	{
+		DWORD dwSSPIOutFlags;
 
-	SecBufferDesc outBuffer;
-	SecBuffer outBuffers[1];
-	outBuffers[0].pvBuffer   = NULL;
-	outBuffers[0].BufferType = SECBUFFER_TOKEN;
-	outBuffers[0].cbBuffer   = 0;
-	outBuffer.cBuffers = 1;
-	outBuffer.pBuffers = outBuffers;
-	outBuffer.ulVersion = SECBUFFER_VERSION;
+		SecBufferDesc outBuffer;
+		SecBuffer outBuffers[1];
+		outBuffers[0].pvBuffer   = NULL;
+		outBuffers[0].BufferType = SECBUFFER_TOKEN;
+		outBuffers[0].cbBuffer   = 0;
+		outBuffer.cBuffers = 1;
+		outBuffer.pBuffers = outBuffers;
+		outBuffer.ulVersion = SECBUFFER_VERSION;
 
-	secStatus = g_pSSPI->InitializeSecurityContextA(
-		&hClientCreds,
-		NULL,
-		"servername",
-		dwSSPIFlags,
-		0,
-		SECURITY_NATIVE_DREP,
-		NULL,
-		0,
-		&hContext,
-		&outBuffer,
-		&dwSSPIOutFlags,
-		&tsExpiry
-	);
-	if(secStatus != SEC_I_CONTINUE_NEEDED) {
-		return st;
+		secStatus = g_pSSPI->InitializeSecurityContextA(
+			&hClientCreds,
+			NULL,
+			"google.com",
+			dwSSPIFlags,
+			0,
+			SECURITY_NATIVE_DREP,
+			NULL,
+			0,
+			&hContext,
+			&outBuffer,
+			&dwSSPIOutFlags,
+			&tsExpiry
+		);
+		if(secStatus != SEC_I_CONTINUE_NEEDED) {
+			return st;
+		}
+
+		// Connect to the server
+		st = _socket.connect(endPoint);
+		if(!st) return st;
+
+		// Send response to server if there is one.
+		if(outBuffers[0].cbBuffer && outBuffers[0].pvBuffer) {
+			roSize len = outBuffers[0].cbBuffer;
+			st = _socket.send(outBuffers[0].pvBuffer, len);
+			if(!st) return st;
+		}
 	}
 
-	// Connect to the server
-	st = _socket.connect(endPoint);
-	if(!st) return st;
+	// Read response from server
+	{
+		roSize IO_BUFFER_SIZE = 0x10000;
 
-	// Send response to server if there is one.
-	if(outBuffers[0].cbBuffer && outBuffers[0].pvBuffer) {
-		roSize len = outBuffers[0].cbBuffer;
-		st = _socket.send(outBuffers[0].pvBuffer, len);
+		DWORD dwSSPIOutFlags;
+		SecBufferDesc inBuffer;
+		SecBuffer inBuffers[2];
+		SecBufferDesc outBuffer;
+		SecBuffer outBuffers[1];
+
+		ByteArray buf;
+		st = buf.resizeNoInit(IO_BUFFER_SIZE);
 		if(!st) return st;
+
+		SECURITY_STATUS scRet = SEC_I_CONTINUE_NEEDED;
+		while(scRet == SEC_I_CONTINUE_NEEDED ||
+			  scRet == SEC_E_INCOMPLETE_MESSAGE ||
+			  scRet == SEC_I_INCOMPLETE_CREDENTIALS) 
+		{
+			roSize len = buf.sizeInByte();
+			st = _socket.receive(buf.bytePtr(), len);
+			if(!st) return st;
+			roVerify(buf.resize(len));
+
+			// Set up the input buffers. Buffer 0 is used to pass in data
+			// received from the server. Schannel will consume some or all
+			// of this. Leftover data (if any) will be placed in buffer 1 and
+			// given a buffer type of SECBUFFER_EXTRA.
+			inBuffers[0].pvBuffer = buf.bytePtr();
+			inBuffers[0].cbBuffer = buf.sizeInByte();
+			inBuffers[0].BufferType = SECBUFFER_TOKEN;
+
+			inBuffers[1].pvBuffer = NULL;
+			inBuffers[1].cbBuffer = 0;
+			inBuffers[1].BufferType = SECBUFFER_EMPTY;
+
+			inBuffer.cBuffers = 2;
+			inBuffer.pBuffers = inBuffers;
+			inBuffer.ulVersion = SECBUFFER_VERSION;
+
+			outBuffers[0].pvBuffer = NULL;
+			outBuffers[0].BufferType = SECBUFFER_TOKEN;
+			outBuffers[0].cbBuffer = 0;
+
+			outBuffer.cBuffers = 1;
+			outBuffer.pBuffers = outBuffers;
+			outBuffer.ulVersion = SECBUFFER_VERSION;
+
+			secStatus = g_pSSPI->InitializeSecurityContextA(
+				&hClientCreds,
+				&hContext,
+				NULL,
+				dwSSPIFlags,
+				0,
+				SECURITY_NATIVE_DREP,
+				&inBuffer,
+				0,
+				NULL,
+				&outBuffer,
+				&dwSSPIOutFlags,
+				&tsExpiry
+			);
+
+			if (secStatus == SEC_E_OK ||
+				secStatus == SEC_I_CONTINUE_NEEDED ||
+				FAILED(secStatus) && (dwSSPIOutFlags & ISC_RET_EXTENDED_ERROR))
+			{
+				secStatus = secStatus;
+			}
+
+			if(secStatus != SEC_I_CONTINUE_NEEDED) {
+				return st;
+			}
+		}
 	}
 
 	return roStatus::ok;
