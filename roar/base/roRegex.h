@@ -32,7 +32,7 @@ struct Regex : private NonCopyable
 	T getValueWithDefault(roSize index, T defaultValue);
 
 // Attributes
-	bool isDebug;
+	roUint8	logLevel;	// 0 for no logging, larger for more
 	TinyArray<RangedString, 16> result;
 };	// Regex
 
