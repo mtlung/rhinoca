@@ -2,7 +2,7 @@
 #include "roRegex.h"
 #include "roLog.h"
 #include "roTypeOf.h"
-//#include "roTypeCast.h"
+#include "roTypeCast.h"
 
 // Reference:
 // Online regex test platform
@@ -669,9 +669,9 @@ bool parse_nodes(Graph& graph, const RangedString& f)
 	roSize bracketCount2 = 0;
 	const roUtf8* i = f.begin;
 	const roUtf8* begin = f.begin;
-	TinyArray<roUint16, 16> altNodeIdx;
+	TinyArray<roUint16, 16> altOptionIdx;
 
-	roUint16 beginNodeIdx = graph.currentNodeIdx;
+	roUint16 altNodeIdx = graph.currentNodeIdx;
 	bool firstEncounter = true;
 
 	// Scan till next '|' or till end
@@ -691,15 +691,16 @@ bool parse_nodes(Graph& graph, const RangedString& f)
 			if(i[0] == '|' && firstEncounter) {
 				Node node = { RangedString("|") };
 				graph.push2(node, alternation);
-				beginNodeIdx = graph.currentNodeIdx;
+				altNodeIdx = graph.currentNodeIdx;
 				firstEncounter = false;
 			}
 
+			roUint16 tmp = graph.currentNodeIdx + 1;
 			if(!parse_nodes_impl(graph, RangedString(begin, i)))
 				return false;
 
 			begin = i + 1;
-			altNodeIdx.pushBack(graph.currentNodeIdx);
+			altOptionIdx.pushBack(tmp);
 		}
 
 		bracketCount1 += (*i == '(') ? 1 : 0;
@@ -710,12 +711,12 @@ bool parse_nodes(Graph& graph, const RangedString& f)
 	}
 
 	// If there were alternation, adjust the edges
-	for(roSize j=1; j<altNodeIdx.size(); ++j)
-		graph.redirect(altNodeIdx[j], num_cast<roUint16>(graph.nodes2.size()));
+	for(roSize j=1; j<altOptionIdx.size(); ++j)
+		graph.redirect(altOptionIdx[j], num_cast<roUint16>(graph.nodes2.size()));
 
-	for(roSize j=1; j<altNodeIdx.size(); ++j) {
-		Edge edge = { RangedString(), alternation, altNodeIdx[j], 0 };
-		graph.pushEdge(beginNodeIdx, edge);
+	for(roSize j=1; j<altOptionIdx.size(); ++j) {
+		Edge edge = { RangedString(), alternation, altOptionIdx[j], 0 };
+		graph.pushEdge(altNodeIdx, edge);
 	}
 
 	return true;

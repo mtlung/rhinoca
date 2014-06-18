@@ -387,6 +387,7 @@ TEST_FIXTURE(RegexTest, test)
 		{ "^[ab]{1,3}?(ab*?|b)",		"",		"aabbbbb",										"aa`a" },
 		{ "^[ab]{1,3}(ab*?|b)",			"",		"aabbbbb",										"aabb`b" },
 
+		// My own test cases:
 		{ "^http://([^/]+)(.*)",		"",		"http://localhost",								"http://localhost`localhost`" },
 		{ NULL,							"",		"http://localhost/",							"http://localhost/`localhost`/" },
 		{ NULL,							"",		"http://localhost/index.html",					"http://localhost/index.html`localhost`/index.html" },
@@ -398,16 +399,24 @@ TEST_FIXTURE(RegexTest, test)
 		{ "()",							"",		"",												NULL },
 		{ "a1?2*",						"",		"a",											"a" },
 
-		{ "[a-c0-9]", "", "9", "9" },
-		{ "[^1]", "", "abc", "a" },
-		{ "(012|abc|lung)+",		"",		"abclung",										"abclung`lung" },
-		{ "abc|def",	"i","Abc", "Abc" },
-		{ "abc|ha|def", "",	"def", "def" },
-		{ "abc|def",	"",	"abc", "abc" },
-		{ "ab*",		"",	"ababc", "ab" },
+		{ "[a-c0-9]",					"",		"9",											"9" },
+		{ "[^1]",						"",		"abc",											"a" },
+		{ "(012|abc|lung)+",			"",		"abclung",										"abclung`lung" },
+		{ "abc|def",					"i",	"Abc",											"Abc" },
+		{ "abc|ha|def",					"",		"def",											"def" },
+		{ "abc|def",					"",		"abc",											"abc" },
+		{ "ab*",						"",		"ababc",										"ab" },
+
+		// Failed case regression
+		{ "(a(b))?",					"",		"ab",											"ab`ab`b" },
+		{ "a|(b)",						"",		"a",											"a`" },
+		{ NULL,							"",		"b",											"b`b" },
+		{ "(a|(b))",					"",		"a",											"a`a`" },
+		{ NULL,							"",		"b",											"b`b`b" },
 	};
 
 	Regex regex;
+	regex.logLevel = 0;
 
 	const roUtf8* regStr = NULL;
 	for(roSize i=0; i<roCountof(testData); ++i) {
