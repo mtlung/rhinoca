@@ -106,7 +106,7 @@ bool counted_loop_exit(Graph& graph, Node& node, Edge& edge, RangedString& s)
 		return count = 0, true;
 }
 
-bool node_begin(Graph& graph, Node& node, Edge& edge, RangedString& s) { return true; }
+bool node_begin(Graph& graph, Node& node, Edge& edge, RangedString& s);
 bool node_end(Graph& graph, Node& node, Edge& edge, RangedString& s);
 bool pass_though(Graph& graph, Node& node, Edge& edge, RangedString& s) { return true; }
 bool alternation(Graph& graph, Node& node, Edge& edge, RangedString& s) { return true; }
@@ -116,16 +116,30 @@ bool parse_nodes(Graph& graph, const RangedString& f);
 struct Graph
 {
 	Graph()
-		: regex(NULL)
-		, nestedGroupLevel(0)
-		, branchLevel(0)
-		, charCmpFunc(NULL)
 	{
-		edges.resize(1);	// The first element will not be used
+		clear();
+	}
+
+	void clear()
+	{
+		regex = NULL;
+		nestedGroupLevel = 0;
+		branchLevel = 0;
+		charCmpFunc = NULL;
+		capturingGroupCount = 0;
+		tmpResult.clear();
+		result.clear();
+		nodes2.clear();
+		edges.clear();
+		currentNodeIdx = endNodeIdx = 0;
+
+		// The first element will not be used
+		edges.resize(1);
 
 		// Create the begin node
 		Node node = { RangedString("begin") };
 		push2(node, node_begin);
+
 	}
 
 	roStatus push2(const Node& node, Edge::Func func, const RangedString& edgeStr=RangedString())
@@ -199,7 +213,8 @@ struct Graph
 	RangedString regString;
 	RangedString srcString;
 	bool (*charCmpFunc)(char c1, char c2);
-	TinyArray<roUint16, 16> resultEndNodeIdx;
+	roSize capturingGroupCount;
+	TinyArray<RangedString, 16> tmpResult, result;
 
 	TinyArray<Node, 64> nodes2;
 	TinyArray<Edge, 128> edges;
@@ -210,12 +225,16 @@ struct Graph
 //////////////////////////////////////////////////////////////////////////
 // Matching
 
+bool node_begin(Graph& graph, Node& node, Edge& edge, RangedString& s)
+{
+	// NOTE: This line is to prevent the optimizer to merge node_begin with any other function
+	graph.branchLevel = 0;
+	return true;
+}
+
 bool node_end(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
-	// NOTE: This line is to prevent the optimizer to merge node_end and node_begin
-	// together into the same function
-	graph.branchLevel = 0;
-
+	--graph.branchLevel;
 	return true;
 }
 
@@ -238,6 +257,13 @@ bool group_end(Graph& graph, Node& node, Edge& edge, RangedString& s)
 	if((void*)graph.branchLevel >= beginNode.userdata[3])
 		beginNode.userdata[1] = beginNode.userdata[0];
 	beginNode.userdata[2] = (void*)s.begin;
+
+	if(beginNode.userdata[1] <= beginNode.userdata[2])
+		graph.tmpResult[(roSize)node.userdata[1]] = RangedString((roUtf8*)beginNode.userdata[1], (roUtf8*)beginNode.userdata[2]);
+
+	// Commit the latest successful match at the outermost capturing group
+	if(graph.nestedGroupLevel == 1)
+		graph.result = graph.tmpResult;
 
 	return --graph.nestedGroupLevel, true;
 }
@@ -602,6 +628,7 @@ bool parse_group(Graph& graph, const RangedString& f, const roUtf8*& i)
 	roAssert(end >= begin);
 
 	roUint16 prevNodeIdx, beginNodeIdx;
+	roSize capturingGroupIdx = 0;
 
 	{	// Add starting node
 		Node beginNode = { RangedString("(") };
@@ -609,8 +636,12 @@ bool parse_group(Graph& graph, const RangedString& f, const roUtf8*& i)
 		graph.push2(beginNode, capturing ? group_begin : nonCaptureGroup_begin);
 		beginNodeIdx = graph.currentNodeIdx;
 
-		if(capturing)
-			graph.resultEndNodeIdx.pushBack(beginNodeIdx);
+		if(capturing) {
+			capturingGroupIdx = graph.capturingGroupCount;
+			++graph.capturingGroupCount;
+			graph.tmpResult.resize(graph.capturingGroupCount);
+			graph.result.resize(graph.capturingGroupCount);
+		}
 	}
 
 	if(!parse_nodes(graph, RangedString(begin, end)))
@@ -619,6 +650,7 @@ bool parse_group(Graph& graph, const RangedString& f, const roUtf8*& i)
 	{	// Add end node
 		Node endNode = { RangedString(")") };
 		endNode.userdata[0] = (void*)beginNodeIdx;
+		endNode.userdata[1] = (void*)capturingGroupIdx;
 		graph.push2(endNode, capturing ? group_end : nonCaptureGroup_end);
 	}
 
@@ -731,7 +763,7 @@ bool matchNodes(Graph& graph, Node& node, RangedString& s)
 	{
 		Edge& edge = graph.edges[pNode->edgeIdx];
 		if(edge.func == node_end)
-			return --graph.branchLevel, true;
+			return node_end(graph, *pNode, edge, s);
 
 		if(graph.regex->logLevel > 1) {
 			String ident = " ";
@@ -757,7 +789,7 @@ bool matchNodes(Graph& graph, Node& node, RangedString& s)
 
 		Edge& edge = graph.edges[edgeIdx];
 		if(edge.func == node_end)
-			return --graph.branchLevel, true;
+			return node_end(graph, *pNode, edge, s);
 
 		if((*edge.func)(graph, *pNode, edge, s)) {
 			Node* nextNode = &graph.nodes2[edge.nextNode];
@@ -835,8 +867,6 @@ bool Regex::match(RangedString srcString, RangedString regString, const char* op
 		debugNodes(graph);
 	}
 
-	result.resize(graph.resultEndNodeIdx.size() + 1);
-
 	// Matching
 	while(srcString.begin < srcString.end) {
 		const roUtf8* currentBegin = srcString.begin;
@@ -844,13 +874,9 @@ bool Regex::match(RangedString srcString, RangedString regString, const char* op
 		graph.nestedGroupLevel = 0;
 
 		if(matchNodes(graph, graph.nodes2.front(), srcString)) {
-			result[0] = RangedString(currentBegin, srcString.begin);
-
-			for(roSize i=0; i<graph.resultEndNodeIdx.size(); ++i) {
-				Node& node = graph.nodes2[graph.resultEndNodeIdx[i]];
-				RangedString str = RangedString((roUtf8*)node.userdata[1], (roUtf8*)node.userdata[2]);
-				result[i + 1] = str;
-			}
+			result.pushBack(RangedString(currentBegin, srcString.begin));
+			for(roSize i=0; i<graph.result.size(); ++i)
+				result.pushBack(graph.result[i]);
 
 			return true;
 		}

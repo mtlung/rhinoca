@@ -413,6 +413,12 @@ TEST_FIXTURE(RegexTest, test)
 		{ NULL,							"",		"b",											"b`b" },
 		{ "(a|(b))",					"",		"a",											"a`a`" },
 		{ NULL,							"",		"b",											"b`b`b" },
+		{ "(([a-z]+|([a-z]+[-]+[a-z]+))[.])+",	"",	"local-host.com",							"local-host.`local-host.`local-host`local-host" },
+
+		{ "(([a-z]|(a))[.])",			"",		"a.c",											"a.`a.`a`" },
+		{ "(([a-z]|(ab))[.])",			"",		"ab.c",											"ab.`ab.`ab`ab" },
+		{ "((c|(a))[.])",				"",		"a.c",											"a.`a.`a`a" },
+		{ "((c|(ab))[.])+",				"",		"ab.c",											"ab.`ab.`ab`ab" },
 	};
 
 	Regex regex;
