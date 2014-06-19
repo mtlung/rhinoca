@@ -2,6 +2,7 @@
 #include "roSocket.h"
 #include "roDnsResolve.h"
 #include "../base/roAtomic.h"
+#include "../base/roRegex.h"
 #include "../base/roString.h"
 #include "../base/roStringFormat.h"
 #include "../base/roUtility.h"
@@ -255,6 +256,34 @@ roUint32 SockAddr::ipLoopBack()
 roUint32 SockAddr::ipAny()
 {
 	return 0;
+}
+
+roStatus SockAddr::splitHostAndPort(const RangedString& hostAndPort, RangedString& host, RangedString& port)
+{
+	Regex regex;
+	host = "";
+	port = "";
+
+	// Reference: http://stackoverflow.com/questions/106179/regular-expression-to-match-hostname-or-ip-address
+	if(!regex.match(hostAndPort, "(^(?:[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])(?:\\.(?:[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9]))*)(?::([0-9]+))?$"))
+		return Status::net_invalid_host_string;
+
+	host = regex.result[1];
+	port = regex.result[2];
+
+	return Status::ok;
+}
+
+roStatus SockAddr::splitHostAndPort(const RangedString& hostAndPort, RangedString& host, roUint16& port, roUint16 defaultPort)
+{
+	RangedString portStr;
+	port = defaultPort;
+
+	roStatus st = splitHostAndPort(hostAndPort, host, portStr);
+	if(!st) return st;
+
+	port = roStrToUint16(portStr.toString().c_str(), defaultPort);
+	return roStatus::ok;
 }
 
 static AtomicInteger _initCount = 0;

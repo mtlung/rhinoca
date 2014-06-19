@@ -71,3 +71,46 @@ TEST_FIXTURE(SockAddrTestFixture, Comparison)
 	CHECK(ep1 == ep2);
 	CHECK(ep2 != ep3);
 }
+
+TEST_FIXTURE(SockAddrTestFixture, splitHostAndPort)
+{
+	RangedString str("localhost:123");
+	RangedString host, port;
+
+	CHECK(SockAddr::splitHostAndPort(str, host, port));
+	CHECK_EQUAL("localhost", host);
+	CHECK_EQUAL("123", port);
+
+	str = "localhost";
+	CHECK(SockAddr::splitHostAndPort(str, host, port));
+	CHECK_EQUAL("localhost", host);
+	CHECK_EQUAL("", port);
+
+	str = "localhost:";
+	CHECK_EQUAL(roStatus::net_invalid_host_string, SockAddr::splitHostAndPort(str, host, port));
+	CHECK_EQUAL("", host);
+	CHECK_EQUAL("", port);
+
+	str = "-invalid";
+	CHECK_EQUAL(roStatus::net_invalid_host_string, SockAddr::splitHostAndPort(str, host, port));
+	CHECK_EQUAL("", host);
+	CHECK_EQUAL("", port);
+
+	roUint16 portNum;
+	str = "yahoo.com:443";
+	CHECK(SockAddr::splitHostAndPort(str, host, portNum, 0));
+	CHECK_EQUAL("yahoo.com", host);
+	CHECK_EQUAL(443, portNum);
+
+	str = "www.abc.com:";
+	portNum = 0;
+	CHECK_EQUAL(roStatus::net_invalid_host_string, SockAddr::splitHostAndPort(str, host, portNum, 456));
+	CHECK_EQUAL("", host);
+	CHECK_EQUAL(456, portNum);
+
+	str = "a.b.c:655351";
+	portNum = 0;
+	CHECK(SockAddr::splitHostAndPort(str, host, portNum, 80));
+	CHECK_EQUAL("a.b.c", host);
+	CHECK_EQUAL(80, portNum);
+}

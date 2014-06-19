@@ -444,6 +444,8 @@ int RangedString::cmpNoCase(const char* str) const
 
 bool RangedString::operator==(const char* rhs) const
 {
+	if(size() != roStrLen(rhs))
+		return false;
 	return roStrnCmp(begin, rhs, size()) == 0;
 }
 

@@ -33,6 +33,7 @@ typedef roPtrInt socket_t;
 namespace ro {
 
 struct String;
+struct RangedString;
 
 ///	Socket address (IPv4 + port)
 struct SockAddr
@@ -59,6 +60,9 @@ struct SockAddr
 
 	static roUint32 ipLoopBack();
 	static roUint32 ipAny();
+
+	static roStatus splitHostAndPort(const RangedString& hostAndPort, RangedString& host, RangedString& port);
+	static roStatus splitHostAndPort(const RangedString& hostAndPort, RangedString& host, roUint16& port, roUint16 defaultPort);
 
 // Private
 	roUint8 _sockAddr[16];
