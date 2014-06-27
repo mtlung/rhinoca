@@ -5,16 +5,7 @@
 
 namespace ro {
 
-struct SecureSocket
-{
-	SecureSocket();
-	~SecureSocket();
-
-	roStatus create();
-	roStatus connect(const SockAddr& endPoint);
-
-	CoSocket _socket;
-};	// SecureSocket
+roStatus secureSocketHandshake(CoSocket& socket);
 
 }	// namespace ro
 

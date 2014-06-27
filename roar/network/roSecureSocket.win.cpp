@@ -22,51 +22,10 @@
 
 namespace ro {
 
-static roSize _loadCount = 0;
-static Mutex _loadMutex;
-static roStatus _loadSecurityInterface()
-{
-	ScopeLock lock(_loadMutex);
-
-	if(_loadCount > 0)
-		return roStatus::ok;
-
-	roStatus st;
-	++_loadCount;
-	st = roStatus::ok;
-	return st;
-}
-
-static roStatus _unloadSecurityInterface()
-{
-	ScopeLock lock(_loadMutex);
-
-	if(_loadCount > 0)
-		--_loadCount;
-
-	if(_loadCount > 0)
-		return roStatus::ok;
-
-	roStatus st;
-	st = roStatus::ok;
-	return st;
-}
-
-SecureSocket::SecureSocket()
-{
-
-}
-
-roStatus SecureSocket::create()
-{
-	return _socket.create(BsdSocket::TCP);
-}
-
-roStatus SecureSocket::connect(const SockAddr& endPoint)
+//roStatus SecureSocket::connect(const SockAddr& endPoint)
+roStatus secureSocketHandshake(CoSocket& socket)
 {
 	roStatus st;
-
-	roVerify(_loadSecurityInterface());
 
 	HCERTSTORE hMyCertStore = NULL;
 	hMyCertStore = CertOpenSystemStoreA(0, "MY");
@@ -176,14 +135,10 @@ roStatus SecureSocket::connect(const SockAddr& endPoint)
 			return st;
 		}
 
-		// Connect to the server
-		st = _socket.connect(endPoint);
-		if(!st) return st;
-
 		// Send response to server if there is one.
 		if(outBuffers[0].cbBuffer && outBuffers[0].pvBuffer) {
 			roSize len = outBuffers[0].cbBuffer;
-			st = _socket.send(outBuffers[0].pvBuffer, len);
+			st = socket.send(outBuffers[0].pvBuffer, len);
 			if(!st) return st;
 		}
 	}
@@ -208,7 +163,7 @@ roStatus SecureSocket::connect(const SockAddr& endPoint)
 			  scRet == SEC_I_INCOMPLETE_CREDENTIALS) 
 		{
 			roSize len = buf.sizeInByte();
-			st = _socket.receive(buf.bytePtr(), len);
+			st = socket.receive(buf.bytePtr(), len);
 			if(!st) return st;
 			roVerify(buf.resize(len));
 
@@ -265,11 +220,6 @@ roStatus SecureSocket::connect(const SockAddr& endPoint)
 	}
 
 	return roStatus::ok;
-}
-
-SecureSocket::~SecureSocket()
-{
-	roVerify(_unloadSecurityInterface());
 }
 
 }	// namespace ro
