@@ -166,8 +166,10 @@ struct Array : public IArray<T>
 	Array(roSize size)					{ this->resize(size); }
 	Array(roSize size, const T& val)	{ this->resize(size, val); }
 	Array(const Array<T>& src)			{ this->copy(src); }
+	Array(Array<T>&& rhs);
 	~Array()							{ this->clear(); roFree(this->_data); }
 	Array& operator=(const Array& rhs)	{ this->copy(rhs); return *this; }
+	Array& operator=(Array&& rhs);
 
 // Operations
 	Status reserve(roSize newCapacity, bool force=false) override;

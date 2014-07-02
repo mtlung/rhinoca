@@ -19,10 +19,12 @@ struct String
 	String(const char* str, roSize count);
 	String(const String& str);
 	String(const RangedString& rangedStr);
+	String(String&& str) : _cstr(str._cstr) { str._cstr = NULL; }
 	~String();
 
 	String& operator=(const char* str);
 	String& operator=(const String& str);
+	String&	operator=(String&& str);
 	String& operator=(const RangedString& rangedStr);
 
 // Operations

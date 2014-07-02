@@ -74,6 +74,14 @@ String& String::operator=(const RangedString& rangedStr)
 	return *this;
 }
 
+String& String::operator=(String&& str)
+{
+	clear();
+	_cstr = str._cstr;
+	str._cstr = NULL;
+	return *this;
+}
+
 char* String::_str() const
 {
 	if(!_cstr)

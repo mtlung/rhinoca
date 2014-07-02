@@ -347,6 +347,30 @@ const T* IArray<T>::find(const K& key, bool(*equal)(const T&, const K&)) const
 
 // ----------------------------------------------------------------------
 
+template<class T>
+Array<T>::Array(Array<T>&& rhs)
+{
+	_size = rhs._size;;
+	_capacity = rhs._capacity;
+	_data = rhs._data;
+	rhs._size = 0;
+	rhs._capacity = 0;
+	rhs._data = nullptr;
+}
+
+template<class T>
+Array<T>& Array<T>::operator=(Array<T>&& rhs)
+{
+	this->~Array();
+	_size = rhs._size;;
+	_capacity = rhs._capacity;
+	_data = rhs._data;
+	rhs._size = 0;
+	rhs._capacity = 0;
+	rhs._data = nullptr;
+	return *this;
+}
+
 template<class T> roFORCEINLINE
 Status Array<T>::reserve(roSize newCapacity, bool force)
 {
