@@ -77,6 +77,7 @@ struct HttpClientChunkedIStream : public IStream
 	roUint64 _posInChunk;
 	roUint64 _chunkSize;
 	CoSocket& _socket;
+	bool _ended;
 };	// HttpClientChunkedIStream
 
 HttpClientChunkedIStream::HttpClientChunkedIStream(const CoSocket& socket)
@@ -84,6 +85,7 @@ HttpClientChunkedIStream::HttpClientChunkedIStream(const CoSocket& socket)
 {
 	_posInChunk = 0;
 	_chunkSize = 0;
+	_ended = false;
 	_innerRead = &HttpClientChunkedIStream::_readFormBuf;
 }
 
@@ -147,8 +149,27 @@ Status HttpClientChunkedIStream::_readChunkSize()
 		return Status::http_invalid_chunk_size;
 
 	_chunkSize = val;
-	if(val == 0)
-		st = Status::end_of_data;
+	if(val == 0) {
+		_ended = true;
+
+		// Real till another \r\n:
+		// 0
+		// some-footer: some-value
+		// another-footer: another-value
+		// [blank line here]
+		while(st) {
+			char c;
+			st = (this->*_innerRead)(&c, 1, len);
+			if(len == 0) return Status::http_invalid_chunk_size;
+
+			if(c == '\r') {
+				st = (this->*_innerRead)(&c, 1, len);
+				if(len == 0) return Status::http_invalid_chunk_size;
+				if(c == '\n')
+					st = Status::end_of_data;
+			}
+		}
+	}
 
 	return st;
 }
@@ -158,6 +179,9 @@ Status HttpClientChunkedIStream::read(void* buffer, roUint64 bytesToRead, roUint
 	bytesRead = 0;
 	if(bytesToRead == 0)
 		return roStatus::ok;
+
+	if(_ended)
+		return Status::end_of_data;
 
 	// Try to parse the chunk size
 	if(_posInChunk == _chunkSize) {

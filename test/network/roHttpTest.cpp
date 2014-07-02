@@ -97,6 +97,11 @@ TEST_FIXTURE(HttpTest, server)
 #include "../../roar/base/roIOStream.h"
 #include "../../roar/base/roTypeCast.h"
 
+roStatus onReply_noRead(const HttpResponseHeader& response, IStream& body, void* userPtr)
+{
+	return roStatus::ok;
+}
+
 roStatus onReply(const HttpResponseHeader& response, IStream& body, void* userPtr)
 {
 	roStatus st;
@@ -109,8 +114,12 @@ roStatus onReply(const HttpResponseHeader& response, IStream& body, void* userPt
 		content.append((char*)buf, clamp_cast<roSize>(read));
 	} while(st);
 
-	if(st == roStatus::end_of_data)
-		st = roStatus::ok;
+	if(st == roStatus::end_of_data) {
+		// Further read should keep returning roStatus::end_of_data
+		st = body.read(buf, sizeof(buf), read);
+		if(st == roStatus::end_of_data)
+			st = roStatus::ok;
+	}
 
 	return st;
 }
@@ -146,9 +155,11 @@ TEST_FIXTURE(HttpTest, proxy)
 	HttpClient client;
 	client.logLevel = 2;
 	client.proxy = "157.7.202.27:3128";
+	client.proxy = "proxy.ubisoft.io:3128";
 
 	HttpRequestHeader header;
 	CHECK(header.make(HttpRequestHeader::Method::Get, "http://google.com.sg"));
+	CHECK(client.request(header, onReply_noRead));
 	CHECK(client.request(header, onReply));
 
 	client.useHttpCompression = true;
@@ -160,10 +171,12 @@ TEST_FIXTURE(HttpTest, proxy)
 
 TEST_FIXTURE(HttpTest, https)
 {
-	SockAddr addr;
-	addr.parse("google.com:443");
+	HttpClient client;
+	client.logLevel = 2;
+	client.useHttpCompression = true;
+	client.proxy = "proxy.ubisoft.io:3128";
 
-	SecureSocket s;
-	s.create();
-	s.connect(addr);
+	HttpRequestHeader header;
+	CHECK(header.make(HttpRequestHeader::Method::Get, "https://google.com:443"));
+	CHECK(client.request(header, onReply));
 }

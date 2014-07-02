@@ -60,7 +60,7 @@ HttpClient::HttpClient()
 	useHttpCompression = true;
 }
 
-static AutoPtr<IStream> getStream(const HttpResponseHeader& response, RangedString& preSocketBuf, CoSocket& socket)
+static AutoPtr<IStream> _getStream(const HttpResponseHeader& response, const RangedString& preSocketBuf, CoSocket& socket)
 {
 	AutoPtr<IStream> istream;
 
@@ -106,11 +106,29 @@ static AutoPtr<IStream> getStream(const HttpResponseHeader& response, RangedStri
 			s->init(istream);
 			roAssert(!istream.ptr());
 			istream.takeOver(s);
-
-//			if(logLevel > 0)
-//				roLog("info", "HttpClient - Content encoding: %s\n", contentEncoding.toString().c_str());
 		}
 	}
+
+	return istream;
+}
+
+static roStatus _skipStreamData(const HttpResponseHeader& response, IStream& istream)
+{
+	roStatus st = roStatus::ok;
+
+	if(response.cmpFieldNoCase(HttpResponseHeader::HeaderField::Connection, "keep-alive")) {
+		// Read all the remaining data
+		roByte buf[128];
+		roUint64 read = 0;
+		do {
+			st = istream.read(buf, sizeof(buf), read);
+		} while(st);
+
+		if(st == roStatus::end_of_data)
+			st = roStatus::ok;
+	}
+
+	return st;
 }
 
 roStatus HttpClient::request(const HttpRequestHeader& orgHeader, ReplyFunc replyFunc, void* userPtr, HttpConnections* connectionPool)
@@ -298,6 +316,8 @@ while(true) {
 	if(logLevel > 0)
 		roLog("info", "HttpClient - Status code: %u\n", statusCode);
 
+	AutoPtr<IStream> istream;
+
 	// Decode status code
 	switch(statusCode)
 	{
@@ -308,58 +328,11 @@ while(true) {
 	case 404:		// Not found
 	case 416:		// Requested Range not satisfiable
 	{
-		AutoPtr<IStream> istream = getStream(
+		istream.takeOver(_getStream(
 			response,
-			RangedString(responseStr.c_str() + contentStartPos, responseStr, responseStr.end()
-		);
-
-		roUint64 contentLength = 0;
-		RangedString transferEncoding, tillCloseConnection;
-
-		// Determine the encoding
-		if(response.getField(HttpResponseHeader::HeaderField::ContentLength, contentLength)) {
-			AutoPtr<HttpClientSizedIStream> s = _allocator.newObj<HttpClientSizedIStream>(connection->socket, clamp_cast<roSize>(contentLength));
-			s->begin = (roByte*)responseStr.c_str() + contentStartPos;
-			s->end = (roByte*)responseStr.c_str() + responseStr.size();
-			s->current = s->begin;
-			istream.takeOver(s);
-
-			if(logLevel > 0)
-				roLog("info", "HttpClient - Content length: %u\n", contentLength);
-		}
-		else if(response.getField(HttpResponseHeader::HeaderField::TransferEncoding, transferEncoding)) {
-			AutoPtr<HttpClientChunkedIStream> s = _allocator.newObj<HttpClientChunkedIStream>(connection->socket);
-			s->begin = (roByte*)responseStr.c_str() + contentStartPos;
-			s->end = (roByte*)responseStr.c_str() + responseStr.size();
-			s->current = s->begin;
-			istream.takeOver(s);
-		}
-		else if(response.cmpFieldNoCase(HttpResponseHeader::HeaderField::Connection, "close")) {
-			AutoPtr<HttpClientReadTillEndIStream> s = _allocator.newObj<HttpClientReadTillEndIStream>(connection->socket);
-			s->begin = (roByte*)responseStr.c_str() + contentStartPos;
-			s->end = (roByte*)responseStr.c_str() + responseStr.size();
-			s->current = s->begin;
-			istream.takeOver(s);
-		}
-		else {
-			// Create a null stream
-			AutoPtr<MemoryIStream> s = _allocator.newObj<MemoryIStream>();
-			istream.takeOver(s);
-		}
-
-		// Any compression?
-		RangedString contentEncoding;
-		if(response.getField(HttpResponseHeader::HeaderField::ContentEncoding, contentEncoding)) {
-			if(contentEncoding.cmpNoCase("gzip") == 0) {
-				AutoPtr<GZipStreamIStream> s = _allocator.newObj<GZipStreamIStream>();
-				s->init(istream);
-				roAssert(!istream.ptr());
-				istream.takeOver(s);
-
-				if(logLevel > 0)
-					roLog("info", "HttpClient - Content encoding: %s\n", contentEncoding.toString().c_str());
-			}
-		}
+			RangedString(responseStr.c_str() + contentStartPos, responseStr.end()),
+			connection->socket
+		));
 
 		if(logLevel > 0)
 			roLog("info", "HttpClient - Read body content\n");
@@ -395,16 +368,25 @@ while(true) {
 		else
 			connectionPool->connections.insert(*connection);
 
+		istream.takeOver(_getStream(
+			response,
+			RangedString(responseStr.c_str() + contentStartPos, responseStr.end()),
+			connection->socket
+		));
+
 		// Back to the start of the location redirect loop
+		st = _skipStreamData(response, *istream);
+		if(!st) roEXCP_THROW;
 		continue;
 	}	break;
 	default:
 		break;
 	}
 
-	if(response.cmpFieldNoCase(HttpResponseHeader::HeaderField::Connection, "keep-alive")) {
-		// Read all the remaining data
-	}
+	// For keep-alive to work, we need to read till end of the http response
+	// if the client callback didn't do so.
+	st = _skipStreamData(response, *istream);
+	if(!st) roEXCP_THROW;
 
 	break;
 }	// End of location redirection loop
