@@ -123,6 +123,7 @@ struct Graph
 	void clear()
 	{
 		regex = NULL;
+		customMatchers = NULL;
 		nestedGroupLevel = 0;
 		branchLevel = 0;
 		charCmpFunc = NULL;
@@ -208,6 +209,7 @@ struct Graph
 	}
 
 	Regex* regex;
+	const IArray<Regex::CustomMatcher>* customMatchers;
 	roSize nestedGroupLevel;
 	roSize branchLevel;
 	RangedString regString;
@@ -413,6 +415,14 @@ bool match_beginOfString(Graph& graph, Node& node, Edge& edge, RangedString& s)
 bool match_endOfString(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
 	return (s.begin == graph.srcString.end);
+}
+
+bool match_customFunc(Graph& graph, Node& node, Edge& edge, RangedString& s)
+{
+	const Regex::CustomMatcher* matcher = reinterpret_cast<const Regex::CustomMatcher*>(node.userdata[0]);
+	if(!matcher) return false;
+	if(!matcher->func) return false;
+	return matcher->func(s, matcher->userData);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -676,6 +686,25 @@ bool parse_match_endOfString(Graph& graph, const RangedString& f, const roUtf8*&
 	return ++i, true;
 }
 
+bool parse_customFunc(Graph& graph, const RangedString& f, const roUtf8*& i)
+{
+	if(!graph.customMatchers) return false;
+	if(*i != '$') return false;
+	if(!f.isInRange(i - f.begin)) return false;
+
+	roUtf8 idx = 0;
+	if(!roStrTo(i+1, i, idx)) return false;
+
+	if(!graph.customMatchers->isInRange(idx)) return false;
+	Node node = { RangedString("$") };
+	node.userdata[0] = (void*)&(*graph.customMatchers)[idx];
+	graph.push2(node, match_customFunc);
+
+	parse_repeatition(graph, f, i, graph.currentNodeIdx-1, graph.currentNodeIdx);
+
+	return true;
+}
+
 bool parse_nodes_impl(Graph& graph, const RangedString& f)
 {
 	bool ret = false;
@@ -686,6 +715,7 @@ bool parse_nodes_impl(Graph& graph, const RangedString& f)
 		ret |= b = parse_raw(graph, f, i);					if(b) continue;
 		ret |= b = parse_charSet(graph, f, i);				if(b) continue;
 		ret |= b = parse_group(graph, f, i);				if(b) continue;
+		ret |= b = parse_customFunc(graph, f, i);			if(b) continue;
 		ret |= b = parse_match_beginOfString(graph, f, i);	if(b) continue;
 		ret |= b = parse_match_endOfString(graph, f, i);	if(b) continue;
 		break;
@@ -840,8 +870,15 @@ bool Regex::match(const roUtf8* s, const roUtf8* f, const char* options)
 
 bool Regex::match(RangedString srcString, RangedString regString, const char* options)
 {
+	Array<CustomMatcher> customMatcher;
+	return match(srcString, regString, customMatcher, options);
+}
+
+bool Regex::match(RangedString srcString, RangedString regString, const IArray<CustomMatcher>& customMatcher, const char* options)
+{
 	Graph graph;
 	graph.regex = this;
+	graph.customMatchers = &customMatcher;
 	graph.regString = regString;
 	graph.srcString = srcString;
 	graph.charCmpFunc = charCmp;

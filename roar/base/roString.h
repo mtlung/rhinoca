@@ -136,6 +136,9 @@ struct RangedString
 	bool		operator<=	(const RangedString& rhs) const { return (*this < rhs) || (*this == rhs); }
 	bool		operator>	(const RangedString& rhs) const { return !(*this < rhs) && (*this != rhs); }
 
+	bool		isInRange	(int i) const		{ return i >= 0 && roSize(i) < size(); }
+	bool		isInRange	(roSize i) const	{ return i < size(); }
+
 	const roUtf8& operator[](roSize index) const { roAssert(index < size()); return begin[index]; }
 
 	static const roSize npos = roSize(-1);

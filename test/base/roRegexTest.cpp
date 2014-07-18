@@ -451,3 +451,39 @@ TEST_FIXTURE(RegexTest, test)
 
 	regex.match("http://yahoo.com", "http://{:i}\\.{com|org}(\\::z)?{(/:i)*}");
 }
+
+TEST_FIXTURE(RegexTest, customMatcher)
+{
+	struct LocalScope {
+		static bool matchFloatNumber(RangedString& inout, void* userData)
+		{
+			Regex regex;
+			if(!regex.match(inout, "([0-9]+\\.[0-9]*)|([0-9]+)|(\\.[0-9]+)")) return false;
+			inout.begin = regex.result[0].end;
+			return true;
+		}
+
+		static bool matchFloatExponent(RangedString& inout, void* userData)
+		{
+			Regex regex;
+			if(!regex.match(inout, "(e|E)(\\+|-)?[0-9]+")) return false;
+			inout.begin = regex.result[0].end;
+			return true;
+		}
+	};	// LocalScope
+
+	Regex regex;
+
+	Array<Regex::CustomMatcher> matchers;
+	Regex::CustomMatcher matcher1 = { LocalScope::matchFloatNumber, NULL };
+	Regex::CustomMatcher matcher2 = { LocalScope::matchFloatExponent, NULL };
+	matchers.pushBack(matcher1);
+	matchers.pushBack(matcher2);
+
+	CHECK(regex.match(".23", "$0$1?", matchers));
+	CHECK(regex.match("1.23", "$0$1?", matchers));
+	CHECK(regex.match("1.23e+01", "$0$1?", matchers));
+	CHECK(regex.match("1.23E-01", "$0$1?", matchers));
+
+	CHECK(!regex.match("1.23", "$0$1", matchers));
+}

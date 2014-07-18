@@ -23,6 +23,13 @@ struct Regex : private NonCopyable
 	bool match(const roUtf8* s, const roUtf8* f, const char* options=NULL);
 	bool match(RangedString s, RangedString f, const char* options=NULL);
 
+	typedef bool (*CustomFunc)(RangedString& inout, void* userData);
+	struct CustomMatcher {
+		CustomFunc func;
+		void* userData;
+	};
+	bool match(RangedString s, RangedString f, const IArray<CustomMatcher>& customMatcher, const char* options=NULL);
+
 	template<typename T>
 	Status getValue(roSize index, T& value);
 
