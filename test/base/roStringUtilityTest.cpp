@@ -186,3 +186,70 @@ TEST_FIXTURE(StringUtilityTest, toString)
 
 	CHECK_EQUAL(7u, roToString(buf, roCountof(buf), (void*)0x123ABCD));	CHECK_EQUAL("123ABCD", buf);
 }
+
+TEST_FIXTURE(StringUtilityTest, strcmp)
+{
+	// Strcmp
+	CHECK(roStrCmp("A", "A") == 0);
+	CHECK(roStrCmp("AB", "AB") == 0);
+
+	CHECK(roStrCmp("A", "B") < 0);
+	CHECK(roStrCmp("A", "AB") < 0);
+	CHECK(roStrCmp("AB", "AC") < 0);
+
+	CHECK(roStrCmp("B", "A") > 0);
+	CHECK(roStrCmp("AB", "A") > 0);
+	CHECK(roStrCmp("AC", "AB") > 0);
+
+	// Strncmp
+	CHECK(roStrnCmp("A", "A", 1) == 0);
+	CHECK(roStrnCmp("AB", "AB", 1) == 0);
+	CHECK(roStrnCmp("AB", "AB", 2) == 0);
+
+	CHECK(roStrnCmp("A", "B", 1) < 0);
+
+	CHECK(roStrnCmp("B", "A", 1) > 0);
+
+	// Strncmp
+	CHECK(roStrnCmp("A", 1, "A", 1) == 0);
+	CHECK(roStrnCmp("AB", 1, "AB", 1) == 0);
+	CHECK(roStrnCmp("AB", 2, "AB", 2) == 0);
+
+	CHECK(roStrnCmp("AB", 1, "AB", 2) < 0);
+	CHECK(roStrnCmp("AB", 2, "AC", 2) < 0);
+
+	CHECK(roStrnCmp("AB", 2, "AB", 1) > 0);
+	CHECK(roStrnCmp("AC", 2, "AB", 2) > 0);
+
+	// StrCaseCmp
+	CHECK(roStrCaseCmp("A", "A") == 0);				CHECK(roStrCaseCmp("a", "A") == 0);
+	CHECK(roStrCaseCmp("AB", "AB") == 0);			CHECK(roStrCaseCmp("ab", "AB") == 0);
+
+	CHECK(roStrCaseCmp("A", "B") < 0);				CHECK(roStrCaseCmp("a", "B") < 0);
+	CHECK(roStrCaseCmp("A", "AB") < 0);				CHECK(roStrCaseCmp("a", "AB") < 0);
+	CHECK(roStrCaseCmp("AB", "AC") < 0);			CHECK(roStrCaseCmp("ab", "AC") < 0);
+
+	CHECK(roStrCaseCmp("B", "A") > 0);				CHECK(roStrCaseCmp("b", "A") > 0);
+	CHECK(roStrCaseCmp("AB", "A") > 0);				CHECK(roStrCaseCmp("ab", "A") > 0);
+	CHECK(roStrCaseCmp("AC", "AB") > 0);			CHECK(roStrCaseCmp("ac", "AB") > 0);
+
+	// StrnCaseCmp
+	CHECK(roStrnCaseCmp("A", "A", 1) == 0);			CHECK(roStrnCaseCmp("a", "A", 1) == 0);
+	CHECK(roStrnCaseCmp("AB", "AB", 1) == 0);		CHECK(roStrnCaseCmp("ab", "AB", 1) == 0);
+	CHECK(roStrnCaseCmp("AB", "AB", 2) == 0);		CHECK(roStrnCaseCmp("ab", "AB", 2) == 0);
+
+	CHECK(roStrnCaseCmp("A", "B", 1) < 0);			CHECK(roStrnCaseCmp("a", "B", 1) < 0);
+
+	CHECK(roStrnCaseCmp("B", "A", 1) > 0);			CHECK(roStrnCaseCmp("b", "A", 1) > 0);
+
+	// StrnCaseCmp
+	CHECK(roStrnCaseCmp("A", 1, "A", 1) == 0);		CHECK(roStrnCaseCmp("a", 1, "A", 1) == 0);
+	CHECK(roStrnCaseCmp("AB", 1, "AB", 1) == 0);	CHECK(roStrnCaseCmp("ab", 1, "AB", 1) == 0);
+	CHECK(roStrnCaseCmp("AB", 2, "AB", 2) == 0);	CHECK(roStrnCaseCmp("ab", 2, "AB", 2) == 0);
+
+	CHECK(roStrnCaseCmp("AB", 1, "AB", 2) < 0);		CHECK(roStrnCaseCmp("ab", 1, "AB", 2) < 0);
+	CHECK(roStrnCaseCmp("AB", 2, "AC", 2) < 0);		CHECK(roStrnCaseCmp("ab", 2, "AC", 2) < 0);
+
+	CHECK(roStrnCaseCmp("AB", 2, "AB", 1) > 0);		CHECK(roStrnCaseCmp("ab", 2, "AB", 1) > 0);
+	CHECK(roStrnCaseCmp("AC", 2, "AB", 2) > 0);		CHECK(roStrnCaseCmp("ac", 2, "AB", 2) > 0);
+}

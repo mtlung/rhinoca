@@ -11,8 +11,10 @@ inline char*	roStrnCpy		(char* dst, const char* src, roSize n);
 
 inline int		roStrCmp		(const char* s1, const char* s2);
 inline int		roStrnCmp		(const char* s1, const char* s2, roSize n);
+inline int		roStrnCmp		(const char* s1, roSize n1, const char* s2, roSize n2);
 inline int		roStrCaseCmp	(const char* s1, const char* s2);
 inline int		roStrnCaseCmp	(const char* s1, const char* s2, roSize n);
+inline int		roStrnCaseCmp	(const char* s1, roSize n1, const char* s2, roSize n2);
 
 inline char*	roStrChr		(char* sz, char ch);
 inline char*	roStrrChr		(char* sz, char ch);

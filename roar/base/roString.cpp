@@ -393,6 +393,10 @@ bool String::operator==(const RangedString& rhs) const
 	return roStrnCmp(_str(), rhs.begin, size()) == 0;
 }
 
+bool String::operator<(const String& rhs) const
+{
+	return roStrCmp(_str(), rhs._str()) < 0;
+}
 
 String RangedString::toString() const
 {
@@ -442,12 +446,12 @@ roSize RangedString::rfind(const char* str, roSize offset) const
 
 int RangedString::cmpCase(const char* str) const
 {
-	return roStrnCmp(begin, str, size());
+	return roStrnCmp(begin, size(), str, roStrLen(str));
 }
 
 int RangedString::cmpNoCase(const char* str) const
 {
-	return roStrnCaseCmp(begin, str, size());
+	return roStrnCaseCmp(begin, size(), str, roStrLen(str));
 }
 
 bool RangedString::operator==(const char* rhs) const
@@ -471,6 +475,11 @@ bool RangedString::operator==(const RangedString& rhs) const
 		return false;
 
 	return roStrnCmp(begin, rhs.begin, size()) == 0;
+}
+
+bool RangedString::operator<(const RangedString& rhs) const
+{
+	return roStrnCmp(begin, size(), rhs.begin, rhs.size()) < 0;
 }
 
 
