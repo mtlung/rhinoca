@@ -1,0 +1,60 @@
+#ifndef __roSwc_Lexer_h__
+#define __roSwc_Lexer_h__
+
+#include "../base/roArray.h"
+#include "../base/roLinkList.h"
+#include "../base/roMap.h"
+#include "../base/roRegex.h"
+#include "../base/roString.h"
+
+namespace ro {
+
+struct Lexer
+{
+	struct LineInfo {
+		LineInfo() { l1 = l2 = c1 = c2 = p1 = p2 = 0; }
+		roSize l1, l2;	// Line begin/end
+		roSize c1, c2;	// Column begin/end
+		roSize p1, p2;	// Position from beginning of string
+	};
+
+	typedef	bool (*MatchFunc)(RangedString& inout, void* userData);
+
+	roStatus registerRule(const char* ruleName, const char* regex, bool isFragment=false);	// Regex grammar
+	roStatus registerRule(const char* ruleName, MatchFunc matchFunc, void* userData=NULL, bool isFragment=false);	// Matching with user function
+
+	roStatus beginParse(const RangedString& source);	// Please make sure source string not deleted before endParse()
+	roStatus nextToken(RangedString& token, RangedString& val, LineInfo& lineInfo);
+	roStatus endParse();
+
+// Private:
+	struct IRule : public MapNode<String, IRule> {
+		virtual ~IRule() {}
+		virtual bool match(RangedString& inout) = 0;
+
+		bool isFragment;	// Fragment can compose into rule but won't contribute to the generated token directly
+		struct OrderedListNode : public ro::ListNode<IRule::OrderedListNode> {
+			void destroyThis() override { removeThis(); }
+		} orderedListNode;
+	};	// IRule
+
+	struct RegexRule : public IRule {
+		virtual bool match(RangedString& inout) override;
+		String regex;
+		TinyArray<Regex::CustomMatcher, 4> matcher;
+	};	// RegexRule
+
+	struct CustomRule : public IRule {
+		virtual bool match(RangedString& inout) override;
+		MatchFunc matchFunc;
+		void* userData;
+	};	// CustomRule
+
+	Map<IRule> _rules;
+	LinkList<IRule::OrderedListNode> _ruleOrderedList;	// For ordered iteration
+	RangedString _src;
+};	// Lexer
+
+}	// namespace ro
+
+#endif	// __roSwc_Lexer_h__
