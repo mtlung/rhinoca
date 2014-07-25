@@ -16,6 +16,9 @@ namespace ro {
 // \S	Matches any nonwhite space character. Equivalent to "[^ \f\n\r\t\v]"
 // \w	Matches any word character including underscore. Equivalent to "[A-Za-z0-9_]"
 // \W	Matches any non-word character. Equivalent to "[^A-Za-z0-9_]"
+// Options:
+// i	case-insensitive
+// b	only match at beginning of string
 struct Regex : private NonCopyable
 {
 	Regex();
@@ -23,6 +26,7 @@ struct Regex : private NonCopyable
 	bool match(const roUtf8* s, const roUtf8* f, const char* options=NULL);
 	bool match(RangedString s, RangedString f, const char* options=NULL);
 
+	// Matching with custom function. Use $0, $1... to refer to the function
 	typedef bool (*CustomFunc)(RangedString& inout, void* userData);
 	struct CustomMatcher {
 		CustomFunc func;

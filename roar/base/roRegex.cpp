@@ -904,6 +904,8 @@ bool Regex::match(RangedString srcString, RangedString regString, const IArray<C
 		debugNodes(graph);
 	}
 
+	bool onlyMatchBeginningOfString = options && roStrChr(options, 'b');
+
 	// Matching
 	while(srcString.begin < srcString.end) {
 		const roUtf8* currentBegin = srcString.begin;
@@ -917,6 +919,9 @@ bool Regex::match(RangedString srcString, RangedString regString, const IArray<C
 
 			return true;
 		}
+
+		if(onlyMatchBeginningOfString)
+			break;
 
 		// If no match found, try start at next character in the string
 		srcString.begin = currentBegin + 1;

@@ -49,8 +49,8 @@ struct String
 
 	roSize		find		(char c, roSize offset=0) const;
 	roSize		find		(const char* str, roSize offset=0) const;
-	roSize		rfind		(char c, roSize offset=0) const;
-	roSize		rfind		(const char* str, roSize offset=0) const;
+	roSize		rfind		(char c, roSize offset=npos) const;				// Offset is count from begin not end
+	roSize		rfind		(const char* str, roSize offset=npos) const;	//
 
 	String		substr		(roSize offset=0, roSize count=npos) const;
 
@@ -118,8 +118,8 @@ struct RangedString
 
 	roSize		find		(char c, roSize offset=0) const;
 	roSize		find		(const char* str, roSize offset=0) const;
-	roSize		rfind		(char c, roSize offset=0) const;
-	roSize		rfind		(const char* str, roSize offset=0) const;
+	roSize		rfind		(char c, roSize offset=npos) const;				// Offset is count from begin not end
+	roSize		rfind		(const char* str, roSize offset=npos) const;	//
 
 	roSize		size		() const { return end - begin; }
 

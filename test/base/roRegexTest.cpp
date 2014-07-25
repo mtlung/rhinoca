@@ -466,7 +466,7 @@ TEST_FIXTURE(RegexTest, customMatcher)
 		static bool matchFloatExponent(RangedString& inout, void* userData)
 		{
 			Regex regex;
-			if(!regex.match(inout, "(e|E)(\\+|-)?[0-9]+")) return false;
+			if(!regex.match(inout, "[eE][+-]?[0-9]+")) return false;
 			inout.begin = regex.result[0].end;
 			return true;
 		}
