@@ -229,7 +229,7 @@ void* FunctionPatcher::patch(void* func, void* newFunc)
 	{
 		roSize headerSize = info.origByteCodes.size();
 
-		info.jumpByteCodes = _allocateExeBuffer(NULL, 16);
+		info.jumpByteCodes = _allocateExeBuffer(NULL, 32);	// In most cases 16 bytes is enough but some need 32
 		Address infouedFromAddress = (Address)info.jumpByteCodes;
 		memcpy(infouedFromAddress, &info.origByteCodes.front(), headerSize);
 		infouedFromAddress += headerSize;

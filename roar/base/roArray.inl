@@ -51,6 +51,29 @@ void StaticArray<T,N>::assign(const T& fill)
 		data[i] = fill;
 }
 
+template<class T, roSize N>
+T* StaticArray<T,N>::find(const T& key)
+{
+	return roArrayFind(this->data, N, key);
+}
+
+template<class T, roSize N>
+const T* StaticArray<T,N>::find(const T& key) const
+{
+	return roArrayFind(this->data, N, key);
+}
+
+template<class T, roSize N> template<class K>
+T* StaticArray<T,N>::find(const K& key, bool(*equal)(const T&, const K&))
+{
+	return roArrayFind(this->data, N, key, equal);
+}
+
+template<class T, roSize N>  template<class K>
+const T* StaticArray<T,N>::find(const K& key, bool(*equal)(const T&, const K&)) const
+{
+	return roArrayFind(this->data, N, key, equal);
+}
 
 // ----------------------------------------------------------------------
 
@@ -263,8 +286,8 @@ void IArray<T>::popBack()
 template<class T>
 void IArray<T>::remove(roSize idx)
 {
-	roAssert(idx < _size);
-	if(idx >= _size) return;
+	roAssert(isInRange(idx));
+	if(!isInRange(idx)) return;
 
 	_data[idx].~T();
 	roAssert(_size > 0);
@@ -279,6 +302,28 @@ void IArray<T>::remove(roSize idx)
 		}
 	}
 	--_size;
+}
+
+template<class T>
+void IArray<T>::remove(roSize idx, roSize count)
+{
+	if(count == 0) return;
+	roAssert(isInRange(idx));
+	if(!isInRange(idx)) return;
+	if(!isInRange(idx + count - 1)) return;
+
+	if(TypeOf<T>::isPOD())
+		roMemmov(&_data[idx], &_data[idx+count], sizeof(T) * (_size - idx - count));
+	else {
+		for(roSize i=idx; i<idx+count; ++i) {
+			_data[i].~T();
+			new ((void *)&_data[i]) T;
+			roSwap(_data[i], _data[i+count]);
+			_data[i+count].~T();
+		}
+	}
+
+	_size -= count;
 }
 
 template<class T>

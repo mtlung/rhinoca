@@ -27,6 +27,10 @@ struct Lexer
 	roStatus nextToken(RangedString& token, RangedString& val, LineInfo& lineInfo);
 	roStatus endParse();
 
+	void pushState();		// Save current state on stack
+	void restoreState();	// Restore the saved state
+	void discardState();	// Discard the saved state
+
 // Private:
 	struct IRule : public MapNode<String, IRule> {
 		virtual ~IRule() {}
@@ -52,7 +56,8 @@ struct Lexer
 
 	Map<IRule> _rules;
 	LinkList<IRule::OrderedListNode> _ruleOrderedList;	// For ordered iteration
-	RangedString _src;
+
+	Array<RangedString> _stateStack;
 };	// Lexer
 
 }	// namespace ro

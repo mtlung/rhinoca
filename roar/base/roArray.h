@@ -50,6 +50,14 @@ struct StaticArray
 
 	void			assign(const T& fill);		///< Assign one value to all elements
 
+	T*				find(const T& key);
+	const T*		find(const T& key) const;
+
+	template<class K>
+	T*				find(const K& key, bool(*equal)(const T&, const K&));
+	template<class K>
+	const T*		find(const K& key, bool(*equal)(const T&, const K&)) const;
+
 	roStaticAssert(N_ > 0);
 };	// StaticArray
 
@@ -104,6 +112,7 @@ struct IArray
 
 	void		popBack();
 	void		remove(roSize i);
+	void		remove(roSize i, roSize count);
 	void		removeBySwap(roSize i);
 	bool		removeByKey(const T& key);		///< Returns false if the key not found
 	bool		removeAllByKey(const T& key);

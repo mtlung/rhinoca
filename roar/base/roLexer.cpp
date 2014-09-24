@@ -7,7 +7,8 @@ namespace ro {
 
 roStatus Lexer::beginParse(const RangedString& source)
 {
-	_src = source;
+	_stateStack.clear();
+	_stateStack.pushBack(source);
 	return roStatus::ok;
 }
 
@@ -18,6 +19,11 @@ roStatus Lexer::nextToken(RangedString& token, RangedString& val, LineInfo& line
 	};
 	Array<Longest> longest;
 
+	if(_stateStack.isEmpty())
+		return roStatus::end_of_data;
+
+	RangedString& src = _stateStack.back();
+
 	// Try to match with all rules and proceed with the longest result
 	// See http://en.wikipedia.org/wiki/Maximal_munch
 	for(IRule::OrderedListNode* n = _ruleOrderedList.begin(); n != _ruleOrderedList.end(); n=n->next()) {
@@ -25,11 +31,11 @@ roStatus Lexer::nextToken(RangedString& token, RangedString& val, LineInfo& line
 		if(r.isFragment)
 			continue;
 
-		RangedString tmp(_src);
+		RangedString tmp(src);
 		if(!r.match(tmp))
 			continue;
 
-		Longest l = { r.key(), RangedString(_src.begin, tmp.begin) };
+		Longest l = { r.key(), RangedString(src.begin, tmp.begin) };
 		longest.pushBack(l);
 	}
 
@@ -64,13 +70,31 @@ roStatus Lexer::nextToken(RangedString& token, RangedString& val, LineInfo& line
 	if(longest.isEmpty())
 		return roStatus::end_of_data;
 
-	_src.begin = val.end;
+	src.begin = val.end;
 	return roStatus::ok;
 }
 
 roStatus Lexer::endParse()
 {
 	return roStatus::ok;
+}
+
+void Lexer::pushState()
+{
+	RangedString cur = _stateStack.back();
+	_stateStack.pushBack(cur);
+}
+
+void Lexer::restoreState()
+{
+	_stateStack.popBack();
+}
+
+void Lexer::discardState()
+{
+	RangedString cur = _stateStack.back();
+	_stateStack.popBack();
+	_stateStack.back() = cur;
 }
 
 static DefaultAllocator _allocator;

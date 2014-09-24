@@ -25,20 +25,20 @@ static MemoryProfiler*	_profiler = NULL;
 typedef LPVOID (WINAPI *MyHeapAlloc)(HANDLE, DWORD, SIZE_T);
 typedef LPVOID (WINAPI *MyHeapReAlloc)(HANDLE, DWORD, LPVOID, SIZE_T);
 typedef LPVOID (WINAPI *MyHeapFree)(HANDLE, DWORD, LPVOID);
-typedef NTSTATUS (NTAPI *MyNtAlloc)(HANDLE, PVOID*, ULONG_PTR, PSIZE_T, ULONG, ULONG);
-typedef NTSTATUS (WINAPI *MyNtFree)(HANDLE, PVOID*, PSIZE_T, ULONG);
+typedef LPVOID (WINAPI *MyVirtualAlloc)(LPVOID, SIZE_T, DWORD, DWORD);
+typedef BOOL   (WINAPI *MyVirtualFree)(LPVOID, SIZE_T, DWORD);
 
 MyHeapAlloc		_orgHeapAlloc = NULL;
 MyHeapReAlloc	_orgHeapReAlloc = NULL;
 MyHeapFree		_orgHeapFree = NULL;
-MyNtAlloc		_orgNtAlloc = NULL;
-MyNtFree		_orgNtFree = NULL;
+MyVirtualAlloc	_orgVirtualAlloc = NULL;
+MyVirtualFree	_orgVirtualFree = NULL;
 
 LPVOID WINAPI myHeapAlloc(__in HANDLE, __in DWORD, __in SIZE_T);
 LPVOID WINAPI myHeapReAlloc(__in HANDLE, __in DWORD, __deref LPVOID, __in SIZE_T);
 LPVOID WINAPI myHeapFree(__in HANDLE, __in DWORD, __deref LPVOID);
-NTSTATUS NTAPI myNtAlloc(HANDLE, PVOID*, ULONG_PTR, PSIZE_T, ULONG, ULONG);
-NTSTATUS WINAPI myNtFree(HANDLE, PVOID*, PSIZE_T, ULONG);
+LPVOID WINAPI myVirtualAlloc(__in_opt LPVOID, __in SIZE_T, __in DWORD, __in DWORD);
+BOOL   WINAPI myVirtualFree(__in LPVOID, __in SIZE_T, __in DWORD);
 
 namespace {
 
@@ -84,7 +84,11 @@ Status Array_VirtualAlloc<T>::reserve(roSize newCapacity, bool force)
 		if(_capacity * sizeof(T) >= roundUpSize && !force)
 			return Status::ok;
 
-		newPtr = (T*)::VirtualAlloc(NULL, roundUpSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+		if(_orgVirtualAlloc)
+			newPtr = (T*)_orgVirtualAlloc(NULL, roundUpSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+		else
+			newPtr = (T*)::VirtualAlloc(NULL, roundUpSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
 		if(!newPtr)
 			return Status::not_enough_memory;
 	}
@@ -96,8 +100,12 @@ Status Array_VirtualAlloc<T>::reserve(roSize newCapacity, bool force)
 		roSwap(_data[i], newPtr[i]);
 	if(_data) for(roSize i=0; i<_size; ++i)
 		(_data[i]).~T();
-	if(_data)
+	if(_data) {
+		if(_orgVirtualFree)
+			_orgVirtualFree(_data, 0, MEM_RELEASE);
+		else
 		::VirtualFree(_data, 0, MEM_RELEASE);
+	}
 
 	_data = newPtr;
 	_capacity = roundUpSize / sizeof(T);
@@ -113,6 +121,7 @@ struct FlowRegulator
 	FlowRegulator()
 	{
 		roVerify(_buffer.reserve(_flushSize));
+//		_stopWatch.Start();
 	}
 
 	bool send(TlsStruct* tls)
@@ -126,8 +135,8 @@ struct FlowRegulator
 		if(_buffer.size() > _flushSize)
 			return flush(_profiler->_acceptorSocket);
 
-		if(_stopWatch.getFloat() > 1)
-			return flush(_profiler->_acceptorSocket);
+//		if(_stopWatch.GetElapsedMs() > 1000)
+//			return flush(_profiler->_acceptorSocket);
 
 		return true;
 	}
@@ -143,11 +152,11 @@ struct FlowRegulator
 			return false;
 
 		_buffer.clear();
-		_stopWatch.reset();
+//		_stopWatch.Restart();
 		return true;
 	}
 
-	StopWatch _stopWatch;
+//	Gear::StopWatch _stopWatch;
 	Array_VirtualAlloc<char> _buffer;
 	static const roSize _flushSize = 1024 * 512;
 };
@@ -185,12 +194,9 @@ MemoryProfiler::MemoryProfiler()
 
 MemoryProfiler::~MemoryProfiler()
 {
-	shutdown();
+	if(_profiler)
+		shutdown();
 }
-
-roUint64 _mainBeg = 0;
-roUint64 _mainEnd = 0;
-roUint64 _mainThreadId = 0;
 
 Status MemoryProfiler::init(roUint16 listeningPort)
 {
@@ -232,12 +238,11 @@ Status MemoryProfiler::init(roUint16 listeningPort)
 
 	{	// Patching heap functions
 		void* pAlloc, *pReAlloc, *pFree, *pNtAlloc, *pNtFree;
+		void* pVirtualAlloc, *pVirtualFree;
 		if(HMODULE h = GetModuleHandleA("ntdll.dll")) {
 			pAlloc = GetProcAddress(h, "RtlAllocateHeap");
 			pReAlloc = GetProcAddress(h, "RtlReAllocateHeap");
 			pFree = GetProcAddress(h, "RtlFreeHeap");
-			pNtAlloc = GetProcAddress(h, "NtAllocateVirtualMemory");
-			pNtFree = GetProcAddress(h, "NtFreeVirtualMemory");
 		}
 		else {
 			pAlloc = &HeapAlloc;
@@ -247,12 +252,22 @@ Status MemoryProfiler::init(roUint16 listeningPort)
 			pNtFree = NULL;
 		}
 
+		// Patching virtual memory functions
+		if(HMODULE h = GetModuleHandleA("kernelbase.dll")) {
+			pVirtualAlloc = GetProcAddress(h, "VirtualAlloc");
+			pVirtualFree = GetProcAddress(h, "VirtualFree");
+		}
+		else {
+			pVirtualAlloc = &VirtualAlloc;
+			pVirtualFree = &VirtualFree;
+		}
+
 		// Back up the original function and then do patching
 		_orgHeapAlloc = (MyHeapAlloc)_functionPatcher.patch(pAlloc, &myHeapAlloc);
 		_orgHeapReAlloc = (MyHeapReAlloc)_functionPatcher.patch(pReAlloc, &myHeapReAlloc);
 		_orgHeapFree = (MyHeapFree)_functionPatcher.patch(pFree, &myHeapFree);
-//		_orgNtAlloc = (MyNtAlloc)_functionPatcher.patch(pNtAlloc, &myNtAlloc);
-//		_orgNtFree = (MyNtFree)_functionPatcher.patch(pNtFree, &myNtFree);
+		_orgVirtualAlloc = (MyVirtualAlloc)_functionPatcher.patch(pVirtualAlloc, &myVirtualAlloc);
+		_orgVirtualFree = (MyVirtualFree)_functionPatcher.patch(pVirtualFree, &myVirtualFree);
 	}
 
 	return Status::ok;
@@ -373,41 +388,39 @@ LPVOID WINAPI myHeapFree(__in HANDLE hHeap, __in DWORD dwFlags, __deref LPVOID l
 	return ret;
 }
 
-// Allocate on same address with same size is ok
-// Allocate on same address with larger size will fail
-NTSTATUS NTAPI myNtAlloc(HANDLE ProcessHandle, PVOID* BaseAddress, ULONG_PTR ZeroBits, PSIZE_T RegionSize, ULONG AllocationType, ULONG Protect)
+LPVOID WINAPI myVirtualAlloc(__in_opt LPVOID lpAddress, __in SIZE_T dwSize, __in DWORD flAllocationType, __in DWORD flProtect)
 {
 	TlsStruct* tls = _tlsStruct();
 	roAssert(tls);
 
-	if(!tls || tls->recurseCount > 0)
-		return _orgNtAlloc(ProcessHandle, BaseAddress, ZeroBits, RegionSize, AllocationType, Protect);
+	if(!tls || tls->recurseCount > 0 || !(flAllocationType & MEM_COMMIT))
+		return _orgVirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
 
 	tls->recurseCount++;
-	NTSTATUS ret = _orgNtAlloc(ProcessHandle, BaseAddress, ZeroBits, RegionSize, AllocationType, Protect);
-	if(0 == ret && BaseAddress) {
-		if(AllocationType | MEM_COMMIT && *RegionSize > 0)
-			_send(tls, 'a', *BaseAddress, *RegionSize);
-	}
+	void* ret = _orgVirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
+	_send(tls, 'a', ret, dwSize);
 	tls->recurseCount--;
 
 	return ret;
 }
 
-NTSTATUS WINAPI myNtFree(HANDLE ProcessHandle, PVOID* BaseAddress, PSIZE_T RegionSize, ULONG FreeType)
+BOOL WINAPI myVirtualFree(__in LPVOID lpAddress, __in SIZE_T dwSize, __in DWORD dwFreeType)
 {
 	TlsStruct* tls = _tlsStruct();
 	roAssert(tls);
 
-	if(!tls || tls->recurseCount > 0)
-		return _orgNtFree(ProcessHandle, BaseAddress, RegionSize, FreeType);
+	if(!tls || tls->recurseCount > 0 || lpAddress == NULL || (dwFreeType & MEM_DECOMMIT))
+		return _orgVirtualFree(lpAddress, dwSize, dwFreeType);
+
+	roAssert(dwFreeType & MEM_RELEASE);
+
+	MEMORY_BASIC_INFORMATION info;
+	::VirtualQuery(lpAddress, &info, sizeof(info));
 
 	tls->recurseCount++;
-	NTSTATUS ret = _orgNtFree(ProcessHandle, BaseAddress, RegionSize, FreeType);
-	if(0 == ret && BaseAddress) {
-		if(FreeType | MEM_DECOMMIT)
-			_send(tls, 'f', *BaseAddress, *RegionSize);
-	}
+	BOOL ret = _orgVirtualFree(lpAddress, dwSize, dwFreeType);
+	if(SUCCEEDED(ret))
+		_send(tls, 'f', lpAddress, info.RegionSize);
 	tls->recurseCount--;
 
 	return ret;
@@ -415,6 +428,8 @@ NTSTATUS WINAPI myNtFree(HANDLE ProcessHandle, PVOID* BaseAddress, PSIZE_T Regio
 
 void MemoryProfiler::shutdown()
 {
+	roAssert(_profiler);
+
 	_functionPatcher.unpatchAll();
 
 	roVerify(_acceptorSocket.shutDownReadWrite());
