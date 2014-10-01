@@ -50,7 +50,7 @@ char doEscape(const roUtf8*& str)
 }	// namespace
 
 struct Node;
-struct Graph;
+typedef Regex::Graph Graph;
 
 struct Edge
 {
@@ -69,43 +69,6 @@ struct Node
 	void* userdata[4];
 };	// Node
 
-bool loop_repeat(Graph& graph, Node& node, Edge& edge, RangedString& s)
-{
-	// Prevent endless loop, for instance: "(a*)*b" with "b"
-	// Where nothing for inner a* to match but it regarded as success since it is '*'
-	// then ()* think the inner a* is keeping success, resulting endless loop.
-	// Here we try to solve the problem by detecting any progress is made since last loop_repeat
-	if(edge.f.begin == s.begin)
-		return false;
-
-	edge.f.begin = s.begin;
-	return true;
-}
-
-bool loop_exit(Graph& graph, Node& node, Edge& edge, RangedString& s) { return true; }
-
-bool counted_loop_repeat(Graph& graph, Node& node, Edge& edge, RangedString& s)
-{
-	roSize& count = (roSize&)node.userdata[0];
-	roSize max = (roSize)node.userdata[2];
-
-	if((count++) < max)
-		return loop_repeat(graph, node, edge, s);
-	else
-		return false;
-}
-
-bool counted_loop_exit(Graph& graph, Node& node, Edge& edge, RangedString& s)
-{
-	roSize& count = (roSize&)node.userdata[0];
-	roSize min = (roSize)node.userdata[1];
-
-	if(count < min)
-		return count = 0, false;
-	else
-		return count = 0, true;
-}
-
 bool node_begin(Graph& graph, Node& node, Edge& edge, RangedString& s);
 bool node_end(Graph& graph, Node& node, Edge& edge, RangedString& s);
 bool pass_though(Graph& graph, Node& node, Edge& edge, RangedString& s) { return true; }
@@ -113,7 +76,7 @@ bool alternation(Graph& graph, Node& node, Edge& edge, RangedString& s) { return
 
 bool parse_nodes(Graph& graph, const RangedString& f);
 
-struct Graph
+struct Regex::Graph
 {
 	Graph()
 	{
@@ -140,7 +103,6 @@ struct Graph
 		// Create the begin node
 		Node node = { RangedString("begin") };
 		push2(node, node_begin);
-
 	}
 
 	roStatus push2(const Node& node, Edge::Func func, const RangedString& edgeStr=RangedString())
@@ -187,7 +149,11 @@ struct Graph
 
 	Edge& getEdge(roUint16 nodeIdx, roUint16 edgeIdxInNode)
 	{
-		Node& node = nodes2[nodeIdx];
+		return getEdge(nodes2[nodeIdx], edgeIdxInNode);
+	}
+
+	Edge& getEdge(Node& node, roUint16 edgeIdxInNode)
+	{
 		roUint16 edgeIdx = node.edgeIdx;
 		for(roSize i=0; i<edgeIdxInNode; ++i) {
 			roAssert(edgeIdx != 0);
@@ -224,6 +190,16 @@ struct Graph
 	roUint16 endNodeIdx;
 };	// Graph
 
+Regex::Compiled::Compiled()
+	: graph(NULL)
+{
+}
+
+Regex::Compiled::~Compiled()
+{
+	delete graph;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Matching
 
@@ -242,7 +218,6 @@ bool node_end(Graph& graph, Node& node, Edge& edge, RangedString& s)
 
 bool group_begin(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
-	edge.f.begin = s.begin;
 	node.userdata[0] = (void*)s.begin;
 	node.userdata[3] = (void*)graph.branchLevel;
 	return ++graph.nestedGroupLevel, true;
@@ -423,6 +398,49 @@ bool match_customFunc(Graph& graph, Node& node, Edge& edge, RangedString& s)
 	if(!matcher) return false;
 	if(!matcher->func) return false;
 	return matcher->func(s, matcher->userData);
+}
+
+bool loop_repeat(Graph& graph, Node& node, Edge& edge, RangedString& s)
+{
+	// Prevent endless loop, for instance: "(a*)*b" with "b"
+	// Where nothing for inner a* to match but it regarded as success since it is '*'
+	// then ()* think the inner a* is keeping success, resulting endless loop.
+	// Here we try to solve the problem by detecting any progress is made since last loop_repeat
+	if(edge.f.begin == s.begin)
+		return false;
+
+	edge.f.begin = s.begin;	// Should be restored in loop_exit / counted_loop_exit
+	return true;
+}
+
+bool loop_exit(Graph& graph, Node& node, Edge& edge, RangedString& s)
+{
+	graph.getEdge(node, 1).f.begin = NULL;	// Restore to NULL
+	return true;
+}
+
+bool counted_loop_repeat(Graph& graph, Node& node, Edge& edge, RangedString& s)
+{
+	roSize& count = (roSize&)node.userdata[0];
+	roSize max = (roSize)node.userdata[2];
+
+	if((count++) < max)
+		return loop_repeat(graph, node, edge, s);
+	else
+		return false;
+}
+
+bool counted_loop_exit(Graph& graph, Node& node, Edge& edge, RangedString& s)
+{
+	graph.getEdge(node, 1).f.begin = NULL;	// Restore to NULL
+
+	roSize& count = (roSize&)node.userdata[0];
+	roSize min = (roSize)node.userdata[1];
+
+	if(count < min)
+		return count = 0, false;
+	else
+		return count = 0, true;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -707,7 +725,7 @@ bool parse_customFunc(Graph& graph, const RangedString& f, const roUtf8*& i)
 
 bool parse_nodes_impl(Graph& graph, const RangedString& f)
 {
-	bool ret = false;
+	bool ret = true;	// Empty regex consider ok
 	for(const roUtf8* i = f.begin; i < f.end; )
 	{
 		bool b;
@@ -860,6 +878,35 @@ static void debugNodes(Graph& graph)
 	roLog("debug", "\n");
 }
 
+roStatus Regex::compile(const roUtf8* reg, Compiled& compiled, roUint8 logLevel)
+{
+	compiled.regexStr = reg;
+	if(!compiled.graph)
+		compiled.graph = new Graph;
+
+	Graph& graph = *compiled.graph;
+	graph.clear();
+	graph.regString = compiled.regexStr;
+	graph.charCmpFunc = charCmp;
+
+	if(!parse_nodes(graph, graph.regString))
+		return roStatus::regex_compile_error;
+
+	// Push end node
+	{	Node node = { RangedString("end") };
+		graph.push2(node, node_end);
+		graph.edges.back().nextNode = 0;
+		graph.redirect(graph.currentNodeIdx+1, graph.currentNodeIdx);
+	}
+
+	if(logLevel > 0) {
+		roLog("debug", "%s\n", graph.regString.toString().c_str());
+		debugNodes(graph);
+	}
+
+	return roStatus::ok;
+}
+
 bool Regex::match(const roUtf8* s, const roUtf8* f, const char* options)
 {
 	RangedString regString(f, f + roStrLen(f));
@@ -874,6 +921,12 @@ bool Regex::match(RangedString srcString, RangedString regString, const char* op
 	return match(srcString, regString, customMatcher, options);
 }
 
+bool Regex::match(RangedString srcString, const Compiled& compiled, const char* options)
+{
+	Array<CustomMatcher> customMatcher;
+	return match(srcString, compiled, customMatcher, options);
+}
+
 bool Regex::match(RangedString srcString, RangedString regString, const IArray<CustomMatcher>& customMatcher, const char* options)
 {
 	Graph graph;
@@ -881,14 +934,8 @@ bool Regex::match(RangedString srcString, RangedString regString, const IArray<C
 	graph.customMatchers = &customMatcher;
 	graph.regString = regString;
 	graph.srcString = srcString;
-	graph.charCmpFunc = charCmp;
-
-	if(options && roStrChr(options, 'i')) {
-		graph.charCmpFunc = charCaseCmp;
-	}
 
 	// Parsing
-	result.clear();
 	if(!parse_nodes(graph, regString))
 		return false;
 
@@ -903,6 +950,38 @@ bool Regex::match(RangedString srcString, RangedString regString, const IArray<C
 		roLog("debug", "%s, %s\n", regString.toString().c_str(), srcString.toString().c_str());
 		debugNodes(graph);
 	}
+
+	return _match(graph, options);
+}
+
+bool Regex::match(RangedString srcString, const Compiled& compiled, const IArray<CustomMatcher>& customMatcher, const char* options)
+{
+	if(!compiled.graph)
+		return false;
+
+	Graph& graph = *compiled.graph;
+
+	graph.regex = this;
+	graph.customMatchers = &customMatcher;
+	graph.srcString = srcString;
+
+	return _match(graph, options);
+}
+
+bool Regex::_match(Graph& graph, const char* options)
+{
+	RangedString srcString = graph.srcString;	// NOTE: It must be copy by value
+
+	result.clear();
+
+	for(roSize i=0; i<graph.result.size(); ++i)
+		graph.result[i] = "";
+	for(roSize i=0; i<graph.tmpResult.size(); ++i)
+		graph.tmpResult[i] = "";
+
+	graph.charCmpFunc = charCmp;
+	if(options && roStrChr(options, 'i'))
+		graph.charCmpFunc = charCaseCmp;
 
 	bool onlyMatchBeginningOfString = options && roStrChr(options, 'b');
 
@@ -927,7 +1006,6 @@ bool Regex::match(RangedString srcString, RangedString regString, const IArray<C
 		srcString.begin = currentBegin + 1;
 	}
 
-	result.clear();
 	return false;
 }
 

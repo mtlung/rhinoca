@@ -21,10 +21,16 @@ namespace ro {
 // b	only match at beginning of string
 struct Regex : private NonCopyable
 {
+	struct Graph;
+	struct Compiled { Compiled(); ~Compiled(); String regexStr; Graph* graph; };
+
 	Regex();
 
-	bool match(const roUtf8* s, const roUtf8* f, const char* options=NULL);
-	bool match(RangedString s, RangedString f, const char* options=NULL);
+	static roStatus compile(const roUtf8* reg, Compiled& compiled, roUint8 logLevel=0);
+
+	bool match(const roUtf8* str, const roUtf8* reg, const char* options=NULL);
+	bool match(RangedString str, RangedString reg, const char* options=NULL);
+	bool match(RangedString str, const Compiled& reg, const char* options=NULL);
 
 	// Matching with custom function. Use $0, $1... to refer to the function
 	typedef bool (*CustomFunc)(RangedString& inout, void* userData);
@@ -32,7 +38,8 @@ struct Regex : private NonCopyable
 		CustomFunc func;
 		void* userData;
 	};
-	bool match(RangedString s, RangedString f, const IArray<CustomMatcher>& customMatcher, const char* options=NULL);
+	bool match(RangedString str, RangedString reg, const IArray<CustomMatcher>& customMatcher, const char* options=NULL);
+	bool match(RangedString str, const Compiled& reg, const IArray<CustomMatcher>& customMatcher, const char* options=NULL);
 
 	template<typename T>
 	Status getValue(roSize index, T& value);
@@ -45,6 +52,9 @@ struct Regex : private NonCopyable
 // Attributes
 	roUint8	logLevel;	// 0 for no logging, larger for more
 	TinyArray<RangedString, 16> result;
+
+// Private
+	bool _match(Graph& graph, const char* options);
 };	// Regex
 
 template<typename T>

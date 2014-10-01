@@ -423,12 +423,43 @@ TEST_FIXTURE(RegexTest, test)
 
 	Regex regex;
 	regex.logLevel = 0;
-
 	const roUtf8* regStr = NULL;
+
+	// Match without compilation
 	for(roSize i=0; i<roCountof(testData); ++i) {
 		if(testData[i][0])
 			regStr = testData[i][0];
+
 		regex.match(testData[i][2], regStr, testData[i][1]);
+
+		const roUtf8* result = testData[i][3];
+		if(result) {
+			if(regex.result.isEmpty()) {
+				CHECK_EQUAL("", regStr);
+			}
+			if(!regex.result.isEmpty()) {
+				String str;
+				for(roSize j=0; j<regex.result.size(); ++j) {
+					str += regex.result[j];
+					if(j != regex.result.size() - 1)
+						str += "`";
+				}
+				CHECK_EQUAL(result, str.c_str());
+			}
+		}
+		else
+			CHECK(regex.result.isEmpty());
+	}
+
+	// Match with compilation
+	for(roSize i=0; i<roCountof(testData); ++i) {
+		if(testData[i][0])
+			regStr = testData[i][0];
+
+		Regex::Compiled compiled;
+		CHECK(regex.compile(regStr, compiled));
+		regex.match(testData[i][2], compiled, testData[i][1]);
+		regex.match(testData[i][2], compiled, testData[i][1]);	// Should able to compile once, match multiple times
 
 		const roUtf8* result = testData[i][3];
 		if(result) {

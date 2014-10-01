@@ -88,6 +88,9 @@ roStatusEnum( http_404_not_found )
 roStatusEnum( http_max_redirect_reached )
 
 // Json
+roStatusEnum( regex_compile_error )
+
+// Json
 roStatusEnum( json_parse_error )
 roStatusEnum( json_missing_root_object )
 roStatusEnum( json_expect_object_begin )
