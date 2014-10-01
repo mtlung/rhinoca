@@ -44,7 +44,7 @@ struct Lexer
 
 	struct RegexRule : public IRule {
 		virtual bool match(RangedString& inout) override;
-		String regex;
+		Regex::Compiled regex;
 		TinyArray<Regex::CustomMatcher, 4> matcher;
 	};	// RegexRule
 

@@ -117,7 +117,7 @@ roStatus Lexer::registerRule(const char* ruleName, const char* bnf, bool isFragm
 	AutoPtr<RegexRule> rule(_allocator.newObj<RegexRule>());
 	rule->setKey(ruleName);
 	rule->isFragment = isFragment;
-	String& regexStr = rule->regex;
+	String regexStr;
 
 	// Scan for {rulename}
 	roSize ruleNameCount = 0;
@@ -154,6 +154,9 @@ roStatus Lexer::registerRule(const char* ruleName, const char* bnf, bool isFragm
 			if(!st) return st;
 		}
 	}
+
+	st = Regex::compile(regexStr.c_str(), rule->regex);
+	if(!st) return st;
 
 	_ruleOrderedList.pushBack(rule->orderedListNode);
 	_rules.insert(*rule.unref());
