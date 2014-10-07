@@ -99,6 +99,53 @@ void Lexer::discardState()
 
 static DefaultAllocator _allocator;
 
+struct StringRule : public Lexer::IRule {
+	virtual bool match(RangedString& inout) override
+	{
+		const char* found = roStrStr(inout.begin, inout.end, str.c_str());
+		if(found)
+			return inout.end = inout.begin + str.size(), true;
+		return false;
+	}
+	String str;
+};	// CustomRule
+
+roStatus Lexer::registerStrRule(const char* strToMatch, bool isFragment)
+{
+	roStatus st;
+
+	if(_rules.find(strToMatch))
+		return roStatus::already_exist;
+
+	AutoPtr<StringRule> rule(_allocator.newObj<StringRule>());
+	rule->setKey(strToMatch);
+	rule->isFragment = isFragment;
+	rule->str = strToMatch;
+
+	_ruleOrderedList.pushBack(rule->orderedListNode);
+	_rules.insert(*rule.unref());
+
+	return roStatus::ok;
+}
+
+roStatus Lexer::registerStrRule(const char* ruleName, const char* strToMatch, bool isFragment)
+{
+	roStatus st;
+
+	if(_rules.find(ruleName))
+		return roStatus::already_exist;
+
+	AutoPtr<StringRule> rule(_allocator.newObj<StringRule>());
+	rule->setKey(ruleName);
+	rule->isFragment = isFragment;
+	rule->str = strToMatch;
+
+	_ruleOrderedList.pushBack(rule->orderedListNode);
+	_rules.insert(*rule.unref());
+
+	return roStatus::ok;
+}
+
 static bool _customMatch(RangedString& inout, void* userData)
 {
 	Lexer::IRule* r = reinterpret_cast<Lexer::IRule*>(userData);
@@ -106,7 +153,20 @@ static bool _customMatch(RangedString& inout, void* userData)
 	return r->match(inout);
 }
 
-roStatus Lexer::registerRule(const char* ruleName, const char* bnf, bool isFragment)
+struct RegexRule : public Lexer::IRule {
+	virtual bool match(RangedString& inout) override
+	{
+		Regex regex;
+		if(!regex.match(inout, this->regex, this->matcher, "b")) return false;
+		inout.begin = regex.result[0].end;
+		return true;
+	}
+
+	Regex::Compiled regex;
+	TinyArray<Regex::CustomMatcher, 4> matcher;
+};	// RegexRule
+
+roStatus Lexer::registerRegexRule(const char* ruleName, const char* bnf, bool isFragment)
 {
 	roStatus st;
 
@@ -164,7 +224,17 @@ roStatus Lexer::registerRule(const char* ruleName, const char* bnf, bool isFragm
 	return roStatus::ok;
 }
 
-roStatus Lexer::registerRule(const char* ruleName, MatchFunc matchFunc, void* userData, bool isFragment)
+struct CustomRule : public Lexer::IRule {
+	virtual bool match(RangedString& inout) override
+	{
+		if(!matchFunc) return false;
+		return (*matchFunc)(inout, userData);
+	}
+	Lexer::MatchFunc matchFunc;
+	void* userData;
+};	// CustomRule
+
+roStatus Lexer::registerCustomRule(const char* ruleName, MatchFunc matchFunc, void* userData, bool isFragment)
 {
 	roStatus st;
 
@@ -181,21 +251,6 @@ roStatus Lexer::registerRule(const char* ruleName, MatchFunc matchFunc, void* us
 	_rules.insert(*rule.unref());
 
 	return roStatus::ok;
-}
-
-bool Lexer::RegexRule::match(RangedString& inout)
-{
-	Regex regex;
-	if(!regex.match(inout, this->regex, this->matcher, "b")) return false;
-	inout.begin = regex.result[0].end;
-	return true;
-}
-
-
-bool Lexer::CustomRule::match(RangedString& inout)
-{
-	if(!matchFunc) return false;
-	return (*matchFunc)(inout, userData);
 }
 
 }	// namespace ro

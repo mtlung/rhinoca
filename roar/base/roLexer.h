@@ -20,8 +20,10 @@ struct Lexer
 
 	typedef	bool (*MatchFunc)(RangedString& inout, void* userData);
 
-	roStatus registerRule(const char* ruleName, const char* regex, bool isFragment=false);	// Regex grammar
-	roStatus registerRule(const char* ruleName, MatchFunc matchFunc, void* userData=NULL, bool isFragment=false);	// Matching with user function
+	roStatus registerStrRule(const char* strToMatch, bool isFragment=false);						// Rule name is the same as the string to match
+	roStatus registerStrRule(const char* ruleName, const char* strToMatch, bool isFragment=false);	// Simple character to character matching
+	roStatus registerRegexRule(const char* ruleName, const char* regex, bool isFragment=false);		// Regex grammar
+	roStatus registerCustomRule(const char* ruleName, MatchFunc matchFunc, void* userData=NULL, bool isFragment=false);	// Matching with user function
 
 	roStatus beginParse(const RangedString& source);	// Please make sure source string not deleted before endParse()
 	roStatus nextToken(RangedString& token, RangedString& val, LineInfo& lineInfo);
@@ -41,18 +43,6 @@ struct Lexer
 			void destroyThis() override { removeThis(); }
 		} orderedListNode;
 	};	// IRule
-
-	struct RegexRule : public IRule {
-		virtual bool match(RangedString& inout) override;
-		Regex::Compiled regex;
-		TinyArray<Regex::CustomMatcher, 4> matcher;
-	};	// RegexRule
-
-	struct CustomRule : public IRule {
-		virtual bool match(RangedString& inout) override;
-		MatchFunc matchFunc;
-		void* userData;
-	};	// CustomRule
 
 	Map<IRule> _rules;
 	LinkList<IRule::OrderedListNode> _ruleOrderedList;	// For ordered iteration
