@@ -102,13 +102,13 @@ static DefaultAllocator _allocator;
 struct StringRule : public Lexer::IRule {
 	virtual bool match(RangedString& inout) override
 	{
-		const char* found = roStrStr(inout.begin, inout.end, str.c_str());
-		if(found)
-			return inout.end = inout.begin + str.size(), true;
+		roSize minSize = roMinOf2(inout.size(), str.size());
+		if(0 == roStrnCmp(inout.begin, minSize, str.c_str(), str.size()))
+			return inout.begin += str.size(), true;
 		return false;
 	}
 	String str;
-};	// CustomRule
+};	// StringRule
 
 roStatus Lexer::registerStrRule(const char* strToMatch, bool isFragment)
 {

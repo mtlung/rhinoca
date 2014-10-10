@@ -1,5 +1,5 @@
-#ifndef __roSwc_Lexer_h__
-#define __roSwc_Lexer_h__
+#ifndef __roLexer_h__
+#define __roLexer_h__
 
 #include "../base/roArray.h"
 #include "../base/roLinkList.h"
@@ -52,4 +52,4 @@ struct Lexer
 
 }	// namespace ro
 
-#endif	// __roSwc_Lexer_h__
+#endif	// __roLexer_h__
