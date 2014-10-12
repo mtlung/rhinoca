@@ -5,6 +5,8 @@
 #include "../base/roCoroutine.h"
 #include "../base/roStopWatch.h"
 #include "../platform/roPlatformHeaders.h"
+
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <winsock2.h>
 #include <windns.h>	// DNS API
 #pragma comment(lib, "dnsapi.lib")
@@ -56,6 +58,7 @@ roStatus roGetHostByName(const roUtf8* hostname, roUint32& ipv4, float timeout)
 	ByteArray buf;
 	buf.resizeNoInit(MAXGETHOSTSTRUCT);
 
+	// TODO: Use GetAddrInfoEx with overlap
 	HANDLE hRet = WSAAsyncGetHostByName(
 		hWnd, WM_HOSTRESOLVED,
 		hostname,

@@ -448,6 +448,7 @@ bool counted_loop_exit(Graph& graph, Node& node, Edge& edge, RangedString& s)
 
 bool parse_repeatition(Graph& graph, const RangedString& f, const roUtf8*& i, roUint16 preveNodeIdx=0, roUint16 beginNodeIdx=0)
 {
+	roStatus st;
 	if(i[0] == '?') {
 		Edge edge = { RangedString(), pass_though, graph.currentNodeIdx+1, 0 };
 		graph.pushEdge(beginNodeIdx, edge);
@@ -459,7 +460,8 @@ bool parse_repeatition(Graph& graph, const RangedString& f, const roUtf8*& i, ro
 		roUint16 edge1Idx = greedy ? 1 : 0;
 
 		Node node = { RangedString("+") };
-		graph.push2(node, Edge::Func(NULL));
+		st = graph.push2(node, Edge::Func(NULL));
+		if(!st) return st;
 		Edge edge = { RangedString(), NULL, 0, 0 };
 		graph.pushEdge(graph.currentNodeIdx, edge);
 		graph.getEdge(graph.currentNodeIdx, edge0Idx).func = loop_repeat;
@@ -474,7 +476,8 @@ bool parse_repeatition(Graph& graph, const RangedString& f, const roUtf8*& i, ro
 		roUint16 edge1Idx = greedy ? 0 : 1;
 
 		Node node = { RangedString("*") };
-		graph.push2(node, Edge::Func(NULL));
+		st = graph.push2(node, Edge::Func(NULL));
+		if(!st) return st;
 		Edge edge = { RangedString(), NULL, 0, 0 };
 		graph.pushEdge(graph.currentNodeIdx, edge);
 		graph.getEdge(graph.currentNodeIdx, edge0Idx).func = loop_exit;
@@ -526,7 +529,8 @@ bool parse_repeatition(Graph& graph, const RangedString& f, const roUtf8*& i, ro
 		node.userdata[1] = (void*)min;
 		node.userdata[2] = (void*)max;
 
-		graph.push2(node, Edge::Func(NULL));
+		st = graph.push2(node, Edge::Func(NULL));
+		if(!st) return st;
 		Edge edge = { RangedString(), NULL, 0, 0 };
 		graph.pushEdge(graph.currentNodeIdx, edge);
 		graph.getEdge(graph.currentNodeIdx, edge0Idx).func = counted_loop_exit;
@@ -986,7 +990,7 @@ bool Regex::_match(Graph& graph, const char* options)
 	bool onlyMatchBeginningOfString = options && roStrChr(options, 'b');
 
 	// Matching
-	while(srcString.begin < srcString.end) {
+	while(srcString.begin <= srcString.end) {	// Use <= to ensure empty string have a chance to match
 		const roUtf8* currentBegin = srcString.begin;
 		graph.branchLevel = 0;
 		graph.nestedGroupLevel = 0;
