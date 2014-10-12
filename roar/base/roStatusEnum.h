@@ -87,7 +87,13 @@ roStatusEnum( http_unknow_size )
 roStatusEnum( http_404_not_found )
 roStatusEnum( http_max_redirect_reached )
 
-// Json
+// SSL
+roStatusEnum( ssl_error )
+
+// Command line
+roStatusEnum( cmd_line_parse_error )
+
+// Regex
 roStatusEnum( regex_compile_error )
 
 // Json
