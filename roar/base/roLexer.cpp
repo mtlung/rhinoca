@@ -163,17 +163,18 @@ struct RegexRule : public Lexer::IRule {
 	}
 
 	Regex::Compiled regex;
+	String option;
 	TinyArray<Regex::CustomMatcher, 4> matcher;
 };	// RegexRule
 
-roStatus Lexer::registerRegexRule(const char* ruleName, const char* bnf, bool isFragment)
+roStatus Lexer::registerRegexRule(const char* ruleName, const char* regex, const char* option, bool isFragment)
 {
 	roStatus st;
 
 	if(_rules.find(ruleName))
 		return roStatus::already_exist;
 
-	RangedString str(bnf);
+	RangedString str(regex);
 	AutoPtr<RegexRule> rule(_allocator.newObj<RegexRule>());
 	rule->setKey(ruleName);
 	rule->isFragment = isFragment;
@@ -194,30 +195,30 @@ roStatus Lexer::registerRegexRule(const char* ruleName, const char* bnf, bool is
 		if(*c == '{') {
 			Regex regex;
 			RangedString result(c);
-			if(!regex.match(result, "\\{([A-Za-z][A-za-z0-9]*)\\}"))
+			if(regex.match(result, "\\{([A-Za-z][A-za-z0-9]*)\\}")) {
+				c = regex.result[0].end - 1;
+
+				st = strFormat(regexStr, "${}", ruleNameCount);
+				++ruleNameCount;
+
+				IRule* r = _rules.find(regex.result[1].toString().c_str());
+				if(!r) return roStatus::not_found;
+
+				Regex::CustomMatcher regCustomMatcher = { _customMatch, r };
+				st = rule->matcher.pushBack(regCustomMatcher);
+				if(!st) return st;
 				continue;
-
-			c = regex.result[0].end - 1;
-
-			st = strFormat(regexStr, "${}", ruleNameCount);
-			++ruleNameCount;
-
-			IRule* r = _rules.find(regex.result[1].toString().c_str());
-			if(!r) return roStatus::not_found;
-
-			Regex::CustomMatcher regCustomMatcher = { _customMatch, r };
-			st = rule->matcher.pushBack(regCustomMatcher);
-			if(!st) return st;
+			}
 		}
-		else {
-			st = regexStr.append(*c);
-			if(!st) return st;
-		}
+
+		st = regexStr.append(*c);
+		if(!st) return st;
 	}
 
 	st = Regex::compile(regexStr.c_str(), rule->regex);
 	if(!st) return st;
 
+	rule->option = option;
 	_ruleOrderedList.pushBack(rule->orderedListNode);
 	_rules.insert(*rule.unref());
 

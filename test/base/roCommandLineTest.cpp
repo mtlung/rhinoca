@@ -7,32 +7,44 @@ struct CommandLineTest {};
 
 TEST_FIXTURE(CommandLineTest, test)
 {
-	String json;
-	roParseCommandLine(
-		"hello usage:\n"
-		" ((a1 a2|a3)|a4)\n"
-		" (a|b)\n"
-		" ship <name> move <x> <y>\n"
-		" ship mine (set|remove)\n"
-		"Options:\n"
-		" -h --help\n"
-		" --version\n",
-		" ship Titanic move 1 2", json
-	);
-
 	// Test data from:
 	// https://github.com/docopt/docopt.cpp/blob/master/testcases.docopt
 	const roUtf8* testData[][3] = {
-//		{ "Usage:",						"",				"{}" },
-//		{ "Usage:",						"--xxx",		"{}" },
+//		{ "Usage:",													"",				"{}" },
+//		{ "Usage:",													"--xxx",		"{}" },
 
-		{ "Usage:\n <arg>",				"10 ",			"{\"arg\":\"10\"}" },
-		{ "Usage:\n <arg>",				"10 20",		NULL },
-		{ "Usage:\n <arg>",				"",				NULL },
+		{ "Options:\n -p PATH, --path=<path>  Path to files [default: ./]",		"",		"" },
+		{ "Options:\n -p PATH  Path to files [default: ./]",		"",		"" },
 
-		{ "Usage:\n [<arg>]",			"10",			"{\"arg\":\"10\"}" },
-		{ "Usage:\n [<arg>]",			"10 20",		NULL },
-		{ "Usage:\n [<arg>]",			"",				"{\"arg\":null}" },
+		{ "Usage:\n (<kind> --all | <name>)\nOptions:\n -p PATH  Path to files [default: ./]",		"10 --all",		"{\"kind\":\"10\",\"--all\":\"true\",\"name\":\"\"}" },
+
+		{ "Usage:\n [<kind> | (<name> <type>)]",					"20 40",		"{\"kind\":\"\",\"name\":\"20\",\"type\":\"40\"}" },
+
+		{ "Usage:\n <arg>",											"10",			"{\"arg\":\"10\"}" },
+		{ "Usage:\n <arg>",											"10 20",		NULL },
+		{ "Usage:\n <arg>",											"",				NULL },
+
+		{ "Usage:\n [<arg>]",										"10",			"{\"arg\":\"10\"}" },
+		{ "Usage:\n [<arg>]",										"10 20",		NULL },
+		{ "Usage:\n [<arg>]",										"",				"{\"arg\":null}" },
+
+		{ "Usage:\n <kind> <name> <type>",							"10 20 40",		"{\"kind\":\"10\",\"name\":\"20\",\"type\":\"40\"}" },
+		{ "Usage:\n <kind> <name> <type>",							"10 20",		NULL },
+		{ "Usage:\n <kind> <name> <type>",							"",				NULL },
+
+		{ "Usage:\n <kind> [<name> <type>]",						"10 20 40",		"{\"kind\":\"10\",\"name\":\"20\",\"type\":\"40\"}" },
+		{ "Usage:\n <kind> [<name> <type>]",						"10 20",		"{\"kind\":\"10\",\"name\":\"20\",\"type\":\"\"}" },
+
+		{ "Usage:\n [<kind> | (<name> <type>)]",					"10 20 40",		NULL },
+		{ "Usage:\n [<kind> | (<name> <type>)]",					"20 40",		"{\"kind\":\"\",\"name\":\"20\",\"type\":\"40\"}" },
+		{ "Usage:\n [<kind> | (<name> <type>)]",					"",				"{\"kind\":\"\",\"name\":\"\",\"type\":\"\"}" },
+
+		{ "Usage:\n (<kind> --all | <name>)\nOptions:\n --all",		"10 --all",		"{\"kind\":\"10\",\"--all\":\"true\",\"name\":\"\"}" },
+		{ "Usage:\n (<kind> --all | <name>)\nOptions:\n --all",		"10",			"{\"kind\":\"\",\"--all\":\"false\",\"name\":\"10\"}" },
+		{ "Usage:\n (<kind> --all | <name>)\nOptions:\n --all",		"",				NULL },
+
+		// POSIXly correct tokenization
+		{ "usage:\n [<input file>]",								"f.txt",		"{\"input file\":\"f.txt\"}" },
 	};
 
 	for(roSize i=0; i<roCountof(testData); ++i) {

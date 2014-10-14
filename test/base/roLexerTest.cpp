@@ -40,7 +40,7 @@ TEST_FIXTURE(LexerTest, basic)
 		"L?\"(\\.|[^\"])*\"");
 
 	lexer.registerRegexRule("FloatExponent",
-		"[eE][+-]?[0-9]+", true);
+		"[eE][+-]?[0-9]+", "", true);
 
 	lexer.registerRegexRule("FloatLiteral",
 		"([0-9]+\\.[0-9]*){FloatExponent}?|"

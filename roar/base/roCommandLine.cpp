@@ -53,6 +53,181 @@ struct Pattern
 	Array<bool> isArgument;
 };
 
+struct Option
+{
+	RangedString shortName;
+	RangedString longName;
+	RangedString argument;
+	RangedString defaultValue;
+};
+
+struct OptionParser
+{
+	// Opt -> name arg
+	bool parseOpt(Lexer& lexer, Option& opt)
+	{
+		roStatus st;
+		RangedString t, v;
+		Lexer::LineInfo lInfo;
+
+		if(!lexer.nextToken(t, v, lInfo))
+			return false;
+
+		if(t == "shortOption") {
+			Regex regex;
+			if(!regex.match(v, shortOptionRegStr)) {
+				roAssert(false);
+				return false;
+			}
+
+			if(opt.shortName == regex.result[1])	// Check for duplicated name
+				return false;
+
+			opt.shortName = regex.result[1];
+
+			if(regex.result[2].size())
+				opt.argument = regex.result[2];
+		}
+
+		if(t == "longOption") {
+			Regex regex;
+			if(!regex.match(v, longOptionRegStr)) {
+				roAssert(false);
+				return false;
+			}
+
+			if(opt.longName == regex.result[1])	// Check for duplicated name
+				return false;
+
+			opt.longName = regex.result[1];
+
+			RangedString argument = regex.result[2].size() ? regex.result[2] : regex.result[3];
+			if(argument.size())
+				opt.argument = argument;
+		}
+
+		return true;
+	}
+
+	// opt(, opt)? comment? default?
+	bool parseOption(Lexer& lexer, Option& opt)
+	{
+		if(!parseOpt(lexer, opt))
+			return false;
+
+		RangedString t, v;
+		Lexer::LineInfo lInfo;
+
+		if(!lexer.nextToken(t, v, lInfo))
+			return false;
+
+		if(t == ",") {
+			if(!parseOpt(lexer, opt))
+				return false;
+		}
+
+		// Skip comment
+		lexer.nextToken(t, v, lInfo);
+		if(t == "comment")
+			lexer.nextToken(t, v, lInfo);
+
+		if(t == "default")
+			opt.defaultValue = v;
+
+		return true;
+	}
+
+	bool parseOptions(Lexer& lexer, IArray<Option>& options)
+	{
+		while(true) {
+			Option opt;
+			if(!parseOption(lexer, opt))
+				return false;
+
+			options.pushBack(opt);
+
+			RangedString t, v;
+			Lexer::LineInfo lInfo;
+
+			if(!lexer.nextToken(t, v, lInfo))
+				break;
+
+			if(t != " ")
+				return false;
+		}
+
+		return true;
+	}
+
+	static const char* shortOptionRegStr;
+	static const char* longOptionRegStr;
+	static const char* argumentRegStr;
+};	// OptionParser
+
+const char* OptionParser::shortOptionRegStr	= "\\s*-([^][()<>|,=\\s])(?: ((?:[^][()<>|,=\\s]+)|(?:<[^][()<>|,\\s]+>)))?";
+//const char* OptionParser::longOptionRegStr= "\\s*--([^][()<>|,=\\s]+)(?:(?: |=)(([^][()<>|,=\\sa-z]+)|(?: <([^][()<>|,\\s]+)>)))?";
+const char* OptionParser::longOptionRegStr	= "\\s*--([^][()<>|,=\\s]+)(?:(?: |=)(?:([^][()<>|,=\\sa-z]+)|<([^][()<>|,=\\s]+)>))?";
+const char* OptionParser::argumentRegStr	= " ((?:[^][()<>|\\s]+)|(?:<[^][()<>|\\s]+>))";
+
+// short -> -c str? --output=FILE
+static bool parseOption(const RangedString& option, IArray<Option>& options)
+{
+	roStatus st;
+	Lexer lexer;
+
+	//							   (name         )    (argument                                ) (comment                      )                   (default    )
+	const char* shortOptionReg = "-([^][()<>|\\s])(?: ((?:[^][()<>|\\s]+)|(?:<[^][()<>|\\s]+>)))?(?:[ \\t]{2,}[^][()<>|\\-\\n]+)?(?:\\[default:\\s*([^][()<>|]+)\\])?";
+	const char* longOptionReg = "--([^][()<>|\\s])(?: ((?:[^][()<>|\\s]+)|(?:<[^][()<>|\\s]+>)))?";
+
+	lexer.registerRegexRule("comment",		"[ \\t]{2,}[^][()<>|\\-\\n]+");
+//	lexer.registerRegexRule("shortOption",	shortOptionReg);
+//	lexer.registerRegexRule("longOption",	longOptionReg);
+	lexer.registerRegexRule("shortOption",	OptionParser::shortOptionRegStr);
+	lexer.registerRegexRule("longOption",	OptionParser::longOptionRegStr);
+	lexer.registerRegexRule("default",		"\\[default:\\s*([^][()<>|]+)\\]");
+	lexer.registerRegexRule(" ",			"[ \\t]+");
+	lexer.registerRegexRule("\n",			"[\\n]+");
+	lexer.registerStrRule(",");
+	lexer.registerStrRule("=");
+
+	st = lexer.beginParse(option);
+	if(!st) return st;
+
+	OptionParser optionParser;
+	optionParser.parseOptions(lexer, options);
+
+	RangedString t, v;
+	Lexer::LineInfo lInfo;
+
+	while(true) {
+		st = lexer.nextToken(t, v, lInfo);
+		if(!st) break;
+
+		if(t == " ") continue;
+
+		if(t == "\n") {
+			options.pushBack();
+			continue;
+		}
+
+		if(t == "shortOption") {
+			Regex regex;
+			if(!regex.match(v, shortOptionReg))
+				continue;
+
+			options.back().shortName = regex.result[1];
+			options.back().argument = regex.result[2];
+			options.back().defaultValue = regex.result[3];
+		}
+		else if(t == "longOption")
+			options.back().longName = RangedString(v.begin + 2, v.end);
+		else if(t == "comment")
+			continue;
+	}
+
+	return *v.end == '\0';
+}
+
 static bool parseUsage(const RangedString& usage, IArray<Pattern>& patterns)
 {
 	roStatus st;
@@ -60,7 +235,7 @@ static bool parseUsage(const RangedString& usage, IArray<Pattern>& patterns)
 
 	lexer.registerRegexRule("string",	"[^][()<>|\\s]+");
 	lexer.registerRegexRule("option",	"--?[^][()<>|\\s]+");
-	lexer.registerRegexRule("argument",	"<[^>]+>");
+	lexer.registerRegexRule("argument",	"<[^][()<>|]+>");
 	lexer.registerRegexRule(" ",		"[ \\t]+");
 	lexer.registerRegexRule("\n",		"[\\n]+");
 	lexer.registerStrRule("...");
@@ -141,6 +316,10 @@ roStatus roParseCommandLine(const roUtf8* usage, const roUtf8* cmd, ro::String& 
 	Array<RangedString> usages;
 	RangedString usageSection = parseSection("Usage:", usage);
 	RangedString optionSection = parseSection("Options:", usage);
+
+	Array<Option> options;
+	if(!parseOption(optionSection, options))
+		return roStatus::cmd_line_parse_error;
 
 	Array<Pattern> patterns;
 	parseUsage(usageSection, patterns);

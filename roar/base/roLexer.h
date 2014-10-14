@@ -22,7 +22,7 @@ struct Lexer
 
 	roStatus registerStrRule(const char* strToMatch, bool isFragment=false);						// Rule name is the same as the string to match
 	roStatus registerStrRule(const char* ruleName, const char* strToMatch, bool isFragment=false);	// Simple character to character matching
-	roStatus registerRegexRule(const char* ruleName, const char* regex, bool isFragment=false);		// Regex grammar
+	roStatus registerRegexRule(const char* ruleName, const char* regex, const char* option="", bool isFragment=false);		// Regex grammar
 	roStatus registerCustomRule(const char* ruleName, MatchFunc matchFunc, void* userData=NULL, bool isFragment=false);	// Matching with user function
 
 	roStatus beginParse(const RangedString& source);	// Please make sure source string not deleted before endParse()
