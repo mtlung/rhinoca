@@ -407,6 +407,8 @@ TEST_FIXTURE(RegexTest, test)
 		{ "abc|def",					"",		"abc",											"abc" },
 		{ "ab*",						"",		"ababc",										"ab" },
 
+		{ "\\bis\\b",					"",		"This island is beautiful",						"is" },
+
 		// Failed case regression
 		{ "(a(b))?",					"",		"ab",											"ab`ab`b" },
 		{ "a|(b)",						"",		"a",											"a`" },

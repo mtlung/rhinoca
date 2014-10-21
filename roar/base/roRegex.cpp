@@ -286,28 +286,43 @@ static bool isWordChar(char c)
 	return roIsAlpha(c) || roIsDigit(c) || c == '_';
 }
 
-bool match_charClass(char f, RangedString& s)
+bool match_charClass(Graph& graph, char f, RangedString& s)
 {
 	roUtf8 c = *s.begin;
 	switch(f) {
 	case 'd':
-		if(roIsDigit(c)) return true;
+		if(roIsDigit(c)) return ++s.begin, true;
 		break;
 	case 'D':
-		if(!roIsDigit(c)) return true;
+		if(!roIsDigit(c)) return ++s.begin, true;
 		break;
 	case 's':
-		if(roStrChr(str_whiteSpace, c)) return true;
+		if(roStrChr(str_whiteSpace, c)) return ++s.begin, true;
 		break;
 	case 'S':
-		if(!roStrChr(str_whiteSpace, c)) return true;
+		if(!roStrChr(str_whiteSpace, c)) return ++s.begin, true;
 		break;
 	case 'w':
-		if(isWordChar(c)) return true;
+		if(isWordChar(c)) return ++s.begin, true;
 		break;
 	case 'W':
-		if(!isWordChar(c)) return true;
+		if(!isWordChar(c)) return ++s.begin, true;
 		break;
+	case 'b':
+	{	bool cIsWorld = isWordChar(c);
+		return
+			(s.begin == graph.srcString.begin && cIsWorld) ||
+			(isWordChar(*(s.begin - 1)) != cIsWorld) ||
+			(cIsWorld && s.begin + 1 == graph.srcString.end);
+	}	break;
+	case 'B':
+	{	bool cIsWorld = isWordChar(c);
+		return !(
+			(s.begin == graph.srcString.begin && cIsWorld) ||
+			(isWordChar(*(s.begin - 1)) != cIsWorld) ||
+			(cIsWorld && s.begin + 1 == graph.srcString.end)
+		);
+	}	break;
 	default:
 		break;
 	}
@@ -320,10 +335,7 @@ bool match_charClass(Graph& graph, Node& node, Edge& edge, RangedString& s)
 	if(s.begin >= s.end)
 		return false;
 
-	if(match_charClass(*edge.f.begin, s))
-		return ++s.begin, true;
-
-	return false;
+	return match_charClass(graph, *edge.f.begin, s);
 }
 
 static bool isCharSet(const roUtf8* f)
@@ -364,7 +376,8 @@ bool match_charSet(Graph& graph, Node& node, Edge& edge, RangedString& s)
 		// Character class
 		else if((i + 1) < edge.f.end && isCharSet(i)) {
 			++i;
-			if(match_charClass(*i, s)) {
+			RangedString s2 = s;
+			if(match_charClass(graph, *i, s2)) {
 				inList = true;
 				break;
 			}
