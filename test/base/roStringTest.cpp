@@ -19,6 +19,16 @@ TEST_FIXTURE(StringTest, compare)
 	CHECK(String("AC") > String("AB"));
 }
 
+TEST_FIXTURE(RangedStringTest, basic)
+{
+	CHECK(RangedString().isEmpty());
+	CHECK_EQUAL(0, RangedString().size());
+
+	CHECK(!RangedString("A").isEmpty());
+	CHECK_EQUAL(1u, RangedString("A").size());
+	CHECK_EQUAL(2u, RangedString("B").size());
+}
+
 TEST_FIXTURE(RangedStringTest, compare)
 {
 	CHECK(RangedString("AB") == RangedString("AB"));
