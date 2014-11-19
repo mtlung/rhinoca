@@ -796,8 +796,17 @@ bool parse_nodes(Graph& graph, const RangedString& f)
 			if(!parse_nodes_impl(graph, RangedString(begin, i)))
 				return false;
 
+			// Introduce extra node at each alternation, such that alternation will not interfere
+			// with any edge redirection.
+			// For instance match "a|0+a" with "0" should not success
+			if(i[0] == '|') {
+				Node node = { RangedString("|->") };
+				graph.push2(node, pass_though);
+				tmp = graph.currentNodeIdx - 1;
+			}
+
 			begin = i + 1;
-			altOptionIdx.pushBack(tmp);
+			altOptionIdx.pushBack(tmp - 1);
 		}
 
 		bracketCount1 += (*i == '(') ? 1 : 0;

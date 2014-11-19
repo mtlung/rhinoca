@@ -401,6 +401,10 @@ TEST_FIXTURE(RegexTest, test)
 
 		{ "[a-c0-9]",					"",		"9",											"9" },
 		{ "[^1]",						"",		"abc",											"a" },
+		{ "a|0+a",						"",		"0",											NULL },
+		{ NULL,							"",		"a",											"a" },
+		{ NULL,							"",		"0a",											"0a" },
+		{ NULL,							"",		"00a",											"00a" },
 		{ "(012|abc|lung)+",			"",		"abclung",										"abclung`lung" },
 		{ "abc|def",					"i",	"Abc",											"Abc" },
 		{ "abc|ha|def",					"",		"def",											"def" },
