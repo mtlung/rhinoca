@@ -117,9 +117,8 @@ TEST_FIXTURE(LexerTest, basic)
 
 	CHECK(lexer.beginParse(source));
 
-	RangedString token, val;
-	Lexer::LineInfo lineInfo;
-	while(lexer.nextToken(token, val, lineInfo))
+	Lexer::Token token;
+	while(lexer.nextToken(token))
 	{
 		token = token;
 	}

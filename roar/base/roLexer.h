@@ -18,6 +18,12 @@ struct Lexer
 		roSize p1, p2;	// Position from beginning of string
 	};
 
+	struct Token {
+		RangedString token;
+		RangedString value;
+		Lexer::LineInfo lineInfo;
+	};
+
 	typedef	bool (*MatchFunc)(RangedString& inout, void* userData);
 
 	roStatus registerStrRule(const char* strToMatch, bool isFragment=false);						// Rule name is the same as the string to match
@@ -26,7 +32,7 @@ struct Lexer
 	roStatus registerCustomRule(const char* ruleName, MatchFunc matchFunc, void* userData=NULL, bool isFragment=false);	// Matching with user function
 
 	roStatus beginParse(const RangedString& source);	// Please make sure source string not deleted before endParse()
-	roStatus nextToken(RangedString& token, RangedString& val, LineInfo& lineInfo);
+	roStatus nextToken(Token& token);
 	roStatus endParse();
 
 	void pushState();		// Save current state on stack
@@ -49,6 +55,25 @@ struct Lexer
 
 	Array<RangedString> _stateStack;
 };	// Lexer
+
+struct TokenStream
+{
+	roStatus	beginParse(const RangedString& source);	// Please make sure source string not deleted before endParse()
+	roStatus	consumeToken(roSize count=1);
+	roStatus	currentToken(Lexer::Token& token);
+	roStatus	lookAhead(roSize offset, Lexer::Token& token);
+	roStatus	endParse();
+
+	void pushState();		// Save current state on stack
+	void restoreState();	// Restore the saved state
+	void discardState();	// Discard the saved state
+
+	Array<String> tokenToIgnore;
+
+	Lexer _lexer;
+	Array<Lexer::Token> _lookAheadBuf;
+	Array<roSize> _tokenPosStack;
+};	// TokenStream
 
 }	// namespace ro
 

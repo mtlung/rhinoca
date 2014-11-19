@@ -12,7 +12,7 @@ roStatus Lexer::beginParse(const RangedString& source)
 	return roStatus::ok;
 }
 
-roStatus Lexer::nextToken(RangedString& token, RangedString& val, LineInfo& lineInfo)
+roStatus Lexer::nextToken(Token& token)// RangedString& token, RangedString& val, LineInfo& lineInfo)
 {
 	struct Longest {
 		RangedString token, value;
@@ -47,30 +47,30 @@ roStatus Lexer::nextToken(RangedString& token, RangedString& val, LineInfo& line
 			continue;
 
 		longestLen = len;
-		token = longest[i].token;
-		val = longest[i].value;
+		token.token = longest[i].token;
+		token.value = longest[i].value;
 	}
 
 	// Line, position counting
-	lineInfo.l1 = lineInfo.l2;
-	lineInfo.c1 = lineInfo.c2;
-	lineInfo.p1 = lineInfo.p2;
-	for(roSize i=0; i<val.size(); ++i) {
-		++lineInfo.p2;
-		if(val[i] == '\n') {
-			++lineInfo.l2;
-			lineInfo.c2 = 0;
+	token.lineInfo.l1 = token.lineInfo.l2;
+	token.lineInfo.c1 = token.lineInfo.c2;
+	token.lineInfo.p1 = token.lineInfo.p2;
+	for(roSize i=0; i<token.value.size(); ++i) {
+		++token.lineInfo.p2;
+		if(token.value[i] == '\n') {
+			++token.lineInfo.l2;
+			token.lineInfo.c2 = 0;
 		}
-		else if(val[i] == '\r')
-			lineInfo.c2 = 0;
+		else if(token.value[i] == '\r')
+			token.lineInfo.c2 = 0;
 		else
-			++lineInfo.c2;
+			++token.lineInfo.c2;
 	}
 
 	if(longest.isEmpty())
 		return roStatus::end_of_data;
 
-	src.begin = val.end;
+	src.begin = token.value.end;
 	return roStatus::ok;
 }
 
@@ -252,6 +252,84 @@ roStatus Lexer::registerCustomRule(const char* ruleName, MatchFunc matchFunc, vo
 	_rules.insert(*rule.unref());
 
 	return roStatus::ok;
+}
+
+roStatus TokenStream::beginParse(const RangedString& source)
+{
+	_lookAheadBuf.clear();
+	roStatus st = _tokenPosStack.resize(1, 0);
+	if(!st) return st;
+	return _lexer.beginParse(source);
+}
+
+roStatus TokenStream::consumeToken(roSize count)
+{
+	roStatus st;
+	if(_lookAheadBuf.size() <= count + _tokenPosStack.back()) {
+		Lexer::Token dummy;
+		st = lookAhead(count, dummy);
+		if(!st) return st;
+	}
+	_tokenPosStack.back() += count;
+
+	return roStatus::ok;
+}
+
+roStatus TokenStream::currentToken(Lexer::Token& token)
+{
+	return lookAhead(0, token);
+}
+
+roStatus TokenStream::lookAhead(roSize offset, Lexer::Token& token)
+{
+	while(_lookAheadBuf.size() <= _tokenPosStack.back() + offset) {
+		Lexer::Token t;
+		roStatus st = _lexer.nextToken(t);
+
+		if(!st) {
+			_tokenPosStack.back() += _tokenPosStack.back() < _lookAheadBuf.size() ? 1 : 0;
+			return st;
+		}
+
+		bool skip = false;
+		for(roSize i=0; i<tokenToIgnore.size(); ++i) {
+			if(t.token == tokenToIgnore[i]) {
+				skip = true;
+				break;
+			}
+		}
+
+		if(skip)
+			continue;
+
+		st = _lookAheadBuf.pushBack(t);
+		if(!st) return st;
+	}
+
+	token = _lookAheadBuf[_tokenPosStack.back() + offset];
+	return roStatus::ok;
+}
+
+roStatus TokenStream::endParse() {
+	return _lexer.endParse();
+}
+
+void TokenStream::pushState()
+{
+	roSize pos = _tokenPosStack.back();
+	_tokenPosStack.pushBack(pos);
+}
+
+void TokenStream::restoreState()
+{
+	_tokenPosStack.popBack();
+}
+
+void TokenStream::discardState()
+{
+	roSize pos = _tokenPosStack.back();
+	_tokenPosStack.popBack();
+	_tokenPosStack.back() = pos;
 }
 
 }	// namespace ro
