@@ -6,6 +6,9 @@
 #include <math.h>
 #include <stdio.h>
 
+// Some notes on printf:
+// http://www.dgp.toronto.edu/~ajr/209/notes/printf.html
+
 char* roStrStr(char* a, const char* b)
 {
 	char* sa = a;
@@ -607,24 +610,11 @@ roSize roToString(char* str, roSize strBufSize, bool val, const char* option)
 	return 1;
 }
 
-// Some notes on printf:
-// http://www.dgp.toronto.edu/~ajr/209/notes/printf.html
 roSize roToString(char* str, roSize strBufSize, float val, const char* option)
 {
 	int ret = 0;
 #if roCOMPILER_VC
 	ret = _snprintf(str, strBufSize, "%.3g", val);
-#else
-#endif
-
-	return roMaxOf2(ret, 0);
-}
-
-roSize roToString(char* str, roSize strBufSize, double val, const char* option)
-{
-	int ret = 0;
-#if roCOMPILER_VC
-	ret = _snprintf(str, strBufSize, "%.3lg", val);
 #else
 #endif
 

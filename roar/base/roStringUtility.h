@@ -148,6 +148,8 @@ roSize		roToString		(char* str, roSize strBufSize, roUint32 val, const char* opt
 roSize		roToString		(char* str, roSize strBufSize, roUint64 val, const char* option=NULL);
 roSize		roToString		(char* str, roSize strBufSize, const void* ptrVal, const char* option=NULL);	// Convert pointer into hex string
 
+char*		roDtoa			(double value, char* strBuf);
+
 // ----------------------------------------------------------------------
 // String encodings
 

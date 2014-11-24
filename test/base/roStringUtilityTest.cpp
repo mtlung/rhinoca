@@ -182,6 +182,11 @@ TEST_FIXTURE(StringUtilityTest, toString)
 	CHECK_EQUAL(4u, roToString(buf, 4, 1.23f));	CHECK_EQUAL("1.23", buf);
 	CHECK_EQUAL(4u, roToString(buf, 8, 1.23f));	CHECK_EQUAL("1.23", buf);
 
+	CHECK_EQUAL(0u, roToString(buf, 1, 1.23));
+	CHECK_EQUAL(0u, roToString(buf, 2, 1.23));
+	CHECK_EQUAL(4u, roToString(buf, 4, 1.23));	CHECK_EQUAL("1.23", buf);
+	CHECK_EQUAL(4u, roToString(buf, 8, 1.23));	CHECK_EQUAL("1.23", buf);
+
 	CHECK(roToString(buf, roCountof(buf), DBL_MAX) > 0);
 
 	CHECK_EQUAL(7u, roToString(buf, roCountof(buf), (void*)0x123ABCD));	CHECK_EQUAL("123ABCD", buf);
