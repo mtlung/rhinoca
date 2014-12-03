@@ -139,6 +139,7 @@ struct JsonWriter : private NonCopyable
 // For array
 	roStatus beginArray(const roUtf8* name=NULL);
 	roStatus endArray();
+	roStatus writeNull();
 	roStatus write(bool val);
 	roStatus write(roInt8 val);
 	roStatus write(roInt16 val);
@@ -151,11 +152,13 @@ struct JsonWriter : private NonCopyable
 	roStatus write(float val);
 	roStatus write(double val);
 	roStatus write(const roUtf8* val);
+	roStatus write(const RangedString& val);
 	roStatus write(const roByte* buf, roSize bufLen);
 
 // For object
 	roStatus beginObject(const roUtf8* name=NULL);
 	roStatus endObject();
+	roStatus writeNull(const roUtf8* name);
 	roStatus write(const roUtf8* name, bool val);
 	roStatus write(const roUtf8* name, roInt8 val);
 	roStatus write(const roUtf8* name, roInt16 val);
@@ -168,6 +171,7 @@ struct JsonWriter : private NonCopyable
 	roStatus write(const roUtf8* name, float val);
 	roStatus write(const roUtf8* name, double val);
 	roStatus write(const roUtf8* name, const roUtf8* val);
+	roStatus write(const roUtf8* name, const RangedString& val);
 	roStatus write(const roUtf8* name, const roByte* buf, roSize bufLen);
 
 // Private

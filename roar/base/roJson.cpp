@@ -623,6 +623,7 @@ struct JsonString
 {
 	JsonString(const roUtf8* str) : buf((roByte*)str), bufLen(roStrLen(str)) {}
 	JsonString(const roByte* b, roSize l) : buf(b), bufLen(l) {}
+	JsonString(const RangedString& str) : buf((const roByte*)str.begin), bufLen(str.size()) {}
 	const roByte* buf;
 	roSize bufLen;
 };
@@ -706,6 +707,14 @@ roStatus JsonWriter::endObject()
 	return st;
 }
 
+roStatus JsonWriter::writeNull(const roUtf8* name)
+{
+	roAssert(_stateStack.back() == _inObject);
+	roStatus st = flushStrBuf();
+	if(!st) return st;
+	return strFormat(_strBuf, "\"{}\":null,", JsonString(name));
+}
+
 template<typename T>
 static roStatus writeNumbers(JsonWriter& writer, const roUtf8* name, T val)
 {
@@ -735,6 +744,15 @@ roStatus JsonWriter::write(const roUtf8* name, bool val)
 }
 
 roStatus JsonWriter::write(const roUtf8* name, const roUtf8* val)
+{
+	roAssert(_stateStack.back() == _inObject);
+	roStatus st = flushStrBuf();
+	if(!st) return st;
+
+	return strFormat(_strBuf, "\"{}\":\"{}\",", JsonString(name), JsonString(val));
+}
+
+roStatus JsonWriter::write(const roUtf8* name, const RangedString& val)
 {
 	roAssert(_stateStack.back() == _inObject);
 	roStatus st = flushStrBuf();
@@ -787,6 +805,14 @@ roStatus JsonWriter::endArray()
 	return st;
 }
 
+roStatus JsonWriter::writeNull()
+{
+	roAssert(_stateStack.back() == _inArray);
+	roStatus st = flushStrBuf();
+	if(!st) return st;
+	return _strBuf.append("null,");
+}
+
 template<typename T>
 static roStatus writeNumbers(JsonWriter& writer, T val)
 {
@@ -816,6 +842,15 @@ roStatus JsonWriter::write(bool val)
 }
 
 roStatus JsonWriter::write(const roUtf8* val)
+{
+	roAssert(_stateStack.back() == _inArray);
+	roStatus st = flushStrBuf();
+	if(!st) return st;
+
+	return strFormat(_strBuf, "\"{}\",", JsonString(val));
+}
+
+roStatus JsonWriter::write(const RangedString& val)
 {
 	roAssert(_stateStack.back() == _inArray);
 	roStatus st = flushStrBuf();
