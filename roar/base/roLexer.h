@@ -58,11 +58,15 @@ struct Lexer
 
 struct TokenStream
 {
+	typedef Lexer::Token Token;
+
 	roStatus	beginParse(const RangedString& source);	// Please make sure source string not deleted before endParse()
 	roStatus	consumeToken(roSize count=1);
+	bool		consumeToken(const RangedString& token);
 	roStatus	currentToken(Lexer::Token& token);
 	roStatus	lookAhead(roSize offset, Lexer::Token& token);
 	roStatus	endParse();
+
 
 	void pushState();		// Save current state on stack
 	void restoreState();	// Restore the saved state

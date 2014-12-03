@@ -366,11 +366,20 @@ bool match_charSet(Graph& graph, Node& node, Edge& edge, RangedString& s)
 			i += 2;
 			roUtf8 escaped2 = doEscape(i);
 			roAssert(i < edge.f.end);
-			roUtf8 l = roToLower(c);
-			roUtf8 u = roToUpper(c);
-			if((l >= escaped && l <= escaped2) || (u >= escaped && u <= escaped2)) {
-				inList = true;
-				break;
+
+			if(graph.charCmpFunc != charCaseCmp) {	// Case sensitive
+				if(c >= escaped && c <= escaped2) {
+					inList = true;
+					break;
+				}
+			}
+			else {									// Case insensitive
+				roUtf8 l = roToLower(c);
+				roUtf8 u = roToUpper(c);
+				if((l >= escaped && l <= escaped2) || (u >= escaped && u <= escaped2)) {
+					inList = true;
+					break;
+				}
 			}
 		}
 		// Character class

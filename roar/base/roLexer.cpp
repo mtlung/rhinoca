@@ -154,10 +154,11 @@ static bool _customMatch(RangedString& inout, void* userData)
 }
 
 struct RegexRule : public Lexer::IRule {
+	RegexRule() : option("b") {}
 	virtual bool match(RangedString& inout) override
 	{
 		Regex regex;
-		if(!regex.match(inout, this->regex, this->matcher, "b")) return false;
+		if(!regex.match(inout, this->regex, this->matcher, option.c_str())) return false;
 		inout.begin = regex.result[0].end;
 		return true;
 	}
@@ -218,7 +219,7 @@ roStatus Lexer::registerRegexRule(const char* ruleName, const char* regex, const
 	st = Regex::compile(regexStr.c_str(), rule->regex);
 	if(!st) return st;
 
-	rule->option = option;
+	rule->option += option;
 	_ruleOrderedList.pushBack(rule->orderedListNode);
 	_rules.insert(*rule.unref());
 
@@ -310,8 +311,29 @@ roStatus TokenStream::lookAhead(roSize offset, Lexer::Token& token)
 	return roStatus::ok;
 }
 
-roStatus TokenStream::endParse() {
+roStatus TokenStream::endParse()
+{
 	return _lexer.endParse();
+}
+
+bool TokenStream::consumeToken(const RangedString& token)
+{
+	Token t;
+	roSize consumed = 0;
+
+	while(true) {
+		if(!currentToken(t))
+			return false;
+
+		if(t.token == token) {
+			consumeToken(1);
+			++consumed;
+		}
+		else
+			break;
+	}
+
+	return consumed > 0;
 }
 
 void TokenStream::pushState()
