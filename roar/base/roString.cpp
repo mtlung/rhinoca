@@ -374,6 +374,7 @@ Status String::toUtf16(roUint16* dst, roSize& dstLen)
 
 bool String::operator==(const char* rhs) const
 {
+	if(!rhs) return isEmpty();
 	return roStrCmp(_str(), rhs) == 0;
 }
 
@@ -456,8 +457,7 @@ int RangedString::cmpNoCase(const char* str) const
 
 bool RangedString::operator==(const char* rhs) const
 {
-	if(size() != roStrLen(rhs))
-		return false;
+	if(!rhs) return isEmpty();
 	return roStrnCmp(begin, rhs, size()) == 0;
 }
 

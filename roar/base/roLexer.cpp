@@ -354,4 +354,22 @@ void TokenStream::discardState()
 	_tokenPosStack.back() = pos;
 }
 
+TokenStream::StateScoped::StateScoped(TokenStream& tks)
+	: tks(tks), consumed(false)
+{
+	tks.pushState();
+}
+
+TokenStream::StateScoped::~StateScoped()
+{
+	if(!consumed)
+		tks.restoreState();
+}
+
+void TokenStream::StateScoped::consume()
+{
+	tks.discardState();
+	consumed = true;
+}
+
 }	// namespace ro

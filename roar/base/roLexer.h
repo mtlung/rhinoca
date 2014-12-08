@@ -67,10 +67,17 @@ struct TokenStream
 	roStatus	lookAhead(roSize offset, Lexer::Token& token);
 	roStatus	endParse();
 
-
 	void pushState();		// Save current state on stack
 	void restoreState();	// Restore the saved state
 	void discardState();	// Discard the saved state
+
+	struct StateScoped {
+		StateScoped(TokenStream& tks);
+		~StateScoped();
+		void consume();
+		TokenStream& tks;
+		bool consumed;
+	};
 
 	Array<String> tokenToIgnore;
 
