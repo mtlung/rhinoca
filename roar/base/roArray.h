@@ -110,13 +110,22 @@ struct IArray
 	Status		insertSorted(const T& val);
 	Status		insertSorted(const T& val, bool(*less)(const T&, const T&));
 
+// Removal operations
 	void		popBack();
 	void		remove(roSize i);
 	void		remove(roSize i, roSize count);
 	void		removeBySwap(roSize i);
-	bool		removeByKey(const T& key);		///< Returns false if the key not found
-	bool		removeAllByKey(const T& key);
 
+	template<class K>
+	bool		removeByKey(const K& key, bool(*equal)(const T&, const K&) = _defaultEquality);		///< Returns false if the key not found
+
+	template<class K>
+	bool		removeAllByKey(const K& key, bool(*equal)(const T&, const K&) = _defaultEquality);
+
+	template<class K>
+	void		removeAllByKeys(const IArray<K>& rhs, bool(*equal)(const T&, const K&) = _defaultEquality);	/// All occurrence of rhs in this array will be removed, O(m*n) since unsorted
+
+// Search operations
 	T*			find(const T& key);
 	const T*	find(const T& key) const;
 
@@ -159,6 +168,9 @@ struct IArray
 	const roBytePtr	bytePtr() const				{ return _data; }
 
 // Private
+	template<class T1, class T2>
+	static bool		_defaultEquality(const T1& lhs, const T2& rhs) { return lhs == rhs; }
+
 	roSize _size;
 	roSize _capacity;
 	T* _data;

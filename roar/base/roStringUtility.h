@@ -3,6 +3,8 @@
 
 #include "roStatus.h"
 
+namespace ro { struct String; }
+
 inline roSize	roStrLen		(const roUtf8* str);
 inline roSize	roStrLen		(const roUtf16* str);
 inline roSize	roStrLen		(const roUtf8* str, roSize strLenMax);
@@ -57,6 +59,7 @@ roStatus	roStrTo			(const char* str, roUint8& ret);
 roStatus	roStrTo			(const char* str, roUint16& ret);
 roStatus	roStrTo			(const char* str, roUint32& ret);
 roStatus	roStrTo			(const char* str, roUint64& ret);
+roStatus	roStrTo			(const char* str, ro::String& ret);
 
 roStatus	roStrTo			(const char* str, roSize len, bool& ret);
 roStatus	roStrTo			(const char* str, roSize len, float& ret);
@@ -69,6 +72,7 @@ roStatus	roStrTo			(const char* str, roSize len, roUint8& ret);
 roStatus	roStrTo			(const char* str, roSize len, roUint16& ret);
 roStatus	roStrTo			(const char* str, roSize len, roUint32& ret);
 roStatus	roStrTo			(const char* str, roSize len, roUint64& ret);
+roStatus	roStrTo			(const char* str, roSize len, ro::String& ret);
 
 roStatus	roStrTo			(const char* str, const char*& newPos, bool& ret);
 roStatus	roStrTo			(const char* str, const char*& newPos, float& ret);

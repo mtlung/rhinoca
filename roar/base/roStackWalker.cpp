@@ -47,6 +47,7 @@ roSize StackWalker::stackWalk_v0(void** address, roSize maxCount, roUint64* outH
 		void* funcAddress = frame[1];
 		address[count] = frame;
 		myEbp = (void**)nextFrame;
+		(void)funcAddress;
 	}
 #endif
 

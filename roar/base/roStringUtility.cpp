@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "roStringUtility.h"
+#include "roString.h"
 #include "roTypeCast.h"
 #include "roUtility.h"
 #include <ctype.h>
@@ -267,6 +268,10 @@ roStatus roStrTo(const char* str, roUint64& ret) {
 	return _parseNumber(str, NULL, ret);
 }
 
+roStatus roStrTo(const char* str, ro::String& ret) {
+	return ret.assign(str);
+}
+
 roStatus roStrTo(const char* str, roSize len, bool& ret)
 {
 	if(len == 4 && roStrCaseCmp(str, "true") == 0) {
@@ -326,6 +331,10 @@ roStatus roStrTo(const char* str, roSize len, roUint32& ret) {
 
 roStatus roStrTo(const char* str, roSize len, roUint64& ret) {
 	return _parseNumber(str, str + len, ret);
+}
+
+roStatus roStrTo(const char* str, roSize len, ro::String& ret) {
+	return ret.assign(str, len);
 }
 
 roStatus roStrTo(const char* str, const char*& newPos, roInt8& ret) {

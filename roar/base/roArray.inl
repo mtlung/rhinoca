@@ -338,10 +338,10 @@ void IArray<T>::removeBySwap(roSize idx)
 	this->popBack();
 }
 
-template<class T>
-bool IArray<T>::removeByKey(const T& key)
+template<class T> template<class K>
+bool IArray<T>::removeByKey(const K& key, bool(*equal)(const T&, const K&))
 {
-	T* v = this->find(key);
+	T* v = this->find(key, equal);
 	if(!v) return false;
 
 	roAssert(v >= begin() && v < end());
@@ -349,12 +349,12 @@ bool IArray<T>::removeByKey(const T& key)
 	return true;
 }
 
-template<class T>
-bool IArray<T>::removeAllByKey(const T& key)
+template<class T> template<class K>
+bool IArray<T>::removeAllByKey(const K& key, bool(*equal)(const T&, const K&))
 {
 	bool ret = false;
 	for(roSize i=0; i<this->_size;) {
-		if(_data[i] == key) {
+		if(equal(_data[i], key)) {
 			this->remove(i);
 			ret = true;
 		}
@@ -363,6 +363,16 @@ bool IArray<T>::removeAllByKey(const T& key)
 	}
 
 	return ret;
+}
+
+template<class T> template<class K>
+void IArray<T>::removeAllByKeys(const IArray<K>& rhs, bool(*equal)(const T&, const K&))
+{
+	if(this == &rhs)
+		return clear();
+
+	for(roSize i=0; i<rhs.size(); ++i)
+		removeAllByKey(rhs[i], equal);
 }
 
 template<class T>
@@ -383,7 +393,7 @@ T* IArray<T>::find(const K& key, bool(*equal)(const T&, const K&))
 	return roArrayFind(this->_data, this->_size, key, equal);
 }
 
-template<class T>  template<class K>
+template<class T> template<class K>
 const T* IArray<T>::find(const K& key, bool(*equal)(const T&, const K&)) const
 {
 	return roArrayFind(this->_data, this->_size, key, equal);

@@ -71,7 +71,7 @@ struct TokenStream
 	void restoreState();	// Restore the saved state
 	void discardState();	// Discard the saved state
 
-	struct StateScoped {
+	struct StateScoped : NonCopyable {
 		StateScoped(TokenStream& tks);
 		~StateScoped();
 		void consume();
