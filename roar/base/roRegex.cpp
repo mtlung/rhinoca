@@ -6,7 +6,8 @@
 
 // Reference:
 // Online regex test platform
-// http://regexpal.com/
+// http://regexpal.com
+// https://regex101.com
 // Regular Expression Matching Can Be Simple And Fast
 // http://swtch.com/~rsc/regexp/regexp1.html
 // Regular expression to NFA visualization
@@ -14,7 +15,7 @@
 // A JavaScript and regular expression centric blog
 // http://blog.stevenlevithan.com
 // Perl regular expression cheat sheet
-// http://ult-tex.net/info/perl/
+// http://ult-tex.net/info/perl
 // .Net regex quick reference
 // http://msdn.microsoft.com/en-us/library/az24scfc%28v=vs.110%29.aspx
 
@@ -35,7 +36,6 @@ static bool charCaseCmp(char c1, char c2) { return roToLower(c1) == roToLower(c2
 char doEscape(const roUtf8*& str)
 {
 	if(*str != '\\') return *str;
-
 
 	const char* i = roStrChr(str_escapes[0], str[1]);
 	if(i) return ++str, str_escapes[1][i - str_escapes[0]];
@@ -247,11 +247,17 @@ bool group_end(Graph& graph, Node& node, Edge& edge, RangedString& s)
 
 bool nonCaptureGroup_begin(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
-	return true;
+	return ++graph.nestedGroupLevel, true;
 }
 bool nonCaptureGroup_end(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
-	return true;
+	roAssert(graph.nestedGroupLevel > 0);
+
+	// Commit the latest successful match at the outermost capturing group
+	if(graph.nestedGroupLevel == 1)
+		graph.result = graph.tmpResult;
+
+	return --graph.nestedGroupLevel, true;
 }
 
 bool match_raw(Graph& graph, Node& node, Edge& edge, RangedString& s_)
@@ -274,7 +280,7 @@ bool match_raw(Graph& graph, Node& node, Edge& edge, RangedString& s_)
 			return false;
 	}
 
-	if(f == edge.f.begin)
+	if(f != edge.f.end)
 		return false;
 
 	s_.begin = s;
@@ -1006,6 +1012,7 @@ bool Regex::match(RangedString srcString, const Compiled& compiled, const IArray
 bool Regex::_match(Graph& graph, const char* options)
 {
 	RangedString srcString = graph.srcString;	// NOTE: It must be copy by value
+	_srcString = srcString;
 
 	result.clear();
 
@@ -1044,10 +1051,25 @@ bool Regex::_match(Graph& graph, const char* options)
 	return false;
 }
 
+bool Regex::isMatch(roSize index) const
+{
+	if(!result.isInRange(index))
+		return false;
+
+	if(result[index].begin < _srcString.begin || result[index].end > _srcString.end)
+		return false;
+
+	return true;
+}
+
 Status Regex::getValue(roSize index, RangedString& str)
 {
 	if(!result.isInRange(index))
 		return Status::index_out_of_range;
+
+	if(result[index].begin < _srcString.begin || result[index].end > _srcString.end)
+		return Status::invalid_parameter;
+
 	str = result[index];
 	return Status::ok;
 }

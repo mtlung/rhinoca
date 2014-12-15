@@ -14,13 +14,17 @@ TEST_FIXTURE(RegexTest, test)
 
 		{ "(a)*b",						"",		"aab",											"aab`a" },
 		{ "(abc)d",						"",		"abcd",											"abcd`abc" },
+		{ "(?:(A|a)(B|b))+",			"",		"ABa",											"AB`A`B" },
+		{ "(((a)?b)?c)?",				"",		"abc",											"abc`abc`ab`a" },
+		{ "(?:(?:(a) (b)? c)?)?",		"",		"a b c",										"a b c`a`b" },
 
 		{ "[^ a-z]+",					"",		"path",											NULL },
 		{ "[^ a-z]+",					"",		"PATH",											"PATH" },
 
+		{ "a b",						"",		"a",											NULL },
 		{ "a|b|c",						"",		"a",											"a" },
 		{ "b| a|[^ ]*|",				"",		" a",											" a" },
-		{ "[^ ]*| a",					"",		" a",											"" },	// Note that alternation is evaluated left to right, resulting a valid but emtpy result
+		{ "[^ ]*| a",					"",		" a",											"" },	// Note that alternation is evaluated left to right, resulting a valid but empty result
 		{ "[a-c]*d",					"",		"ad",											"ad" },
 		{ "a{1,2}",						"",		"a",											"a" },
 		{ "[abc]d",						"",		"bd",											"bd" },

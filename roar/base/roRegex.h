@@ -41,9 +41,10 @@ struct Regex : private NonCopyable
 	bool match(RangedString str, RangedString reg, const IArray<CustomMatcher>& customMatcher, const char* options=NULL);
 	bool match(RangedString str, const Compiled& reg, const IArray<CustomMatcher>& customMatcher, const char* options=NULL);
 
+	bool isMatch(roSize index) const;
+
 	template<typename T>
 	Status getValue(roSize index, T& value);
-
 	Status getValue(roSize index, RangedString& str);
 
 	template<typename T>
@@ -55,6 +56,7 @@ struct Regex : private NonCopyable
 
 // Private
 	bool _match(Graph& graph, const char* options);
+	RangedString _srcString;	// For remembering the source string of the last performed match
 };	// Regex
 
 template<typename T>
