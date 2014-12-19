@@ -87,6 +87,7 @@ struct IArray
 	void		swap(IArray& rhs)				{ roSwap(_size, rhs._size); roSwap(_capacity, rhs._capacity); roSwap(_data, rhs._data); }
 
 	Status		copy(const IArray& src);
+	void		assign(const T& src);
 	Status		assign(const T* srcBegin, roSize count);
 	Status		assign(const T* srcBegin, const T* srcEnd);
 

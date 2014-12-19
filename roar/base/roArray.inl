@@ -89,6 +89,13 @@ Status IArray<T>::copy(const IArray<T>& src)
 }
 
 template<class T>
+void IArray<T>::assign(const T& src)
+{
+	for(roSize i = 0; i < _size; ++i)
+		_data[i] = src;
+}
+
+template<class T>
 Status IArray<T>::assign(const T* srcBegin, roSize count)
 {
 	clear();
