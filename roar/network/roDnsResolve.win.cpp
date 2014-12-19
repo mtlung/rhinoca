@@ -71,7 +71,7 @@ roStatus roGetHostByName(const roUtf8* hostname, roUint32& ipv4, float timeout)
 
 	CountDownTimer timer(timeout);
 
-	for(bool keepRun=true; keepRun && st;)
+	if(hRet) for(bool keepRun=true; keepRun && st;)
 	{
 		MSG msg;
 

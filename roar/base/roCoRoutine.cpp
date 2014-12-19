@@ -105,14 +105,16 @@ void coSleep(float seconds)
 	Coroutine* coroutine = Coroutine::current();
 	CoSleepManager* sleepMgr = _currentCoSleepManager;
 
-	if(!coroutine || !sleepMgr || seconds == 0) {
+	if(coroutine && (!sleepMgr || seconds == 0)) {
 		coroutine->yield();
 		return;
 	}
 
-	sleepMgr->add(*coroutine, seconds);
-	sleepMgr->resumeWithId(sleepMgr);
-	coroutine->suspendWithId(sleepMgr);
+	if(coroutine && sleepMgr) {
+		sleepMgr->add(*coroutine, seconds);
+		sleepMgr->resumeWithId(sleepMgr);
+		coroutine->suspendWithId(sleepMgr);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////

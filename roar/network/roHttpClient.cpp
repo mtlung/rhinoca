@@ -363,20 +363,25 @@ while(true) {
 		}
 
 		// Release connection back to pool
-		if(response.cmpFieldNoCase(HttpResponseHeader::HeaderField::Connection, "close"))
+		if(response.cmpFieldNoCase(HttpResponseHeader::HeaderField::Connection, "close")) {
+			// Can be deleted since server will close this connection and while we are redirecting to another location (new connection needed)
 			roDelete(connection);
-		else
+		}
+		else {
 			connectionPool->connections.insert(*connection);
 
-		istream.takeOver(_getStream(
-			response,
-			RangedString(responseStr.c_str() + contentStartPos, responseStr.end()),
-			connection->socket
-		));
+			istream.takeOver(_getStream(
+				response,
+				RangedString(responseStr.c_str() + contentStartPos, responseStr.end()),
+				connection->socket
+			));
+
+			st = _skipStreamData(response, *istream);
+		}
+
+		if(!st) roEXCP_THROW;
 
 		// Back to the start of the location redirect loop
-		st = _skipStreamData(response, *istream);
-		if(!st) roEXCP_THROW;
 		continue;
 	}	break;
 	default:

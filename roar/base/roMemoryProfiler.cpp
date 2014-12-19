@@ -419,7 +419,7 @@ BOOL WINAPI myVirtualFree(__in LPVOID lpAddress, __in SIZE_T dwSize, __in DWORD 
 
 	tls->recurseCount++;
 	BOOL ret = _orgVirtualFree(lpAddress, dwSize, dwFreeType);
-	if(SUCCEEDED(ret))
+	if(ret)
 		_send(tls, 'f', lpAddress, info.RegionSize);
 	tls->recurseCount--;
 

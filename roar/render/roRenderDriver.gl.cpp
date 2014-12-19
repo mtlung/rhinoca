@@ -183,6 +183,7 @@ static bool _setRenderTargets(roRDriverTexture** textures, roSize targetCount, b
 
 	for(unsigned i=0; i<targetCount; ++i) {
 		roRDriverTextureImpl* tex = static_cast<roRDriverTextureImpl*>(textures[i]);
+		if(!tex) continue;
 
 		if(tex->format == roRDriverTextureFormat_DepthStencil) {
 			if(hasDepthAttachment) {
@@ -591,15 +592,15 @@ static bool _initBufferSpecificLocation(roRDriverBufferImpl* impl, roRDriverBuff
 	if(systemMemory) {
 		impl->systemBuf = _allocator.realloc(impl->systemBuf, impl->sizeInBytes, sizeInBytes);
 		if(initData)
- 			roMemcpy(impl->systemBuf, initData, sizeInBytes);
+			roMemcpy(impl->systemBuf, initData, sizeInBytes);
 
 		if(impl->glh) {
 			impl->isMapped = false;	// Calling glDeleteBuffers also implies glUnmapBuffer
 			glDeleteBuffers(1, &impl->glh);
 			impl->glh = 0;
 		}
- 	}
- 	else
+	}
+	else
 	{
 		if(!impl->glh)
 			glGenBuffers(1, &impl->glh);
@@ -655,9 +656,9 @@ static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, const voi
 			_allocator.realloc(impl->systemBuf, self->sizeInBytes, sizeInBytes);
 			self->sizeInBytes = sizeInBytes;
 		}
- 		roMemcpy(((char*)impl->systemBuf) + offsetInBytes, data, sizeInBytes);
+		roMemcpy(((char*)impl->systemBuf) + offsetInBytes, data, sizeInBytes);
 	}
- 	else {
+	else {
 		checkError();
 		GLenum t = _bufferTarget[self->type];
 		glBindBuffer(t, impl->glh);

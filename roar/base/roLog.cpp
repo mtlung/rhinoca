@@ -12,9 +12,9 @@ static void _defaultLogFunc(const char* type, const char* format, va_list ap)
 
 static RoLogFunc _logFunc = _defaultLogFunc;
 
-void roLogIf(bool shouldLog, const char* type, const char* format, ...)
+void roLog(const char* type, roPRINTF_FORMAT_PARAM const char* format, ...) roPRINTF_ATTRIBUTE(2,3)
 {
-	if(!shouldLog || !format || !_logFunc) return;
+	if(!format || !_logFunc) return;
 
 	va_list vl;
 	va_start(vl, format);
@@ -22,9 +22,9 @@ void roLogIf(bool shouldLog, const char* type, const char* format, ...)
 	va_end(vl);
 }
 
-void roLog(const char* type, const char* format, ...)
+void roLogIf(bool shouldLog, const char* type, roPRINTF_FORMAT_PARAM const char* format, ...) roPRINTF_ATTRIBUTE(3,4)
 {
-	if(!format || !_logFunc) return;
+	if(!shouldLog || !format || !_logFunc) return;
 
 	va_list vl;
 	va_start(vl, format);
