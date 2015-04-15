@@ -306,6 +306,9 @@ ErrorCode BsdSocket::initApplication()
 
 ErrorCode BsdSocket::closeApplication()
 {
+	if(_initCount == 0)
+		return OK;
+
 	if(--_initCount > 0)
 		return OK;
 

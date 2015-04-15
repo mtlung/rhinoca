@@ -41,14 +41,14 @@ roStatus Lexer::nextToken(Token& token)// RangedString& token, RangedString& val
 
 	// If there were multiple results having the same length, the later registered rule have the higher priority
 	roSize longestLen = 0;
-	for(roSize i=0; i<longest.size(); ++i) {
-		roSize len = longest[i].value.size();
+	for(Longest& i : longest) {
+		roSize len = i.value.size();
 		if(len < longestLen)
 			continue;
 
 		longestLen = len;
-		token.token = longest[i].token;
-		token.value = longest[i].value;
+		token.token = i.token;
+		token.value = i.value;
 	}
 
 	// Line, position counting

@@ -66,7 +66,7 @@ struct CoSleepManager : public BgCoroutine
 					break;
 
 				entry.coro->resumeWithId(this);
-				sortedEntries.remove(0);
+				sortedEntries.removeAt(0);
 			}
 
 			if(sortedEntries.isEmpty())

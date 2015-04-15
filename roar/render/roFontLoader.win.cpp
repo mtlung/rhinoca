@@ -187,10 +187,8 @@ void FontLoader::checkRequest(TaskPool* taskPool)
 	roSwap(font->requestMainThread, font->requestLoadThread);
 
 	// Process reply
-	for(roSize i=0; i<font->replys.size(); ++i)
+	for(const Reply& reply : font->replys)
 	{
-		Reply& reply = font->replys[i];
-
 		FontData* fontData = font->typefaces.find(reply.fontHash, Pred::fontDataEqual);
 		roAssert(fontData);
 
@@ -244,9 +242,8 @@ void FontLoader::checkRequest(TaskPool* taskPool)
 
 static FontData* _findFontData(Array<FontData>& typefaces, roUint32 hash)
 {
-	for(roSize i=0; i<typefaces.size(); ++i)
+	for(FontData& fontData : typefaces)
 	{
-		FontData& fontData = typefaces[i];
 		if(fontData.fontHash == hash)
 			return &fontData;
 	}
@@ -302,9 +299,8 @@ void FontLoader::processRequest(TaskPool* taskPool)
 {
 	ro::Array<roUint8> glyhpBitmapBuf;
 
-	for(roSize i=0; i<font->requestLoadThread.size(); ++i)
+	for(Request& request : font->requestLoadThread)
 	{
-		Request& request = font->requestLoadThread[i];
 		FontData* fontData = _findFontData(font->typefaces, request.fontHash);
 		roAssert(fontData && "Hash value should already be registered by Font::setStyle()");
 
@@ -316,9 +312,9 @@ void FontLoader::processRequest(TaskPool* taskPool)
 
 		// Find out the reply object
 		Reply* reply = NULL;
-		for(roSize j=0; j<font->replys.size(); ++j) {
-			if(request.fontHash == font->replys[j].fontHash)
-				reply = &font->replys[j];
+		for(Reply& j : font->replys) {
+			if(request.fontHash == j.fontHash)
+				reply = &j;
 		}
 
 		// If no reply object exist yet, create one
@@ -393,11 +389,11 @@ void FontLoader::processRequest(TaskPool* taskPool)
 
 		// Scale up from GGO_GRAY8_BITMAP to 0 - 255
 		roUint64 pixelSum = 0;
-		for(roSize i=0; i<glyhpBitmapBuf.size(); ++i) {
-			int c = glyhpBitmapBuf[i];
+		for(roUint8& i : glyhpBitmapBuf) {
+			int c = i;
 			pixelSum += c;
 			c = int(c * (float)255 / 64);
-			glyhpBitmapBuf[i] = num_cast<roUint8>(c);
+			i = num_cast<roUint8>(c);
 		}
 
 		// If the bitmap doesn't has any visual pixel, force the box to be zero

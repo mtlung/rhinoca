@@ -135,11 +135,11 @@ static void _clearColor(float r, float g, float b, float a)
 		ctx->dxDeviceContext->ClearRenderTargetView(ctx->dxRenderTargetView, color);
 	else {
 		// Find render target cache
-		for(unsigned i=0; i<ctx->renderTargetCache.size(); ++i) {
-			if(ctx->renderTargetCache[i].hash != ctx->currentRenderTargetViewHash)
+		for(RenderTarget& i : ctx->renderTargetCache) {
+			if(i.hash != ctx->currentRenderTargetViewHash)
 				continue;
-			for(unsigned j=0; j<ctx->renderTargetCache[i].rtViews.size(); ++j)
-				ctx->dxDeviceContext->ClearRenderTargetView(ctx->renderTargetCache[i].rtViews[j], color);
+			for(auto& j : i.rtViews)
+				ctx->dxDeviceContext->ClearRenderTargetView(j, color);
 		}
 	}
 }
@@ -153,10 +153,10 @@ static void _clearDepth(float z)
 		ctx->dxDeviceContext->ClearDepthStencilView(ctx->dxDepthStencilView, D3D11_CLEAR_DEPTH, z, 0);
 	else {
 		// Find render target cache
-		for(unsigned i=0; i<ctx->renderTargetCache.size(); ++i) {
-			if(ctx->renderTargetCache[i].hash != ctx->currentRenderTargetViewHash)
+		for(RenderTarget& i : ctx->renderTargetCache) {
+			if(i.hash != ctx->currentRenderTargetViewHash)
 				continue;
-			ctx->dxDeviceContext->ClearDepthStencilView(ctx->renderTargetCache[i].depthStencilView, D3D11_CLEAR_DEPTH, z, 0);
+			ctx->dxDeviceContext->ClearDepthStencilView(i.depthStencilView, D3D11_CLEAR_DEPTH, z, 0);
 		}
 	}
 }
@@ -170,10 +170,10 @@ static void _clearStencil(unsigned char s)
 		ctx->dxDeviceContext->ClearDepthStencilView(ctx->dxDepthStencilView, D3D11_CLEAR_STENCIL, 1, s);
 	else {
 		// Find render target cache
-		for(unsigned i=0; i<ctx->renderTargetCache.size(); ++i) {
-			if(ctx->renderTargetCache[i].hash != ctx->currentRenderTargetViewHash)
+		for(RenderTarget& i : ctx->renderTargetCache) {
+			if(i.hash != ctx->currentRenderTargetViewHash)
 				continue;
-			ctx->dxDeviceContext->ClearDepthStencilView(ctx->renderTargetCache[i].depthStencilView, D3D11_CLEAR_STENCIL, 1, s);
+			ctx->dxDeviceContext->ClearDepthStencilView(i.depthStencilView, D3D11_CLEAR_STENCIL, 1, s);
 		}
 	}
 }
@@ -235,19 +235,19 @@ static bool _setRenderTargets(roRDriverTexture** textures, roSize targetCount, b
 	ctx->currentRenderTargetViewHash = hash;
 
 	// Find render target cache
-	for(unsigned i=0; i<ctx->renderTargetCache.size(); ++i) {
-		if(ctx->renderTargetCache[i].hash != hash)
+	for(RenderTarget& i : ctx->renderTargetCache) {
+		if(i.hash != hash)
 			continue;
 
 		// Unbind any texture which is using as shader resource at the moment
 		ID3D11ShaderResourceView* views[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT] = { NULL };
 		ctx->dxDeviceContext->PSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, views);
 
-		ctx->renderTargetCache[i].lastUsedTime = ctx->lastSwapTime;
+		i.lastUsedTime = ctx->lastSwapTime;
 		ctx->dxDeviceContext->OMSetRenderTargets(
-			num_cast<UINT>(ctx->renderTargetCache[i].rtViews.size()),
-			&ctx->renderTargetCache[i].rtViews.typedPtr()->ptr,
-			ctx->renderTargetCache[i].depthStencilView.ptr
+			num_cast<UINT>(i.rtViews.size()),
+			&i.rtViews.typedPtr()->ptr,
+			i.depthStencilView.ptr
 		);
 		return true;
 	}
@@ -383,10 +383,10 @@ static void _setBlendState(roRDriverBlendState* state)
 		return;
 	else {
 		// Try to search for the state in the cache
-		for(roSize i=0; i<ctx->blendStateCache.size(); ++i) {
-			if(state->hash == ctx->blendStateCache[i].hash) {
-				dxState = ctx->blendStateCache[i].dxBlendState;
-				ctx->blendStateCache[i].lastUsedTime = ctx->lastSwapTime;
+		for(BlendState& i : ctx->blendStateCache) {
+			if(state->hash == i.hash) {
+				dxState = i.dxBlendState;
+				i.lastUsedTime = ctx->lastSwapTime;
 				break;
 			}
 		}
@@ -445,10 +445,10 @@ static void _setRasterizerState(roRDriverRasterizerState* state)
 		return;
 	else {
 		// Try to search for the state in the cache
-		for(roSize i=0; i<ctx->rasterizerState.size(); ++i) {
-			if(state->hash == ctx->rasterizerState[i].hash) {
-				dxState = ctx->rasterizerState[i].dxRasterizerState;
-				ctx->rasterizerState[i].lastUsedTime = ctx->lastSwapTime;
+		for(RasterizerState& i : ctx->rasterizerState) {
+			if(state->hash == i.hash) {
+				dxState = i.dxRasterizerState;
+				i.lastUsedTime = ctx->lastSwapTime;
 				break;
 			}
 		}
@@ -534,10 +534,10 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 		return;
 	else {
 		// Try to search for the state in the cache
-		for(roSize i=0; i<ctx->depthStencilStateCache.size(); ++i) {
-			if(state->hash == ctx->depthStencilStateCache[i].hash) {
-				dxState = ctx->depthStencilStateCache[i].dxDepthStencilState;
-				ctx->depthStencilStateCache[i].lastUsedTime = ctx->lastSwapTime;
+		for(DepthStencilState& i : ctx->depthStencilStateCache) {
+			if(state->hash == i.hash) {
+				dxState = i.dxDepthStencilState;
+				i.lastUsedTime = ctx->lastSwapTime;
 				break;
 			}
 		}
@@ -776,16 +776,16 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 	impl->dxStagingIdx = -1;
 
 	// A simple first fit algorithm
-	if(impl->usage != roRDriverDataUsage_Static) for(roSize i=0; i<ctx->bufferCache.size(); ++i)
+	if(impl->usage != roRDriverDataUsage_Static) for(BufferCacheEntry& i : ctx->bufferCache)
 	{
-		if(impl->hash != ctx->bufferCache[i].hash)
+		if(impl->hash != i.hash)
 			continue;
-		if(ctx->bufferCache[i].sizeInByte < sizeInBytes)
+		if(i.sizeInByte < sizeInBytes)
 			continue;
 
 		// Cache hit
-		impl->dxBuffer = ctx->bufferCache[i].dxBuffer;
-		impl->capacity = ctx->bufferCache[i].sizeInByte;
+		impl->dxBuffer = i.dxBuffer;
+		impl->capacity = i.sizeInByte;
 		ctx->bufferCache.remove(i);
 
 		roIgnoreRet(_updateBuffer(impl, 0, initData, sizeInBytes));
@@ -855,10 +855,9 @@ static StagingBuffer* _getStagingBuffer(roRDriverContextImpl* ctx, roSize size, 
 				return NULL;
 			}
 
-			for(unsigned i=0; i<ctx->stagingBufferCache.size(); ++i) {
-				StagingBuffer* sb = &ctx->stagingBufferCache[i];
-				if(!sb->dxBuffer) {
-					ret = sb;
+			for(StagingBuffer& i : ctx->stagingBufferCache) {
+				if(!i.dxBuffer) {
+					ret = &i;
 					break;
 				}
 			}
@@ -1205,10 +1204,9 @@ static StagingTexture* _getStagingTexture(roRDriverContextImpl* ctx, roRDriverTe
 				return NULL;
 			}
 
-			for(unsigned i=0; i<ctx->stagingTextureCache.size(); ++i) {
-				StagingTexture* st = &ctx->stagingTextureCache[i];
-				if(!st->dxTexture) {
-					ret = st;
+			for(StagingTexture& i : ctx->stagingTextureCache) {
+				if(!i.dxTexture) {
+					ret = &i;
 					break;
 				}
 			}
@@ -1435,9 +1433,9 @@ static void _deleteShader(roRDriverShader* self)
 	roRDriverShaderImpl* impl = static_cast<roRDriverShaderImpl*>(self);
 	if(!ctx || !impl) return;
 
-	for(unsigned i=0; i<ctx->currentShaders.size(); ++i)
-		if(ctx->currentShaders[i] == impl) {
-			ctx->currentShaders[i] = NULL;
+	for(auto& i : ctx->currentShaders)
+		if(i == impl) {
+			i = NULL;
 		}
 
 	_allocator.deleteObj(static_cast<roRDriverShaderImpl*>(self));
@@ -1721,13 +1719,11 @@ bool _setUniformBuffer(unsigned nameHash, roRDriverBuffer* buffer, roRDriverShad
 	}
 
 	// Search for the constant buffer with the matching name
-	for(unsigned i=0; i<ctx->currentShaders.size(); ++i) {
-		roRDriverShaderImpl* shader = ctx->currentShaders[i];
+	for(roRDriverShaderImpl* shader : ctx->currentShaders) {
 		if(!shader)
 			continue;
 
-		for(unsigned j=0; j<shader->shaderResourceBindings.size(); ++j) {
-			ShaderResourceBinding& b = shader->shaderResourceBindings[j];
+		for(ShaderResourceBinding& b : shader->shaderResourceBindings) {
 			if(b.nameHash == nameHash) {
 				if(shader->type == roRDriverShaderType_Vertex)
 					ctx->dxDeviceContext->VSSetConstantBuffers(b.bindPoint, 1, &tmpBuf->dxBuffer.ptr);
@@ -1781,11 +1777,11 @@ bool _bindShaderBuffers(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 	// Search for existing input layout
 	InputLayout* inputLayout = NULL;
 	bool inputLayoutCacheFound = false;
-	for(roSize i=0; i<ctx->inputLayoutCache.size(); ++i)
+	for(InputLayout& i : ctx->inputLayoutCache)
 	{
-		if(inputHash == ctx->inputLayoutCache[i].hash) {
-			inputLayout = &ctx->inputLayoutCache[i];
-			ctx->inputLayoutCache[i].lastUsedTime = ctx->lastSwapTime;
+		if(inputHash == i.hash) {
+			inputLayout = &i;
+			i.lastUsedTime = ctx->lastSwapTime;
 			inputLayoutCacheFound = true;
 			break;
 		}
@@ -1825,9 +1821,9 @@ bool _bindShaderBuffers(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 			if(inputLayoutCacheFound) continue;
 
 			roRDriverShaderImpl* shader = ctx->currentShaders[bufferType];
-			for(unsigned j=0; j<ctx->currentShaders.size(); ++j) {
-				if(ctx->currentShaders[j] && ctx->currentShaders[j]->type == roRDriverShaderType_Vertex)
-					shader = ctx->currentShaders[j];
+			for(roRDriverShaderImpl* j : ctx->currentShaders) {
+				if(j && j->type == roRDriverShaderType_Vertex)
+					shader = j;
 			}
 
 			if(!shader) {
@@ -1842,9 +1838,9 @@ bool _bindShaderBuffers(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 
 			// Search for the input param name
 			InputParam* inputParam = NULL;
-			for(unsigned j=0; j<shader->inputParams.size(); ++j) {
-				if(shader->inputParams[j].nameHash == input->nameHash) {
-					inputParam = &shader->inputParams[j];
+			for(InputParam& j : shader->inputParams) {
+				if(j.nameHash == input->nameHash) {
+					inputParam = &j;
 					break;
 				}
 			}
@@ -1969,10 +1965,10 @@ bool _bindShaderTexture(roRDriverShaderTextureInput* inputs, roSize inputCount)
 
 		UINT slot = 0;
 		bool slotFound = false;
-		for(roSize j=0; j<shader->shaderResourceBindings.size(); ++j) {
-			if(shader->shaderResourceBindings[j].nameHash != input.nameHash)
+		for(ShaderResourceBinding& j : shader->shaderResourceBindings) {
+			if(j.nameHash != input.nameHash)
 				continue;
-			slot = shader->shaderResourceBindings[j].bindPoint;
+			slot = j.bindPoint;
 			slotFound = true;
 			break;
 		}

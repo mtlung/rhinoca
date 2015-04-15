@@ -291,7 +291,14 @@ void IArray<T>::popBack()
 }
 
 template<class T>
-void IArray<T>::remove(roSize idx)
+void IArray<T>::remove(const T& ele)
+{
+	roAssert(&ele > _data);
+	removeAt(&ele - _data);
+}
+
+template<class T>
+void IArray<T>::removeAt(roSize idx)
 {
 	roAssert(isInRange(idx));
 	if(!isInRange(idx)) return;
@@ -312,7 +319,7 @@ void IArray<T>::remove(roSize idx)
 }
 
 template<class T>
-void IArray<T>::remove(roSize idx, roSize count)
+void IArray<T>::removeAt(roSize idx, roSize count)
 {
 	if(count == 0) return;
 	roAssert(isInRange(idx));
@@ -334,7 +341,14 @@ void IArray<T>::remove(roSize idx, roSize count)
 }
 
 template<class T>
-void IArray<T>::removeBySwap(roSize idx)
+void IArray<T>::removeBySwap(const T& ele)
+{
+	roAssert(&ele > _data);
+	removeBySwapAt(&ele - _data);
+}
+
+template<class T>
+void IArray<T>::removeBySwapAt(roSize idx)
 {
 	roAssert(idx < _size);
 	if(idx >= _size) return;
@@ -352,7 +366,7 @@ bool IArray<T>::removeByKey(const K& key, bool(*equal)(const T&, const K&))
 	if(!v) return false;
 
 	roAssert(v >= begin() && v < end());
-	this->remove(v - begin());
+	this->removeAt(v - begin());
 	return true;
 }
 
@@ -362,7 +376,7 @@ bool IArray<T>::removeAllByKey(const K& key, bool(*equal)(const T&, const K&))
 	bool ret = false;
 	for(roSize i=0; i<this->_size;) {
 		if(equal(_data[i], key)) {
-			this->remove(i);
+			this->removeAt(i);
 			ret = true;
 		}
 		else
@@ -378,8 +392,8 @@ void IArray<T>::removeAllByKeys(const IArray<K>& rhs, bool(*equal)(const T&, con
 	if(this == &rhs)
 		return clear();
 
-	for(roSize i=0; i<rhs.size(); ++i)
-		removeAllByKey(rhs[i], equal);
+	for(auto& i : rhs)
+		removeAllByKey(i, equal);
 }
 
 template<class T>
@@ -600,8 +614,8 @@ roStatus serialize_Array(Serializer& se, Field& field, void* fieldParent)
 		}
 	}
 	else {
-		for(IArray<T>::const_iterator i=a->begin(); i!=a->end(); ++i) {
-			st = innerType->serializeFunc(se, f, (void*)i);
+		for(const auto& i : *a) {
+			st = innerType->serializeFunc(se, f, (void*)&i);
 			if(!st) return st;
 		}
 	}

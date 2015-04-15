@@ -34,9 +34,9 @@ FontPtr FontManager::getFont(const char* typeface)
 		return NULL;
 
 	StringHash h = stringLowerCaseHash(typeface);
-	for(roSize i=0; i<_mapping.size(); ++i) {
-		if(_mapping[i].typeface.lowerCaseHash() == h)
-			return roSubSystems->resourceMgr->loadAs<Font>(_mapping[i].fontUri.c_str());
+	for(const _FontTypeface& i : _mapping) {
+		if(i.typeface.lowerCaseHash() == h)
+			return roSubSystems->resourceMgr->loadAs<Font>(i.fontUri.c_str());
 	}
 	return NULL;
 }

@@ -136,11 +136,11 @@ TEST_FIXTURE(TextureLoaderTest, stressTest)
 		CpuProfilerScope cpuProfilerScope("Main loop");
 
 		// Check if any of the texture are loaded
-		for(roSize i=0; i<resources.size(); ++i) {
-			TexturePtr tex = dynamic_cast<Texture*>(resources[i].get());
+		for(ResourcePtr& i : resources) {
+			TexturePtr tex = dynamic_cast<Texture*>(i.get());
 			if(!tex)
 				continue;
-			if(resources[i]->state == Resource::Loaded) {
+			if(i->state == Resource::Loaded) {
 				canvas.drawImage(tex->handle,
 					0, 0, (float)tex->width(), (float)tex->height(),
 					0, 0, (float)context->width, (float)context->height);

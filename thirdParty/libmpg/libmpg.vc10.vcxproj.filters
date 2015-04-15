@@ -1,0 +1,176 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{3eeadfd6-d2cb-4a0d-a8fd-54a59bdd3747}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{e097c156-38cf-4fe2-8757-7676cef8fa66}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="compat.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dct64.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="equalizer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="feature.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="format.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="frame.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="icy.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="icy2utf8.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="id3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="index.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="layer1.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="layer2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="layer3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="libmpg123.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ntom.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="optimize.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="parse.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="readers.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stringbuf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="synth.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="synth_8bit.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="synth_real.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="synth_s32.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tabinit.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="compat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="debug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="decode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="frame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="gapless.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="getbits.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="getcpuflags.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="huffman.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="icy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="icy2utf8.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="id3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="index.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="intsym.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="l2tables.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mangle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mpg123.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mpg123.in.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mpg123lib_intern.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="optimize.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="parse.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="reader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sample.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="synth.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="synth_8bit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="synth_mono.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="synth_ntom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="synths.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="true.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

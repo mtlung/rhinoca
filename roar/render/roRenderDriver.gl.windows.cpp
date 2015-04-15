@@ -88,14 +88,14 @@ void _deleteDriverContext_GL(roRDriverContext* self)
 
 	// Destroy any shader program
 	glUseProgram(0);
-	for(roSize i=0; i<impl->shaderProgramCache.size(); ++i) {
-		glDeleteProgram(impl->shaderProgramCache[i].glh);
+	for(roRDriverShaderProgramImpl& i : impl->shaderProgramCache) {
+		glDeleteProgram(i.glh);
 	}
 
 	// Free the sampler state cache
-	for(roSize i=0; i<impl->textureStateCache.size(); ++i) {
-		if(impl->textureStateCache[i].glh != 0)
-			glDeleteSamplers(1, &impl->textureStateCache[i].glh);
+	for(roRDriverContextImpl::TextureState& i : impl->textureStateCache) {
+		if(i.glh != 0)
+			glDeleteSamplers(1, &i.glh);
 	}
 
 	// Free the pixel buffer cache
@@ -267,7 +267,7 @@ void _driverSwapBuffers_GL()
 
 		if(lastUsedTime < _currentContext->lastSwapTime - removalTimeOut) {
 			glDeleteVertexArrays(1, &_currentContext->vaoCache[i].glh);
-			_currentContext->vaoCache.remove(i);
+			_currentContext->vaoCache.removeAt(i);
 		}
 		else
 			++i;
@@ -279,7 +279,7 @@ void _driverSwapBuffers_GL()
 
 		if(lastUsedTime < _currentContext->lastSwapTime - removalTimeOut) {
 			glDeleteFramebuffers(1, &_currentContext->renderTargetCache[i].glh);
-			_currentContext->renderTargetCache.remove(i);
+			_currentContext->renderTargetCache.removeAt(i);
 		}
 		else
 			++i;
@@ -293,7 +293,7 @@ void _driverSwapBuffers_GL()
 
 		if(cache.refCount == 0 && cache.lastUsedTime < _currentContext->lastSwapTime - removalTimeOut) {
 			glDeleteRenderbuffers(3, &cache.depthHandle);
-			_currentContext->depthStencilBufferCache.remove(i);
+			_currentContext->depthStencilBufferCache.removeAt(i);
 		}
 		else
 			++i;

@@ -1,57 +1,57 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClCompile Include="..\..\test\base\roArrayTest.cpp" />
+    <ClCompile Include="..\..\test\base\roFileSystemTest.cpp" />
+    <ClCompile Include="..\..\test\base\roMapTest.cpp" />
+    <ClCompile Include="..\..\test\base\roSockAddrTest.cpp" />
+    <ClCompile Include="..\..\test\base\roSocketTest.cpp" />
+    <ClCompile Include="..\..\test\base\roStringUtilityTest.cpp" />
+    <ClCompile Include="..\..\test\base\roTaskPoolMergeSortTest.cpp" />
+    <ClCompile Include="..\..\test\base\roTaskPoolTest.cpp" />
     <ClCompile Include="..\..\test\main.cpp" />
     <ClCompile Include="..\..\test\pch.cpp" />
-    <ClCompile Include="..\..\test\render\roGraphicsDriverTest.cpp">
-      <Filter>render</Filter>
+    <ClCompile Include="..\..\test\render\roCanvasTest.cpp" />
+    <ClCompile Include="..\..\test\render\roGraphicsDriverTest.cpp" />
+    <ClCompile Include="..\..\test\render\roGraphicsTestBase.win.cpp" />
+    <ClCompile Include="..\..\test\render\roTextureLoaderTest.cpp" />
+    <ClCompile Include="..\..\test\gui\roImGuiTest.cpp">
+      <Filter>gui</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\test\base\roSockAddrTest.cpp">
-      <Filter>base</Filter>
+    <ClCompile Include="..\..\test\parsertest.cpp" />
+    <ClCompile Include="..\..\test\base\roJsonTest.cpp" />
+    <ClCompile Include="..\..\test\base\roIOStreamTest.cpp" />
+    <ClCompile Include="..\..\test\base\roSafeIntegerTest.cpp" />
+    <ClCompile Include="..\..\test\base\roReflectionTest.cpp" />
+    <ClCompile Include="..\..\test\base\roStringFormatTest.cpp" />
+    <ClCompile Include="..\..\test\base\roRegexTest.cpp" />
+    <ClCompile Include="..\..\test\base\roRingBufferTest.cpp" />
+    <ClCompile Include="..\..\test\math\roMatrixTest.cpp">
+      <Filter>math</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\test\base\roSocketTest.cpp">
-      <Filter>base</Filter>
+    <ClCompile Include="..\..\test\math\roRandomTest.cpp">
+      <Filter>math</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\test\base\roStringUtilityTest.cpp">
-      <Filter>base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\test\base\roTaskPoolMergeSortTest.cpp">
-      <Filter>base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\test\base\roTaskPoolTest.cpp">
-      <Filter>base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\test\base\roArrayTest.cpp">
-      <Filter>base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\test\base\roFileSystemTest.cpp">
-      <Filter>base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\test\base\roMapTest.cpp">
-      <Filter>base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\test\render\roGraphicsTestBase.win.cpp">
-      <Filter>render</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\test\render\roTextureLoaderTest.cpp">
-      <Filter>render</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\test\render\roCanvasTest.cpp">
-      <Filter>render</Filter>
+    <ClCompile Include="..\..\test\audio\roAudioTest.cpp" />
+    <ClCompile Include="..\..\test\base\roDateTimeTest.cpp" />
+    <ClCompile Include="..\..\test\base\roStopWatchTest.cpp" />
+    <ClCompile Include="..\..\test\network\roHttpTest.cpp">
+      <Filter>network</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\test\pch.h" />
-    <ClInclude Include="..\..\test\render\roGraphicsTestBase.win.h">
-      <Filter>render</Filter>
-    </ClInclude>
+    <ClInclude Include="..\..\test\render\roGraphicsTestBase.win.h" />
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="render">
-      <UniqueIdentifier>{4a425500-30d1-425b-b8e9-825105d429d8}</UniqueIdentifier>
+    <Filter Include="gui">
+      <UniqueIdentifier>{394a413e-4bbe-4a10-8278-51a48db242bf}</UniqueIdentifier>
     </Filter>
-    <Filter Include="base">
-      <UniqueIdentifier>{771f50eb-8b76-4ab7-b390-45e9e132504d}</UniqueIdentifier>
+    <Filter Include="math">
+      <UniqueIdentifier>{162c0619-49ee-4dca-bb4b-daee46761af2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="network">
+      <UniqueIdentifier>{70985b00-954e-4f09-a984-d38e854315ca}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

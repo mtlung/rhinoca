@@ -113,9 +113,11 @@ struct IArray
 
 // Removal operations
 	void		popBack();
-	void		remove(roSize i);
-	void		remove(roSize i, roSize count);
-	void		removeBySwap(roSize i);
+	void		remove(const T& ele);
+	void		removeAt(roSize i);
+	void		removeAt(roSize i, roSize count);
+	void		removeBySwap(const T& ele);
+	void		removeBySwapAt(roSize i);
 
 	template<class K>
 	bool		removeByKey(const K& key, bool(*equal)(const T&, const K&) = _defaultEquality);		///< Returns false if the key not found

@@ -80,11 +80,11 @@ void _deleteDriverContext_DX11(roRDriverContext* self)
 
 	impl->driver->deleteBuffer(impl->triangleFanIndexBuffer);
 
-	for(roSize i=0; i<impl->constBufferInUse.size(); ++i) {
+	for(roRDriverBufferImpl*& i : impl->constBufferInUse) {
 		// The same buffer may be used in multiple shader, only do the deletion for the last one
-		if(roOccurrence(impl->constBufferInUse.begin(), impl->constBufferInUse.end(), impl->constBufferInUse[i]) == 1)
-			impl->driver->deleteBuffer(impl->constBufferInUse[i]);
-		impl->constBufferInUse[i] = NULL;
+		if(roOccurrence(impl->constBufferInUse.begin(), impl->constBufferInUse.end(), i) == 1)
+			impl->driver->deleteBuffer(i);
+		i = NULL;
 	}
 
 	for(roSize i=0; i<impl->stagingBufferCache.size(); ++i) {
@@ -283,7 +283,7 @@ void _driverSwapBuffers_DX11()
 		float lastUsedTime = _currentContext->inputLayoutCache[i].lastUsedTime;
 
 		if(lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
-			_currentContext->inputLayoutCache.removeBySwap(i);
+			_currentContext->inputLayoutCache.removeBySwapAt(i);
 		else
 			++i;
 	}
@@ -319,7 +319,7 @@ void _driverSwapBuffers_DX11()
 		RenderTarget& rt = _currentContext->renderTargetCache[i];
 
 		if(rt.lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
-			_currentContext->renderTargetCache.removeBySwap(i);
+			_currentContext->renderTargetCache.removeBySwapAt(i);
 		else
 			++i;
 	}
@@ -329,7 +329,7 @@ void _driverSwapBuffers_DX11()
 		float lastUsedTime = _currentContext->blendStateCache[i].lastUsedTime;
 
 		if(lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
-			_currentContext->blendStateCache.removeBySwap(i);
+			_currentContext->blendStateCache.removeBySwapAt(i);
 		else
 			++i;
 	}
@@ -339,7 +339,7 @@ void _driverSwapBuffers_DX11()
 		float lastUsedTime = _currentContext->rasterizerState[i].lastUsedTime;
 
 		if(lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
-			_currentContext->rasterizerState.removeBySwap(i);
+			_currentContext->rasterizerState.removeBySwapAt(i);
 		else
 			++i;
 	}
@@ -349,7 +349,7 @@ void _driverSwapBuffers_DX11()
 		float lastUsedTime = _currentContext->depthStencilStateCache[i].lastUsedTime;
 
 		if(lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
-			_currentContext->depthStencilStateCache.removeBySwap(i);
+			_currentContext->depthStencilStateCache.removeBySwapAt(i);
 		else
 			++i;
 	}
@@ -359,7 +359,7 @@ void _driverSwapBuffers_DX11()
 		float lastUsedTime = _currentContext->bufferCache[i].lastUsedTime;
 
 		if(lastUsedTime < _currentContext->lastSwapTime - removalTimeOut)
-			_currentContext->bufferCache.removeBySwap(i);
+			_currentContext->bufferCache.removeBySwapAt(i);
 		else
 			++i;
 	}

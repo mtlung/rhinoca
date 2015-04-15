@@ -570,7 +570,7 @@ void roInputDriverImpl::_popWinEvents()
 		}	break;
 		}
 
-		_winEvents.remove(0);
+		_winEvents.removeAt(0);
 	}
 }
 

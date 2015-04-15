@@ -362,19 +362,19 @@ void Canvas::_flushDrawImageBatch()
 	if(_batchedQuadCount == 0)
 		return;
 
-	for(roSize i=0; i<_perTextureQuadList.size(); ++i)
+	for(const PerTextureQuadList& i : _perTextureQuadList)
 	{
 		// Resize the index buffer if needed
-		roSize indexBufSize = _perTextureQuadList[i].quadCount * 6 * sizeof(roUint16);
+		roSize indexBufSize = i.quadCount * 6 * sizeof(roUint16);
 		if(_iBuffer->sizeInBytes <= indexBufSize)
 			roVerify(_driver->resizeBuffer(_iBuffer, indexBufSize));
 
 		// Build the index buffer
 		roUint16 iIdx = 0;
-		ro::IArray<PerTextureQuadList::Range>& ranges = _perTextureQuadList[i].range;
+		const ro::IArray<PerTextureQuadList::Range>& ranges = i.range;
 		_mappedIBuffer = (roUint16*)_driver->mapBuffer(_iBuffer, roRDriverMapUsage_Write, 0, indexBufSize);
-		for(roSize j=0; j<ranges.size(); ++j) {
-			for(roUint16 k=ranges[j].begin; k<ranges[j].end; ++k) {
+		for(const PerTextureQuadList::Range& j : ranges) {
+			for(roUint16 k=j.begin; k<j.end; ++k) {
 				_mappedIBuffer[iIdx++] = k * 4 + 0;
 				_mappedIBuffer[iIdx++] = k * 4 + 1;
 				_mappedIBuffer[iIdx++] = k * 4 + 2;
@@ -385,7 +385,7 @@ void Canvas::_flushDrawImageBatch()
 		}
 		_driver->unmapBuffer(_iBuffer);
 
-		_drawImageDrawcall(_perTextureQuadList[i].tex, _perTextureQuadList[i].quadCount);
+		_drawImageDrawcall(i.tex, i.quadCount);
 	}
 
 	_batchedQuadCount = 0;
@@ -472,9 +472,9 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 	if(_isBatchMode) {
 		// Search for the cache entry
 		PerTextureQuadList* listEntry = NULL;
-		for(roSize i=0; i<_perTextureQuadList.size(); ++i) {
-			if(_perTextureQuadList[i].tex == texture) {
-				listEntry = &_perTextureQuadList[i];
+		for(PerTextureQuadList& i : _perTextureQuadList) {
+			if(i.tex == texture) {
+				listEntry = &i;
 				break;
 			}
 		}

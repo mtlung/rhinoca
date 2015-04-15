@@ -93,7 +93,7 @@ struct Regex::Graph
 		capturingGroupCount = 0;
 		tmpResult.clear();
 		result.clear();
-		nodes2.clear();
+		nodes.clear();
 		edges.clear();
 		currentNodeIdx = endNodeIdx = 0;
 
@@ -108,16 +108,16 @@ struct Regex::Graph
 	roStatus push2(const Node& node, Edge::Func func, const RangedString& edgeStr=RangedString())
 	{
 		roStatus st;
-		st = roSafeAssign(currentNodeIdx, nodes2.size());
+		st = roSafeAssign(currentNodeIdx, nodes.size());
 		if(!st) return st;
-		st = nodes2.pushBack(node);
+		st = nodes.pushBack(node);
 		if(!st) return st;
-		nodes2.back().edgeCount = 1;
+		nodes.back().edgeCount = 1;
 		roUint16 nextNodeIdx;
-		st = roSafeAssign(nextNodeIdx, nodes2.size());
+		st = roSafeAssign(nextNodeIdx, nodes.size());
 
 		// Create edge for this new node, and point them to the next node
-		st = roSafeAssign(nodes2[currentNodeIdx].edgeIdx, edges.size());
+		st = roSafeAssign(nodes[currentNodeIdx].edgeIdx, edges.size());
 		if(!st) return st;
 
 		roUint16 edgeIdx;
@@ -133,7 +133,7 @@ struct Regex::Graph
 
 	void pushEdge(roUint16 nodeIdx, const Edge& edge)
 	{
-		Node& node = nodes2[nodeIdx];
+		Node& node = nodes[nodeIdx];
 		roUint16 edgeIdx = node.edgeIdx;
 		while(true) {
 			Edge& edge = edges[edgeIdx];
@@ -149,7 +149,7 @@ struct Regex::Graph
 
 	Edge& getEdge(roUint16 nodeIdx, roUint16 edgeIdxInNode)
 	{
-		return getEdge(nodes2[nodeIdx], edgeIdxInNode);
+		return getEdge(nodes[nodeIdx], edgeIdxInNode);
 	}
 
 	Edge& getEdge(Node& node, roUint16 edgeIdxInNode)
@@ -167,10 +167,9 @@ struct Regex::Graph
 	// Redirect all edges that point from fromNode to toNode
 	void redirect(roUint16 fromNode, roUint16 toNode)
 	{
-		for(roSize i=0; i<edges.size(); ++i) {
-			Edge& edge = edges[i];
-			if(edge.nextNode == fromNode)
-				edge.nextNode = toNode;
+		for(Edge& i : edges) {
+			if(i.nextNode == fromNode)
+				i.nextNode = toNode;
 		}
 	}
 
@@ -184,7 +183,7 @@ struct Regex::Graph
 	roSize capturingGroupCount;
 	TinyArray<RangedString, 16> tmpResult, result;
 
-	TinyArray<Node, 64> nodes2;
+	TinyArray<Node, 64> nodes;
 	TinyArray<Edge, 128> edges;
 	roUint16 currentNodeIdx;
 	roUint16 endNodeIdx;
@@ -226,7 +225,7 @@ bool group_end(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
 	roAssert(graph.nestedGroupLevel > 0);
 	roUint16 beginNodeIdx = (roUint16)node.userdata[0];
-	Node& beginNode = graph.nodes2[beginNodeIdx];
+	Node& beginNode = graph.nodes[beginNodeIdx];
 
 	// Commit the data in beginNode
 	// This check prevent altering the begin of string during back-tracking
@@ -469,6 +468,12 @@ bool counted_loop_exit(Graph& graph, Node& node, Edge& edge, RangedString& s)
 		return count = 0, false;
 	else
 		return count = 0, true;
+}
+
+bool cleanup_on_failed_alternation(Graph& graph, Node& node, Edge& edge, RangedString& s)
+{
+//	graph.tmpResult.assign(RangedString());	// Test case: "(a)(b)|(a)(c)", "", "ac", "ac```a`c"
+	return true;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -816,7 +821,7 @@ bool parse_nodes(Graph& graph, const RangedString& f)
 			// For instance match "a|0+a" with "0" should not success
 			if(i[0] == '|') {
 				Node node = { RangedString("|->") };
-				graph.push2(node, pass_though);
+				graph.push2(node, cleanup_on_failed_alternation);
 				tmp = graph.currentNodeIdx - 1;
 			}
 
@@ -832,11 +837,11 @@ bool parse_nodes(Graph& graph, const RangedString& f)
 	}
 
 	// If there were alternation, adjust the edges
-	for(roSize j=1; j<altOptionIdx.size(); ++j)
-		graph.redirect(altOptionIdx[j], num_cast<roUint16>(graph.nodes2.size()));
+	for(roSize i=1; i<altOptionIdx.size(); ++i)
+		graph.redirect(altOptionIdx[i], num_cast<roUint16>(graph.nodes.size()));
 
-	for(roSize j=1; j<altOptionIdx.size(); ++j) {
-		Edge edge = { RangedString(), alternation, altOptionIdx[j], 0 };
+	for(roSize i=1; i<altOptionIdx.size(); ++i) {
+		Edge edge = { RangedString(), alternation, altOptionIdx[i], 0 };
 		graph.pushEdge(altNodeIdx, edge);
 	}
 
@@ -867,7 +872,7 @@ bool matchNodes(Graph& graph, Node& node, RangedString& s)
 		if(!(*edge.func)(graph, *pNode, edge, s))
 			return --graph.branchLevel, false;
 
-		pNode = &graph.nodes2[edge.nextNode];
+		pNode = &graph.nodes[edge.nextNode];
 	}
 
 	// Call recursively if there is branching
@@ -881,7 +886,7 @@ bool matchNodes(Graph& graph, Node& node, RangedString& s)
 			return node_end(graph, *pNode, edge, s);
 
 		if((*edge.func)(graph, *pNode, edge, s)) {
-			Node* nextNode = &graph.nodes2[edge.nextNode];
+			Node* nextNode = &graph.nodes[edge.nextNode];
 
 			++graph.branchLevel;
 			if(matchNodes(graph, *nextNode, s))
@@ -906,8 +911,8 @@ Regex::Regex()
 
 static void debugNodes(Graph& graph)
 {
-	for(roSize i=0; i<graph.nodes2.size(); ++i) {
-		Node& node = graph.nodes2[i];
+	for(roSize i=0; i<graph.nodes.size(); ++i) {
+		Node& node = graph.nodes[i];
 		roLog("debug", "Node %u: %s\n", i, node.debugStr.toString().c_str());
 		roUint16 edgeIdx = node.edgeIdx;
 		do {
@@ -1016,10 +1021,10 @@ bool Regex::_match(Graph& graph, const char* options)
 
 	result.clear();
 
-	for(roSize i=0; i<graph.result.size(); ++i)
-		graph.result[i] = "";
-	for(roSize i=0; i<graph.tmpResult.size(); ++i)
-		graph.tmpResult[i] = "";
+	for(RangedString& i : graph.result)
+		i = "";
+	for(RangedString& i : graph.tmpResult)
+		i = "";
 
 	graph.charCmpFunc = charCmp;
 	if(options && roStrChr(options, 'i'))
@@ -1033,10 +1038,10 @@ bool Regex::_match(Graph& graph, const char* options)
 		graph.branchLevel = 0;
 		graph.nestedGroupLevel = 0;
 
-		if(matchNodes(graph, graph.nodes2.front(), srcString)) {
+		if(matchNodes(graph, graph.nodes.front(), srcString)) {
 			result.pushBack(RangedString(currentBegin, srcString.begin));
-			for(roSize i=0; i<graph.result.size(); ++i)
-				result.pushBack(graph.result[i]);
+			for(RangedString& i : graph.result)
+				result.pushBack(i);
 
 			return true;
 		}

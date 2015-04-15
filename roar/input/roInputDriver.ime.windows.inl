@@ -276,7 +276,7 @@ STDMETHODIMP TextService::SetText(DWORD dwFlags, LONG acpStart, LONG acpEnd, con
 	roSize acpRemovingEnd = roMinOf2(num_cast<roSize>(acpEnd), _wString.size() + 1);
 
 	for(roSize i=0; i<acpRemovingEnd - acpStart; ++i)
-		_wString.remove(acpStart);
+		_wString.removeAt(acpStart);
 
 	_wString.insert(acpStart, pchText, cch);
 
@@ -296,7 +296,7 @@ STDMETHODIMP TextService::InsertTextAtSelection(DWORD dwFlags, const WCHAR* pchT
 	}
 
 	for(roSize i=0; i<num_cast<roSize>(_acpEnd - _acpStart); ++i)
-		_wString.remove(_acpStart);
+		_wString.removeAt(_acpStart);
 
 	_wString.insert(_acpStart, pchText, cch);
 

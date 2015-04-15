@@ -53,10 +53,10 @@ roStatus JsonOutputSerializer::serialize_object(Field& field, void* fieldParent)
 	const char* name = field.name.isEmpty() ? NULL : field.name.c_str();
 	writer.beginObject(name);
 
-	for(Field* f=type->fields.begin(), *end=type->fields.end(); f != end; ++f) {
-		if(!f->type) return roStatus::pointer_is_null;
-		if(f->isConst) continue;	// We simply ignore any const member
-		roStatus st = f->type->serializeFunc(*this, *f, fieldParent);
+	for(Field& f : type->fields) {
+		if(!f.type) return roStatus::pointer_is_null;
+		if(f.isConst) continue;	// We simply ignore any const member
+		roStatus st = f.type->serializeFunc(*this, f, fieldParent);
 		if(!st) return st;
 	}
 
@@ -184,10 +184,10 @@ roStatus JsonInputSerializer::serialize_object(Field& field, void* fieldParent)
 	if(parser.getCurrentProcessNext() != JsonParser::Event::BeginObject)
 		return roStatus::json_expect_object_begin;
 
-	for(Field* f=type->fields.begin(), *end=type->fields.end(); f != end; ++f) {
-		if(!f->type) return roStatus::pointer_is_null;
-		if(f->isConst) continue;	// We simply ignore any const member
-		roStatus st = f->type->serializeFunc(*this, *f, fieldParent);
+	for(Field& f : type->fields) {
+		if(!f.type) return roStatus::pointer_is_null;
+		if(f.isConst) continue;	// We simply ignore any const member
+		roStatus st = f.type->serializeFunc(*this, f, fieldParent);
 		if(!st) return st;
 	}
 

@@ -384,9 +384,9 @@ public:
 		if(!name)
 			return NULL;
 
-		for(Attributes::const_iterator i=mAttributes.begin(); i!=mAttributes.end(); ++i)
-			if(::roStrCaseCmp(name, i->name) == 0)
-				return i->value;
+		for(const Attribute& i : mAttributes)
+			if(::roStrCaseCmp(name, i.name) == 0)
+				return i.value;
 		return NULL;
 	}
 

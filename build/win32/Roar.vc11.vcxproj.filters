@@ -74,9 +74,6 @@
     <ClCompile Include="..\..\roar\base\roSerializer.cpp">
       <Filter>base</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\roar\base\roSocket.cpp">
-      <Filter>base</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\roar\base\roStatus.cpp">
       <Filter>base</Filter>
     </ClCompile>
@@ -112,9 +109,6 @@
     </ClCompile>
     <ClCompile Include="..\..\roar\platform\roCompiler.vc.cpp">
       <Filter>platform</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\roar\network\roHttp.cpp">
-      <Filter>network</Filter>
     </ClCompile>
     <ClCompile Include="..\..\roar\network\roHttpHeader.cpp">
       <Filter>network</Filter>
@@ -207,6 +201,33 @@
       <Filter>render\shivavg</Filter>
     </ClCompile>
     <ClCompile Include="..\..\roar\base\roCoroutine.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\network\roHttpClient.cpp">
+      <Filter>network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roStackWalker.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roCompressedStream.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\network\roDnsResolve.win.cpp">
+      <Filter>network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\network\roSocket.cpp">
+      <Filter>network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\network\roSecureSocket.win.cpp">
+      <Filter>network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roLexer.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roCommandLine.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\roar\base\roDtoa.cpp">
       <Filter>base</Filter>
     </ClCompile>
   </ItemGroup>
@@ -318,9 +339,6 @@
     <ClInclude Include="..\..\roar\base\roSharedPtr.h">
       <Filter>base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\roar\base\roSocket.h">
-      <Filter>base</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\roar\base\roStackWalker.h">
       <Filter>base</Filter>
     </ClInclude>
@@ -397,9 +415,6 @@
       <Filter>platform</Filter>
     </ClInclude>
     <ClInclude Include="..\..\roar\network\roHttp.h">
-      <Filter>network</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\roar\network\roHttpContentDecoder.h">
       <Filter>network</Filter>
     </ClInclude>
     <ClInclude Include="..\..\roar\gui\roGui.h">
@@ -507,6 +522,24 @@
     <ClInclude Include="..\..\roar\base\roCoroutine.h">
       <Filter>base</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\roar\base\roCompressedStream.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\network\roDnsResolve.h">
+      <Filter>network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\network\roSocket.h">
+      <Filter>network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\network\roSecureSocket.h">
+      <Filter>network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roLexer.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roCommandLine.h">
+      <Filter>base</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="base">
@@ -564,6 +597,9 @@
     </None>
     <None Include="..\..\roar\render\roRenderDriver.gl.inl">
       <Filter>render</Filter>
+    </None>
+    <None Include="..\..\roar\network\roHttpClientStream.inc">
+      <Filter>network</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

@@ -55,15 +55,6 @@ bool _roRemoveDataBreakpoint(unsigned index);
 #define roSetDataBreakpoint _roSetDataBreakpoint
 #define roRemoveDataBreakpoint _roRemoveDataBreakpoint
 
-// Source code annotation
-#if !roCPP11 && _MSC_VER < 1800
-#	if !defined(__midl) && defined(_PREFAST_) 
-#		define override override
-#	else
-#		define override
-#	endif
-#endif
-
 // Force inline
 #define roFORCEINLINE __forceinline
 

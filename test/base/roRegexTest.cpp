@@ -17,6 +17,7 @@ TEST_FIXTURE(RegexTest, test)
 		{ "(?:(A|a)(B|b))+",			"",		"ABa",											"AB`A`B" },
 		{ "(((a)?b)?c)?",				"",		"abc",											"abc`abc`ab`a" },
 		{ "(?:(?:(a) (b)? c)?)?",		"",		"a b c",										"a b c`a`b" },
+		{ "(a)(b)|(a)(c)",				"",		"ac",											"ac```a`c" },
 
 		{ "[^ a-z]+",					"",		"path",											NULL },
 		{ "[^ a-z]+",					"",		"PATH",											"PATH" },

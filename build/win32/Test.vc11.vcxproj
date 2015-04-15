@@ -22,11 +22,13 @@
     <ClCompile Include="..\..\test\base\roAlgorithmTest.cpp" />
     <ClCompile Include="..\..\test\base\roArrayPerformanceTest.cpp" />
     <ClCompile Include="..\..\test\base\roArrayTest.cpp" />
+    <ClCompile Include="..\..\test\base\roCommandLineTest.cpp" />
     <ClCompile Include="..\..\test\base\roCoRoutineTest.cpp" />
     <ClCompile Include="..\..\test\base\roDateTimeTest.cpp" />
     <ClCompile Include="..\..\test\base\roFileSystemTest.cpp" />
     <ClCompile Include="..\..\test\base\roIOStreamTest.cpp" />
     <ClCompile Include="..\..\test\base\roJsonTest.cpp" />
+    <ClCompile Include="..\..\test\base\roLexerTest.cpp" />
     <ClCompile Include="..\..\test\base\roMapTest.cpp" />
     <ClCompile Include="..\..\test\base\roNumericOverflowTest.cpp" />
     <ClCompile Include="..\..\test\base\roParserTest.cpp" />
@@ -40,14 +42,17 @@
     <ClCompile Include="..\..\test\base\roSocketTest.cpp" />
     <ClCompile Include="..\..\test\base\roStopWatchTest.cpp" />
     <ClCompile Include="..\..\test\base\roStringFormatTest.cpp" />
+    <ClCompile Include="..\..\test\base\roStringTest.cpp" />
     <ClCompile Include="..\..\test\base\roStringUtilityTest.cpp" />
     <ClCompile Include="..\..\test\base\roTaskPoolMergeSortTest.cpp" />
     <ClCompile Include="..\..\test\base\roTaskPoolTest.cpp" />
+    <ClCompile Include="..\..\test\cpptest\test.cpp" />
     <ClCompile Include="..\..\test\gui\roImGuiTest.cpp" />
     <ClCompile Include="..\..\test\input\roInputTest.cpp" />
     <ClCompile Include="..\..\test\main.cpp" />
     <ClCompile Include="..\..\test\math\roMatrixTest.cpp" />
     <ClCompile Include="..\..\test\math\roRandomTest.cpp" />
+    <ClCompile Include="..\..\test\network\roDnsTest.cpp" />
     <ClCompile Include="..\..\test\network\roHttpTest.cpp" />
     <ClCompile Include="..\..\test\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -61,6 +66,10 @@
     <ClCompile Include="..\..\test\render\roTextureLoaderTest.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\test\cpptest\checks.h" />
+    <ClInclude Include="..\..\test\cpptest\cpptest.h" />
+    <ClInclude Include="..\..\test\cpptest\test.h" />
+    <ClInclude Include="..\..\test\cpptest\macros.h" />
     <ClInclude Include="..\..\test\pch.h" />
     <ClInclude Include="..\..\test\render\roGraphicsTestBase.win.h" />
   </ItemGroup>

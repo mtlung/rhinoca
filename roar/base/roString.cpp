@@ -592,8 +592,8 @@ struct ConstStringHashTable
 		newBuckets.resize(bucketSize, NULL);
 
 		roAssert(_mutex.isLocked());
-		for(roSize i=0; i<_buckets.size(); ++i) {
-			for(Node* n = _buckets[i]; n; ) {
+		for(Node* i : _buckets) {
+			for(Node* n = i; n; ) {
 				Node* next = n->next;
 				const roSize index = n->hash % bucketSize;
 				n->next = newBuckets[index];

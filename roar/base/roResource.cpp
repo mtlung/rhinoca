@@ -56,8 +56,8 @@ ResourcePtr ResourceManager::load(const char* uri)
 	LoadFunc loadFunc = NULL;
 
 	if(!r) {
-		for(roSize i=0; i<_extMapping.size(); ++i) {
-			if(_extMapping[i](uri, (void*&)createFunc, (void*&)loadFunc))
+		for(ExtMappingFunc& i : _extMapping) {
+			if(i(uri, (void*&)createFunc, (void*&)loadFunc))
 				break;
 		}
 

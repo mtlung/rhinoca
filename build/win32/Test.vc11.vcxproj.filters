@@ -102,11 +102,38 @@
     <ClCompile Include="..\..\test\base\roCoRoutineTest.cpp">
       <Filter>base</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\test\cpptest\test.cpp">
+      <Filter>cpptest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\network\roDnsTest.cpp">
+      <Filter>network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roLexerTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roStringTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roCommandLineTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\test\pch.h" />
     <ClInclude Include="..\..\test\render\roGraphicsTestBase.win.h">
       <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\test\cpptest\cpptest.h">
+      <Filter>cpptest</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\test\cpptest\test.h">
+      <Filter>cpptest</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\test\cpptest\macros.h">
+      <Filter>cpptest</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\test\cpptest\checks.h">
+      <Filter>cpptest</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -127,6 +154,9 @@
     </Filter>
     <Filter Include="render">
       <UniqueIdentifier>{86b2f973-e1a1-4d94-b0ea-39f7c765c656}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="cpptest">
+      <UniqueIdentifier>{e2eab3ea-08fd-408b-8a46-47baeefc039e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

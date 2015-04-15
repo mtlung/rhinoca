@@ -123,8 +123,8 @@ AudioBuffer::AudioBuffer(const char* uri)
 
 AudioBuffer::~AudioBuffer()
 {
-	for(roSize i=0; i<subBuffers.size(); ++i)
-		alDeleteBuffers(1, &subBuffers[i].handle);
+	for(SubBuffer& i : subBuffers)
+		alDeleteBuffers(1, &i.handle);
 	delete loader;
 }
 
@@ -184,9 +184,9 @@ void AudioBuffer::addSubBuffer(unsigned pcmPosition, const char* data, roSize si
 
 AudioBuffer::SubBuffer* AudioBuffer::findSubBuffer(unsigned pcmPosition)
 {
-	for(roSize i=0; i<subBuffers.size(); ++i) {
-		if(subBuffers[i].posBegin <= pcmPosition && pcmPosition < subBuffers[i].posEnd)
-			return &subBuffers[i];
+	for(SubBuffer& i : subBuffers) {
+		if(i.posBegin <= pcmPosition && pcmPosition < i.posEnd)
+			return &i;
 	}
 
 	return NULL;
@@ -454,8 +454,8 @@ static void _soundSourceSeekPos(roADriverSoundSource* self, float time)
 	// Remove all queued buffers and reset the play position to beginning
 	// Call alSourceStop() such that unqueueBuffer() can get effect
 	alSourceStop(impl->handle);
-	for(roSize i=0; i<impl->queuedSubBuffers.size(); ++i)
-		alSourceUnqueueBuffers(impl->handle, 1, &impl->queuedSubBuffers[i].handle);
+	for(SoundSource::QueuedSubBuffer& i : impl->queuedSubBuffers)
+		alSourceUnqueueBuffers(impl->handle, 1, &i.handle);
 	impl->queuedSubBuffers.clear();
 
 	// Call alSourceRewind() to make the sound go though the AL_INITIAL state
@@ -528,7 +528,7 @@ static void _tick(roAudioDriver* self)
 		roAssert(buffersProcessed <= (ALint)sound.queuedSubBuffers.size());
 		while(buffersProcessed) {
 			alSourceUnqueueBuffers(sound.handle, 1, &sound.queuedSubBuffers.front().handle);
-			sound.queuedSubBuffers.remove(0);
+			sound.queuedSubBuffers.removeAt(0);
 			--buffersProcessed;
 		}
 

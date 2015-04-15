@@ -302,9 +302,9 @@ Status HttpResponseHeader::parse(char* buf, roSize bufSize, roSize& headerSize)
 
 const char*	HttpResponseHeader::findValue(const char* name)
 {
-	for(roSize i=0; i<nvp.size(); ++i) {
-		if(roStrCaseCmp(nvp[i].name, name) == 0)
-			return nvp[i].value;
+	for(Pair& i : nvp) {
+		if(roStrCaseCmp(i.name, name) == 0)
+			return i.value;
 	}
 	return NULL;
 }

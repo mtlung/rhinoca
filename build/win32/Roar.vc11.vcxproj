@@ -81,6 +81,7 @@
     <OutDir>../../lib/$(PlatformName)/</OutDir>
     <IncludePath>$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath);$(DXSDK_DIR)\Lib\x86</LibraryPath>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IntDir>tmp/$(ProjectName)/$(PlatformName)/$(Configuration)/</IntDir>
@@ -97,7 +98,6 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
@@ -105,6 +105,7 @@
       <SmallerTypeCheck>true</SmallerTypeCheck>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <MinimalRebuild>false</MinimalRebuild>
+      <WarningLevel>Level4</WarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -185,6 +186,8 @@
     <ClInclude Include="..\..\roar\base\roByteOrder.h" />
     <ClInclude Include="..\..\roar\base\roBytePtr.h" />
     <ClInclude Include="..\..\roar\base\roCachedVal.h" />
+    <ClInclude Include="..\..\roar\base\roCommandLine.h" />
+    <ClInclude Include="..\..\roar\base\roCompressedStream.h" />
     <ClInclude Include="..\..\roar\base\roComPtr.h" />
     <ClInclude Include="..\..\roar\base\roCondVar.h" />
     <ClInclude Include="..\..\roar\base\roCoroutine.h" />
@@ -196,6 +199,7 @@
     <ClInclude Include="..\..\roar\base\roIOStream.h" />
     <ClInclude Include="..\..\roar\base\roJson.h" />
     <ClInclude Include="..\..\roar\base\roJsonSerializer.h" />
+    <ClInclude Include="..\..\roar\base\roLexer.h" />
     <ClInclude Include="..\..\roar\base\roLinkList.h" />
     <ClInclude Include="..\..\roar\base\roLog.h" />
     <ClInclude Include="..\..\roar\base\roMap.h" />
@@ -214,7 +218,6 @@
     <ClInclude Include="..\..\roar\base\roSafeInteger.h" />
     <ClInclude Include="..\..\roar\base\roSerializer.h" />
     <ClInclude Include="..\..\roar\base\roSharedPtr.h" />
-    <ClInclude Include="..\..\roar\base\roSocket.h" />
     <ClInclude Include="..\..\roar\base\roStackWalker.h" />
     <ClInclude Include="..\..\roar\base\roStatus.h" />
     <ClInclude Include="..\..\roar\base\roStatusEnum.h" />
@@ -245,8 +248,10 @@
     <ClInclude Include="..\..\roar\math\roRandom.h" />
     <ClInclude Include="..\..\roar\math\roRect.h" />
     <ClInclude Include="..\..\roar\math\roVector.h" />
+    <ClInclude Include="..\..\roar\network\roDnsResolve.h" />
     <ClInclude Include="..\..\roar\network\roHttp.h" />
-    <ClInclude Include="..\..\roar\network\roHttpContentDecoder.h" />
+    <ClInclude Include="..\..\roar\network\roSocket.h" />
+    <ClInclude Include="..\..\roar\network\roSecureSocket.h" />
     <ClInclude Include="..\..\roar\pch.h" />
     <ClInclude Include="..\..\roar\platform\roCompiler.h" />
     <ClInclude Include="..\..\roar\platform\roCompiler.vc.h" />
@@ -276,16 +281,20 @@
     <ClCompile Include="..\..\roar\audio\roAudioDriver.openal.cpp" />
     <ClCompile Include="..\..\roar\audio\stb_vorbis.cpp" />
     <ClCompile Include="..\..\roar\base\roBlockAllocator.cpp" />
+    <ClCompile Include="..\..\roar\base\roCommandLine.cpp" />
+    <ClCompile Include="..\..\roar\base\roCompressedStream.cpp" />
     <ClCompile Include="..\..\roar\base\roCondVar.cpp" />
     <ClCompile Include="..\..\roar\base\roCoroutine.cpp" />
     <ClCompile Include="..\..\roar\base\roCpuProfiler.cpp" />
     <ClCompile Include="..\..\roar\base\roDateTime.cpp" />
+    <ClCompile Include="..\..\roar\base\roDtoa.cpp" />
     <ClCompile Include="..\..\roar\base\roFileSystem.cpp" />
     <ClCompile Include="..\..\roar\base\roHttpFileSystem.cpp" />
     <ClCompile Include="..\..\roar\base\roHttpStream.cpp" />
     <ClCompile Include="..\..\roar\base\roIOStream.cpp" />
     <ClCompile Include="..\..\roar\base\roJson.cpp" />
     <ClCompile Include="..\..\roar\base\roJsonSerializer.cpp" />
+    <ClCompile Include="..\..\roar\base\roLexer.cpp" />
     <ClCompile Include="..\..\roar\base\roLinkList.cpp" />
     <ClCompile Include="..\..\roar\base\roLog.cpp" />
     <ClCompile Include="..\..\roar\base\roMap.cpp" />
@@ -299,7 +308,7 @@
     <ClCompile Include="..\..\roar\base\roRegex.cpp" />
     <ClCompile Include="..\..\roar\base\roResource.cpp" />
     <ClCompile Include="..\..\roar\base\roSerializer.cpp" />
-    <ClCompile Include="..\..\roar\base\roSocket.cpp" />
+    <ClCompile Include="..\..\roar\base\roStackWalker.cpp" />
     <ClCompile Include="..\..\roar\base\roStatus.cpp" />
     <ClCompile Include="..\..\roar\base\roStopWatch.cpp" />
     <ClCompile Include="..\..\roar\base\roString.cpp" />
@@ -313,9 +322,12 @@
     <ClCompile Include="..\..\roar\math\roMath.cpp" />
     <ClCompile Include="..\..\roar\math\roMatrix.cpp" />
     <ClCompile Include="..\..\roar\math\roVector.cpp" />
-    <ClCompile Include="..\..\roar\network\roHttp.cpp" />
+    <ClCompile Include="..\..\roar\network\roDnsResolve.win.cpp" />
+    <ClCompile Include="..\..\roar\network\roHttpClient.cpp" />
     <ClCompile Include="..\..\roar\network\roHttpHeader.cpp" />
     <ClCompile Include="..\..\roar\network\roHttpServer.cpp" />
+    <ClCompile Include="..\..\roar\network\roSocket.cpp" />
+    <ClCompile Include="..\..\roar\network\roSecureSocket.win.cpp" />
     <ClCompile Include="..\..\roar\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -359,11 +371,15 @@
     <None Include="..\..\roar\input\roInputDriver.ime.windows.inl" />
     <None Include="..\..\roar\math\roMatrix.inl" />
     <None Include="..\..\roar\math\roVector.inl" />
+    <None Include="..\..\roar\network\roHttpClientStream.inc" />
     <None Include="..\..\roar\render\roRenderDriver.dx11.inl" />
     <None Include="..\..\roar\render\roRenderDriver.gl.inl" />
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="..\..\roar\base\roCoroutine.win64.asm" />
+    <MASM Include="..\..\roar\base\roCoroutine.win64.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

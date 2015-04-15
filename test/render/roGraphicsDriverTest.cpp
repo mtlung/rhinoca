@@ -2,14 +2,9 @@
 #include "roGraphicsTestBase.win.h"
 #include "../../roar/base/roStringHash.h"
 #include "../../roar/math/roMatrix.h"
-
-#include <math.h>
+#include "../../roar/math/roRandom.h"
 
 using namespace ro;
-
-static float randf() {
-	return (float)rand() / RAND_MAX;
-}
 
 struct GraphicsDriverTest : public GraphicsTestBase {};
 
@@ -285,9 +280,9 @@ TEST_FIXTURE(GraphicsDriverTest, textureUpdate)
 
 		// Make some noise in the texture
 		for(unsigned i=texDim; i--;) {
-			unsigned idx = unsigned(randf() * (texDim * texDim));
+			unsigned idx = roRandBeginEnd(0u, texDim * texDim);
 			unsigned* pixel = ((unsigned*)texData) + idx % (texDim * texDim);
-			*pixel = unsigned(randf() * UINT_MAX);
+			*pixel = roRandBeginEnd(0u, unsigned(-1));
 			pixel = pixel;
 		}
 

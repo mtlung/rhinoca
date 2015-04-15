@@ -105,9 +105,8 @@ void* FunctionPatcher::_allocateExeBuffer(void* nearAddr, roSize size)
 	char* addr = (char*)nearAddr;
 
 	// Scan existing pages for available memory
-	for(roSize i=0; i<_allocatedPages.size(); ++i) {
-		PageAllocator& a = _allocatedPages[i];
-		char* p = _allocatedPages[i].nextFree;
+	for(PageAllocator& a : _allocatedPages) {
+		char* p = a.nextFree;
 		if(a.pageSize - a.allocated < size)
 			continue;
 
@@ -243,15 +242,14 @@ void* FunctionPatcher::patch(void* func, void* newFunc)
 
 void FunctionPatcher::unpatchAll()
 {
-	for(roSize i=0; i < _patchInfo.size(); ++i) {
-		PatchInfo& info = _patchInfo[i];
+	for(PatchInfo& info : _patchInfo) {
 		ScopeChangeProtection guard(info.original);
 		memcpy(info.original, &info.origByteCodes.front(), info.origByteCodes.size());
 	}
 	_patchInfo.clear();
 
-	for(roSize i=0; i<_allocatedPages.size(); ++i) {
-		VirtualFree(_allocatedPages[i].head, 0, MEM_RELEASE);
+	for(PageAllocator& i : _allocatedPages) {
+		VirtualFree(i.head, 0, MEM_RELEASE);
 	}
 	_allocatedPages.clear();
 }

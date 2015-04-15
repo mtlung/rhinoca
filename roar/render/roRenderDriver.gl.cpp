@@ -146,10 +146,10 @@ static bool _setRenderTargets(roRDriverTexture** textures, roSize targetCount, b
 	ctx->currentRenderHash = hash;
 
 	// Find render target cache
-	for(unsigned i=0; i<ctx->renderTargetCache.size(); ++i) {
-		if(ctx->renderTargetCache[i].hash == hash) {
-			ctx->renderTargetCache[i].lastUsedTime = ctx->lastSwapTime;
-			glBindFramebuffer(GL_FRAMEBUFFER, ctx->renderTargetCache[i].glh);
+	for(RenderTarget& i : ctx->renderTargetCache) {
+		if(i.hash == hash) {
+			i.lastUsedTime = ctx->lastSwapTime;
+			glBindFramebuffer(GL_FRAMEBUFFER, i.glh);
 			checkError();
 			return true;
 		}
@@ -942,7 +942,8 @@ static unsigned _mipLevelInfo(roRDriverTextureImpl* self, unsigned mipIndex, uns
 static GLuint _getPbo(roRDriverContextImpl* ctx)
 {
 	GLuint pbo = 0;
-	for(roSize i=0; i<ctx->pixelBufferCache.size(); ++i) {
+	for(GLuint i : ctx->pixelBufferCache) {
+		(void)i;
 		roSize index = ctx->currentPixelBufferIndex++;
 		ctx->currentPixelBufferIndex = ctx->currentPixelBufferIndex % ctx->pixelBufferCache.size();
 		pbo = ctx->pixelBufferCache[index];
@@ -1306,7 +1307,7 @@ static void _deleteShader(roRDriverShader* self)
 			program.glh = 0;	// For safety
 			program.hash = 0;	//
 
-			ctx->shaderProgramCache.remove(i);
+			ctx->shaderProgramCache.removeAt(i);
 		}
 		else
 			++i;
@@ -1373,9 +1374,9 @@ static ProgramUniform* _findProgramUniform(roRDriverContextImpl* ctx, roRDriverS
 	roAssert(ctx);
 	if(!impl) return NULL;
 
-	for(unsigned i=0; i<impl->uniforms.size(); ++i) {
-		if(impl->uniforms[i].nameHash == nameHash)
-			return &impl->uniforms[i];
+	for(ProgramUniform& i : impl->uniforms) {
+		if(i.nameHash == nameHash)
+			return &i;
 	}
 	return NULL;
 }
@@ -1388,9 +1389,9 @@ static ProgramUniformBlock* _findProgramUniformBlock(unsigned nameHash)
 	roRDriverShaderProgramImpl* impl = ctx->currentShaderProgram;
 	if(!impl) return NULL;
 
-	for(unsigned i=0; i<impl->uniformBlocks.size(); ++i) {
-		if(impl->uniformBlocks[i].nameHash == nameHash)
-			return &impl->uniformBlocks[i];
+	for(ProgramUniformBlock& i : impl->uniformBlocks) {
+		if(i.nameHash == nameHash)
+			return &i;
 	}
 	return NULL;
 }
@@ -1400,9 +1401,9 @@ static ProgramAttribute* _findProgramAttribute(roRDriverShaderProgram* self, uns
 	roRDriverShaderProgramImpl* impl = static_cast<roRDriverShaderProgramImpl*>(self);
 	if(!impl) return NULL;
 
-	for(unsigned i=0; i<impl->attributes.size(); ++i) {
-		if(impl->attributes[i].nameHash == nameHash)
-			return &impl->attributes[i];
+	for(ProgramAttribute& i : impl->attributes) {
+		if(i.nameHash == nameHash)
+			return &i;
 	}
 	return NULL;
 }
@@ -1596,9 +1597,9 @@ bool _bindShaders(roRDriverShader** shaders, roSize shaderCount)
 	roRDriverShaderProgramImpl* program = NULL;
 	// Linear search in the shader program cache
 	// TODO: Find using hash table
-	for(unsigned i=0; i<ctx->shaderProgramCache.size(); ++i) {
-		if(ctx->shaderProgramCache[i].hash == hash) {
-			program = &ctx->shaderProgramCache[i];
+	for(roRDriverShaderProgramImpl& i : ctx->shaderProgramCache) {
+		if(i.hash == hash) {
+			program = &i;
 			break;
 		}
 	}
@@ -1780,11 +1781,11 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 	// Search for existing VAO
 	GLuint vao = 0;
 	bool vaoCacheFound = false;
-	for(unsigned i=0; i<ctx->vaoCache.size(); ++i)
+	for(VertexArrayObject& i : ctx->vaoCache)
 	{
-		if(inputHash == ctx->vaoCache[i].hash) {
-			vao = ctx->vaoCache[i].glh;
-			ctx->vaoCache[i].lastUsedTime = ctx->lastSwapTime;
+		if(inputHash == i.hash) {
+			vao = i.glh;
+			i.lastUsedTime = ctx->lastSwapTime;
 			vaoCacheFound = true;
 			break;
 		}

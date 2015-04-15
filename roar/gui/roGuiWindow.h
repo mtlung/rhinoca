@@ -14,7 +14,7 @@ static void _drawWindows()
 		GuiWindowState* state = _states.windowList[i];
 
 		if(!state || state->_useCount == 1) {
-			_states.windowList.remove(i);
+			_states.windowList.removeAt(i);
 			--i;
 			continue;
 		}
