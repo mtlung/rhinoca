@@ -17,7 +17,9 @@ TEST_FIXTURE(RegexTest, test)
 		{ "(?:(A|a)(B|b))+",			"",		"ABa",											"AB`A`B" },
 		{ "(((a)?b)?c)?",				"",		"abc",											"abc`abc`ab`a" },
 		{ "(?:(?:(a) (b)? c)?)?",		"",		"a b c",										"a b c`a`b" },
-		{ "(a)(b)|(a)(c)",				"",		"ac",											"ac```a`c" },
+		{ "(a)(b)|(a)(c)",				"",		"ac",											"ac```a`c" },	// Matching of first (a)(b) fail and should not put in result
+		{ "(a)(?:(b)|(a)(c))",			"",		"aac",											"aac`a``a`c" },	// First (a) match and should keep, (b) will fail and shouldn't put in result
+		{ "((a)(?:(b)|(a)(c)))",		"",		"aac",											"aac`aac`a``a`c" },
 
 		{ "[^ a-z]+",					"",		"path",											NULL },
 		{ "[^ a-z]+",					"",		"PATH",											"PATH" },

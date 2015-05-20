@@ -91,6 +91,8 @@ struct Regex::Graph
 		branchLevel = 0;
 		charCmpFunc = NULL;
 		capturingGroupCount = 0;
+		capturingGroupCountStack.clear();
+		capturingGroupCountStack.pushBack(0);
 		tmpResult.clear();
 		result.clear();
 		nodes.clear();
@@ -181,6 +183,7 @@ struct Regex::Graph
 	RangedString srcString;
 	bool (*charCmpFunc)(char c1, char c2);
 	roSize capturingGroupCount;
+	TinyArray<roSize, 16> capturingGroupCountStack;	// Keep track the beginning of capturing group in (both capture or non-capture) group during parse phrase
 	TinyArray<RangedString, 16> tmpResult, result;
 
 	TinyArray<Node, 64> nodes;
@@ -472,7 +475,10 @@ bool counted_loop_exit(Graph& graph, Node& node, Edge& edge, RangedString& s)
 
 bool cleanup_on_failed_alternation(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
-//	graph.tmpResult.assign(RangedString());	// Test case: "(a)(b)|(a)(c)", "", "ac", "ac```a`c"
+	roSize begin = (roSize)node.userdata[0];
+	roSize end = (roSize)node.userdata[1];
+	for(roSize i=begin; i<end; ++i)
+		graph.tmpResult[i] = RangedString();	// Test case: "(a)(b)|(a)(c)", "", "ac", "ac```a`c"
 	return true;
 }
 
@@ -709,8 +715,12 @@ bool parse_group(Graph& graph, const RangedString& f, const roUtf8*& i)
 		}
 	}
 
+	graph.capturingGroupCountStack.pushBack(graph.capturingGroupCount);
+
 	if(!parse_nodes(graph, RangedString(begin, end)))
 		return false;
+
+	graph.capturingGroupCountStack.popBack();
 
 	{	// Add end node
 		Node endNode = { RangedString(")") };
@@ -821,6 +831,8 @@ bool parse_nodes(Graph& graph, const RangedString& f)
 			// For instance match "a|0+a" with "0" should not success
 			if(i[0] == '|') {
 				Node node = { RangedString("|->") };
+				node.userdata[0] = (void*)graph.capturingGroupCountStack.back();
+				node.userdata[1] = (void*)graph.capturingGroupCount;
 				graph.push2(node, cleanup_on_failed_alternation);
 				tmp = graph.currentNodeIdx - 1;
 			}

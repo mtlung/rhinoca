@@ -147,9 +147,11 @@ TEST_FIXTURE(CommandLineTest, test)
 		{ "usage:\n [<input file>]",								"f.txt",		"{\"input file\":\"f.txt\"}" },*/
 	};
 
-	for(roSize i=65; i<roCountof(testData); ++i) {
+	for(roSize i=0; i<roCountof(testData); ++i) {
 		String json;
 		bool ret = roParseCommandLine(testData[i][0], testData[i][1], json);
+
+		bool success = ((testData[i][2] != NULL) ^ ret) == 0;
 		CHECK(((testData[i][2] != NULL) ^ ret) == 0);
 
 		if(testData[i][2])
