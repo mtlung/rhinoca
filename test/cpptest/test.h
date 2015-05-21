@@ -62,11 +62,11 @@ struct TestRunner
 
 	void setTestReporter(TestReporter* testReporter);
 
-	//! Run a single test
-	bool runTest(const char* name);
+	//! Run tests matching with regex
+	bool runTest(const char* testNameRegex);
 
-	//! Run a single test multiple times
-	bool runTest(const char* name, roSize repeat);
+	//! Run tests matching with regex multiple times
+	bool runTest(const char* testNameRegex, roSize repeat);
 
 	//! Run all tests and make a report
 	int runAllTests();

@@ -2,6 +2,7 @@
 #include "test.h"
 #include "../../roar/base/roCoroutine.h"
 #include "../../roar/base/roLog.h"
+#include "../../roar/base/roRegex.h"
 #include "../../roar/base/roStringFormat.h"
 
 namespace ro {
@@ -66,12 +67,15 @@ void CoroutineTestRunner::run()
 
 void Test::run(CoroutineScheduler& scheduler, TestResults& testResults, roSize repeat)
 {
+#if 1
 	for(roSize i=0; i<repeat; ++i)
 		scheduler.add(*new CoroutineTestRunner(*this, testResults));
 
 	scheduler.runTillAllFinish();
-
-//	runImpl(testResults);
+#else
+	for(roSize i=0; i<repeat; ++i)
+		runImpl(testResults);
+#endif
 
 /*	try {
 #ifdef TRANSLATE_POSIX_SIGNALS
@@ -137,33 +141,52 @@ void TestRunner::setTestReporter(TestReporter* testReporter)
 	_testReporter = testReporter;
 }
 
-bool TestRunner::runTest(const char* name)
+bool TestRunner::runTest(const char* testNameRegex)
 {
 	TestResults result(_testReporter);
-	TestLauncher* i = TestLauncher::getTestLaunchers().find(name);
-	if(!i)
+
+	Regex regex;
+	Regex::Compiled compiled;
+	if(!regex.compile(testNameRegex, compiled))
 		return false;
 
-	if(_showTestName)
-		roLog("", "Running test: %s\n", i->getName());
+	bool fail = false;
+	for(TestLauncher* i = TestLauncher::getTestLaunchers().findMin(); i != NULL; i = i->next()) {
+		if(!regex.match(i->getName(), compiled))
+			continue;
 
-	i->launch(_coScheduler, result, 1);
-	return !result.failed();
+		if(_showTestName)
+			roLog("", "Running test: %s\n", i->getName());
+
+		i->launch(_coScheduler, result, 1);
+		fail |= result.failed();
+	}
+
+	return !fail;
 }
 
-bool TestRunner::runTest(const char* name, roSize repeat)
+bool TestRunner::runTest(const char* testNameRegex, roSize repeat)
 {
 	TestResults result(_testReporter);
-	TestLauncher* i = TestLauncher::getTestLaunchers().find(name);
-	if(!i)
+
+	Regex regex;
+	Regex::Compiled compiled;
+	if(!regex.compile(testNameRegex, compiled))
 		return false;
 
-	if(_showTestName)
-		roLog("", "Running test: %s for %u times\n", i->getName(), repeat);
+	bool fail = false;
+	for(TestLauncher* i = TestLauncher::getTestLaunchers().findMin(); i != NULL; i = i->next()) {
+		if(!regex.match(i->getName(), compiled))
+			continue;
 
-	i->launch(_coScheduler, result, repeat);
+		if(_showTestName)
+			roLog("", "Running test: %s for %u times\n", i->getName(), repeat);
 
-	return !result.failed();
+		i->launch(_coScheduler, result, 1);
+		fail |= result.failed();
+	}
+
+	return !fail;
 }
 
 int TestRunner::runAllTests()
