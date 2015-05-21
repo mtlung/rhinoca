@@ -12,6 +12,8 @@ TEST_FIXTURE(RegexTest, test)
 		{ "<.*>",						"",		"<img>def</img>",								"<img>def</img>" },
 		{ "<.*?>",						"",		"<img>def</img>",								"<img>" },
 
+		{ "(0)|(2)|(3)",				"",		"12",											"2``2`" },
+
 		{ "(a)*b",						"",		"aab",											"aab`a" },
 		{ "(abc)d",						"",		"abcd",											"abcd`abc" },
 		{ "(?:(A|a)(B|b))+",			"",		"ABa",											"AB`A`B" },

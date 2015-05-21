@@ -822,7 +822,6 @@ bool parse_nodes(Graph& graph, const RangedString& f)
 				firstEncounter = false;
 			}
 
-			roUint16 tmp = graph.currentNodeIdx + 1;
 			if(!parse_nodes_impl(graph, RangedString(begin, i)))
 				return false;
 
@@ -834,11 +833,10 @@ bool parse_nodes(Graph& graph, const RangedString& f)
 				node.userdata[0] = (void*)graph.capturingGroupCountStack.back();
 				node.userdata[1] = (void*)graph.capturingGroupCount;
 				graph.push2(node, cleanup_on_failed_alternation);
-				tmp = graph.currentNodeIdx - 1;
+				altOptionIdx.pushBack(graph.currentNodeIdx);
 			}
 
 			begin = i + 1;
-			altOptionIdx.pushBack(tmp - 1);
 		}
 
 		bracketCount1 += (*i == '(') ? 1 : 0;
@@ -849,11 +847,11 @@ bool parse_nodes(Graph& graph, const RangedString& f)
 	}
 
 	// If there were alternation, adjust the edges
-	for(roSize i=1; i<altOptionIdx.size(); ++i)
+	for(roSize i=0; i<altOptionIdx.size(); ++i)
 		graph.redirect(altOptionIdx[i], num_cast<roUint16>(graph.nodes.size()));
 
-	for(roSize i=1; i<altOptionIdx.size(); ++i) {
-		Edge edge = { RangedString(), alternation, altOptionIdx[i], 0 };
+	for(roSize i=0; i<altOptionIdx.size(); ++i) {
+		Edge edge = { RangedString(), alternation, altOptionIdx[i] , 0 };
 		graph.pushEdge(altNodeIdx, edge);
 	}
 
