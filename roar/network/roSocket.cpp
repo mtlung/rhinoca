@@ -286,11 +286,11 @@ roStatus SockAddr::splitHostAndPort(const RangedString& hostAndPort, RangedStrin
 	return roStatus::ok;
 }
 
-static AtomicInteger _initCount = 0;
+static InitShutdownCounter _initCounter;
 
 ErrorCode BsdSocket::initApplication()
 {
-	if(++_initCount > 1)
+	if(!_initCounter.tryInit())
 		return OK;
 
 #if roOS_WIN
@@ -306,10 +306,7 @@ ErrorCode BsdSocket::initApplication()
 
 ErrorCode BsdSocket::closeApplication()
 {
-	if(_initCount == 0)
-		return OK;
-
-	if(--_initCount > 0)
+	if(!_initCounter.tryShutdown())
 		return OK;
 
 #if roOS_WIN
@@ -325,7 +322,7 @@ BsdSocket::BsdSocket()
 	, _isBlockingMode(true)
 {
 	roStaticAssert(sizeof(socket_t) == sizeof(_fd));
-	setFd(INVALID_SOCKET);
+	_setFd(INVALID_SOCKET);
 }
 
 BsdSocket::~BsdSocket()
@@ -340,10 +337,10 @@ roStatus BsdSocket::create(SocketType type)
 		return lastError = -1, errorToStatus(lastError);
 
 	switch (type) {
-	case TCP:	setFd(::socket(AF_INET, SOCK_STREAM, 0));	break;
-	case TCP6:	setFd(::socket(AF_INET6, SOCK_STREAM, 0));	break;
-	case UDP:	setFd(::socket(AF_INET, SOCK_DGRAM, 0));	break;
-	case UDP6:	setFd(::socket(AF_INET6, SOCK_DGRAM, 0));	break;
+	case TCP:	_setFd(::socket(AF_INET, SOCK_STREAM, 0));	break;
+	case TCP6:	_setFd(::socket(AF_INET6, SOCK_STREAM, 0));	break;
+	case UDP:	_setFd(::socket(AF_INET, SOCK_DGRAM, 0));	break;
+	case UDP6:	_setFd(::socket(AF_INET6, SOCK_DGRAM, 0));	break;
 	default: return getLastError(), errorToStatus(lastError);
 	}
 
@@ -436,7 +433,8 @@ roStatus BsdSocket::accept(BsdSocket& socket) const
 	if(s == INVALID_SOCKET)
 		return lastError = getLastError(), errorToStatus(lastError);
 
-	socket.setFd(s);
+	socket.close();
+	socket._setFd(s);
 	return lastError = OK, roStatus::ok;
 }
 
@@ -579,14 +577,21 @@ roStatus BsdSocket::close()
 
 	roVerify(setBlocking(true));
 
+	if(fd() != INVALID_SOCKET) {
+		roVerify(shutDownWrite());
+		roByte buf[128];
+		roSize len;
+		while(len = sizeof(buf), receive(buf, len) && len) {}
+	}
+
 #if roOS_WIN
 	if(::closesocket(fd()) == OK) {
-		setFd(INVALID_SOCKET);
+		_setFd(INVALID_SOCKET);
 		return lastError = OK, roStatus::ok;
 	}
 #else
 	if(::close(fd()) == OK) {
-		setFd(INVALID_SOCKET);
+		_setFd(INVALID_SOCKET);
 		return lastError = OK, roStatus::ok;
 	}
 #endif
@@ -642,6 +647,11 @@ const socket_t& BsdSocket::fd() const {
 }
 
 void BsdSocket::setFd(const socket_t& f) {
+	roAssert(fd() == INVALID_SOCKET && "Please close the socket before you set a new fd");
+	*reinterpret_cast<socket_t*>(_fd) = f;
+}
+
+void BsdSocket::_setFd(const socket_t& f) {
 	*reinterpret_cast<socket_t*>(_fd) = f;
 }
 
@@ -693,6 +703,8 @@ roStatus CoSocket::setBlocking(bool block)
 
 roStatus CoSocket::accept(CoSocket& socket) const
 {
+	socket.close();
+
 	roStatus st = Super::accept(socket);
 	socket._onHeap.takeOver(_allocator.newObj<OnHeap>());
 

@@ -170,6 +170,8 @@ struct BsdSocket : NonCopyable
 	void setFd(const socket_t& f);
 
 // Private
+	void _setFd(const socket_t& f);
+
 	roStatus	_setOption			(int level, int opt, const void* p, roSize size);
 	SocketType	_socketType;
 	char		_fd[sizeof(void*)];	///< File descriptor
