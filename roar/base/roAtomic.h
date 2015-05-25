@@ -33,6 +33,14 @@ private:
 	volatile long _value;
 };	// AtomicInteger
 
+/// Utility class to ease doing init/shutdown function
+struct InitShutdownCounter
+{
+	bool tryInit()		{ return !(++_initCount > 1); }
+	bool tryShutdown()	{ return !(_initCount == 0 || --_initCount > 0); }
+	AtomicInteger _initCount;
+};	// InitShutdownCounter
+
 }	// namespace ro
 
 // ----------------------------------------------------------------------

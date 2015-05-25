@@ -99,10 +99,13 @@ Status SubSystems::init()
 {
 	shutdown();
 
+	if(!_initCounter.tryInit())
+		return roStatus::ok;
+
 	Status st;
 	BsdSocket::initApplication();
 	st = _cpuProfiler.init(); if(!st) return st;
-//	st = _memoryProfiler.init(5000); if(!st) return st;
+	st = _memoryProfiler.init(0); if(!st) return st;
 
 	_cpuProfiler.enable = false;
 
@@ -131,6 +134,9 @@ Status SubSystems::init()
 
 void SubSystems::shutdown()
 {
+	if(!_initCounter.tryShutdown())
+		return;
+
 	defaultFont = NULL;
 	currentCanvas = NULL;
 

@@ -2,6 +2,7 @@
 #define __roSubSystems_h__
 
 #include "base/roArray.h"
+#include "base/roAtomic.h"
 #include "base/roSharedPtr.h"
 
 struct roAudioDriver;
@@ -71,6 +72,8 @@ struct SubSystems : private NonCopyable
 	roSize frameNumber;
 	float maxFrameDuration;
 	float averageFrameDuration;
+
+	InitShutdownCounter _initCounter;
 };	// SubSystems
 
 // Forward declarations of all build-in loaders
