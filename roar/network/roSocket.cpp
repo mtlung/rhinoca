@@ -578,7 +578,7 @@ roStatus BsdSocket::close()
 	roVerify(setBlocking(true));
 
 	if(fd() != INVALID_SOCKET) {
-		roVerify(shutDownWrite());
+		(void)shutDownWrite();
 		roByte buf[128];
 		roSize len;
 		while(len = sizeof(buf), receive(buf, len) && len) {}

@@ -1,9 +1,12 @@
 #include "pch.h"
 #include "roMemoryProfiler.h"
+#include "roAtomic.h"
 #include "roSerializer.h"
+#include "roStopWatch.h"
+#include "roStringFormat.h"
 #include "roTaskPool.h"
 #include "roTypeCast.h"
-#include "roStopWatch.h"
+#include "roWinDialogTemplate.h"
 #include "../platform/roCpu.h"
 #include "../platform/roPlatformHeaders.h"
 
@@ -19,7 +22,6 @@ namespace ro {
 
 static DWORD			_tlsIndex = 0;
 static RecursiveMutex	_mutex;
-static FunctionPatcher	_functionPatcher;
 static MemoryProfiler*	_profiler = NULL;
 
 typedef LPVOID (WINAPI *MyHeapAlloc)(HANDLE, DWORD, SIZE_T);
@@ -121,7 +123,6 @@ struct FlowRegulator
 	FlowRegulator()
 	{
 		roVerify(_buffer.reserve(_flushSize));
-//		_stopWatch.Start();
 	}
 
 	bool send(TlsStruct* tls)
@@ -135,8 +136,8 @@ struct FlowRegulator
 		if(_buffer.size() > _flushSize)
 			return flush(_profiler->_acceptorSocket);
 
-//		if(_stopWatch.GetElapsedMs() > 1000)
-//			return flush(_profiler->_acceptorSocket);
+		if(_stopWatch.getFloat() > 1)
+			return flush(_profiler->_acceptorSocket);
 
 		return true;
 	}
@@ -152,11 +153,11 @@ struct FlowRegulator
 			return false;
 
 		_buffer.clear();
-//		_stopWatch.Restart();
+		_stopWatch.reset();
 		return true;
 	}
 
-//	Gear::StopWatch _stopWatch;
+	StopWatch _stopWatch;
 	Array_VirtualAlloc<char> _buffer;
 	static const roSize _flushSize = 1024 * 512;
 };
@@ -194,18 +195,47 @@ MemoryProfiler::MemoryProfiler()
 
 MemoryProfiler::~MemoryProfiler()
 {
-	if(_profiler)
 		shutdown();
 }
 
+static LRESULT CALLBACK dlgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	switch(msg) {
+	case WM_INITDIALOG:
+		return TRUE;
+	case WM_COMMAND:
+		switch(wParam) {
+		case IDOK:
+			EndDialog(hWndDlg, 0);
+			return TRUE;
+		}
+		break;
+	}
+
+	return FALSE;
+}
+
+// NOTE: The order of these static variable is important!
+static InitShutdownCounter _initCounter;
+static FlowRegulator _regulator;
+static FunctionPatcher	_functionPatcher;
+static Array_VirtualAlloc<roUint64> _callstackHash;
+
 Status MemoryProfiler::init(roUint16 listeningPort)
 {
+	if(!_initCounter.tryInit())
+		return roStatus::ok;
+
+	if(listeningPort == 0)
+		return roStatus::ok;
+
 	roAssert(!_profiler);
 	_profiler = this;
 
 	_tlsIndex = ::TlsAlloc();
 	StackWalker::init();
 
+	BsdSocket::initApplication();
 	SockAddr addr(SockAddr::ipAny(), listeningPort);
 
 	roStatus st;
@@ -213,6 +243,14 @@ Status MemoryProfiler::init(roUint16 listeningPort)
 	st = _listeningSocket.bind(addr); if(!st) return st;
 	st = _listeningSocket.listen(); if(!st) return st;
 	st = _listeningSocket.setBlocking(false); if(!st) return st;
+
+	// Show dialog
+	WinDialogTemplate dialogTemplate("Memory profiler server", WS_CAPTION | DS_CENTER, 10, 10, 160, 50, NULL);
+	String dialogStr;
+	roVerify(strFormat(dialogStr, "Waiting for profiler connection on port {}", listeningPort));
+	dialogTemplate.AddStatic(dialogStr.c_str(), WS_VISIBLE, 0, 2 + 3, 7, 200, 8, (WORD)-1);
+	HWND hWnd = ::CreateDialogIndirect(::GetModuleHandle(NULL), dialogTemplate, NULL, (DLGPROC)dlgProc);
+	::ShowWindow(hWnd, SW_SHOWDEFAULT);
 
 	st = _acceptorSocket.create(BsdSocket::TCP); if(!st) return st;
 	while(BsdSocket::inProgress(_listeningSocket.accept(_acceptorSocket))) {
@@ -226,6 +264,8 @@ Status MemoryProfiler::init(roUint16 listeningPort)
 		}
 		TaskPool::sleep(10);
 	}
+
+	::DestroyWindow(hWnd);
 
 	{	// Send our process id to the client
 		DWORD pid = GetCurrentProcessId();
@@ -272,9 +312,6 @@ Status MemoryProfiler::init(roUint16 listeningPort)
 
 	return Status::ok;
 }
-
-static FlowRegulator _regulator;
-static Array_VirtualAlloc<roUint64> _callstackHash;
 
 static bool _firstSeen(roUint64 hash)
 {
@@ -419,7 +456,7 @@ BOOL WINAPI myVirtualFree(__in LPVOID lpAddress, __in SIZE_T dwSize, __in DWORD 
 
 	tls->recurseCount++;
 	BOOL ret = _orgVirtualFree(lpAddress, dwSize, dwFreeType);
-	if(ret)
+	if(SUCCEEDED(ret))
 		_send(tls, 'f', lpAddress, info.RegionSize);
 	tls->recurseCount--;
 
@@ -428,13 +465,16 @@ BOOL WINAPI myVirtualFree(__in LPVOID lpAddress, __in SIZE_T dwSize, __in DWORD 
 
 void MemoryProfiler::shutdown()
 {
-	roAssert(_profiler);
+	if(!_initCounter.tryShutdown())
+		return;
 
 	_functionPatcher.unpatchAll();
 
 	roVerify(_acceptorSocket.shutDownReadWrite());
 	_acceptorSocket.close();
 	_listeningSocket.close();
+
+	BsdSocket::closeApplication();
 
 	_profiler = NULL;
 }
