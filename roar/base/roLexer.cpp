@@ -216,7 +216,7 @@ roStatus Lexer::registerRegexRule(const char* ruleName, const char* regex, const
 		if(!st) return st;
 	}
 
-	st = Regex::compile(regexStr.c_str(), rule->regex);
+	st = Regex::compile(regexStr.c_str(), rule->regex, rule->matcher);
 	if(!st) return st;
 
 	rule->option += option;

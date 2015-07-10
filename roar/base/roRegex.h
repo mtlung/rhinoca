@@ -26,18 +26,20 @@ struct Regex : private NonCopyable
 
 	Regex();
 
-	static roStatus compile(const roUtf8* reg, Compiled& compiled, roUint8 logLevel=0);
-
-	bool match(const roUtf8* str, const roUtf8* reg, const char* options=NULL);
-	bool match(RangedString str, RangedString reg, const char* options=NULL);
-	bool match(RangedString str, const Compiled& reg, const char* options=NULL);
-
 	// Matching with custom function. Use $0, $1... to refer to the function
 	typedef bool (*CustomFunc)(RangedString& inout, void* userData);
 	struct CustomMatcher {
 		CustomFunc func;
 		void* userData;
 	};
+
+	static roStatus compile(const roUtf8* reg, Compiled& compiled, roUint8 logLevel=0);
+	static roStatus compile(const roUtf8* reg, Compiled& compiled, const IArray<CustomMatcher>& customMatcher, roUint8 logLevel=0);
+
+	bool match(const roUtf8* str, const roUtf8* reg, const char* options=NULL);
+	bool match(RangedString str, RangedString reg, const char* options=NULL);
+	bool match(RangedString str, const Compiled& reg, const char* options=NULL);
+
 	bool match(RangedString str, RangedString reg, const IArray<CustomMatcher>& customMatcher, const char* options=NULL);
 	bool match(RangedString str, const Compiled& reg, const IArray<CustomMatcher>& customMatcher, const char* options=NULL);
 

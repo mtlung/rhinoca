@@ -936,12 +936,19 @@ static void debugNodes(Graph& graph)
 
 roStatus Regex::compile(const roUtf8* reg, Compiled& compiled, roUint8 logLevel)
 {
+	Array<CustomMatcher> customMatcher;
+	return compile(reg, compiled, customMatcher, logLevel);
+}
+
+roStatus Regex::compile(const roUtf8* reg, Compiled& compiled, const IArray<CustomMatcher>& customMatcher, roUint8 logLevel)
+{
 	compiled.regexStr = reg;
 	if(!compiled.graph)
 		compiled.graph = new Graph;
 
 	Graph& graph = *compiled.graph;
 	graph.clear();
+	graph.customMatchers = &customMatcher;
 	graph.regString = compiled.regexStr;
 	graph.charCmpFunc = charCmp;
 
