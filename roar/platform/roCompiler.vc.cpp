@@ -1,5 +1,6 @@
 #include "pch.h"
 #include <assert.h>
+#include "roPlatformHeaders.h"
 
 void _roAssert(const wchar_t* expression, const wchar_t* file, unsigned line)
 {

@@ -257,4 +257,12 @@ TEST_FIXTURE(StringUtilityTest, strcmp)
 
 	CHECK(roStrnCaseCmp("AB", 2, "AB", 1) > 0);		CHECK(roStrnCaseCmp("ab", 2, "AB", 1) > 0);
 	CHECK(roStrnCaseCmp("AC", 2, "AB", 2) > 0);		CHECK(roStrnCaseCmp("ac", 2, "AB", 2) > 0);
+
+	// roStrCmpMinLen
+	CHECK(roStrCmpMinLen("A", "A") == 0);			CHECK(roStrCaseCmpMinLen("a", "A") == 0);
+	CHECK(roStrCmpMinLen("AB", "AB") == 0);			CHECK(roStrCaseCmpMinLen("aB", "Ab") == 0);
+	CHECK(roStrCmpMinLen("AB", "A") == 0);			CHECK(roStrCaseCmpMinLen("aB", "A") == 0);
+	CHECK(roStrCmpMinLen("BA", "B") == 0);			CHECK(roStrCaseCmpMinLen("aB", "a") == 0);
+	CHECK(roStrCmpMinLen("A", "B") < 0);			CHECK(roStrCaseCmpMinLen("a", "B") < 0);
+	CHECK(roStrCmpMinLen("B", "A") > 0);			CHECK(roStrCaseCmpMinLen("B", "a") > 0);
 }

@@ -5,44 +5,46 @@
 
 namespace ro { struct String; }
 
-inline roSize	roStrLen		(const roUtf8* str);
-inline roSize	roStrLen		(const roUtf16* str);
-inline roSize	roStrLen		(const roUtf8* str, roSize strLenMax);
+inline roSize	roStrLen			(const roUtf8* str);
+inline roSize	roStrLen			(const roUtf16* str);
+inline roSize	roStrLen			(const roUtf8* str, roSize strLenMax);
 
-inline char*	roStrnCpy		(char* dst, const char* src, roSize n);
+inline char*	roStrnCpy			(char* dst, const char* src, roSize n);
 
-inline int		roStrCmp		(const char* s1, const char* s2);
-inline int		roStrnCmp		(const char* s1, const char* s2, roSize n);
-inline int		roStrnCmp		(const char* s1, roSize n1, const char* s2, roSize n2);
-inline int		roStrCaseCmp	(const char* s1, const char* s2);
-inline int		roStrnCaseCmp	(const char* s1, const char* s2, roSize n);
-inline int		roStrnCaseCmp	(const char* s1, roSize n1, const char* s2, roSize n2);
+inline int		roStrCmp			(const char* s1, const char* s2);			// roStrCmp("Exact match", "Exact match")
+inline int		roStrnCmp			(const char* s1, const char* s2, roSize n);
+inline int		roStrnCmp			(const char* s1, roSize n1, const char* s2, roSize n2);
+inline int		roStrCmpMinLen		(const char* s1, const char* s2);			// roStrCmpMinLen("Match the short part", "Match")
+inline int		roStrCaseCmp		(const char* s1, const char* s2);
+inline int		roStrnCaseCmp		(const char* s1, const char* s2, roSize n);
+inline int		roStrnCaseCmp		(const char* s1, roSize n1, const char* s2, roSize n2);
+inline int		roStrCaseCmpMinLen	(const char* s1, const char* s2);
 
-inline char*	roStrChr		(char* sz, char ch);
-inline char*	roStrrChr		(char* sz, char ch);
-inline char*	roStrChrCase	(char* sz, char ch);
-inline char*	roStrrChrCase	(char* sz, char ch);
+inline char*	roStrChr			(char* sz, char ch);
+inline char*	roStrrChr			(char* sz, char ch);
+inline char*	roStrChrCase		(char* sz, char ch);
+inline char*	roStrrChrCase		(char* sz, char ch);
 
-char*			roStrStr		(char* a, const char* b);
-char*			roStrStr		(char* a, const char* aEnd, const char* b);
-char*			roStrnStr		(char* a, roSize aLen, const char* b);
-char*			roStrrStr		(char* a, const char* b);
-char*			roStrrnStr		(char* a, roSize aLen, const char* b);
+char*			roStrStr			(char* a, const char* b);					// roStrChr("This is a simple string", "simple")
+char*			roStrStr			(char* a, const char* aEnd, const char* b);
+char*			roStrnStr			(char* a, roSize aLen, const char* b);
+char*			roStrrStr			(char* a, const char* b);
+char*			roStrrnStr			(char* a, roSize aLen, const char* b);
 
-char*			roStrStrCase	(char* a, const char* b);
-char*			roStrStrCase	(char* a, const char* aEnd, const char* b);
-char*			roStrnStrCase	(char* a, roSize aLen, const char* b);
+char*			roStrStrCase		(char* a, const char* b);
+char*			roStrStrCase		(char* a, const char* aEnd, const char* b);
+char*			roStrnStrCase		(char* a, roSize aLen, const char* b);
 
-inline char		roToLower		(char c);
-inline char		roToUpper		(char c);
+inline char		roToLower			(char c);
+inline char		roToUpper			(char c);
 
-void			roToLower		(char* str);
-void			roToUpper		(char* str);
+void			roToLower			(char* str);
+void			roToUpper			(char* str);
 
-bool			roIsDigit		(char ch);
-bool			roIsAlpha		(char ch);
+bool			roIsDigit			(char ch);
+bool			roIsAlpha			(char ch);
 
-void			roStrReverse	(char* str, roSize len);
+void			roStrReverse		(char* str, roSize len);
 
 
 // ----------------------------------------------------------------------

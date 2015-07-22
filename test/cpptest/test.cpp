@@ -182,7 +182,7 @@ bool TestRunner::runTest(const char* testNameRegex, roSize repeat)
 		if(_showTestName)
 			roLog("", "Running test: %s for %u times\n", i->getName(), repeat);
 
-		i->launch(_coScheduler, result, 1);
+		i->launch(_coScheduler, result, repeat);
 		fail |= result.failed();
 	}
 

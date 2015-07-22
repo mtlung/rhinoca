@@ -31,8 +31,12 @@ struct Lexer
 	roStatus registerRegexRule(const char* ruleName, const char* regex, const char* option="", bool isFragment=false);		// Regex grammar
 	roStatus registerCustomRule(const char* ruleName, MatchFunc matchFunc, void* userData=NULL, bool isFragment=false);	// Matching with user function
 
+	typedef	roStatus (*MatchingEndTokenFunc)(const RangedString& source, const Token& currentToken, RangedString& output, void* userData);
+	roStatus registerMatchingEndToken(MatchingEndTokenFunc matchingEndTokenFunc, void* userData=NULL);
+
 	roStatus beginParse(const RangedString& source);	// Please make sure source string not deleted before endParse()
 	roStatus nextToken(Token& token);
+	roStatus seekToMatchingEndToken();	// Find the matched end position of the current token, for instance () {} [] etc...
 	roStatus endParse();
 
 	void pushState();		// Save current state on stack
@@ -53,6 +57,9 @@ struct Lexer
 	Map<IRule> _rules;
 	LinkList<IRule::OrderedListNode> _ruleOrderedList;	// For ordered iteration
 
+	MatchingEndTokenFunc	_matchingEndTokenFunc;
+	void*					_matchingEndTokenUserData;
+
 	Array<RangedString> _stateStack;
 };	// Lexer
 
@@ -65,6 +72,7 @@ struct TokenStream
 	bool		consumeToken(const RangedString& token);
 	roStatus	currentToken(Lexer::Token& token);
 	roStatus	lookAhead(roSize offset, Lexer::Token& token);
+	roStatus	seekToMatchingEndToken();
 	roStatus	endParse();
 
 	void pushState();		// Save current state on stack

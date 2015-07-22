@@ -74,6 +74,42 @@ roStatus Lexer::nextToken(Token& token)// RangedString& token, RangedString& val
 	return roStatus::ok;
 }
 
+roStatus Lexer::seekToMatchingEndToken()
+{
+	if(!_matchingEndTokenFunc)
+		return roStatus::pointer_is_null;
+
+	if(_stateStack.isEmpty())
+		return roStatus::end_of_data;
+
+	Token t;
+	roStatus st;
+
+roEXCP_TRY
+	pushState();
+
+	RangedString src = _stateStack.back();
+
+	st = nextToken(t);
+	if(!st) roEXCP_THROW;
+
+	RangedString output;
+	st = (*_matchingEndTokenFunc)(src, t, output, _matchingEndTokenUserData);
+	if(!st) roEXCP_THROW;
+
+	restoreState();
+	_stateStack.back() = output;
+
+	roAssert(output.begin >= src.begin && output.end <= src.end);
+
+	return st;
+
+roEXCP_CATCH
+roEXCP_END
+	restoreState();
+	return st;
+}
+
 roStatus Lexer::endParse()
 {
 	return roStatus::ok;
@@ -255,6 +291,13 @@ roStatus Lexer::registerCustomRule(const char* ruleName, MatchFunc matchFunc, vo
 	return roStatus::ok;
 }
 
+roStatus Lexer::registerMatchingEndToken(MatchingEndTokenFunc matchingEndTokenFunc, void* userData)
+{
+	_matchingEndTokenFunc = matchingEndTokenFunc;
+	_matchingEndTokenUserData = userData;
+	return roStatus::ok;
+}
+
 roStatus TokenStream::beginParse(const RangedString& source)
 {
 	_lookAheadBuf.clear();
@@ -266,7 +309,7 @@ roStatus TokenStream::beginParse(const RangedString& source)
 roStatus TokenStream::consumeToken(roSize count)
 {
 	roStatus st;
-	if(_lookAheadBuf.size() <= count + _tokenPosStack.back()) {
+	if(_lookAheadBuf.size() < count + _tokenPosStack.back()) {
 		Lexer::Token dummy;
 		st = lookAhead(count, dummy);
 		if(!st) return st;
@@ -308,6 +351,34 @@ roStatus TokenStream::lookAhead(roSize offset, Lexer::Token& token)
 	}
 
 	token = _lookAheadBuf[_tokenPosStack.back() + offset];
+	return roStatus::ok;
+}
+
+roStatus TokenStream::seekToMatchingEndToken()
+{
+	if(_lookAheadBuf.isEmpty())
+		return roStatus::not_found;
+
+	if(_lexer._stateStack.isEmpty())
+		return roStatus::end_of_data;
+
+	if(_lookAheadBuf.size() < 1 + _tokenPosStack.back())	// Ensure there is a current token
+		return roStatus::not_found;
+
+	_lexer.pushState();
+	Token current;
+	currentToken(current);
+	_lexer._stateStack.back().begin = current.value.begin;
+	roStatus st = _lexer.seekToMatchingEndToken();
+	if(!st) {
+		_lexer.restoreState();
+		return st;
+	}
+
+	// Consume the opening token
+	roVerify(consumeToken(_lookAheadBuf.back().token));
+
+	_lexer.discardState();
 	return roStatus::ok;
 }
 

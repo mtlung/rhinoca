@@ -59,7 +59,7 @@ TEST_FIXTURE(StringFormatTest, printf)
 	str.clear(); strFormat(str, "0x{}", (void*)0x1234ABCD);			CHECK(str == "0x1234ABCD");
 	str.clear(); strFormat(str, "0x{}", (const void*)0x1234ABCD);	CHECK(str == "0x1234ABCD");
 
-	str.clear(); strFormat(str, "{} {} {} {} {} {} {} {} {} {}",
+	str.clear(); strFormat(str, "{} {} {} {} {} {} {} {} {}",
 		TypeOf<roInt8>::valueMax(),
 		TypeOf<roInt16>::valueMax(),
 		TypeOf<roInt32>::valueMax(),
@@ -68,10 +68,9 @@ TEST_FIXTURE(StringFormatTest, printf)
 		TypeOf<roInt16>::valueMax(),
 		TypeOf<roInt32>::valueMax(),
 		TypeOf<roInt64>::valueMax(),
-		1.23456f,
-		1.23456
+		1.23
 	);
-	CHECK(str == "127 32767 2147483647 9223372036854775807 127 32767 2147483647 9223372036854775807 1.23 1.23");
+	CHECK(str == "127 32767 2147483647 9223372036854775807 127 32767 2147483647 9223372036854775807 1.23");
 
 	str.clear(); strFormat(str, "{} {}", "Hello world!", 123);
 	CHECK(str == "Hello world! 123");
