@@ -1,3 +1,89 @@
+//////////////////////////////////////////////////////////////////////////
+// Const overloads
+
+inline const char* roStrChr(const char* sz, char ch)
+{
+	return roStrChr((char*)sz, ch);
+}
+
+inline const char* roStrrChr(const char* begin, char ch, const char* end=NULL)
+{
+	return roStrrChr((char*)begin, ch, (char*)end);
+}
+
+inline const char* roStrChrCase(const char* sz, char ch)
+{
+	return roStrChrCase((char*)sz, ch);
+}
+
+inline const char* roStrrChrCase(const char* begin, char ch, const char* end=NULL)
+{
+	return roStrrChrCase((char*)begin, ch, (char*)end);
+}
+
+inline const char* roStrChr(const char* sz, const char* ch)
+{
+	return roStrChr((char*)sz, ch);
+}
+
+inline const char* roStrrChr(const char* begin, const char* ch, const char* end=NULL)
+{
+	return roStrrChr((char*)begin, ch, (char*)end);
+}
+
+inline const char* roStrChrCase(const char* sz, const char* ch)
+{
+	return roStrChrCase((char*)sz, ch);
+}
+
+inline const char* roStrrChrCase(const char* begin, const char* ch, const char* end=NULL)
+{
+	return roStrrChrCase((char*)begin, ch, (char*)end);
+}
+
+inline const char* roStrStr(const char* a, const char* b)
+{
+	return roStrStr((char*)a, b);
+}
+
+inline const char* roStrStr(const char* a, const char* aEnd, const char* b)
+{
+	return roStrStr((char*)a, aEnd, b);
+}
+
+inline const char* roStrnStr(const char* a, roSize aLen, const char* b)
+{
+	return roStrnStr((char*)a, aLen, b);
+}
+
+inline const char* roStrrStr(const char* a, const char* b)
+{
+	return roStrrStr((char*)a, b);
+}
+
+inline const char* roStrrnStr(const char* a, roSize aLen, const char* b)
+{
+	return roStrrnStr((char*)a, aLen, b);
+}
+
+inline const char* roStrStrCase(const char* a, const char* b)
+{
+	return roStrStrCase((char*)a, b);
+}
+
+inline const char* roStrStrCase(const char* a, const char* aEnd, const char* b)
+{
+	return roStrStrCase((char*)a, aEnd, b);
+}
+
+inline const char* roStrnStrCase(const char* a, roSize aLen, const char* b)
+{
+	return roStrnStrCase((char*)a, aLen, b);
+}
+
+//////////////////////////////////////////////////////////////////////////
+// Inline implementations
+
 inline roSize roStrLen(const roUtf8* str)
 {
 	if(!str) return 0;
@@ -127,12 +213,12 @@ inline char* roStrChr(char* sz, char ch)
 	return NULL;
 }
 
-inline char* roStrrChr(char* sz, char ch)
+inline char* roStrrChr(char* begin, char ch, char* end)
 {
-	roSize len = roStrLen(sz);
-	if(len == 0) return NULL;
-	char* s = &sz[len - 1];
-	for( ; s > sz; --s) {
+	if(!end) end = begin + roStrLen(begin);
+	if(begin >= end) return NULL;
+	char* s = end;
+	for( ; (--s) >= begin; ) {
 		if(*s == ch) return s;
 	}
 	return NULL;
@@ -147,76 +233,54 @@ inline char* roStrChrCase(char* sz, char ch)
 	return NULL;
 }
 
-inline char* roStrrChrCase(char* sz, char ch)
+inline char* roStrrChrCase(char* begin, char ch, char* end)
 {
-	roSize len = roStrLen(sz);
-	if(len == 0) return NULL;
-	char* s = &sz[len - 1];
+	if(!end) end = begin + roStrLen(begin);
+	if(begin >= end) return NULL;
+	char* s = end;
 	char c = roToLower(ch);
-	for( ; s > sz; --s) {
+	for( ; (--s) >= begin; ) {
 		if(roToLower(*s) == c) return s;
 	}
 	return NULL;
 }
 
-inline const char* roStrChr(const char* sz, char ch)
+inline char* roStrChr(char* sz, const char* ch)
 {
-	return roStrChr((char*)sz, ch);
+	for( ; *sz; ++sz) {
+		if(roStrChr(ch, *sz)) return sz;
+	}
+	return NULL;
 }
 
-inline const char* roStrrChr(const char* sz, char ch)
+inline char* roStrrChr(char* begin, const char* ch, char* end)
 {
-	return roStrrChr((char*)sz, ch);
+	if(!end) end = begin + roStrLen(begin);
+	if(begin >= end) return NULL;
+	char* s = end;
+	for( ; (--s) >= begin; ) {
+		if(roStrChr(ch, *s)) return s;
+	}
+	return NULL;
 }
 
-inline const char* roStrChrCase(const char* sz, char ch)
+inline char* roStrChrCase(char* sz, const char* ch)
 {
-	return roStrChrCase((char*)sz, ch);
+	for( ; *sz; ++sz) {
+		if(roStrChrCase(ch, *sz)) return sz;
+	}
+	return NULL;
 }
 
-inline const char* roStrrChrCase(const char* sz, char ch)
+inline char* roStrrChrCase(char* begin, const char* ch, char* end)
 {
-	return roStrrChrCase((char*)sz, ch);
-}
-
-inline const char* roStrStr(const char* a, const char* b)
-{
-	return roStrStr((char*)a, b);
-}
-
-inline const char* roStrStr(const char* a, const char* aEnd, const char* b)
-{
-	return roStrStr((char*)a, aEnd, b);
-}
-
-inline const char* roStrnStr(const char* a, roSize aLen, const char* b)
-{
-	return roStrnStr((char*)a, aLen, b);
-}
-
-inline const char* roStrrStr(const char* a, const char* b)
-{
-	return roStrrStr((char*)a, b);
-}
-
-inline const char* roStrrnStr(const char* a, roSize aLen, const char* b)
-{
-	return roStrrnStr((char*)a, aLen, b);
-}
-
-inline const char* roStrStrCase(const char* a, const char* b)
-{
-	return roStrStrCase((char*)a, b);
-}
-
-inline const char* roStrStrCase(const char* a, const char* aEnd, const char* b)
-{
-	return roStrStrCase((char*)a, aEnd, b);
-}
-
-inline const char* roStrnStrCase(const char* a, roSize aLen, const char* b)
-{
-	return roStrnStrCase((char*)a, aLen, b);
+	if(!end) end = begin + roStrLen(begin);
+	if(begin >= end) return NULL;
+	char* s = end;
+	for( ; (--s) >= begin; ) {
+		if(roStrChrCase(ch, *s)) return s;
+	}
+	return NULL;
 }
 
 // Borrowed from http://code.google.com/p/stringencoders/source/browse/trunk/src/modp_ascii.c

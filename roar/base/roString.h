@@ -116,33 +116,35 @@ struct RangedString
 	String		toString() const;
 	operator	String();
 
-	roSize		find		(char c, roSize offset=0) const;
-	roSize		find		(const char* str, roSize offset=0) const;
-	roSize		rfind		(char c, roSize offset=npos) const;				// Offset is count from begin not end
-	roSize		rfind		(const char* str, roSize offset=npos) const;	//
+	roSize		find			(char c, roSize offset=0) const;
+	roSize		find			(const char* str, roSize offset=0) const;
+	roSize		rfind			(char c, roSize offset=npos) const;				// Offset is count from begin not end
+	roSize		rfind			(const char* str, roSize offset=npos) const;	//
 
-	roSize		size		() const	{ return end - begin; }
-	bool		isEmpty		() const	{ return end <= begin; }
+	roSize		size			() const	{ return end - begin; }
+	bool		isEmpty			() const	{ return end <= begin; }
 
-	void		clear		() { begin = end = NULL; }
+	void		clear			() { begin = end = NULL; }
 
-	int			cmpCase		(const char* str) const;
-	int			cmpNoCase	(const char* str) const;
+	int			cmpCase			(const char* str) const;
+	int			cmpNoCase		(const char* str) const;
 
-	bool		operator==	(const char* rhs) const;
-	bool		operator==	(const String& rhs) const;
-	bool		operator==	(const RangedString& rhs) const;
-	bool		operator!=	(const char* rhs) const		{ return !(*this == rhs); }
-	bool		operator!=	(const String& rhs) const	{ return !(*this == rhs); }
-	bool		operator!=	(const RangedString& rhs) const	{ return !(*this == rhs); }
-	bool		operator<	(const RangedString& rhs) const;
-	bool		operator<=	(const RangedString& rhs) const { return (*this < rhs) || (*this == rhs); }
-	bool		operator>	(const RangedString& rhs) const { return !(*this < rhs) && (*this != rhs); }
+	bool		operator==		(const char* rhs) const;
+	bool		operator==		(const String& rhs) const;
+	bool		operator==		(const RangedString& rhs) const;
+	bool		operator!=		(const char* rhs) const		{ return !(*this == rhs); }
+	bool		operator!=		(const String& rhs) const	{ return !(*this == rhs); }
+	bool		operator!=		(const RangedString& rhs) const	{ return !(*this == rhs); }
+	bool		operator<		(const RangedString& rhs) const;
+	bool		operator<=		(const RangedString& rhs) const { return (*this < rhs) || (*this == rhs); }
+	bool		operator>		(const RangedString& rhs) const { return !(*this < rhs) && (*this != rhs); }
 
-	bool		isInRange	(roPtrInt i) const		{ return i >= 0 && roSize(i) < size(); }
-	bool		isInRange	(roSize i) const	{ return i < size(); }
+	bool		isInRange		(roPtrInt i) const		{ return i >= 0 && roSize(i) < size(); }
+	bool		isInRange		(roSize i) const		{ return i < size(); }
 
-	const roUtf8& operator[](roSize index) const { roAssert(index < size()); return begin[index]; }
+	bool		isSubstringOf	(const RangedString& srcStr) const	{ return (begin >= srcStr.begin && end <= srcStr.end); }
+
+	const roUtf8& operator[]	(roSize index) const	{ roAssert(index < size()); return begin[index]; }
 
 	static const roSize npos = roSize(-1);
 

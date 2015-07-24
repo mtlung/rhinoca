@@ -21,9 +21,14 @@ inline int		roStrnCaseCmp		(const char* s1, roSize n1, const char* s2, roSize n2
 inline int		roStrCaseCmpMinLen	(const char* s1, const char* s2);
 
 inline char*	roStrChr			(char* sz, char ch);
-inline char*	roStrrChr			(char* sz, char ch);
+inline char*	roStrrChr			(char* begin, char ch, char* end=NULL);
 inline char*	roStrChrCase		(char* sz, char ch);
-inline char*	roStrrChrCase		(char* sz, char ch);
+inline char*	roStrrChrCase		(char* begin, char ch, char* end=NULL);
+
+inline char*	roStrChr			(char* sz, const char* ch);					// roStrChr("Find white space char", "\n\r \t")
+inline char*	roStrrChr			(char* begin, const char* ch, char* end=NULL);
+inline char*	roStrChrCase		(char* sz, const char* ch);
+inline char*	roStrrChrCase		(char* begin, const char* ch, char* end=NULL);
 
 char*			roStrStr			(char* a, const char* b);					// roStrChr("This is a simple string", "simple")
 char*			roStrStr			(char* a, const char* aEnd, const char* b);

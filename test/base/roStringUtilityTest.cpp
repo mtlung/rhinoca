@@ -195,13 +195,16 @@ TEST_FIXTURE(StringUtilityTest, toString)
 TEST_FIXTURE(StringUtilityTest, strcmp)
 {
 	// Strcmp
+	CHECK(roStrCmp("", "") == 0);
 	CHECK(roStrCmp("A", "A") == 0);
 	CHECK(roStrCmp("AB", "AB") == 0);
 
+	CHECK(roStrCmp("", "B") < 0);
 	CHECK(roStrCmp("A", "B") < 0);
 	CHECK(roStrCmp("A", "AB") < 0);
 	CHECK(roStrCmp("AB", "AC") < 0);
 
+	CHECK(roStrCmp("B", "") > 0);
 	CHECK(roStrCmp("B", "A") > 0);
 	CHECK(roStrCmp("AB", "A") > 0);
 	CHECK(roStrCmp("AC", "AB") > 0);
@@ -265,4 +268,71 @@ TEST_FIXTURE(StringUtilityTest, strcmp)
 	CHECK(roStrCmpMinLen("BA", "B") == 0);			CHECK(roStrCaseCmpMinLen("aB", "a") == 0);
 	CHECK(roStrCmpMinLen("A", "B") < 0);			CHECK(roStrCaseCmpMinLen("a", "B") < 0);
 	CHECK(roStrCmpMinLen("B", "A") > 0);			CHECK(roStrCaseCmpMinLen("B", "a") > 0);
+}
+
+TEST_FIXTURE(StringUtilityTest, roStrChr)
+{
+	// roStrChr
+	CHECK(!roStrChr("", 'A'));
+	CHECK(!roStrChr("C", 'A'));
+	CHECK(*roStrChr("A", 'A') == 'A');
+	CHECK(*roStrChr("BA", 'A') == 'A');
+
+	// roStrChrCase
+	CHECK(!roStrChrCase("", 'a'));
+	CHECK(!roStrChrCase("C", 'a'));
+	CHECK(*roStrChrCase("A", 'a') == 'A');
+	CHECK(*roStrChrCase("BA", 'a') == 'A');
+
+	// roStrrChr
+	{	const char* data = "";		CHECK(!roStrrChr(data, 'A'));	}
+	{	const char* data = "C";		CHECK(!roStrrChr(data, 'A'));	}
+	{	const char* data = "A";		CHECK(*roStrrChr(data, 'A') == 'A');	}
+	{	const char* data = "BA";	CHECK(*roStrrChr(data, 'A') == 'A');	}
+	{	const char* data = "";		CHECK(!roStrrChr(data, 'A', data + 0));	}
+	{	const char* data = "C";		CHECK(!roStrrChr(data, 'A', data + 1));	}
+	{	const char* data = "A";		CHECK(*roStrrChr(data, 'A', data + 1) == 'A');	}
+	{	const char* data = "BA";	CHECK(*roStrrChr(data, 'A', data + 2) == 'A');	}
+
+	// roStrrChrCase
+	{	const char* data = "";		CHECK(!roStrrChrCase(data, 'a'));	}
+	{	const char* data = "C";		CHECK(!roStrrChrCase(data, 'a'));	}
+	{	const char* data = "A";		CHECK(*roStrrChrCase(data, 'a') == 'A');	}
+	{	const char* data = "BA";	CHECK(*roStrrChrCase(data, 'a') == 'A');	}
+	{	const char* data = "";		CHECK(!roStrrChrCase(data, 'a', data + 0));	}
+	{	const char* data = "C";		CHECK(!roStrrChrCase(data, 'a', data + 1));	}
+	{	const char* data = "A";		CHECK(*roStrrChrCase(data, 'a', data + 1) == 'A');	}
+	{	const char* data = "BA";	CHECK(*roStrrChrCase(data, 'a', data + 2) == 'A');	}
+
+	// roStrChr list
+	CHECK(!roStrChr("", "AB"));
+	CHECK(!roStrChr("C", "AB"));
+	CHECK(*roStrChr("A", "AB") == 'A');
+	CHECK(*roStrChr("B", "AB") == 'B');
+
+	// roStrChrCase list
+	CHECK(!roStrChrCase("", "ab"));
+	CHECK(!roStrChrCase("C", "ab"));
+	CHECK(*roStrChrCase("A", "ab") == 'A');
+	CHECK(*roStrChrCase("B", "ab") == 'B');
+
+	// roStrrChr list
+	{	const char* data = "";		CHECK(!roStrrChr(data, "AB"));	}
+	{	const char* data = "C";		CHECK(!roStrrChr(data, "AB"));	}
+	{	const char* data = "A";		CHECK(*roStrrChr(data, "AB") == 'A');	}
+	{	const char* data = "BA";	CHECK(*roStrrChr(data, "AB") == 'A');	}
+	{	const char* data = "";		CHECK(!roStrrChr(data, "AB", data + 0));	}
+	{	const char* data = "C";		CHECK(!roStrrChr(data, "AB", data + 1));	}
+	{	const char* data = "A";		CHECK(*roStrrChr(data, "AB", data + 1) == 'A');	}
+	{	const char* data = "BA";	CHECK(*roStrrChr(data, "AB", data + 2) == 'A');	}
+
+	// roStrrChrCase list
+	{	const char* data = "";		CHECK(!roStrrChrCase(data, "ab"));	}
+	{	const char* data = "C";		CHECK(!roStrrChrCase(data, "ab"));	}
+	{	const char* data = "A";		CHECK(*roStrrChrCase(data, "ab") == 'A');	}
+	{	const char* data = "BA";	CHECK(*roStrrChrCase(data, "ab") == 'A');	}
+	{	const char* data = "";		CHECK(!roStrrChrCase(data, "ab", data + 0));	}
+	{	const char* data = "C";		CHECK(!roStrrChrCase(data, "ab", data + 1));	}
+	{	const char* data = "A";		CHECK(*roStrrChrCase(data, "ab", data + 1) == 'A');	}
+	{	const char* data = "BA";	CHECK(*roStrrChrCase(data, "ab", data + 2) == 'A');	}
 }
