@@ -307,6 +307,36 @@ public:
 #endif
 };	// ConstStrideArray
 
+// Stack adapter for IArray
+template<class IAry>
+struct Stack : public IAry
+{
+	typedef typename IAry::T T;
+
+	Status		push(const T& val=T())		{ return IAry::pushBack(val); }
+	Status		pushUnique(const T& val)	{ return IAry::insertUnique(size(), val); }
+	void		pop()						{ IAry::popBack(); }
+
+protected:
+	// Hide selected functions
+	Status		pushBack(const T& val=T());
+	Status		pushBack(const T* srcBegin, roSize count);
+	Status		pushBackBySwap(const T& val);
+	Status		insert(roSize atIdx, const T& val);
+	Status		insert(roSize atIdx, const T* srcBegin, roSize count);
+	Status		insert(roSize atIdx, const T* srcBegin, const T* srcEnd);
+	Status		insertUnique(roSize atIdx, const T& val);
+	Status		insertSorted(const T& val);
+	Status		insertSorted(const T& val, bool(*less)(const T&, const T&));
+
+	void		popBack();
+	void		remove(const T& ele);
+	void		removeAt(roSize i);
+	void		removeAt(roSize i, roSize count);
+	void		removeBySwap(const T& ele);
+	void		removeBySwapAt(roSize i);
+};	// Stack
+
 }	// namespace ro
 
 #endif	// __roArray_h__
