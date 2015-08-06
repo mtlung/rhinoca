@@ -31,7 +31,10 @@ TEST_FIXTURE(LexerTest, basic)
 			return inout.begin - org.begin >= (sizeof(min) - 1);
 		}
 	};
-	lexer.registerCustomRule("Comment", LocalScope::matchComment, NULL);
+	lexer.registerCustomRule("MLComment", LocalScope::matchComment, NULL);
+
+	lexer.registerRegexRule("Comment",
+		"{SLComment}|{MLComment}");
 
 	lexer.registerRegexRule("WhiteSpace",
 		"[ \t\n\r]+");
@@ -48,7 +51,7 @@ TEST_FIXTURE(LexerTest, basic)
 		"\\.[0-9]+{FloatExponent}?"
 	);
 
-	lexer.registerRegexRule("Comment",
+	lexer.registerRegexRule("SLComment",
 		"//[^\r\n]*");
 
 	lexer.registerRegexRule("Identifier",

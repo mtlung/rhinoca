@@ -12,10 +12,11 @@ namespace ro {
 struct Lexer
 {
 	struct LineInfo {
-		LineInfo() { l1 = l2 = c1 = c2 = p1 = p2 = 0; }
-		roSize l1, l2;	// Line begin/end
-		roSize c1, c2;	// Column begin/end
-		roSize p1, p2;	// Position from beginning of string
+		LineInfo() { l1 = l2 = c1 = c2 = 0; p1 = p2 = lp1 = lp2 = 0; }
+		roUint32 l1, l2;	// Line begin/end
+		roUint32 c1, c2;	// Column begin/end
+		roSize p1, p2;		// Absolution character position from beginning of string
+		roSize lp1, lp2;	// Absolution character position of the line
 	};
 
 	struct Token {
@@ -35,6 +36,7 @@ struct Lexer
 	roStatus registerMatchingEndToken(MatchingEndTokenFunc matchingEndTokenFunc, void* userData=NULL);
 
 	roStatus beginParse(const RangedString& source);	// Please make sure source string not deleted before endParse()
+	roStatus beginParse(const RangedString& source, const RangedString& subStrInSource);
 	roStatus nextToken(Token& token);
 	roStatus seekToMatchingEndToken();	// Find the matched end position of the current token, for instance () {} [] etc...
 	roStatus endParse();
@@ -42,6 +44,8 @@ struct Lexer
 	void pushState();		// Save current state on stack
 	void restoreState();	// Restore the saved state
 	void discardState();	// Discard the saved state
+
+	roStatus updateLineInfo(Token& token);	// Calculate line number and column number base on absolute character position
 
 // Private:
 	struct IRule : public MapNode<String, IRule> {
@@ -57,10 +61,11 @@ struct Lexer
 	Map<IRule> _rules;
 	LinkList<IRule::OrderedListNode> _ruleOrderedList;	// For ordered iteration
 
-	MatchingEndTokenFunc	_matchingEndTokenFunc;
-	void*					_matchingEndTokenUserData;
+	MatchingEndTokenFunc			_matchingEndTokenFunc;
+	void*							_matchingEndTokenUserData;
 
-	Array<RangedString> _stateStack;
+	RangedString					_srcString;
+	Stack<Array<RangedString> >		_stateStack;
 };	// Lexer
 
 struct TokenStream
@@ -68,6 +73,7 @@ struct TokenStream
 	typedef Lexer::Token Token;
 
 	roStatus	beginParse(const RangedString& source);	// Please make sure source string not deleted before endParse()
+	roStatus	beginParse(const RangedString& source, const RangedString& subStrInSource);
 	roStatus	consumeToken(roSize count=1);
 	bool		consumeToken(const RangedString& token);
 	roStatus	currentToken(Lexer::Token& token);
@@ -90,8 +96,8 @@ struct TokenStream
 	Array<String> tokenToIgnore;
 
 	Lexer _lexer;
-	Array<Lexer::Token> _lookAheadBuf;
-	Array<roSize> _tokenPosStack;
+	Stack<Array<Lexer::Token> > _lookAheadBuf;
+	Stack<Array<roSize> >		_tokenPosStack;
 };	// TokenStream
 
 }	// namespace ro

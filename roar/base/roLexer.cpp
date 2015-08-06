@@ -1,14 +1,78 @@
 #include "pch.h"
 #include "roLexer.h"
-#include "../base/roStringFormat.h"
 #include "../base/roAlgorithm.h"
+#include "../base/roStringFormat.h"
+#include "../base/roTypeCast.h"
 
 namespace ro {
 
 roStatus Lexer::beginParse(const RangedString& source)
 {
-	_stateStack.clear();
-	_stateStack.pushBack(source);
+	roAssert(_stateStack.isEmpty());
+	_srcString = source;
+	return _stateStack.push(source);
+}
+
+roStatus Lexer::beginParse(const RangedString& source, const RangedString& subStrInSource)
+{
+	if(!subStrInSource.isSubstringOf(source))
+		return roStatus::invalid_parameter;
+
+	roAssert(_stateStack.isEmpty());
+	_srcString = source;
+	return _stateStack.push(subStrInSource);
+}
+
+roStatus Lexer::updateLineInfo(Token& token)
+{
+	if(!token.value.isSubstringOf(_srcString))
+		return roStatus::invalid_parameter;
+
+	if(num_cast<roSize>(token.value.begin - _srcString.begin) != token.lineInfo.p2) {
+		// Search from current p1
+		for(const roUtf8* i = _srcString.begin + token.lineInfo.p1, *e = token.value.begin; i < e; ++i) {
+			++token.lineInfo.p1;
+			if(*i == '\n') {
+				++token.lineInfo.l1;
+				token.lineInfo.c1 = 0;
+				token.lineInfo.lp1 = token.lineInfo.p1;
+			}
+			else if(*i == '\r') {
+				token.lineInfo.c1 = 0;
+				token.lineInfo.lp1 = token.lineInfo.p1;
+			}
+			else
+				++token.lineInfo.c1;
+		}
+
+		token.lineInfo.l2 = token.lineInfo.l1;
+		token.lineInfo.c2 = token.lineInfo.c1;
+		token.lineInfo.p2 = token.lineInfo.p1;
+		token.lineInfo.lp2 = token.lineInfo.lp1;
+	}
+	else {
+		// It's a partial update, we need a previous token.lineInfo.l2 to set up correctly
+		token.lineInfo.l1 = token.lineInfo.l2;
+		token.lineInfo.c1 = token.lineInfo.c2;
+		token.lineInfo.p1 = token.lineInfo.p2;
+		token.lineInfo.lp1 = token.lineInfo.lp2;
+	}
+
+	for(roSize i=0; i<token.value.size(); ++i) {
+		++token.lineInfo.p2;
+		if(token.value[i] == '\n') {
+			++token.lineInfo.l2;
+			token.lineInfo.c2 = 0;
+			token.lineInfo.lp2 = token.lineInfo.p2;
+		}
+		else if(token.value[i] == '\r') {
+			token.lineInfo.c2 = 0;
+			token.lineInfo.lp2 = token.lineInfo.p2;
+		}
+		else
+			++token.lineInfo.c2;
+	}
+
 	return roStatus::ok;
 }
 
@@ -51,24 +115,10 @@ roStatus Lexer::nextToken(Token& token)// RangedString& token, RangedString& val
 		token.value = i.value;
 	}
 
-	// Line, position counting
-	token.lineInfo.l1 = token.lineInfo.l2;
-	token.lineInfo.c1 = token.lineInfo.c2;
-	token.lineInfo.p1 = token.lineInfo.p2;
-	for(roSize i=0; i<token.value.size(); ++i) {
-		++token.lineInfo.p2;
-		if(token.value[i] == '\n') {
-			++token.lineInfo.l2;
-			token.lineInfo.c2 = 0;
-		}
-		else if(token.value[i] == '\r')
-			token.lineInfo.c2 = 0;
-		else
-			++token.lineInfo.c2;
-	}
-
 	if(longest.isEmpty())
 		return roStatus::end_of_data;
+
+	roVerify(updateLineInfo(token));
 
 	src.begin = token.value.end;
 	return roStatus::ok;
@@ -100,7 +150,7 @@ roEXCP_TRY
 	restoreState();
 	_stateStack.back() = output;
 
-	roAssert(output.begin >= src.begin && output.end <= src.end);
+	roAssert(output.isSubstringOf(src));
 
 	return st;
 
@@ -112,24 +162,26 @@ roEXCP_END
 
 roStatus Lexer::endParse()
 {
+	_stateStack.pop();
+	roAssert(_stateStack.isEmpty());
 	return roStatus::ok;
 }
 
 void Lexer::pushState()
 {
 	RangedString cur = _stateStack.back();
-	_stateStack.pushBack(cur);
+	_stateStack.push(cur);
 }
 
 void Lexer::restoreState()
 {
-	_stateStack.popBack();
+	_stateStack.pop();
 }
 
 void Lexer::discardState()
 {
 	RangedString cur = _stateStack.back();
-	_stateStack.popBack();
+	_stateStack.pop();
 	_stateStack.back() = cur;
 }
 
@@ -301,9 +353,19 @@ roStatus Lexer::registerMatchingEndToken(MatchingEndTokenFunc matchingEndTokenFu
 roStatus TokenStream::beginParse(const RangedString& source)
 {
 	_lookAheadBuf.clear();
-	roStatus st = _tokenPosStack.resize(1, 0);
+	roStatus st = _tokenPosStack.resize(1);
+	_tokenPosStack.back() = 0;
 	if(!st) return st;
 	return _lexer.beginParse(source);
+}
+
+roStatus TokenStream::beginParse(const RangedString& source, const RangedString& subStrInSource)
+{
+	_lookAheadBuf.clear();
+	roStatus st = _tokenPosStack.resize(1);
+	_tokenPosStack.back() = 0;
+	if(!st) return st;
+	return _lexer.beginParse(source, subStrInSource);
 }
 
 roStatus TokenStream::consumeToken(roSize count)
@@ -346,7 +408,7 @@ roStatus TokenStream::lookAhead(roSize offset, Lexer::Token& token)
 		if(skip)
 			continue;
 
-		st = _lookAheadBuf.pushBack(t);
+		st = _lookAheadBuf.push(t);
 		if(!st) return st;
 	}
 
@@ -410,18 +472,18 @@ bool TokenStream::consumeToken(const RangedString& token)
 void TokenStream::pushState()
 {
 	roSize pos = _tokenPosStack.back();
-	_tokenPosStack.pushBack(pos);
+	_tokenPosStack.push(pos);
 }
 
 void TokenStream::restoreState()
 {
-	_tokenPosStack.popBack();
+	_tokenPosStack.pop();
 }
 
 void TokenStream::discardState()
 {
 	roSize pos = _tokenPosStack.back();
-	_tokenPosStack.popBack();
+	_tokenPosStack.pop();
 	_tokenPosStack.back() = pos;
 }
 
