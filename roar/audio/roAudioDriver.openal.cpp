@@ -163,8 +163,9 @@ void AudioBuffer::addSubBuffer(unsigned pcmPosition, const char* data, roSize si
 	i = roMinOf2(i, subBuffers.size()-1);
 
 	// Trim begin
-	if(subBuffers.isInRange(i) && pcmBegin < subBuffers[i].posEnd) {
+	if(subBuffers.isInRange(i) && pcmBegin > subBuffers[i].posBegin && pcmBegin < subBuffers[i].posEnd) {
 		roSize sizeToTrim = format.blockAlignment * (subBuffers[i].posEnd - pcmBegin);
+		sizeToTrim = roMinOf2(sizeToTrim, sizeInByte);
 		data += sizeToTrim;
 		sizeInByte -= sizeToTrim;
 		pcmBegin = subBuffers[i].posEnd;
@@ -172,9 +173,15 @@ void AudioBuffer::addSubBuffer(unsigned pcmPosition, const char* data, roSize si
 
 	// Trim end
 	if(i < j && subBuffers.isInRange(j) && pcmEnd > subBuffers[j].posBegin) {
-		sizeInByte -= format.blockAlignment * (pcmEnd - subBuffers[j].posBegin);
+		roSize sizeToTrim = format.blockAlignment * (pcmEnd - subBuffers[j].posBegin);
+		roAssert(sizeInByte >= sizeToTrim);
+		sizeInByte -= sizeToTrim;
 		pcmEnd = subBuffers[j].posBegin;
 	}
+
+	// Seems OpenAL wont happen with zero sized data
+	if(sizeInByte == 0)
+		return;
 
 	SubBuffer subBuffer = { pcmBegin, pcmEnd, 1, 0 };
 	alGenBuffers(1, &subBuffer.handle);
@@ -458,6 +465,9 @@ static void _soundSourceSeekPos(roADriverSoundSource* self, float time)
 		alSourceUnqueueBuffers(impl->handle, 1, &i.handle);
 	impl->queuedSubBuffers.clear();
 
+	impl->audioBuffer->subBuffers.clear();
+
+//	self->
 	// Call alSourceRewind() to make the sound go though the AL_INITIAL state
 //	alSourceRewind(impl->handle);
 

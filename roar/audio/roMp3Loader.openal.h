@@ -21,7 +21,7 @@ struct Mp3Loader : public AudioLoader
 		roAssert(mpg);
 
 //		mpg123_param(mpg, MPG123_VERBOSE, 4, 0);
-		roVerify(mpg123_param(mpg, MPG123_FLAGS, MPG123_FUZZY | MPG123_SEEKBUFFER, 0) == MPG123_OK);
+		roVerify(mpg123_param(mpg, MPG123_FLAGS, MPG123_SEEKBUFFER, 0) == MPG123_OK);
 
 		// Let the seek index auto-grow and contain an entry for every frame
 		roVerify(mpg123_param(mpg, MPG123_INDEX_SIZE, -1, 0) == MPG123_OK);
@@ -223,8 +223,7 @@ roEXCP_TRY
 
 	// Condition for EOF
 	if(mpgRet == MPG123_DONE || (mpgRet == MPG123_NEED_MORE && st == Status::file_ended)) {
-		format.totalSamples = format.estimatedSamples = mpg123_tell(mpg);
-		curPcmPos;
+		format.totalSamples = format.estimatedSamples = curPcmPos = mpg123_tell(mpg);
 	}
 
 	roAssert(decodeBytes <= pcmData.sizeInByte());

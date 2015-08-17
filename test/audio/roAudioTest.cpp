@@ -47,7 +47,7 @@ TEST_FIXTURE(AudioTest, soundSource)
 
 		TaskPool::sleep(10);
 
-		printf("%f\n", driver->soundSourceTellPos(sound));
+		roLog("info", "%f\n", driver->soundSourceTellPos(sound));
 		subSystems.tick();
 	}
 
