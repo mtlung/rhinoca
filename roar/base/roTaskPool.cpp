@@ -418,9 +418,13 @@ void TaskPool::suspend(TaskId id)
 void TaskPool::resume(TaskId id)
 {
 	ScopeLock lock(condVar);
-	if(TaskProxy* p = _findProxyById(id))
+	if(TaskProxy* p = _findProxyById(id)) {
 		if(p->suspensionCount > 0)
 			p->suspensionCount--;
+
+//		if(p->suspensionCount == 0)
+//			condVar.broadcast();
+	}
 }
 
 void TaskPool::doSomeTask(float timeout)

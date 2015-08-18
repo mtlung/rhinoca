@@ -2,14 +2,7 @@
 #define __roStackWalker_h__
 
 #include "../platform/roCompiler.h"
-#include <WinNT.h>
-
-typedef size_t roSize;
-typedef __int32 roInt32;
-typedef unsigned __int8 roUint8;
-typedef unsigned __int16 roUint16;
-typedef unsigned __int32 roUint32;
-typedef unsigned __int64 roUint64;
+#include "../platform/roPlatformHeaders.h"
 
 //////////////////////////////////////////////////////////////////////////
 
