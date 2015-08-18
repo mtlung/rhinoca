@@ -100,11 +100,8 @@ struct AudioLoader : public Task, NonCopyable
 
 	void requestPcm(unsigned pcmPos)
 	{
-		if(!pcmRequest.find(pcmPos)) {
-			if(pcmRequest.isEmpty())
-				manager->taskPool->resume(audioBuffer->taskLoaded);
-			pcmRequest.pushBack(pcmPos);
-		}
+		pcmRequest.pushBackUnique(pcmPos);
+		manager->taskPool->resume(audioBuffer->taskLoaded);
 	}
 
 	void* stream;
@@ -163,7 +160,7 @@ void AudioBuffer::addSubBuffer(unsigned pcmPosition, const char* data, roSize si
 	i = roMinOf2(i, subBuffers.size()-1);
 
 	// Trim begin
-	if(subBuffers.isInRange(i) && pcmBegin > subBuffers[i].posBegin && pcmBegin < subBuffers[i].posEnd) {
+	if(subBuffers.isInRange(i) && pcmBegin >= subBuffers[i].posBegin && pcmBegin <= subBuffers[i].posEnd) {
 		roSize sizeToTrim = format.blockAlignment * (subBuffers[i].posEnd - pcmBegin);
 		sizeToTrim = roMinOf2(sizeToTrim, sizeInByte);
 		data += sizeToTrim;
@@ -172,7 +169,7 @@ void AudioBuffer::addSubBuffer(unsigned pcmPosition, const char* data, roSize si
 	}
 
 	// Trim end
-	if(i < j && subBuffers.isInRange(j) && pcmEnd > subBuffers[j].posBegin) {
+	if(i < j && subBuffers.isInRange(j) && pcmEnd >= subBuffers[j].posBegin) {
 		roSize sizeToTrim = format.blockAlignment * (pcmEnd - subBuffers[j].posBegin);
 		roAssert(sizeInByte >= sizeToTrim);
 		sizeInByte -= sizeToTrim;
