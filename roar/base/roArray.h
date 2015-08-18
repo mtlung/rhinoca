@@ -104,6 +104,7 @@ struct IArray
 	Status		pushBack(const T& val=T());
 	Status		pushBack(const T* srcBegin, roSize count);
 	Status		pushBackBySwap(const T& val);
+	Status		pushBackUnique(const T& val);
 	Status		insert(roSize atIdx, const T& val);
 	Status		insert(roSize atIdx, const T* srcBegin, roSize count);
 	Status		insert(roSize atIdx, const T* srcBegin, const T* srcEnd);
@@ -314,7 +315,7 @@ struct Stack : public IAry
 	typedef typename IAry::T T;
 
 	Status		push(const T& val=T())		{ return IAry::pushBack(val); }
-	Status		pushUnique(const T& val)	{ return IAry::insertUnique(size(), val); }
+	Status		pushUnique(const T& val)	{ return IAry::pushUnique(val); }
 	void		pop()						{ IAry::popBack(); }
 
 protected:

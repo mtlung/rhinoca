@@ -208,6 +208,12 @@ Status IArray<T>::pushBackBySwap(const T& val)
 }
 
 template<class T>
+Status IArray<T>::pushBackUnique(const T& val)
+{
+	return insertUnique(size(), val);
+}
+
+template<class T>
 Status IArray<T>::insert(roSize idx, const T& val)
 {
 	roAssert(idx <= _size);
