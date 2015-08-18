@@ -23,9 +23,6 @@ struct Mp3Loader : public AudioLoader
 //		mpg123_param(mpg, MPG123_VERBOSE, 4, 0);
 		roVerify(mpg123_param(mpg, MPG123_FLAGS, MPG123_SEEKBUFFER, 0) == MPG123_OK);
 
-		// Let the seek index auto-grow and contain an entry for every frame
-		roVerify(mpg123_param(mpg, MPG123_INDEX_SIZE, -1, 0) == MPG123_OK);
-
 		if(mpg123_open_feed(mpg) != MPG123_OK) {
 			roAssert(false);
 			nextFun = &Mp3Loader::abort;
@@ -215,14 +212,19 @@ roEXCP_TRY
 		roEXCP_THROW;
 	}
 
-	if(decodeBytes <= 0 && readCount > 0)
+	bool lastDataChunkNotEnoughForDecode = (readCount > 0 && readCount < _dataChunkSize);
+	if(mpgRet == MPG123_NEED_MORE && readCount > 0 && !lastDataChunkNotEnoughForDecode)
 		return reSchedule(false);
 
 	// If the "GAPLESS" option in mpg123 has been turned on, this assert may fail
 	roAssert(curPcmPos + decodeBytes / format.blockAlignment == num_cast<unsigned>(mpg123_tell(mpg)));
 
 	// Condition for EOF
-	if(mpgRet == MPG123_DONE || (mpgRet == MPG123_NEED_MORE && st == Status::file_ended)) {
+	if(mpgRet == MPG123_DONE ||
+		(mpgRet == MPG123_NEED_MORE &&
+			(st == Status::file_ended || lastDataChunkNotEnoughForDecode)
+		)
+	) {
 		format.totalSamples = format.estimatedSamples = curPcmPos = mpg123_tell(mpg);
 	}
 
