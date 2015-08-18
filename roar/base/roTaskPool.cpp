@@ -422,8 +422,8 @@ void TaskPool::resume(TaskId id)
 		if(p->suspensionCount > 0)
 			p->suspensionCount--;
 
-//		if(p->suspensionCount == 0)
-//			condVar.broadcast();
+		if(p->suspensionCount == 0)
+			condVar.broadcast();
 	}
 }
 
