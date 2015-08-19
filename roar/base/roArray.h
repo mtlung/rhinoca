@@ -317,6 +317,8 @@ struct Stack : public IAry
 	Status		push(const T& val=T())		{ return IAry::pushBack(val); }
 	Status		pushUnique(const T& val)	{ return IAry::pushUnique(val); }
 	void		pop()						{ IAry::popBack(); }
+	T&			top()						{ return IAry::back(); }
+	const T&	top() const					{ return IAry::back(); }
 
 protected:
 	// Hide selected functions
