@@ -56,6 +56,7 @@ void _strFormat_uint64ptr	(String& str, roUint64* val, const roUtf8* options);
 void _strFormat_utf8		(String& str, const roUtf8* val, const roUtf8* options);
 void _strFormat_str			(String& str, const String* val, const roUtf8* options);
 void _strFormat_rangedStr	(String& str, const RangedString* val, const roUtf8* options);
+void _strFormat_constStr	(String& str, const ConstString* val, const roUtf8* options);
 void _strFormat_pointer		(String& str, const void* val, const roUtf8* options);
 
 inline void* _strFormatFunc(roInt8 val) {
@@ -102,6 +103,9 @@ inline void* _strFormatFunc(const String& val) {
 }
 inline void* _strFormatFunc(const RangedString& val) {
 	return (void*)_strFormat_rangedStr;
+}
+inline void* _strFormatFunc(const ConstString& val) {
+	return (void*)_strFormat_constStr;
 }
 template <class T>
 inline void* _strFormatFunc(const T* val) {

@@ -190,6 +190,23 @@ void _strFormat_rangedStr(String& str, const RangedString* val, const roUtf8* op
 		str.append(padding, padLen - len);
 }
 
+void _strFormat_constStr(String& str, const ConstString* val, const roUtf8* options)
+{
+	if(!val) return;
+
+	roSize len = val->size();
+
+	roSize padLen = 0;
+	roUtf8 padding;
+	if(sscanf(options, "pl%u%c", &padLen, &padding) == 2 && padLen > len)
+		str.append(padding, padLen - len);
+
+	str.append(val->c_str(), len);
+
+	if(sscanf(options, "pr%u%c", &padLen, &padding) == 2 && padLen > len)
+		str.append(padding, padLen - len);
+}
+
 void _strFormat_pointer(String& str, const void* val, const roUtf8* options)
 {
 	roSize charCount = roToString(NULL, 0, val);
