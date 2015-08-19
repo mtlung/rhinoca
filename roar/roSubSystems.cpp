@@ -177,8 +177,10 @@ void SubSystems::tick()
 	if(taskPool)
 		taskPool->doSomeTask(1.0f / 100.0f);
 
-	if(resourceMgr)
+	if(resourceMgr) {
 		resourceMgr->tick();
+		resourceMgr->collectInfrequentlyUsed();
+	}
 
 	if(inputDriver)
 		inputDriver->tick(inputDriver);

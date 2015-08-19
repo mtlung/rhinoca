@@ -39,6 +39,8 @@ struct Resource
 	Resource* (*createFunc)(ResourceManager* mgr, const char* uri);
 	bool (*loadFunc)(ResourceManager*, Resource*);
 
+	virtual void updateHotness();
+
 	float hotness;	///!< For tracking resource usage and perform unload when resource is scarce
 
 	void* scratch;	///! Hold any temporary needed during loading

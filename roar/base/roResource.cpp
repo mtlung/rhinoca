@@ -3,6 +3,7 @@
 #include "roCpuProfiler.h"
 #include "roLog.h"
 #include "roMemory.h"
+#include "../math/roMath.h"
 
 namespace ro {
 
@@ -12,7 +13,7 @@ Resource::Resource(const char* p)
 	: state(NotLoaded)
 	, taskReady(0), taskLoaded(0)
 	, createFunc(NULL), loadFunc(NULL)
-	, hotness(0)
+	, hotness(1)
 	, scratch(NULL)
 {
 	setKey(p);
@@ -31,6 +32,15 @@ ConstString Resource::uri() const
 unsigned Resource::refCount() const
 {
 	return _refCount;
+}
+
+void Resource::updateHotness()
+{
+	if(hotness < roFLT_EPSILON &&
+		(state == Resource::Loaded || state == Resource::Aborted))
+	{
+		unload();
+	}
 }
 
 ResourceManager::ResourceManager()
@@ -132,7 +142,7 @@ ResourcePtr ResourceManager::load(Resource* r, LoadFunc loadFunc)
 			return NULL;
 		}
 
-		r->hotness = 1000;	// Give a relative hot value right after the resource is loaded
+		r->hotness = 1;	// Give a relative hot value right after the resource is loaded
 	}
 
 	return r;
@@ -157,7 +167,7 @@ void ResourceManager::tick()
 
 	// Every resource will get cooler on every update
 	for(Resource* r = _resources.findMin(); r != NULL; r = r->next()) {
-		r->hotness *= 0.5f;
+		r->hotness *= 0.9f;
 	}
 }
 
@@ -174,12 +184,7 @@ void ResourceManager::collectInfrequentlyUsed()
 			continue;
 		}
 
-		if(r->hotness < 0.00001f &&
-			(r->state == Resource::Loaded || r->state == Resource::Aborted))
-		{
-			r->unload();
-		}
-
+		r->updateHotness();
 		r = r->next();
 	}
 }

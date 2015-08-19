@@ -6,6 +6,7 @@
 #include "../base/roLog.h"
 #include "../base/roResource.h"
 #include "../base/roTypeCast.h"
+#include "../math/roMath.h"
 #include "../roSubSystems.h"
 
 #if defined(__APPLE__)
@@ -65,6 +66,8 @@ struct AudioBuffer : public ro::Resource
 
 	SubBuffer* findSubBuffer(unsigned pcmPosition);
 
+	void updateHotness() override;
+
 	struct Format {
 		unsigned channels;
 		unsigned samplesPerSecond;
@@ -120,8 +123,10 @@ AudioBuffer::AudioBuffer(const char* uri)
 
 AudioBuffer::~AudioBuffer()
 {
-	for(SubBuffer& i : subBuffers)
+	for(SubBuffer& i : subBuffers) {
 		alDeleteBuffers(1, &i.handle);
+		roAssert(alGetError() == AL_NO_ERROR && "The buffer might still in use");
+	}
 	delete loader;
 }
 
@@ -194,6 +199,28 @@ AudioBuffer::SubBuffer* AudioBuffer::findSubBuffer(unsigned pcmPosition)
 	}
 
 	return NULL;
+}
+
+void AudioBuffer::updateHotness()
+{
+	for(roSize i=0; i<subBuffers.size(); ) {
+		SubBuffer& s = subBuffers[i];
+		s.hotness *= 0.9f;
+		if(s.hotness <= roFLT_EPSILON) {
+			alDeleteBuffers(1, &s.handle);
+			ALenum err = alGetError();
+			if(err == AL_NO_ERROR)
+				subBuffers.removeAt(i);
+			else {
+				hotness = s.hotness = 1;
+				++i;
+			}
+		}
+		else
+			++i;
+	}
+
+	Resource::updateHotness();
 }
 
 struct roADriverSoundSource {};
