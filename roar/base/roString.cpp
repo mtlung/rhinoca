@@ -644,6 +644,15 @@ ConstString::ConstString(const char* str, roSize count)
 #endif
 }
 
+ConstString::ConstString(const RangedString& str)
+	: _node(&_constStringHashTable().add(str.begin, str.size()))
+{
+	++_node->refCount;
+#if roDEBUG
+	_debugStr = c_str();
+#endif
+}
+
 ConstString::ConstString(StringHash hash)
 	: _node(&_constStringHashTable().find(hash))
 {
@@ -681,6 +690,12 @@ ConstString& ConstString::operator=(const ConstString& rhs)
 	_debugStr = c_str();
 #endif
 	return *this;
+}
+
+ConstString& ConstString::operator=(const RangedString& rhs)
+{
+	ConstString tmp(rhs);
+	return *this = tmp;
 }
 
 ConstString& ConstString::operator=(const StringHash& stringHash)

@@ -32,6 +32,9 @@ struct ListNode : public _ListNode
 	T*				next() const			{ return (T*)_next; }
 	T*				prev() const			{ return (T*)_prev; }
 
+	template<class U>
+	T*				next() const			{ return static_cast<T*>(static_cast<U*>(_next)); }
+
 	void			removeThis() override	{ _ListNode::removeThis(); }
 	void			destroyThis() override	{ _ListNode::destroyThis(); }
 };	// ListNode
@@ -80,24 +83,24 @@ struct LinkList : public _LinkList
 	using _LinkList::moveBefore;
 	using _LinkList::moveAfter;
 
-	Node*		getAt(roSize i)	{ return (Node*)_LinkList::getAt(i); }
+	Node*		getAt(roSize i)	{ return (Node*)(ListNode<Node>*)_LinkList::getAt(i); }
 
 	roSize		size() const	{ return _count; }
 	bool		isEmpty() const	{ return _count == 0; }
 
-	Node&		front()			{ roAssert(_count > 0); return (Node&)(*_head->_next); }
-	const Node&	front() const	{ roAssert(_count > 0); return (Node&)(*_head->_next); }
-	Node&		back()			{ roAssert(_count > 0); return (Node&)(*_tail->_prev); }
-	const Node&	back() const	{ roAssert(_count > 0); return (Node&)(*_tail->_prev); }
+	Node&		front()			{ roAssert(_count > 0); return (Node&)(ListNode<Node>&)(*_head->_next); }
+	const Node&	front() const	{ roAssert(_count > 0); return (Node&)(ListNode<Node>&)(*_head->_next); }
+	Node&		back()			{ roAssert(_count > 0); return (Node&)(ListNode<Node>&)(*_tail->_prev); }
+	const Node&	back() const	{ roAssert(_count > 0); return (Node&)(ListNode<Node>&)(*_tail->_prev); }
 
-	Node*		begin()			{ return (Node*)_head->_next; }
-	const Node*	begin() const	{ return (Node*)_head->_next; }
-	Node*		rbegin()		{ return (Node*)_tail->_prev; }
-	const Node*	rbegin() const	{ return (Node*)_tail->_prev; }
-	Node*		end()			{ return (Node*)_tail; }
-	const Node*	end() const		{ return (Node*)_tail; }
-	Node*		rend()			{ return (Node*)_head; }
-	const Node*	rend() const	{ return (Node*)_head; }
+	Node*		begin()			{ return (Node*)(ListNode<Node>*)_head->_next; }
+	const Node*	begin() const	{ return (Node*)(ListNode<Node>*)_head->_next; }
+	Node*		rbegin()		{ return (Node*)(ListNode<Node>*)_tail->_prev; }
+	const Node*	rbegin() const	{ return (Node*)(ListNode<Node>*)_tail->_prev; }
+	Node*		end()			{ return (Node*)(ListNode<Node>*)_tail; }
+	const Node*	end() const		{ return (Node*)(ListNode<Node>*)_tail; }
+	Node*		rend()			{ return (Node*)(ListNode<Node>*)_head; }
+	const Node*	rend() const	{ return (Node*)(ListNode<Node>*)_head; }
 };	// LinkList
 
 }	// namespace ro

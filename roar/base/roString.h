@@ -177,6 +177,7 @@ struct ConstString
 	/// Null input string will result an empty string.
 	ConstString(const char* str);
 	ConstString(const char* str, roSize count);
+	ConstString(const RangedString& str);
 
 	/// Construct with an existing string in the global table, indexed with it's hash value.
 	/// Make sure there is an other instance of ConstString constructed with a string content first.
@@ -188,6 +189,7 @@ struct ConstString
 
 	ConstString& operator=(const char* rhs);
 	ConstString& operator=(const ConstString& rhs);
+	ConstString& operator=(const RangedString& rhs);
 	ConstString& operator=(const StringHash& stringHash);
 
 	const char*		c_str			() const;

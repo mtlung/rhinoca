@@ -145,6 +145,7 @@ roEXCP_TRY
 
 	RangedString output;
 	st = (*_matchingEndTokenFunc)(src, t, output, _matchingEndTokenUserData);
+	output.end = src.end;
 	if(!st) roEXCP_THROW;
 
 	restoreState();

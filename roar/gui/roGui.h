@@ -7,6 +7,9 @@
 #include "../render/roTexture.h"
 #include "../base/roWeakPtr.h"
 
+// Reference:
+// https://github.com/ocornut/imgui
+
 namespace ro {
 
 struct Canvas;
