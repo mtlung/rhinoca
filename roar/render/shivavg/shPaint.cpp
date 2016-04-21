@@ -26,6 +26,11 @@
 #include "shPaint.h"
 #include <stdio.h>
 
+#ifdef _MSC_VER
+#	pragma warning(disable : 4456) // hides previous local declaration
+#	pragma warning(disable : 4457) // hides function parameter
+#endif
+
 #define _ITEM_T SHStop
 #define _ARRAY_T SHStopArray
 #define _FUNC_T shStopArray
@@ -262,7 +267,7 @@ void shValidateInputStops(SHPaint *p)
 }
 
 void shGenerateStops(SHPaint *p, SHfloat minOffset, SHfloat maxOffset,
-                     SHStopArray *outStops)
+					 SHStopArray *outStops)
 {
 	SHStop *s1,*s2;
 	SHint i1,i2;
@@ -451,7 +456,7 @@ static void fillBoundingBox(VGContext* c, SHVector2* corners, SHColor* color)
 }
 
 int shDrawLinearGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
-                             VGPaintMode mode, unsigned texUnit)
+							 VGPaintMode mode, unsigned texUnit)
 {
 	SHint i;
 	SHfloat n;
@@ -555,7 +560,7 @@ int shDrawLinearGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
 }
 
 int shDrawRadialGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
-                             VGPaintMode mode, unsigned texUnit)
+							 VGPaintMode mode, unsigned texUnit)
 {
 	SHint i, j;
 	float a, n;
@@ -774,7 +779,7 @@ int shDrawRadialGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
 }
 
 int shDrawPatternMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
-                      VGPaintMode mode, unsigned texUnit)
+					  VGPaintMode mode, unsigned texUnit)
 {
 	SHMatrix3x3* m = NULL;
 	SHMatrix3x3 mi;

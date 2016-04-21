@@ -32,7 +32,7 @@ roSprite::roSprite()
 void roSprite::Tick(float dt)
 {
 	accuTime += dt;
-	float f = fmod(accuTime,totalTime);
+	float f = fmodf(accuTime,totalTime);
 	currentFrameIndex = 0;
 	for(int j=0;j<(int)frames.size();++j)
 	{

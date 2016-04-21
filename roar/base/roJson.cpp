@@ -665,8 +665,8 @@ static void _strFormat_JsonString(String& str, JsonString* val, const roUtf8* op
 	}
 }
 
-static void* _strFormatFunc(const JsonString& val) {
-	return (void*)_strFormat_JsonString;
+static roPtrInt _strFormatFunc(const JsonString& val) {
+	return (roPtrInt)_strFormat_JsonString;
 }
 
 roStatus JsonWriter::beginObject(const roUtf8* name)

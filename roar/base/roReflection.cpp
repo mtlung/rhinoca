@@ -37,20 +37,20 @@ Registry* Type::getRegistry()
 	return roContainerof(Registry, types, getList());
 }
 
-Field* Type::getField(const char* name)
+Field* Type::getField(const char* name_)
 {
 	for(Field* i=fields.begin(), *end=fields.end(); i != end; ++i)
-		if(i->name == name)
+		if(i->name == name_)
 			return &(*i);
 	return NULL;
 }
 
-roStatus Type::serialize(Serializer& se, const roUtf8* name, void* val)
+roStatus Type::serialize(Serializer& se, const roUtf8* varName, void* val)
 {
 	if(!serializeFunc || !val) return roStatus::pointer_is_null;
-	if(!name) name = "";
+	if(!varName) varName = "";
 	// Make a dummy field as root
-	Field field = { name, this, 0, false, false };
+	Field field = { varName, this, 0, false, false };
 	return (*serializeFunc)(se, field, val);
 }
 

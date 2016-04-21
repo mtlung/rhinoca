@@ -211,8 +211,8 @@ bool _initDriverContext_GL(roRDriverContext* self, void* platformSpecificWindow)
 	// https://sites.google.com/site/opengltutorialsbyaks/introduction-to-opengl-4-1---tutorial-05
 	if(wglCreateContextAttribsARB && v1 <= impl->majorVersion && v2 < impl->minorVersion) {
 		const int attribs[] = {
-			WGL_CONTEXT_MAJOR_VERSION_ARB, impl->majorVersion,
-			WGL_CONTEXT_MINOR_VERSION_ARB, impl->minorVersion,
+			WGL_CONTEXT_MAJOR_VERSION_ARB, static_cast<int>(impl->majorVersion),
+			WGL_CONTEXT_MINOR_VERSION_ARB, static_cast<int>(impl->minorVersion),
 			WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB | WGL_CONTEXT_DEBUG_BIT_ARB,
 			0
 		};

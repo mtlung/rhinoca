@@ -32,7 +32,7 @@ typedef struct roInputDriver : private ro::NonCopyable
 
 // Others
 	void			(*tick)					(roInputDriver* self);
-	void			(*processEvents)		(roInputDriver* self, void** data, roSize numData);
+	void			(*processEvents)		(roInputDriver* self, roUserData* data, roSize numData);
 } roInputDriver;
 
 roInputDriver*		roNewInputDriver		();

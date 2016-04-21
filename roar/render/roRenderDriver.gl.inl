@@ -110,9 +110,9 @@ struct GLCapability
 
 struct roRDriverContextImpl : public roRDriverContext, NonCopyable
 {
-	void* currentBlendStateHash;
-	void* currentRasterizerStateHash;
-	void* currentDepthStencilStateHash;
+	roUint32 currentBlendStateHash;
+	roUint32 currentRasterizerStateHash;
+	roUint32 currentDepthStencilStateHash;
 
 	void* currentIndexBufSysMemPtr;
 
@@ -129,7 +129,7 @@ struct roRDriverContextImpl : public roRDriverContext, NonCopyable
 	TinyArray<VertexArrayObject, 16> vaoCache;
 
 	struct TextureState {
-		void* hash;
+		roUint32 hash;
 		GLuint glh;
 	};
 	StaticArray<TextureState, 64> textureStateCache;

@@ -73,7 +73,7 @@ roEXCP_TRY
 		if(fileSystem.readWillBlock(stream, sizeof(chunkId) + sizeof(chunkSize) + sizeof(WaveFormatExtensible)))
 			return reSchedule();
 
-		Status st = fileSystem.atomicRead(stream, chunkId, 4);
+		st = fileSystem.atomicRead(stream, chunkId, 4);
 		if(!st) roEXCP_THROW;
 
 		st = fileSystem.atomicRead(stream, &chunkSize, sizeof(roInt32));
@@ -95,12 +95,12 @@ roEXCP_TRY
 			pcmData.resizeNoInit(chunkSize);
 
 			AudioBuffer::Format f = {
-				formatEx.format.channels,
-				formatEx.format.samplesPerSec,
-				formatEx.format.bitsPerSample,
-				formatEx.format.blockAlign,
-				chunkSize / formatEx.format.blockAlign,
-				chunkSize / formatEx.format.blockAlign
+				clamp_cast<decltype(AudioBuffer::Format::channels)>(formatEx.format.channels),
+				clamp_cast<decltype(AudioBuffer::Format::samplesPerSecond)>(formatEx.format.samplesPerSec),
+				clamp_cast<decltype(AudioBuffer::Format::bitsPerSample)>(formatEx.format.bitsPerSample),
+				clamp_cast<decltype(AudioBuffer::Format::blockAlignment)>(formatEx.format.blockAlign),
+				clamp_cast<decltype(AudioBuffer::Format::totalSamples)>(chunkSize / formatEx.format.blockAlign),
+				clamp_cast<decltype(AudioBuffer::Format::estimatedSamples)>(chunkSize / formatEx.format.blockAlign)
 			};
 
 			format = f;
@@ -139,7 +139,7 @@ roEXCP_TRY
 	if(fileSystem.readWillBlock(stream, pcmData.size()))
 		return reSchedule(false, ~taskPool->mainThreadId());
 
-	Status st = fileSystem.atomicRead(stream, pcmData.bytePtr(), pcmData.size());
+	st = fileSystem.atomicRead(stream, pcmData.bytePtr(), pcmData.size());
 	if(!st) roEXCP_THROW;
 
 	nextFun = &WaveLoader::commitData;

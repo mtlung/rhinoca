@@ -172,7 +172,8 @@ roStatus secureSocketHandshake(CoSocket& socket)
 			// of this. Leftover data (if any) will be placed in buffer 1 and
 			// given a buffer type of SECBUFFER_EXTRA.
 			inBuffers[0].pvBuffer = buf.bytePtr();
-			inBuffers[0].cbBuffer = buf.sizeInByte();
+			st = roSafeAssign(inBuffers[0].cbBuffer, buf.sizeInByte());
+			if(!st) return st;
 			inBuffers[0].BufferType = SECBUFFER_TOKEN;
 
 			inBuffers[1].pvBuffer = NULL;

@@ -25,6 +25,11 @@
 #include "openvg.h"
 #include "shContext.h"
 
+#ifdef _MSC_VER
+#	pragma warning(disable : 4456) // hides previous local declaration
+#	pragma warning(disable : 4457) // hides function parameter
+#endif
+
 /*----------------------------------------------------
  * Returns true (1) if the specified parameter takes
  * a vector of values (more than 1) or false (0)

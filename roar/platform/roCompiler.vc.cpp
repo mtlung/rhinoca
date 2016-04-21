@@ -99,7 +99,7 @@ bool _roSetDataBreakpoint(unsigned index, void* address, unsigned size)
 	ctx.Dr7 = (ctx.Dr7 & rwMask) | (rw << rwShift);
 	ctx.Dr7 = (ctx.Dr7 & lenMask) | (len << lenShift);
 	// Set global and local enable bits.
-	ctx.Dr7 |= (roPtrInt)(1 << glShift);
+	ctx.Dr7 |= ((roPtrInt)1 << glShift);
 
 	// Update the thread context.
 	return (SetThreadContext(threadHandle, &ctx) == TRUE);

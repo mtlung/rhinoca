@@ -58,14 +58,14 @@ void _strFormat_int64(String& str, roInt64 val, const roUtf8* options)
 
 	roSize padLen = 0;
 	roUtf8 padding;
-	if(sscanf(options, "pl%u%c", &padLen, &padding) == 2 && padLen > bytes)
+	if(sscanf(options, "pl%zu%c", &padLen, &padding) == 2 && padLen > bytes)
 		str.append(padding, padLen - bytes);
 
 	roSize offset = str.size();
 	str.resize(str.size() + bytes);
 	roToString(&str[offset], str.size() - offset + 1, val, options);
 
-	if(sscanf(options, "pr%u%c", &padLen, &padding) == 2 && padLen > bytes)
+	if(sscanf(options, "pr%zu%c", &padLen, &padding) == 2 && padLen > bytes)
 		str.append(padding, padLen - bytes);
 }
 
@@ -101,14 +101,14 @@ void _strFormat_uint64(String& str, roUint64 val, const roUtf8* options)
 
 	roSize padLen = 0;
 	roUtf8 padding;
-	if(sscanf(options, "pl%u%c", &padLen, &padding) == 2 && padLen > bytes)
+	if(sscanf(options, "pl%zu%c", &padLen, &padding) == 2 && padLen > bytes)
 		str.append(padding, padLen - bytes);
 
 	roSize offset = str.size();
 	str.resize(str.size() + bytes);
 	roToString(&str[offset], str.size() - offset + 1, val, options);
 
-	if(sscanf(options, "pr%u%c", &padLen, &padding) == 2 && padLen > bytes)
+	if(sscanf(options, "pr%zu%c", &padLen, &padding) == 2 && padLen > bytes)
 		str.append(padding, padLen - bytes);
 }
 
@@ -134,14 +134,14 @@ void _strFormat_double(String& str, double val, const roUtf8* options)
 
 	roSize padLen = 0;
 	roUtf8 padding;
-	if(sscanf(options, "pl%u%c", &padLen, &padding) == 2 && padLen > bytes)
+	if(sscanf(options, "pl%zu%c", &padLen, &padding) == 2 && padLen > bytes)
 		str.append(padding, padLen - bytes);
 
 	roSize offset = str.size();
 	str.resize(str.size() + bytes);
 	roToString(&str[offset], str.size() - offset + 1, val, options);
 
-	if(sscanf(options, "pr%u%c", &padLen, &padding) == 2 && padLen > bytes)
+	if(sscanf(options, "pr%zu%c", &padLen, &padding) == 2 && padLen > bytes)
 		str.append(padding, padLen - bytes);
 }
 
@@ -158,12 +158,12 @@ void _strFormat_utf8(String& str, const roUtf8* val, const roUtf8* options)
 
 	roSize padLen = 0;
 	roUtf8 padding;
-	if(sscanf(options, "pl%u%c", &padLen, &padding) == 2 && padLen > len)
+	if(sscanf(options, "pl%zu%c", &padLen, &padding) == 2 && padLen > len)
 		str.append(padding, padLen - len);
 
 	str.append(val, len);
 
-	if(sscanf(options, "pr%u%c", &padLen, &padding) == 2 && padLen > len)
+	if(sscanf(options, "pr%zu%c", &padLen, &padding) == 2 && padLen > len)
 		str.append(padding, padLen - len);
 }
 
@@ -181,12 +181,12 @@ void _strFormat_rangedStr(String& str, const RangedString* val, const roUtf8* op
 
 	roSize padLen = 0;
 	roUtf8 padding;
-	if(sscanf(options, "pl%u%c", &padLen, &padding) == 2 && padLen > len)
+	if(sscanf(options, "pl%zu%c", &padLen, &padding) == 2 && padLen > len)
 		str.append(padding, padLen - len);
 
 	str.append(val->begin, len);
 
-	if(sscanf(options, "pr%u%c", &padLen, &padding) == 2 && padLen > len)
+	if(sscanf(options, "pr%zu%c", &padLen, &padding) == 2 && padLen > len)
 		str.append(padding, padLen - len);
 }
 
@@ -198,12 +198,12 @@ void _strFormat_constStr(String& str, const ConstString* val, const roUtf8* opti
 
 	roSize padLen = 0;
 	roUtf8 padding;
-	if(sscanf(options, "pl%u%c", &padLen, &padding) == 2 && padLen > len)
+	if(sscanf(options, "pl%zu%c", &padLen, &padding) == 2 && padLen > len)
 		str.append(padding, padLen - len);
 
 	str.append(val->c_str(), len);
 
-	if(sscanf(options, "pr%u%c", &padLen, &padding) == 2 && padLen > len)
+	if(sscanf(options, "pr%zu%c", &padLen, &padding) == 2 && padLen > len)
 		str.append(padding, padLen - len);
 }
 
@@ -271,7 +271,7 @@ roStatus _strFormat(String& str, const roUtf8* format, roSize argCount, ...)
 	va_start(vl, argCount);
 
 	for(roSize i=0; i<argCount; ++i) {
-		FormatArg arg = { va_arg(vl, FUNC), va_arg(vl, void*) };
+		FormatArg arg = { va_arg(vl, FUNC), (void*)(va_arg(vl, roPtrInt)) };
 		args.pushBack(arg);
 	}
 

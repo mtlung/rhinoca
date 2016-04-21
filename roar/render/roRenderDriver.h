@@ -159,7 +159,7 @@ typedef enum roRDriverColorWriteMask
 
 typedef struct roRDriverBlendState
 {
-	void* hash;			/// Set it to 0 when ever the state is changed
+	roUint32 hash;		/// Set it to 0 when ever the state is changed
 	unsigned enable;	/// Use unsigned to avoid any padding
 	roRDriverBlendOp colorOp, alphaOp;
 	roRDriverBlendValue colorSrc, colorDst, alphaSrc, alphaDst;
@@ -175,7 +175,7 @@ typedef enum roRDriverCullMode
 
 typedef struct roRDriverRasterizerState
 {
-	void* hash;		/// Set it to 0 when ever the state is changed
+	roUint32 hash;		/// Set it to 0 when ever the state is changed
 	bool scissorEnable;
 	bool smoothLineEnable;
 	bool multisampleEnable;
@@ -215,7 +215,7 @@ typedef struct roRDriverStencilState
 
 typedef struct roRDriverDepthStencilState
 {
-	void* hash;		/// Set it to 0 whenever the state is changed
+	roUint32 hash;		/// Set it to 0 whenever the state is changed
 	unsigned char enableDepthTest;
 	unsigned char enableDepthWrite;
 	unsigned short enableStencil;
@@ -244,7 +244,7 @@ typedef enum roRDriverTextureAddressMode
 
 typedef struct roRDriverTextureState
 {
-	void* hash;		/// Set it to 0 when ever the state is changed
+	roUint32 hash;		/// Set it to 0 when ever the state is changed
 	roRDriverTextureFilterMode filter;
 	roRDriverTextureAddressMode u, v;
 	unsigned maxAnisotropy;

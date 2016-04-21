@@ -490,7 +490,7 @@ void Canvas::drawImage(roRDriverTexture* texture, float srcx, float srcy, float 
 		if(!listEntry->range.isEmpty() && listEntry->range.back().end == _batchedQuadCount)
 			listEntry->range.back().end++;
 		else {
-			PerTextureQuadList::Range range = { _batchedQuadCount, _batchedQuadCount + 1 };
+			PerTextureQuadList::Range range = { _batchedQuadCount, (roUint16)(_batchedQuadCount + 1) };
 			listEntry->range.pushBack(range);
 		}
 

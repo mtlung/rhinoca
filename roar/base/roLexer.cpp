@@ -247,12 +247,12 @@ struct RegexRule : public Lexer::IRule {
 	virtual bool match(RangedString& inout) override
 	{
 		Regex regex;
-		if(!regex.match(inout, this->regex, this->matcher, option.c_str())) return false;
+		if(!regex.match(inout, regexCompiled, matcher, option.c_str())) return false;
 		inout.begin = regex.result[0].end;
 		return true;
 	}
 
-	Regex::Compiled regex;
+	Regex::Compiled regexCompiled;
 	String option;
 	TinyArray<Regex::CustomMatcher, 4> matcher;
 };	// RegexRule
@@ -283,15 +283,15 @@ roStatus Lexer::registerRegexRule(const char* ruleName, const char* regex, const
 		}
 
 		if(*c == '{') {
-			Regex regex;
+			Regex re;
 			RangedString result(c);
-			if(regex.match(result, "\\{([A-Za-z][A-za-z0-9]*)\\}")) {
-				c = regex.result[0].end - 1;
+			if(re.match(result, "\\{([A-Za-z][A-za-z0-9]*)\\}")) {
+				c = re.result[0].end - 1;
 
 				st = strFormat(regexStr, "${}", ruleNameCount);
 				++ruleNameCount;
 
-				IRule* r = _rules.find(regex.result[1].toString().c_str());
+				IRule* r = _rules.find(re.result[1].toString().c_str());
 				if(!r) return roStatus::not_found;
 
 				Regex::CustomMatcher regCustomMatcher = { _customMatch, r };
@@ -305,7 +305,7 @@ roStatus Lexer::registerRegexRule(const char* ruleName, const char* regex, const
 		if(!st) return st;
 	}
 
-	st = Regex::compile(regexStr.c_str(), rule->regex, rule->matcher);
+	st = Regex::compile(regexStr.c_str(), rule->regexCompiled, rule->matcher);
 	if(!st) return st;
 
 	rule->option += option;

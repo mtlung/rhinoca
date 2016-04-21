@@ -21,12 +21,13 @@ public:
 
 class roSprite
 {
-	typedef enum roPlayType
+	enum roPlayType
 	{
 		Loop = 0,
 		PlayOneAndStop,
 		PingPong
 	};
+
 public:
 	roSprite();
 	void Tick(float dt);
@@ -47,7 +48,7 @@ protected:
 	float totalTime;	
 	bool isDirty;
 	Array<roSpriteFrame> frames;
-};
+};	// roSprite
 
 }
 #endif

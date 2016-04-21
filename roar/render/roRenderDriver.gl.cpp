@@ -257,7 +257,7 @@ static void _setBlendState(roRDriverBlendState* state)
 
 	// Generate the hash value if not yet
 	if(state->hash == 0)
-		state->hash = (void*)_hash(state, sizeof(*state));
+		state->hash = _hash(state, sizeof(*state));
 
 	if(state->hash == ctx->currentBlendStateHash)
 		return;
@@ -317,7 +317,7 @@ static void _setRasterizerState(roRDriverRasterizerState* state)
 
 	// Generate the hash value if not yet
 	if(state->hash == 0)
-		state->hash = (void*)_hash(state, sizeof(*state));
+		state->hash = _hash(state, sizeof(*state));
 
 	if(state->hash == ctx->currentRasterizerStateHash)
 		return;
@@ -383,7 +383,7 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 
 	// Generate the hash value if not yet
 	if(state->hash == 0) {
-		state->hash = (void*)_hash(
+		state->hash = _hash(
 			&state->enableDepthTest,
 			sizeof(roRDriverDepthStencilState) - roOffsetof(roRDriverDepthStencilState, roRDriverDepthStencilState::enableDepthTest)
 		);
@@ -463,7 +463,7 @@ static void _setTextureState(roRDriverTextureState* states, roSize stateCount, u
 
 		// Generate the hash value if not yet
 		if(state.hash == 0) {
-			state.hash = (void*)_hash(
+			state.hash = _hash(
 				&state.filter,
 				sizeof(roRDriverTextureState) - roOffsetof(roRDriverTextureState, roRDriverTextureState::filter)
 			);
@@ -1149,7 +1149,7 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 	else
 #endif
 	if(!mapInfo.systemBuf) {
-		roSize sizeInBytes = impl->formatMapping->glPixelSize * impl->width * impl->height;
+		sizeInBytes = impl->formatMapping->glPixelSize * impl->width * impl->height;
 		mapInfo.systemBuf = _allocator.malloc(sizeInBytes);
 		ret = mapInfo.systemBuf;
 

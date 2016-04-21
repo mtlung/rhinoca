@@ -73,10 +73,11 @@ Status IStream::peek(roByte*& outBuf, roSize& outPeekSize)
 
 Status IStream::atomicPeek(roByte*& outBuf, roUint64& inoutMinBytesToPeek)
 {
-	while(st && (end - current) < inoutMinBytesToPeek)
+	roAssert(end >= current);
+	while(st && roUint64(end - current) < inoutMinBytesToPeek)
 		st = (*_next)(*this, inoutMinBytesToPeek);
 
-	if((end - current) >= inoutMinBytesToPeek) {
+	if(roUint64(end - current) >= inoutMinBytesToPeek) {
 		outBuf = current;
 		inoutMinBytesToPeek = end - current;
 		st = Status::ok;
@@ -87,7 +88,8 @@ Status IStream::atomicPeek(roByte*& outBuf, roUint64& inoutMinBytesToPeek)
 
 Status IStream::skip(roUint64 bytes)
 {
-	if(end - current >= bytes) {
+	roAssert(end >= current);
+	if(roUint64(end - current) >= bytes) {
 		current += bytes;
 		return st = Status::ok;
 	}
@@ -164,7 +166,7 @@ Status MemorySeekableOStream::write(const void* buffer, roUint64 bytesToWrite)
 	roAssert(size() >= _pos);
 	if(bytesToWrite_ > (size() - _pos)) {
 		roUint64 newSize;
-		roStatus st = roSafeAdd(_pos, bytesToWrite_, newSize);
+		st = roSafeAdd(_pos, bytesToWrite_, newSize);
 		if(!st) return st;
 		st = roIsValidCast(roSize(0), newSize);
 		if(!st) return st;

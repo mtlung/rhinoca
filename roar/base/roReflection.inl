@@ -118,11 +118,11 @@ void extractField(Klass<C>& klass, Field& outField, const char* name, F f, T C::
 {
 	Registry* registry = klass.registry;
 	roAssert(registry);
-	unsigned offset = reinterpret_cast<unsigned>(&((C*)(NULL)->*f));
+	roPtrInt offset = reinterpret_cast<roPtrInt>(&((C*)(NULL)->*f));
 	Field tmp = {
 		name,
 		extractMemberType(*registry, f),
-		offset,
+		(unsigned)offset,
 		isMemberConst(f),
 		isMemberPointerType(f)
 	};

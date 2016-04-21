@@ -132,7 +132,7 @@ Status HttpIStream::_connect()
 	roVerify(_socket.close());
 
 	// Create socket
-	roStatus st = _socket.create(BsdSocket::TCP); if(!st) return st;
+	st = _socket.create(BsdSocket::TCP); if(!st) return st;
 	st = _socket.setBlocking(false); if(!st) return st;
 
 	_fileSize = 0;
@@ -323,13 +323,15 @@ Status HttpIStream::_readResponse()
 	if(!st) return setError();
 
 	{	// Parse response
-		Regex regex;
-		if(!regex.match(responseHeader.nvp[0].name, "^HTTP/([\\d\\.]+)[ ]+(\\d+)")) {
-			roLog("error", "Invalid http response header: %s\n", responseHeader.nvp[0].name);
-			return setError(Status::http_error);
-		}
+		{
+			Regex regex;
+			if (!regex.match(responseHeader.nvp[0].name, "^HTTP/([\\d\\.]+)[ ]+(\\d+)")) {
+				roLog("error", "Invalid http response header: %s\n", responseHeader.nvp[0].name);
+				return setError(Status::http_error);
+			}
 
-		_responseCode = regex.getValueWithDefault(2, 0);
+			_responseCode = regex.getValueWithDefault(2, 0);
+		}
 
 		if(_responseCode == 200)			// Ok
 		{
@@ -345,7 +347,7 @@ Status HttpIStream::_readResponse()
 
 			const char* contentLength = responseHeader.findValue("Content-Length");
 			if(contentLength) {
-				if(sscanf(contentLength, "%*[ \t]%u", &_fileSize) != 1)
+				if(sscanf(contentLength, "%*[ \t]%llu", &_fileSize) != 1)
 					st = _contentLengthSattus = Status::http_error;
 				else
 					_contentLengthSattus = Status::ok;

@@ -20,8 +20,8 @@ namespace ro {
 ///		return strFormat(str, "{}, {}", pair->first, pair->second);
 /// }
 /// template<class T>
-/// void* _strFormatFunc(const  Pair<T>& val) {
-///		return (void*)formatPairToString<Pair<T> >;
+/// roPtrInt _strFormatFunc(const  Pair<T>& val) {
+///		return (roPtrInt)formatPairToString<Pair<T> >;
 /// }
 ///
 /// Pair<int> pair = { 1, 2 };
@@ -112,53 +112,53 @@ inline void* _strFormatFunc(const T* val) {
 	return (void*)_strFormat_pointer;
 }
 
-inline const void* _strFormatArg(roInt8 val) {
-	return (void*)val;
+inline const roPtrInt _strFormatArg(roInt8 val) {
+	return (roPtrInt)val;
 }
-inline const void* _strFormatArg(roInt16 val) {
-	return (void*)val;
+inline const roPtrInt _strFormatArg(roInt16 val) {
+	return (roPtrInt)val;
 }
-inline const void* _strFormatArg(const roInt32& val) {
-	return sizeof(val) != sizeof(void*) ? &val : (void*)val;
+inline const roPtrInt _strFormatArg(const roInt32& val) {
+	return sizeof(val) != sizeof(roPtrInt) ? (roPtrInt)&val : (roPtrInt)val;
 }
-inline const void* _strFormatArg(const roInt64& val) {
-	return sizeof(val) != sizeof(void*) ? &val : (void*)val;
+inline const roPtrInt _strFormatArg(const roInt64& val) {
+	return sizeof(val) != sizeof(roPtrInt) ? (roPtrInt)&val : (roPtrInt)val;
 }
-inline const void* _strFormatArg(roUint8 val) {
-	return (void*)val;
+inline const roPtrInt _strFormatArg(roUint8 val) {
+	return (roPtrInt)val;
 }
-inline const void* _strFormatArg(roUint16 val) {
-	return (void*)val;
+inline const roPtrInt _strFormatArg(roUint16 val) {
+	return (roPtrInt)val;
 }
-inline const void* _strFormatArg(const roUint32& val) {
-	return sizeof(val) != sizeof(void*) ? &val : (void*)val;
+inline const roPtrInt _strFormatArg(const roUint32& val) {
+	return sizeof(val) != sizeof(roPtrInt) ? (roPtrInt)&val : (roPtrInt)val;
 }
-inline const void* _strFormatArg(const roUint64& val) {
-	return sizeof(val) != sizeof(void*) ? &val : (void*)val;
+inline const roPtrInt _strFormatArg(const roUint64& val) {
+	return sizeof(val) != sizeof(roPtrInt) ? (roPtrInt)&val : (roPtrInt)val;
 }
-inline const void* _strFormatArg(const float& val) {
-	return sizeof(val) != sizeof(void*) ? &val : (void*)(*(int*)(&val));
+inline const roPtrInt _strFormatArg(const float& val) {
+	return sizeof(val) != sizeof(roPtrInt) ? (roPtrInt)&val : (roPtrInt)(*(int*)(&val));
 }
-inline const void* _strFormatArg(const double& val) {
-	return sizeof(val) != sizeof(void*) ? &val : (void*)(*(int*)(&val));
+inline const roPtrInt _strFormatArg(const double& val) {
+	return sizeof(val) != sizeof(roPtrInt) ? (roPtrInt)&val : (roPtrInt)(*(int*)(&val));
 }
-inline const void* _strFormatArg(roUtf8* val) {
-	return (void*)val;
+inline const roPtrInt _strFormatArg(roUtf8* val) {
+	return (roPtrInt)val;
 }
-inline const void* _strFormatArg(const roUtf8* val) {
-	return (void*)val;
-}
-template <class T>
-inline void* _strFormatArg(T* val) {
-	return (void*)val;
+inline const roPtrInt _strFormatArg(const roUtf8* val) {
+	return (roPtrInt)val;
 }
 template <class T>
-inline void* _strFormatArg(const T* val) {
-	return (void*)val;
+inline roPtrInt _strFormatArg(T* val) {
+	return (roPtrInt)val;
 }
 template <class T>
-inline const void* _strFormatArg(const T& val) {
-	return (void*)&val;
+inline roPtrInt _strFormatArg(const T* val) {
+	return (roPtrInt)val;
+}
+template <class T>
+inline const roPtrInt _strFormatArg(const T& val) {
+	return (roPtrInt)&val;
 }
 
 #define _EXPAND(x) _strFormatFunc(x), _strFormatArg(x)

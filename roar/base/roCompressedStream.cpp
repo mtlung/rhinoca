@@ -18,8 +18,6 @@ Status GZipStreamIStream::init(AutoPtr<IStream>& stream, roSize chunkSize)
 	if(_innerStream.ptr())
 		inflateEnd(&_zStream);
 
-	Status st;
-
 	st = _inBuffer.resizeNoInit(chunkSize);
 	_inBuffer.condense();
 	if(!st) return st;
@@ -39,23 +37,23 @@ Status GZipStreamIStream::init(AutoPtr<IStream>& stream, roSize chunkSize)
 	if(err != Z_OK) return Status::zlib_error;
 
 	_innerStream.takeOver(stream);
-	return Status::ok;
+	return (st = Status::ok);
 }
 
 Status GZipStreamIStream::read(void* buffer, roUint64 bytesToRead, roUint64& bytesRead)
 {
 	bytesRead = 0;
 	if(bytesToRead == 0)
-		return roStatus::ok;
+		return (st = roStatus::ok);
 
 	if(!_innerStream.ptr())
-		return Status::pointer_is_null;
+		return (st = Status::pointer_is_null);
 
 	while(true)	// Loop for read more input
 	{
 		if(_zStream.next_in == NULL || _zStream.avail_out != 0) {
 			roUint64 len = 0;
-			Status st = _innerStream->read(_inBuffer.bytePtr(), _inBuffer.sizeInByte(), len);
+			st = _innerStream->read(_inBuffer.bytePtr(), _inBuffer.sizeInByte(), len);
 			if(!st) return st;
 
 			_zStream.next_in = _inBuffer.bytePtr();
@@ -74,11 +72,11 @@ Status GZipStreamIStream::read(void* buffer, roUint64 bytesToRead, roUint64& byt
 		case Z_BUF_ERROR:	// Not enough input buffer, read more
 			continue;
 		case Z_STREAM_END:
-			return Status::end_of_data;
+			return (st = Status::end_of_data);
 		case Z_OK:
 			break;
 		default:
-			return Status::zlib_error;
+			return (st = Status::zlib_error);
 		}
 		break;
 	}

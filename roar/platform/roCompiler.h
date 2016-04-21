@@ -71,6 +71,8 @@ template<> struct _sizetSelector<8> { typedef roInt64 _signed; typedef roUint64 
 typedef _sizetSelector<sizeof(void*)>::_unsigned roSize;
 typedef _sizetSelector<sizeof(void*)>::_signed roPtrInt;
 
+typedef roPtrInt roUserData;	// To replace void* as user data type
+
 // Force inline
 #ifndef roFORCEINLINE
 #	define roFORCEINLINE inline

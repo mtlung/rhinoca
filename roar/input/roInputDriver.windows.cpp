@@ -28,7 +28,7 @@ struct roInputDriverImpl : public roInputDriver
 
 	roInputDriverImpl();
 
-	void _processEvents(void** data, roSize numData);
+	void _processEvents(roUserData* data, roSize numData);
 	void _processButtons(const WinEvent& e);
 
 	void _popWinEvents();
@@ -391,7 +391,7 @@ void roInputDriverImpl::_tick()
 	_popWinEvents();
 }
 
-static void _processEvents(roInputDriver* self, void** data, roSize numData)
+static void _processEvents(roInputDriver* self, roUserData* data, roSize numData)
 {
 	roInputDriverImpl* impl = static_cast<roInputDriverImpl*>(self);
 	if(!impl) return;
@@ -399,7 +399,7 @@ static void _processEvents(roInputDriver* self, void** data, roSize numData)
 	impl->_processEvents(data, numData);
 }
 
-void roInputDriverImpl::_processEvents(void** data, roSize numData)
+void roInputDriverImpl::_processEvents(roUserData* data, roSize numData)
 {
 	WinEvent e = {
 		HWND(data[0]),
@@ -412,8 +412,8 @@ void roInputDriverImpl::_processEvents(void** data, roSize numData)
 
 void roInputDriverImpl::_processButtons(const WinEvent& winEvent)
 {
-	bool buttonDown = (winEvent.uMsg == WM_KEYDOWN || winEvent.uMsg == WM_SYSKEYDOWN);
-	bool buttonUp = (winEvent.uMsg == WM_KEYUP || winEvent.uMsg == WM_SYSKEYUP);
+	bool isButtonDown = (winEvent.uMsg == WM_KEYDOWN || winEvent.uMsg == WM_SYSKEYDOWN);
+	bool isButtonUp = (winEvent.uMsg == WM_KEYUP || winEvent.uMsg == WM_SYSKEYUP);
 	WPARAM wParam = winEvent.wParam;
 
 HandleLRShift:
@@ -423,12 +423,12 @@ HandleLRShift:
 			continue;
 
 		roStringHash hash = _buttonMapping[i].hash;
-		if(buttonDown) {
+		if(isButtonDown) {
 			_keyList.pushBack(hash);
 			_keyDownList.pushBack(hash);
 		}
 
-		if(buttonUp) {
+		if(isButtonUp) {
 			_keyList.removeAllByKey(hash);
 			_keyUpList.pushBack(hash);
 		}

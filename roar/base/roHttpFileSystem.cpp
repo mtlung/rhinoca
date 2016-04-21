@@ -308,7 +308,7 @@ ConnectionRestart:
 
 			// Get the content length
 			if(const char* p = roStrStr(s->buffer, "Content-Length:")) {
-				if(sscanf(p, "Content-Length:%*[ \t]%u", &s->expectedTotalSize) != 1)
+				if(sscanf(p, "Content-Length:%*[ \t]%zu", &s->expectedTotalSize) != 1)
 					return s->status = Status::http_error, false;
 
 				s->getSizeStatus = Status::ok;

@@ -386,8 +386,8 @@ roStatus BsdSocket::setNoDelay(bool b)
 
 roStatus BsdSocket::setSendTimeout(float seconds)
 {
-	unsigned s = unsigned(seconds);
-	unsigned us = unsigned((seconds - s) * 1000 * 1000);
+	long s = long(seconds);
+	long us = long((seconds - s) * 1000 * 1000);
 	timeval timeout = { s, us };
 	return _setOption(SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
 }

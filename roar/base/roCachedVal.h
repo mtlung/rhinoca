@@ -30,11 +30,11 @@ struct _CachedMemberVal
 		isDirty = true;
 	}
 
-    Owner* owner()
-    {
-        return reinterpret_cast<Owner*>(
-            reinterpret_cast<char*>(this) - Tag::offset());
-    }
+	Owner* owner()
+	{
+		return reinterpret_cast<Owner*>(
+			reinterpret_cast<char*>(this) - Tag::offset());
+	}
 
 	mutable bool isDirty;
 	T val;
@@ -45,9 +45,9 @@ struct _CachedMemberVal
 /// Usage: roCachedMemberVal(Canvas, Mat4, viewProj, &Canvas::_updateViewProj);
 #define roCachedMemberVal(Owner, T, name, updater) \
 struct _name ## _tag { \
-    static roPtrInt offset() { \
-        return roOffsetof(Owner, name); \
-    } \
+	static roPtrInt offset() { \
+		return roOffsetof(Owner, name); \
+	} \
 }; \
 _CachedMemberVal<Owner, T, _name ## _tag, updater> name
 

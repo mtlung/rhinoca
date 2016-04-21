@@ -117,8 +117,8 @@ static void _setScissorRect(unsigned x, unsigned y, unsigned width, unsigned hei
 	if(!ctx || !ctx->dxDeviceContext) return;
 
 	D3D10_RECT rect = {
-		x, y,
-		x + width, y + height
+		LONG(x), LONG(y),
+		LONG(x + width), LONG(y + height)
 	};
 
 	ctx->dxDeviceContext->RSSetScissorRects(1, &rect);
@@ -375,7 +375,7 @@ static void _setBlendState(roRDriverBlendState* state)
 
 	// Generate the hash value if not yet
 	if(state->hash == 0)
-		state->hash = (void*)_hash(state, sizeof(*state));
+		state->hash = _hash(state, sizeof(*state));
 
 	ID3D11BlendState* dxState = NULL;
 
@@ -437,7 +437,7 @@ static void _setRasterizerState(roRDriverRasterizerState* state)
 
 	// Generate the hash value if not yet
 	if(state->hash == 0)
-		state->hash = (void*)_hash(state, sizeof(*state));
+		state->hash = _hash(state, sizeof(*state));
 
 	ID3D11RasterizerState* dxState = NULL;
 
@@ -522,7 +522,7 @@ static void _setDepthStencilState(roRDriverDepthStencilState* state)
 
 	// Generate the hash value if not yet
 	if(state->hash == 0) {
-		state->hash = (void*)_hash(
+		state->hash = _hash(
 			&state->enableDepthTest,
 			sizeof(roRDriverDepthStencilState) - roOffsetof(roRDriverDepthStencilState, roRDriverDepthStencilState::enableDepthTest)
 		);
@@ -614,7 +614,7 @@ static void _setTextureState(roRDriverTextureState* states, roSize stateCount, u
 
 		// Generate the hash value if not yet
 		if(state.hash == 0) {
-			state.hash = (void*)_hash(
+			state.hash = _hash(
 				&state.filter,
 				sizeof(roRDriverTextureState) - roOffsetof(roRDriverTextureState, roRDriverTextureState::filter)
 			);
@@ -741,15 +741,15 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 		: D3D11_CPU_ACCESS_WRITE;
 
 	D3D11_BUFFER_DESC desc = {
-		0,						// ByteWidth
-		_bufferUsage[usage],	// Usage
-		_bufferBindFlag[type],	// BindFlags
-		cpuAccessFlag,			// cpuAccessFlag
-		0,						// MiscFlags
-		0,						// StructureByteStride
+		0,								// ByteWidth
+		_bufferUsage[usage],			// Usage
+		(UINT)_bufferBindFlag[type],	// BindFlags
+		cpuAccessFlag,					// cpuAccessFlag
+		0,								// MiscFlags
+		0,								// StructureByteStride
 	};
 
-	void* hash = (void*)_hash(&desc, sizeof(desc));
+	roUint32 hash = _hash(&desc, sizeof(desc));
 
 	// First check if the DX buffer can be safely reused
 	if( impl->hash == hash && impl->capacity >= sizeInBytes &&
@@ -776,17 +776,18 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 	impl->dxStagingIdx = -1;
 
 	// A simple first fit algorithm
-	if(impl->usage != roRDriverDataUsage_Static) for(BufferCacheEntry& i : ctx->bufferCache)
+	if(impl->usage != roRDriverDataUsage_Static) for(roSize i=0; i<ctx->bufferCache.size(); ++i)
 	{
-		if(impl->hash != i.hash)
+		const BufferCacheEntry& c = ctx->bufferCache[i];
+		if(impl->hash != c.hash)
 			continue;
-		if(i.sizeInByte < sizeInBytes)
+		if(c.sizeInByte < sizeInBytes)
 			continue;
 
 		// Cache hit
-		impl->dxBuffer = i.dxBuffer;
-		impl->capacity = i.sizeInByte;
-		ctx->bufferCache.remove(i);
+		impl->dxBuffer = c.dxBuffer;
+		impl->capacity = c.sizeInByte;
+		ctx->bufferCache.removeAt(i);
 
 		roIgnoreRet(_updateBuffer(impl, 0, initData, sizeInBytes));
 		return true;
@@ -1142,7 +1143,7 @@ static bool _initTexture(roRDriverTexture* self, unsigned width, unsigned height
 
 	if(bindFlags & D3D11_BIND_SHADER_RESOURCE) {
 		ID3D11ShaderResourceView* view = NULL;
-		HRESULT hr = ctx->dxDevice->CreateShaderResourceView(impl->dxTexture, NULL, &view);
+		hr = ctx->dxDevice->CreateShaderResourceView(impl->dxTexture, NULL, &view);
 		impl->dxView = view;
 
 		if(FAILED(hr)) {
@@ -1531,8 +1532,8 @@ static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const c
 
 		// For the semantic index == 0, it's a special case that we also consider the semantic name without the index number
 		if(paramDesc.SemanticIndex == 0) {
-			InputParam ip = { stringLowerCaseHash(paramDesc.SemanticName, 0), _countBits(paramDesc.Mask), paramDesc.ComponentType };
-			impl->inputParams.pushBack(ip);
+			InputParam ip_ = { stringLowerCaseHash(paramDesc.SemanticName, 0), _countBits(paramDesc.Mask), paramDesc.ComponentType };
+			impl->inputParams.pushBack(ip_);
 		}
 	}
 

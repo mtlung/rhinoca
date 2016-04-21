@@ -120,8 +120,8 @@ static void _strFormat_DateTime(String& str, DateTime* val, const roUtf8* option
 	strFormat(str, "{}/{}/{} - {}:{}:{}", val->day(), val->month(), val->year(), val->hour(), val->minute(), val->second());
 }
 
-void* _strFormatFunc(const DateTime& val) {
-	return (void*)_strFormat_DateTime;
+roPtrInt _strFormatFunc(const DateTime& val) {
+	return (roPtrInt)_strFormat_DateTime;
 }
 
 }	// namespace ro

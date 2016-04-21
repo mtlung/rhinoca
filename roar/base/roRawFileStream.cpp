@@ -47,7 +47,7 @@ Status RawFileIStream::open(const roUtf8* path)
 
 	Array<roUint16> wstr;
 	{	roSize len = 0;
-		Status st = roUtf8ToUtf16(NULL, len, path, roSize(-1)); if(!st) return st;
+		st = roUtf8ToUtf16(NULL, len, path, roSize(-1)); if(!st) return st;
 		if(!wstr.resize(len+1)) return Status::invalid_parameter;
 		st = roUtf8ToUtf16(wstr.typedPtr(), len, path, roSize(-1)); if(!st) return st;
 		wstr[len] = 0;
@@ -56,8 +56,8 @@ Status RawFileIStream::open(const roUtf8* path)
 	HANDLE h = CreateFileW((wchar_t*)wstr.typedPtr(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
 	if(h == INVALID_HANDLE_VALUE) {
 		if(GetLastError() == ERROR_FILE_NOT_FOUND)
-			return Status::file_not_found;
-		return Status::file_error;
+			return st = Status::file_not_found;
+		return st = Status::file_error;
 	}
 
 	_handle = h;
@@ -108,11 +108,12 @@ CheckProgress:
 	st = roSafeAssign(bytesToRead, size);
 	if(!st) return false;
 
-	roSize bufSize = roMaxOf2((roSize)bytesToRead, (roSize)1024);
+	bytesToRead = roMaxOf2(bytesToRead, (DWORD)1024);
 
-    roByte* buf = NULL;
-	st = _ringBuf.write(bufSize, buf);
-	if(::ReadFile(_handle, buf, bufSize, NULL, &_overlap)) {
+	roByte* buf = NULL;
+	st = _ringBuf.write(bytesToRead, buf);
+
+	if(::ReadFile(_handle, buf, bytesToRead, NULL, &_overlap)) {
 		_readInProgress = true;
 		goto CheckProgress;
 	}
@@ -364,9 +365,9 @@ Status RawFileIStream::seekRead(roInt64 offset, SeekOrigin origin)
 	if(!st) return st;
 
 	if(fseek(_file, num_cast<long>(offset), origin) == 0)
-        st = Status::ok;
-    else
-        st = Status::file_seek_error;
+		st = Status::ok;
+	else
+		st = Status::file_seek_error;
 
 	_ringBuf.clear();
 

@@ -71,6 +71,15 @@ bool _roRemoveDataBreakpoint(unsigned index);
 #ifndef _CRT_NONSTDC_NO_DEPRECATE
 #	define _CRT_NONSTDC_NO_DEPRECATE
 #endif
+
+#ifndef _ALLOW_RTCc_IN_STL	// STL in VS2015 Update2 has potential of truncating type
+#	define _ALLOW_RTCc_IN_STL
+#endif
+
+#ifndef _CRT_NO_POSIX_ERROR_CODES	// Avoid bring in POSIX error codes in <errno.h>
+#	define _CRT_NO_POSIX_ERROR_CODES
+#endif
+
 #pragma warning(disable : 4100)	// unreferenced formal parameter
 #pragma warning(disable : 4127)	// conditional expression is constant
 #pragma warning(disable : 4201)	// nonstandard extension used : nameless struct/union

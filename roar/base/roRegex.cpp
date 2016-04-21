@@ -138,9 +138,9 @@ struct Regex::Graph
 		Node& node = nodes[nodeIdx];
 		roUint16 edgeIdx = node.edgeIdx;
 		while(true) {
-			Edge& edge = edges[edgeIdx];
-			if(edge.nextEdge == 0) {
-				edge.nextEdge = num_cast<roUint16>(edges.size());
+			Edge& e = edges[edgeIdx];
+			if(e.nextEdge == 0) {
+				e.nextEdge = num_cast<roUint16>(edges.size());
 				break;
 			}
 			edgeIdx = edge.nextEdge;
@@ -227,7 +227,7 @@ bool group_begin(Graph& graph, Node& node, Edge& edge, RangedString& s)
 bool group_end(Graph& graph, Node& node, Edge& edge, RangedString& s)
 {
 	roAssert(graph.nestedGroupLevel > 0);
-	roUint16 beginNodeIdx = (roUint16)node.userdata[0];
+	roUint16 beginNodeIdx = (roUint16)(roPtrInt)node.userdata[0];
 	Node& beginNode = graph.nodes[beginNodeIdx];
 
 	// Commit the data in beginNode
@@ -489,7 +489,10 @@ bool parse_repeatition(Graph& graph, const RangedString& f, const roUtf8*& i, ro
 {
 	roStatus st;
 	if(i[0] == '?') {
-		Edge edge = { RangedString(), pass_though, graph.currentNodeIdx+1, 0 };
+		roUint16 nextEdge;
+		st = roSafeAdd(graph.currentNodeIdx, (roUint16)1, nextEdge);
+		if (!st) return st;
+		Edge edge = { RangedString(), pass_though, nextEdge, 0 };
 		graph.pushEdge(beginNodeIdx, edge);
 	}
 	else if(i[0] == '+') {
@@ -550,7 +553,7 @@ bool parse_repeatition(Graph& graph, const RangedString& f, const roUtf8*& i, ro
 		roUint16 edge0Idx = greedy ? 1 : 0;
 		roUint16 edge1Idx = greedy ? 0 : 1;
 
-		roVerify(sscanf(pMin, "%u", &min) == 1);
+		roVerify(sscanf(pMin, "%zu", &min) == 1);
 
 		// No max was given, use the biggest number instead
 		if(pMax == pClose)
@@ -558,7 +561,7 @@ bool parse_repeatition(Graph& graph, const RangedString& f, const roUtf8*& i, ro
 		else if(pMax == NULL)
 			max = min;
 		else
-			roVerify(sscanf(pMax, "%u", &max) == 1);
+			roVerify(sscanf(pMax, "%zu", &max) == 1);
 
 		if(min > max)	// Consider as parsing error
 			return false;
@@ -794,7 +797,6 @@ bool parse_nodes(Graph& graph, const RangedString& f)
 {
 	roSize bracketCount1 = 0;
 	roSize bracketCount2 = 0;
-	const roUtf8* i = f.begin;
 	const roUtf8* begin = f.begin;
 	TinyArray<roUint16, 16> altOptionIdx;
 
@@ -802,7 +804,7 @@ bool parse_nodes(Graph& graph, const RangedString& f)
 	bool firstEncounter = true;
 
 	// Scan till next '|' or till end
-	for(;i <= f.end; ++i)
+	for(const roUtf8* i = f.begin; i <= f.end; ++i)
 	{
 		if(*i == '\\') {
 			++i;

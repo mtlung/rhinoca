@@ -47,30 +47,30 @@ struct StagingTexture
 };
 
 struct SamplerState {
-	void* hash;
+	roUint32 hash;
 	ComPtr<ID3D11SamplerState> dxSamplerState;
 };
 
 struct BlendState {
-	void* hash;
+	roUint32 hash;
 	float lastUsedTime;
 	ComPtr<ID3D11BlendState> dxBlendState;
 };
 
 struct RasterizerState {
-	void* hash;
+	roUint32 hash;
 	float lastUsedTime;
 	ComPtr<ID3D11RasterizerState> dxRasterizerState;
 };
 
 struct DepthStencilState {
-	void* hash;
+	roUint32 hash;
 	float lastUsedTime;
 	ComPtr<ID3D11DepthStencilState> dxDepthStencilState;
 };
 
 struct BufferCacheEntry {
-	void* hash;	// Capture D3D11_BUFFER_DESC without the ByteWidth
+	roUint32 hash;	// Capture D3D11_BUFFER_DESC without the ByteWidth
 	roSize sizeInByte;
 	float lastUsedTime;
 	ComPtr<ID3D11Buffer> dxBuffer;
@@ -78,7 +78,7 @@ struct BufferCacheEntry {
 
 struct roRDriverBufferImpl : public roRDriverBuffer, NonCopyable
 {
-	void* hash;
+	roUint32 hash;
 	roSize capacity;	// This is the actual size of the dxBuffer
 	ComPtr<ID3D11Buffer> dxBuffer;
 	int dxStagingIdx;	// Index into stagingBufferCache
@@ -125,9 +125,9 @@ struct RenderTarget
 
 struct roRDriverContextImpl : public roRDriverContext, NonCopyable
 {
-	void* currentBlendStateHash;
-	void* currentRasterizerStateHash;
-	void* currentDepthStencilStateHash;
+	roUint32 currentBlendStateHash;
+	roUint32 currentRasterizerStateHash;
+	roUint32 currentDepthStencilStateHash;
 
 	ComPtr<ID3D11Device> dxDevice;
 	ComPtr<ID3D11DeviceContext> dxDeviceContext;

@@ -187,7 +187,7 @@ roStatus JsonInputSerializer::serialize_object(Field& field, void* fieldParent)
 	for(Field& f : type->fields) {
 		if(!f.type) return roStatus::pointer_is_null;
 		if(f.isConst) continue;	// We simply ignore any const member
-		roStatus st = f.type->serializeFunc(*this, f, fieldParent);
+		st = f.type->serializeFunc(*this, f, fieldParent);
 		if(!st) return st;
 	}
 

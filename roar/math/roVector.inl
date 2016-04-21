@@ -14,14 +14,14 @@ inline Vec2::Vec2(float xy) {
 	x = y = xy;
 }
 
-inline Vec2::Vec2(float x, float y) {
-	this->x = x;
-	this->y = y;
+inline Vec2::Vec2(float x_, float y_) {
+	x = x_;
+	y = y_;
 }
 
-inline void Vec2::set(float x, float y) {
-	this->x = x;
-	this->y = y;
+inline void Vec2::set(float x_, float y_) {
+	x = x_;
+	y = y_;
 }
 
 inline void Vec2::zero() {
@@ -221,10 +221,10 @@ inline float &Vec3::operator[](roSize index) {
 	return (&x)[index];
 }
 
-inline void Vec3::set(float x, float y, float z) {
-	this->x = x;
-	this->y = y;
-	this->z = z;
+inline void Vec3::set(float x_, float y_, float z_) {
+	x = x_;
+	y = y_;
+	z = z_;
 }
 
 inline void Vec3::zero(void) {
@@ -441,11 +441,11 @@ inline float &Vec4::operator[](roSize index) {
 	return (&x)[index];
 }
 
-inline void Vec4::set(float x, float y, float z, float w) {
-	this->x = x;
-	this->y = y;
-	this->z = z;
-	this->w = w;
+inline void Vec4::set(float x_, float y_, float z_, float w_) {
+	x = x_;
+	y = y_;
+	z = z_;
+	w = w_;
 }
 
 inline void Vec4::zero(void) {

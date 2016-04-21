@@ -6,7 +6,7 @@
 
 namespace ro {
 
-void SubSystems::processEvents(void** data, roSize numData)
+void SubSystems::processEvents(roUserData* data, roSize numData)
 {
 	HWND hWnd = HWND(data[0]);
 	UINT uMsg = UINT(data[1]);

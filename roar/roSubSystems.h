@@ -32,10 +32,10 @@ struct SubSystems : private NonCopyable
 	Status	init			();
 	void	shutdown		();
 	void	tick			();
-	void	processEvents	(void** platformSPecificData, roSize numData);
+	void	processEvents	(roUserData* platformSPecificData, roSize numData);
 
 // Attributes
-	Array<void*> userData;
+	Array<roUserData> userData;
 
 	CustomInit initTaskPool;
 	TaskPool* taskPool;

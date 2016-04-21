@@ -114,14 +114,13 @@ Status HttpClientChunkedIStream::_readFormBuf(void* buffer, roUint64 bytesToRead
 Status HttpClientChunkedIStream::_readFormSocket(void* buffer, roUint64 bytesToRead, roUint64& bytesRead)
 {
 	roSize size = clamp_cast<roSize>(bytesToRead);
-	Status st = _socket.receive(buffer, size);
+	st = _socket.receive(buffer, size);
 	bytesRead = size;
 	return st;
 }
 
 Status HttpClientChunkedIStream::_readChunkSize()
 {
-	Status st;
 	const roSize maxHexStrSize = 16;
 	char buf[maxHexStrSize + 3];	// 16 for the hex string, two for "\r\n" and one for safety null
 	buf[sizeof(buf) - 1] = '\0';
@@ -132,7 +131,7 @@ Status HttpClientChunkedIStream::_readChunkSize()
 	while(p - buf < maxHexStrSize) {
 		st = (this->*_innerRead)(p, 1, len);
 		if(!st) return st;
-		if(len == 0) return Status::http_invalid_chunk_size;
+		if(len == 0) return st = Status::http_invalid_chunk_size;
 		roAssert(len == 1);
 		++p;
 		const char* newPos = p;
@@ -160,11 +159,11 @@ Status HttpClientChunkedIStream::_readChunkSize()
 		while(st) {
 			char c;
 			st = (this->*_innerRead)(&c, 1, len);
-			if(len == 0) return Status::http_invalid_chunk_size;
+			if(len == 0) return st = Status::http_invalid_chunk_size;
 
 			if(c == '\r') {
 				st = (this->*_innerRead)(&c, 1, len);
-				if(len == 0) return Status::http_invalid_chunk_size;
+				if(len == 0) return st = Status::http_invalid_chunk_size;
 				if(c == '\n')
 					st = Status::end_of_data;
 			}

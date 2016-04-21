@@ -34,7 +34,7 @@ struct DateTime
 	mutable tm		convertedTime;
 };	// DateTime
 
-void* _strFormatFunc(const DateTime& val);
+roPtrInt _strFormatFunc(const DateTime& val);
 
 }   // namespace ro
 
