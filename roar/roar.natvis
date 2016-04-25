@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+<!-- Reference: -->
+<!-- https://msdn.microsoft.com/en-us/library/jj620914.aspx -->
+
 <Type Name="ro::String">
 	<DisplayString>{_cstr+sizeof(roSize)*2, s8b}</DisplayString>
 	<Expand>
@@ -28,4 +31,5 @@
 		</ArrayItems> 
 	</Expand>
 </Type>
+	
 </AutoVisualizer>

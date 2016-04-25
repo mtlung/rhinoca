@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Put the following into C:\Users\username\Documents\Visual Studio 2015\Visualizers\default.natstepfilter -->
+<!-- Reference: https://msdn.microsoft.com/en-us/library/dn457346.aspx -->
+<!-- Put this file under "%USERPROFILE%\My Documents\Visual Studio 2015\Visualizers" -->
+
+<StepFilter xmlns="http://schemas.microsoft.com/vstudio/debugger/natstepfilter/2010">
+	<Function><Name>roStatus.*</Name><Action>NoStepInto</Action></Function>
+	<Function><Name>ro::IArray.*</Name><Action>NoStepInto</Action></Function>
+	<Function><Name>ro::SharedPtr.*</Name><Action>NoStepInto</Action></Function>
+	<Function><Name>ro::String.*</Name><Action>NoStepInto</Action></Function>
+</StepFilter>
