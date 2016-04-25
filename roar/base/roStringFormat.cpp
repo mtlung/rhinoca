@@ -268,12 +268,24 @@ roStatus _strFormat(String& str, const roUtf8* format, roSize argCount, ...)
 	// Extract the function pointer and value pointer first
 	TinyArray<FormatArg, 16> args;
 	va_list vl;
-	va_start(vl, argCount);
+	va_start(vl, argCount * 2);
 
+#if roCompiler_VarTemplateArg
 	for(roSize i=0; i<argCount; ++i) {
+		FormatArg arg = { va_arg(vl, FUNC), NULL };
+		args.pushBack(arg);
+	}
+
+	for (roSize i = 0; i<argCount; ++i) {
+		void* p = (void*)(va_arg(vl, roPtrInt));
+		args[i].param = p;
+	}
+#else
+	for (roSize i = 0; i<argCount; ++i) {
 		FormatArg arg = { va_arg(vl, FUNC), (void*)(va_arg(vl, roPtrInt)) };
 		args.pushBack(arg);
 	}
+#endif
 
 	va_end(vl);
 

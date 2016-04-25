@@ -230,6 +230,9 @@
     <ClCompile Include="..\..\roar\base\roDtoa.cpp">
       <Filter>base</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\roar\base\roWinDialogTemplate.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\roar\pch.h" />
@@ -538,6 +541,9 @@
       <Filter>base</Filter>
     </ClInclude>
     <ClInclude Include="..\..\roar\base\roCommandLine.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roWinDialogTemplate.h">
       <Filter>base</Filter>
     </ClInclude>
   </ItemGroup>

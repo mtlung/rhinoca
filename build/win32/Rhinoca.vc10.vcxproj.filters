@@ -8,6 +8,9 @@
     <ClCompile Include="..\..\src\pch.cpp" />
     <ClCompile Include="..\..\src\rhinoca.cpp" />
     <ClCompile Include="..\..\src\xmlparser.cpp" />
+    <ClCompile Include="..\..\src\dom\audio.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\dom\body.cpp">
       <Filter>dom</Filter>
     </ClCompile>
@@ -20,22 +23,7 @@
     <ClCompile Include="..\..\src\dom\canvasgradient.cpp">
       <Filter>dom</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\dom\element.cpp">
-      <Filter>dom</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\dom\document.cpp">
-      <Filter>dom</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\dom\div.cpp">
-      <Filter>dom</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\dom\image.cpp">
-      <Filter>dom</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\dom\audio.cpp">
-      <Filter>dom</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\dom\color.cpp">
+    <ClCompile Include="..\..\src\dom\cssparser.cpp">
       <Filter>dom</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\dom\cssstyledeclaration.cpp">
@@ -47,13 +35,22 @@
     <ClCompile Include="..\..\src\dom\cssstylesheet.cpp">
       <Filter>dom</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\dom\cssparser.cpp">
+    <ClCompile Include="..\..\src\dom\div.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\document.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\element.cpp">
       <Filter>dom</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\dom\elementstyle.cpp">
       <Filter>dom</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\dom\event.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dom\image.cpp">
       <Filter>dom</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\dom\imagedata.cpp">
@@ -68,10 +65,10 @@
     <ClCompile Include="..\..\src\dom\mouseevent.cpp">
       <Filter>dom</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\dom\node.cpp">
+    <ClCompile Include="..\..\src\dom\navigator.cpp">
       <Filter>dom</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\dom\navigator.cpp">
+    <ClCompile Include="..\..\src\dom\node.cpp">
       <Filter>dom</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\dom\nodelist.cpp">
@@ -106,6 +103,7 @@
     <ClInclude Include="..\..\src\common.h" />
     <ClInclude Include="..\..\src\context.h" />
     <ClInclude Include="..\..\src\context_win.h" />
+    <ClInclude Include="..\..\src\dom\pch.h" />
     <ClInclude Include="..\..\src\jsbindable.h" />
     <ClInclude Include="..\..\src\path.h" />
     <ClInclude Include="..\..\src\pch.h" />
@@ -113,6 +111,9 @@
     <ClInclude Include="..\..\src\rhinoca.h" />
     <ClInclude Include="..\..\src\xmlparser.h" />
     <ClInclude Include="..\..\src\dom\canvasgradient.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\audio.h">
       <Filter>dom</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\dom\body.h">
@@ -124,22 +125,10 @@
     <ClInclude Include="..\..\src\dom\canvas2dcontext.h">
       <Filter>dom</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\dom\element.h">
-      <Filter>dom</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\dom\document.h">
-      <Filter>dom</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\dom\div.h">
       <Filter>dom</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\dom\image.h">
-      <Filter>dom</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\dom\audio.h">
-      <Filter>dom</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\dom\color.h">
+    <ClInclude Include="..\..\src\dom\cssparser.h">
       <Filter>dom</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\dom\cssstyledeclaration.h">
@@ -151,7 +140,13 @@
     <ClInclude Include="..\..\src\dom\cssstylesheet.h">
       <Filter>dom</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\dom\cssparser.h">
+    <ClInclude Include="..\..\src\dom\imagedata.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\document.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\element.h">
       <Filter>dom</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\dom\elementstyle.h">
@@ -160,25 +155,25 @@
     <ClInclude Include="..\..\src\dom\event.h">
       <Filter>dom</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\dom\imagedata.h">
-      <Filter>dom</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\dom\keyevent.h">
+    <ClInclude Include="..\..\src\dom\image.h">
       <Filter>dom</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\dom\media.h">
       <Filter>dom</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\dom\mouseevent.h">
+    <ClInclude Include="..\..\src\dom\keyevent.h">
       <Filter>dom</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\dom\node.h">
+    <ClInclude Include="..\..\src\dom\nodelist.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dom\mouseevent.h">
       <Filter>dom</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\dom\navigator.h">
       <Filter>dom</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\dom\nodelist.h">
+    <ClInclude Include="..\..\src\dom\node.h">
       <Filter>dom</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\dom\registerfactories.h">
@@ -208,7 +203,7 @@
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dom">
-      <UniqueIdentifier>{d55d46e7-9c6c-43fb-b22e-69199e01ec85}</UniqueIdentifier>
+      <UniqueIdentifier>{8049549c-a3a9-40b1-91b0-173e817dcba8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

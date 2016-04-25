@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zlib", "zlib\zlib.vcxproj", "{B6465CDE-20B5-433B-B274-DAF0CC6BF600}"
+# Visual Studio 14
+VisualStudioVersion = 14.0.25123.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zlib", "zlib\zlib.vc14.vcxproj", "{B6465CDE-20B5-433B-B274-DAF0CC6BF600}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "png", "png\png.vcxproj", "{8F846F5A-915E-4937-80AC-521AFFCB036A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SmallJpeg", "SmallJpeg\SmallJpeg.vcxproj", "{D6AD4E9B-BB9A-4F23-87C6-10BCC68350C1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SmallJpeg", "SmallJpeg\SmallJpeg.vc14.vcxproj", "{D6AD4E9B-BB9A-4F23-87C6-10BCC68350C1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libmpg123", "libmpg\libmpg.vc10.vcxproj", "{F2ECEF40-A8ED-4E85-87E8-730375D1115A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libmpg123", "libmpg\libmpg.vc14.vcxproj", "{F2ECEF40-A8ED-4E85-87E8-730375D1115A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,8 +27,8 @@ Global
 		{B6465CDE-20B5-433B-B274-DAF0CC6BF600}.Release|Win32.Build.0 = Release|Win32
 		{B6465CDE-20B5-433B-B274-DAF0CC6BF600}.Release|x64.ActiveCfg = Release|x64
 		{B6465CDE-20B5-433B-B274-DAF0CC6BF600}.Release|x64.Build.0 = Release|x64
-		{8F846F5A-915E-4937-80AC-521AFFCB036A}.Debug|Win32.ActiveCfg = Release|Win32
-		{8F846F5A-915E-4937-80AC-521AFFCB036A}.Debug|Win32.Build.0 = Release|Win32
+		{8F846F5A-915E-4937-80AC-521AFFCB036A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8F846F5A-915E-4937-80AC-521AFFCB036A}.Debug|Win32.Build.0 = Debug|Win32
 		{8F846F5A-915E-4937-80AC-521AFFCB036A}.Debug|x64.ActiveCfg = Debug|x64
 		{8F846F5A-915E-4937-80AC-521AFFCB036A}.Debug|x64.Build.0 = Debug|x64
 		{8F846F5A-915E-4937-80AC-521AFFCB036A}.Release|Win32.ActiveCfg = Release|Win32

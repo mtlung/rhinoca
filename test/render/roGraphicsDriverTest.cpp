@@ -169,9 +169,9 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 		driver->clearColor(0, 0.125f, 0.3f, 1);
 
 		// Animate the color
-		color1[0] = (sin(context->lastSwapTime) + 1) / 2;
-		color2[1] = (cos(context->lastSwapTime) + 1) / 2;
-		color2[6] = (cos(context->lastSwapTime * 2) + 1) / 2;
+		color1[0] = (sinf(context->lastSwapTime) + 1) / 2;
+		color2[1] = (cosf(context->lastSwapTime) + 1) / 2;
+		color2[6] = (cosf(context->lastSwapTime * 2) + 1) / 2;
 
 		driver->updateBuffer(ubuffer1, 0, color1, sizeof(color1));
 

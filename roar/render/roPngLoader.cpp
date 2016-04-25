@@ -1,4 +1,8 @@
 #include "pch.h"
+
+// On windows we use WICLoader
+#if !roOS_WIN
+
 #include "roTexture.h"
 #include "roRenderDriver.h"
 #include "../base/roCpuProfiler.h"
@@ -8,12 +12,6 @@
 #include "../base/roTypeCast.h"
 #include "../../thirdParty/png/png.h"
 
-#if roCOMPILER_VC
-#	pragma comment(lib, "png")
-#	pragma comment(lib, "zlib")
-#	pragma warning(disable:4611)
-#endif
-
 // Reading of png files using the libpng
 // The code is base on the example provided in libpng
 // More information can be found in
@@ -21,6 +19,12 @@
 // http://www.libpng.org/pub/png/libpng-1.2.5-manual.html
 
 namespace ro {
+
+#if roCOMPILER_VC
+#	pragma comment(lib, "png")
+#	pragma comment(lib, "zlib")
+#	pragma warning(disable:4611)
+#endif
 
 struct PngLoader : public Task
 {
@@ -292,3 +296,5 @@ bool extMappingPng(const char* uri, void*& createFunc, void*& loadFunc)
 }
 
 }	// namespace ro
+
+#endif	// !roOS_WIN

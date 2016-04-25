@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\test\audio\roAudioTest.cpp" />
     <ClCompile Include="..\..\test\base\roAlgorithmTest.cpp" />
     <ClCompile Include="..\..\test\base\roArrayPerformanceTest.cpp" />
     <ClCompile Include="..\..\test\base\roArrayTest.cpp" />
@@ -82,8 +83,8 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -124,15 +125,11 @@
     <TargetName>$(ProjectName)d</TargetName>
     <IntDir>tmp/$(ProjectName)/$(PlatformName)/$(Configuration)/</IntDir>
     <OutDir>../../bin/$(PlatformName)/</OutDir>
-    <IncludePath>$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
-    <LibraryPath>$(LibraryPath);$(DXSDK_DIR)\Lib\x64</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <TargetName>$(ProjectName)d</TargetName>
     <IntDir>tmp/$(ProjectName)/$(PlatformName)/$(Configuration)/</IntDir>
     <OutDir>../../bin/$(PlatformName)/</OutDir>
-    <IncludePath>$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
-    <LibraryPath>$(LibraryPath);$(DXSDK_DIR)\Lib\x86</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IntDir>tmp/$(ProjectName)/$(PlatformName)/$(Configuration)/</IntDir>
@@ -175,6 +172,7 @@
       <SmallerTypeCheck>true</SmallerTypeCheck>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <MinimalRebuild>false</MinimalRebuild>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

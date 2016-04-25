@@ -132,7 +132,7 @@ struct RandomIOStreamTest
 			roSize bytesToPeek = 0;
 
 			do {
-				Status st = s->peek(buf, bytesToPeek);
+				st = s->peek(buf, bytesToPeek);
 				if(st == Status::file_ended)
 					return Status::ok;
 

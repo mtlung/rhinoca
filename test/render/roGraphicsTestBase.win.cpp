@@ -37,7 +37,7 @@ static LRESULT CALLBACK wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	if(uMsg == WM_CLOSE) PostQuitMessage(0);
 
 	if(test) {
-		void* eventData[4] = { hWnd, (void*)uMsg, (void*)wParam, (void*)lParam };
+		roUserData eventData[4] = { (roUserData)hWnd, (roUserData)uMsg, (roUserData)wParam, lParam };
 		test->subSystems.processEvents(eventData, roCountof(eventData));
 	}
 
@@ -84,7 +84,7 @@ void GraphicsTestBase::createWindow(int width, int height)
 		NULL
 	);
 
-	::SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG>(this));
+	::SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 	::ShowWindow(hWnd, true);
 }
 
@@ -106,8 +106,8 @@ static void _initRenderDriver(ro::SubSystems& subSystems)
 ro::Status GraphicsTestBase::initContext(const char* driverStr)
 {
 	ro::Status st;
-	subSystems.userData.pushBack(this);
-	subSystems.userData.pushBack((void*)driverStr);
+	subSystems.userData.pushBack((roUserData)this);
+	subSystems.userData.pushBack((roUserData)driverStr);
 	subSystems.initRenderDriver = _initRenderDriver;
 	st = subSystems.init(); if(!st) return st;
 

@@ -232,6 +232,7 @@
     <ClInclude Include="..\..\roar\base\roTypeOf.h" />
     <ClInclude Include="..\..\roar\base\roUtility.h" />
     <ClInclude Include="..\..\roar\base\roWeakPtr.h" />
+    <ClInclude Include="..\..\roar\base\roWinDialogTemplate.h" />
     <ClInclude Include="..\..\roar\gui\roGui.h" />
     <ClInclude Include="..\..\roar\gui\roGuiButton.h" />
     <ClInclude Include="..\..\roar\gui\roGuiCheckBox.h" />
@@ -317,6 +318,7 @@
     <ClCompile Include="..\..\roar\base\roTaskPool.cpp" />
     <ClCompile Include="..\..\roar\base\roTextResource.cpp" />
     <ClCompile Include="..\..\roar\base\roUtility.cpp" />
+    <ClCompile Include="..\..\roar\base\roWinDialogTemplate.cpp" />
     <ClCompile Include="..\..\roar\gui\roGui.cpp" />
     <ClCompile Include="..\..\roar\input\roInputDriver.windows.cpp" />
     <ClCompile Include="..\..\roar\math\roMath.cpp" />

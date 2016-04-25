@@ -88,7 +88,7 @@ void extractField(const Klass<C>& klass, Field& outField, const char* name, F f,
 	// Register the LinkList type if not yet done so
 	Type* type = RegisterTemplateArgument(*registry, (LinkList<T>*)NULL);
 
-	unsigned offset = reinterpret_cast<unsigned>(&((C*)(NULL)->*f));
+	unsigned offset = num_cast<unsigned>((roPtrInt)&((C*)(NULL)->*f));
 	Field tmp = {
 		name,
 		type,

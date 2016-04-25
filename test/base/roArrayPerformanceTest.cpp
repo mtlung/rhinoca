@@ -23,11 +23,11 @@ void roSwap(std::string& lhs, std::string& rhs)
 
 TEST_FIXTURE(ArrayPerformanceTest, compareWithSTL)
 {
-	roSize sampleCount = roIsDebug ? 10 : 1000;
 	ro::StopWatch timer;
 
 	{	// Push back of int
 		roLog("info", "Push back int\n");
+		roSize sampleCount = roIsDebug ? 10 : 1000;
 
 		typedef Array<roSize> MyArray;
 		BEGIN_PROFILE(10000, 1, MyArray ary;)

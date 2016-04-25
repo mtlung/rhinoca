@@ -19,8 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{8F846F5A-915E-4937-80AC-521AFFCB036A}</ProjectGuid>
+    <ProjectGuid>{D6AD4E9B-BB9A-4F23-87C6-10BCC68350C1}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
+    <ProjectName>SmallJpeg</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -93,52 +94,35 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
-      <CompileAs>CompileAsC</CompileAs>
-      <DisableSpecificWarnings>4100;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
-      <CompileAs>CompileAsC</CompileAs>
-      <DisableSpecificWarnings>4100;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
-      <CompileAs>CompileAsC</CompileAs>
-      <DisableSpecificWarnings>4100;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
-      <CompileAs>CompileAsC</CompileAs>
-      <DisableSpecificWarnings>4100;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="png.c" />
-    <ClCompile Include="pngerror.c" />
-    <ClCompile Include="pngget.c" />
-    <ClCompile Include="pngmem.c" />
-    <ClCompile Include="pngpread.c" />
-    <ClCompile Include="pngread.c" />
-    <ClCompile Include="pngrio.c" />
-    <ClCompile Include="pngrtran.c" />
-    <ClCompile Include="pngrutil.c" />
-    <ClCompile Include="pngset.c" />
-    <ClCompile Include="pngtrans.c" />
-    <ClCompile Include="pngwio.c" />
-    <ClCompile Include="pngwrite.c" />
-    <ClCompile Include="pngwtran.c" />
-    <ClCompile Include="pngwutil.c" />
+    <ClCompile Include="H2v2.cpp" />
+    <ClCompile Include="idct.cpp" />
+    <ClCompile Include="jidctfst.cpp" />
+    <ClCompile Include="jpegdecoder.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="png.h" />
-    <ClInclude Include="pngconf.h" />
-    <ClInclude Include="pngpriv.h" />
+    <ClInclude Include="jpegdecoder.h" />
+    <ClInclude Include="main.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="jpegdecoder.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

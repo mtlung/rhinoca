@@ -610,12 +610,12 @@ roStatus serialize_Array(Serializer& se, Field& field, void* fieldParent)
 	};
 
 	if(se.isReading) {
-		IArray<T>* a = field.getPtr<IArray<T> >(fieldParent);
-		a->clear();
+		IArray<T>* a2 = field.getPtr<IArray<T> >(fieldParent);
+		a2->clear();
 
 		while(!se.isArrayEnded()) {
-			a->incSize(1);	// TODO: Make some hints for reserve
-			st = innerType->serializeFunc(se, f, &a->back());
+			a2->incSize(1);	// TODO: Make some hints for reserve
+			st = innerType->serializeFunc(se, f, &a2->back());
 			if(!st) return st;
 		}
 	}
@@ -667,7 +667,7 @@ void extractField_IArray(const Klass<C>& klass, Field& outField, const char* nam
 	// Register the array type if not yet done so
 	Type* type = RegisterTemplateArgument(*registry, (IArray<T>*)NULL);
 
-	unsigned offset = reinterpret_cast<unsigned>(&((C*)(NULL)->*f));
+	unsigned offset = num_cast<unsigned>((roPtrInt)&((C*)(NULL)->*f));
 	Field tmp = {
 		name,
 		type,

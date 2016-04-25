@@ -14,13 +14,13 @@ TEST_FIXTURE(InputTest, mouse)
 	createWindow(200, 200);
 	subSystems.init();
 
-	roInputDriver* driver = subSystems.inputDriver;
+	roInputDriver* inputDriver = subSystems.inputDriver;
 
 	float mouseX = 0, mouseY = 0;
 
 	while(keepRun()) {
-		float x = driver->mouseAxis(driver, stringHash("mouse x"));
-		float y = driver->mouseAxis(driver, stringHash("mouse y"));
+		float x = inputDriver->mouseAxis(inputDriver, stringHash("mouse x"));
+		float y = inputDriver->mouseAxis(inputDriver, stringHash("mouse y"));
 
 		if(x != mouseX || y != mouseY) {
 			roLog("", "%f, %f\n", mouseX, mouseY);
@@ -28,7 +28,7 @@ TEST_FIXTURE(InputTest, mouse)
 			mouseY = y;
 		}
 
-		if(driver->anyButtonDown(driver, false))
+		if(inputDriver->anyButtonDown(inputDriver, false))
 			roLog("", "Any button\n");
 	}
 }

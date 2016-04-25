@@ -7,6 +7,10 @@ namespace ro {
 // zlib reference:
 // http://www.zlib.net/zlib_how.html
 
+#if roCOMPILER_VC
+#	pragma comment(lib, "zlib")
+#endif
+
 GZipStreamIStream::~GZipStreamIStream()
 {
 	if(_innerStream.ptr())

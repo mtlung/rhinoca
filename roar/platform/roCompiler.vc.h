@@ -28,6 +28,11 @@ typedef unsigned char roByte;
 #	define roOS_WIN32 1
 #endif
 
+// Detect C++ features
+#if _MSC_VER >= 1800	// VC2015 (VC14)
+#	define roCompiler_VarTemplateArg 1	// Variadic template arguments
+#endif
+
 // Our own debug macro
 #ifdef _DEBUG
 #	define roDEBUG 1

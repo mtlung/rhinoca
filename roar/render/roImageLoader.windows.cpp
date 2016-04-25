@@ -54,7 +54,7 @@ static const WICConvert _wicConvert[] =
 	{ GUID_WICPixelFormat32bppRGBA,				GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
 	{ GUID_WICPixelFormat32bppBGRA,				GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
 	{ GUID_WICPixelFormat32bppPBGRA,			GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
-//	{ GUID_WICPixelFormat32bppPRGBA,			GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
+	{ GUID_WICPixelFormat32bppPRGBA,			GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
 
 	{ GUID_WICPixelFormat1bppIndexed,			GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
 	{ GUID_WICPixelFormat2bppIndexed,			GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
@@ -62,9 +62,9 @@ static const WICConvert _wicConvert[] =
 	{ GUID_WICPixelFormat8bppIndexed,			GUID_WICPixelFormat32bppRGBA,		roRDriverTextureFormat_RGBA		},
 
 	{ GUID_WICPixelFormat48bppRGBFixedPoint,	GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F	},
-//	{ GUID_WICPixelFormat48bppBGRFixedPoint,	GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F },
+	{ GUID_WICPixelFormat48bppBGRFixedPoint,	GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F },
 	{ GUID_WICPixelFormat64bppRGBAFixedPoint,	GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F },
-//	{ GUID_WICPixelFormat64bppBGRAFixedPoint,	GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F },
+	{ GUID_WICPixelFormat64bppBGRAFixedPoint,	GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F },
 	{ GUID_WICPixelFormat64bppRGBFixedPoint,	GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F },
 	{ GUID_WICPixelFormat64bppRGBHalf,			GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F },
 	{ GUID_WICPixelFormat48bppRGBHalf,			GUID_WICPixelFormat64bppRGBAHalf,	roRDriverTextureFormat_RGBA_16F },

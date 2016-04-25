@@ -27,9 +27,6 @@ namespace ro {
 /// Pair<int> pair = { 1, 2 };
 /// strFormat(str, "{}", pair);
 
-template<class T1>
-roStatus strFormat(String& str, const roUtf8* format, const T1& t1);
-
 
 //////////////////////////////////////////////////////////////////////////
 // Below are implementation details
@@ -161,9 +158,21 @@ inline const roPtrInt _strFormatArg(const T& val) {
 	return (roPtrInt)&val;
 }
 
-#define _EXPAND(x) _strFormatFunc(x), _strFormatArg(x)
-
 roStatus _strFormat(String& str, const roUtf8* format, roSize argCount, ...);
+
+#if roCompiler_VarTemplateArg
+
+template<class... TS>
+roStatus strFormat(String& str, const roUtf8* format, const TS&... ts) {
+	// NOTE: Seems MSVC has problem compiling the following code
+	// (_strFormatFunc(ts), _strFormatArg(ts))...
+	// Therefore the argument order need to be different in Variadic template argument version
+	return _strFormat(str, format, sizeof...(TS), _strFormatFunc(ts)..., _strFormatArg(ts)...);
+}
+
+#else
+
+#define _EXPAND(x) _strFormatFunc(x), _strFormatArg(x)
 
 template<class T1>
 roStatus strFormat(String& str, const roUtf8* format, const T1& t1) {
@@ -216,6 +225,8 @@ roStatus strFormat(String& str, const roUtf8* format, const T1& t1, const T2& t2
 }
 
 #undef _EXPAND
+
+#endif	// roCompiler_VarTemplateArg
 
 }	// namespace
 

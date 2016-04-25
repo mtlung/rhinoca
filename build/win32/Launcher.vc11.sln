@@ -9,6 +9,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Rhinoca", "Rhinoca.vc11.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Launcher", "Launcher.vc11.vcxproj", "{59819FBB-736C-494E-8144-048F6515A13A}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BEF75A6B-4577-4CAD-838C-ECCEFFFF768E}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\roar\base\roWinDialogTemplate.cpp = ..\..\roar\base\roWinDialogTemplate.cpp
+		..\..\roar\base\roWinDialogTemplate.h = ..\..\roar\base\roWinDialogTemplate.h
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Swc", "Swc.vc11.vcxproj.vcxproj", "{D5085BAC-49D2-4683-94B6-21785B21419C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -49,6 +57,14 @@ Global
 		{59819FBB-736C-494E-8144-048F6515A13A}.Release|Win32.Build.0 = Release|Win32
 		{59819FBB-736C-494E-8144-048F6515A13A}.Release|x64.ActiveCfg = Release|x64
 		{59819FBB-736C-494E-8144-048F6515A13A}.Release|x64.Build.0 = Release|x64
+		{D5085BAC-49D2-4683-94B6-21785B21419C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D5085BAC-49D2-4683-94B6-21785B21419C}.Debug|Win32.Build.0 = Debug|Win32
+		{D5085BAC-49D2-4683-94B6-21785B21419C}.Debug|x64.ActiveCfg = Debug|x64
+		{D5085BAC-49D2-4683-94B6-21785B21419C}.Debug|x64.Build.0 = Debug|x64
+		{D5085BAC-49D2-4683-94B6-21785B21419C}.Release|Win32.ActiveCfg = Release|Win32
+		{D5085BAC-49D2-4683-94B6-21785B21419C}.Release|Win32.Build.0 = Release|Win32
+		{D5085BAC-49D2-4683-94B6-21785B21419C}.Release|x64.ActiveCfg = Release|x64
+		{D5085BAC-49D2-4683-94B6-21785B21419C}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
