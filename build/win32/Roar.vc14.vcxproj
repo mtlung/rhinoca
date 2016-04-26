@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -18,6 +18,158 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{2F12C86F-7242-45B3-8E6B-D359A8EDBD09}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>Roar</RootNamespace>
+    <ProjectName>Roar</ProjectName>
+    <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>$(ProjectName)d</TargetName>
+    <IntDir>tmp/$(ProjectName)/$(PlatformName)/$(Configuration)/</IntDir>
+    <OutDir>../../lib/$(PlatformName)/</OutDir>
+    <IncludePath>$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath);$(DXSDK_DIR)\Lib\x64</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <TargetName>$(ProjectName)d</TargetName>
+    <IntDir>tmp/$(ProjectName)/$(PlatformName)/$(Configuration)/</IntDir>
+    <OutDir>../../lib/$(PlatformName)/</OutDir>
+    <IncludePath>$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath);$(DXSDK_DIR)\Lib\x86</LibraryPath>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IntDir>tmp/$(ProjectName)/$(PlatformName)/$(Configuration)/</IntDir>
+    <OutDir>../../lib/$(PlatformName)/</OutDir>
+    <IncludePath>$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath);$(DXSDK_DIR)\Lib\x86</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IntDir>tmp/$(ProjectName)/$(PlatformName)/$(Configuration)/</IntDir>
+    <OutDir>../../lib/$(PlatformName)/</OutDir>
+    <IncludePath>$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath);$(DXSDK_DIR)\Lib\x64</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SmallerTypeCheck>true</SmallerTypeCheck>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <MinimalRebuild>false</MinimalRebuild>
+      <WarningLevel>Level4</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <SmallerTypeCheck>true</SmallerTypeCheck>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <MinimalRebuild>false</MinimalRebuild>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <MASM />
+    <Lib />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>Full</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <StringPooling>true</StringPooling>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>Full</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <StringPooling>true</StringPooling>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\roar\audio\roAudioDriver.h" />
     <ClInclude Include="..\..\roar\audio\roAudioDriver.openal.windows.functionList.h" />
@@ -33,8 +185,11 @@
     <ClInclude Include="..\..\roar\base\roByteOrder.h" />
     <ClInclude Include="..\..\roar\base\roBytePtr.h" />
     <ClInclude Include="..\..\roar\base\roCachedVal.h" />
+    <ClInclude Include="..\..\roar\base\roCommandLine.h" />
+    <ClInclude Include="..\..\roar\base\roCompressedStream.h" />
     <ClInclude Include="..\..\roar\base\roComPtr.h" />
     <ClInclude Include="..\..\roar\base\roCondVar.h" />
+    <ClInclude Include="..\..\roar\base\roCoroutine.h" />
     <ClInclude Include="..\..\roar\base\roCpuProfiler.h" />
     <ClInclude Include="..\..\roar\base\roDateTime.h" />
     <ClInclude Include="..\..\roar\base\roFileSystem.h" />
@@ -43,6 +198,7 @@
     <ClInclude Include="..\..\roar\base\roIOStream.h" />
     <ClInclude Include="..\..\roar\base\roJson.h" />
     <ClInclude Include="..\..\roar\base\roJsonSerializer.h" />
+    <ClInclude Include="..\..\roar\base\roLexer.h" />
     <ClInclude Include="..\..\roar\base\roLinkList.h" />
     <ClInclude Include="..\..\roar\base\roLog.h" />
     <ClInclude Include="..\..\roar\base\roMap.h" />
@@ -61,7 +217,6 @@
     <ClInclude Include="..\..\roar\base\roSafeInteger.h" />
     <ClInclude Include="..\..\roar\base\roSerializer.h" />
     <ClInclude Include="..\..\roar\base\roSharedPtr.h" />
-    <ClInclude Include="..\..\roar\base\roSocket.h" />
     <ClInclude Include="..\..\roar\base\roStackWalker.h" />
     <ClInclude Include="..\..\roar\base\roStatus.h" />
     <ClInclude Include="..\..\roar\base\roStatusEnum.h" />
@@ -76,6 +231,7 @@
     <ClInclude Include="..\..\roar\base\roTypeOf.h" />
     <ClInclude Include="..\..\roar\base\roUtility.h" />
     <ClInclude Include="..\..\roar\base\roWeakPtr.h" />
+    <ClInclude Include="..\..\roar\base\roWinDialogTemplate.h" />
     <ClInclude Include="..\..\roar\gui\roGui.h" />
     <ClInclude Include="..\..\roar\gui\roGuiButton.h" />
     <ClInclude Include="..\..\roar\gui\roGuiCheckBox.h" />
@@ -92,8 +248,10 @@
     <ClInclude Include="..\..\roar\math\roRandom.h" />
     <ClInclude Include="..\..\roar\math\roRect.h" />
     <ClInclude Include="..\..\roar\math\roVector.h" />
+    <ClInclude Include="..\..\roar\network\roDnsResolve.h" />
     <ClInclude Include="..\..\roar\network\roHttp.h" />
-    <ClInclude Include="..\..\roar\network\roHttpContentDecoder.h" />
+    <ClInclude Include="..\..\roar\network\roSocket.h" />
+    <ClInclude Include="..\..\roar\network\roSecureSocket.h" />
     <ClInclude Include="..\..\roar\pch.h" />
     <ClInclude Include="..\..\roar\platform\roCompiler.h" />
     <ClInclude Include="..\..\roar\platform\roCompiler.vc.h" />
@@ -123,15 +281,20 @@
     <ClCompile Include="..\..\roar\audio\roAudioDriver.openal.cpp" />
     <ClCompile Include="..\..\roar\audio\stb_vorbis.cpp" />
     <ClCompile Include="..\..\roar\base\roBlockAllocator.cpp" />
+    <ClCompile Include="..\..\roar\base\roCommandLine.cpp" />
+    <ClCompile Include="..\..\roar\base\roCompressedStream.cpp" />
     <ClCompile Include="..\..\roar\base\roCondVar.cpp" />
+    <ClCompile Include="..\..\roar\base\roCoroutine.cpp" />
     <ClCompile Include="..\..\roar\base\roCpuProfiler.cpp" />
     <ClCompile Include="..\..\roar\base\roDateTime.cpp" />
+    <ClCompile Include="..\..\roar\base\roDtoa.cpp" />
     <ClCompile Include="..\..\roar\base\roFileSystem.cpp" />
     <ClCompile Include="..\..\roar\base\roHttpFileSystem.cpp" />
     <ClCompile Include="..\..\roar\base\roHttpStream.cpp" />
     <ClCompile Include="..\..\roar\base\roIOStream.cpp" />
     <ClCompile Include="..\..\roar\base\roJson.cpp" />
     <ClCompile Include="..\..\roar\base\roJsonSerializer.cpp" />
+    <ClCompile Include="..\..\roar\base\roLexer.cpp" />
     <ClCompile Include="..\..\roar\base\roLinkList.cpp" />
     <ClCompile Include="..\..\roar\base\roLog.cpp" />
     <ClCompile Include="..\..\roar\base\roMap.cpp" />
@@ -145,7 +308,7 @@
     <ClCompile Include="..\..\roar\base\roRegex.cpp" />
     <ClCompile Include="..\..\roar\base\roResource.cpp" />
     <ClCompile Include="..\..\roar\base\roSerializer.cpp" />
-    <ClCompile Include="..\..\roar\base\roSocket.cpp" />
+    <ClCompile Include="..\..\roar\base\roStackWalker.cpp" />
     <ClCompile Include="..\..\roar\base\roStatus.cpp" />
     <ClCompile Include="..\..\roar\base\roStopWatch.cpp" />
     <ClCompile Include="..\..\roar\base\roString.cpp" />
@@ -154,18 +317,22 @@
     <ClCompile Include="..\..\roar\base\roTaskPool.cpp" />
     <ClCompile Include="..\..\roar\base\roTextResource.cpp" />
     <ClCompile Include="..\..\roar\base\roUtility.cpp" />
+    <ClCompile Include="..\..\roar\base\roWinDialogTemplate.cpp" />
     <ClCompile Include="..\..\roar\gui\roGui.cpp" />
     <ClCompile Include="..\..\roar\input\roInputDriver.windows.cpp" />
     <ClCompile Include="..\..\roar\math\roMath.cpp" />
     <ClCompile Include="..\..\roar\math\roMatrix.cpp" />
     <ClCompile Include="..\..\roar\math\roVector.cpp" />
-    <ClCompile Include="..\..\roar\network\roHttp.cpp" />
+    <ClCompile Include="..\..\roar\network\roDnsResolve.win.cpp" />
+    <ClCompile Include="..\..\roar\network\roHttpClient.cpp" />
     <ClCompile Include="..\..\roar\network\roHttpHeader.cpp" />
     <ClCompile Include="..\..\roar\network\roHttpServer.cpp" />
+    <ClCompile Include="..\..\roar\network\roSocket.cpp" />
+    <ClCompile Include="..\..\roar\network\roSecureSocket.win.cpp" />
     <ClCompile Include="..\..\roar\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\roar\platform\roCompiler.vc.cpp" />
@@ -199,129 +366,27 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\roar\base\roArray.inl" />
+    <None Include="..\..\roar\base\roLinkList.inl" />
     <None Include="..\..\roar\base\roReflection.inl" />
     <None Include="..\..\roar\base\roStringUtility.inl" />
     <None Include="..\..\roar\input\roInputDriver.ime.windows.inl" />
     <None Include="..\..\roar\math\roMatrix.inl" />
     <None Include="..\..\roar\math\roVector.inl" />
+    <None Include="..\..\roar\network\roHttpClientStream.inc" />
     <None Include="..\..\roar\render\roRenderDriver.dx11.inl" />
     <None Include="..\..\roar\render\roRenderDriver.gl.inl" />
   </ItemGroup>
-  <PropertyGroup Label="Globals">
-    <ProjectName>Roar</ProjectName>
-    <ProjectGuid>{26651F8F-FC84-4dd1-A716-F3E7B659F28A}</ProjectGuid>
-    <RootNamespace>Roar</RootNamespace>
-    <Keyword>Win32Proj</Keyword>
-  </PropertyGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
-    <CharacterSet>Unicode</CharacterSet>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
-    <CharacterSet>Unicode</CharacterSet>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
-    <CharacterSet>Unicode</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
-    <CharacterSet>Unicode</CharacterSet>
-  </PropertyGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings">
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <PropertyGroup Label="UserMacros" />
-  <PropertyGroup>
-    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../../lib/$(PlatformName)/</OutDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../../lib/$(PlatformName)/</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">tmp/$(ProjectName)/$(PlatformName)/$(ConfigurationName)/</IntDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">tmp/$(ProjectName)/$(PlatformName)/$(ConfigurationName)/</IntDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../../lib/$(PlatformName)/</OutDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../../lib/$(PlatformName)/</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">tmp/$(ProjectName)/$(PlatformName)/$(ConfigurationName)/</IntDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">tmp/$(ProjectName)/$(PlatformName)/$(ConfigurationName)/</IntDir>
-    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
-    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
-    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
-    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
-    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
-    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectName)d</TargetName>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectName)d</TargetName>
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Include;$(IncludePath)</IncludePath>
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Include;$(IncludePath)</IncludePath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Lib\x86\;$(LibraryPath)</LibraryPath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Lib\x86\;$(LibraryPath)</LibraryPath>
-  </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ClCompile>
-      <PreprocessorDefinitions>WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <WarningLevel>Level4</WarningLevel>
-      <Optimization>Disabled</Optimization>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-    </ClCompile>
-    <Lib>
-      <OutputFile>$(OutDir)$(ProjectName)d.lib</OutputFile>
-    </Lib>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ClCompile>
-      <PreprocessorDefinitions>WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <WarningLevel>Level4</WarningLevel>
-      <Optimization>Disabled</Optimization>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-    </ClCompile>
-    <Lib>
-      <OutputFile>$(OutDir)$(ProjectName)d.lib</OutputFile>
-    </Lib>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ClCompile>
-      <PreprocessorDefinitions>WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <WarningLevel>Level4</WarningLevel>
-    </ClCompile>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <ClCompile>
-      <PreprocessorDefinitions>WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <WarningLevel>Level4</WarningLevel>
-    </ClCompile>
-  </ItemDefinitionGroup>
+  <ItemGroup>
+    <MASM Include="..\..\roar\base\roCoroutine.win64.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\..\roar\roar.natvis" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
   </ImportGroup>
 </Project>
