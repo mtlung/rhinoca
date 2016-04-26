@@ -58,9 +58,9 @@ public:
 	STDMETHODIMP RetrieveRequestedAttrs(ULONG, TS_ATTRVAL*, ULONG*) { return E_NOTIMPL; }
 
 	// ITfContextOwnerCompositionSink interfaces
-    STDMETHODIMP OnStartComposition(ITfCompositionView* pComposition, BOOL* pfOk);
-    STDMETHODIMP OnUpdateComposition(ITfCompositionView* pComposition, ITfRange* pRangeNew);
-    STDMETHODIMP OnEndComposition(ITfCompositionView* pComposition);
+	STDMETHODIMP OnStartComposition(ITfCompositionView* pComposition, BOOL* pfOk);
+	STDMETHODIMP OnUpdateComposition(ITfCompositionView* pComposition, ITfRange* pRangeNew);
+	STDMETHODIMP OnEndComposition(ITfCompositionView* pComposition);
 
 // Private
 	ULONG refCount;
@@ -103,7 +103,7 @@ roStatus TextService::init()
 
 	_hWnd = ::GetActiveWindow();
 
-    // Register with TSF...
+	// Register with TSF...
 	hr = ::CoCreateInstance(CLSID_TF_ThreadMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfThreadMgr, (void**)&_cpThreadMgr);
 	if(FAILED(hr) || !_cpThreadMgr) return st;
 
@@ -117,10 +117,10 @@ roStatus TextService::init()
 
 	if(FAILED(_cpDocMgr->Push(_cpContext))) return st;
 
-    ITfDocumentMgr* pDocumentMgrPrev = NULL;
-    _cpThreadMgr->AssociateFocus(_hWnd, _cpDocMgr, &pDocumentMgrPrev);
-    if(pDocumentMgrPrev)
-        pDocumentMgrPrev->Release();
+	ITfDocumentMgr* pDocumentMgrPrev = NULL;
+	_cpThreadMgr->AssociateFocus(_hWnd, _cpDocMgr, &pDocumentMgrPrev);
+	if(pDocumentMgrPrev)
+		pDocumentMgrPrev->Release();
 
 	AddRef();
 
@@ -161,7 +161,7 @@ STDMETHODIMP_(DWORD) TextService::Release()
 
 STDMETHODIMP TextService::QueryInterface(REFIID riid, LPVOID* pVoid)
 {
-    *pVoid = NULL;
+	*pVoid = NULL;
 
 	if(IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, IID_ITextStoreACP))
 		*pVoid = (ITextStoreACP*)this;
@@ -245,27 +245,27 @@ STDMETHODIMP TextService::SetSelection(ULONG ulCount, const TS_SELECTION_ACP* pS
 
 STDMETHODIMP TextService::GetText(LONG acpStart, LONG acpEnd, WCHAR* pchPlain, ULONG cchPlainReq, ULONG* pcchPlainRet, TS_RUNINFO* prgRunInfo, ULONG cRunInfoReq, ULONG* pcRunInfoRet, LONG* pacpNext)
 {
-    if(cchPlainReq == 0 && cRunInfoReq == 0)
-        return S_OK;
+	if(cchPlainReq == 0 && cRunInfoReq == 0)
+		return S_OK;
 
-    if(acpEnd == -1)
-        acpEnd = _acpEnd;
+	if(acpEnd == -1)
+		acpEnd = _acpEnd;
 
-    acpEnd = roMinOf3(num_cast<ULONG>(acpEnd), acpStart + cchPlainReq, num_cast<ULONG>(_wString.size()));
+	acpEnd = roMinOf3(num_cast<ULONG>(acpEnd), acpStart + cchPlainReq, num_cast<ULONG>(_wString.size()));
 
 	memcpy(pchPlain, _wString.typedPtr(), (acpEnd - acpStart) * sizeof(wchar_t));
 
-    *pcchPlainRet = acpEnd - acpStart;
-    if(cRunInfoReq)
-    {
-        prgRunInfo[0].uCount = acpEnd - acpStart;
-        prgRunInfo[0].type = TS_RT_PLAIN;
-        *pcRunInfoRet = 1;
-    }
+	*pcchPlainRet = acpEnd - acpStart;
+	if(cRunInfoReq)
+	{
+		prgRunInfo[0].uCount = acpEnd - acpStart;
+		prgRunInfo[0].type = TS_RT_PLAIN;
+		*pcRunInfoRet = 1;
+	}
 
-    *pacpNext = acpEnd;
+	*pacpNext = acpEnd;
 
-    return S_OK;
+	return S_OK;
 }
 
 STDMETHODIMP TextService::SetText(DWORD dwFlags, LONG acpStart, LONG acpEnd, const WCHAR* pchText, ULONG cch, TS_TEXTCHANGE* pChange)
@@ -320,8 +320,8 @@ STDMETHODIMP TextService::InsertTextAtSelection(DWORD dwFlags, const WCHAR* pchT
 
 STDMETHODIMP TextService::GetEndACP(LONG* pacp)
 {
-    *pacp = _acpEnd;
-    return S_OK;
+	*pacp = _acpEnd;
+	return S_OK;
 }
 
 STDMETHODIMP TextService::GetActiveView(TsViewCookie* pvcView)
@@ -332,14 +332,14 @@ STDMETHODIMP TextService::GetActiveView(TsViewCookie* pvcView)
 
 STDMETHODIMP TextService::GetTextExt(TsViewCookie, LONG, LONG, RECT* prc, BOOL* pfClipped)
 {
-    prc->left = 0;
-    prc->right = 0;
-    prc->top = 0;
-    prc->bottom = 0;
+	prc->left = 0;
+	prc->right = 0;
+	prc->top = 0;
+	prc->bottom = 0;
 
 	::ClientToScreen(_hWnd, (POINT *)&prc->left);
 	::ClientToScreen(_hWnd, (POINT *)&prc->right);
-    *pfClipped = FALSE;
+	*pfClipped = FALSE;
 
 	return S_OK;
 }

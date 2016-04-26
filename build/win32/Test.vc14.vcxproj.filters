@@ -1,0 +1,163 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\test\audio\roAudioTest.cpp" />
+    <ClCompile Include="..\..\test\main.cpp" />
+    <ClCompile Include="..\..\test\pch.cpp" />
+    <ClCompile Include="..\..\test\base\roAlgorithmTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roArrayPerformanceTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roArrayTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roCommandLineTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roCoRoutineTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roDateTimeTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roFileSystemTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roIOStreamTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roJsonTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roLexerTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roMapTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roNumericOverflowTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roParserTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roRegexTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roReflectionTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roResourceTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roRingBufferTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roSafeIntegerTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roSerializerTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roSockAddrTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roSocketTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roStopWatchTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roStringFormatTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roStringTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roStringUtilityTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roTaskPoolMergeSortTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\base\roTaskPoolTest.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\cpptest\test.cpp">
+      <Filter>cpptest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\gui\roImGuiTest.cpp">
+      <Filter>gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\input\roInputTest.cpp">
+      <Filter>input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\math\roMatrixTest.cpp">
+      <Filter>math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\math\roRandomTest.cpp">
+      <Filter>math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\network\roHttpTest.cpp">
+      <Filter>network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\network\roDnsTest.cpp">
+      <Filter>network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\render\roCanvasTest.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\render\roGraphicsDriverTest.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\render\roGraphicsTestBase.win.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\render\roTextureLoaderTest.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\test\pch.h" />
+    <ClInclude Include="..\..\test\cpptest\checks.h">
+      <Filter>cpptest</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\test\cpptest\cpptest.h">
+      <Filter>cpptest</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\test\cpptest\macros.h">
+      <Filter>cpptest</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\test\cpptest\test.h">
+      <Filter>cpptest</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\test\render\roGraphicsTestBase.win.h">
+      <Filter>render</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="base">
+      <UniqueIdentifier>{6eb207d8-eb16-4217-baee-da8fa858bdaf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="cpptest">
+      <UniqueIdentifier>{9293ab0d-c87c-4772-b51b-98294a71709b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gui">
+      <UniqueIdentifier>{05e688e5-09c8-497e-9b63-b089a24de61c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="input">
+      <UniqueIdentifier>{15b98fe6-b4e4-4ace-b0ea-5225fc6a4c9a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="math">
+      <UniqueIdentifier>{d30e3e38-9ac1-40ea-a399-5dc169362c9b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="network">
+      <UniqueIdentifier>{26a2625d-c751-41ef-9406-bc7c7fcd4849}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="render">
+      <UniqueIdentifier>{8bb3de14-889d-4ae4-80a3-608c5f769f82}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

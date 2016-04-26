@@ -75,7 +75,7 @@ void guiVScrollBarLogic(GuiScrollBarState& state)
 	state.value = roClamp(state.value, 0.f, state.valueMax);
 
 	// Update bar rect
-    float barPos = ((slideSize - barSize) * state.value) / state.valueMax;
+	float barPos = ((slideSize - barSize) * state.value) / state.valueMax;
 	state.barButton.rect = Rectf(
 		rect.x,
 		rect.y + rectButU.h + barPos,

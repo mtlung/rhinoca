@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 14
+VisualStudioVersion = 14.0.25123.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Roar", "Roar.vc14.vcxproj", "{2F12C86F-7242-45B3-8E6B-D359A8EDBD09}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Test.vc14.vcxproj", "{F9A97715-369E-4C43-9F84-CBF8350C9A12}"
@@ -10,10 +12,6 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Launcher", "Launcher.vc14.vcxproj", "{59819FBB-736C-494E-8144-048F6515A13A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BEF75A6B-4577-4CAD-838C-ECCEFFFF768E}"
-	ProjectSection(SolutionItems) = preProject
-		..\..\roar\base\roWinDialogTemplate.cpp = ..\..\roar\base\roWinDialogTemplate.cpp
-		..\..\roar\base\roWinDialogTemplate.h = ..\..\roar\base\roWinDialogTemplate.h
-	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Swc", "Swc.vc14.vcxproj.vcxproj", "{D5085BAC-49D2-4683-94B6-21785B21419C}"
 EndProject
