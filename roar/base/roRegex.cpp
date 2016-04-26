@@ -143,7 +143,7 @@ struct Regex::Graph
 				e.nextEdge = num_cast<roUint16>(edges.size());
 				break;
 			}
-			edgeIdx = edge.nextEdge;
+			edgeIdx = e.nextEdge;
 		}
 		edges.pushBack(edge);
 		++node.edgeCount;
