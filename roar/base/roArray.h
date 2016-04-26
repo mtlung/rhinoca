@@ -232,6 +232,20 @@ typedef IArray<roByte> IByteArray;
 typedef Array<roByte> ByteArray;
 typedef TinyArray<roByte, 64> TinyByteArray;
 
+/// Array with a hard limit on it's size, suitable for use in security context to prevent attack
+template<class InnerArray>
+struct SizeLimitedArray : public InnerArray
+{
+	SizeLimitedArray() { maxSizeAllowed = 0; }
+	SizeLimitedArray(const SizeLimitedArray& src)	{ this->copy(src); }
+	SizeLimitedArray& operator=(const SizeLimitedArray& rhs);
+
+// Operations
+	Status reserve(roSize newCapacity, bool force=false) override;
+
+	roSize maxSizeAllowed;
+};	// SizeLimitedArray
+
 
 // ----------------------------------------------------------------------
 

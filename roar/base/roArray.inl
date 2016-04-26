@@ -571,6 +571,22 @@ Status ExtArray<T>::reserve(roSize newCapacity, bool force)
 		return Status::not_enough_memory;
 }
 
+template<class InnerArray>
+SizeLimitedArray<InnerArray>& SizeLimitedArray<InnerArray>::operator=(const SizeLimitedArray& rhs)
+{
+	maxSizeAllowed = rhs.maxSizeAllowed;
+	this->copy(rhs); return *this;
+}
+
+template<class InnerArray>
+Status SizeLimitedArray<InnerArray>::reserve(roSize newCapacity, bool force)
+{
+	if(newCapacity > maxSizeAllowed)
+		return roStatus::size_limit_reached;
+
+	return InnerArray::reserve(newCapacity, force);
+}
+
 }	// namespace ro
 
 #endif	// __roArray_inl__

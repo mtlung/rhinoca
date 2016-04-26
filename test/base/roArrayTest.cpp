@@ -3,10 +3,7 @@
 
 using namespace ro;
 
-class TinyArrayTest
-{
-public:
-};
+struct TinyArrayTest {};
 
 TEST_FIXTURE(TinyArrayTest, empty)
 {
@@ -139,3 +136,19 @@ TEST_FIXTURE(TinyArrayTest, arrayOfClassWithArray)
 	CHECK_EQUAL(1, v[0].v[0]);
 	CHECK_EQUAL(2, v[0].v[1]);
 }
+
+struct SizeLimitedArrayTest {};
+
+TEST_FIXTURE(SizeLimitedArrayTest, basic)
+{
+	SizeLimitedArray<Array<int> > v;
+	CHECK_EQUAL(roStatus::size_limit_reached, v.incSize(1));
+
+	v.maxSizeAllowed = 1;
+	CHECK_EQUAL(roStatus::ok, v.pushBack(1));
+	CHECK_EQUAL(roStatus::size_limit_reached, v.pushBack(2));
+
+	v.maxSizeAllowed = 2;
+	CHECK_EQUAL(roStatus::ok, v.pushBack(2));
+}
+
