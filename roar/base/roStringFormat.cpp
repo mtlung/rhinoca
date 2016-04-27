@@ -31,6 +31,25 @@ void strPaddingRight(String& str, roUtf8 c, roSize totalLen)
 		str.append(c);
 }
 
+template<class T>
+void _strFormat_num(String& str, T val, const roUtf8* options)
+{
+	roSize bytes = roToString(NULL, 0, val, options);
+	roAssert(bytes > 0);
+
+	roSize padLen = 0;
+	roUtf8 padding;
+	if (sscanf(options, "pl%zu%c", &padLen, &padding) == 2 && padLen > bytes)
+		str.append(padding, padLen - bytes);
+
+	roSize offset = str.size();
+	str.resize(str.size() + bytes);
+	roToString(&str[offset], str.size() - offset + 1, val, options);
+
+	if (sscanf(options, "pr%zu%c", &padLen, &padding) == 2 && padLen > bytes)
+		str.append(padding, padLen - bytes);
+}
+
 void _strFormat_int8(String& str, roInt8 val, const roUtf8* options)
 {
 	_strFormat_int64(str, val, options);
@@ -53,20 +72,7 @@ void _strFormat_int32ptr(String& str, roInt32* val, const roUtf8* options)
 
 void _strFormat_int64(String& str, roInt64 val, const roUtf8* options)
 {
-	roSize bytes = roToString(NULL, 0, val, options);
-	roAssert(bytes > 0);
-
-	roSize padLen = 0;
-	roUtf8 padding;
-	if(sscanf(options, "pl%zu%c", &padLen, &padding) == 2 && padLen > bytes)
-		str.append(padding, padLen - bytes);
-
-	roSize offset = str.size();
-	str.resize(str.size() + bytes);
-	roToString(&str[offset], str.size() - offset + 1, val, options);
-
-	if(sscanf(options, "pr%zu%c", &padLen, &padding) == 2 && padLen > bytes)
-		str.append(padding, padLen - bytes);
+	_strFormat_num(str, val, options);
 }
 
 void _strFormat_int64ptr(String& str, roInt64* val, const roUtf8* options)
@@ -96,20 +102,7 @@ void _strFormat_uint32ptr(String& str, roUint32* val, const roUtf8* options)
 
 void _strFormat_uint64(String& str, roUint64 val, const roUtf8* options)
 {
-	roSize bytes = roToString(NULL, 0, val, options);
-	roAssert(bytes > 0);
-
-	roSize padLen = 0;
-	roUtf8 padding;
-	if(sscanf(options, "pl%zu%c", &padLen, &padding) == 2 && padLen > bytes)
-		str.append(padding, padLen - bytes);
-
-	roSize offset = str.size();
-	str.resize(str.size() + bytes);
-	roToString(&str[offset], str.size() - offset + 1, val, options);
-
-	if(sscanf(options, "pr%zu%c", &padLen, &padding) == 2 && padLen > bytes)
-		str.append(padding, padLen - bytes);
+	_strFormat_num(str, val, options);
 }
 
 void _strFormat_uint64ptr(String& str, roUint64* val, const roUtf8* options)
@@ -119,7 +112,7 @@ void _strFormat_uint64ptr(String& str, roUint64* val, const roUtf8* options)
 
 void _strFormat_float(String& str, float val, const roUtf8* options)
 {
-	_strFormat_double(str, val, options);
+	_strFormat_num(str, val, options);
 }
 
 void _strFormat_floatptr(String& str, float* val, const roUtf8* options)
@@ -129,20 +122,7 @@ void _strFormat_floatptr(String& str, float* val, const roUtf8* options)
 
 void _strFormat_double(String& str, double val, const roUtf8* options)
 {
-	roSize bytes = roToString(NULL, 0, val, options);
-	roAssert(bytes > 0);
-
-	roSize padLen = 0;
-	roUtf8 padding;
-	if(sscanf(options, "pl%zu%c", &padLen, &padding) == 2 && padLen > bytes)
-		str.append(padding, padLen - bytes);
-
-	roSize offset = str.size();
-	str.resize(str.size() + bytes);
-	roToString(&str[offset], str.size() - offset + 1, val, options);
-
-	if(sscanf(options, "pr%zu%c", &padLen, &padding) == 2 && padLen > bytes)
-		str.append(padding, padLen - bytes);
+	_strFormat_num(str, val, options);
 }
 
 void _strFormat_doubleptr(String& str, double* val, const roUtf8* options)

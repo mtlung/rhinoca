@@ -118,6 +118,9 @@
     <ClCompile Include="..\..\test\render\roTextureLoaderTest.cpp">
       <Filter>render</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\test\math\roMathTest.cpp">
+      <Filter>math</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\test\pch.h" />

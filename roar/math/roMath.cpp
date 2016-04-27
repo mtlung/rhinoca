@@ -56,6 +56,30 @@ double roPow10d(int n)
 		1e+281,1e+282,1e+283,1e+284,1e+285,1e+286,1e+287,1e+288,1e+289,1e+290,1e+291,1e+292,1e+293,1e+294,1e+295,1e+296,1e+297,1e+298,1e+299,1e+300,
 		1e+301,1e+302,1e+303,1e+304,1e+305,1e+306,1e+307,1e+308
 	};
-	roAssert(n <= 308);
-	return n < -308 ? 0.0 : e[n + 308];
+
+	if(n < -308)
+		return 0.0;
+	if(n > 308)
+		return INFINITY;
+	else
+		return e[n + 308];
+}
+
+float roRoundTo(float x, unsigned digit)
+{
+	const float floor = roFloor(x);
+	const float frac = x - floor;
+
+	const float p = (float)roPow10d(digit);
+	return floor + roRound(frac * p) / p;
+}
+
+double roRoundTo(double x, unsigned digit)
+{
+	const double floor = roFloor(x);
+	const double frac = x - floor;
+
+	const double p = roPow10d(digit);
+	const double rounded = roRound(frac * p) / p;
+	return floor + rounded;
 }

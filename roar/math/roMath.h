@@ -40,6 +40,13 @@ float roFloor				(float x);
 float roCeil				(float x);
 float roFrac				(float x);
 float roRound				(float x);	// < 0.5 floor, > 0.5 ceil
+float roRoundTo				(float x, unsigned digit);
+
+double roFloor				(double x);
+double roCeil				(double x);
+double roFrac				(double x);
+double roRound				(double x);	// < 0.5 floor, > 0.5 ceil
+double roRoundTo			(double x, unsigned digit);
 
 double roPow10d				(int n);	// return 10.0^n
 
@@ -85,6 +92,11 @@ inline float roFloor(float x) { return ::floorf(x); }
 inline float roCeil(float x) { return ::ceilf(x); }
 inline float roFrac(float x) { return x - roFloor(x); }
 inline float roRound(float x) { return ::floorf(x + 0.5f); }
+
+inline double roFloor(double x) { return ::floor(x); }
+inline double roCeil(double x) { return ::ceil(x); }
+inline double roFrac(double x) { return x - roFloor(x); }
+inline double roRound(double x) { return ::floor(x + 0.5); }
 
 template<class T>
 inline T roGcd(T a, T b)

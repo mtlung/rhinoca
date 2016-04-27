@@ -51,6 +51,7 @@
     <ClCompile Include="..\..\test\gui\roImGuiTest.cpp" />
     <ClCompile Include="..\..\test\input\roInputTest.cpp" />
     <ClCompile Include="..\..\test\main.cpp" />
+    <ClCompile Include="..\..\test\math\roMathTest.cpp" />
     <ClCompile Include="..\..\test\math\roMatrixTest.cpp" />
     <ClCompile Include="..\..\test\math\roRandomTest.cpp" />
     <ClCompile Include="..\..\test\network\roDnsTest.cpp" />
