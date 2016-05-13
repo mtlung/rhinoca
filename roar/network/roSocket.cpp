@@ -577,7 +577,7 @@ roStatus BsdSocket::close()
 
 	roVerify(setBlocking(true));
 
-	if(fd() != INVALID_SOCKET) {
+	if(fd() != INVALID_SOCKET && (_socketType == TCP || _socketType == TCP6)) {
 		(void)shutDownWrite();
 		roByte buf[128];
 		roSize len;

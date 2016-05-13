@@ -71,19 +71,19 @@ struct CoroutineScheduler
 	CoroutineScheduler();
 	~CoroutineScheduler();
 
-	void	init				(roSize statckSize = 2 * 1024 * 1024);
-	void	add					(Coroutine& coroutine);
-	void	addSuspended		(Coroutine& coroutine);
-	void	update				(unsigned timeSliceMilliSeconds=0);
-	void	runTillAllFinish	(float maxFps=60.f);
-	void	requestStop			();
-	void	stop				();
-	bool	keepRun				() const;
-	bool	bgKeepRun			() const;
+	roStatus	init				(roSize statckSize = 2 * 1024 * 1024);
+	void		add					(Coroutine& coroutine);
+	void		addSuspended		(Coroutine& coroutine);
+	roStatus	update				(unsigned timeSliceMilliSeconds=0);
+	void		runTillAllFinish	(float maxFps=60.f);
+	void		requestStop			();
+	void		stop				();
+	bool		keepRun				() const;
+	bool		bgKeepRun			() const;
 
-	roSize	taskCount			() const;	// Exclude background task
-	roSize	activetaskCount		() const;	//
-	roSize	suspendedtaskCount	() const;	//
+	roSize		taskCount			() const;	// Exclude background task
+	roSize		activetaskCount		() const;	//
+	roSize		suspendedtaskCount	() const;	//
 
 	// Yield the current running co-routine and return it's pointer, so you can resume it later on.
 	// Coroutine should not be destroied before run() finish, so it's safe to return Coroutine*
@@ -109,6 +109,7 @@ struct CoroutineScheduler
 };	// CoroutineScheduler
 
 void coSleep(float seconds);
+void coYield();
 
 }	// namespace ro
 

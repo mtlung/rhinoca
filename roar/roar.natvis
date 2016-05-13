@@ -21,6 +21,10 @@
 	</Expand>
 </Type>
 
+<Type Name="ro::ConstString">
+	<DisplayString>{(_node+1), s8b}</DisplayString>
+</Type>
+
 <Type Name="ro::IArray&lt;*&gt;">
 	<Expand>
 		<Item Name="Size">_size</Item>
@@ -29,6 +33,13 @@
 			<Size>_size</Size> 
 			<ValuePointer>_data</ValuePointer> 
 		</ArrayItems> 
+	</Expand>
+</Type>
+
+<Type Name="ro::MapNode&lt;*,*,*&gt;">
+	<DisplayString>Key = {_key}</DisplayString>
+	<Expand>
+		<Item Name="Key">_key</Item>
 	</Expand>
 </Type>
 	

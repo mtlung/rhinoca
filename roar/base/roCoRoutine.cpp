@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "roCoroutine.h"
 #include "roCoroutine.inc"
+#include "roAtomic.h"
 #include "roLog.h"
 #include "roStackWalker.h"
 
@@ -117,6 +118,11 @@ void coSleep(float seconds)
 	}
 }
 
+void coYield()
+{
+	Coroutine::current()->yield();
+}
+
 //////////////////////////////////////////////////////////////////////////
 // CoroutineScheduler
 
@@ -169,8 +175,14 @@ CoroutineScheduler::~CoroutineScheduler()
 
 extern BgCoroutine* createSocketManager();
 
-void CoroutineScheduler::init(roSize stackSize)
+static AtomicInteger _CoroutineSchedulerInitCount = 0;
+
+roStatus CoroutineScheduler::init(roSize stackSize)
 {
+	if(_CoroutineSchedulerInitCount > 0)
+		return roStatus::already_initialized;
+
+	++_CoroutineSchedulerInitCount;
 	_keepRun = true;
 	_bgKeepRun = true;
 	_stack.resizeNoInit(stackSize);
@@ -178,6 +190,8 @@ void CoroutineScheduler::init(roSize stackSize)
 
 	add(*createSleepManager());
 	add(*createSocketManager());
+
+	return roStatus::ok;
 }
 
 void CoroutineScheduler::add(Coroutine& coroutine)
@@ -190,8 +204,11 @@ void CoroutineScheduler::addSuspended(Coroutine& coroutine)
 	coroutine.scheduler = this;
 }
 
-void CoroutineScheduler::update(unsigned timeSliceMilliSeconds)
+roStatus CoroutineScheduler::update(unsigned timeSliceMilliSeconds)
 {
+	if(_stack.isEmpty())
+		return roStatus::not_initialized;
+
 	roAssert(!_stack.isEmpty());
 	roAssert(!_inUpdate && "this is a non-reentrant function");
 
@@ -297,6 +314,8 @@ void CoroutineScheduler::update(unsigned timeSliceMilliSeconds)
 	}
 
 	_inUpdate = false;
+
+	return roStatus::ok;
 }
 
 void CoroutineScheduler::requestStop()

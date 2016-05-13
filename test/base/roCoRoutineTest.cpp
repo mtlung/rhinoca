@@ -20,12 +20,12 @@ TEST_FIXTURE(CoroutineTest, empty)
 	}
 
 	{	CoroutineScheduler scheduler;
-		scheduler.init();
+		CHECK_EQUAL(roStatus::already_initialized, scheduler.init());
 	}
 
 	{	CoroutineScheduler scheduler;
-		scheduler.init();
-		scheduler.update();
+		CHECK_EQUAL(roStatus::already_initialized, scheduler.init());
+		CHECK_EQUAL(roStatus::not_initialized, scheduler.update());
 	}
 
 	DymmyCoroutine producer;
@@ -38,19 +38,20 @@ struct Consumer;
 
 struct Producer : public Coroutine
 {
-	Producer() : ended(false), yieldValue(0) {}
-
+	Producer() : done(false), yieldValue(0) {}
 	virtual void run() override;
 
-	bool ended;
+	bool done;
 	int yieldValue;
 	Consumer* consumer;
 };
 
 struct Consumer : public Coroutine
 {
+	Consumer() : done(false) {}
 	virtual void run() override;
 
+	bool done;
 	Producer* producer;
 	Array<int> result;
 };
@@ -65,7 +66,7 @@ void Producer::run()
 		switchToCoroutine(*this);
 		resume();
 	}
-	ended = true;
+	done = true;
 	consumer->resume();
 }
 
@@ -73,19 +74,19 @@ void Consumer::run()
 {
 	while(true) {
 		switchToCoroutine(*producer);
-		if(producer->ended)
+		if(producer->done)
 			break;
 
 		result.pushBack(producer->yieldValue);
 	}
+	done = true;
 }
 
 }	// namespace
 
 TEST_FIXTURE(CoroutineTest, producerConsumer)
 {
-	CoroutineScheduler scheduler;
-	scheduler.init();
+	CoroutineScheduler& scheduler = *CoroutineScheduler::perThreadScheduler();
 
 	Producer producer;
 	Consumer consumer;
@@ -100,7 +101,8 @@ TEST_FIXTURE(CoroutineTest, producerConsumer)
 	scheduler.add(producer);
 	scheduler.add(consumer);
 
-	scheduler.update();
+	while(!producer.done || !consumer.done)
+		coYield();
 
 	CHECK_EQUAL(3, consumer.result.size());
 	CHECK_EQUAL(1, consumer.result[0]);
@@ -128,8 +130,6 @@ struct SpawnCoroutine : public Coroutine
 			newCoroutine->counter = counter;
 			scheduler->add(*newCoroutine);
 		}
-		else
-			scheduler->requestStop();
 
 		{	SpawnCoroutine dummy;
 			scheduler->add(dummy);
@@ -152,20 +152,21 @@ struct SpawnCoroutine : public Coroutine
 
 roSize SpawnCoroutine::maxInstanceCount = 0;
 
-}
+}	// namespace
 
 TEST_FIXTURE(CoroutineTest, spawnCoroutineInCoroutine)
 {
-	CoroutineScheduler scheduler;
-	scheduler.init();
+	CoroutineScheduler& scheduler = *CoroutineScheduler::perThreadScheduler();
 
 	SpawnCoroutine* spawner = new SpawnCoroutine;
 	spawner->counter = 3;
 
 	scheduler.add(*spawner);
-	scheduler.update();
 
-	CHECK_EQUAL(9, SpawnCoroutine::maxInstanceCount);
+	while(SpawnCoroutine::maxInstanceCount != 8)
+		coYield();
+
+	CHECK_EQUAL(8, SpawnCoroutine::maxInstanceCount);
 }
 
 #include "../../roar/network/roSocket.h"
@@ -229,6 +230,8 @@ struct SocketTestServerAcceptor : public Coroutine
 
 struct SocketTestClient : public Coroutine
 {
+	SocketTestClient() : done(false) {}
+
 	virtual void run() override
 	{
 		static roSize sendFailCount = 0;
@@ -255,9 +258,11 @@ struct SocketTestClient : public Coroutine
 		}
 
 		s.close();
+		done = true;
 	}	// run()
 
 	roSize id;
+	bool done;
 };
 
 }	// namespace
@@ -266,8 +271,7 @@ TEST_FIXTURE(CoroutineTest, socket)
 {
 	CoSocket::initApplication();
 
-	CoroutineScheduler scheduler;
-	scheduler.init();
+	CoroutineScheduler& scheduler = *CoroutineScheduler::perThreadScheduler();
 
 	SocketTestServerAcceptor* server = new SocketTestServerAcceptor;
 	server->expectedConnectionCount = 1 * 1024;
@@ -279,7 +283,15 @@ TEST_FIXTURE(CoroutineTest, socket)
 		clients[i].id = i;
 		scheduler.add(clients[i]);
 	}
-
-	scheduler.update();
-	scheduler.stop();
+	
+	while(true) {
+		bool stillBusy = false;
+		for (roSize i = 0; i<clients.size(); ++i) {
+			if(!clients[i].done)
+				coYield();
+			stillBusy |= (!clients[i].done);
+		}
+		if(!stillBusy)
+			break;
+	}
 }

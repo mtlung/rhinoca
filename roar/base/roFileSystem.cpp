@@ -69,6 +69,7 @@ Status _compoundFSSeek(void* file, roInt64 offset, FileSystem::SeekOrigin origin
 
 void _compoundFSCloseFile(void* file)
 {
+	if(!file) return;
 	_CompoundFSContext* c = (_CompoundFSContext*)file;
 	c->fsImpl->closeFile(c->impl);
 	_allocator.deleteObj(c);

@@ -52,6 +52,7 @@ struct CoroutineTestRunner : public Coroutine, private NonCopyable
 		: test(test), results(testResults)
 	{
 		Coroutine::debugName = "TestRunner coroutine";
+		initStack();
 	}
 
 	virtual void run() override;

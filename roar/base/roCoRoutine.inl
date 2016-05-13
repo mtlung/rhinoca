@@ -85,7 +85,7 @@
 #define CORO_H
 
 //#define CORO_ASM 1
-//#define CORO_FIBER 1
+#define CORO_FIBER 1
 
 #if __cplusplus
 extern "C" {

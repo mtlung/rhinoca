@@ -4,6 +4,6 @@
 #define roOS_WIN_2K		0x0500
 
 /// The minimum supported windows version
-#define roOS_WIN_MIN_SUPPORTED roOS_WIN_VISTA
+#define roOS_WIN_MIN_SUPPORTED roOS_WIN_WIN7
 
 #define _WIN32_WINNT roOS_WIN_MIN_SUPPORTED

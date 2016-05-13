@@ -98,7 +98,8 @@ roStatus TextService::init()
 	roStatus st;
 
 	// Initialize COM
-	HRESULT hr = ::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+	// NOTE: Must use COINIT_MULTITHREADED otherwise _cpThreadMgr->Activate() will fail under window's fiber
+	HRESULT hr = ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
 	if(FAILED(hr)) return st;
 
 	_hWnd = ::GetActiveWindow();

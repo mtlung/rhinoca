@@ -11,7 +11,7 @@ struct FileSystemTest {};
 TEST_FIXTURE(FileSystemTest, defaultFS)
 {
 	void* file = NULL;
-	Status st = fileSystem.openFile("Test.vc9.vcproj", file);
+	Status st = fileSystem.openFile("Test.vc14.vcxproj", file);
 	CHECK(st);
 	CHECK(file);
 
@@ -25,7 +25,7 @@ TEST_FIXTURE(FileSystemTest, defaultFS)
 TEST_FIXTURE(FileSystemTest, rawFS_getWholeFile)
 {
 	void* file = NULL;
-	Status st = rawFileSystemOpenFile("Test.vc9.vcproj", file);
+	Status st = rawFileSystemOpenFile("Test.vc14.vcxproj", file);
 
 	while(rawFileSystemReadWillBlock(file, roUint64(-1))) {}
 
@@ -41,7 +41,7 @@ TEST_FIXTURE(FileSystemTest, rawFS_getBuffer)
 	CHECK(!st);
 	CHECK(!file);
 
-	st = rawFileSystemOpenFile("Test.vc9.vcproj", file);
+	st = rawFileSystemOpenFile("Test.vc14.vcxproj", file);
 	if(!st)
 		return;
 

@@ -1486,7 +1486,7 @@ static bool _initShader(roRDriverShader* self, roRDriverShaderType type, const c
 
 	if(FAILED(hr)) {
 		if(errorMessage) {
-			roLog("error", "Shader compilation failed: %s\n", errorMessage->GetBufferPointer());
+			roLog("error", "Shader compilation failed: %s\n", (char*)errorMessage->GetBufferPointer());
 			errorMessage->Release();
 		}
 		return false;
