@@ -11,7 +11,11 @@ struct sockaddr;
 typedef roPtrInt socket_t;
 
 // Unify the error code used in Linux and win32
-#if roOS_WIN && (!defined(_INC_ERRNO) || defined(_CRT_NO_POSIX_ERROR_CODES))
+#if roOS_WIN && !defined(_CRT_NO_POSIX_ERROR_CODES) && defined(_INC_ERRNO)
+#   define roMICROSOFT_ERROR_H
+#endif
+
+#ifndef roMICROSOFT_ERROR_H
 #	define EALREADY		WSAEALREADY		// Operation already in progress
 #	define ECONNABORTED	WSAECONNABORTED	// Software caused connection abort
 #	define ECONNRESET	WSAECONNRESET	// Connection reset by peer

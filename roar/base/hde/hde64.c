@@ -96,7 +96,7 @@ unsigned int hde64_disasm(const void *code, hde64s *hs)
     if (cflags & C_GROUP) {
         uint16_t t;
         t = *(uint16_t *)(ht + (cflags & 0x7f));
-        cflags = (uint8_t)t;
+        cflags = (uint8_t)(t & 0xFF);
         x = (uint8_t)(t >> 8);
     }
 

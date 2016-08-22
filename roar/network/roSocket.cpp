@@ -65,8 +65,40 @@ namespace ro {
 
 static int getLastError()
 {
-#if roOS_WIN
+#if roOS_WIN && !defined(roMICROSOFT_ERROR_H)
 	return WSAGetLastError();
+#elif roOS_WIN && defined(roMICROSOFT_ERROR_H)
+    switch (WSAGetLastError()) {
+    case WSAEADDRINUSE: return EADDRINUSE;
+    case WSAEADDRNOTAVAIL: return EADDRNOTAVAIL;
+    case WSAEAFNOSUPPORT: return EAFNOSUPPORT;
+    case WSAEALREADY: return EALREADY;
+    case WSAECANCELLED: return ECANCELED;
+    case WSAECONNABORTED: return ECONNABORTED;
+    case WSAECONNREFUSED: return ECONNREFUSED;
+    case WSAECONNRESET: return ECONNRESET;
+    case WSAEDESTADDRREQ: return EDESTADDRREQ;
+    case WSAEHOSTUNREACH: return EHOSTUNREACH;
+    case WSAEINPROGRESS: return EINPROGRESS;
+    case WSAEISCONN: return EISCONN;
+    case WSAELOOP: return ELOOP;
+    case WSAEMSGSIZE: return EMSGSIZE;
+    case WSAENETDOWN: return ENETDOWN;
+    case WSAENETRESET: return ENETRESET;
+    case WSAENETUNREACH: return ENETUNREACH;
+    case WSAENOBUFS: return ENOBUFS;
+    case WSAENOPROTOOPT: return ENOPROTOOPT;
+    case WSAENOTCONN: return ENOTCONN;
+    case WSANO_RECOVERY: return ENOTRECOVERABLE;
+    case WSAENOTSOCK: return ENOTSOCK;
+    case WSAEOPNOTSUPP: return EOPNOTSUPP;
+    case WSAEPROTONOSUPPORT: return EPROTONOSUPPORT;
+    case WSAEPROTOTYPE: return EPROTOTYPE;
+    case WSAETIMEDOUT: return ETIMEDOUT;
+    case WSAEWOULDBLOCK: return EWOULDBLOCK;
+    }
+    roAssert("Not handled WSA error");
+    return WSAGetLastError();
 #else
 //	if(errno != 0)
 //		perror("Network error:");
@@ -82,7 +114,9 @@ static roStatus errorToStatus(BsdSocket::ErrorCode errorCode)
 	case ECONNABORTED:	return roStatus::net_connaborted;
 	case ECONNRESET:	return roStatus::net_connreset;
 	case ECONNREFUSED:	return roStatus::net_connrefused;
+#if !(roOS_WIN && defined(_INC_ERRNO))
 	case EHOSTDOWN:		return roStatus::net_hostdown;
+#endif
 	case EHOSTUNREACH:	return roStatus::net_hostunreach;
 	case EINPROGRESS:	return roStatus::net_inprogress;
 	case ENETDOWN:		return roStatus::net_netdown;
