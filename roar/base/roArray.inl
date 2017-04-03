@@ -432,7 +432,7 @@ const T* IArray<T>::find(const K& key, bool(*equal)(const T&, const K&)) const
 template<class T>
 Array<T>::Array(Array<T>&& rhs)
 {
-	_size = rhs._size;;
+	_size = rhs._size;
 	_capacity = rhs._capacity;
 	_data = rhs._data;
 	rhs._size = 0;
@@ -444,7 +444,7 @@ template<class T>
 Array<T>& Array<T>::operator=(Array<T>&& rhs)
 {
 	this->~Array();
-	_size = rhs._size;;
+	_size = rhs._size;
 	_capacity = rhs._capacity;
 	_data = rhs._data;
 	rhs._size = 0;

@@ -81,6 +81,8 @@ inline float roSqrt(float x) { return ::sqrtf(x); }
 inline float roInvSqrt(float x) { return 1.0f / ::sqrtf(x); }
 inline float roInvSqrtFast(float x) { return 1.0f / ::sqrtf(x); }
 
+inline double roSqrt(double x) { return ::sqrt(x); }
+
 inline float roDeg2Rad(float x) { return x * roM_DEG2RAD; }
 inline float roRad2Deg(float x) { return x * roM_RAD2DEG; }
 

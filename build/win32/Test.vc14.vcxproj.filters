@@ -121,6 +121,9 @@
     <ClCompile Include="..\..\test\math\roMathTest.cpp">
       <Filter>math</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\test\playground\roProfileThreadTimeSlice.cpp">
+      <Filter>playground</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\test\pch.h" />
@@ -161,6 +164,9 @@
     </Filter>
     <Filter Include="render">
       <UniqueIdentifier>{8bb3de14-889d-4ae4-80a3-608c5f769f82}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="playground">
+      <UniqueIdentifier>{167a930c-915b-43ce-b066-2faae82393ab}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
