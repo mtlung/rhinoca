@@ -72,6 +72,7 @@ struct FontManager
 		ConstString typeface;
 	};
 	Array<_FontTypeface> _mapping;
+	Mutex _mutex;
 };	// FontManager
 
 namespace Parsing {
