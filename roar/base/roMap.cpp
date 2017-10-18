@@ -39,7 +39,7 @@ static void _synLeftRight(_TreeNode& self) { self.mRight = self._children[Right]
 static void _synLeftRight(_TreeNode& self) {}
 #endif	// NDEBUG
 
-static Direction _parentIdx(_TreeNode& self)
+static Direction _parentIdx(const _TreeNode& self)
 {
 	roAssert(
 		(&self == self._parent->_children[Left]) ||
@@ -68,7 +68,7 @@ static void _setChildSafe(_TreeNode& self, Direction dir, _TreeNode* child)
 	_synLeftRight(self);
 }
 
-static bool _isBallanceOk(_TreeNode& self)
+static bool _isBallanceOk(const _TreeNode& self)
 {
 	return (self._balance >= -1) && (self._balance <= 1);
 }
@@ -200,7 +200,7 @@ bool _AvlTree::rotate(Node& node, roInt8 dir)
 		roAssert(dir != pNext->_balance);
 	}
 
-	bool bDepthDecrease = pNext->_balance && !_isBallanceOk(node);
+	const bool bDepthDecrease = pNext->_balance && !_isBallanceOk(node);
 
 	node._balance += dir;
 	if(pNext->_balance) {

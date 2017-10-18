@@ -80,7 +80,7 @@ T* roLowerBound(T* ary, roSize count, const T& key)
 template<class T, class K>
 T* roLowerBound(T* ary, roSize count, const K& key, bool(*less)(const T&, const K&))
 {
-	T* end = ary + count;
+	const T* end = ary + count;
 	while(count)
 	{	// Divide and conquer, find half that contains answer
 		roSize count2 = count / 2;

@@ -37,7 +37,7 @@ struct JsonParser : private NonCopyable
 
 	Event::Enum		nextEvent();
 	Event::Enum		currentEvent()			{ return _event; }
-	Event::Enum		getCurrentProcessNext() { Event::Enum e = _event; nextEvent(); return e; }
+	Event::Enum		getCurrentProcessNext() { const Event::Enum e = _event; nextEvent(); return e; }
 
 	bool			getBool()				{ roAssert(_event == Event::Bool); return _boolVal; }
 	const roUtf8*	getName()				{ roAssert(_event == Event::Name); return _stringVal; }

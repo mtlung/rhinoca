@@ -123,7 +123,7 @@ AudioBuffer::AudioBuffer(const char* uri)
 
 AudioBuffer::~AudioBuffer()
 {
-	for(SubBuffer& i : subBuffers) {
+	for(const SubBuffer& i : subBuffers) {
 		alDeleteBuffers(1, &i.handle);
 		roAssert(alGetError() == AL_NO_ERROR && "The buffer might still in use");
 	}
@@ -208,7 +208,7 @@ void AudioBuffer::updateHotness()
 		s.hotness *= 0.9f;
 		if(s.hotness <= roFLT_EPSILON) {
 			alDeleteBuffers(1, &s.handle);
-			ALenum err = alGetError();
+			const ALenum err = alGetError();
 			if(err == AL_NO_ERROR)
 				subBuffers.removeAt(i);
 			else {
@@ -273,7 +273,8 @@ SoundSource::~SoundSource()
 struct roAudioDriverImpl : public roAudioDriver, public Task
 {
 	roAudioDriverImpl()
-		: taskReady(0)
+		: roAudioDriver()
+		, taskReady(0)
 		, alContext(NULL)
 	{}
 

@@ -81,7 +81,7 @@ roEXCP_TRY
 	st = fileSystem.read(stream, buf, _dataChunkSize, readCount);
 	if(!st) roEXCP_THROW;
 
-	int ret = mpg123_decode(mpg, buf, num_cast<size_t>(readCount), NULL, 0, NULL);
+	const int ret = mpg123_decode(mpg, buf, num_cast<size_t>(readCount), NULL, 0, NULL);
 
 	if(ret == MPG123_NEED_MORE)
 		return reSchedule();

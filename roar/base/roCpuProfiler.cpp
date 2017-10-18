@@ -175,7 +175,7 @@ float CallstackNode::peakInclusiveTime() const
 	if(recursionCount == 0)
 		return _peakInclusiveTime;
 
-	float elasped = _stopWatch.getFloat();
+	const float elasped = _stopWatch.getFloat();
 	return roMaxOf2(_peakInclusiveTime, elasped);
 }
 

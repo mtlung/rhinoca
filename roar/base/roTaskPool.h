@@ -13,6 +13,7 @@ typedef roPtrInt ThreadId;
 class Task
 {
 public:
+	Task() : _proxy(nullptr) {}
 	virtual ~Task() {}
 
 	/// Derived class will do actual work in this function.

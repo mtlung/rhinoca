@@ -237,7 +237,7 @@ roStatus Lexer::registerStrRule(const char* ruleName, const char* strToMatch, bo
 
 static bool _customMatch(RangedString& inout, void* userData)
 {
-	Lexer::IRule* r = reinterpret_cast<Lexer::IRule*>(userData);
+	Lexer::IRule* r = static_cast<Lexer::IRule*>(userData);
 	if(!r) return false;
 	return r->match(inout);
 }

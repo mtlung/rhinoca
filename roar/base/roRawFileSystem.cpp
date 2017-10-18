@@ -430,7 +430,7 @@ void* rawFileSystemOpenDir(const char* uri)
 
 bool rawFileSystemNextDir(void* dir)
 {
-	OpenDirContext* dirCtx = reinterpret_cast<OpenDirContext*>(dir);
+	OpenDirContext* dirCtx = static_cast<OpenDirContext*>(dir);
 	if(!dirCtx) return false;
 
 	if(!::FindNextFileW(dirCtx->handle, &(dirCtx->data))) {
@@ -443,7 +443,7 @@ bool rawFileSystemNextDir(void* dir)
 
 const char* rawFileSystemDirName(void* dir)
 {
-	OpenDirContext* dirCtx = reinterpret_cast<OpenDirContext*>(dir);
+	OpenDirContext* dirCtx = static_cast<OpenDirContext*>(dir);
 	if(!dirCtx) return false;
 
 	if(!dirCtx->str.fromUtf16((roUint16*)dirCtx->data.cFileName, roSize(-1)))
@@ -454,7 +454,7 @@ const char* rawFileSystemDirName(void* dir)
 
 void rawFileSystemCloseDir(void* dir)
 {
-	OpenDirContext* dirCtx = reinterpret_cast<OpenDirContext*>(dir);
+	OpenDirContext* dirCtx = static_cast<OpenDirContext*>(dir);
 	_allocator.deleteObj(dirCtx);
 }
 

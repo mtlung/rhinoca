@@ -69,6 +69,7 @@ enum HttpState {
 /// http://curl.haxx.se/libcurl/competitors.html
 struct HttpStream
 {
+	HttpStream() : buffer(nullptr) {}
 	~HttpStream() { defaultAllocator.free(buffer); }
 	BsdSocket socket;
 	char* buffer;
@@ -237,7 +238,7 @@ Status httpFileSystemOpenFile(const char* uri, void*& outFile)
 
 bool httpFileSystemReadWillBlock(void* file, roUint64 size)
 {
-	HttpStream* s = reinterpret_cast<HttpStream*>(file);
+	HttpStream* s = static_cast<HttpStream*>(file);
 	if(!s) return false;
 
 	roSize requestSize = 0;
@@ -476,7 +477,7 @@ Status httpFileSystemRead(void* file, void* buffer, roUint64 size, roUint64& byt
 {
 	bytesRead = 0;
 
-	HttpStream* s = reinterpret_cast<HttpStream*>(file);
+	HttpStream* s = static_cast<HttpStream*>(file);
 	if(!s) return Status::invalid_parameter;
 
 	roSize _size = 0;
@@ -515,7 +516,7 @@ Status httpFileSystemAtomicRead(void* file, void* buffer, roUint64 size)
 
 Status httpFileSystemSize(void* file, roUint64& size)
 {
-	HttpStream* s = reinterpret_cast<HttpStream*>(file);
+	HttpStream* s = static_cast<HttpStream*>(file);
 	if(!s) return Status::invalid_parameter;
 
 	if(httpFileSystemReadWillBlock(file, 1)) return Status::in_progress;
@@ -532,13 +533,13 @@ Status httpFileSystemSeek(void* file, roInt64 offset, FileSystem::SeekOrigin ori
 
 void httpFileSystemCloseFile(void* file)
 {
-	HttpStream* s = reinterpret_cast<HttpStream*>(file);
+	HttpStream* s = static_cast<HttpStream*>(file);
 	defaultAllocator.deleteObj(s);
 }
 
 roBytePtr httpFileSystemGetBuffer(void* file, roUint64 requestSize, roUint64& readableSize)
 {
-	HttpStream* s = reinterpret_cast<HttpStream*>(file);
+	HttpStream* s = static_cast<HttpStream*>(file);
 	if(!s || s->state == State_Error || requestSize == 0) { readableSize = 0; return NULL; }
 
 	roSize bytesToRead = 0;
@@ -556,7 +557,7 @@ roBytePtr httpFileSystemGetBuffer(void* file, roUint64 requestSize, roUint64& re
 
 void httpFileSystemTakeBuffer(void* file)
 {
-	HttpStream* s = reinterpret_cast<HttpStream*>(file);
+	HttpStream* s = static_cast<HttpStream*>(file);
 	if(!s || s->state == State_Error || s->lastReadSize == 0) return;
 
 	roBytePtr newBuf = defaultAllocator.malloc(s->bufCapacity);

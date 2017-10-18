@@ -90,7 +90,6 @@ struct CoSleepManager : public BgCoroutine
 	}
 
 	StopWatch	stopWatch;
-	roUint64	timeToWakeup;
 	Array<Entry> sortedEntries;
 };	// CoSleepManager
 

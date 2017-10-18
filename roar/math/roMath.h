@@ -28,8 +28,8 @@ float roSqrt				(float x);
 float roInvSqrt				(float x);
 float roInvSqrtFast			(float x);
 
-float roDeg2Rad				(float x);
-float roRad2Deg				(float x);
+constexpr float roDeg2Rad	(float x);
+constexpr float roRad2Deg	(float x);
 
 float roSin					(float x);
 float roCos					(float x);
@@ -58,9 +58,9 @@ template<class T> T roClampMax(T x, T max);
 
 template<class T> T roClampedSubtraction(T a, T b);
 
-bool roIsSameSign			(float v1, float v2);
-bool roIsPowerOfTwo			(unsigned x);
-unsigned roNextPowerOfTwo	(unsigned x);
+constexpr bool roIsSameSign			(float v1, float v2);
+constexpr bool roIsPowerOfTwo		(unsigned x);
+constexpr unsigned roNextPowerOfTwo	(unsigned x);
 
 roUint64 roFactorial		(roUint64 n);
 
@@ -83,8 +83,8 @@ inline float roInvSqrtFast(float x) { return 1.0f / ::sqrtf(x); }
 
 inline double roSqrt(double x) { return ::sqrt(x); }
 
-inline float roDeg2Rad(float x) { return x * roM_DEG2RAD; }
-inline float roRad2Deg(float x) { return x * roM_RAD2DEG; }
+constexpr inline float roDeg2Rad(float x) { return x * roM_DEG2RAD; }
+constexpr inline float roRad2Deg(float x) { return x * roM_RAD2DEG; }
 
 inline float roSin(float x) { return ::sinf(x); }
 inline float roCos(float x) { return ::cosf(x); }
@@ -128,11 +128,11 @@ inline T roStepRunAvg(const T& oldVal, const T& newVal, unsigned avgOverFrame)
 	return ((oldVal * (avgOverFrame - 1)) + newVal) / avgOverFrame;
 }
 
-inline bool roIsSameSign(float v1, float v2) { return (v1 > 0) == (v2 > 0); }
+inline constexpr bool roIsSameSign(float v1, float v2) { return (v1 > 0) == (v2 > 0); }
 
-inline bool roIsPowerOfTwo(unsigned x) { return x == roNextPowerOfTwo(x); }
+inline constexpr bool roIsPowerOfTwo(unsigned x) { return x == roNextPowerOfTwo(x); }
 
-inline unsigned roNextPowerOfTwo(unsigned x)
+inline constexpr unsigned roNextPowerOfTwo(unsigned x)
 {
 	x = x - 1;
 	x = x | (x >> 1);

@@ -32,8 +32,8 @@ inline roStatus roIsValidCast<double>(float src)
 template<>
 inline roStatus roIsValidCast<float>(double src)
 {
-	float f = (float)src;
-	double diff = src - f;
+	const float f = (float)src;
+	const double diff = src - f;
 	const double epsilon = 1e-7;
 	return (diff > -epsilon && diff < epsilon) ? roStatus::ok : roStatus::numeric_cast_overflow;
 }

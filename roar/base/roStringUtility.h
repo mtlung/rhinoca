@@ -40,14 +40,14 @@ char*			roStrStrCase		(char* a, const char* b);
 char*			roStrStrCase		(char* a, const char* aEnd, const char* b);
 char*			roStrnStrCase		(char* a, roSize aLen, const char* b);
 
-inline char		roToLower			(char c);
-inline char		roToUpper			(char c);
+constexpr char	roToLower			(char c);
+constexpr char	roToUpper			(char c);
 
 void			roToLower			(char* str);
 void			roToUpper			(char* str);
 
-bool			roIsDigit			(char ch);
-bool			roIsAlpha			(char ch);
+constexpr bool	roIsDigit			(char ch);
+constexpr bool	roIsAlpha			(char ch);
 
 void			roStrReverse		(char* str, roSize len);
 

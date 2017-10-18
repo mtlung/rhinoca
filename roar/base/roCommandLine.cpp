@@ -136,7 +136,7 @@ struct OptionParser
 
 			option.longName = regex.result[1];
 
-			RangedString argument = regex.result[2].size() ? regex.result[2] : regex.result[3];
+			const RangedString argument = regex.result[2].size() ? regex.result[2] : regex.result[3];
 			if(argument.size())
 				option.argument = argument;
 

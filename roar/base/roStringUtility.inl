@@ -140,7 +140,7 @@ inline int roStrnCmp(const char* s1, const char* s2, roSize n)
 
 inline int roStrnCmp(const char* s1, roSize n1, const char* s2, roSize n2)
 {
-	roSize n = n1 < n2 ? n1 : n2;
+	const roSize n = n1 < n2 ? n1 : n2;
 	for(roSize i=0; i<n; ++s1, ++s2, ++i) {
 		if(*s1 != *s2) return (*s1-*s2);
 		if(*s1 == 0 || *s2 == 0) break;
@@ -161,8 +161,8 @@ inline int roStrCmpMinLen(const char* s1, const char* s2)
 inline int roStrCaseCmp(const char* s1, const char* s2)
 {
 	for( ;; ++s1, ++s2 ) {
-		char c1 = roToLower(*s1);
-		char c2 = roToLower(*s2);
+		const char c1 = roToLower(*s1);
+		const char c2 = roToLower(*s2);
 		if(c1 != c2) return (c1 - c2);
 		if(c1 == 0 || c2 == 0 ) break;
 	}
@@ -172,8 +172,8 @@ inline int roStrCaseCmp(const char* s1, const char* s2)
 inline int roStrnCaseCmp(const char* s1, const char* s2, roSize n)
 {
 	for(roSize i=0; i<n; ++s1, ++s2, ++i) {
-		char c1 = roToLower(*s1);
-		char c2 = roToLower(*s2);
+		const char c1 = roToLower(*s1);
+		const char c2 = roToLower(*s2);
 		if(c1 != c2) return (c1 - c2);
 		if(c1 == 0 || c2 == 0 ) break;
 	}
@@ -182,10 +182,10 @@ inline int roStrnCaseCmp(const char* s1, const char* s2, roSize n)
 
 inline int roStrnCaseCmp(const char* s1, roSize n1, const char* s2, roSize n2)
 {
-	roSize n = n1 < n2 ? n1 : n2;
+	const roSize n = n1 < n2 ? n1 : n2;
 	for(roSize i=0; i<n; ++s1, ++s2, ++i) {
-		char c1 = roToLower(*s1);
-		char c2 = roToLower(*s2);
+		const char c1 = roToLower(*s1);
+		const char c2 = roToLower(*s2);
 		if(c1 != c2) return (c1 - c2);
 		if(c1 == 0 || c2 == 0 ) break;
 	}
@@ -197,8 +197,8 @@ inline int roStrnCaseCmp(const char* s1, roSize n1, const char* s2, roSize n2)
 inline int roStrCaseCmpMinLen(const char* s1, const char* s2)
 {
 	for( ;; ++s1, ++s2) {
-		char c1 = roToLower(*s1);
-		char c2 = roToLower(*s2);
+		const char c1 = roToLower(*s1);
+		const char c2 = roToLower(*s2);
 		if(c1 == 0 || c2 == 0) break;
 		if(c1 != c2) return (c1 - c2);
 	}
@@ -226,7 +226,7 @@ inline char* roStrrChr(char* begin, char ch, char* end)
 
 inline char* roStrChrCase(char* sz, char ch)
 {
-	char c = roToLower(ch);
+	const char c = roToLower(ch);
 	for( ; *sz; ++sz) {
 		if(roToLower(*sz) == c) return sz;
 	}
@@ -238,7 +238,7 @@ inline char* roStrrChrCase(char* begin, char ch, char* end)
 	if(!end) end = begin + roStrLen(begin);
 	if(begin >= end) return NULL;
 	char* s = end;
-	char c = roToLower(ch);
+	const char c = roToLower(ch);
 	for( ; (--s) >= begin; ) {
 		if(roToLower(*s) == c) return s;
 	}
@@ -284,7 +284,7 @@ inline char* roStrrChrCase(char* begin, const char* ch, char* end)
 }
 
 // Borrowed from http://code.google.com/p/stringencoders/source/browse/trunk/src/modp_ascii.c
-inline char roToLower(char c)
+inline constexpr char roToLower(char c)
 {
 	roUint32 eax = c;
 	roUint32 ebx = (0x7f7f7f7fu & eax) + 0x25252525u;
@@ -293,7 +293,7 @@ inline char roToLower(char c)
 	return (char)(eax + ebx);
 }
 
-inline char roToUpper(char c)
+inline constexpr char roToUpper(char c)
 {
 	roUint32 eax = c;
 	roUint32 ebx = (0x7f7f7f7fu & eax) + 0x05050505u;
@@ -302,12 +302,12 @@ inline char roToUpper(char c)
 	return (char)(eax - ebx);
 }
 
-inline bool roIsDigit(char ch)
+inline constexpr bool roIsDigit(char ch)
 {
 	return (ch - '0' + 0u) <= 9u;
 }
 
-inline bool roIsAlpha(char ch)
+inline constexpr bool roIsAlpha(char ch)
 {
 	// | 32 is a simple way toLower, which is enough for the comparison
 	return ((ch | 32) - 'a' + 0u) <= ('z' - 'a' + 0u);

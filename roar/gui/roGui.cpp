@@ -509,7 +509,7 @@ static bool _isClickedDown(const Rectf& rect)
 	return _states.mouseDown() && _isActive(rect);
 }
 
-static float _round(float x)
+static constexpr float _round(float x)
 {
 	return float(int(x));
 }
