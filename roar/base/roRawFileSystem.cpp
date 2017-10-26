@@ -74,7 +74,7 @@ CheckProgress:
 	if(impl->readInProgress) {
 		DWORD transferred = 0;
 		if(!GetOverlappedResult(impl->file, &impl->overlap, &transferred, false)) {
-			if(GetLastError() == ERROR_IO_PENDING)
+			if(GetLastError() == ERROR_IO_PENDING || GetLastError() == ERROR_IO_INCOMPLETE)
 				return impl->st = Status::in_progress, true;
 
 			// If EOF or error occurred

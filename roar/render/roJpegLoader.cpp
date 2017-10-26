@@ -92,7 +92,7 @@ void JpegLoader::loadHeader(TaskPool* taskPool)
 {
 	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
-	Status st;
+	Status st = Status::ok;
 
 roEXCP_TRY
 	if(!stream) st = fileSystem.openFile(texture->uri(), stream);

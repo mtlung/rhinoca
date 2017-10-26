@@ -60,7 +60,7 @@ void WaveLoader::run(TaskPool* taskPool)
 
 void WaveLoader::loadHeader(TaskPool* taskPool)
 {
-	Status st;
+	Status st = Status::ok;
 
 roEXCP_TRY
 	if(!stream) st = fileSystem.openFile(audioBuffer->uri(), stream);

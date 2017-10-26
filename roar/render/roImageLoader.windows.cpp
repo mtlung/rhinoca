@@ -172,7 +172,7 @@ void WICLoader::initWic(TaskPool* taskPool)
 
 void WICLoader::loadFileToMemory(TaskPool* taskPool)
 {
-	Status st;
+	Status st = Status::ok;
 
 roEXCP_TRY
 	if(!stream) st = fileSystem.openFile(texture->uri(), stream);
