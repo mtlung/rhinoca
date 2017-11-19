@@ -115,6 +115,22 @@ TEST_FIXTURE(TinyArrayTest, arrayOfArray)
 	CHECK_EQUAL(2, v[0][1]);
 }
 
+TEST_FIXTURE(TinyArrayTest, initList)
+{
+	TinyArray<int, 2> v = { 1 };
+	CHECK_EQUAL(1, v.size());
+	CHECK_EQUAL(1, v[0]);
+
+	v = {};
+	CHECK_EQUAL(0, v.size());
+
+	v = { 1, 2, 3 };
+	CHECK_EQUAL(3, v.size());
+	CHECK_EQUAL(1, v[0]);
+	CHECK_EQUAL(2, v[1]);
+	CHECK_EQUAL(3, v[2]);
+}
+
 namespace {
 
 struct MyClass {

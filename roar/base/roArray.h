@@ -8,6 +8,7 @@
 #include "roStatus.h"
 #include "roTypeOf.h"
 #include "roUtility.h"
+#include <initializer_list>
 
 namespace ro {
 
@@ -20,6 +21,19 @@ struct StaticArray
 {
 	enum { N = N_ };
 	T data[N];		///< Fixed-size array of elements of type T
+
+	StaticArray() = default;
+
+	StaticArray(std::initializer_list<T> initList) {
+		roAssert(initList.size() == N);
+		for(roSize i=0; i<N; ++i) { data[i] = *(initList.begin() + i); }
+	}
+
+	StaticArray& operator=(std::initializer_list<T> initList) {
+		roAssert(initList.size() == N);
+		for(roSize i=0; i<N; ++i) { data[i] = *(initList.begin() + i); }
+		return *this;
+	}
 
 	bool			isInRange(int i) const		{ return i >= 0 && roSize(i) < N; }
 	bool			isInRange(roSize i) const	{ return i < N; }
@@ -193,8 +207,12 @@ struct Array : public IArray<T>
 	Array(const Array<T>& src)			{ this->copy(src); }
 	Array(Array<T>&& rhs);
 	~Array()							{ this->clear(); roFree(this->_data); }
+
 	Array& operator=(const Array& rhs)	{ this->copy(rhs); return *this; }
 	Array& operator=(Array&& rhs);
+
+	Array(std::initializer_list<T> initList) { roVerify(assign(initList.begin(), initList.end())); }
+	Array& operator=(std::initializer_list<T> initList) { roVerify(assign(initList.begin(), initList.end())); return *this; }
 
 // Operations
 	Status reserve(roSize newCapacity, bool force=false) override;
@@ -209,6 +227,9 @@ struct TinyArray : public IArray<T>
 	TinyArray(const TinyArray<T,PreAllocCount>& v)	{ this->_data = (T*)_buffer; this->_capacity = PreAllocCount; copy(v); }
 	~TinyArray()									{ this->clear(); if(_isUsingDynamic()) roFree(this->_data); }
 	TinyArray& operator=(const TinyArray& rhs)		{ this->copy(rhs); return *this; }
+
+	TinyArray(std::initializer_list<T> initList) { roVerify(assign(initList.begin(), initList.end())); }
+	TinyArray& operator=(std::initializer_list<T> initList) { roVerify(assign(initList.begin(), initList.end())); return *this; }
 
 // Operations
 	Status reserve(roSize newSize, bool force=false) override;
@@ -237,8 +258,8 @@ template<class InnerArray>
 struct SizeLimitedArray : public InnerArray
 {
 	SizeLimitedArray() { maxSizeAllowed = 0; }
-	SizeLimitedArray(const SizeLimitedArray& src)	{ this->copy(src); }
-	SizeLimitedArray& operator=(const SizeLimitedArray& rhs);
+	SizeLimitedArray(const SizeLimitedArray& src) = delete;
+	SizeLimitedArray& operator=(const SizeLimitedArray& rhs) = delete;
 
 // Operations
 	Status reserve(roSize newCapacity, bool force=false) override;

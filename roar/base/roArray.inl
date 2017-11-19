@@ -572,13 +572,6 @@ Status ExtArray<T>::reserve(roSize newCapacity, bool force)
 }
 
 template<class InnerArray>
-SizeLimitedArray<InnerArray>& SizeLimitedArray<InnerArray>::operator=(const SizeLimitedArray& rhs)
-{
-	maxSizeAllowed = rhs.maxSizeAllowed;
-	this->copy(rhs); return *this;
-}
-
-template<class InnerArray>
 Status SizeLimitedArray<InnerArray>::reserve(roSize newCapacity, bool force)
 {
 	if(newCapacity > maxSizeAllowed)
