@@ -646,26 +646,19 @@ static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, const voi
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl) return false;
 	if(impl->isMapped) return false;
-	if(offsetInBytes != 0 && offsetInBytes + sizeInBytes > self->sizeInBytes) return false;
+	if(offsetInBytes + sizeInBytes > self->sizeInBytes) return false;
 	if(impl->usage == roRDriverDataUsage_Static) return false;
 
 	if(!data || sizeInBytes == 0) return true;
 
 	if(impl->systemBuf) {
-		if(sizeInBytes > self->sizeInBytes) {
-			_allocator.realloc(impl->systemBuf, self->sizeInBytes, sizeInBytes);
-			self->sizeInBytes = sizeInBytes;
-		}
 		roMemcpy(((char*)impl->systemBuf) + offsetInBytes, data, sizeInBytes);
 	}
 	else {
 		checkError();
 		GLenum t = _bufferTarget[self->type];
 		glBindBuffer(t, impl->glh);
-		if(sizeInBytes > self->sizeInBytes)
-			glBufferData(t, sizeInBytes, data, _bufferUsage[impl->usage]);
-		else
-			glBufferSubData(t, offsetInBytes, sizeInBytes, data);
+		glBufferSubData(t, offsetInBytes, sizeInBytes, data);
 		checkError();
 	}
 
@@ -762,6 +755,7 @@ static bool _resizeBuffer(roRDriverBuffer* self, roSize sizeInBytes)
 {
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl) return false;
+	if(sizeInBytes == self->sizeInBytes) return true;
 	if(impl->isMapped) return false;
 	if(impl->usage == roRDriverDataUsage_Static) return false;
 
@@ -776,18 +770,22 @@ static bool _resizeBuffer(roRDriverBuffer* self, roSize sizeInBytes)
 		roRDriverBuffer* newBuf = _newBuffer();
 		if(!_initBuffer(newBuf, impl->type, impl->usage, NULL, sizeInBytes)) return false;
 
-		if(void* mapped = _mapBuffer(self, roRDriverMapUsage_Read, 0, impl->sizeInBytes)) {
-			// TODO: May consider ARB_copy_buffer?
-			if(!_updateBuffer(newBuf, 0, mapped, impl->sizeInBytes))
+		if(impl->sizeInBytes > 0) {
+			if(void* mapped = _mapBuffer(self, roRDriverMapUsage_Read, 0, impl->sizeInBytes)) {
+				// TODO: May consider ARB_copy_buffer?
+				if(!_updateBuffer(newBuf, 0, mapped, impl->sizeInBytes)) {
+					_unmapBuffer(self);
+					return false;
+				}
+				_unmapBuffer(self);
+			}
+			else
 				return false;
-			_unmapBuffer(self);
-
-			roSwapMemory(impl, newBuf, sizeof(*impl));
-			_deleteBuffer(newBuf);
-			return true;
 		}
 
-		return false;
+		roSwapMemory(impl, newBuf, sizeof(*impl));
+		_deleteBuffer(newBuf);
+		return true;
 	}
 
 	return true;
