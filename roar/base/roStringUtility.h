@@ -40,8 +40,8 @@ char*			roStrStrCase		(char* a, const char* b);
 char*			roStrStrCase		(char* a, const char* aEnd, const char* b);
 char*			roStrnStrCase		(char* a, roSize aLen, const char* b);
 
-constexpr char	roToLower			(char c);
-constexpr char	roToUpper			(char c);
+char			roToLower			(char c);
+char			roToUpper			(char c);
 
 void			roToLower			(char* str);
 void			roToUpper			(char* str);

@@ -58,9 +58,9 @@ template<class T> T roClampMax(T x, T max);
 
 template<class T> T roClampedSubtraction(T a, T b);
 
-constexpr bool roIsSameSign			(float v1, float v2);
-constexpr bool roIsPowerOfTwo		(unsigned x);
-constexpr unsigned roNextPowerOfTwo	(unsigned x);
+constexpr bool roIsSameSign	(float v1, float v2);
+bool roIsPowerOfTwo			(unsigned x);
+unsigned roNextPowerOfTwo	(unsigned x);
 
 roUint64 roFactorial		(roUint64 n);
 
@@ -130,9 +130,9 @@ inline T roStepRunAvg(const T& oldVal, const T& newVal, unsigned avgOverFrame)
 
 inline constexpr bool roIsSameSign(float v1, float v2) { return (v1 > 0) == (v2 > 0); }
 
-inline constexpr bool roIsPowerOfTwo(unsigned x) { return x == roNextPowerOfTwo(x); }
+inline bool roIsPowerOfTwo(unsigned x) { return x == roNextPowerOfTwo(x); }
 
-inline constexpr unsigned roNextPowerOfTwo(unsigned x)
+inline unsigned roNextPowerOfTwo(unsigned x)
 {
 	x = x - 1;
 	x = x | (x >> 1);
