@@ -556,6 +556,7 @@ static roRDriverBuffer* _newBuffer()
 	ret->mapOffset = 0;
 	ret->mapSize = 0;
 	ret->sizeInBytes = 0;
+	ret->capacityInBytes = 0;
 
 	ret->glh = 0;
 	ret->systemBuf = NULL;
@@ -623,6 +624,7 @@ static bool _initBufferSpecificLocation(roRDriverBufferImpl* impl, roRDriverBuff
 	impl->mapOffset = 0;
 	impl->mapSize = 0;
 	impl->sizeInBytes = sizeInBytes;
+	impl->capacityInBytes = sizeInBytes;
 
 	return true;
 }
@@ -646,8 +648,8 @@ static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, const voi
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl) return false;
 	if(impl->isMapped) return false;
-	if(offsetInBytes + sizeInBytes > self->sizeInBytes) return false;
 	if(impl->usage == roRDriverDataUsage_Static) return false;
+	if(offsetInBytes + sizeInBytes > self->sizeInBytes) return false;
 
 	if(!data || sizeInBytes == 0) return true;
 
@@ -755,13 +757,17 @@ static bool _resizeBuffer(roRDriverBuffer* self, roSize sizeInBytes)
 {
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl) return false;
-	if(sizeInBytes == self->sizeInBytes) return true;
 	if(impl->isMapped) return false;
 	if(impl->usage == roRDriverDataUsage_Static) return false;
+	if(sizeInBytes <= self->capacityInBytes) {
+		self->sizeInBytes = sizeInBytes;
+		return true;
+	}
 
 	if(impl->systemBuf) {
-		_allocator.realloc(impl->systemBuf, self->sizeInBytes, sizeInBytes);
+		_allocator.realloc(impl->systemBuf, self->capacityInBytes, sizeInBytes);
 		self->sizeInBytes = sizeInBytes;
+		self->capacityInBytes = sizeInBytes;
 	}
 	else {
 		// TODO: This implementation will change the value of impl->glh!
@@ -1827,7 +1833,16 @@ bool _bindShaderUniform(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 				// TODO: glVertexAttribPointer only work for vertex array but not plain system memory in certain GL version
 				glEnableVertexAttribArray(a->location);
 				glBindBuffer(GL_ARRAY_BUFFER, buffer->glh);
-				glVertexAttribPointer(a->location, a->elementCount, a->elementType, false, i->stride, (void*)(ptrdiff_t(buffer->systemBuf) + i->offset));
+				static const GLint elementCountMapping[] = { 0,0,0,0,0,0,1,2,3,4,0,1,2,3,4,0,1,2,3,4,0,1,2,3,4,0 };
+				static const GLenum elementTypeMapping[] = { 0,0,0,0,0,0,
+					GL_UNSIGNED_BYTE,	GL_UNSIGNED_BYTE,	GL_UNSIGNED_BYTE,	GL_UNSIGNED_BYTE,	0,
+					GL_UNSIGNED_INT,	GL_UNSIGNED_INT,	GL_UNSIGNED_INT,	GL_UNSIGNED_INT,	0,
+					GL_INT,				GL_INT,				GL_INT,				GL_INT,				0,
+					GL_FLOAT,			GL_FLOAT,			GL_FLOAT,			GL_FLOAT,			0,
+				};
+				GLint elementCount = i->format == roRDriverBufferFormatType_Auto ? a->elementCount : elementCountMapping[(int)i->format];
+				GLenum elmentType = i->format == roRDriverBufferFormatType_Auto ? a->elementType : elementTypeMapping[(int)i->format];
+				glVertexAttribPointer(a->location, elementCount, elmentType, false, i->stride, (void*)(ptrdiff_t(buffer->systemBuf) + i->offset));
 				checkError();
 			}
 			else {

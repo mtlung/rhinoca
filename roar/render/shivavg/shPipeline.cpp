@@ -219,7 +219,7 @@ void updateBlendingStateGL(VGContext *c, int alphaIsOne)
 static void shDrawStroke(VGContext* c, SHPath *p)
 {
 	roVerify(c->driver->initBuffer(c->vBuffer, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, p->stroke.items, p->stroke.size * sizeof(SHVector2)));
-	roVerify(c->driver->bindShaderBuffers(c->strokeLayout, roCountof(c->strokeLayout), NULL));
+	roVerify(c->driver->bindShaderBuffers(c->strokeLayout.typedPtr(), c->strokeLayout.size(), NULL));
 	c->driver->drawTriangle(0, p->stroke.size, 0);
 }
 
@@ -234,7 +234,7 @@ static void shDrawVertices(VGContext* c, SHPath *p, roRDriverPrimitiveType primi
 	int size = 0;
 
 	roVerify(c->driver->initBuffer(c->vBuffer, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, p->vertices.items, p->vertices.size * sizeof(SHVertex)));
-	roVerify(c->driver->bindShaderBuffers(c->shVertexLayout, roCountof(c->shVertexLayout), NULL));
+	roVerify(c->driver->bindShaderBuffers(c->shVertexLayout.typedPtr(), c->shVertexLayout.size(), NULL));
 
 	// We separate vertex arrays by contours to properly handle the fill modes
 	// TODO: May use primitive restart
@@ -248,7 +248,7 @@ static void shDrawVertices(VGContext* c, SHPath *p, roRDriverPrimitiveType primi
 void shDrawQuad(VGContext* c, float* fourCorners)
 {
 	roVerify(c->driver->updateBuffer(c->quadBuffer, 0, fourCorners, sizeof(float) * 2 * 4));
-	roVerify(c->driver->bindShaderBuffers(c->quadInputLayout, roCountof(c->quadInputLayout), NULL));
+	roVerify(c->driver->bindShaderBuffers(c->quadInputLayout.typedPtr(), c->quadInputLayout.size(), NULL));
 	c->driver->drawPrimitive(roRDriverPrimitiveType_TriangleStrip, 0, 4, 0);
 }
 

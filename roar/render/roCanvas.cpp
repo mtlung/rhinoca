@@ -128,15 +128,12 @@ void Canvas::init()
 	roVerify(_driver->initBuffer(_uBuffer, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, isRtTexture, sizeof(isRtTexture)));
 
 	// Bind shader buffer input
-	const roRDriverShaderBufferInput input[] = {
-		{ _vBuffer, "position", 0, 0, sizeof(float)*6, 0 },
-		{ _vBuffer, "texCoord", 0, sizeof(float)*4, sizeof(float)*6, 0 },
-		{ _uBuffer, "constants", 0, 0, 0, 0 },
-		{ _iBuffer, "", 0, 0, 0, 0 },
+	_bufferInputs = {
+		{ _vBuffer, "position", 0, roRDriverBufferFormatType_Auto, 0, sizeof(float)*6, 0 },
+		{ _vBuffer, "texCoord", 0, roRDriverBufferFormatType_Auto, sizeof(float)*4, sizeof(float)*6, 0 },
+		{ _uBuffer, "constants", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
+		{ _iBuffer, "", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
 	};
-	roAssert(roCountof(input) == _bufferInputs.size());
-	for(roSize i=0; i<roCountof(input); ++i)
-		_bufferInputs[i] = input[i];
 
 	_textureInput.name = "tex";
 	_textureInput.nameHash = 0;

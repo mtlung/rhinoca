@@ -449,7 +449,7 @@ static void fillBoundingBox(VGContext* c, SHVector2* corners, SHColor* color)
 	};
 
 	roVerify(c->driver->updateBuffer(c->quadBuffer, 0, vertex, sizeof(vertex)));
-	roVerify(c->driver->bindShaderBuffers(c->quadInputLayout, roCountof(c->quadInputLayout), NULL));
+	roVerify(c->driver->bindShaderBuffers(c->quadInputLayout.typedPtr(), c->quadInputLayout.size(), NULL));
 
 	c->driver->updateBuffer(c->uBuffer, roOffsetof(UniformBuffer, UniformBuffer::color), color, sizeof(SHColor));
 	c->driver->drawPrimitive(roRDriverPrimitiveType_TriangleStrip, 0, 4, 0);
@@ -553,7 +553,7 @@ int shDrawLinearGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
 
 	roVerify(context->driver->updateBuffer(context->quadBuffer, 0, vertex, sizeof(vertex)));
 	roVerify(context->driver->updateBuffer(context->quadUvBuffer, 0, uv, sizeof(uv)));
-	roVerify(context->driver->bindShaderBuffers(context->quadInputLayout, roCountof(context->quadInputLayout), NULL));
+	roVerify(context->driver->bindShaderBuffers(context->quadInputLayout.typedPtr(), context->quadInputLayout.size(), NULL));
 	context->driver->drawPrimitive(roRDriverPrimitiveType_TriangleStrip, 0, 4, 0);
 
 	return 1;
@@ -722,7 +722,7 @@ int shDrawRadialGradientMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
 
 	const unsigned vertexSize = 6 * 2 * 2;
 	roVerify(context->driver->initBuffer(context->vBuffer, roRDriverBufferType_Vertex, roRDriverDataUsage_Stream, NULL, (numsteps-1)*sizeof(float)*vertexSize));
-	roVerify(context->driver->bindShaderBuffers(context->tex1VertexLayout, roCountof(context->tex1VertexLayout), NULL));
+	roVerify(context->driver->bindShaderBuffers(context->tex1VertexLayout.typedPtr(), context->tex1VertexLayout.size(), NULL));
 
 	char* pBuf = (char*)context->driver->mapBuffer(context->vBuffer, roRDriverMapUsage_Write, 0, 0);
 
@@ -827,7 +827,7 @@ int shDrawPatternMesh(SHPaint *p, SHVector2 *min, SHVector2 *max,
 	shSetPatternTexGLState(p, context, texUnit);
 
 	roVerify(context->driver->updateBuffer(context->quadBuffer, 0, corners, sizeof(corners)));
-	roVerify(context->driver->bindShaderBuffers(context->quadInputLayout, roCountof(context->quadInputLayout), NULL));
+	roVerify(context->driver->bindShaderBuffers(context->quadInputLayout.typedPtr(), context->quadInputLayout.size(), NULL));
 	context->driver->drawPrimitive(roRDriverPrimitiveType_TriangleStrip, 0, 4, 0);
 
 //	for (int i=0; i<4; ++i) {

@@ -145,55 +145,43 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height, void* graphic
 	// Bind shader input layout
 	{	// For use with stroke
 		// {posx, posy}, {posx, posy}, ...
-		const roRDriverShaderBufferInput input[] = {
-			{ c->vBuffer, "position", 0, 0, sizeof(float)*2, 0 },
-			{ c->vBuffer, "texCoord", 0, 0, sizeof(float)*2, 0 },
-			{ c->uBuffer, "constants", 0, 0, 0, 0 },
+		c->strokeLayout = {
+			{ c->vBuffer, "position", 0, roRDriverBufferFormatType_Auto, 0, sizeof(float)*2, 0 },
+			{ c->vBuffer, "texCoord", 0, roRDriverBufferFormatType_Auto, 0, sizeof(float)*2, 0 },
+			{ c->uBuffer, "constants", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
 		};
-		roAssert(roCountof(input) == roCountof(c->strokeLayout));
-		for(roSize i=0; i<roCountof(input); ++i)
-			c->strokeLayout[i] = input[i];
 	}
 
 	{	// For use with primitive without any texture
 		// {posx, posy, SHVector2, ...}, {posx, posy, SHVector2, ...}, ...
-		const roRDriverShaderBufferInput input[] = {
-			{ c->vBuffer, "position", 0, 0, sizeof(SHVertex), 0 },
-			{ c->vBuffer, "texCoord", 0, 0, sizeof(SHVertex), 0 },	// We don't care about uv, so just use the position as uv
-			{ c->uBuffer, "constants", 0, 0, 0, 0 },
+		c->shVertexLayout = {
+			{ c->vBuffer, "position", 0, roRDriverBufferFormatType_Auto, 0, sizeof(SHVertex), 0 },
+			{ c->vBuffer, "texCoord", 0, roRDriverBufferFormatType_Auto, 0, sizeof(SHVertex), 0 },	// We don't care about uv, so just use the position as uv
+			{ c->uBuffer, "constants", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
 		};
-		roAssert(roCountof(input) == roCountof(c->shVertexLayout));
-		for(roSize i=0; i<roCountof(input); ++i)
-			c->shVertexLayout[i] = input[i];
 	}
 
 	{	// For use with single quad of 1 texture coordinate channel
 		// {posx, posy}, {posx, posy}, ... {u, v}, {u, v}, ...
-		const roRDriverShaderBufferInput input[] = {
-			{ c->quadBuffer, "position", 0, 0, sizeof(float)*2, 0 },
-			{ c->quadUvBuffer, "texCoord", 0, 0, sizeof(float)*2, 0 },
-			{ c->uBuffer, "constants", 0, 0, 0, 0 },
+		c->quadInputLayout = {
+			{ c->quadBuffer, "position", 0, roRDriverBufferFormatType_Auto, 0, sizeof(float)*2, 0 },
+			{ c->quadUvBuffer, "texCoord", 0, roRDriverBufferFormatType_Auto, 0, sizeof(float)*2, 0 },
+			{ c->uBuffer, "constants", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
 		};
-		roAssert(roCountof(input) == roCountof(c->quadInputLayout));
-		for(roSize i=0; i<roCountof(input); ++i)
-			c->quadInputLayout[i] = input[i];
 	}
 
 	{	// For use with primitive of 1 texture coordinate channel
 		// {posx, posy, u, v}, {posx, posy, u, v}, ...
-		const roRDriverShaderBufferInput input[] = {
-			{ c->vBuffer, "position", 0, 0, sizeof(float)*2*2, 0 },
-			{ c->vBuffer, "texCoord", 0, sizeof(float)*2, sizeof(float)*2*2, 0 },
-			{ c->uBuffer, "constants", 0, 0, 0, 0 },
+		c->tex1VertexLayout = {
+			{ c->vBuffer, "position", 0, roRDriverBufferFormatType_Auto, 0, sizeof(float)*2*2, 0 },
+			{ c->vBuffer, "texCoord", 0, roRDriverBufferFormatType_Auto, sizeof(float)*2, sizeof(float)*2*2, 0 },
+			{ c->uBuffer, "constants", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
 		};
-		roAssert(roCountof(input) == roCountof(c->tex1VertexLayout));
-		for(roSize i=0; i<roCountof(input); ++i)
-			c->tex1VertexLayout[i] = input[i];
 	}
 
 	roRDriverShader* shaders[] = { c->vShader, c->pShader };
 	roVerify(c->driver->bindShaders(shaders, roCountof(shaders)));
-	roVerify(c->driver->bindShaderBuffers(c->quadInputLayout, roCountof(c->quadInputLayout), NULL));
+	roVerify(c->driver->bindShaderBuffers(c->quadInputLayout.typedPtr(), c->quadInputLayout.size(), NULL));
 
 	// Create a white texture
 	c->whiteTexture = d->newTexture();

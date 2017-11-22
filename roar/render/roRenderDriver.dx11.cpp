@@ -685,9 +685,9 @@ static roRDriverBuffer* _newBuffer()
 	ret->mapOffset = 0;
 	ret->mapSize = 0;
 	ret->sizeInBytes = 0;
+	ret->capacityInBytes = 0;
 
 	ret->hash = 0;
-	ret->capacity = 0;
 	ret->dxStagingIdx = 0;
 	return ret;
 }
@@ -702,7 +702,7 @@ static void _deleteBuffer(roRDriverBuffer* self)
 
 	// Put the DX buffer back into the cache
 	if(impl->dxBuffer) {
-		BufferCacheEntry tmp = { impl->hash, impl->capacity, ctx->lastSwapTime, impl->dxBuffer };
+		BufferCacheEntry tmp = { impl->hash, impl->capacityInBytes, ctx->lastSwapTime, impl->dxBuffer };
 		ctx->bufferCache.pushBack(tmp);
 		impl->dxBuffer = (ID3D11Buffer*)NULL;
 	}
@@ -752,7 +752,7 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 	roUint32 hash = _hash(&desc, sizeof(desc));
 
 	// First check if the DX buffer can be safely reused
-	if( impl->hash == hash && impl->capacity >= sizeInBytes &&
+	if( impl->hash == hash && impl->capacityInBytes >= sizeInBytes &&
 		(impl->usage != roRDriverDataUsage_Static)	// If the original buffer is a static one, we can't reuse it anymore
 	)
 	{
@@ -761,8 +761,10 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 
 	// The old DX buffer cannot be reused, put it into the cache
 	if(impl->dxBuffer) {
-		BufferCacheEntry tmp = { impl->hash, impl->capacity, ctx->lastSwapTime, impl->dxBuffer };
-		ctx->bufferCache.pushBack(tmp);
+		BufferCacheEntry tmp = { impl->hash, impl->capacityInBytes, ctx->lastSwapTime, impl->dxBuffer };
+		if(tmp.sizeInByte)	// Cache with zero size will be discared
+			ctx->bufferCache.pushBack(tmp);
+
 		impl->dxBuffer = (ID3D11Buffer*)NULL;
 	}
 
@@ -772,6 +774,7 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 	impl->mapOffset = 0;
 	impl->mapSize = 0;
 	impl->sizeInBytes = sizeInBytes;
+	impl->capacityInBytes = sizeInBytes;
 	impl->hash = hash;
 	impl->dxStagingIdx = -1;
 
@@ -786,7 +789,7 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 
 		// Cache hit
 		impl->dxBuffer = c.dxBuffer;
-		impl->capacity = c.sizeInByte;
+		impl->capacityInBytes = c.sizeInByte;
 		ctx->bufferCache.removeAt(i);
 
 		roIgnoreRet(_updateBuffer(impl, 0, initData, sizeInBytes));
@@ -807,13 +810,10 @@ static bool _initBuffer(roRDriverBuffer* self, roRDriverBufferType type, roRDriv
 		return false;
 
 	HRESULT hr = ctx->dxDevice->CreateBuffer(&desc, initData ? &data : NULL, &impl->dxBuffer.ptr);
-
 	if(FAILED(hr)) {
 		roLog("error", "Fail to create buffer\n");
 		return false;
 	}
-
-	impl->capacity = sizeInBytes;
 
 	return true;
 }
@@ -928,8 +928,8 @@ static bool _updateBuffer(roRDriverBuffer* self, roSize offsetInBytes, const voi
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!ctx || !impl) return false;
 	if(impl->isMapped) return false;
-	if(offsetInBytes + sizeInBytes > impl->capacity) return false;
 	if(impl->usage == roRDriverDataUsage_Static) return false;
+	if(offsetInBytes + sizeInBytes > impl->sizeInBytes) return false;
 
 	if(!data || sizeInBytes == 0) return true;
 
@@ -1044,9 +1044,12 @@ static bool _resizeBuffer(roRDriverBuffer* self, roSize sizeInBytes)
 {
 	roRDriverBufferImpl* impl = static_cast<roRDriverBufferImpl*>(self);
 	if(!impl) return false;
-	if(sizeInBytes == self->sizeInBytes) return true;
 	if(impl->isMapped) return false;
 	if(impl->usage == roRDriverDataUsage_Static) return false;
+	if(sizeInBytes <= self->capacityInBytes) {
+		self->sizeInBytes = sizeInBytes;
+		return true;
+	}
 
 	roRDriverBuffer* newBuf = _newBuffer();
 	if(!_initBuffer(newBuf, impl->type, impl->usage, NULL, sizeInBytes)) return false;
@@ -1752,8 +1755,15 @@ bool _setUniformBuffer(unsigned nameHash, roRDriverBuffer* buffer, roRDriverShad
 roStaticAssert(D3D10_REGISTER_COMPONENT_UINT32 == 1);
 roStaticAssert(D3D10_REGISTER_COMPONENT_SINT32 == 2);
 roStaticAssert(D3D10_REGISTER_COMPONENT_FLOAT32 == 3);
-static const StaticArray<DXGI_FORMAT, 20> _inputFormatMapping = {
+static const StaticArray<DXGI_FORMAT, 20> _inputFormatMapping1 = {
 	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_UNKNOWN,	DXGI_FORMAT_UNKNOWN,		DXGI_FORMAT_UNKNOWN,		DXGI_FORMAT_UNKNOWN,			// D3D10_REGISTER_COMPONENT_UNKNOWN
+	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_R32_UINT,	DXGI_FORMAT_R32G32_UINT,	DXGI_FORMAT_R32G32B32_UINT,	DXGI_FORMAT_R32G32B32A32_UINT,	// D3D10_REGISTER_COMPONENT_UINT32
+	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_R32_SINT,	DXGI_FORMAT_R32G32_SINT,	DXGI_FORMAT_R32G32B32_SINT,	DXGI_FORMAT_R32G32B32A32_SINT,	// D3D10_REGISTER_COMPONENT_SINT32
+	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_R32_FLOAT,	DXGI_FORMAT_R32G32_FLOAT,	DXGI_FORMAT_R32G32B32_FLOAT,DXGI_FORMAT_R32G32B32A32_FLOAT,	// D3D10_REGISTER_COMPONENT_FLOAT32
+};
+static const StaticArray<DXGI_FORMAT, 25> _inputFormatMapping2 = {
+	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_UNKNOWN,	DXGI_FORMAT_UNKNOWN,		DXGI_FORMAT_UNKNOWN,		DXGI_FORMAT_UNKNOWN,			// D3D10_REGISTER_COMPONENT_UNKNOWN
+	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_R8_UNORM,	DXGI_FORMAT_R8G8_UNORM,		DXGI_FORMAT_UNKNOWN,		DXGI_FORMAT_R8G8B8A8_UNORM,		// D3D10_REGISTER_COMPONENT_UNORM
 	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_R32_UINT,	DXGI_FORMAT_R32G32_UINT,	DXGI_FORMAT_R32G32B32_UINT,	DXGI_FORMAT_R32G32B32A32_UINT,	// D3D10_REGISTER_COMPONENT_UINT32
 	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_R32_SINT,	DXGI_FORMAT_R32G32_SINT,	DXGI_FORMAT_R32G32B32_SINT,	DXGI_FORMAT_R32G32B32A32_SINT,	// D3D10_REGISTER_COMPONENT_SINT32
 	DXGI_FORMAT_UNKNOWN, DXGI_FORMAT_R32_FLOAT,	DXGI_FORMAT_R32G32_FLOAT,	DXGI_FORMAT_R32G32B32_FLOAT,DXGI_FORMAT_R32G32B32A32_FLOAT,	// D3D10_REGISTER_COMPONENT_FLOAT32
@@ -1870,7 +1880,9 @@ bool _bindShaderBuffers(roRDriverShaderBufferInput* inputs, roSize inputCount, u
 			D3D11_INPUT_ELEMENT_DESC inputDesc;
 			inputDesc.SemanticName = semanticNames.back().c_str();
 			inputDesc.SemanticIndex = semanticIndex;
-			inputDesc.Format = _inputFormatMapping[inputParam->type * 5 + elementCount];
+			inputDesc.Format = input->format == roRDriverBufferFormatType_Auto ?
+				_inputFormatMapping1[inputParam->type * 5 + elementCount] :
+				_inputFormatMapping2[(int)input->format];
 			inputDesc.InputSlot = slotCounter++;
 			inputDesc.AlignedByteOffset = input->offset;
 			inputDesc.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;

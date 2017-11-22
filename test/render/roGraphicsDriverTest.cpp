@@ -159,10 +159,10 @@ TEST_FIXTURE(GraphicsDriverTest, uniformBuffer)
 	CHECK(driver->initBuffer(ubuffer2, roRDriverBufferType_Uniform, roRDriverDataUsage_Stream, color2, sizeof(color2)));
 
 	roRDriverShaderBufferInput shaderInput[] = {
-		{ vbuffer, "position", 0, 0, 0, 0 },
-		{ ibuffer, NULL, 0, 0, 0, 0 },
-		{ ubuffer1, "color1", 0, 0, 0, 0 },
-		{ ubuffer2, "color2", 0, 0, 0, 0 },
+		{ vbuffer, "position", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
+		{ ibuffer, NULL, 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
+		{ ubuffer1, "color1", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
+		{ ubuffer2, "color2", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
 	};
 
 	while(keepRun()) {
@@ -238,7 +238,7 @@ TEST_FIXTURE(GraphicsDriverTest, textureUpdate)
 
 	// Init texture
 	const unsigned texDim = 1024;
-	const unsigned char* texData = (const unsigned char*)malloc(sizeof(char) * 4 * texDim * texDim);
+	const unsigned char* texData = (const unsigned char*)roMalloc(sizeof(char) * 4 * texDim * texDim);
 
 	roRDriverTexture* texture = driver->newTexture();
 	CHECK(driver->initTexture(texture, texDim, texDim, 1, roRDriverTextureFormat_RGBA, roRDriverTextureFlag_None));
@@ -268,9 +268,9 @@ TEST_FIXTURE(GraphicsDriverTest, textureUpdate)
 
 	// Bind shader input layout
 	roRDriverShaderBufferInput input[] = {
-		{ vbuffer, "position", 0, 0, sizeof(float)*6, 0 },
-		{ vbuffer, "texCoord", 0, sizeof(float)*4, sizeof(float)*6, 0 },
-		{ ibuffer, NULL, 0, 0, 0, 0 },
+		{ vbuffer, "position", 0, roRDriverBufferFormatType_Auto, 0, sizeof(float)*6, 0 },
+		{ vbuffer, "texCoord", 0, roRDriverBufferFormatType_Auto, sizeof(float)*4, sizeof(float)*6, 0 },
+		{ ibuffer, NULL, 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
 	};
 
 	int frameCounter = 0;
@@ -319,7 +319,7 @@ TEST_FIXTURE(GraphicsDriverTest, textureUpdate)
 	driver->deleteTexture(texture);
 	driver->deleteBuffer(vbuffer);
 	driver->deleteBuffer(ibuffer);
-	free((void*)texData);
+	roFree((void*)texData);
 }
 /*
 TEST_FIXTURE(GraphicsDriverTest, _texture)
@@ -463,11 +463,11 @@ TEST_FIXTURE(GraphicsDriverTest, 3d)
 
 	// Bind shader input layout
 	roRDriverShaderBufferInput input[] = {
-		{ vbuffer, "position", 0, 0, 0, 0 },
-		{ ibuffer, NULL, 0, 0, 0, 0 },
-		{ ubuffer, "modelViewMat", 0, 0, 0, 0 },
-		{ ubuffer, "projectionMat", 0, sizeof(float)*16, 0, 0 },
-		{ ubuffer, "color", 0, sizeof(float)*16*2, 0, 0 },
+		{ vbuffer, "position", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
+		{ ibuffer, NULL, 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
+		{ ubuffer, "modelViewMat", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
+		{ ubuffer, "projectionMat", 0, roRDriverBufferFormatType_Auto, sizeof(float)*16, 0, 0 },
+		{ ubuffer, "color", 0, roRDriverBufferFormatType_Auto, sizeof(float)*16*2, 0, 0 },
 	};
 
 	while(keepRun()) {
@@ -555,9 +555,9 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 			driver->updateBuffer(ubuffer, 0, color, sizeof(color));
 
 			roRDriverShaderBufferInput input[] = {
-				{ vbuffer1, "position", 0, 0, 0, 0 },
-				{ ibuffer, NULL, 0, 0, 0, 0 },
-				{ ubuffer, "color", 0, 0, 0, 0 },
+				{ vbuffer1, "position", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
+				{ ibuffer, NULL, 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
+				{ ubuffer, "color", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
 			};
 			CHECK(driver->bindShaderBuffers(input, roCountof(input), NULL));
 
@@ -569,9 +569,9 @@ TEST_FIXTURE(GraphicsDriverTest, blending)
 			driver->updateBuffer(ubuffer, 0, color, sizeof(color));
 
 			roRDriverShaderBufferInput input[] = {
-				{ vbuffer2, "position", 0, 0, 0, 0 },
-				{ ibuffer, NULL, 0, 0, 0, 0 },
-				{ ubuffer, "color", 0, 0, 0, 0 },
+				{ vbuffer2, "position", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
+				{ ibuffer, NULL, 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
+				{ ubuffer, "color", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
 			};
 			CHECK(driver->bindShaderBuffers(input, roCountof(input), NULL));
 
@@ -679,11 +679,11 @@ TEST_FIXTURE(GraphicsDriverTest, GeometryShader)
 
 	// Bind shader input layout
 	roRDriverShaderBufferInput input[] = {
-		{ vbuffer, "position", 0, 0, 0, 0 },
-		{ ibuffer, NULL, 0, 0, 0, 0 },
-		{ ubuffer, "modelViewMat", 0, 0, 0, 0 },
-		{ ubuffer, "projectionMat", 0, sizeof(float)*16, 0, 0 },
-		{ ubuffer, "color", 0, sizeof(float)*16*2, 0, 0 },
+		{ vbuffer, "position", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
+		{ ibuffer, NULL, 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
+		{ ubuffer, "modelViewMat", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
+		{ ubuffer, "projectionMat", 0, roRDriverBufferFormatType_Auto, sizeof(float)*16, 0, 0 },
+		{ ubuffer, "color", 0, roRDriverBufferFormatType_Auto, sizeof(float)*16*2, 0, 0 },
 	};
 
 	while(keepRun()) {
@@ -789,9 +789,9 @@ TEST_FIXTURE(GraphicsDriverTest, shaderBinary)
 			driver->updateBuffer(ubuffer, 0, color, sizeof(color));
 
 			roRDriverShaderBufferInput input[] = {
-				{ vbuffer1, "position", 0, 0, 0, 0 },
-				{ ibuffer, NULL, 0, 0, 0, 0 },
-				{ ubuffer, "color", 0, 0, 0, 0 },
+				{ vbuffer1, "position", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
+				{ ibuffer, NULL, 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
+				{ ubuffer, "color", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
 			};
 			CHECK(driver->bindShaderBuffers(input, roCountof(input), NULL));
 
@@ -803,9 +803,9 @@ TEST_FIXTURE(GraphicsDriverTest, shaderBinary)
 			driver->updateBuffer(ubuffer, 0, color, sizeof(color));
 
 			roRDriverShaderBufferInput input[] = {
-				{ vbuffer2, "position", 0, 0, 0, 0 },
-				{ ibuffer, NULL, 0, 0, 0, 0 },
-				{ ubuffer, "color", 0, 0, 0, 0 },
+				{ vbuffer2, "position", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
+				{ ibuffer, NULL, 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
+				{ ubuffer, "color", 0, roRDriverBufferFormatType_Auto, 0, 0, 0 },
 			};
 			CHECK(driver->bindShaderBuffers(input, roCountof(input), NULL));
 

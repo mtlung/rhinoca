@@ -79,7 +79,6 @@ struct BufferCacheEntry {
 struct roRDriverBufferImpl : public roRDriverBuffer, NonCopyable
 {
 	roUint32 hash;
-	roSize capacity;	// This is the actual size of the dxBuffer
 	ComPtr<ID3D11Buffer> dxBuffer;
 	int dxStagingIdx;	// Index into stagingBufferCache
 };

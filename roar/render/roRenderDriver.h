@@ -54,6 +54,7 @@ typedef struct roRDriverBuffer
 	roSize mapOffset;
 	roSize mapSize;
 	roSize sizeInBytes;
+	roSize capacityInBytes;
 } roRDriverBuffer;
 
 typedef enum roRDriverTextureFormat
@@ -114,11 +115,33 @@ typedef struct roRDriverShaderTextureInput
 	unsigned nameHash;		/// after name is changed, reset it to zero will cause it to be re-calculated
 } roRDriverShaderTextureInput;
 
+typedef enum roRDriverBufferFormat
+{
+	roRDriverBufferFormatType_Auto		= 0,
+	roRDriverBufferFormatType_U8_1		= 6,
+	roRDriverBufferFormatType_U8_2,
+	roRDriverBufferFormatType_U8_3,
+	roRDriverBufferFormatType_U8_4,
+	roRDriverBufferFormatType_U32_1		= 11,
+	roRDriverBufferFormatType_U32_2,
+	roRDriverBufferFormatType_U32_3,
+	roRDriverBufferFormatType_U32_4,
+	roRDriverBufferFormatType_S32_1		= 16,
+	roRDriverBufferFormatType_S32_2,
+	roRDriverBufferFormatType_S32_3,
+	roRDriverBufferFormatType_S32_4,
+	roRDriverBufferFormatType_Float_1	= 21,
+	roRDriverBufferFormatType_Float_2,
+	roRDriverBufferFormatType_Float_3,
+	roRDriverBufferFormatType_Float_4,
+} roRDriverBufferFormat;
+
 typedef struct roRDriverShaderBufferInput
 {
 	roRDriverBuffer* buffer;
 	const char* name;		/// In GL it's the shader variable name, in DX it's the semantic name (with semantic index ie. position1)
 	unsigned nameHash;		/// after name is changed, reset it to zero will cause it to be re-calculated
+	roRDriverBufferFormat format;	/// Set to roRDriverBufferFormatType_None for auto-detection from shader source
 	unsigned offset;
 	unsigned stride;
 	unsigned cacheId;
