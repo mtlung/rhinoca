@@ -8,6 +8,16 @@
 #	include <pthread.h>
 #endif
 
+#ifdef CONCURRENCYSAL_H
+#   define roSAL_Lock(x) _Acquires_nonreentrant_lock_(x)
+#   define roSAL_Unlock(x) _Releases_nonreentrant_lock_(x)
+#   define roSAL_RecursiveLock(x) _Acquires_lock_(x)
+#else
+#   define roSAL_Lock(x)
+#   define roSAL_Unlock(x)
+#   define roSAL_RecursiveLock(x)
+#endif
+
 namespace ro {
 
 struct Mutex : private NonCopyable
@@ -17,8 +27,8 @@ struct Mutex : private NonCopyable
 	explicit Mutex(unsigned spinCount = 200);
 	~Mutex();
 
-	void lock();
-	void unlock();
+	roSAL_Lock(_mutex) void lock();
+	roSAL_Unlock(_mutex) void unlock();
 	bool tryLock();
 
 #if roDEBUG
@@ -51,7 +61,7 @@ struct RecursiveMutex : private NonCopyable
 	explicit RecursiveMutex(unsigned spintCount = 200);
 	~RecursiveMutex();
 
-	void lock();
+	roSAL_RecursiveLock(_mutex) void lock();
 	void unlock();
 	bool tryLock();
 

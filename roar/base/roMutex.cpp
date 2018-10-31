@@ -28,7 +28,7 @@ Mutex::~Mutex()
 	::DeleteCriticalSection((LPCRITICAL_SECTION)&_mutex);
 }
 
-void Mutex::lock()
+roSAL_Lock(_mutex) void Mutex::lock()
 {
 	::EnterCriticalSection((LPCRITICAL_SECTION)&_mutex);
 #if roDEBUG
@@ -37,7 +37,7 @@ void Mutex::lock()
 #endif
 }
 
-void Mutex::unlock()
+roSAL_Unlock(_mutex) void Mutex::unlock()
 {
 #if roDEBUG
 	roAssert(_locked && "Unlock when not locked");
@@ -81,7 +81,7 @@ RecursiveMutex::~RecursiveMutex()
 	::DeleteCriticalSection((LPCRITICAL_SECTION)&_mutex);
 }
 
-void RecursiveMutex::lock()
+roSAL_RecursiveLock(_mutex) void RecursiveMutex::lock()
 {
 	::EnterCriticalSection((LPCRITICAL_SECTION)&_mutex);
 #if roDEBUG
