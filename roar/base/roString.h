@@ -121,7 +121,7 @@ struct RangedString
 	roSize		rfind			(char c, roSize offset=npos) const;				// Offset is count from begin not end
 	roSize		rfind			(const char* str, roSize offset=npos) const;	//
 
-	roSize		size			() const	{ return end - begin; }
+	roSize		size			() const	{ return roSize(end - begin); }
 	bool		isEmpty			() const	{ return end <= begin; }
 
 	void		clear			() { begin = end = NULL; }

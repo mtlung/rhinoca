@@ -498,8 +498,8 @@ bool parse_repeatition(Graph& graph, const RangedString& f, const roUtf8*& i, ro
 	else if(i[0] == '+') {
 		bool greedy = (i[1] != '?');
 		if(!greedy) ++i;
-		roUint16 edge0Idx = greedy ? 0 : 1;
-		roUint16 edge1Idx = greedy ? 1 : 0;
+		roUint16 edge0Idx = greedy ? 0u : 1u;
+		roUint16 edge1Idx = greedy ? 1u : 0u;
 
 		Node node = { RangedString("+") };
 		st = graph.push2(node, Edge::Func(NULL));
@@ -509,13 +509,13 @@ bool parse_repeatition(Graph& graph, const RangedString& f, const roUtf8*& i, ro
 		graph.getEdge(graph.currentNodeIdx, edge0Idx).func = loop_repeat;
 		graph.getEdge(graph.currentNodeIdx, edge0Idx).nextNode = beginNodeIdx;
 		graph.getEdge(graph.currentNodeIdx, edge1Idx).func = loop_exit;
-		graph.getEdge(graph.currentNodeIdx, edge1Idx).nextNode = graph.currentNodeIdx+1;
+		graph.getEdge(graph.currentNodeIdx, edge1Idx).nextNode = graph.currentNodeIdx+1u;
 	}
 	else if(i[0] == '*') {
 		bool greedy = (i[1] != '?');
 		if(!greedy) ++i;
-		roUint16 edge0Idx = greedy ? 1 : 0;
-		roUint16 edge1Idx = greedy ? 0 : 1;
+		roUint16 edge0Idx = greedy ? 1u : 0u;
+		roUint16 edge1Idx = greedy ? 0u : 1u;
 
 		Node node = { RangedString("*") };
 		st = graph.push2(node, Edge::Func(NULL));
@@ -523,7 +523,7 @@ bool parse_repeatition(Graph& graph, const RangedString& f, const roUtf8*& i, ro
 		Edge edge = { RangedString(), NULL, 0, 0 };
 		graph.pushEdge(graph.currentNodeIdx, edge);
 		graph.getEdge(graph.currentNodeIdx, edge0Idx).func = loop_exit;
-		graph.getEdge(graph.currentNodeIdx, edge0Idx).nextNode = graph.currentNodeIdx+1;
+		graph.getEdge(graph.currentNodeIdx, edge0Idx).nextNode = graph.currentNodeIdx+1u;
 		graph.redirect(beginNodeIdx, graph.currentNodeIdx);
 		graph.getEdge(graph.currentNodeIdx, edge1Idx).func = loop_repeat;
 		graph.getEdge(graph.currentNodeIdx, edge1Idx).nextNode = beginNodeIdx;
@@ -550,8 +550,8 @@ bool parse_repeatition(Graph& graph, const RangedString& f, const roUtf8*& i, ro
 
 		bool greedy = (i[1] != '?');
 		if(!greedy) ++i;
-		roUint16 edge0Idx = greedy ? 1 : 0;
-		roUint16 edge1Idx = greedy ? 0 : 1;
+		roUint16 edge0Idx = greedy ? 1u : 0u;
+		roUint16 edge1Idx = greedy ? 0u : 1u;
 
 		roVerify(sscanf(pMin, "%zu", &min) == 1);
 
@@ -576,7 +576,7 @@ bool parse_repeatition(Graph& graph, const RangedString& f, const roUtf8*& i, ro
 		Edge edge = { RangedString(), NULL, 0, 0 };
 		graph.pushEdge(graph.currentNodeIdx, edge);
 		graph.getEdge(graph.currentNodeIdx, edge0Idx).func = counted_loop_exit;
-		graph.getEdge(graph.currentNodeIdx, edge0Idx).nextNode = graph.currentNodeIdx+1;
+		graph.getEdge(graph.currentNodeIdx, edge0Idx).nextNode = graph.currentNodeIdx+1u;
 		graph.redirect(beginNodeIdx, graph.currentNodeIdx);
 		graph.getEdge(graph.currentNodeIdx, edge1Idx).func = counted_loop_repeat;
 		graph.getEdge(graph.currentNodeIdx, edge1Idx).nextNode = beginNodeIdx;
@@ -624,7 +624,7 @@ bool parse_raw(Graph& graph, const RangedString& f, const roUtf8*& i)
 		graph.push2(node, match_raw, RangedString(end1, end2));
 
 		i = end2;
-		parse_repeatition(graph, f, i, graph.currentNodeIdx-1, graph.currentNodeIdx);
+		parse_repeatition(graph, f, i, graph.currentNodeIdx-1u, graph.currentNodeIdx);
 	}
 
 	return true;
@@ -656,7 +656,7 @@ bool parse_charSet(Graph& graph, const RangedString& f, const roUtf8*& i)
 
 	Node node = { RangedString(begin-1, end+1) };
 	graph.push2(node, match_charSet, RangedString(begin, end));
-	parse_repeatition(graph, f, i, graph.currentNodeIdx-1, graph.currentNodeIdx);
+	parse_repeatition(graph, f, i, graph.currentNodeIdx-1u, graph.currentNodeIdx);
 
 	return true;
 }
@@ -671,7 +671,7 @@ bool parse_charClass(Graph& graph, const RangedString& f, const roUtf8*& i)
 	graph.push2(node, match_charClass, RangedString(i+1, i+2));
 
 	i += 2;
-	parse_repeatition(graph, f, i, graph.currentNodeIdx-1, graph.currentNodeIdx);
+	parse_repeatition(graph, f, i, graph.currentNodeIdx-1u, graph.currentNodeIdx);
 
 	return true;
 }
@@ -768,7 +768,7 @@ bool parse_customFunc(Graph& graph, const RangedString& f, const roUtf8*& i)
 	node.userdata[0] = (void*)&(*graph.customMatchers)[idx];
 	graph.push2(node, match_customFunc);
 
-	parse_repeatition(graph, f, i, graph.currentNodeIdx-1, graph.currentNodeIdx);
+	parse_repeatition(graph, f, i, graph.currentNodeIdx-1u, graph.currentNodeIdx);
 
 	return true;
 }
@@ -961,7 +961,7 @@ roStatus Regex::compile(const roUtf8* reg, Compiled& compiled, const IArray<Cust
 	{	Node node = { RangedString("end") };
 		graph.push2(node, node_end);
 		graph.edges.back().nextNode = 0;
-		graph.redirect(graph.currentNodeIdx+1, graph.currentNodeIdx);
+		graph.redirect(graph.currentNodeIdx+1u, graph.currentNodeIdx);
 	}
 
 	if(logLevel > 0) {
@@ -1008,7 +1008,7 @@ bool Regex::match(RangedString srcString, RangedString regString, const IArray<C
 	{	Node node = { RangedString("end") };
 		graph.push2(node, node_end);
 		graph.edges.back().nextNode = 0;
-		graph.redirect(graph.currentNodeIdx+1, graph.currentNodeIdx);
+		graph.redirect(graph.currentNodeIdx+1u, graph.currentNodeIdx);
 	}
 
 	if(logLevel > 0) {

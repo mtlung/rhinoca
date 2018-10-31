@@ -8,6 +8,7 @@ namespace ro {
 
 /// An intrusive associative map container.
 /// More documentation on http://www.codeproject.com/KB/recipes/Containers.aspx
+/// https://www.codeproject.com/Articles/20085/Superior-container-classes-Smaller-faster-flexible
 /*!	To use the map, user have to extend the node first:
 \code
 struct FooNode : public MapNode<int, FooNode> {
@@ -33,7 +34,13 @@ struct _AvlTree;
 
 struct _TreeNode
 {
-	_TreeNode() : _tree(NULL) {}
+	_TreeNode() : _tree(NULL)
+	{
+#if roCOMPILER_VC && roDEBUG
+		mRight = NULL;
+#endif
+	}
+
 	virtual ~_TreeNode();
 	virtual void destroyThis();
 

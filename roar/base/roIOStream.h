@@ -26,7 +26,7 @@ struct IStream : private NonCopyable
 	virtual bool		readWillBlock	(roUint64 minBytesToRead) { return false; }
 
 	virtual Status		size			(roUint64& bytes) const { return roStatus::not_supported; }
-	virtual roUint64	posRead			() { return 0; }
+	virtual roUint64	posRead			() const { return 0; }
 	virtual Status		seekRead		(roInt64 offset, SeekOrigin origin) { return roStatus::not_supported; }
 	virtual void		closeRead		() {}
 
