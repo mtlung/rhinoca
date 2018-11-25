@@ -315,7 +315,7 @@ Status MemoryProfiler::init(roUint16 listeningPort)
 
 static bool _firstSeen(roUint64 hash)
 {
-	ScopeRecursiveLock lock(_mutex);
+	roAssert(_mutex.isLocked());
 	roUint64* h = roLowerBound(_callstackHash.begin(), _callstackHash.size(), hash);
 
 	if(!h || (*h != hash)) {
@@ -339,6 +339,7 @@ static void _send(TlsStruct* tls, char cmd, void* memAddr, roSize memSize)
 		if(count > 2)
 			count -= 2;
 
+		ScopeRecursiveLock lock(_mutex);
 		// The first time we save this particular callstack, send it to the client
 		if(_firstSeen(hash)) {
 			char c = 'h';
