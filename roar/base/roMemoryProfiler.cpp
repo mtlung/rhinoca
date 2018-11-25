@@ -426,6 +426,25 @@ LPVOID WINAPI myHeapFree(__in HANDLE hHeap, __in DWORD dwFlags, __deref LPVOID l
 	return ret;
 }
 
+static SIZE_T getVirtualAllocCommittedSize(void* p)
+{
+	SIZE_T size = 0;
+	MEMORY_BASIC_INFORMATION info;
+	if(!::VirtualQuery(p, &info, sizeof(info)))
+		return 0;
+
+	p = info.AllocationBase;
+	while (info.AllocationBase == p) {
+		p = (unsigned char*)p + info.RegionSize;
+		if (info.State == MEM_COMMIT)
+			size += info.RegionSize;
+
+		if(!::VirtualQuery(p, &info, sizeof(info)))
+			return 0;
+	}
+	return size;
+}
+
 LPVOID WINAPI myVirtualAlloc(__in_opt LPVOID lpAddress, __in SIZE_T dwSize, __in DWORD flAllocationType, __in DWORD flProtect)
 {
 	TlsStruct* tls = _tlsStruct();
@@ -435,8 +454,14 @@ LPVOID WINAPI myVirtualAlloc(__in_opt LPVOID lpAddress, __in SIZE_T dwSize, __in
 		return _orgVirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
 
 	tls->recurseCount++;
+	SIZE_T committedSizeBefore = getVirtualAllocCommittedSize(lpAddress);
 	void* ret = _orgVirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
-	_send(tls, 'a', ret, dwSize);
+	if(ret) {
+		SIZE_T committedSizeAfter = getVirtualAllocCommittedSize(lpAddress);
+		_send(tls, 'a', ret, committedSizeAfter - committedSizeBefore);
+		if((committedSizeAfter - committedSizeBefore) != dwSize)
+			committedSizeBefore = committedSizeBefore;
+	}
 	tls->recurseCount--;
 
 	return ret;
