@@ -106,7 +106,7 @@ Status Array_VirtualAlloc<T>::reserve(roSize newCapacity, bool force)
 		if(_orgVirtualFree)
 			_orgVirtualFree(_data, 0, MEM_RELEASE);
 		else
-		::VirtualFree(_data, 0, MEM_RELEASE);
+			::VirtualFree(_data, 0, MEM_RELEASE);
 	}
 
 	_data = newPtr;
@@ -134,21 +134,21 @@ struct FlowRegulator
 		tls->serializeBuf.clear();
 
 		if(_buffer.size() > _flushSize)
-			return flush(_profiler->_acceptorSocket);
+			return flush();
 
 		if(_stopWatch.getFloat() > 1)
-			return flush(_profiler->_acceptorSocket);
+			return flush();
 
 		return true;
 	}
 
-	bool flush(BsdSocket& socket)
+	bool flush()
 	{
 		ScopeRecursiveLock lock(_mutex);
 
 		roSize size = _buffer.sizeInByte();
 		roSize sizeSend = size;
-		socket.send(_buffer.bytePtr(), sizeSend);
+		_profiler->_acceptorSocket.send(_buffer.bytePtr(), sizeSend);
 		if(sizeSend != size)
 			return false;
 
@@ -195,7 +195,7 @@ MemoryProfiler::MemoryProfiler()
 
 MemoryProfiler::~MemoryProfiler()
 {
-		shutdown();
+	shutdown();
 }
 
 static LRESULT CALLBACK dlgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -350,7 +350,7 @@ static void _send(TlsStruct* tls, char cmd, void* memAddr, roSize memSize)
 			s.ioVary(count);
 			// Reverse the order so the root come first
 			for(roSize i=0; i<count; ++i) {
-				roUint64 addr = (roSize)tls->stackBuf[count - i];
+				roUint64 addr = (roSize)tls->stackBuf[count - i - 1];
 				s.ioVary(addr);
 			}
 
@@ -494,6 +494,7 @@ void MemoryProfiler::shutdown()
 	if(!_initCounter.tryShutdown())
 		return;
 
+	_regulator.flush();
 	_functionPatcher.unpatchAll();
 
 	roVerify(_acceptorSocket.shutDownReadWrite());
