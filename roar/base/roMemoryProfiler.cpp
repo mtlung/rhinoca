@@ -21,7 +21,7 @@
 namespace ro {
 
 static DWORD			_tlsIndex = 0;
-static RecursiveMutex	_mutex;
+static RecursiveMutex	_callstackHashMutex;
 static MemoryProfiler*	_profiler = NULL;
 
 typedef LPVOID (WINAPI *MyHeapAlloc)(HANDLE, DWORD, SIZE_T);
@@ -48,8 +48,6 @@ namespace {
 struct TlsStruct
 {
 	TlsStruct() : recurseCount(0) {}
-	~TlsStruct() {}
-
 	roSize recurseCount;
 
 	StackWalker stackWalker;
@@ -158,32 +156,45 @@ struct FlowRegulator
 	}
 
 	StopWatch _stopWatch;
+	RecursiveMutex _mutex;
 	Array_VirtualAlloc<char> _buffer;
 	static const roSize _flushSize = 1024 * 512;
 };
 
-}	// namespace
+bool isIniting = false;
 
-static TinyArray<TlsStruct, 64> _tlsStructs;
+struct ResetErrorCode
+{
+	ResetErrorCode() : errCode(GetLastError()) {}
+	~ResetErrorCode() { SetLastError(errCode); }
+	void ReVerify() { if (GetLastError() != ERROR_SUCCESS) errCode = GetLastError(); }
+	DWORD errCode;
+};  // ResetErrorCode
+
+}	// namespace
 
 TlsStruct* _tlsStruct()
 {
+	ResetErrorCode scopedResetErrorCode;
+
 	roAssert(_tlsIndex != 0);
 
+	// NOTE: TlsGetValue function calls SetLastError to clear a thread's last error when it succeeds
 	TlsStruct* tls = reinterpret_cast<TlsStruct*>(::TlsGetValue(_tlsIndex));
 
+	if (isIniting)
+		return NULL;
+
 	if(!tls) {
-		ScopeRecursiveLock lock(_mutex);
+		isIniting = true;
 
-		// TODO: The current method didn't respect thread destruction
-		roAssert(_tlsStructs.size() < _tlsStructs.capacity());
-		if(_tlsStructs.size() >= _tlsStructs.capacity())
-			return NULL;
-
-		if(!_tlsStructs.pushBack())
-			return NULL;
-		tls = &_tlsStructs.back();
+		// NOTE: We never free TlsStruct. By sacrificing a little bit of memory, we gain robustness.
+		// since windows' thread local suck, having no callback for clean up; while FlsAlloc do have
+		// callback but FlsSetValue will allocate memory...
+		tls = new TlsStruct;
 		::TlsSetValue(_tlsIndex, tls);
+
+		isIniting = false;
 	}
 
 	return tls;
@@ -315,7 +326,7 @@ Status MemoryProfiler::init(roUint16 listeningPort)
 
 static bool _firstSeen(roUint64 hash)
 {
-	roAssert(_mutex.isLocked());
+	roAssert(_callstackHashMutex.isLocked());
 	roUint64* h = roLowerBound(_callstackHash.begin(), _callstackHash.size(), hash);
 
 	if(!h || (*h != hash)) {
@@ -328,6 +339,8 @@ static bool _firstSeen(roUint64 hash)
 
 static void _send(TlsStruct* tls, char cmd, void* memAddr, roSize memSize)
 {
+	ResetErrorCode scopedResetErrorCode;
+
 	Serializer s;
 	s.setBuf(&tls->serializeBuf);
 
@@ -339,7 +352,7 @@ static void _send(TlsStruct* tls, char cmd, void* memAddr, roSize memSize)
 		if(count > 2)
 			count -= 2;
 
-		ScopeRecursiveLock lock(_mutex);
+		ScopeRecursiveLock lock(_callstackHashMutex);
 		// The first time we save this particular callstack, send it to the client
 		if(_firstSeen(hash)) {
 			char c = 'h';
@@ -373,7 +386,6 @@ static void _send(TlsStruct* tls, char cmd, void* memAddr, roSize memSize)
 LPVOID WINAPI myHeapAlloc(__in HANDLE hHeap, __in DWORD dwFlags, __in SIZE_T dwBytes)
 {
 	TlsStruct* tls = _tlsStruct();
-	roAssert(tls);
 
 	// HeapAlloc will invoke itself recursively, so we need a recursion counter
 	if(!tls || tls->recurseCount > 0)
@@ -391,13 +403,11 @@ LPVOID WINAPI myHeapAlloc(__in HANDLE hHeap, __in DWORD dwFlags, __in SIZE_T dwB
 LPVOID WINAPI myHeapReAlloc(__in HANDLE hHeap, __in DWORD dwFlags, __deref LPVOID lpMem, __in SIZE_T dwBytes)
 {
 	TlsStruct* tls = _tlsStruct();
-	roAssert(tls);
-
 	if(!tls || tls->recurseCount > 0)
 		return _orgHeapReAlloc(hHeap, dwFlags, lpMem, dwBytes);
 
 	tls->recurseCount++;
-	roSize orgSize = HeapSize(hHeap, dwFlags, lpMem);
+	roSize orgSize = HeapSize(hHeap, dwFlags, lpMem);	// NOTE: HeapSize doesn't calls SetLastError
 	void* ret = _orgHeapReAlloc(hHeap, dwFlags, lpMem, dwBytes);
 	roAssert(HeapSize(hHeap, dwFlags, ret) == dwBytes);
 	if(ret != lpMem || orgSize != dwBytes) {
@@ -412,13 +422,11 @@ LPVOID WINAPI myHeapReAlloc(__in HANDLE hHeap, __in DWORD dwFlags, __deref LPVOI
 LPVOID WINAPI myHeapFree(__in HANDLE hHeap, __in DWORD dwFlags, __deref LPVOID lpMem)
 {
 	TlsStruct* tls = _tlsStruct();
-	roAssert(tls);
-
 	if(!tls || tls->recurseCount > 0 || lpMem == NULL)
 		return _orgHeapFree(hHeap, dwFlags, lpMem);
 
 	tls->recurseCount++;
-	roSize orgSize = HeapSize(hHeap, dwFlags, lpMem);
+	roSize orgSize = HeapSize(hHeap, dwFlags, lpMem);	// NOTE: HeapSize doesn't calls SetLastError
 	void* ret = _orgHeapFree(hHeap, dwFlags, lpMem);
 	_send(tls, 'f', lpMem, orgSize);
 	tls->recurseCount--;
@@ -448,7 +456,6 @@ static SIZE_T getVirtualAllocCommittedSize(void* p)
 LPVOID WINAPI myVirtualAlloc(__in_opt LPVOID lpAddress, __in SIZE_T dwSize, __in DWORD flAllocationType, __in DWORD flProtect)
 {
 	TlsStruct* tls = _tlsStruct();
-	roAssert(tls);
 
 	if(!tls || tls->recurseCount > 0 || !(flAllocationType & MEM_COMMIT))
 		return _orgVirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
@@ -457,6 +464,7 @@ LPVOID WINAPI myVirtualAlloc(__in_opt LPVOID lpAddress, __in SIZE_T dwSize, __in
 	SIZE_T committedSizeBefore = getVirtualAllocCommittedSize(lpAddress);
 	void* ret = _orgVirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
 	if(ret) {
+		ResetErrorCode scopedResetErrorCode;
 		SIZE_T committedSizeAfter = getVirtualAllocCommittedSize(lpAddress);
 		_send(tls, 'a', ret, committedSizeAfter - committedSizeBefore);
 		if((committedSizeAfter - committedSizeBefore) != dwSize)
@@ -470,8 +478,6 @@ LPVOID WINAPI myVirtualAlloc(__in_opt LPVOID lpAddress, __in SIZE_T dwSize, __in
 BOOL WINAPI myVirtualFree(__in LPVOID lpAddress, __in SIZE_T dwSize, __in DWORD dwFreeType)
 {
 	TlsStruct* tls = _tlsStruct();
-	roAssert(tls);
-
 	if(!tls || tls->recurseCount > 0 || lpAddress == NULL || (dwFreeType & MEM_DECOMMIT))
 		return _orgVirtualFree(lpAddress, dwSize, dwFreeType);
 
