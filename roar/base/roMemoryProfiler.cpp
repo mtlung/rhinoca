@@ -436,13 +436,15 @@ LPVOID WINAPI myHeapFree(__in HANDLE hHeap, __in DWORD dwFlags, __deref LPVOID l
 
 static SIZE_T getVirtualAllocCommittedSize(void* p)
 {
+	if(!p) return 0;
+
 	SIZE_T size = 0;
 	MEMORY_BASIC_INFORMATION info;
 	if(!::VirtualQuery(p, &info, sizeof(info)))
 		return 0;
 
-	p = info.AllocationBase;
-	while (info.AllocationBase == p) {
+	void* base = info.AllocationBase;
+	while (info.AllocationBase == base) {
 		p = (unsigned char*)p + info.RegionSize;
 		if (info.State == MEM_COMMIT)
 			size += info.RegionSize;
@@ -465,10 +467,10 @@ LPVOID WINAPI myVirtualAlloc(__in_opt LPVOID lpAddress, __in SIZE_T dwSize, __in
 	void* ret = _orgVirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
 	if(ret) {
 		ResetErrorCode scopedResetErrorCode;
-		SIZE_T committedSizeAfter = getVirtualAllocCommittedSize(lpAddress);
-		_send(tls, 'a', ret, committedSizeAfter - committedSizeBefore);
-		if((committedSizeAfter - committedSizeBefore) != dwSize)
-			committedSizeBefore = committedSizeBefore;
+		SIZE_T committedSizeAfter = getVirtualAllocCommittedSize(ret);
+		SIZE_T incSize = committedSizeAfter - committedSizeBefore;
+		if(incSize > 0)
+			_send(tls, 'a', ret, incSize);
 	}
 	tls->recurseCount--;
 
@@ -478,21 +480,28 @@ LPVOID WINAPI myVirtualAlloc(__in_opt LPVOID lpAddress, __in SIZE_T dwSize, __in
 BOOL WINAPI myVirtualFree(__in LPVOID lpAddress, __in SIZE_T dwSize, __in DWORD dwFreeType)
 {
 	TlsStruct* tls = _tlsStruct();
-	if(!tls || tls->recurseCount > 0 || lpAddress == NULL || (dwFreeType & MEM_DECOMMIT))
+	if(!tls || tls->recurseCount > 0 || lpAddress == NULL)
 		return _orgVirtualFree(lpAddress, dwSize, dwFreeType);
 
-	roAssert(dwFreeType & MEM_RELEASE);
-
-	MEMORY_BASIC_INFORMATION info;
-	::VirtualQuery(lpAddress, &info, sizeof(info));
-
 	tls->recurseCount++;
+	SIZE_T committedSizeBefore = getVirtualAllocCommittedSize(lpAddress);
 	BOOL ret = _orgVirtualFree(lpAddress, dwSize, dwFreeType);
-	if(SUCCEEDED(ret))
-		_send(tls, 'f', lpAddress, info.RegionSize);
+	if(SUCCEEDED(ret)) {
+		ResetErrorCode scopedResetErrorCode;
+		SIZE_T committedSizeAfter = getVirtualAllocCommittedSize(lpAddress);
+		SIZE_T decSize = committedSizeBefore - committedSizeAfter;
+		if(decSize)
+			_send(tls, 'f', lpAddress, decSize);
+	}
 	tls->recurseCount--;
 
 	return ret;
+}
+
+void MemoryProfiler::flush()
+{
+	if(_profiler)
+		_regulator.flush();
 }
 
 void MemoryProfiler::shutdown()

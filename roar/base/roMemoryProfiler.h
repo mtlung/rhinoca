@@ -12,7 +12,7 @@ struct MemoryProfiler
 
 	/// The memory profiler must have an external program to analysis the data
 	Status init(roUint16 listeningPort);
-
+	static void flush();
 	void shutdown();
 
 // Private
