@@ -19,7 +19,7 @@ TEST(MemoryProfilerTest)
 		CHECK(p == NULL);
 		p = ::VirtualAlloc(NULL, 1024, MEM_RESERVE, PAGE_READWRITE);
 		CHECK(p);
-		CHECK(!::VirtualAlloc((char*)p + 1, 1024, MEM_COMMIT, PAGE_READWRITE));		// Must give the base address for MEM_COMMIT
+		CHECK(!::VirtualAlloc((char*)p + 1, 1024, MEM_COMMIT, PAGE_READWRITE));		// Must give the base address for MEM_COMMIT, althought it fails but memory is commited through NtAllocateVirtualMemory
 		p = ::VirtualAlloc(p, 1024, MEM_COMMIT, PAGE_READWRITE);					// mem + 4096
 		CHECK(p);
 
@@ -47,12 +47,21 @@ TEST(MemoryProfilerTest)
 		p = ::VirtualAlloc((char*)b +  4096, 4096, MEM_COMMIT, PAGE_READWRITE);		// mem + 4096
 		p = ::VirtualAlloc((char*)b +  4096, 4096, MEM_COMMIT, PAGE_READWRITE);		// mem + 0, Commit on already committed region
 		p = ::VirtualAlloc((char*)b + 12288, 8192, MEM_COMMIT, PAGE_READWRITE);		// mem + 8192
-		p = ::VirtualAlloc((char*)b +     0,40960, MEM_COMMIT, PAGE_READWRITE);		// mem + 28672, some regions already committed
+		p = ::VirtualAlloc((char*)b +     0,40960, MEM_COMMIT, PAGE_READWRITE);		// mem + 28672, some regions already committed, and creating 2 new entries one at front and one at back
 
 		CHECK(::VirtualFree((char*)b + 4096, 4096, MEM_DECOMMIT));					// mem - 4096
 		CHECK(::VirtualFree((char*)b + 4096, 4096, MEM_DECOMMIT));					// mem - 0, Decommit on already decommitted region
 		CHECK(::VirtualFree((char*)b +12288, 8192, MEM_DECOMMIT));					// mem - 8192
 		CHECK(::VirtualFree((char*)b +    0,36864, MEM_DECOMMIT));					// mem - 24576, some regions already decommitted
+
+		p = ::VirtualAlloc((char*)b +  4096, 4096, MEM_COMMIT, PAGE_READWRITE);		// Do all the above allocation once more
+		p = ::VirtualAlloc((char*)b +  4096, 4096, MEM_COMMIT, PAGE_READWRITE);
+		p = ::VirtualAlloc((char*)b + 12288, 8192, MEM_COMMIT, PAGE_READWRITE);
+		p = ::VirtualAlloc((char*)b +     0,40960, MEM_COMMIT, PAGE_READWRITE);
+
+		CHECK(::VirtualFree((char*)b +    0,    0, MEM_DECOMMIT));					// Decommit all at once
+
+		p = ::VirtualAlloc((char*)b +  4096, 4096, MEM_COMMIT, PAGE_READWRITE);
 
 		CHECK(::VirtualFree(b, 0, MEM_RELEASE));									// mem - 4096
 		MemoryProfiler::flush();
