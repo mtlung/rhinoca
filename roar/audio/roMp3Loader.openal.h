@@ -212,6 +212,7 @@ roEXCP_TRY
 		roEXCP_THROW;
 	}
 
+	// TODO: Can result an infinite loop, mpg123 keep throwing MPG123_NEED_MORE but we always read the same size: _dataChunkSize
 	bool lastDataChunkNotEnoughForDecode = (readCount > 0 && readCount < _dataChunkSize);
 	if(mpgRet == MPG123_NEED_MORE && readCount > 0 && !lastDataChunkNotEnoughForDecode)
 		return reSchedule(false);

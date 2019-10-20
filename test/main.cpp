@@ -1,7 +1,8 @@
 #include "pch.h"
 #include "../roar/base/roMemoryProfiler.h"
 #include "../roar/base/roResource.h"
-#include "../roar/base/roSocket.h"
+#include "../roar/network/roSocket.h"
+#include <crtdbg.h>
 
 int main()
 {
@@ -12,22 +13,22 @@ int main()
 #endif
 
 	size_t ret;
-	CppTestHarness::TestRunner runner;
-	runner.ShowTestName(true);
+	ro::cpptest::TestRunner runner;
+	runner.showTestName(true);
 
-//	ret = runner.RunTest("GraphicsDriverTest::textureUpdate");
-//	ret = runner.RunTest("GraphicsDriverTest::font");
+//	ret = runner.runTest("GraphicsDriverTest::textureUpdate");
+//	ret = runner.runTest("GraphicsDriverTest::font");
 //	ret = runner.RunAllTests();
 
-//	ret = runner.RunTest("FileSystemTest::httpFS_read");
-//	ret = runner.RunTest("TextureLoaderTest::stressTest");
-	ret = runner.RunTest("ImGuiTest::window");
-//	ret = runner.RunTest("MatrixTest::transformVector");
-//	ret = runner.RunTest("InputTest::mouse");
-//	ret = runner.RunTest("CanvasTest::drawImage");
-//	ret = runner.RunTest("AudioTest::soundSource");
-//	ret = runner.RunTest("StringFormatTest::printf");
-//	ret = runner.RunTest("AlgorithmTest::sort");
+//	ret = runner.runTest("FileSystemTest::httpFS_read");
+//	ret = runner.runTest("TextureLoaderTest::stressTest");
+	ret = runner.runTest("ImGuiTest::window");
+//	ret = runner.runTest("MatrixTest::transformVector");
+//	ret = runner.runTest("InputTest::mouse");
+//	ret = runner.runTest("CanvasTest::drawImage");
+//	ret = runner.runTest("AudioTest::soundSource");
+//	ret = runner.runTest("StringFormatTest::printf");
+//	ret = runner.runTest("AlgorithmTest::sort");
 
 /*	using namespace ro;
 	

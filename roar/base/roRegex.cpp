@@ -276,7 +276,7 @@ bool match_raw(Graph& graph, Node& node, Edge& edge, RangedString& s_)
 		// Escape character
 		char escaped = doEscape(f);
 		roAssert(escaped != '\0');
-		roAssert(s != '\0');
+		roAssert(*s != '\0');
 
 		if(!graph.charCmpFunc(*s, escaped))
 			return false;

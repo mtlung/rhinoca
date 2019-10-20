@@ -289,7 +289,7 @@ struct roAudioDriverImpl : public roAudioDriver, public Task
 			taskPool->wait(taskReady);
 
 		roAssert(alContext);
-		alcMakeContextCurrent(alContext);
+		roVerify(alcMakeContextCurrent(alContext));
 	}
 
 	void run(TaskPool* taskPool) override;
@@ -428,7 +428,7 @@ static ALint _soundSourceTellPcmPos(roADriverSoundSource* self)
 	if(!impl) return 0;
 	if(!impl->audioBuffer) return 0;
 
-	ALint offset;
+	ALint offset = 0;
 	alGetSourcei(impl->handle, AL_SAMPLE_OFFSET, &offset);
 	offset += impl->queuedSubBuffers.isEmpty() ? impl->nextQueuePos : impl->queuedSubBuffers.front().posBegin;
 
@@ -619,7 +619,7 @@ static void _tick(roAudioDriver* self)
 					sound.nextQueuePos = 0;
 				}
 
-				if(!sound.isLoop && sound.audioBuffer->format.totalSamples != 0) {
+				if(!sound.isPlay && !sound.isLoop && sound.audioBuffer->format.totalSamples != 0) {
 					sound.isPlay = false;
 					sound.activeListNode.removeThis();
 
@@ -676,6 +676,8 @@ void _alDeviceInit()
 
 	roAssert(!_alcDevice);
 	_alcDevice = alcOpenDevice(NULL);
+	const char* deviceString = alcGetString(NULL, ALC_DEVICE_SPECIFIER);
+	roLog("info", "Using OpenAL device: %s\n", deviceString);
 
 	if(!_alcDevice)
 		roLog("error", "Fail to initialize audio device\n");

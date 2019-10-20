@@ -89,6 +89,13 @@ struct CoSleepManager : public BgCoroutine
 		return sortedEntries.front().timeToWake < stopWatch.getTick();
 	}
 
+	roUint64 nextResumeTime() const {
+		if(sortedEntries.isEmpty())
+			return TypeOf<roUint64>::valueMax();
+		else
+			return sortedEntries.front().timeToWake;
+	}
+
 	StopWatch	stopWatch;
 	Array<Entry> sortedEntries;
 };	// CoSleepManager
@@ -174,7 +181,7 @@ CoroutineScheduler::~CoroutineScheduler()
 
 extern BgCoroutine* createSocketManager();
 
-static AtomicInteger _CoroutineSchedulerInitCount = 0;
+__declspec(thread) static AtomicInteger _CoroutineSchedulerInitCount = 0;
 
 roStatus CoroutineScheduler::init(roSize stackSize)
 {
@@ -203,7 +210,7 @@ void CoroutineScheduler::addSuspended(Coroutine& coroutine)
 	coroutine.scheduler = this;
 }
 
-roStatus CoroutineScheduler::update(unsigned timeSliceMilliSeconds)
+roStatus CoroutineScheduler::update(unsigned timeSliceMilliSeconds, roUint64* nextUpdateTime)
 {
 	if(_stack.isEmpty())
 		return roStatus::not_initialized;
@@ -300,6 +307,9 @@ roStatus CoroutineScheduler::update(unsigned timeSliceMilliSeconds)
 		}
 	}
 
+	if(nextUpdateTime && _currentCoSleepManager)
+		*nextUpdateTime = _currentCoSleepManager->nextResumeTime();
+
 	tlsInstance = NULL;
 
 	// Wake up all suspended background coroutine
@@ -389,6 +399,13 @@ roSize CoroutineScheduler::activetaskCount() const
 roSize CoroutineScheduler::suspendedtaskCount() const
 {
 	return _suspendedList.size();
+}
+
+roUint64 CoroutineScheduler::currentTimeInTicks() const
+{
+	if(!_currentCoSleepManager)
+		return 0;
+	return _currentCoSleepManager->stopWatch.getTick();
 }
 
 Coroutine* CoroutineScheduler::currentCoroutine()

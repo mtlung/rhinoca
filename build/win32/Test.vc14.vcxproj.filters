@@ -121,9 +121,6 @@
     <ClCompile Include="..\..\test\math\roMathTest.cpp">
       <Filter>math</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\test\playground\roProfileThreadTimeSlice.cpp">
-      <Filter>playground</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\test\pch.h" />

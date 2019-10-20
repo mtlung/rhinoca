@@ -2,6 +2,8 @@
 #include "../../roar/base/roArray.h"
 #include "../../roar/base/roLog.h"
 #include "../../roar/base/roStopWatch.h"
+#include <exception>
+#include <string>
 #include <vector>
 
 using namespace ro;

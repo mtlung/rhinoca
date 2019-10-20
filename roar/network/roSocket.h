@@ -34,6 +34,9 @@ typedef roPtrInt socket_t;
 #   include <sys/errno.h>
 #endif
 
+roUint16 roHtons(roUint16 hostShort);
+roUint16 roNtohs(roUint16 netShort);
+
 namespace ro {
 
 struct String;

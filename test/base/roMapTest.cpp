@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "../../roar/base/roMap.h"
 #include "../../roar/base/roStopWatch.h"
+#include <exception>
 #include <map>
 
 using namespace ro;

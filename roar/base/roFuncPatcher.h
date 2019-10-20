@@ -71,8 +71,8 @@ struct FunctionPatcher
 		MEMORY_BASIC_INFORMATION mbi;
 	};
 
-	Array<PatchInfo> _patchInfo;
-	Array<PageAllocator> _allocatedPages;
+	TinyArray<PatchInfo, 16> _patchInfo;
+	TinyArray<PageAllocator, 16> _allocatedPages;
 };
 
 void* FunctionPatcher::_allocatePage(void* nearAddr, roSize& size)

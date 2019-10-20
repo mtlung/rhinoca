@@ -61,6 +61,16 @@
 #	define MSG_NOSIGNAL 0x2000	// http://lists.apple.com/archives/macnetworkprog/2002/Dec/msg00091.html
 #endif
 
+roUint16 roHtons(roUint16 hostShort)
+{
+	return htons(hostShort);
+}
+
+roUint16 roNtohs(roUint16 netShort)
+{
+	return ntohs(netShort);
+}
+
 namespace ro {
 
 static int getLastError()
@@ -912,7 +922,7 @@ roStatus CoSocket::receive(void* buf, roSize& len, int flags)
 	// Data is now ready for read
 	st = Super::receive(buf, len, flags);
 
-	roAssert(!inProgress(st));
+	// Note: Can be inProgress if the coroutine is resumed externally
 	return st;
 }
 

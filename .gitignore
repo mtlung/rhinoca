@@ -2,4 +2,11 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
-/.vs
+.vs
+/bin/x64
+/lib/x64
+/build/win32/tmp
+/thirdParty/libmpg/x64
+/thirdParty/png/x64
+/thirdParty/SmallJpeg/x64
+/thirdParty/zlib/x64

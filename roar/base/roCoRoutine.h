@@ -74,7 +74,7 @@ struct CoroutineScheduler
 	roStatus	init				(roSize statckSize = 2 * 1024 * 1024);
 	void		add					(Coroutine& coroutine);
 	void		addSuspended		(Coroutine& coroutine);
-	roStatus	update				(unsigned timeSliceMilliSeconds=0);
+	roStatus	update				(unsigned timeSliceMilliSeconds=0, roUint64* nextUpdateTime=nullptr);
 	void		runTillAllFinish	(float maxFps=60.f);
 	void		requestStop			();
 	void		stop				();
@@ -84,6 +84,8 @@ struct CoroutineScheduler
 	roSize		taskCount			() const;	// Exclude background task
 	roSize		activetaskCount		() const;	//
 	roSize		suspendedtaskCount	() const;	//
+
+	roUint64	currentTimeInTicks	() const;	// For use in conjunction with update(nextUpdateTime)
 
 	// Yield the current running co-routine and return it's pointer, so you can resume it later on.
 	// Coroutine should not be destroied before run() finish, so it's safe to return Coroutine*

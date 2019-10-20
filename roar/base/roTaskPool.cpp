@@ -171,7 +171,20 @@ void TaskPool::yield()
 #endif
 }
 
-void _run(TaskPool* pool)
+void TaskPool::waitForTaskAvailable(unsigned timeoutInMs)
+{
+	ScopeLock lock(condVar);
+	_waitForTaskAvailableNoLock(timeoutInMs);
+}
+
+void TaskPool::_waitForTaskAvailableNoLock(unsigned timeoutInMs)
+{
+	++_workerWaitCount;
+	condVar.waitNoLock(timeoutInMs);
+	--_workerWaitCount;
+}
+
+void defaultThreadFunction(TaskPool* pool)
 {
 	String s("WORKER THREAD");	// NOTE: This make sure every thread have it's own copy of the scope name
 	CpuProfilerScope cpuProfilerScope(s.c_str());
@@ -179,12 +192,8 @@ void _run(TaskPool* pool)
 	while(pool->keepRun()) {
 		pool->doSomeTask(0);
 
-		ScopeLock lock(pool->condVar);
-		if(pool->_keepRun) {
-			++pool->_workerWaitCount;
-			pool->condVar.waitNoLock();
-			--pool->_workerWaitCount;
-		}
+		if(pool->_keepRun)
+			pool->waitForTaskAvailable();
 	}
 }
 
@@ -194,16 +203,20 @@ static void* _threadFunc(void* p) {
 static DWORD WINAPI _threadFunc(LPVOID p) {
 #endif
 	TaskPool* pool = reinterpret_cast<TaskPool*>(p);
-	_run(pool);
-
+	(pool->threadFunction())(pool);
 	return 0;
 }
 
-void TaskPool::init(roSize threadCount)
+void TaskPool::init(roSize threadCount, ThreadFunction threadFunction)
 {
 	roAssert(!_threadHandles);
 	_threadCount = threadCount;
 	_threadHandles = _allocator.malloc(threadCount * sizeof(roSize));
+
+	if(!threadFunction)
+		_threadFunction = defaultThreadFunction;
+	else
+		_threadFunction = threadFunction;
 
 	for(roSize i=0; i<_threadCount; ++i) {
 #ifdef roUSE_PTHREAD
@@ -389,9 +402,7 @@ void TaskPool::_wait(TaskProxy* p, ThreadId tId)
 				_doTask(p2, tId);
 			else {
 				// If no more task can do, we wait
-				++_workerWaitCount;
-				condVar.waitNoLock();
-				--_workerWaitCount;
+				_waitForTaskAvailableNoLock(unsigned(-1));
 			}
 		}
 	}

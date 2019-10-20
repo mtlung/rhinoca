@@ -50,8 +50,10 @@ public:
 	TaskPool();
 	~TaskPool();
 
+	typedef void (*ThreadFunction)(TaskPool*);
+
 // Operations
-	void init(roSize threadCount);
+	void init(roSize threadCount, ThreadFunction threadFunction= NULL);
 
 	/// You can addChild() and dependsOn() in-between beginAdd() and finishAdd()
 	/// The task will begin to process as soon as possible
@@ -109,18 +111,23 @@ public:
 	/// This function is better than sleep(0)
 	static void yield();
 
+	/// For use in custom thread function
+	void waitForTaskAvailable(unsigned timeoutInMs=unsigned(-1));
+
 // Attributes
 	/// To get the current thread id, which is use for setting affinity
 	static ThreadId threadId();
 
 	roSize taskCount() const { return taskList.count; }
+	roSize threadCount() const { return _threadCount; }
 
 	ThreadId mainThreadId() const { return _mainThreadId; }
+	ThreadFunction threadFunction() const { return _threadFunction; }
 
 protected:
 	class TaskProxy;
 
-	friend void _run(TaskPool*);
+	friend void defaultThreadFunction(TaskPool*);
 	void _doTask(TaskProxy* id, ThreadId threadI);
 
 	void _wait(TaskProxy* id, ThreadId threadId);
@@ -146,6 +153,8 @@ protected:
 
 	bool _hasOutstandingDependency(TaskProxy* p);
 
+	void _waitForTaskAvailableNoLock(unsigned timeoutInMs);
+
 	class TaskList
 	{
 	public:
@@ -162,6 +171,7 @@ protected:
 	};	// TaskList
 
 	TaskList taskList;
+	ThreadFunction _threadFunction;
 
 	bool _keepRun;
 	TaskProxy* _openTasks;			///< Tasks which are not completed yet.
