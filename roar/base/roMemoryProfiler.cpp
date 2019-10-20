@@ -404,10 +404,10 @@ void TicketSystem::_send(TlsStruct* tls, Info& info)
 
 Status MemoryProfiler::init(roUint16 listeningPort)
 {
-	if(!_initCounter.tryInit())
+	if(listeningPort == 0)
 		return roStatus::ok;
 
-	if(listeningPort == 0)
+	if(!_initCounter.tryInit())
 		return roStatus::ok;
 
 #if roMemoryProfilerDebug
