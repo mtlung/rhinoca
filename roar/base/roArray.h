@@ -242,7 +242,7 @@ struct TinyArray : public IArray<T>
 template<class T>
 struct ExtArray : public IArray<T>
 {
-	ExtArray(void* extBuf, roSize extBufBytes)		{ _data = extBuf; _capacity = extBufBytes / sizeof(T); }
+	ExtArray(void* extBuf, roSize extBufBytes)		{ this->_data = extBuf; this->_capacity = extBufBytes / sizeof(T); }
 	~ExtArray()										{ this->clear(); }
 
 // Operations

@@ -432,9 +432,9 @@ const T* IArray<T>::find(const K& key, bool(*equal)(const T&, const K&)) const
 template<class T>
 Array<T>::Array(Array<T>&& rhs)
 {
-	_size = rhs._size;
-	_capacity = rhs._capacity;
-	_data = rhs._data;
+	this->_size = rhs._size;
+	this->_capacity = rhs._capacity;
+	this->_data = rhs._data;
 	rhs._size = 0;
 	rhs._capacity = 0;
 	rhs._data = nullptr;
@@ -444,9 +444,9 @@ template<class T>
 Array<T>& Array<T>::operator=(Array<T>&& rhs)
 {
 	this->~Array();
-	_size = rhs._size;
-	_capacity = rhs._capacity;
-	_data = rhs._data;
+	this->_size = rhs._size;
+	this->_capacity = rhs._capacity;
+	this->_data = rhs._data;
 	rhs._size = 0;
 	rhs._capacity = 0;
 	rhs._data = nullptr;
@@ -473,7 +473,7 @@ Status Array<T>::reserve(roSize newCapacity, bool force)
 		for(roSize i=0; i<this->_size; ++i) {
 			new ((void *)&newPtr[i]) T;
 			roSwap(this->_data[i], newPtr[i]);
-			_data[i].~T();
+			this->_data[i].~T();
 		}
 		roFree(this->_data);
 	}

@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "roLinklist.h"
+#include "roLinkList.h"
 
 namespace ro {
 
@@ -45,7 +45,7 @@ void _LinkList::insertBefore(_ListNode& newNode, const _ListNode& beforeThis)
 {
 	roAssert(!newNode._list);
 	roAssert("Parameter 'beforeThis' should be in this list" &&
-		beforeThis._next == NULL || beforeThis._list == this
+		(beforeThis._next == NULL || beforeThis._list == this)
 	);
 
 	beforeThis._prev->_next = &newNode;

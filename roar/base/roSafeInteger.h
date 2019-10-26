@@ -18,7 +18,7 @@ template<> struct _HigherIntType<roUint32>	{ typedef roUint64 ret;	typedef roInt
 template<typename T> roFORCEINLINE
 roStatus roSafeAdd(T a, T b, T& ret)
 {
-	typedef _HigherIntType<T>::forAddSub Type;
+	typedef typename _HigherIntType<T>::forAddSub Type;
 	Type a_ = a, b_ = b;
 	Type val = a_ + b_;
 	ret = T(val);
@@ -28,7 +28,7 @@ roStatus roSafeAdd(T a, T b, T& ret)
 template<typename T> roFORCEINLINE
 roStatus roSafeSub(T a, T b, T& ret)
 {
-	typedef _HigherIntType<T>::forAddSub Type;
+	typedef typename _HigherIntType<T>::forAddSub Type;
 	Type a_ = a, b_ = b;
 	Type val = a_ - b_;
 	ret = T(val);
@@ -38,7 +38,7 @@ roStatus roSafeSub(T a, T b, T& ret)
 template<typename T> roFORCEINLINE
 roStatus roSafeMul(T a, T b, T& ret)
 {
-	typedef _HigherIntType<T>::ret Type;
+	typedef typename _HigherIntType<T>::ret Type;
 	Type a_ = a, b_ = b;
 	Type val = a_ * b_;
 	ret = T(val);
@@ -226,8 +226,8 @@ bool roIsEqual(T1 t1, T2 t2)
 		return (T1)t1 == (T1)t2;
 	if(t1 < 0 && t2 >= 0) return false;
 	if(t2 < 0 && t1 >= 0) return false;
-	ro::UnsignedCounterPart<T1>::Ret t1_(t1);
-	ro::UnsignedCounterPart<T2>::Ret t2_(t2);
+	typename ro::UnsignedCounterPart<T1>::Ret t1_(t1);
+	typename ro::UnsignedCounterPart<T2>::Ret t2_(t2);
 	return t1_ == t2_;
 }
 
@@ -246,8 +246,8 @@ bool roIsGreater(T1 t1, T2 t2)
 	if(t1 < 0) return false;
 	if(t2 < 0) return true;
 
-	ro::UnsignedCounterPart<T1>::Ret t1_(t1);
-	ro::UnsignedCounterPart<T2>::Ret t2_(t2);
+	typename ro::UnsignedCounterPart<T1>::Ret t1_(t1);
+	typename ro::UnsignedCounterPart<T2>::Ret t2_(t2);
 	return t1_ > t2_;
 }
 
@@ -260,8 +260,8 @@ bool roIsGreaterEqual(T1 t1, T2 t2)
 	if(t1 < 0) return false;
 	if(t2 < 0) return true;
 
-	ro::UnsignedCounterPart<T1>::Ret t1_(t1);
-	ro::UnsignedCounterPart<T2>::Ret t2_(t2);
+	typename ro::UnsignedCounterPart<T1>::Ret t1_(t1);
+	typename ro::UnsignedCounterPart<T2>::Ret t2_(t2);
 	return t1_ >= t2_;
 }
 
