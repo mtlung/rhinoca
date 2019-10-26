@@ -123,6 +123,26 @@ void HttpRequestHeader::removeField(HeaderField::Enum field)
 	removeField(_requestEnumStringMapping[field]);
 }
 
+HttpVersion::Enum HttpRequestHeader::getVersion() const
+{
+	RangedString str;
+	if(!getField(HeaderField::Enum::Version, str))
+		return HttpVersion::Enum::Unknown;
+
+	if(roStrnCmp(str.begin, "1.1", 3) == 0)
+		return HttpVersion::Enum::v1_1;
+	if(roStrnCmp(str.begin, "2.0", 3) == 0)
+		return HttpVersion::Enum::v2_0;
+	if(roStrnCmp(str.begin, "1.0", 3) == 0)
+		return HttpVersion::Enum::v1_0;
+	if(roStrnCmp(str.begin, "2", 1) == 0)
+		return HttpVersion::Enum::v2_0;
+	if(roStrnCmp(str.begin, "1", 1) == 0)
+		return HttpVersion::Enum::v1_0;
+
+	return HttpVersion::Enum::Unknown;
+}
+
 HttpRequestHeader::Method::Enum HttpRequestHeader::getMethod() const
 {
 	for(roSize i=0; i<_methodEnumStringMapping.size(); ++i) {
@@ -194,12 +214,20 @@ bool HttpRequestHeader::getField(HeaderField::Enum field, String& value) const
 bool HttpRequestHeader::getField(HeaderField::Enum field, RangedString& value) const
 {
 	switch(field) {
+	case HeaderField::Connection:
+		return getField("Connection", value);
 	case HeaderField::Host:
 		return getField("Host", value);
 	case HeaderField::Resource:
 		{	Regex regex;
 			regex.match(string.c_str(), "^(GET|POST)\\s+([^\\s]*)", "i");
 			return regex.getValue(2, value);
+		}
+	case HeaderField::Version:
+		if(const char* p = roStrStrCase(string.c_str(), "HTTP/")) {
+			value.begin = roStrChr(p, '/') + 1;
+			value.end = roStrChr(value.begin, "\n\r \t");
+			return true;
 		}
 	}
 
@@ -218,6 +246,13 @@ bool HttpRequestHeader::cmpFieldNoCase(HeaderField::Enum option, const char* val
 
 //////////////////////////////////////////////////////////////////////////
 // HttpResponseHeader
+
+static const StaticArray<char*, 4>  _responseCodeStringMapping = {
+	"100 Continue",
+	"200 OK",
+	"404 Not Found",
+	"500 Internal Server Error",
+};
 
 static const StaticArray<char*, 35>  _responseEnumStringMapping = {
 	"Access-Control-Allow-Origin",
@@ -256,6 +291,33 @@ static const StaticArray<char*, 35>  _responseEnumStringMapping = {
 	"Via",
 	"WWW-Authenticate",
 };
+
+roStatus HttpResponseHeader::make(ResponseCode::Enum responseCode)
+{
+	string.clear();
+	roStatus st = strFormat(string, "HTTP/1.1 {}\r\n", _responseCodeStringMapping[responseCode]);
+	return st;
+}
+
+Status HttpResponseHeader::addField(const char* field, const char* value)
+{
+	return strFormat(string, "{}: {}\r\n", field, value);
+}
+
+Status HttpResponseHeader::addField(HeaderField::Enum field, const char* value)
+{
+	return addField(_responseEnumStringMapping[field], value);
+}
+
+Status HttpResponseHeader::addField(HeaderField::Enum field, roUint64 value)
+{
+	switch(field) {
+	case HeaderField::ContentLength:
+		return strFormat(string, "{}: {}\r\n", "Content-Length", value);
+	}
+
+	return Status::invalid_parameter;
+}
 
 bool HttpResponseHeader::getField(const char* field, String& value) const
 {

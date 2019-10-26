@@ -6,8 +6,20 @@
 #include "../base/roMap.h"
 #include "../base/roRingBuffer.h"
 #include "../base/roString.h"
+#include <functional>
 
 namespace ro {
+
+struct HttpVersion
+{
+	enum Enum {
+		Unknown = 0,
+		v0_9,
+		v1_0,
+		v1_1,
+		v2_0,
+	};
+};
 
 struct HttpRequestHeader
 {
@@ -50,6 +62,7 @@ struct HttpRequestHeader
 		Range,					// Range: bytes=500-999
 		Referer,				// Referer: http://en.wikipedia.org/wiki/Main_Page
 		UserAgent,				// User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/21.0
+		Version,				// HTTP/1.1 206 Partial Content
 		Via						// Via: 1.0 fred, 1.1 example.com (Apache/1.1)
 	}; };
 
@@ -63,7 +76,9 @@ struct HttpRequestHeader
 	void		removeField		(const char* field);
 	void		removeField		(HeaderField::Enum field);
 
-	Method::Enum	getMethod	() const;
+	/// Parse and get information from requestString
+	HttpVersion::Enum	getVersion	() const;
+	Method::Enum		getMethod	() const;
 
 	bool		getField		(const char* option, String& value) const;
 	bool		getField		(const char* option, RangedString& value) const;
@@ -76,6 +91,13 @@ struct HttpRequestHeader
 
 struct HttpResponseHeader
 {
+	struct ResponseCode { enum Enum {
+		Continue,					// 100 - Everything so far is OK, client should continue the request
+		OK,							// 200 - The request has succeeded
+		NotFound,					// 404 - The server can not find requested resource
+		InternalServerError,		// 500 - The server has encountered a situation it doesn't know how to handle
+	}; };
+
 	struct HeaderField { enum Enum {
 		AccessControlAllowOrigin,	// Access-Control-Allow-Origin: *
 		AcceptRanges,				// Accept-Ranges: bytes
@@ -114,13 +136,19 @@ struct HttpResponseHeader
 		WWWAuthenticate,			// WWW-Authenticate: Basic
 	}; };
 
+	/// Functions for composing responseString
+	Status		make			(ResponseCode::Enum responseCode);
+	Status		addField		(const char* field, const char* value);
+	Status		addField		(HeaderField::Enum field, const char* value);
+	Status		addField		(HeaderField::Enum field, roUint64 value);
+
 	/// Parse and get information from responseString
-	bool getField		(const char* option, String& value) const;
-	bool getField		(const char* option, RangedString& value) const;
-	bool getField		(HeaderField::Enum option, String& value) const;
-	bool getField		(HeaderField::Enum option, RangedString& value) const;
-	bool getField		(HeaderField::Enum option, roUint64& value) const;
-	bool getField		(HeaderField::Enum option, roUint64& value1, roUint64& value2, roUint64& value3) const;
+	bool		getField		(const char* option, String& value) const;
+	bool		getField		(const char* option, RangedString& value) const;
+	bool		getField		(HeaderField::Enum option, String& value) const;
+	bool		getField		(HeaderField::Enum option, RangedString& value) const;
+	bool		getField		(HeaderField::Enum option, roUint64& value) const;
+	bool		getField		(HeaderField::Enum option, roUint64& value1, roUint64& value2, roUint64& value3) const;
 
 	bool cmpFieldNoCase	(HeaderField::Enum option, const char* value) const;
 
@@ -163,6 +191,8 @@ struct HttpClient
 	String	proxy;
 };	// HttpClient
 
+struct OStream;
+
 struct HttpServer
 {
 	HttpServer();
@@ -172,21 +202,25 @@ struct HttpServer
 	{
 		Connection();
 
-		Status		update		();
+		roStatus	_processHeader(HttpRequestHeader& header);
 
-		RingBuffer	ringBuf;
-		BsdSocket	socket;
+		bool		keepAlive = false;
+		CoSocket	socket;
 	};	// HttpServer::Connection
 
 	Status	init();
-	Status	update();
-	Status	(*onRequest)(Connection& connection, HttpRequestHeader& request);
+
+	typedef std::function<roStatus(Connection & connection, HttpRequestHeader & request)> OnRequest;
+	roStatus	start(const OnRequest&& onRequest);
+
+	unsigned outStandingAcceptor = 8;
+	float keepAliveTimeout = 15;
 
 	LinkList<Connection> activeConnections;
 	LinkList<Connection> pooledConnections;
 
 // Private
-	BsdSocket	_socketListen;
+	CoSocket	_socketListen;
 };	// HttpServer
 
 }   // namespace ro

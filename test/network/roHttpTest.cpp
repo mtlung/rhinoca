@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "../../roar/network/roHttp.h"
+#include "../../roar/base/roCoRoutine.h"
+#include "../../roar/base/roLog.h"
 
 using namespace ro;
 
@@ -92,6 +94,46 @@ TEST_FIXTURE(HttpTest, server)
 		CHECK(server.update());
 		CHECK(request.update());
 	}*/
+
+	// To use ApacheBench for benchmarking:
+	// apt-get install apache2-utils
+	// ab -n 1000 -c 20 http://example.com/
+
+	auto runOne = [&]() {
+		while (true) {
+			server.start([](HttpServer::Connection& connection, HttpRequestHeader& request) -> roStatus
+			{
+				HttpRequestHeader::Method::Enum method = request.getMethod();
+				if (method == HttpRequestHeader::Method::Get) {
+					RangedString resourceName;
+					request.getField(HttpRequestHeader::HeaderField::Resource, resourceName);
+					roLog("info", "Requesting http resource: %s\n", resourceName.toString().c_str());
+
+					HttpResponseHeader response;
+					response.make(HttpResponseHeader::ResponseCode::OK);
+					response.addField(HttpResponseHeader::HeaderField::Server, "Roar");
+					response.addField(HttpResponseHeader::HeaderField::ContentType, "text/html; charset=utf-8");
+					response.addField(HttpResponseHeader::HeaderField::Connection, connection.keepAlive ? "keep-alive" : "close");
+					response.addField(HttpResponseHeader::HeaderField::ContentLength, 6);
+
+					response.string += "\r\n";
+
+					roSize len = response.string.size();
+					connection.socket.send(response.string.c_str(), len);
+					len = 6;
+					connection.socket.send("Hello!", len);
+				}
+				else
+					return Status::not_implemented;
+
+				return Status::ok;
+			});
+		}
+	};
+
+	for(unsigned i=40; i--;)
+		coRun(runOne, "HTTP server single connection loop", 1024 * 1024);
+	runOne();
 }
 
 #include "../../roar/base/roIOStream.h"
