@@ -381,10 +381,10 @@ roStatus BsdSocket::create(SocketType type)
 		return lastError = -1, errorToStatus(lastError);
 
 	switch (type) {
-	case TCP:	_setFd(::socket(AF_INET, SOCK_STREAM, 0));	break;
+	case TCP:	_setFd(::socket(AF_INET,  SOCK_STREAM, 0));	break;
 	case TCP6:	_setFd(::socket(AF_INET6, SOCK_STREAM, 0));	break;
-	case UDP:	_setFd(::socket(AF_INET, SOCK_DGRAM, 0));	break;
-	case UDP6:	_setFd(::socket(AF_INET6, SOCK_DGRAM, 0));	break;
+	case UDP:	_setFd(::socket(AF_INET,  SOCK_DGRAM,  0));	break;
+	case UDP6:	_setFd(::socket(AF_INET6, SOCK_DGRAM,  0));	break;
 	default: return getLastError(), errorToStatus(lastError);
 	}
 
@@ -479,6 +479,7 @@ roStatus BsdSocket::accept(BsdSocket& socket) const
 
 	socket.close();
 	socket._setFd(s);
+	socket._socketType = _socketType;
 	return lastError = OK, roStatus::ok;
 }
 
@@ -733,7 +734,6 @@ static DefaultAllocator _allocator;
 
 roStatus CoSocket::create(SocketType type)
 {
-	_onHeap.takeOver(_allocator.newObj<OnHeap>());
 	roStatus st = Super::create(type);
 	if(!st) return st;
 	return setBlocking(true);
@@ -748,34 +748,22 @@ roStatus CoSocket::setBlocking(bool block)
 roStatus CoSocket::accept(CoSocket& socket) const
 {
 	socket.close();
+	roAssert(!socket._readEntry.isInList());
 
 	roStatus st = Super::accept(socket);
-	socket._onHeap.takeOver(_allocator.newObj<OnHeap>());
-
 	if(!_isCoBlockingMode)
 		return st;
-
-	Coroutine* coroutine = Coroutine::current();
-	CoSocketManager* socketMgr = _currentCoSocketManager;
-
-	if(!coroutine || !socketMgr)
-		return st;
-
-	while(st == roStatus::net_nobufs) {
-		coroutine->yield();
-		st = Super::accept(socket);
-	}
 
 	if(!inProgress(st))
 		return st;
 
-	Entry& readEntry = _onHeap->_readEntry;
-
-	// We pipe operation one by one
-	while(readEntry.isInList())
-		coroutine->yield();
+	Coroutine* coroutine = Coroutine::current();
+	CoSocketManager* socketMgr = _currentCoSocketManager;
+	if(!coroutine || !socketMgr)
+		return st;
 
 	// Prepare for hand over to socket manager
+	Entry& readEntry = socket._readEntry;	// NOTE: we borrow readEntry from argument's socket not 'this'
 	readEntry.operation = Accept;
 	readEntry.fd = fd();
 	readEntry.coro = coroutine;
@@ -784,8 +772,18 @@ roStatus CoSocket::accept(CoSocket& socket) const
 	roAssert(readEntry.getList() == &socketMgr->socketList);
 	readEntry.removeThis();
 
-	st = Super::accept(socket);
-	roAssert(!inProgress(st));
+	do {
+		socketMgr->process(readEntry);
+		roAssert(readEntry.getList() == &socketMgr->socketList);
+		readEntry.removeThis();
+
+		st = Super::accept(socket);
+
+		if (st == roStatus::net_nobufs) {
+			roLog("warn", "net_nobufs encountered\n");
+			continue;
+		}
+	} while (inProgress(st) || st == roStatus::net_nobufs);
 
 	return st;
 }
@@ -820,14 +818,13 @@ roStatus CoSocket::connect(const SockAddr& endPoint, float timeout)
 			return st;
 
 		// Prepare for hand over to socket manager
-		Entry& readEntry = _onHeap->_readEntry;
-		readEntry.operation = Connect;
-		readEntry.fd = fd();
-		readEntry.coro = coroutine;
+		_readEntry.operation = Connect;
+		_readEntry.fd = fd();
+		_readEntry.coro = coroutine;
 
-		socketMgr->process(readEntry);
-		roAssert(readEntry.getList() == &socketMgr->socketList);
-		readEntry.removeThis();
+		socketMgr->process(_readEntry);
+		roAssert(_readEntry.getList() == &socketMgr->socketList);
+		_readEntry.removeThis();
 
 		// Check for connection error
 		socklen_t resultLen = sizeof(ret);
@@ -842,37 +839,35 @@ roStatus CoSocket::send(const void* data, roSize& len, int flags)
 	if(!_isCoBlockingMode)
 		return Super::send(data, len, flags);
 
+	// We pipe operation one by one
+	Coroutine* coroutine = Coroutine::current();
+	while(_writeEntry.isInList())
+		coroutine->yield();
+
 	roSize remain = len;
 	roSize sent = 0;
 	const char* p = (const char*)data;
 
-	Coroutine* coroutine = Coroutine::current();
-	CoSocketManager* socketMgr = _currentCoSocketManager;
-
 	static const roSize maxChunkSize = 1024 * 1024;
+	CoSocketManager* socketMgr = _currentCoSocketManager;
 
 	roStatus st;
 	while(remain > 0) {
 		roSize toSend = roMinOf2(remain, maxChunkSize);
+
 		st = Super::send(data, toSend, flags);
 
 		if(!st) {
 			if(!inProgress(st))
-				return st;
-
-			Entry& writeEntry = _onHeap->_writeEntry;
-			// We pipe operation one by one
-			while(writeEntry.isInList())
-				coroutine->yield();
+				break;
 
 			// Prepare for hand over to socket manager
-			writeEntry.operation = Send;
-			writeEntry.fd = fd();
-			writeEntry.coro = coroutine;
+			_writeEntry.operation = Send;
+			_writeEntry.fd = fd();
+			_writeEntry.coro = coroutine;
 
-			socketMgr->process(writeEntry);
-			roAssert(writeEntry.getList() == &socketMgr->socketList);
-			writeEntry.removeThis();
+			socketMgr->process(_writeEntry);
+			roAssert(_writeEntry.getList() == &socketMgr->socketList);
 		}
 		// In case winsock never return EINPROGRESS, we divide any huge data into smaller chunk,
 		// other wise even simple memory copy will still make the function block for a long time.
@@ -884,11 +879,18 @@ roStatus CoSocket::send(const void* data, roSize& len, int flags)
 		p += toSend;
 	}
 
+	_writeEntry.removeThis();
+	len = num_cast<int>(sent);
 	return st;
 }
 
 roStatus CoSocket::receive(void* buf, roSize& len, int flags)
 {
+	// We pipe operation one by one
+	Coroutine* coroutine = Coroutine::current();
+	while(_readEntry.isInList())
+		coroutine->yield();
+
 	roSize inLen = len;
 	roStatus st = Super::receive(buf, len, flags);
 
@@ -901,28 +903,19 @@ roStatus CoSocket::receive(void* buf, roSize& len, int flags)
 	// No data is ready for read, set back len
 	len = inLen;
 
-	Coroutine* coroutine = Coroutine::current();
-	CoSocketManager* socketMgr = _currentCoSocketManager;
-
-	Entry& readEntry = _onHeap->_readEntry;
-
-	// We pipe operation one by one
-	while(readEntry.isInList())
-		coroutine->yield();
-
 	// Prepare for hand over to socket manager
-	readEntry.operation = Receive;
-	readEntry.fd = fd();
-	readEntry.coro = coroutine;
+	_readEntry.operation = Receive;
+	_readEntry.fd = fd();
+	_readEntry.coro = coroutine;
 
-	socketMgr->process(readEntry);
-	roAssert(readEntry.getList() == &socketMgr->socketList);
-	readEntry.removeThis();
+	CoSocketManager* socketMgr = _currentCoSocketManager;
+	socketMgr->process(_readEntry);
+	roAssert(_readEntry.getList() == &socketMgr->socketList);
+	_readEntry.removeThis();
 
 	// Data is now ready for read
 	st = Super::receive(buf, len, flags);
-
-	// Note: Can be inProgress if the coroutine is resumed externally
+	roAssert(!inProgress(st));
 	return st;
 }
 
@@ -939,24 +932,21 @@ roStatus CoSocket::sendTo(const void* data, roSize len, const SockAddr& destEndP
 	Coroutine* coroutine = Coroutine::current();
 	CoSocketManager* socketMgr = _currentCoSocketManager;
 
-	Entry& writeEntry = _onHeap->_writeEntry;
-
 	// We pipe operation one by one
-	while(writeEntry.isInList())
+	while(_writeEntry.isInList())
 		coroutine->yield();
 
 	// Prepare for hand over to socket manager
-	writeEntry.operation = Send;
-	writeEntry.fd = fd();
-	writeEntry.coro = coroutine;
+	_writeEntry.operation = Send;
+	_writeEntry.fd = fd();
+	_writeEntry.coro = coroutine;
 
-	socketMgr->process(writeEntry);
-	roAssert(writeEntry.getList() == &socketMgr->socketList);
-	writeEntry.removeThis();
+	socketMgr->process(_writeEntry);
+	roAssert(_writeEntry.getList() == &socketMgr->socketList);
+	_writeEntry.removeThis();
 
 	// Data is now ready to send
 	st = Super::sendTo(data, len, destEndPoint, flags);
-
 	roAssert(!inProgress(st));
 	return st;
 }
@@ -1019,16 +1009,14 @@ roStatus CoSocket::receiveFrom(void* buf, roSize& len, SockAddr& srcEndPoint, fl
 	if(!coroutine || !socketMgr)
 		return st;
 
-	Entry& readEntry = _onHeap->_readEntry;
-
 	// We pipe operation one by one
-	while(readEntry.isInList())
+	while(_readEntry.isInList())
 		coroutine->yield();
 
 	// Prepare for hand over to socket manager
-	readEntry.operation = Receive;
-	readEntry.fd = fd();
-	readEntry.coro = coroutine;
+	_readEntry.operation = Receive;
+	_readEntry.fd = fd();
+	_readEntry.coro = coroutine;
 
 	AutoPtr<TimeoutTracker> timeoutTracker;
 
@@ -1037,9 +1025,9 @@ roStatus CoSocket::receiveFrom(void* buf, roSize& len, SockAddr& srcEndPoint, fl
 		coroutine->scheduler->add(*timeoutTracker);
 	}
 
-	socketMgr->process(readEntry);
-	roAssert(readEntry.getList() == &socketMgr->socketList);
-	readEntry.removeThis();
+	socketMgr->process(_readEntry);
+	roAssert(_readEntry.getList() == &socketMgr->socketList);
+	_readEntry.removeThis();
 
 	if(timeoutTracker.ptr()) {
 		if(timeoutTracker->isTimedOut())
@@ -1059,6 +1047,9 @@ roStatus CoSocket::receiveFrom(void* buf, roSize& len, SockAddr& srcEndPoint, fl
 
 roStatus CoSocket::close()
 {
+	if (fd() == INVALID_SOCKET)
+		return roStatus::ok;
+
 	setBlocking(true);
 
 	shutDownWrite();
@@ -1070,6 +1061,9 @@ roStatus CoSocket::close()
 	}
 
 	shutDownRead();
+
+	roAssert(!_readEntry.isInList());
+	roAssert(!_writeEntry.isInList());
 	return Super::close();
 }
 
@@ -1102,6 +1096,7 @@ CoSocketManager::~CoSocketManager()
 
 void CoSocketManager::process(CoSocket::Entry& entry)
 {
+	roAssert(entry.fd != INVALID_SOCKET);
 	socketList.pushBack(entry);
 	resume();
 	roAssert(entry.coro);

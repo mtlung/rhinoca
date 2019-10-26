@@ -212,7 +212,6 @@ struct CoSocket : public BsdSocket
 	roStatus	sendTo			(const void* data, roSize len, const SockAddr& destEndPoint, int flags=0);
 	roStatus	receiveFrom		(void* buf, roSize& len, SockAddr& srcEndPoint, float timeout=0.f, int flags=0);
 
-	void		requestClose	();
 	roStatus	close			();
 
 	bool		isBlockingMode	() const;
@@ -224,7 +223,6 @@ struct CoSocket : public BsdSocket
 		Send,
 		Receive
 	};
-	struct OperationEntry { Operation operation; Coroutine* coro; };
 
 	struct Entry : public ListNode<Entry>
 	{
@@ -233,17 +231,9 @@ struct CoSocket : public BsdSocket
 		Coroutine*	coro;
 	};
 
-	// Due to how we allocate stack in Coroutine, we try to avoid CoSocketManager taking
-	// pointer to CoSocket.
-	struct OnHeap
-	{
-		Entry _readEntry;
-		Entry _writeEntry;
-	};
-
-	bool					_isCoBlockingMode;
-	OperationEntry			_operation;
-	mutable AutoPtr<OnHeap>	_onHeap;
+	bool			_isCoBlockingMode;
+	mutable Entry	_readEntry;
+	mutable Entry	_writeEntry;
 };	// CoSocket
 
 }	// namespace ro
