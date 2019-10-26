@@ -16,7 +16,7 @@ namespace ro {
 
 struct CoSleepManager;
 
-__declspec(thread) static CoSleepManager* _currentCoSleepManager = NULL;
+thread_local CoSleepManager* _currentCoSleepManager = NULL;
 
 struct CoSleepManager : public BgCoroutine
 {
@@ -107,6 +107,15 @@ BgCoroutine* createSleepManager()
 	return mgr;
 }
 
+roStatus coRun(const std::function<void()>& func, const char* debugName, size_t stackSize)
+{
+	CoroutineScheduler* scheduler = CoroutineScheduler::perThreadScheduler();
+	if(!scheduler)
+		return roStatus::pointer_is_null;
+
+	return scheduler->add(func, debugName, stackSize);
+}
+
 void coSleep(float seconds)
 {
 	Coroutine* coroutine = Coroutine::current();
@@ -132,7 +141,7 @@ void coYield()
 //////////////////////////////////////////////////////////////////////////
 // CoroutineScheduler
 
-__declspec(thread) static Coroutine* _currentCoroutine = NULL;
+thread_local Coroutine* _currentCoroutine = NULL;
 
 static void coroutineFunc(void* userData)
 {
@@ -164,7 +173,7 @@ static void coroutineFunc(void* userData)
 	coro_transfer(contextToTransfer, &scheduler->context);
 }
 
-__declspec(thread) CoroutineScheduler* tlsInstance = NULL;
+thread_local CoroutineScheduler* tlsInstance = NULL;
 
 CoroutineScheduler::CoroutineScheduler()
 	: current(NULL)
@@ -181,7 +190,7 @@ CoroutineScheduler::~CoroutineScheduler()
 
 extern BgCoroutine* createSocketManager();
 
-__declspec(thread) static AtomicInteger _CoroutineSchedulerInitCount = 0;
+thread_local AtomicInteger _CoroutineSchedulerInitCount = 0;
 
 roStatus CoroutineScheduler::init(roSize stackSize)
 {
@@ -203,6 +212,23 @@ roStatus CoroutineScheduler::init(roSize stackSize)
 void CoroutineScheduler::add(Coroutine& coroutine)
 {
 	_resumeList.pushBack(coroutine);
+}
+
+roStatus CoroutineScheduler::add(const std::function<void()>& func, const char* debugName, size_t stackSize)
+{
+	struct FunctorCoroutine : public Coroutine, private NonCopyable
+	{
+		virtual void run() override { f(); delete this; }
+		std::function<void()> f;
+	};
+
+	FunctorCoroutine* c = new FunctorCoroutine;
+	roStatus st = c->initStack(stackSize); if(!st) return st;
+	c->f = func;
+	c->debugName = debugName;
+	add(*c);
+
+	return st;
 }
 
 void CoroutineScheduler::addSuspended(Coroutine& coroutine)
@@ -425,12 +451,12 @@ CoroutineScheduler* CoroutineScheduler::perThreadScheduler()
 // Coroutine
 
 Coroutine::Coroutine()
-	: scheduler(NULL)
-	, _isInRun(false)
+	: _isInRun(false)
 	, _isActive(false)
 	, _retValueForSuspend(NULL)
 	, _suspenderId(NULL)
 	, _runningThreadId(0)
+	, scheduler(NULL)
 {
 	coro_create(&_context, NULL, NULL, NULL, 0);
 }
@@ -607,9 +633,11 @@ a: mov DWORD PTR [esp],ecx
 }}
 
 #else
+#include <setjmp.h>
+
 int roSetJmp(jmp_buf buf)
 {
-	return setJmp(buf);
+	return setjmp(buf);
 }
 
 void roLongJmp(jmp_buf buf, int val)

@@ -7,6 +7,7 @@
 #include "roString.h"
 #include "roTaskPool.h"
 #include "roCoroutine.inl"
+#include <functional>
 
 namespace ro {
 
@@ -73,6 +74,7 @@ struct CoroutineScheduler
 
 	roStatus	init				(roSize statckSize = 2 * 1024 * 1024);
 	void		add					(Coroutine& coroutine);
+	roStatus	add					(const std::function<void()>& func, const char* debugName="unamed std::function", size_t stackSize = 2 * 1024 * 1024);
 	void		addSuspended		(Coroutine& coroutine);
 	roStatus	update				(unsigned timeSliceMilliSeconds=0, roUint64* nextUpdateTime=nullptr);
 	void		runTillAllFinish	(float maxFps=60.f);
@@ -110,6 +112,7 @@ struct CoroutineScheduler
 	BgCoroutine*		_sleepManager;
 };	// CoroutineScheduler
 
+roStatus coRun(const std::function<void()>& func, const char* debugName = "unamed std::function", size_t stackSize = 2 * 1024 * 1024);
 void coSleep(float seconds);
 void coYield();
 
