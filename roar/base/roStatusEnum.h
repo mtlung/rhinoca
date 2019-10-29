@@ -25,6 +25,7 @@ roStatusEnum( timed_out )
 roStatusEnum( data_corrupted )
 roStatusEnum( end_of_data )
 roStatusEnum( not_enough_data )
+roStatusEnum( not_enough_buffer )
 roStatusEnum( in_progress )
 roStatusEnum( can_read_only )
 roStatusEnum( type_mismatch )
@@ -87,6 +88,8 @@ roStatusEnum( http_bad_header )
 roStatusEnum( http_unknow_size )
 roStatusEnum( http_404_not_found )
 roStatusEnum( http_max_redirect_reached )
+roStatusEnum( http_invalid_websocket_key )
+roStatusEnum( http_unmasked_websocket_frame )	// Web socket frame from client must be masked. https://tools.ietf.org/html/rfc6455#section-5.1
 
 // SSL
 roStatusEnum( ssl_error )

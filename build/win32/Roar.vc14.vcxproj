@@ -217,6 +217,7 @@
     <ClInclude Include="..\..\roar\base\roRingBuffer.h" />
     <ClInclude Include="..\..\roar\base\roSafeInteger.h" />
     <ClInclude Include="..\..\roar\base\roSerializer.h" />
+    <ClInclude Include="..\..\roar\base\roSha1.h" />
     <ClInclude Include="..\..\roar\base\roSharedPtr.h" />
     <ClInclude Include="..\..\roar\base\roStackWalker.h" />
     <ClInclude Include="..\..\roar\base\roStatus.h" />
@@ -309,6 +310,7 @@
     <ClCompile Include="..\..\roar\base\roRegex.cpp" />
     <ClCompile Include="..\..\roar\base\roResource.cpp" />
     <ClCompile Include="..\..\roar\base\roSerializer.cpp" />
+    <ClCompile Include="..\..\roar\base\roSha1.cpp" />
     <ClCompile Include="..\..\roar\base\roStackWalker.cpp" />
     <ClCompile Include="..\..\roar\base\roStatus.cpp" />
     <ClCompile Include="..\..\roar\base\roStopWatch.cpp" />

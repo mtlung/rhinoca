@@ -4,21 +4,18 @@
 #include "roSocket.h"
 #include "../base/roLinkList.h"
 #include "../base/roMap.h"
-#include "../base/roRingBuffer.h"
 #include "../base/roString.h"
 #include <functional>
 
 namespace ro {
 
-struct HttpVersion
+enum class HttpVersion
 {
-	enum Enum {
-		Unknown = 0,
-		v0_9,
-		v1_0,
-		v1_1,
-		v2_0,
-	};
+	Unknown = 0,
+	v0_9,
+	v1_0,
+	v1_1,
+	v2_0,
 };
 
 struct HttpRequestHeader
@@ -61,6 +58,9 @@ struct HttpRequestHeader
 		ProxyAuthorization,		// Proxy-Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
 		Range,					// Range: bytes=500-999
 		Referer,				// Referer: http://en.wikipedia.org/wiki/Main_Page
+		SecWebSocketVersion,	// Sec-WebSocket-Version: 13
+		SecWebSocketkey,		// Sec-WebSocket-Key: q4xkcO32u266gldTuKaSOw==
+		Upgrade,				// Upgrade: websocket
 		UserAgent,				// User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/21.0
 		Version,				// HTTP/1.1 206 Partial Content
 		Via						// Via: 1.0 fred, 1.1 example.com (Apache/1.1)
@@ -77,8 +77,8 @@ struct HttpRequestHeader
 	void		removeField		(HeaderField::Enum field);
 
 	/// Parse and get information from requestString
-	HttpVersion::Enum	getVersion	() const;
-	Method::Enum		getMethod	() const;
+	HttpVersion		getVersion	() const;
+	Method::Enum	getMethod	() const;
 
 	bool		getField		(const char* option, String& value) const;
 	bool		getField		(const char* option, RangedString& value) const;
@@ -93,6 +93,7 @@ struct HttpResponseHeader
 {
 	struct ResponseCode { enum Enum {
 		Continue,					// 100 - Everything so far is OK, client should continue the request
+		SwitchingProtocol,			// 101 - Response to an Upgrade
 		OK,							// 200 - The request has succeeded
 		NotFound,					// 404 - The server can not find requested resource
 		InternalServerError,		// 500 - The server has encountered a situation it doesn't know how to handle
@@ -124,12 +125,14 @@ struct HttpResponseHeader
 		ProxyAuthenticate,			// Proxy-Authenticate: Basic
 		Refresh,					// Refresh: 5; url=http://www.w3.org/pub/WWW/People.html
 		RetryAfter,					// Example 1: Retry-After: 120, Example 2: Retry-After: Fri, 04 Nov 2014 23:59:59 GMT
+		SecWebSocketAccept,			// Sec-WebSocket-Accept: fA9dggdnMPU79lJgAE3W4TRnyDM=
 		Server,						// Server: Apache/2.4.1 (Unix)
 		SetCookie,					// Set-Cookie: UserID=JohnDoe; Max-Age=3600; Version=1
 		Status,						// Status: 200 OK
 		StrictTransportSecurity,	// Strict-Transport-Security: max-age=16070400; includeSubDomains
 		Trailer,					// Trailer: Max-Forwards
 		TransferEncoding,			// Transfer-Encoding: chunked
+		Upgrade,					// Upgrade: websocket
 		Vary,						// Vary: *
 		Version,					// HTTP/1.1 206 Partial Content
 		Via,						// Via: 1.0 fred, 1.1 example.com (Apache/1.1)
@@ -210,11 +213,48 @@ struct HttpServer
 
 	Status	init();
 
-	typedef std::function<roStatus(Connection & connection, HttpRequestHeader & request)> OnRequest;
-	roStatus	start(const OnRequest&& onRequest);
+	typedef std::function<roStatus(Connection& connection, HttpRequestHeader& request)> OnRequest;
+	roStatus	start();
 
-	unsigned outStandingAcceptor = 8;
+	/// Settings
+	roUint16 port = 80;
+	unsigned backlog = 256;	// The backlog pass to CoSocket::listen
 	float keepAliveTimeout = 15;
+
+	/// Callbacks
+	OnRequest onRequest;
+	OnRequest onWebScoketRequest;
+
+	/// Web socket helper functions
+	roStatus webSocketResponse(Connection& connection, HttpRequestHeader& request);	// To be called in onWebScoketRequest()
+
+	struct WebsocketFrame
+	{
+		// Reference:
+		// https://sookocheff.com/post/networking/how-do-websockets-work
+		enum class Opcode {
+			Continue	= 0x00,	// This frame continues the payload from the previous frame
+			Text		= 0x01,	// Denotes a text frame, UTF-8 encoded
+			Binary		= 0x02,	// Denotes a binary frame. Binary frames are delivered unchanged
+			Close		= 0x08,	// Denotes the client wishes to close the connection
+			Ping		= 0x09,	// A ping frame. Serves as a heartbeat mechanism ensuring the connection is still alive. The receiver must respond with a pong frame
+			Pong		= 0x0a,	// A pong frame. Serves as a heartbeat mechanism ensuring the connection is still alive. The receiver must respond with a ping frame
+		};
+
+		roStatus read(void* buf, roSize& len);
+
+		bool	isLastFrame;
+		Opcode	opcode;
+		roSize	getReamin() const { return _remain; }
+
+	// Private
+		roUint8	_mask[4];
+		roSize	_maskIdx = 0;
+		roSize	_remain = 0;
+		Connection* _connection = NULL;
+	};
+	roStatus readWebSocketFrame(Connection& connection, WebsocketFrame& is);
+	roStatus writeWebSocketFrame(Connection& connection, WebsocketFrame::Opcode opcode, const void* data, roSize size, bool isLastFrame=true);
 
 	LinkList<Connection> activeConnections;
 	LinkList<Connection> pooledConnections;

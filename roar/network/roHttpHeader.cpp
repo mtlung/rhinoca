@@ -8,7 +8,7 @@ namespace ro {
 //////////////////////////////////////////////////////////////////////////
 // HttpRequestHeader
 
-static const StaticArray<char*, 25>  _requestEnumStringMapping = {
+static const StaticArray<const char*, 30>  _requestEnumStringMapping = {
 	"Accept",
 	"Accept-Charset",
 	"Accept-Encoding",
@@ -26,17 +26,22 @@ static const StaticArray<char*, 25>  _requestEnumStringMapping = {
 	"From",
 	"Host",
 	"Max-Forwards",
+	"",	// Method
 	"Origin",
 	"Resource",
 	"Pragma",
 	"Proxy-Authorization",
 	"Range",
 	"Referer",
+	"Sec-WebSocket-Version",
+	"Sec-WebSocket-key",
+	"Upgrade",
 	"User-Agent",
+	"",	// Version
 	"Via",
 };
 
-static const StaticArray<char*, 9>  _methodEnumStringMapping = {
+static const StaticArray<const char*, 9>  _methodEnumStringMapping = {
 	"GET",
 	"HEAD" ,
 	"POST",
@@ -123,24 +128,24 @@ void HttpRequestHeader::removeField(HeaderField::Enum field)
 	removeField(_requestEnumStringMapping[field]);
 }
 
-HttpVersion::Enum HttpRequestHeader::getVersion() const
+HttpVersion HttpRequestHeader::getVersion() const
 {
 	RangedString str;
 	if(!getField(HeaderField::Enum::Version, str))
-		return HttpVersion::Enum::Unknown;
+		return HttpVersion::Unknown;
 
 	if(roStrnCmp(str.begin, "1.1", 3) == 0)
-		return HttpVersion::Enum::v1_1;
+		return HttpVersion::v1_1;
 	if(roStrnCmp(str.begin, "2.0", 3) == 0)
-		return HttpVersion::Enum::v2_0;
+		return HttpVersion::v2_0;
 	if(roStrnCmp(str.begin, "1.0", 3) == 0)
-		return HttpVersion::Enum::v1_0;
+		return HttpVersion::v1_0;
 	if(roStrnCmp(str.begin, "2", 1) == 0)
-		return HttpVersion::Enum::v2_0;
+		return HttpVersion::v2_0;
 	if(roStrnCmp(str.begin, "1", 1) == 0)
-		return HttpVersion::Enum::v1_0;
+		return HttpVersion::v1_0;
 
-	return HttpVersion::Enum::Unknown;
+	return HttpVersion::Unknown;
 }
 
 HttpRequestHeader::Method::Enum HttpRequestHeader::getMethod() const
@@ -214,10 +219,6 @@ bool HttpRequestHeader::getField(HeaderField::Enum field, String& value) const
 bool HttpRequestHeader::getField(HeaderField::Enum field, RangedString& value) const
 {
 	switch(field) {
-	case HeaderField::Connection:
-		return getField("Connection", value);
-	case HeaderField::Host:
-		return getField("Host", value);
 	case HeaderField::Resource:
 		{	Regex regex;
 			regex.match(string.c_str(), "^(GET|POST)\\s+([^\\s]*)", "i");
@@ -229,6 +230,8 @@ bool HttpRequestHeader::getField(HeaderField::Enum field, RangedString& value) c
 			value.end = roStrChr(value.begin, "\n\r \t");
 			return true;
 		}
+	default:
+		return getField(_requestEnumStringMapping[field], value);
 	}
 
 	return false;
@@ -247,14 +250,15 @@ bool HttpRequestHeader::cmpFieldNoCase(HeaderField::Enum option, const char* val
 //////////////////////////////////////////////////////////////////////////
 // HttpResponseHeader
 
-static const StaticArray<char*, 4>  _responseCodeStringMapping = {
+static const StaticArray<const char*, 5>  _responseCodeStringMapping = {
 	"100 Continue",
+	"101 Switching Protocols",
 	"200 OK",
 	"404 Not Found",
 	"500 Internal Server Error",
 };
 
-static const StaticArray<char*, 35>  _responseEnumStringMapping = {
+static const StaticArray<const char*, 37>  _responseEnumStringMapping = {
 	"Access-Control-Allow-Origin",
 	"Accept-Ranges",
 	"Age",
@@ -280,12 +284,14 @@ static const StaticArray<char*, 35>  _responseEnumStringMapping = {
 	"Proxy-Authenticate",
 	"Refresh",
 	"Retry-After",
+	"Sec-WebSocket-Accept",
 	"Server",
 	"Set-Cookie",
 	"Status",
 	"Strict-Transport-Security",
 	"Trailer",
 	"Transfer-Encoding",
+	"Upgrade",
 	"Vary",
 	"Version",
 	"Via",
@@ -352,9 +358,11 @@ bool HttpResponseHeader::getField(HeaderField::Enum field, RangedString& value) 
 			regex.match(string.c_str(), "^HTTP/([\\d\\.]+)", "i");
 			return regex.getValue(1, value);
 		}
+	default:
+		return getField(_responseEnumStringMapping[field], value);
 	}
 
-	return getField(_responseEnumStringMapping[field], value);
+	return false;
 }
 
 bool HttpResponseHeader::getField(HeaderField::Enum field, roUint64& value) const

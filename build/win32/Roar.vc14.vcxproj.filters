@@ -236,6 +236,9 @@
     <ClCompile Include="..\..\roar\input\roInputDriver.windows.cpp">
       <Filter>input</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\roar\base\roSha1.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\roar\pch.h" />
@@ -548,6 +551,9 @@
     </ClInclude>
     <ClInclude Include="..\..\roar\input\roInputDriver.h">
       <Filter>input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\roar\base\roSha1.h">
+      <Filter>base</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

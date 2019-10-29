@@ -81,6 +81,7 @@ TEST_FIXTURE(HttpTest, responseHeader)
 TEST_FIXTURE(HttpTest, server)
 {
 	HttpServer server;
+	server.backlog = 512;
 	CHECK(server.init());
 
 /*	HttpClient client;
@@ -95,44 +96,75 @@ TEST_FIXTURE(HttpTest, server)
 		CHECK(request.update());
 	}*/
 
+	server.onRequest = [&](HttpServer::Connection& connection, HttpRequestHeader& request)->roStatus
+	{
+		HttpRequestHeader::Method::Enum method = request.getMethod();
+		if (method == HttpRequestHeader::Method::Get) {
+			RangedString resourceName;
+			request.getField(HttpRequestHeader::HeaderField::Resource, resourceName);
+			roLog("info", "Requesting http resource: %s\n", resourceName.toString().c_str());
+
+			HttpResponseHeader response;
+			response.make(HttpResponseHeader::ResponseCode::OK);
+			response.addField(HttpResponseHeader::HeaderField::Server, "Roar");
+			response.addField(HttpResponseHeader::HeaderField::ContentType, "text/html; charset=utf-8");
+			response.addField(HttpResponseHeader::HeaderField::Connection, connection.keepAlive ? "keep-alive" : "close");
+			response.addField(HttpResponseHeader::HeaderField::ContentLength, 6);
+
+			response.string += "\r\n";
+
+			roSize len = response.string.size();
+			connection.socket.send(response.string.c_str(), len);
+			len = 6;
+			connection.socket.send("Hello!", len);
+		}
+		else
+			return Status::not_implemented;
+
+		return Status::ok;
+	};
+
+	// A simple server echo and broadcasting text message to all connected web socket
+	LinkList<HttpServer::Connection> webSocketList;
+	server.onWebScoketRequest = [&](HttpServer::Connection& connection, HttpRequestHeader& request) -> roStatus
+	{
+		roStatus st;
+		st = server.webSocketResponse(connection, request);
+		if (!st) return st;
+
+		connection.removeThis();
+		webSocketList.pushBack(connection);
+
+		while (st) {
+			HttpServer::WebsocketFrame frame;
+			st = server.readWebSocketFrame(connection, frame);
+			if (!st) break;
+
+			String s;
+			roSize read = frame.getReamin();
+			s.resize(read);
+			st = frame.read(s.c_str(), read);
+			if (!st) break;
+
+			for (auto&& i = webSocketList.begin(); i != webSocketList.end(); i = i->next()) {
+				st = server.writeWebSocketFrame(*i, HttpServer::WebsocketFrame::Opcode::Text, s.c_str(), s.size());
+				if (!st) return st;
+			}
+		}
+		return st;
+	};
+
 	// To use ApacheBench for benchmarking:
 	// apt-get install apache2-utils
 	// ab -n 1000 -c 20 http://example.com/
 
 	auto runOne = [&]() {
-		while (true) {
-			server.start([](HttpServer::Connection& connection, HttpRequestHeader& request) -> roStatus
-			{
-				HttpRequestHeader::Method::Enum method = request.getMethod();
-				if (method == HttpRequestHeader::Method::Get) {
-					RangedString resourceName;
-					request.getField(HttpRequestHeader::HeaderField::Resource, resourceName);
-					roLog("info", "Requesting http resource: %s\n", resourceName.toString().c_str());
-
-					HttpResponseHeader response;
-					response.make(HttpResponseHeader::ResponseCode::OK);
-					response.addField(HttpResponseHeader::HeaderField::Server, "Roar");
-					response.addField(HttpResponseHeader::HeaderField::ContentType, "text/html; charset=utf-8");
-					response.addField(HttpResponseHeader::HeaderField::Connection, connection.keepAlive ? "keep-alive" : "close");
-					response.addField(HttpResponseHeader::HeaderField::ContentLength, 6);
-
-					response.string += "\r\n";
-
-					roSize len = response.string.size();
-					connection.socket.send(response.string.c_str(), len);
-					len = 6;
-					connection.socket.send("Hello!", len);
-				}
-				else
-					return Status::not_implemented;
-
-				return Status::ok;
-			});
-		}
+		while (true)
+			server.start();
 	};
 
-	for(unsigned i=40; i--;)
-		coRun(runOne, "HTTP server single connection loop", 1024 * 1024);
+	for(unsigned i=server.backlog; i--;)
+		coRun(runOne, "HTTP server single connection loop", 16 * 1024);
 	runOne();
 }
 
