@@ -7,6 +7,7 @@
 #include "../base/roStringFormat.h"
 #include "../base/roUtility.h"
 #include "../base/roTypeCast.h"
+#include "../platform/roCpu.h"
 #include <stdio.h>
 #include <fcntl.h>
 
@@ -61,14 +62,58 @@
 #	define MSG_NOSIGNAL 0x2000	// http://lists.apple.com/archives/macnetworkprog/2002/Dec/msg00091.html
 #endif
 
-roUint16 roHtons(roUint16 hostShort)
+roUint16 roHtons(roUint16 hostVal)
 {
-	return htons(hostShort);
+	return htons(hostVal);
 }
 
-roUint16 roNtohs(roUint16 netShort)
+roUint16 roNtohs(roUint16 netVal)
 {
-	return ntohs(netShort);
+	return ntohs(netVal);
+}
+
+#if roCPU_LITTLE_ENDIAN
+#	define bSwap32 _byteswap_ulong
+#	define bSwap64 _byteswap_uint64
+#elif roCOMPILER_GCC
+#	define bSwap32 __builtin_bswap32
+#	define bSwap64 __builtin_bswap64
+#endif
+
+roUint32 roHtons(roUint32 hostVal)
+{
+#if roCPU_LITTLE_ENDIAN
+	return bSwap32(hostVal);
+#else
+	return hostVal;
+#endif
+}
+
+roUint32 roNtohs(roUint32 netVal)
+{
+#if roCPU_LITTLE_ENDIAN
+	return bSwap32(netVal);
+#else
+	return netVal;
+#endif
+}
+
+roUint64 roHtons(roUint64 hostVal)
+{
+#if roCPU_LITTLE_ENDIAN
+	return bSwap64(hostVal);
+#else
+	return hostVal;
+#endif
+}
+
+roUint64 roNtohs(roUint64 netVal)
+{
+#if roCPU_LITTLE_ENDIAN
+	return bSwap64(netVal);
+#else
+	return netVal;
+#endif
 }
 
 namespace ro {
@@ -718,7 +763,7 @@ CoSocket::~CoSocket()
 
 struct CoSocketManager;
 
-__declspec(thread) static CoSocketManager* _currentCoSocketManager = NULL;
+thread_local CoSocketManager* _currentCoSocketManager = NULL;
 
 struct CoSocketManager : public BgCoroutine
 {
@@ -768,10 +813,6 @@ roStatus CoSocket::accept(CoSocket& socket) const
 	readEntry.fd = fd();
 	readEntry.coro = coroutine;
 
-	socketMgr->process(readEntry);
-	roAssert(readEntry.getList() == &socketMgr->socketList);
-	readEntry.removeThis();
-
 	do {
 		socketMgr->process(readEntry);
 		roAssert(readEntry.getList() == &socketMgr->socketList);
@@ -785,7 +826,8 @@ roStatus CoSocket::accept(CoSocket& socket) const
 		}
 	} while (inProgress(st) || st == roStatus::net_nobufs);
 
-	return st;
+	if(!st) return st;
+	return socket.setBlocking(true);
 }
 
 roStatus CoSocket::connect(const SockAddr& endPoint, float timeout)
