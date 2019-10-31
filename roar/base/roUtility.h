@@ -2,6 +2,7 @@
 #define __roUtility_h__
 
 #include "../platform/roCompiler.h"
+#include <type_traits>
 
 void roMemcpy(void* dst, const void* src, roSize size);
 void roMemmov(void* dst, const void* src, roSize size);
@@ -47,6 +48,9 @@ T roClampMin(T x, T min) { return x < min ? min : x; }
 
 template<class T>
 T roClampMax(T x, T max) { return x > max ? max : x; }
+
+template<class T>
+auto roEnumUnderlyingValue(T x) { return static_cast<std::underlying_type_t<T>>(x); }
 
 #define roFourCC(a,b,c,d) ( (roUint32) (((d)<<24) | ((c)<<16) | ((b)<<8) | (a)) )
 

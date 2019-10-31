@@ -53,7 +53,7 @@ static const StaticArray<const char*, 9>  _methodEnumStringMapping = {
 	"INVALID",
 };
 
-Status HttpRequestHeader::make(Method::Enum method, const char* fullUrl)
+Status HttpRequestHeader::make(Method method, const char* fullUrl)
 {
 	RangedString protocol, host, path;
 
@@ -61,7 +61,7 @@ Status HttpRequestHeader::make(Method::Enum method, const char* fullUrl)
 	if(!st) return st;
 
 	string.clear();
-	st = strFormat(string, "{} {}{} HTTP/1.1\r\n", _methodEnumStringMapping[method], fullUrl, path.size() ? "" : "/");
+	st = strFormat(string, "{} {}{} HTTP/1.1\r\n", _methodEnumStringMapping[static_cast<unsigned>(method)], fullUrl, path.size() ? "" : "/");
 	if(!st) return st;
 
 	return addField(HeaderField::Host, String(host).c_str());
@@ -72,12 +72,12 @@ Status HttpRequestHeader::addField(const char* field, const char* value)
 	return strFormat(string, "{}: {}\r\n", field, value);
 }
 
-Status HttpRequestHeader::addField(HeaderField::Enum field, const char* value)
+Status HttpRequestHeader::addField(HeaderField field, const char* value)
 {
-	return addField(_requestEnumStringMapping[field], value);
+	return addField(_requestEnumStringMapping[roEnumUnderlyingValue(field)], value);
 }
 
-Status HttpRequestHeader::addField(HeaderField::Enum field, roUint64 value)
+Status HttpRequestHeader::addField(HeaderField field, roUint64 value)
 {
 	switch(field) {
 	case HeaderField::ContentLength:
@@ -91,7 +91,7 @@ Status HttpRequestHeader::addField(HeaderField::Enum field, roUint64 value)
 	return Status::invalid_parameter;
 }
 
-Status HttpRequestHeader::addField(HeaderField::Enum field, roUint64 value1, roUint64 value2)
+Status HttpRequestHeader::addField(HeaderField field, roUint64 value1, roUint64 value2)
 {
 	switch(field) {
 	case HeaderField::Range:
@@ -123,15 +123,15 @@ void HttpRequestHeader::removeField(const char* field)
 	}
 }
 
-void HttpRequestHeader::removeField(HeaderField::Enum field)
+void HttpRequestHeader::removeField(HeaderField field)
 {
-	removeField(_requestEnumStringMapping[field]);
+	removeField(_requestEnumStringMapping[roEnumUnderlyingValue(field)]);
 }
 
 HttpVersion HttpRequestHeader::getVersion() const
 {
 	RangedString str;
-	if(!getField(HeaderField::Enum::Version, str))
+	if(!getField(HeaderField::Version, str))
 		return HttpVersion::Unknown;
 
 	if(roStrnCmp(str.begin, "1.1", 3) == 0)
@@ -148,12 +148,12 @@ HttpVersion HttpRequestHeader::getVersion() const
 	return HttpVersion::Unknown;
 }
 
-HttpRequestHeader::Method::Enum HttpRequestHeader::getMethod() const
+HttpRequestHeader::Method HttpRequestHeader::getMethod() const
 {
 	for(roSize i=0; i<_methodEnumStringMapping.size(); ++i) {
 		char* method = roStrStrCase(const_cast<char*>(string.c_str()), _methodEnumStringMapping[i]);
 		if(method && method == string.c_str())
-			return static_cast<Method::Enum>(i);
+			return static_cast<Method>(i);
 	}
 
 	return Method::Invalid;
@@ -206,7 +206,7 @@ bool HttpRequestHeader::getField(const char* field, RangedString& value) const
 	return _getField(string, field, value);
 }
 
-bool HttpRequestHeader::getField(HeaderField::Enum field, String& value) const
+bool HttpRequestHeader::getField(HeaderField field, String& value) const
 {
 	RangedString rangedStr;
 	if(!getField(field, rangedStr))
@@ -216,7 +216,7 @@ bool HttpRequestHeader::getField(HeaderField::Enum field, String& value) const
 	return true;
 }
 
-bool HttpRequestHeader::getField(HeaderField::Enum field, RangedString& value) const
+bool HttpRequestHeader::getField(HeaderField field, RangedString& value) const
 {
 	switch(field) {
 	case HeaderField::Resource:
@@ -231,13 +231,13 @@ bool HttpRequestHeader::getField(HeaderField::Enum field, RangedString& value) c
 			return true;
 		}
 	default:
-		return getField(_requestEnumStringMapping[field], value);
+		return getField(_requestEnumStringMapping[roEnumUnderlyingValue(field)], value);
 	}
 
 	return false;
 }
 
-bool HttpRequestHeader::cmpFieldNoCase(HeaderField::Enum option, const char* value) const
+bool HttpRequestHeader::cmpFieldNoCase(HeaderField option, const char* value) const
 {
 	RangedString str;
 	if(!getField(option, str))
@@ -298,10 +298,10 @@ static const StaticArray<const char*, 37>  _responseEnumStringMapping = {
 	"WWW-Authenticate",
 };
 
-roStatus HttpResponseHeader::make(ResponseCode::Enum responseCode)
+roStatus HttpResponseHeader::make(ResponseCode responseCode)
 {
 	string.clear();
-	roStatus st = strFormat(string, "HTTP/1.1 {}\r\n", _responseCodeStringMapping[responseCode]);
+	roStatus st = strFormat(string, "HTTP/1.1 {}\r\n", _responseCodeStringMapping[roEnumUnderlyingValue(responseCode)]);
 	return st;
 }
 
@@ -310,12 +310,12 @@ Status HttpResponseHeader::addField(const char* field, const char* value)
 	return strFormat(string, "{}: {}\r\n", field, value);
 }
 
-Status HttpResponseHeader::addField(HeaderField::Enum field, const char* value)
+Status HttpResponseHeader::addField(HeaderField field, const char* value)
 {
-	return addField(_responseEnumStringMapping[field], value);
+	return addField(_responseEnumStringMapping[roEnumUnderlyingValue(field)], value);
 }
 
-Status HttpResponseHeader::addField(HeaderField::Enum field, roUint64 value)
+Status HttpResponseHeader::addField(HeaderField field, roUint64 value)
 {
 	switch(field) {
 	case HeaderField::ContentLength:
@@ -340,7 +340,7 @@ bool HttpResponseHeader::getField(const char* field, RangedString& value) const
 	return _getField(string, field, value);
 }
 
-bool HttpResponseHeader::getField(HeaderField::Enum field, String& value) const
+bool HttpResponseHeader::getField(HeaderField field, String& value) const
 {
 	RangedString rangedStr;
 	if(!getField(field, rangedStr))
@@ -350,7 +350,7 @@ bool HttpResponseHeader::getField(HeaderField::Enum field, String& value) const
 	return true;
 }
 
-bool HttpResponseHeader::getField(HeaderField::Enum field, RangedString& value) const
+bool HttpResponseHeader::getField(HeaderField field, RangedString& value) const
 {
 	switch(field) {
 	case HeaderField::Version:
@@ -359,13 +359,13 @@ bool HttpResponseHeader::getField(HeaderField::Enum field, RangedString& value) 
 			return regex.getValue(1, value);
 		}
 	default:
-		return getField(_responseEnumStringMapping[field], value);
+		return getField(_responseEnumStringMapping[roEnumUnderlyingValue(field)], value);
 	}
 
 	return false;
 }
 
-bool HttpResponseHeader::getField(HeaderField::Enum field, roUint64& value) const
+bool HttpResponseHeader::getField(HeaderField field, roUint64& value) const
 {
 	Regex regex;
 	bool ok = false;
@@ -374,7 +374,7 @@ bool HttpResponseHeader::getField(HeaderField::Enum field, roUint64& value) cons
 	switch(field) {
 	case HeaderField::Age:
 	case HeaderField::ContentLength:
-		ok = getField(_responseEnumStringMapping[field], str);
+		ok = getField(_responseEnumStringMapping[roEnumUnderlyingValue(field)], str);
 		break;
 	case HeaderField::Status:
 		ok = regex.match(string.c_str(), "^HTTP/[\\d\\.]+[ ]+(\\d\\d\\d)", "i");
@@ -391,7 +391,7 @@ bool HttpResponseHeader::getField(HeaderField::Enum field, roUint64& value) cons
 	return roStrTo(str.begin, str.size(), value);
 }
 
-bool HttpResponseHeader::getField(HeaderField::Enum field, roUint64& value1, roUint64& value2, roUint64& value3) const
+bool HttpResponseHeader::getField(HeaderField field, roUint64& value1, roUint64& value2, roUint64& value3) const
 {
 	Regex regex;
 	RangedString str;
@@ -408,7 +408,7 @@ bool HttpResponseHeader::getField(HeaderField::Enum field, roUint64& value1, roU
 	return false;
 }
 
-bool HttpResponseHeader::cmpFieldNoCase(HeaderField::Enum option, const char* value) const
+bool HttpResponseHeader::cmpFieldNoCase(HeaderField option, const char* value) const
 {
 	RangedString str;
 	if(!getField(option, str))

@@ -21,8 +21,8 @@ enum class HttpVersion
 struct HttpRequestHeader
 {
 	// http://www.tutorialspoint.com/http/http_methods.htm
-	struct Method { enum Enum {
-		Get,
+	enum class Method {
+		Get = 0,
 		Head, 
 		Post,
 		Put,
@@ -31,9 +31,9 @@ struct HttpRequestHeader
 		Options,
 		Trace,
 		Invalid,
-	}; };
+	};
 
-	struct HeaderField { enum Enum {
+	enum class HeaderField {
 		Accept = 0,				// Accept: text/plain
 		AcceptCharset,			// Accept-Charset: utf-8
 		AcceptEncoding,			// Accept-Encoding: gzip, deflate
@@ -64,42 +64,42 @@ struct HttpRequestHeader
 		UserAgent,				// User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/21.0
 		Version,				// HTTP/1.1 206 Partial Content
 		Via						// Via: 1.0 fred, 1.1 example.com (Apache/1.1)
-	}; };
+	};
 
 	/// Functions for composing requestString
-	Status		make			(Method::Enum method, const char* fullUrl);
+	Status		make			(Method method, const char* fullUrl);
 	Status		addField		(const char* field, const char* value);
-	Status		addField		(HeaderField::Enum field, const char* value);
-	Status		addField		(HeaderField::Enum field, roUint64 value);
-	Status		addField		(HeaderField::Enum field, roUint64 value1, roUint64 value2);
+	Status		addField		(HeaderField field, const char* value);
+	Status		addField		(HeaderField field, roUint64 value);
+	Status		addField		(HeaderField field, roUint64 value1, roUint64 value2);
 
 	void		removeField		(const char* field);
-	void		removeField		(HeaderField::Enum field);
+	void		removeField		(HeaderField field);
 
 	/// Parse and get information from requestString
-	HttpVersion		getVersion	() const;
-	Method::Enum	getMethod	() const;
+	HttpVersion	getVersion  	() const;
+	Method  	getMethod		() const;
 
 	bool		getField		(const char* option, String& value) const;
 	bool		getField		(const char* option, RangedString& value) const;
-	bool		getField		(HeaderField::Enum option, String& value) const;
-	bool		getField		(HeaderField::Enum option, RangedString& value) const;
+	bool		getField		(HeaderField option, String& value) const;
+	bool		getField		(HeaderField option, RangedString& value) const;
 
-	bool		cmpFieldNoCase	(HeaderField::Enum option, const char* value) const;
+	bool		cmpFieldNoCase	(HeaderField option, const char* value) const;
 	String string;
 };	// HttpRequestHeader
 
 struct HttpResponseHeader
 {
-	struct ResponseCode { enum Enum {
+	enum class ResponseCode {
 		Continue,					// 100 - Everything so far is OK, client should continue the request
 		SwitchingProtocol,			// 101 - Response to an Upgrade
 		OK,							// 200 - The request has succeeded
 		NotFound,					// 404 - The server can not find requested resource
 		InternalServerError,		// 500 - The server has encountered a situation it doesn't know how to handle
-	}; };
+	};
 
-	struct HeaderField { enum Enum {
+	enum class HeaderField {
 		AccessControlAllowOrigin,	// Access-Control-Allow-Origin: *
 		AcceptRanges,				// Accept-Ranges: bytes
 		Age,						// Age: 12
@@ -137,23 +137,23 @@ struct HttpResponseHeader
 		Version,					// HTTP/1.1 206 Partial Content
 		Via,						// Via: 1.0 fred, 1.1 example.com (Apache/1.1)
 		WWWAuthenticate,			// WWW-Authenticate: Basic
-	}; };
+	};
 
 	/// Functions for composing responseString
-	Status		make			(ResponseCode::Enum responseCode);
+	Status		make			(ResponseCode responseCode);
 	Status		addField		(const char* field, const char* value);
-	Status		addField		(HeaderField::Enum field, const char* value);
-	Status		addField		(HeaderField::Enum field, roUint64 value);
+	Status		addField		(HeaderField field, const char* value);
+	Status		addField		(HeaderField field, roUint64 value);
 
 	/// Parse and get information from responseString
 	bool		getField		(const char* option, String& value) const;
 	bool		getField		(const char* option, RangedString& value) const;
-	bool		getField		(HeaderField::Enum option, String& value) const;
-	bool		getField		(HeaderField::Enum option, RangedString& value) const;
-	bool		getField		(HeaderField::Enum option, roUint64& value) const;
-	bool		getField		(HeaderField::Enum option, roUint64& value1, roUint64& value2, roUint64& value3) const;
+	bool		getField		(HeaderField option, String& value) const;
+	bool		getField		(HeaderField option, RangedString& value) const;
+	bool		getField		(HeaderField option, roUint64& value) const;
+	bool		getField		(HeaderField option, roUint64& value1, roUint64& value2, roUint64& value3) const;
 
-	bool cmpFieldNoCase	(HeaderField::Enum option, const char* value) const;
+	bool		cmpFieldNoCase	(HeaderField option, const char* value) const;
 
 	String string;
 };	// HttpResponseHeader
@@ -263,6 +263,6 @@ struct HttpServer
 	CoSocket	_socketListen;
 };	// HttpServer
 
-}   // namespace ro
+}	// namespace ro
 
 #endif	// __network_roHttp_h__

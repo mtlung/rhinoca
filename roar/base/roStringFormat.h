@@ -2,6 +2,7 @@
 #define __roString_Format_h__
 
 #include "roString.h"
+#include <type_traits>
 
 namespace ro {
 
@@ -107,6 +108,10 @@ inline void* _strFormatFunc(const ConstString& val) {
 template <class T>
 inline void* _strFormatFunc(const T* val) {
 	return (void*)_strFormat_pointer;
+}
+template <class T, std::enable_if_t<std::is_enum<T>::value, int> = 0>   // Deal with enum class
+inline void* _strFormatFunc(const T val) {
+    return _strFormatFunc(static_cast<std::underlying_type<T>::type>(val));
 }
 
 inline const roPtrInt _strFormatArg(roInt8 val) {
