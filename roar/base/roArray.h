@@ -115,6 +115,7 @@ struct IArray
 	void		clear();		///< Has the same effect as resize(0), if you want to clear the memory, use condense
 	void		condense();
 
+// Insertion operations
 	Status		pushBack(const T& val=T());
 	Status		pushBack(const T* srcBegin, roSize count);
 	Status		pushBackBySwap(const T& val);
@@ -125,6 +126,9 @@ struct IArray
 	Status		insertUnique(roSize atIdx, const T& val);
 	Status		insertSorted(const T& val);
 	Status		insertSorted(const T& val, bool(*less)(const T&, const T&));
+
+	template<class... Args>
+	Status		emplaceBack(Args&&... args);
 
 // Removal operations
 	void		popBack();

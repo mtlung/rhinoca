@@ -1,6 +1,8 @@
 #ifndef __roArray_inl__
 #define __roArray_inl__
 
+#include <utility>
+
 template<class T> inline
 void roSwap(ro::IArray<T>& lhs, ro::IArray<T>& rhs)
 {
@@ -287,6 +289,15 @@ Status IArray<T>::insertSorted(const T& val, bool(*less)(const T&, const T&))
 		return this->insert(p - _data, val);
 	} else
 		return this->pushBack(val);
+}
+
+template<class T> template<class... Args>
+Status IArray<T>::emplaceBack(Args&&... args)
+{
+	Status st = resizeNoInit(_size + 1);
+	if (!st) return st;
+	*new(&back()) T(std::forward<Args>(args)...);
+	return st;
 }
 
 template<class T>
