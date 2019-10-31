@@ -6,6 +6,7 @@
 #include "../base/roSha1.h"
 #include "../base/roTypeCast.h"
 #include "../base/roUtility.h"
+#include <limits.h>
 
 namespace ro {
 

@@ -72,7 +72,7 @@ roUint16 roNtohs(roUint16 netVal)
 	return ntohs(netVal);
 }
 
-#if roCPU_LITTLE_ENDIAN
+#if roCOMPILER_VC
 #	define bSwap32 _byteswap_ulong
 #	define bSwap64 _byteswap_uint64
 #elif roCOMPILER_GCC
@@ -115,6 +115,9 @@ roUint64 roNtohs(roUint64 netVal)
 	return netVal;
 #endif
 }
+
+#undef bSwap32
+#undef bSwap64
 
 namespace ro {
 
@@ -893,10 +896,9 @@ roStatus CoSocket::send(const void* data, roSize& len, int flags)
 	static const roSize maxChunkSize = 1024 * 1024;
 	CoSocketManager* socketMgr = _currentCoSocketManager;
 
-	roStatus st;
+	roStatus st = roStatus::ok;
 	while(remain > 0) {
 		roSize toSend = roMinOf2(remain, maxChunkSize);
-
 		st = Super::send(data, toSend, flags);
 
 		if(!st) {

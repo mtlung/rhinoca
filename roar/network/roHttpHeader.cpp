@@ -61,7 +61,7 @@ Status HttpRequestHeader::make(Method method, const char* fullUrl)
 	if(!st) return st;
 
 	string.clear();
-	st = strFormat(string, "{} {}{} HTTP/1.1\r\n", _methodEnumStringMapping[static_cast<unsigned>(method)], fullUrl, path.size() ? "" : "/");
+	st = strFormat(string, "{} {}{} HTTP/1.1\r\n", _methodEnumStringMapping[roEnumUnderlyingValue(method)], fullUrl, path.size() ? "" : "/");
 	if(!st) return st;
 
 	return addField(HeaderField::Host, String(host).c_str());
@@ -86,6 +86,7 @@ Status HttpRequestHeader::addField(HeaderField field, roUint64 value)
 		return strFormat(string, "{}: {}\r\n", "Max-Forwards", value);
 	case HeaderField::Range:
 		return strFormat(string, "Range: bytes={}-\r\n", value);
+	default: break;
 	}
 
 	return Status::invalid_parameter;
@@ -96,6 +97,7 @@ Status HttpRequestHeader::addField(HeaderField field, roUint64 value1, roUint64 
 	switch(field) {
 	case HeaderField::Range:
 		return strFormat(string, "Range: bytes={}-{}\r\n", value1, value2);
+	default: break;
 	}
 
 	return Status::invalid_parameter;
@@ -320,6 +322,7 @@ Status HttpResponseHeader::addField(HeaderField field, roUint64 value)
 	switch(field) {
 	case HeaderField::ContentLength:
 		return strFormat(string, "{}: {}\r\n", "Content-Length", value);
+	default: break;
 	}
 
 	return Status::invalid_parameter;
@@ -383,6 +386,7 @@ bool HttpResponseHeader::getField(HeaderField field, roUint64& value) const
 
 		ok = getField("Status", str);
 		break;
+	default: break;
 	}
 
 	if(!ok)
@@ -403,6 +407,7 @@ bool HttpResponseHeader::getField(HeaderField field, roUint64& value1, roUint64&
 		if(!regex.getValue(1, value1)) return false;
 		if(!regex.getValue(2, value2)) return false;
 		return regex.getValue(3, value3);
+	default: break;
 	}
 
 	return false;

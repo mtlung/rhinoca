@@ -3,6 +3,7 @@
 #include "roLog.h"
 #include "roTypeOf.h"
 #include "roTypeCast.h"
+#include <stdio.h>	// For sscanf
 
 // Reference:
 // Online regex test platform
@@ -727,8 +728,8 @@ bool parse_group(Graph& graph, const RangedString& f, const roUtf8*& i)
 
 	{	// Add end node
 		Node endNode = { RangedString(")") };
-		endNode.userdata[0] = (void*)beginNodeIdx;
-		endNode.userdata[1] = (void*)capturingGroupIdx;
+		endNode.userdata[0] = reinterpret_cast<void*>(beginNodeIdx);
+		endNode.userdata[1] = reinterpret_cast<void*>(capturingGroupIdx);
 		graph.push2(endNode, capturing ? group_end : nonCaptureGroup_end);
 	}
 

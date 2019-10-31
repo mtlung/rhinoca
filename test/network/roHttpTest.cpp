@@ -98,7 +98,7 @@ TEST_FIXTURE(HttpTest, server)
 
 	server.onRequest = [&](HttpServer::Connection& connection, HttpRequestHeader& request)->roStatus
 	{
-		HttpRequestHeader::Method::Enum method = request.getMethod();
+		HttpRequestHeader::Method method = request.getMethod();
 		if (method == HttpRequestHeader::Method::Get) {
 			RangedString resourceName;
 			request.getField(HttpRequestHeader::HeaderField::Resource, resourceName);

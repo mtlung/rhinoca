@@ -89,7 +89,7 @@ struct NullMutex : private NonCopyable
 {
 	void lock() {}
 	void unlock() {}
-	bool tryLock() {}
+	bool tryLock() { return false; }
 };	// NullMutex
 
 

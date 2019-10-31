@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "roSha1.h"
 #include "roStringUtility.h"
+#include <string.h>	// For memcpy
 
 namespace ro {
 

@@ -181,7 +181,7 @@ protected:
 
 	roSize _threadCount;
 	roSize _workerWaitCount;
-	roSize* _threadHandles;
+	void** _threadHandles;
 
 	ThreadId _mainThreadId;
 

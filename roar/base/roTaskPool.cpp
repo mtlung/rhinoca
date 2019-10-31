@@ -222,7 +222,7 @@ void TaskPool::init(roSize threadCount, ThreadFunction threadFunction)
 #ifdef roUSE_PTHREAD
 		roVerify(::pthread_create(reinterpret_cast<pthread_t*>(&_threadHandles[i]), NULL, &_threadFunc, this) == 0);
 #else
-		_threadHandles[i] = reinterpret_cast<roSize>(::CreateThread(NULL, 0, &_threadFunc, this, 0, NULL));
+		_threadHandles[i] = ::CreateThread(NULL, 0, &_threadFunc, this, 0, NULL);
 #endif
 	}
 }

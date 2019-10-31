@@ -12,21 +12,18 @@ struct _LinkList;
 
 struct _ListNode
 {
-	_ListNode() : _list(NULL), _prev(NULL), _next(NULL) {}
 	virtual ~_ListNode();
 	virtual void destroyThis();
 	virtual void removeThis();
 
-	_LinkList* _list;
-	_ListNode* _prev;
-	_ListNode* _next;
+	_LinkList* _list = NULL;
+	_ListNode* _prev = NULL;
+	_ListNode* _next = NULL;
 };	// _ListNode
 
 template<class T>
 struct ListNode : public _ListNode
 {
-	ListNode() {}
-
 	bool			isInList() const		{ return _list != NULL; }
 	LinkList<T>*	getList() const			{ return static_cast<LinkList<T>*>(_list); }
 	T*				next() const			{ return (T*)_next; }

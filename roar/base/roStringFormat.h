@@ -111,7 +111,7 @@ inline void* _strFormatFunc(const T* val) {
 }
 template <class T, std::enable_if_t<std::is_enum<T>::value, int> = 0>   // Deal with enum class
 inline void* _strFormatFunc(const T val) {
-    return _strFormatFunc(static_cast<std::underlying_type<T>::type>(val));
+    return _strFormatFunc(static_cast<typename std::underlying_type<T>::type>(val));
 }
 
 inline const roPtrInt _strFormatArg(roInt8 val) {
