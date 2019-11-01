@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "roCoroutine.h"
 #include "roCoroutine.inc"
+#include "roCpuProfiler.h"
 #include "roAtomic.h"
 #include "roLog.h"
 #include "roStackWalker.h"
@@ -138,6 +139,11 @@ void coYield()
 	Coroutine::current()->yield();
 }
 
+void coYieldFrame()
+{
+	Coroutine::current()->yieldFrame();
+}
+
 //////////////////////////////////////////////////////////////////////////
 // CoroutineScheduler
 
@@ -181,6 +187,7 @@ CoroutineScheduler::CoroutineScheduler()
 	, _bgKeepRun(false)
 	, _inUpdate(false)
 	, _destroiedCoroutine(NULL)
+	, _sleepManager(NULL)
 {}
 
 CoroutineScheduler::~CoroutineScheduler()
@@ -248,6 +255,10 @@ roStatus CoroutineScheduler::update(unsigned timeSliceMilliSeconds, roUint64* ne
 	tlsInstance = this;
 	float timerHit = 0;
 	CountDownTimer timer(timeSliceMilliSeconds / 1000.0f);
+
+	// Move all _resumeNextFrameList to _resumeList
+	while (!_resumeNextFrameList.isEmpty())
+		_resumeList.moveBack(_resumeNextFrameList.front());
 
 	while(!_resumeList.isEmpty() && (timeSliceMilliSeconds == 0 || !timer.isExpired(timerHit)))
 	{
@@ -363,13 +374,13 @@ void CoroutineScheduler::runTillAllFinish(float maxFps)
 	FrameRateRegulator regulator;
 	regulator.setTargetFraemRate(maxFps);
 
-	while(!_resumeList.isEmpty() || !_suspendedList.isEmpty()) {
+	while(taskCount() > 0) {
 		regulator.beginTask();
 		update(unsigned(1000.0f * regulator.targetFrameTime));
 		float elapsed, timeRemain;
 		regulator.endTask(elapsed, timeRemain);
 
-		if((_resumeList.size() + _suspendedList.size()) == _backgroundList.size())
+		if(taskCount() == _backgroundList.size())
 			break;
 		else {
 			int millSec = int(timeRemain * 1000);
@@ -386,13 +397,13 @@ void CoroutineScheduler::stop()
 	FrameRateRegulator regulator;
 	regulator.setTargetFraemRate(20);
 
-	while(!_resumeList.isEmpty() || !_suspendedList.isEmpty()) {
+	while(taskCount() > 0) {
 		regulator.beginTask();
 		update(unsigned(1000.0f * regulator.targetFrameTime));
 		float elapsed, timeRemain;
 		regulator.endTask(elapsed, timeRemain);
 
-		if((_resumeList.size() + _suspendedList.size()) == _backgroundList.size())
+		if(taskCount() == _backgroundList.size())
 			_bgKeepRun = false;
 		else {
 			int millSec = int(timeRemain * 1000);
@@ -414,7 +425,7 @@ bool CoroutineScheduler::bgKeepRun() const
 
 roSize CoroutineScheduler::taskCount() const
 {
-	return _resumeList.size() + _suspendedList.size();
+	return _resumeList.size() + _suspendedList.size() + _resumeNextFrameList.size();
 }
 
 roSize CoroutineScheduler::activetaskCount() const
@@ -424,7 +435,7 @@ roSize CoroutineScheduler::activetaskCount() const
 
 roSize CoroutineScheduler::suspendedtaskCount() const
 {
-	return _suspendedList.size();
+	return _suspendedList.size() + _resumeNextFrameList.size();
 }
 
 roUint64 CoroutineScheduler::currentTimeInTicks() const
@@ -493,8 +504,14 @@ roStatus Coroutine::initStack(roSize stackSize)
 void Coroutine::yield()
 {
 	roAssert(_isActive);
-
 	scheduler->_resumeList.pushBack(*this);
+	suspend();
+}
+
+void Coroutine::yieldFrame()
+{
+	roAssert(_isActive);
+	scheduler->_resumeNextFrameList.pushBack(*this);
 	suspend();
 }
 
@@ -520,7 +537,7 @@ void* Coroutine::suspend()
 	_isActive = false;
 	
 	// Check if it's already pending for resume (happens in yield)
-	if(getList() != &scheduler->_resumeList)
+	if(getList() != &scheduler->_resumeList && getList() != &scheduler->_resumeNextFrameList)
 		scheduler->_suspendedList.pushBack(*this);
 
 #if !CORO_FIBER

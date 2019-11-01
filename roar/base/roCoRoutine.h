@@ -31,6 +31,7 @@ struct Coroutine : public ListNode<Coroutine>
 	virtual void run() = 0;
 
 	void	yield				();	// Temporary give up the processing ownership
+	void	yieldFrame			();	// Temporary give up the processing ownership and won't get resumed until next frame
 	void*	suspend				();	// Give up processing ownership, until someone call resume().  TODO: Using void* as return value is not type safe
 	void	resume				(void* retValueForSuspend = NULL);	// Move the Coroutine back on track, after it's has been suspend()
 
@@ -103,6 +104,7 @@ struct CoroutineScheduler
 	bool				_bgKeepRun;
 	bool				_inUpdate;
 	LinkList<Coroutine> _resumeList;
+	LinkList<Coroutine> _resumeNextFrameList;
 	LinkList<Coroutine> _suspendedList;
 	LinkList<_ListNode>	_backgroundList;		// For those coroutine that provide very basic service (eg. sleep and IO) should register themselves in this list
 	ByteArray			_stack;					// Multiple coroutine run on the same stack. Stack will be copied when switching coroutines
@@ -115,6 +117,7 @@ struct CoroutineScheduler
 roStatus coRun(const std::function<void()>& func, const char* debugName = "unamed std::function", size_t stackSize = 2 * 1024 * 1024);
 void coSleep(float seconds);
 void coYield();
+void coYieldFrame();
 
 }	// namespace ro
 
