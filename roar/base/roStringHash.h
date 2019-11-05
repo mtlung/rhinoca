@@ -21,7 +21,7 @@ namespace stringHashDetail
 
 	// "1" = char[2]
 	// NOTE: Template specialization have to be preformed in namespace scope.
-	template<> roFORCEINLINE StringHash sdbm<2>(Str<2>::Type str) { return str[0]; }
+	template<> roFORCEINLINE StringHash sdbm<2>(Str<2>::Type str) { return (StringHash)str[0]; }
 }	// namespace stringHashDetail
 
 roFORCEINLINE StringHash stringHash(const char (&str)[2])	{ return stringHashDetail::sdbm<2>(str); }

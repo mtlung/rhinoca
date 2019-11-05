@@ -445,6 +445,20 @@ roSize RangedString::rfind(const char* str, roSize offset) const
 	return npos;
 }
 
+roSize RangedString::findNoCase(char c, roSize offset) const
+{
+	const char* p = begin;
+	const char* ret = roStrChrCase(p + offset, c);
+	return ret ? ret - p : npos;
+}
+
+roSize RangedString::findNoCase(const char* str, roSize offset) const
+{
+	const char* p = begin;
+	const char* ret = roStrStrCase(p + offset, str);
+	return ret ? ret - p : npos;
+}
+
 int RangedString::cmpCase(const char* str) const
 {
 	return roStrnCmp(begin, size(), str, roStrLen(str));

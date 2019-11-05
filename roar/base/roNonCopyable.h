@@ -3,15 +3,14 @@
 
 namespace ro {
 
-class NonCopyable
+struct NonCopyable
 {
-protected:
-	NonCopyable() {}
+    NonCopyable() = default;
+    ~NonCopyable() = default;
 
-private:
 	// Emphasize the following members are private
-	NonCopyable(const NonCopyable&);
-	const NonCopyable& operator=(const NonCopyable&);
+	NonCopyable(const NonCopyable&) = delete;
+	const NonCopyable& operator=(const NonCopyable&) = delete;
 };	// NonCopyable
 
 }	// namespace ro
