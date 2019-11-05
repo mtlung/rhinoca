@@ -2,6 +2,7 @@
 #include "roSocket.h"
 #include "roDnsResolve.h"
 #include "../base/roAtomic.h"
+#include "../base/roCpuProfiler.h"
 #include "../base/roRegex.h"
 #include "../base/roString.h"
 #include "../base/roStringFormat.h"
@@ -795,6 +796,8 @@ roStatus CoSocket::setBlocking(bool block)
 
 roStatus CoSocket::accept(CoSocket& socket) const
 {
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+
 	socket.close();
 	roAssert(!socket._readEntry.isInList());
 
@@ -835,6 +838,8 @@ roStatus CoSocket::accept(CoSocket& socket) const
 
 roStatus CoSocket::connect(const SockAddr& endPoint, float timeout)
 {
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+
 	if(!_isCoBlockingMode) {
 		if(timeout > 0.f)
 			roLog("warn", "A timeout value specified for non-blocking CoSocket is ignored\n");
@@ -881,6 +886,8 @@ roStatus CoSocket::connect(const SockAddr& endPoint, float timeout)
 
 roStatus CoSocket::send(const void* data, roSize& len, int flags)
 {
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+
 	if(!_isCoBlockingMode)
 		return Super::send(data, len, flags);
 
@@ -893,7 +900,7 @@ roStatus CoSocket::send(const void* data, roSize& len, int flags)
 	roSize sent = 0;
 	const char* p = (const char*)data;
 
-	static const roSize maxChunkSize = 1024 * 1024;
+	static const roSize maxChunkSize = roMB(1);
 	CoSocketManager* socketMgr = _currentCoSocketManager;
 
 	roStatus st = roStatus::ok;
@@ -930,6 +937,8 @@ roStatus CoSocket::send(const void* data, roSize& len, int flags)
 
 roStatus CoSocket::receive(void* buf, roSize& len, int flags)
 {
+	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+
 	// We pipe operation one by one
 	Coroutine* coroutine = Coroutine::current();
 	while(_readEntry.isInList())
@@ -1195,6 +1204,8 @@ void CoSocketManager::run()
 
 	while(scheduler->bgKeepRun() || !socketList.isEmpty())
 	{
+		CpuProfilerScope cpuProfilerScope("CoSocketManager loop");
+
 		fd_set readSet, writeSet, errorSet;
 		TinyArray<CoSocket::Entry*, FD_SETSIZE> socketSet;
 		FD_ZERO(&readSet);

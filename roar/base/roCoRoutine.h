@@ -26,7 +26,7 @@ struct Coroutine : public ListNode<Coroutine>
 	// the shared stack in CoroutineScheduler will be used and swap in/our with _backupStack.
 	// NOTE: When running the program under some tool (Visual Studio's profiler) more stack space
 	// may be needed (at least 32k).
-	roStatus initStack(roSize stackSize = 1024 * 1024);
+	roStatus initStack(roSize stackSize = roMB(1));
 
 	virtual void run() = 0;
 
@@ -73,9 +73,9 @@ struct CoroutineScheduler
 	CoroutineScheduler();
 	~CoroutineScheduler();
 
-	roStatus	init				(roSize statckSize = 2 * 1024 * 1024);
+	roStatus	init				(roSize statckSize = roMB(1));
 	void		add					(Coroutine& coroutine);
-	roStatus	add					(const std::function<void()>& func, const char* debugName="unamed std::function", size_t stackSize = 2 * 1024 * 1024);
+	roStatus	add					(const std::function<void()>& func, const char* debugName="unamed std::function", size_t stackSize = roMB(1));
 	void		addSuspended		(Coroutine& coroutine);
 	roStatus	update				(unsigned timeSliceMilliSeconds=0, roUint64* nextUpdateTime=nullptr);
 	void		runTillAllFinish	(float maxFps=60.f);
@@ -114,7 +114,7 @@ struct CoroutineScheduler
 	BgCoroutine*		_sleepManager;
 };	// CoroutineScheduler
 
-roStatus coRun(const std::function<void()>& func, const char* debugName = "unamed std::function", size_t stackSize = 2 * 1024 * 1024);
+roStatus coRun(const std::function<void()>& func, const char* debugName = "unamed std::function", size_t stackSize = roMB(1));
 void coSleep(float seconds);
 void coYield();
 void coYieldFrame();

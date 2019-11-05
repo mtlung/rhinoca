@@ -54,5 +54,8 @@ auto roEnumUnderlyingValue(T x) { return static_cast<std::underlying_type_t<T>>(
 
 #define roFourCC(a,b,c,d) ( (roUint32) (((d)<<24) | ((c)<<16) | ((b)<<8) | (a)) )
 
+constexpr roSize roKB(roSize size) { return 1024 * size; }
+constexpr roSize roMB(roSize size) { return 1024 * 1024 * size; }
+constexpr roSize roGB(roSize size) { return 1024 * 1024 * 1024 * size; }
 
 #endif	// __roUtility_h__
