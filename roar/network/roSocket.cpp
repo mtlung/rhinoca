@@ -1074,7 +1074,7 @@ roStatus CoSocket::receiveFrom(void* buf, roSize& len, SockAddr& srcEndPoint, fl
 	AutoPtr<TimeoutTracker> timeoutTracker;
 
 	if(timeout > 0) {
-		timeoutTracker.takeOver(_allocator.newObj<TimeoutTracker>(coroutine, timeout));
+		timeoutTracker = std::move(_allocator.newObj<TimeoutTracker>(coroutine, timeout));
 		coroutine->scheduler->add(*timeoutTracker);
 	}
 

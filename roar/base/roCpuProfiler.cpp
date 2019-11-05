@@ -202,7 +202,7 @@ struct TlsStruct
 {
 	TlsStruct(const char* name="THREAD")
 		: recurseCount(0)
-		, _currentNode(NULL), _threadName(name)
+		, _threadName(name), _currentNode(NULL)
 	{}
 
 	CallstackNode* currentNode()
@@ -226,9 +226,8 @@ struct TlsStruct
 	CallstackNode* _currentNode;
 };	// TlsStruct
 
-DWORD _tlsIndex = 0;
+thread_local TlsStruct _tls;
 RecursiveMutex _mutex;
-TinyArray<TlsStruct, 64> _tlsStructs;
 
 }	// namespace
 
@@ -260,46 +259,21 @@ CpuProfiler::~CpuProfiler()
 	shutdown();
 }
 
-TlsStruct* _tlsStruct()
-{
-	roAssert(_tlsIndex != 0);
-
-	TlsStruct* tls = reinterpret_cast<TlsStruct*>(::TlsGetValue(_tlsIndex));
-
-	if(!tls) {
-		ScopeRecursiveLock lock(_mutex);
-
-		// TODO: The current method didn't respect thread destruction
-		roAssert(_tlsStructs.size() < _tlsStructs.capacity());
-		if(_tlsStructs.size() >= _tlsStructs.capacity())
-			return NULL;
-
-		if(!_tlsStructs.pushBack())
-			return NULL;
-
-		tls = &_tlsStructs.back();
-		::TlsSetValue(_tlsIndex, tls);
-	}
-
-	return tls;
-}
-
 Status CpuProfiler::init()
 {
 	shutdown();
 
 	_profiler = this;
 	_frameCount = 0;
-	_tlsIndex = ::TlsAlloc();
 	_rootNode = new CallstackNode("ROOT");
 
 	reset();
 
 	// NOTE: We assume CpuProfiler::init() will be invoked in the main thread
-	_tlsStruct()->_threadName = "MAIN THREAD";	// Customize the name for main thread
+	_tls._threadName = "MAIN THREAD";	// Customize the name for main thread
 
 	// Make sure the main thread appear first on the report
-	reinterpret_cast<CallstackNode*>(_rootNode)->getChildByName(_tlsStruct()->_threadName.c_str());
+	reinterpret_cast<CallstackNode*>(_rootNode)->getChildByName(_tls._threadName.c_str());
 
 	return Status::ok;
 }
@@ -411,17 +385,13 @@ void CpuProfiler::shutdown()
 {
 	_profiler = NULL;
 
-	if(_tlsIndex) ::TlsFree(_tlsIndex);
-	_tlsIndex = 0;
-
 	delete reinterpret_cast<CallstackNode*>(_rootNode);
 	_rootNode = NULL;
 }
 
 void CpuProfiler::_begin(const char name[])
 {
-	TlsStruct* tls = _tlsStruct();
-	CallstackNode* node = tls->currentNode();
+	CallstackNode* node = _tls.currentNode();
 
 	// Race with CpuProfiler::reset(), CpuProfiler::defaultReport()
 	ScopeRecursiveLock lock(node->mutex);
@@ -433,7 +403,7 @@ void CpuProfiler::_begin(const char name[])
 
 		// Only alter the current node, if the child node is not recursing
 		if(node->recursionCount == 0)
-			tls->setCurrentNode(node);
+			_tls.setCurrentNode(node);
 	}
 
 	node->begin();
@@ -442,8 +412,7 @@ void CpuProfiler::_begin(const char name[])
 
 void CpuProfiler::_end()
 {
-	TlsStruct* tls = _tlsStruct();
-	CallstackNode* node = tls->currentNode();
+	CallstackNode* node = _tls.currentNode();
 
 	// Race with CpuProfiler::reset(), CpuProfiler::defaultReport()
 	ScopeRecursiveLock lock(node->mutex);
@@ -457,7 +426,7 @@ void CpuProfiler::_end()
 	// Only back to the parent when the current node is not inside a recursive function
 	if(node->recursionCount == 0) {
 		node->end();
-		tls->setCurrentNode(node->parent);
+		_tls.setCurrentNode(node->parent);
 	}
 }
 
