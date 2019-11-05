@@ -189,7 +189,8 @@ static Status _makeConnection(HttpStream& s, const char* uri)
 	s.status = s.socket.create(BsdSocket::TCP);
 	if(!s.status) return s.status;
 
-	s.socket.setBlocking(false);
+	s.status = s.socket.setBlocking(false);
+    if (!s.status) return s.status;
 
 	// Make connection
 	s.status = s.socket.connect(addr);

@@ -1,7 +1,8 @@
 #include "pch.h"
 #include "../../roar/base/roIOStream.h"
-#include "../../roar/base/roString.h"
+#include "../../roar/base/roCompressedStream.h"
 #include "../../roar/math/roRandom.h"
+#include "../../roar/base/roString.h"
 
 using namespace ro;
 
@@ -110,6 +111,43 @@ TEST_FIXTURE(IOStreamTest, memorySeekableOStream)
 	CHECK_EQUAL(os.size(), os.posWrite());
 	CHECK(os.seekWrite(os.size(), OStream::SeekOrigin_End));
 	CHECK_EQUAL(0u, os.posWrite());
+}
+
+TEST_FIXTURE(IOStreamTest, gzip)
+{
+	for (roSize i = 0; i < 64; ++i) {
+		roSize testDataSize = i * roRandMinMax<roSize>(512, 1024);
+
+		// Generate random test data
+		Array<int> randomData;
+		UniformRandom rangen;
+		randomData.resize(testDataSize);
+		for (roSize j = 0; j < testDataSize; ++j)
+			randomData[j] = rangen.nextSeed();
+
+		// Compress
+		DefaultAllocator _allocator;
+		GZipOStream os;
+		auto mos = _allocator.newObj<MemoryOStream>();
+		ByteArray* byteArray = &mos->_buf;
+		CHECK(os.init(std::move(mos)));
+		os.write(randomData.bytePtr(), randomData.sizeInByte());
+		os.flush();
+
+		// De-compress
+		GZipIStream is;
+		auto mis = _allocator.newObj<MemoryIStream>();
+		mis->reset(byteArray->bytePtr(), byteArray->size());
+		CHECK(is.init(std::move(mis)));
+
+		Array<int> verifyData;
+		verifyData.resize(randomData.size() + roRandMinMax<roSize>(0, 64));
+		roUint64 read = 0;
+		CHECK(is.read(verifyData.bytePtr(), verifyData.sizeInByte(), read));
+		
+		// Verify the data
+		CHECK(memcmp(randomData.bytePtr(), verifyData.bytePtr(), randomData.sizeInByte()) == 0);
+	}
 }
 
 struct RandomIOStreamTest

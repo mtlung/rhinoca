@@ -400,7 +400,7 @@ Status openRawFileIStream(roUtf8* path, AutoPtr<IStream>& stream, bool blocking)
 	if(!st)
 		return st;
 
-	stream.takeOver(s);
+	stream = std::move(s);
 	return st;
 }
 

@@ -73,7 +73,7 @@ static AutoPtr<IStream> _getStream(const HttpResponseHeader& response, const Ran
 		s->begin = (roByte*)preSocketBuf.begin;
 		s->end = (roByte*)preSocketBuf.end;
 		s->current = s->begin;
-		istream.takeOver(s);
+		istream = std::move(s);
 
 //		if(logLevel > 0)
 //			roLog("info", "HttpClient - Content length: %u\n", contentLength);
@@ -83,29 +83,29 @@ static AutoPtr<IStream> _getStream(const HttpResponseHeader& response, const Ran
 		s->begin = (roByte*)preSocketBuf.begin;
 		s->end = (roByte*)preSocketBuf.end;
 		s->current = s->begin;
-		istream.takeOver(s);
+		istream = std::move(s);
 	}
 	else if(response.cmpFieldNoCase(HttpResponseHeader::HeaderField::Connection, "close")) {
 		AutoPtr<HttpClientReadTillEndIStream> s = _allocator.newObj<HttpClientReadTillEndIStream>(socket);
 		s->begin = (roByte*)preSocketBuf.begin;
 		s->end = (roByte*)preSocketBuf.end;
 		s->current = s->begin;
-		istream.takeOver(s);
+		istream = std::move(s);
 	}
 	else {
 		// Create a null stream
 		AutoPtr<MemoryIStream> s = _allocator.newObj<MemoryIStream>();
-		istream.takeOver(s);
+		istream = std::move(s);
 	}
 
 	// Any compression?
 	RangedString contentEncoding;
 	if(response.getField(HttpResponseHeader::HeaderField::ContentEncoding, contentEncoding)) {
 		if(contentEncoding.cmpNoCase("gzip") == 0) {
-			AutoPtr<GZipStreamIStream> s = _allocator.newObj<GZipStreamIStream>();
-			s->init(istream);
+			AutoPtr<GZipIStream> s = _allocator.newObj<GZipIStream>();
+			s->init(std::move(istream));
 			roAssert(!istream.ptr());
-			istream.takeOver(s);
+			istream = std::move(s);
 		}
 	}
 
@@ -328,7 +328,7 @@ while(true) {
 	case 404:		// Not found
 	case 416:		// Requested Range not satisfiable
 	{
-		istream.takeOver(_getStream(
+		istream = std::move(_getStream(
 			response,
 			RangedString(responseStr.c_str() + contentStartPos, responseStr.end()),
 			connection->socket
@@ -370,7 +370,7 @@ while(true) {
 		else {
 			connectionPool->connections.insert(*connection);
 
-			istream.takeOver(_getStream(
+			istream = std::move(_getStream(
 				response,
 				RangedString(responseStr.c_str() + contentStartPos, responseStr.end()),
 				connection->socket

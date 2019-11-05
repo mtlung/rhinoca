@@ -24,15 +24,17 @@ extern DefaultAllocator defaultAllocator;
 template<class T>
 struct AutoPtr
 {
-	AutoPtr()								: _p(NULL), _allocator(NULL) {}
-	AutoPtr(T* p, DefaultAllocator& a)		: _p(p), _allocator(&a) {}
-	AutoPtr(const AutoPtr& rhs)				: _p(const_cast<AutoPtr&>(rhs).unref()), _allocator(rhs._allocator) {}
-	~AutoPtr()								{ deleteObject(); }
+	AutoPtr		()							: _p(NULL), _allocator(NULL) {}
+	AutoPtr		(T* p, DefaultAllocator& a)	: _p(p), _allocator(&a) {}
+	~AutoPtr	()							{ deleteObject(); }
+
+	template<class U>
+	AutoPtr		(AutoPtr<U>&& rhs)			: _p(static_cast<T*>(rhs.unref())), _allocator(rhs._allocator) {}
 
 	void		ref(T* p)					{ deleteObject(); _p = p; }
 
 	template<class U>
-	void		takeOver(const AutoPtr<U>& rhs)	{ ref(static_cast<T*>(rhs._p)); const_cast<AutoPtr<U>&>(rhs).unref(); _allocator = rhs._allocator; }
+	AutoPtr&	operator=(AutoPtr<U>&& rhs)	{ ref(static_cast<T*>(rhs.unref())); _allocator = rhs._allocator; return *this; }
 
 	T*			unref()						{ T* t = _p; _p = NULL; return t; }
 	void		deleteObject();
@@ -48,8 +50,7 @@ struct AutoPtr
 	T* _p;
 	DefaultAllocator* _allocator;
 
-private:
-	void operator=(const AutoPtr&);
+	void operator=(const AutoPtr&) = delete;
 };
 
 struct DefaultAllocator

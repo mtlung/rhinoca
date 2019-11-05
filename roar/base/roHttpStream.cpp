@@ -511,7 +511,7 @@ Status openHttpIStream(roUtf8* url, AutoPtr<IStream>& stream, bool blocking)
 	if(!st)
 		return st;
 
-	stream.takeOver(s);
+	stream = std::move(s);
 	return st;
 }
 
