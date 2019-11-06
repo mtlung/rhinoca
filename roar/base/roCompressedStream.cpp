@@ -169,12 +169,12 @@ roUint64 GZipOStream::posWrite() const
 	return _zStream.total_in;
 }
 
-void GZipOStream::flush()
+Status GZipOStream::flush()
 {
 	roStatus st = roStatus::ok;
 
 	if(!_innerStream.ptr())
-		return;
+		return roStatus::pointer_is_null;
 
 	while(true) {
 		int err = deflate(&_zStream, Z_FINISH);
@@ -182,15 +182,26 @@ void GZipOStream::flush()
 		case Z_OK:
 		case Z_STREAM_END:
 			st = _innerStream->write(_buffer.bytePtr(), _buffer.sizeInByte() - _zStream.avail_out);
-			if(!st) return;
+			if(!st) return st;
 			_zStream.next_out = _buffer.bytePtr();
 			st = roSafeAssign(_zStream.avail_out, _buffer.sizeInByte());
+			if(!st) return st;
 			if(err == Z_STREAM_END)
-				return;
+				return _innerStream->flush();
 		default:
 			break;
 		}
 	}
+
+	return roStatus::zlib_error;
+}
+
+Status GZipOStream::closeWrite()
+{
+	Status st = flush();
+	if(!st) return st;
+
+	return _innerStream->closeWrite();
 }
 
 }   // namespace ro

@@ -15,11 +15,11 @@ struct RawFileIStream : public IStream
 	RawFileIStream();
 
 			Status		open			(const roUtf8* path);
-	virtual bool		readWillBlock	(roUint64 bytesToRead);
-	virtual Status		size			(roUint64& bytes) const;
-	virtual roUint64	posRead			() const;
-	virtual Status		seekRead		(roInt64 offset, SeekOrigin origin);
-	virtual void		closeRead		();
+	virtual bool		readWillBlock	(roUint64 bytesToRead) override;
+	virtual Status		size			(roUint64& bytes) const override;
+	virtual roUint64	posRead			() const override;
+	virtual Status		seekRead		(roInt64 offset, SeekOrigin origin) override;
+	virtual Status		closeRead		() override;
 
 	void reset();
 
@@ -230,12 +230,13 @@ Status RawFileIStream::seekRead(roInt64 offset, SeekOrigin origin)
 	return Status::ok;
 }
 
-void RawFileIStream::closeRead()
+Status RawFileIStream::closeRead()
 {
 	if(_handle)
 		roVerify(CloseHandle(_handle));
 
 	reset();
+	return Status::ok;
 }
 
 void RawFileIStream::reset()

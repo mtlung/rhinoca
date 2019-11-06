@@ -28,7 +28,7 @@ struct IStream : private NonCopyable
 	virtual Status		size			(roUint64& bytes) const { return roStatus::not_supported; }
 	virtual roUint64	posRead			() const { return 0; }
 	virtual Status		seekRead		(roInt64 offset, SeekOrigin origin) { return roStatus::not_supported; }
-	virtual void		closeRead		() {}
+	virtual Status		closeRead		() { return roStatus::ok; }
 
 // Standard helper functions, may consider make it virtual to maximize performance
 
@@ -77,8 +77,8 @@ struct OStream : private NonCopyable
 	virtual Status		seekWrite		(roInt64 offset, SeekOrigin origin) { return roStatus::not_supported; }
 	virtual Status		write			(const void* buffer, roUint64 bytesToWrite) = 0;
 	virtual roUint64	posWrite		() const = 0;
-	virtual void		flush			() {}
-	virtual void		closeWrite		() {}
+	virtual Status		flush			() { return roStatus::ok; }
+	virtual Status		closeWrite		() { return roStatus::ok; }
 
 	template<roSize N>
 			Status		write			(const roUtf8 (&ary)[N]) { return write(ary, N); }

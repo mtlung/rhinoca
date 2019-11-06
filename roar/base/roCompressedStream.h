@@ -28,7 +28,8 @@ struct GZipOStream : public OStream
 
 	virtual	Status		write		(const void* buffer, roUint64 bytesToWrite) override;
 	virtual roUint64	posWrite	() const override;
-	virtual void		flush		() override;
+	virtual Status		flush		() override;
+	virtual Status		closeWrite	() override;
 
 // Private
 	z_stream _zStream;

@@ -21,11 +21,11 @@ struct HttpIStream : public IStream
 	~HttpIStream();
 
 			Status		open			(const roUtf8* path);
-	virtual bool		readWillBlock	(roUint64 bytesToRead);
-	virtual Status		size			(roUint64& bytes) const;
-	virtual roUint64	posRead			() const;
-	virtual Status		seekRead		(roInt64 offset, SeekOrigin origin);
-	virtual void		closeRead		();
+	virtual bool		readWillBlock	(roUint64 bytesToRead) override;
+	virtual Status		size			(roUint64& bytes) const override;
+	virtual roUint64	posRead			() const override;
+	virtual Status		seekRead		(roInt64 offset, SeekOrigin origin) override;
+	virtual Status		closeRead		() override;
 
 	Status		_connect			();
 	Status		_waitConnect		();
@@ -490,10 +490,12 @@ Status HttpIStream::seekRead(roInt64 offset, SeekOrigin origin)
 	return st = Status::ok;
 }
 
-void HttpIStream::closeRead()
+Status HttpIStream::closeRead()
 {
-	_socket.close();
+	st = _socket.close();
+	if(!st) return st;
 	_ringBuf.clear();
+	return st;
 }
 
 Status openHttpIStream(roUtf8* url, AutoPtr<IStream>& stream, bool blocking)
