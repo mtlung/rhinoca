@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "roHttp.h"
+#include "../base/roCompressedStream.h"
 #include "../base/roLog.h"
 #include "../base/roRegex.h"
 #include "../base/roRingBuffer.h"
@@ -9,6 +10,83 @@
 #include <limits.h>
 
 namespace ro {
+
+static DefaultAllocator _allocator;
+
+struct HttpServerFixedSizeOStream : public OStream
+{
+	HttpServerFixedSizeOStream(CoSocket& socket, roSize size) : _socket(socket), _contentSize(size), _remainingSize(size) {}
+
+	virtual	Status write(const void* buffer, roUint64 bytesToWrite) override
+	{
+		roUint64 toWrite = roMinOf2(bytesToWrite, _remainingSize);
+		roStatus st = _socket.send(buffer, toWrite);
+		if (!st) return st;
+		if (toWrite != bytesToWrite)
+			return roStatus::size_limit_reached;
+		_remainingSize -= toWrite;
+		return st;
+	}
+
+	virtual roUint64 posWrite() const override
+	{
+		return _contentSize - _remainingSize;
+	}
+
+	virtual Status closeWrite() override
+	{
+		Status st;
+		if (_remainingSize == _contentSize)
+			st = roStatus::ok;
+		else {
+			roUint64 written = _contentSize - _remainingSize;
+			roLog("warn", "HTTP Content-Length mis-match, %llu was declared but only %llu was written", _contentSize, written);
+			st = roStatus::http_content_size_mismatch;
+		}
+
+		_contentSize = _remainingSize = 0;
+		return st;
+	}
+
+	CoSocket& _socket;
+	roSize _contentSize;
+	roSize _remainingSize;
+};	// HttpServerFixedSizeOStream
+
+struct HttpServerChunkedSizeOStream : public OStream
+{
+	HttpServerChunkedSizeOStream(CoSocket& socket) : _socket(socket) {}
+
+	virtual	Status write(const void* buffer, roUint64 bytesToWrite) override
+	{
+		char buf[32];
+		int written = snprintf(buf, sizeof(buf), "%llx\r\n", bytesToWrite);
+		roAssert(written < sizeof(buf));
+		if(written < 0)
+			return roStatus::string_encoding_error;
+		roStatus st = _socket.send(buf, written);
+		if (!st) return st;
+		st = _socket.send(buffer, bytesToWrite);
+		if (!st) return st;
+
+		_written += written;
+		return _socket.send("\r\n", 2);
+	}
+
+	virtual roUint64 posWrite() const override
+	{
+		return _written;
+	}
+
+	virtual Status closeWrite() override
+	{
+		_written = 0;
+		return _socket.send("0\r\n\r\n", 5);
+	}
+
+	CoSocket& _socket;
+	roSize _written = 0;
+};	// HttpServerChunkedSizeOStream
 
 //////////////////////////////////////////////////////////////////////////
 // HttpServer
@@ -37,6 +115,61 @@ Status HttpServer::init()
 
 HttpServer::Connection::Connection()
 {
+}
+
+static roStatus responseCommon(HttpServer::Connection& connection, HttpResponseHeader& header, roSize* contentSize)
+{
+	header.addField(HttpResponseHeader::HeaderField::Server, "Roar");
+	header.addField(HttpResponseHeader::HeaderField::Connection, connection.keepAlive ? "keep-alive" : "close");
+
+	bool chunkedEncoding = false;
+	if (connection.supportGZip) {
+		chunkedEncoding = true;
+		header.addField(HttpResponseHeader::HeaderField::ContentEncoding, "gzip");
+	}
+	else if (contentSize)
+		header.addField(HttpResponseHeader::HeaderField::ContentLength, *contentSize);
+	else
+		chunkedEncoding = true;
+
+	if(chunkedEncoding)
+		header.addField(HttpResponseHeader::HeaderField::TransferEncoding, "chunked");
+
+	header.string += "\r\n";
+
+	return connection.socket.send(header.string.c_str(), header.string.size());
+}
+
+roStatus HttpServer::Connection::response(HttpResponseHeader& header, OStream*& os)
+{
+	roStatus st = responseCommon(*this, header, NULL);
+	if (!st) return st;
+
+	// TODO: Resue oStream if the type was the same
+	oStream = std::move(_allocator.newObj<HttpServerChunkedSizeOStream>(socket));
+	if (supportGZip) {
+		auto zip = std::move(_allocator.newObj<GZipOStream>());
+		zip->init(std::move(oStream));
+		oStream = std::move(zip);
+	}
+
+	os = oStream.ptr();
+	return st;
+}
+
+roStatus HttpServer::Connection::response(HttpResponseHeader& header, OStream*& os, roSize contentSize)
+{
+	roStatus st = responseCommon(*this, header, &contentSize);
+	if (!st) return st;
+
+	// Ignore contentSize if use gzip
+	if (supportGZip)
+		return response(header, os);
+
+	// TODO: Resue oStream if the type was the same
+	oStream = std::move(_allocator.newObj<HttpServerFixedSizeOStream>(socket, contentSize));
+	os = oStream.ptr();
+	return st;
 }
 
 Status HttpServer::Connection::_processHeader(HttpRequestHeader& header)
@@ -72,6 +205,11 @@ Status HttpServer::Connection::_processHeader(HttpRequestHeader& header)
 	header.getField(HttpRequestHeader::HeaderField::Connection, rstr);
 	keepAlive = (httpVersion >= HttpVersion::v1_1 && rstr.cmpNoCase("close") != 0);	// keep-alive is on by default, unless "close" is specified
 
+	header.getField(HttpRequestHeader::HeaderField::AcceptEncoding, rstr);
+	supportGZip = (rstr.findNoCase("gzip") != RangedString::npos);
+	supportDefalt = (rstr.findNoCase("deflate") != RangedString::npos);
+	useChunkEncoding = (httpVersion >= HttpVersion::v1_1 && supportDefalt);
+
 	return roStatus::ok;
 }
 
@@ -104,7 +242,8 @@ roStatus HttpServer::start()
 			break;
 		}
 
-		st = onRequest(c, header); if (!st) break;
+		st = onRequest(c, header); if(!st) break;
+		st = c.oStream->closeWrite(); if(!st) break;
 	}
 
 	c.socket.close();

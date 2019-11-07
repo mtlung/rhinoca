@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "../../roar/network/roHttp.h"
 #include "../../roar/base/roCoRoutine.h"
+#include "../../roar/base/roIOStream.h"
 #include "../../roar/base/roLog.h"
 
 using namespace ro;
@@ -106,17 +107,14 @@ TEST_FIXTURE(HttpTest, server)
 
 			HttpResponseHeader response;
 			response.make(HttpResponseHeader::ResponseCode::OK);
-			response.addField(HttpResponseHeader::HeaderField::Server, "Roar");
 			response.addField(HttpResponseHeader::HeaderField::ContentType, "text/html; charset=utf-8");
-			response.addField(HttpResponseHeader::HeaderField::Connection, connection.keepAlive ? "keep-alive" : "close");
-			response.addField(HttpResponseHeader::HeaderField::ContentLength, 6);
 
-			response.string += "\r\n";
+			OStream* os = NULL;
+			roStatus st = connection.response(response, os);
+			if (!st) return st;
 
-			roSize len = response.string.size();
-			connection.socket.send(response.string.c_str(), len);
-			len = 6;
-			connection.socket.send("Hello!", len);
+			st = os->write("Hello!", 6);
+			if (!st) return st;
 		}
 		else
 			return Status::not_implemented;

@@ -162,10 +162,10 @@ roStatus splitUrl(const RangedString& url, RangedString& protocol, RangedString&
 
 struct HttpOptions
 {
-	struct Option { enum Enum {
+	enum class Option {
 		MaxUrlSize,
 		MaxHeaderSize,
-	}; };
+	};
 };	// HttpOptions
 
 struct IStream;
@@ -205,10 +205,18 @@ struct HttpServer
 	{
 		Connection();
 
+		roStatus	response(HttpResponseHeader& header, OStream*& os);
+		roStatus	response(HttpResponseHeader& header, OStream*& os, roSize contentSize);
+
 		roStatus	_processHeader(HttpRequestHeader& header);
 
 		bool		keepAlive = false;
+		bool		supportGZip = false;
+		bool		supportDefalt = false;
+		bool		useChunkEncoding = false;
+
 		CoSocket	socket;
+		AutoPtr<OStream> oStream;
 	};	// HttpServer::Connection
 
 	Status	init();
