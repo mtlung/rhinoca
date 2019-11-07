@@ -211,7 +211,10 @@ struct CoSocket : public BsdSocket
 	roStatus	accept			(CoSocket& socket) const;
 	roStatus	connect			(const SockAddr& endPoint, float timeout=0);
 
-	roStatus	send			(const void* data, roSize& len, int flags=0);
+	// If written is null, send will try to send all data in one call, fail otherwise
+	// If written is non-null, it will return as quick as possible and tell you how much data written
+	roStatus	send			(const void* data, roSize len, int flags=0, roSize* written=NULL);
+
 	roStatus	receive			(void* buf, roSize& len, int flags=0);
 	roStatus	sendTo			(const void* data, roSize len, const SockAddr& destEndPoint, int flags=0);
 	roStatus	receiveFrom		(void* buf, roSize& len, SockAddr& srcEndPoint, float timeout=0.f, int flags=0);

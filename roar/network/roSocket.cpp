@@ -884,7 +884,7 @@ roStatus CoSocket::connect(const SockAddr& endPoint, float timeout)
 	return lastError = ret, errorToStatus(lastError);
 }
 
-roStatus CoSocket::send(const void* data, roSize& len, int flags)
+roStatus CoSocket::send(const void* data, roSize len, int flags, roSize* written)
 {
 	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
@@ -897,8 +897,7 @@ roStatus CoSocket::send(const void* data, roSize& len, int flags)
 		coroutine->yield();
 
 	roSize remain = len;
-	roSize sent = 0;
-	const char* p = (const char*)data;
+	const roByte* p = (const roByte*)data;
 
 	static const roSize maxChunkSize = roMB(1);
 	CoSocketManager* socketMgr = _currentCoSocketManager;
@@ -926,12 +925,18 @@ roStatus CoSocket::send(const void* data, roSize& len, int flags)
 			coroutine->yield();
 
 		remain -= toSend;
-		sent += toSend;
 		p += toSend;
+
+		if (written)
+			break;
 	}
 
+	if (written)
+		*written = (p - reinterpret_cast<const roByte*>(data));
+	else if (st && remain != 0)
+		st = roStatus::net_error;
+
 	_writeEntry.removeThis();
-	len = num_cast<int>(sent);
 	return st;
 }
 
