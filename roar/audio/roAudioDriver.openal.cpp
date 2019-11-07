@@ -166,7 +166,7 @@ void AudioBuffer::addSubBuffer(unsigned pcmPosition, const char* data, roSize si
 
 	// Trim begin
 	if(subBuffers.isInRange(i) && pcmBegin >= subBuffers[i].posBegin && pcmBegin <= subBuffers[i].posEnd) {
-		roSize sizeToTrim = format.blockAlignment * (subBuffers[i].posEnd - pcmBegin);
+		roSize sizeToTrim = roSize(format.blockAlignment) * (subBuffers[i].posEnd - pcmBegin);
 		sizeToTrim = roMinOf2(sizeToTrim, sizeInByte);
 		data += sizeToTrim;
 		sizeInByte -= sizeToTrim;
@@ -175,7 +175,7 @@ void AudioBuffer::addSubBuffer(unsigned pcmPosition, const char* data, roSize si
 
 	// Trim end
 	if(i < j && subBuffers.isInRange(j) && pcmEnd >= subBuffers[j].posBegin) {
-		roSize sizeToTrim = format.blockAlignment * (pcmEnd - subBuffers[j].posBegin);
+		roSize sizeToTrim = roSize(format.blockAlignment) * (pcmEnd - subBuffers[j].posBegin);
 		roAssert(sizeInByte >= sizeToTrim);
 		sizeInByte -= sizeToTrim;
 		pcmEnd = subBuffers[j].posBegin;
