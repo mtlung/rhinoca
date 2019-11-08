@@ -36,7 +36,7 @@ struct HttpServerFixedSizeOStream : public OStream
 	virtual Status closeWrite() override
 	{
 		Status st;
-		if (_remainingSize == _contentSize)
+		if (_remainingSize == 0)
 			st = roStatus::ok;
 		else {
 			roUint64 written = _contentSize - _remainingSize;
@@ -123,14 +123,15 @@ static roStatus responseCommon(HttpServer::Connection& connection, HttpResponseH
 	header.addField(HttpResponseHeader::HeaderField::Connection, connection.keepAlive ? "keep-alive" : "close");
 
 	bool chunkedEncoding = false;
-	if (connection.supportGZip) {
-		chunkedEncoding = true;
-		header.addField(HttpResponseHeader::HeaderField::ContentEncoding, "gzip");
-	}
-	else if (contentSize)
+	if (contentSize)
 		header.addField(HttpResponseHeader::HeaderField::ContentLength, *contentSize);
-	else
+	else if (connection.supportChunkEncoding) {
 		chunkedEncoding = true;
+		if (connection.supportGZip)
+			header.addField(HttpResponseHeader::HeaderField::ContentEncoding, "gzip");
+	}
+	else
+		return roStatus::not_supported;
 
 	if(chunkedEncoding)
 		header.addField(HttpResponseHeader::HeaderField::TransferEncoding, "chunked");
@@ -201,14 +202,17 @@ Status HttpServer::Connection::_processHeader(HttpRequestHeader& header)
 	header.string = String(rPtr, messageContent - rPtr);
 
 	RangedString rstr;
-	HttpVersion httpVersion = header.getVersion();
-	header.getField(HttpRequestHeader::HeaderField::Connection, rstr);
-	keepAlive = (httpVersion >= HttpVersion::v1_1 && rstr.cmpNoCase("close") != 0);	// keep-alive is on by default, unless "close" is specified
+	httpVersion = header.getVersion();
 
-	header.getField(HttpRequestHeader::HeaderField::AcceptEncoding, rstr);
-	supportGZip = (rstr.findNoCase("gzip") != RangedString::npos);
-	supportDefalt = (rstr.findNoCase("deflate") != RangedString::npos);
-	useChunkEncoding = (httpVersion >= HttpVersion::v1_1 && supportDefalt);
+	if (httpVersion >= HttpVersion::v1_1) {
+		supportChunkEncoding = true;
+
+		if (header.getField(HttpRequestHeader::HeaderField::Connection, rstr))
+			keepAlive = rstr.cmpNoCase("close") != 0;	// keep-alive is on by default, unless "close" is specified
+
+		if (header.getField(HttpRequestHeader::HeaderField::AcceptEncoding, rstr))
+			supportGZip = (rstr.findNoCase("gzip") != RangedString::npos);
+	}
 
 	return roStatus::ok;
 }
@@ -225,8 +229,7 @@ roStatus HttpServer::start()
 	c.removeThis();
 	activeConnections.pushBack(c);
 
-	c.keepAlive = true;
-	while (c.keepAlive) {
+	do {
 		HttpRequestHeader header;
 		st = c._processHeader(header); if (!st) break;
 
@@ -244,7 +247,7 @@ roStatus HttpServer::start()
 
 		st = onRequest(c, header); if(!st) break;
 		st = c.oStream->closeWrite(); if(!st) break;
-	}
+	} while (c.keepAlive);
 
 	c.socket.close();
 	return st;

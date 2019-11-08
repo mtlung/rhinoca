@@ -210,10 +210,10 @@ struct HttpServer
 
 		roStatus	_processHeader(HttpRequestHeader& header);
 
+		HttpVersion httpVersion;
 		bool		keepAlive = false;
 		bool		supportGZip = false;
-		bool		supportDefalt = false;
-		bool		useChunkEncoding = false;
+		bool		supportChunkEncoding = false;
 
 		CoSocket	socket;
 		AutoPtr<OStream> oStream;

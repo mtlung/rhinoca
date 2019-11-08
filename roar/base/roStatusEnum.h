@@ -82,6 +82,7 @@ roStatusEnum( net_wouldblock )	// EWOULDBLOCK, Operation would block (recoverabl
 
 // Http
 roStatusEnum( http_error )
+roStatusEnum( http_content_size_mismatch )
 roStatusEnum( http_invalid_uri )
 roStatusEnum( http_invalid_chunk_size )
 roStatusEnum( http_bad_header )
