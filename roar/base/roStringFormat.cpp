@@ -250,7 +250,6 @@ roStatus _strFormat(String& str, const roUtf8* format, roSize argCount, ...)
 	va_list vl;
 	va_start(vl, argCount);
 
-#if roCompiler_VarTemplateArg
 	for(roSize i=0; i<argCount; ++i) {
 		FormatArg arg = { va_arg(vl, FUNC), NULL };
 		args.pushBack(arg);
@@ -260,12 +259,6 @@ roStatus _strFormat(String& str, const roUtf8* format, roSize argCount, ...)
 		void* p = (void*)(va_arg(vl, roPtrInt));
 		args[i].param = p;
 	}
-#else
-	for (roSize i = 0; i<argCount; ++i) {
-		FormatArg arg = { va_arg(vl, FUNC), (void*)(va_arg(vl, roPtrInt)) };
-		args.pushBack(arg);
-	}
-#endif
 
 	va_end(vl);
 

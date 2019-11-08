@@ -165,8 +165,6 @@ inline const roPtrInt _strFormatArg(const T& val) {
 
 roStatus _strFormat(String& str, const roUtf8* format, roSize argCount, ...);
 
-#if roCompiler_VarTemplateArg
-
 template<class... TS>
 roStatus strFormat(String& str, const roUtf8* format, const TS&... ts) {
 	// NOTE: Seems MSVC has problem compiling the following code
@@ -174,64 +172,6 @@ roStatus strFormat(String& str, const roUtf8* format, const TS&... ts) {
 	// Therefore the argument order need to be different in Variadic template argument version
 	return _strFormat(str, format, sizeof...(TS), _strFormatFunc(ts)..., _strFormatArg(ts)...);
 }
-
-#else
-
-#define _EXPAND(x) _strFormatFunc(x), _strFormatArg(x)
-
-template<class T1>
-roStatus strFormat(String& str, const roUtf8* format, const T1& t1) {
-	return _strFormat(str, format, 1, _EXPAND(t1));
-}
-
-template<class T1, class T2>
-roStatus strFormat(String& str, const roUtf8* format, const T1& t1, const T2& t2) {
-	return _strFormat(str, format, 2, _EXPAND(t1), _EXPAND(t2));
-}
-
-template<class T1, class T2, class T3>
-roStatus strFormat(String& str, const roUtf8* format, const T1& t1, const T2& t2, const T3& t3) {
-	return _strFormat(str, format, 3, _EXPAND(t1), _EXPAND(t2), _EXPAND(t3));
-}
-
-template<class T1, class T2, class T3, class T4>
-roStatus strFormat(String& str, const roUtf8* format, const T1& t1, const T2& t2, const T3& t3, const T4& t4) {
-	return _strFormat(str, format, 4, _EXPAND(t1), _EXPAND(t2), _EXPAND(t3), _EXPAND(t4));
-}
-
-template<class T1, class T2, class T3, class T4, class T5>
-roStatus strFormat(String& str, const roUtf8* format, const T1& t1, const T2& t2, const T3& t3, const T4& t4, const T5& t5) {
-	return _strFormat(str, format, 5, _EXPAND(t1), _EXPAND(t2), _EXPAND(t3), _EXPAND(t4), _EXPAND(t5));
-}
-
-template<class T1, class T2, class T3, class T4, class T5, class T6>
-roStatus strFormat(String& str, const roUtf8* format, const T1& t1, const T2& t2, const T3& t3, const T4& t4, const T5& t5, const T6& t6) {
-	return _strFormat(str, format, 6, _EXPAND(t1), _EXPAND(t2), _EXPAND(t3), _EXPAND(t4), _EXPAND(t5), _EXPAND(t6));
-}
-
-template<class T1, class T2, class T3, class T4, class T5, class T6, class T7>
-roStatus strFormat(String& str, const roUtf8* format, const T1& t1, const T2& t2, const T3& t3, const T4& t4, const T5& t5, const T6& t6, const T7& t7) {
-	return _strFormat(str, format, 7, _EXPAND(t1), _EXPAND(t2), _EXPAND(t3), _EXPAND(t4), _EXPAND(t5), _EXPAND(t6), _EXPAND(t7));
-}
-
-template<class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8>
-roStatus strFormat(String& str, const roUtf8* format, const T1& t1, const T2& t2, const T3& t3, const T4& t4, const T5& t5, const T6& t6, const T7& t7, const T8& t8) {
-	return _strFormat(str, format, 8, _EXPAND(t1), _EXPAND(t2), _EXPAND(t3), _EXPAND(t4), _EXPAND(t5), _EXPAND(t6), _EXPAND(t7), _EXPAND(t8));
-}
-
-template<class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8, class T9>
-roStatus strFormat(String& str, const roUtf8* format, const T1& t1, const T2& t2, const T3& t3, const T4& t4, const T5& t5, const T6& t6, const T7& t7, const T8& t8, const T9& t9) {
-	return _strFormat(str, format, 9, _EXPAND(t1), _EXPAND(t2), _EXPAND(t3), _EXPAND(t4), _EXPAND(t5), _EXPAND(t6), _EXPAND(t7), _EXPAND(t8), _EXPAND(t9));
-}
-
-template<class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8, class T9, class T10>
-roStatus strFormat(String& str, const roUtf8* format, const T1& t1, const T2& t2, const T3& t3, const T4& t4, const T5& t5, const T6& t6, const T7& t7, const T8& t8, const T9& t9, const T10& t10) {
-	return _strFormat(str, format, 10, _EXPAND(t1), _EXPAND(t2), _EXPAND(t3), _EXPAND(t4), _EXPAND(t5), _EXPAND(t6), _EXPAND(t7), _EXPAND(t8), _EXPAND(t9), _EXPAND(t10));
-}
-
-#undef _EXPAND
-
-#endif	// roCompiler_VarTemplateArg
 
 }	// namespace
 
