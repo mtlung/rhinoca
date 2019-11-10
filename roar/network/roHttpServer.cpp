@@ -49,8 +49,8 @@ struct HttpServerFixedSizeOStream : public OStream
 	}
 
 	CoSocket& _socket;
-	roSize _contentSize;
-	roSize _remainingSize;
+	roUint64 _contentSize;
+	roUint64 _remainingSize;
 };	// HttpServerFixedSizeOStream
 
 struct HttpServerChunkedSizeOStream : public OStream
@@ -184,7 +184,7 @@ Status HttpServer::Connection::_processHeader(HttpRequestHeader& header)
 
 	RingBuffer ringBuf;
 	while(!messageContent) {
-		roSize byteSize = 1024;
+		roSize byteSize = roKB(1);
 		st = ringBuf.write(byteSize, wPtr);
 		if(!st) return st;
 

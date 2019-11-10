@@ -918,6 +918,7 @@ roStatus CoSocket::send(const void* data, roSize len, int flags, roSize* written
 
 			socketMgr->process(_writeEntry);
 			roAssert(_writeEntry.getList() == &socketMgr->socketList);
+			st = Super::send(data, toSend, flags);
 		}
 		// In case winsock never return EINPROGRESS, we divide any huge data into smaller chunk,
 		// other wise even simple memory copy will still make the function block for a long time.

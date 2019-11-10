@@ -625,6 +625,19 @@ roSize roToString(char* str, roSize strBufSize, float val, const char* option)
 #if roCOMPILER_VC
 	ret = _snprintf(str, strBufSize, "%.3g", val);
 #else
+	ret = snprintf(str, strBufSize, "%.3g", val);
+#endif
+
+	return roMaxOf2(ret, 0);
+}
+
+roSize roToString(char* str, roSize strBufSize, double val, const char* option)
+{
+	int ret = 0;
+#if roCOMPILER_VC
+	ret = _snprintf(str, strBufSize, "%.3g", val);
+#else
+	ret = snprintf(str, strBufSize, "%.3g", val);
 #endif
 
 	return roMaxOf2(ret, 0);

@@ -4,21 +4,21 @@
 #include "../base/roUtility.h"
 #include <math.h>
 
-static const float roPI				= 3.14159265358979323846f;	// pi
-static const float roTWO_PI			= 2.0f * roPI;				// pi * 2
-static const float roHALF_PI		= 0.5f * roPI;				// pi / 2
-static const float roONEFOURTH_PI	= 0.25f * roPI;				// pi / 4
-static const float roE				= 2.71828182845904523536f;	// e
-static const float roSQRT_TWO		= 1.41421356237309504880f;	// sqrt( 2 )
-static const float roSQRT_THREE		= 1.73205080756887729352f;	// sqrt( 3 )
-static const float roSQRT_1OVER2	= 0.70710678118654752440f;	// sqrt( 1 / 2 )
-static const float roSQRT_1OVER3	= 0.57735026918962576450f;	// sqrt( 1 / 3 )
-static const float roM_DEG2RAD		= roPI / 180.0f;			// Degrees to radians multiplier
-static const float roM_RAD2DEG		= 180.0f / roPI;			// Radians to degrees multiplier
-static const float roM_SEC2MS		= 1000.0f;					// Seconds to milliseconds multiplier
-static const float roM_MS2SEC		= 0.001f;					// Milliseconds to seconds multiplier
-static const float roINFINITY		= 1e30f;					// Huge number which should be larger than any valid number used
-static const float roFLT_EPSILON	= 1.192092896e-07f;			// Smallest positive number such that 1.0+FLT_EPSILON != 1.0
+constexpr float roPI			= 3.14159265358979323846f;	// pi
+constexpr float roTWO_PI		= 2.0f * roPI;				// pi * 2
+constexpr float roHALF_PI		= 0.5f * roPI;				// pi / 2
+constexpr float roONEFOURTH_PI	= 0.25f * roPI;				// pi / 4
+constexpr float roE				= 2.71828182845904523536f;	// e
+constexpr float roSQRT_TWO		= 1.41421356237309504880f;	// sqrt( 2 )
+constexpr float roSQRT_THREE	= 1.73205080756887729352f;	// sqrt( 3 )
+constexpr float roSQRT_1OVER2	= 0.70710678118654752440f;	// sqrt( 1 / 2 )
+constexpr float roSQRT_1OVER3	= 0.57735026918962576450f;	// sqrt( 1 / 3 )
+constexpr float roM_DEG2RAD		= roPI / 180.0f;			// Degrees to radians multiplier
+constexpr float roM_RAD2DEG		= 180.0f / roPI;			// Radians to degrees multiplier
+constexpr float roM_SEC2MS		= 1000.0f;					// Seconds to milliseconds multiplier
+constexpr float roM_MS2SEC		= 0.001f;					// Milliseconds to seconds multiplier
+constexpr float roINFINITY		= 1e30f;					// Huge number which should be larger than any valid number used
+constexpr float roFLT_EPSILON	= 1.192092896e-07f;			// Smallest positive number such that 1.0+FLT_EPSILON != 1.0
 
 bool roIsNearZero			(float x, float epsilon = roFLT_EPSILON);
 bool roIsNearEqual			(float a, float b, float epsilon = roFLT_EPSILON);
