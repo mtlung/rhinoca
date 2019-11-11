@@ -586,8 +586,10 @@ roStatus BsdSocket::send(const void* data, roSize& len, int flags)
 	const char* p = (const char*)data;
 	while(remain > 0) {
 		int ret = ::send(fd(), p, clamp_cast<int>(remain), flags);
-		if(ret < 0)
+		if(ret < 0) {
+			len = sent;
 			return lastError = getLastError(), errorToStatus(lastError);
+		}
 
 		remain -= ret;
 		sent += ret;
@@ -905,7 +907,9 @@ roStatus CoSocket::send(const void* data, roSize len, int flags, roSize* written
 	roStatus st = roStatus::ok;
 	while(remain > 0) {
 		roSize toSend = roMinOf2(remain, maxChunkSize);
-		st = Super::send(data, toSend, flags);
+		st = Super::send(p, toSend, flags);
+		remain -= toSend;
+		p += toSend;
 
 		if(!st) {
 			if(!inProgress(st))
@@ -918,15 +922,12 @@ roStatus CoSocket::send(const void* data, roSize len, int flags, roSize* written
 
 			socketMgr->process(_writeEntry);
 			roAssert(_writeEntry.getList() == &socketMgr->socketList);
-			st = Super::send(data, toSend, flags);
+			_writeEntry.removeThis();
 		}
 		// In case winsock never return EINPROGRESS, we divide any huge data into smaller chunk,
 		// other wise even simple memory copy will still make the function block for a long time.
 		else if(remain > maxChunkSize)
 			coroutine->yield();
-
-		remain -= toSend;
-		p += toSend;
 
 		if (written)
 			break;
@@ -937,7 +938,6 @@ roStatus CoSocket::send(const void* data, roSize len, int flags, roSize* written
 	else if (st && remain != 0)
 		st = roStatus::net_error;
 
-	_writeEntry.removeThis();
 	return st;
 }
 

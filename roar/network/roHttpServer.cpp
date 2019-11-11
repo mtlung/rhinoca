@@ -61,7 +61,7 @@ struct HttpServerChunkedSizeOStream : public OStream
 	{
 		char buf[32];
 		int written = snprintf(buf, sizeof(buf), "%llx\r\n", bytesToWrite);
-		roAssert(written < sizeof(buf));
+		roAssert(written < (int)sizeof(buf));
 		if(written < 0)
 			return roStatus::string_encoding_error;
 		roStatus st = _socket.send(buf, written);
@@ -160,12 +160,12 @@ roStatus HttpServer::Connection::response(HttpResponseHeader& header, OStream*& 
 
 roStatus HttpServer::Connection::response(HttpResponseHeader& header, OStream*& os, roSize contentSize)
 {
-	roStatus st = responseCommon(*this, header, &contentSize);
-	if (!st) return st;
-
 	// Ignore contentSize if use gzip
 	if (supportGZip)
 		return response(header, os);
+
+	roStatus st = responseCommon(*this, header, &contentSize);
+	if (!st) return st;
 
 	// TODO: Resue oStream if the type was the same
 	oStream = std::move(_allocator.newObj<HttpServerFixedSizeOStream>(socket, contentSize));
