@@ -130,7 +130,7 @@ struct FlowRegulator
 
 	bool send(TlsStruct* tls)
 	{
-		ScopeRecursiveLock lock(_mutex);
+		roScopeLock(_mutex);
 		if(!_buffer.pushBack(tls->serializeBuf.bytePtr(), tls->serializeBuf.sizeInByte()))
 			return false;
 
@@ -147,7 +147,7 @@ struct FlowRegulator
 
 	bool flush()
 	{
-		ScopeRecursiveLock lock(_mutex);
+		roScopeLock(_mutex);
 
 		roSize size = _buffer.sizeInByte();
 		roSize sizeSend = size;
@@ -345,7 +345,7 @@ void TicketSystem::submit(TlsStruct* tls, roUint64 ticket, char cmd, void* memAd
 {
 	Info info = { ticket, cmd, memAddr, memSize, callstackHash };
 
-	ScopeRecursiveLock lock(_callstackHashMutex);
+	roScopeLock(_callstackHashMutex);
 
 	// Out of order submission, save it for later.
 	if(ticket == _currentTicket) {
@@ -360,7 +360,7 @@ void TicketSystem::submit(TlsStruct* tls, roUint64 ticket, char cmd, void* memAd
 
 void TicketSystem::voidTicket(TlsStruct* tls, roUint64 ticket)
 {
-	ScopeRecursiveLock lock(_callstackHashMutex);
+	roScopeLock(_callstackHashMutex);
 	if(ticket == _currentTicket)
 		++_currentTicket;
 	else
@@ -522,7 +522,7 @@ static void _send(TlsStruct* tls, roUint64 ticket, char cmd, void* memAddr, roSi
 	if(cmd == 'a' || cmd == 'V') {
 		roUint64 count = tls->stackWalker.stackWalk(&tls->stackBuf[0], roCountof(tls->stackBuf), &hash);
 
-		ScopeRecursiveLock lock(_callstackHashMutex);
+		roScopeLock(_callstackHashMutex);
 		// The first time we save this particular callstack, send it to the client
 		if(_firstSeen(hash)) {
 			char c = 'h';

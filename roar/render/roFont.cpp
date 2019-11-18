@@ -24,7 +24,7 @@ Font::~Font()
 
 void FontManager::registerFontTypeface(const char* typeface, const char* fontUri)
 {
-	ScopeLock lock(_mutex);
+	roScopeLock(_mutex);
 	_FontTypeface f = { fontUri, typeface };
 	_mapping.pushBack(f);
 }
@@ -35,7 +35,7 @@ FontPtr FontManager::getFont(const char* typeface)
 		return NULL;
 
 	StringHash h = stringLowerCaseHash(typeface);
-	ScopeLock lock(_mutex);
+	roScopeLock(_mutex);
 	for(const _FontTypeface& i : _mapping) {
 		if(i.typeface.lowerCaseHash() == h)
 			return roSubSystems->resourceMgr->loadAs<Font>(i.fontUri.c_str());

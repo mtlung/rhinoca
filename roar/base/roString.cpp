@@ -526,7 +526,7 @@ struct ConstStringHashTable
 
 	Node& find(StringHash hash) const
 	{
-		ScopeLock lock(_mutex);
+		roScopeLock(_mutex);
 
 		const roSize index = hash % _buckets.size();
 		for(Node* n = _buckets[index]; n; n = n->next) {
@@ -545,7 +545,7 @@ struct ConstStringHashTable
 		const StringHash hash = stringHash(str, count);
 		const roSize length = count == 0 ? roStrLen(str) : count;
 
-		ScopeLock lock(_mutex);
+		roScopeLock(_mutex);
 		const roSize index = hash % _buckets.size();
 
 		// Find any string with the same hash value
@@ -582,7 +582,7 @@ struct ConstStringHashTable
 		if(--node.refCount != 0)
 			return;
 
-		ScopeLock lock(_mutex);
+		roScopeLock(_mutex);
 		const roSize index = node.hash % _buckets.size();
 		Node* last = NULL;
 

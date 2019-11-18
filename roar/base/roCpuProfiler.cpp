@@ -121,7 +121,7 @@ void CallstackNode::reset()
 {
 	CallstackNode* n1, *n2;
 	{	// Race with CpuProfiler::begin(), CpuProfiler::end()
-		ScopeRecursiveLock lock(mutex);
+		roScopeLock(mutex);
 		callCount = 0;
 		_inclusiveTime = 0;
 		_peakInclusiveTime = 0;
@@ -151,7 +151,7 @@ float CallstackNode::selfTime() const
 	float sum = 0;
 	const CallstackNode* n = static_cast<CallstackNode*>(firstChild);
 	while(n) {
-		ScopeRecursiveLock lock(n->mutex);
+		roScopeLock(n->mutex);
 		sum += n->inclusiveTime();
 		n = n->sibling;
 	}
@@ -329,7 +329,7 @@ String CpuProfiler::report(roSize nameLength, float skipMargin) const
 	if(_frameCount) do
 	{
 		// Race with ThreadedCpuProfiler::begin() and ThreadedCpuProfiler::end()
-		ScopeRecursiveLock lock(n->mutex);
+		roScopeLock(n->mutex);
 
 		roSize callDepth = n->callDepth();
 		indentNodes.resize(roMaxOf2(callDepth + 1, indentNodes.size()), NULL);
@@ -394,7 +394,7 @@ void CpuProfiler::_begin(const char name[])
 	CallstackNode* node = _tls.currentNode();
 
 	// Race with CpuProfiler::reset(), CpuProfiler::defaultReport()
-	ScopeRecursiveLock lock(node->mutex);
+	ScopeLock<decltype(node->mutex)> lock(node->mutex);
 
 	if(name != node->name) {
 		CallstackNode* tmp = node->getChildByName(name);
@@ -415,7 +415,7 @@ void CpuProfiler::_end()
 	CallstackNode* node = _tls.currentNode();
 
 	// Race with CpuProfiler::reset(), CpuProfiler::defaultReport()
-	ScopeRecursiveLock lock(node->mutex);
+	roScopeLock(node->mutex);
 
 	// NOTE: Is is possible that _end() is called without a prior _begin() because of the 'enable' option
 	if(node->recursionCount == 0)

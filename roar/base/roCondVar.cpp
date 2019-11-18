@@ -192,7 +192,7 @@ bool CondVar::waitNoLock(roUint32 milliseconds)
 
 void CondVar::wait()
 {
-	ScopeLock lock(*this);
+	roScopeLock(*this);
 	waitNoLock(INFINITE);
 }
 

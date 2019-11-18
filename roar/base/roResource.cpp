@@ -57,7 +57,7 @@ ResourcePtr ResourceManager::load(const char* uri)
 {
 	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
-	ScopeLock lock(_mutex);
+	roScopeLock(_mutex);
 
 	Resource* r = _resources.find(uri);
 
@@ -100,7 +100,7 @@ ResourcePtr ResourceManager::load(const char* uri)
 		r->state = Resource::Loading;
 		r->loadFunc = loadFunc;
 
-		lock.unlockAndCancel();
+		roScopeUnlockOnly(_mutex);
 
 		if(!loadFunc || !loadFunc(this, r)) {
 			r->state = Resource::Aborted;
@@ -119,7 +119,7 @@ ResourcePtr ResourceManager::load(Resource* r, LoadFunc loadFunc)
 
 	if(!r || !loadFunc) return NULL;
 
-	ScopeLock lock(_mutex);
+	roScopeLock(_mutex);
 
 	if(!_resources.insertUnique(*r)) {
 		roLog("error", "ResourceManager::load: resource with uri '%s' already exist\n", r->uri().c_str());
@@ -135,7 +135,7 @@ ResourcePtr ResourceManager::load(Resource* r, LoadFunc loadFunc)
 		r->state = Resource::Loading;
 		r->loadFunc = loadFunc;
 
-		lock.unlockAndCancel();
+		roScopeUnlockOnly(_mutex);
 
 		if(!loadFunc(this, r)) {
 			r->state = Resource::Aborted;
@@ -150,7 +150,7 @@ ResourcePtr ResourceManager::load(Resource* r, LoadFunc loadFunc)
 
 Resource* ResourceManager::forget(const char* uri)
 {
-	ScopeLock lock(_mutex);
+	roScopeLock(_mutex);
 
 	if(Resource* r = _resources.find(uri)) {
 		r->removeThis();
@@ -163,7 +163,7 @@ Resource* ResourceManager::forget(const char* uri)
 
 void ResourceManager::tick()
 {
-	ScopeLock lock(_mutex);
+	roScopeLock(_mutex);
 
 	// Every resource will get cooler on every update
 	for(Resource* r = _resources.findMin(); r != NULL; r = r->next()) {
@@ -173,7 +173,7 @@ void ResourceManager::tick()
 
 void ResourceManager::collectInfrequentlyUsed()
 {
-	ScopeLock lock(_mutex);
+	roScopeLock(_mutex);
 
 	for(Resource* r = _resources.findMin(); r != NULL; )
 	{
