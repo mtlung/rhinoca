@@ -3,6 +3,7 @@
 
 #include "roNonCopyable.h"
 #include "../platform/roOS.h"
+#include <type_traits>
 
 #ifdef roUSE_PTHREAD
 #	include <pthread.h>
@@ -114,84 +115,56 @@ struct Cancelable
 	\code
 	Mutex mutex;
 	// ...
-	{	ScopeLock lock(mutex);
+	{	ScopeLock<Mutex> lock(mutex);
 		// We now protected by mutex, let's do something
 		// ...
 	}	// mutex get unlocked when out of scope
 	\endcode
  */
+template<class T>
 struct ScopeLock : public Cancelable, private NonCopyable
 {
-	explicit ScopeLock(Mutex& m) : Cancelable(), m(&m) { m.lock(); }
-	explicit ScopeLock(Mutex* m) : Cancelable(), m(m) { if(m) m->lock(); else cancel(); }
+	explicit ScopeLock(T& m) : Cancelable(), m(&m) { m.lock(); }
+	explicit ScopeLock(T* m) : Cancelable(), m(m) { if(m) m->lock(); else cancel(); }
 	~ScopeLock() { unlockAndCancel(); }
-	void swapMutex(Mutex& other) { m->unlock(); m = &other; m->lock(); }
-	Mutex& mutex() { return *m; }
+	void swapMutex(T& other) { m->unlock(); m = &other; m->lock(); }
+	T& mutex() { return *m; }
 	void unlockAndCancel() { if(!isCanceled()) m->unlock(); cancel(); }
 
-	Mutex* m;
+	T* m;
 };	// ScopeLock
 
 /// Unlocking mutex in scope.
+template<class T>
 struct ScopeUnlock : public Cancelable, private NonCopyable
 {
-	explicit ScopeUnlock(Mutex& m) : Cancelable(), m(&m) { m.unlock(); }
-	explicit ScopeUnlock(Mutex* m) : Cancelable(), m(m) { if(m) m->unlock(); else cancel(); }
+	explicit ScopeUnlock(T& m) : Cancelable(), m(&m) { m.unlock(); }
+	explicit ScopeUnlock(T* m) : Cancelable(), m(m) { if(m) m->unlock(); else cancel(); }
 	~ScopeUnlock() { lockAndCancel(); }
-	Mutex& mutex() { return *m; }
+	T& mutex() { return *m; }
 	void lockAndCancel() { if(!isCanceled()) m->lock(); cancel(); }
 
-	Mutex* m;
+	T* m;
 };	// ScopeUnlock
 
 /// Unlocking mutex in scope.
 /// \note Make sure the mutex is locked before ScopeUnlockOnly try to unlock it.
+template<class T>
 struct ScopeUnlockOnly : public Cancelable, private NonCopyable
 {
-	explicit ScopeUnlockOnly(Mutex& m) : Cancelable(), m(&m) { }
-	explicit ScopeUnlockOnly(Mutex* m) : Cancelable(), m(m) { if(!m) cancel(); }
+	explicit ScopeUnlockOnly(T& m) : Cancelable(), m(&m) { }
+	explicit ScopeUnlockOnly(T* m) : Cancelable(), m(m) { if(!m) cancel(); }
 	~ScopeUnlockOnly() { if(!isCanceled()) m->unlock(); }
-	Mutex& mutex() { return *m; }
+	T& mutex() { return *m; }
 
-	Mutex* m;
+	T* m;
 };	// ScopeUnlockOnly
-
-/// Lock recursive mutex in scope.
-struct ScopeRecursiveLock : public Cancelable, private NonCopyable
-{
-	explicit ScopeRecursiveLock(RecursiveMutex& m) : Cancelable(), m(&m) { m.lock(); }
-	explicit ScopeRecursiveLock(RecursiveMutex* m) : Cancelable(), m(m) { if(m) m->lock(); else cancel(); }
-	~ScopeRecursiveLock() { unlockAndCancel(); }
-	void swapMutex(RecursiveMutex& other) { m->unlock(); m = &other; m->lock(); }
-	RecursiveMutex& mutex() { return *m; }
-	void unlockAndCancel() { if(!isCanceled()) m->unlock(); cancel(); }
-
-	RecursiveMutex* m;
-};	// ScopeRecursiveLock
-
-/// Unlocking recursive mutex in scope.
-struct ScopeRecursiveUnlock : public Cancelable, private NonCopyable
-{
-	explicit ScopeRecursiveUnlock(RecursiveMutex& m) : Cancelable(), m(&m) { m.unlock(); }
-	explicit ScopeRecursiveUnlock(RecursiveMutex* m) : Cancelable(), m(m) { if(m) m->unlock(); else cancel(); }
-	~ScopeRecursiveUnlock() { lockAndCancel(); }
-	RecursiveMutex& mutex() { return *m; }
-	void lockAndCancel() { if(!isCanceled()) m->lock(); cancel(); }
-
-	RecursiveMutex* m;
-};	// ScopeRecursiveUnlock
-
-/// Unlocking recursive mutex in scope.
-struct ScopeRecursiveUnlockOnly : public Cancelable, private NonCopyable
-{
-	explicit ScopeRecursiveUnlockOnly(RecursiveMutex& m) : Cancelable(), m(&m) { }
-	explicit ScopeRecursiveUnlockOnly(RecursiveMutex* m) : Cancelable(), m(m) { if(!m) cancel(); }
-	~ScopeRecursiveUnlockOnly() { if(!isCanceled()) m->unlock(); }
-	RecursiveMutex& mutex() { return *m; }
-
-	RecursiveMutex* m;
-};	// ScopeRecursiveUnlockOnly
 
 }	// namespace ro
 
 #endif	// __roMutex_h__
+
+/// Macros to ease the use of ScopeLock family
+#define roScopeLock(m)			::ro::ScopeLock<std::remove_reference_t<decltype(m)> > scopeLock##__LINE__(m);
+#define roScopeUnlock(m)		::ro::ScopeUnlock<std::remove_reference_t<decltype(m)> > scopeUnlock##__LINE__(m);
+#define roScopeUnlockOnly(m)	::ro::ScopeUnlockOnly<std::remove_reference_t<decltype(m)> > scopeUnlockOnly##__LINE__(m);
