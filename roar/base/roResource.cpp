@@ -57,7 +57,7 @@ ResourcePtr ResourceManager::load(const char* uri)
 {
 	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
 
-	roScopeLock(_mutex);
+	ScopeLock<Mutex> lock(_mutex);
 
 	Resource* r = _resources.find(uri);
 
@@ -100,7 +100,7 @@ ResourcePtr ResourceManager::load(const char* uri)
 		r->state = Resource::Loading;
 		r->loadFunc = loadFunc;
 
-		roScopeUnlockOnly(_mutex);
+		lock.unlockAndCancel();
 
 		if(!loadFunc || !loadFunc(this, r)) {
 			r->state = Resource::Aborted;
@@ -119,7 +119,7 @@ ResourcePtr ResourceManager::load(Resource* r, LoadFunc loadFunc)
 
 	if(!r || !loadFunc) return NULL;
 
-	roScopeLock(_mutex);
+	ScopeLock<Mutex> lock(_mutex);
 
 	if(!_resources.insertUnique(*r)) {
 		roLog("error", "ResourceManager::load: resource with uri '%s' already exist\n", r->uri().c_str());
@@ -135,7 +135,7 @@ ResourcePtr ResourceManager::load(Resource* r, LoadFunc loadFunc)
 		r->state = Resource::Loading;
 		r->loadFunc = loadFunc;
 
-		roScopeUnlockOnly(_mutex);
+		lock.unlockAndCancel();
 
 		if(!loadFunc(this, r)) {
 			r->state = Resource::Aborted;
