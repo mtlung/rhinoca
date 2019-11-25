@@ -59,6 +59,9 @@ struct HttpServerChunkedSizeOStream : public OStream
 
 	virtual	Status write(const void* buffer, roUint64 bytesToWrite) override
 	{
+		if (bytesToWrite == 0)
+			return roStatus::ok;
+
 		char buf[32];
 		int written = snprintf(buf, sizeof(buf), "%llx\r\n", bytesToWrite);
 		roAssert(written < (int)sizeof(buf));

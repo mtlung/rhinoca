@@ -1,0 +1,120 @@
+#include "../network/roSocket.h"
+
+#if roOS_WIN
+#	include <winsock2.h>
+#endif
+
+namespace ro {
+
+roStatus ioEventInit()
+{
+	BsdSocket::initApplication();
+	return roStatus::ok;
+}
+
+roStatus ioEventRegister(void* platformSpecificContext)
+{
+	return roStatus::ok;
+}
+
+struct IoEventEntry
+{
+	void* fd;
+	Coroutine* coroutine;
+};
+
+typedef TinyArray<IoEventEntry, FD_SETSIZE> IoEvents;
+thread_local IoEvents* gReadEvents = NULL, * gWriteEvents = NULL;
+
+roStatus ioEventRead(const void* ioCtx)
+{
+	const IoEventEntry* e = reinterpret_cast<const IoEventEntry*>(ioCtx);
+	gReadEvents->pushBack(*e);
+	e->coroutine->suspendWithId((void*)ioEventRead);
+	return roStatus::ok;
+}
+
+roStatus ioEventWrite(const void* ioCtx)
+{
+	const IoEventEntry* e = reinterpret_cast<const IoEventEntry*>(ioCtx);
+	gWriteEvents->pushBack(*e);
+	e->coroutine->suspendWithId((void*)ioEventWrite);
+	return roStatus::ok;
+}
+
+void ioEventDispatch(const bool& keepRun, const float& _timeAllowed)
+{
+	IoEvents readEvents, writeEvents;
+	roAssert(!gReadEvents);
+	roAssert(!gWriteEvents);
+	gReadEvents = &readEvents;
+	gWriteEvents = &writeEvents;
+
+	fd_set readSet, writeSet, errorSet;
+	Coroutine* coroutine = Coroutine::current();
+
+	while (keepRun) {
+		StopWatch stopWatch;
+		const float timeAllowed = roMaxOf2(0.0f, _timeAllowed);
+		float t = timeAllowed;
+
+		do {
+			timeval timeout;
+			timeout.tv_sec = long(t);
+			timeout.tv_usec = long((t - long(t)) * 1000000);
+
+			roAssert(readEvents.size() < FD_SETSIZE);	// TODO: Handle this limitation
+			roAssert(writeEvents.size() < FD_SETSIZE);
+
+			FD_ZERO(&readSet);
+			FD_ZERO(&writeSet);
+			FD_ZERO(&errorSet);
+			for (auto&& i : readEvents)
+				FD_SET((SOCKET)i.fd, &readSet);
+			for (auto&& i : writeEvents)
+				FD_SET((SOCKET)i.fd, &writeSet);
+
+			int ret = 0;
+			// In windows select on empty sets result error
+			if (!readEvents.isEmpty() || !writeEvents.isEmpty())
+				ret = ::select(0, &readSet, &writeSet, &errorSet, &timeout);
+
+			roAssert(ret >= 0);
+
+			if (ret > 0) {
+				for (roSize i=0; i < readEvents.size();) {
+					IoEventEntry& e = readEvents[i];
+					if (FD_ISSET(e.fd, &readSet)) {
+						e.coroutine->resumeWithId((void*)ioEventRead);
+						readEvents.removeBySwapAt(i);
+						continue;
+					}
+					++i;
+				}
+				for (roSize i=0; i < writeEvents.size();) {
+					IoEventEntry& e = writeEvents[i];
+					if (FD_ISSET(e.fd, &writeSet)) {
+						e.coroutine->resumeWithId((void*)ioEventWrite);
+						writeEvents.removeBySwapAt(i);
+						continue;
+					}
+					++i;
+				}
+			}
+			else
+				coroutine->suspendWithId((void*)ioEventDispatch);
+
+			t = roMaxOf2(timeAllowed - stopWatch.getFloat(), 0.0f);
+		} while (t > 0);
+	}
+
+	gReadEvents = gWriteEvents = NULL;
+}
+
+roStatus ioEventShutdown()
+{
+	BsdSocket::closeApplication();
+	return roStatus::ok;
+}
+
+}	// namespace ro

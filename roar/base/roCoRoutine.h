@@ -17,6 +17,11 @@ struct CoroutineScheduler;
 // Make sure run() has finished before Coroutine is deleted.
 // Web server written in coroutine:
 // http://matt.might.net/articles/pipelined-nonblocking-extensible-web-server-with-coroutines/
+// Coroutine intro
+// http://blog.panicsoftware.com/coroutines-introduction/
+// Comparable library
+// https://swtch.com/libtask/
+// http://state-threads.sourceforge.net/
 struct Coroutine : public ListNode<Coroutine>
 {
 	Coroutine();
@@ -76,6 +81,8 @@ struct CoroutineScheduler
 	roStatus	init				(roSize statckSize = roMB(1));
 	void		add					(Coroutine& coroutine);
 	roStatus	add					(const std::function<void()>& func, const char* debugName="unamed std::function", size_t stackSize = roMB(1));
+	void		addFront			(Coroutine& coroutine);
+	roStatus	addFront			(const std::function<void()>& func, const char* debugName="unamed std::function", size_t stackSize = roMB(1));
 	void		addSuspended		(Coroutine& coroutine);
 	roStatus	update				(unsigned timeSliceMilliSeconds=0, roUint64* nextUpdateTime=nullptr);
 	void		runTillAllFinish	(float maxFps=60.f);
@@ -118,6 +125,13 @@ roStatus coRun(const std::function<void()>& func, const char* debugName = "uname
 void coSleep(float seconds);
 void coYield();
 void coYieldFrame();
+
+roStatus ioEventInit();
+roStatus ioEventRegister(void* fdCtx);
+roStatus ioEventRead(const void* ioCtx);
+roStatus ioEventWrite(const void* ioCtx);
+void ioEventDispatch(const bool& keepRun, const float& timeAllowed);	// Will suspend current coroutine, you need to remember it using Coroutine::current(); and resume it later on
+roStatus ioEventShutdown();
 
 }	// namespace ro
 

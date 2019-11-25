@@ -21,14 +21,16 @@ TEST_FIXTURE(CoroutineTest, empty)
 
 	{	CoroutineScheduler scheduler;
 		CHECK_EQUAL(roStatus::already_initialized, scheduler.init());
+		scheduler.stop();
 	}
 
 	{	CoroutineScheduler scheduler;
 		CHECK_EQUAL(roStatus::already_initialized, scheduler.init());
 		CHECK_EQUAL(roStatus::not_initialized, scheduler.update());
+		scheduler.stop();
 	}
 
-	DymmyCoroutine producer;
+	DymmyCoroutine dummy;
 }
 
 namespace {
@@ -38,21 +40,19 @@ struct Consumer;
 
 struct Producer : public Coroutine
 {
-	Producer() : done(false), yieldValue(0) {}
 	virtual void run() override;
 
-	bool done;
-	int yieldValue;
-	Consumer* consumer;
+	bool done = false;
+	int yieldValue = 0;
+	Consumer* consumer = nullptr;
 };
 
 struct Consumer : public Coroutine
 {
-	Consumer() : done(false) {}
 	virtual void run() override;
 
-	bool done;
-	Producer* producer;
+	bool done = false;
+	Producer* producer = nullptr;
 	Array<int> result;
 };
 
@@ -171,127 +171,45 @@ TEST_FIXTURE(CoroutineTest, spawnCoroutineInCoroutine)
 
 #include "../../roar/network/roSocket.h"
 
-namespace {
-
-struct SocketTestServer : public Coroutine
+TEST_FIXTURE(CoroutineTest, socket)
 {
-	virtual void run() override
-	{{
-		roUtf8 buf[128];
-		roSize readSize = sizeof(buf);
-		if(!s.receive(buf, readSize))
-			roLog(NULL, "id:%u, read fail", id);
-		else {
-			buf[readSize] = 0;
-//			printf("id:%u, content: %s", id, buf);
-		}
+	CoSocket a;
+	SockAddr anyAddr(SockAddr::ipAny(), 80);
 
-		s.close();
-	}	delete this;
-	}	// run()
+	unsigned count = 1024;
+	roVerify(a.create(BsdSocket::TCP));
+	roVerify(a.bind(anyAddr));
+	roVerify(a.listen(count));
 
-	CoSocket s;
-	roSize id;
-};
+	roSize inUseCount = 0;
+	for (roSize i = 0; i < count; ++i) {
+		CHECK(coRun([&]() {
+			++inUseCount;
 
-static DefaultAllocator _allocator;
+			CoSocket s;
+			CHECK(a.accept(s));
 
-struct SocketTestServerAcceptor : public Coroutine
-{
-	SocketTestServerAcceptor() : expectedConnectionCount(0) {}
+			roUtf8 buf[128];
+			roSize readSize = sizeof(buf);
+			CHECK(s.receive(buf, readSize));
+			CHECK(s.close());
 
-	virtual void run() override
-	{{
-		CoSocket s;
-		SockAddr anyAddr(SockAddr::ipAny(), 80);
+			--inUseCount;
+		}, "", roKB(8)));
+	}
 
-		roVerify(s.create(BsdSocket::TCP));
-		roVerify(s.bind(anyAddr));
-		roVerify(s.listen(1024 * 1024));
-
-		roSize spawnCount = 0;
-		while(expectedConnectionCount) {
-			AutoPtr<SocketTestServer> server(_allocator.newObj<SocketTestServer>());
-			if(s.accept(server->s)) {
-				server->id = spawnCount++;
-				scheduler->add(*server);
-				server.unref();
-				--expectedConnectionCount;
-			}
-			else {
-				spawnCount = spawnCount;
-			}
-		}
-	}	delete this;
-	}	// run()
-
-	roSize expectedConnectionCount;
-};
-
-struct SocketTestClient : public Coroutine
-{
-	SocketTestClient() : done(false) {}
-
-	virtual void run() override
-	{
-		static roSize sendFailCount = 0;
-		static roSize sendSuccessCount = 0;
-
+	for (roSize i = 0; i < count; ++i) {
 		CoSocket s;
 		SockAddr addr(SockAddr::ipLoopBack(), 80);
 
-		roVerify(s.create(BsdSocket::TCP));
-		if(s.connect(addr, 100000))
-			roLog(NULL, "id: %u - connect success!\n", id);
-		else
-			roLog(NULL, "id: %u - connect fail!\n", id);
+		CHECK(s.create(BsdSocket::TCP));
+		CHECK(s.connect(addr, 100000));
 
 		const roUtf8* request = "GET / HTTP/1.1\r\n\r\n";
 		roSize len = roStrLen(request);
-		if(!s.send(request, len)) {
-			++sendFailCount;
-			roLog(NULL, "id: %u - send fail, count: %u\n", id, sendFailCount);
-		}
-		else {
-			++sendSuccessCount;
-			roLog(NULL, "id: %u - send success, count: %u\n", id, sendSuccessCount);
-		}
-
-		s.close();
-		done = true;
-	}	// run()
-
-	roSize id;
-	bool done;
-};
-
-}	// namespace
-
-TEST_FIXTURE(CoroutineTest, socket)
-{
-	CoSocket::initApplication();
-
-	CoroutineScheduler& scheduler = *CoroutineScheduler::perThreadScheduler();
-
-	SocketTestServerAcceptor* server = new SocketTestServerAcceptor;
-	server->expectedConnectionCount = 1 * 1024;
-	scheduler.add(*server);
-
-	Array<SocketTestClient> clients;
-	clients.resize(server->expectedConnectionCount);
-	for(roSize i=0; i<clients.size(); ++i) {
-		clients[i].id = i;
-		scheduler.add(clients[i]);
+		CHECK(s.send(request, len));
 	}
-	
-	while(true) {
-		bool stillBusy = false;
-		for (roSize i = 0; i<clients.size(); ++i) {
-			if(!clients[i].done)
-				coYield();
-			stillBusy |= (!clients[i].done);
-		}
-		if(!stillBusy)
-			break;
-	}
+
+	while (inUseCount)
+		coYield();
 }

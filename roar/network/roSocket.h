@@ -183,16 +183,13 @@ struct BsdSocket : NonCopyable
 // Private
 	void _setFd(const socket_t& f);
 
-	roStatus	_setOption			(int level, int opt, const void* p, roSize size);
+	roStatus	_setOption			(int level, int opt, const void* p, roSize size) const;
 	SocketType	_socketType;
 	char		_fd[sizeof(void*)];	///< File descriptor
 	bool		_isBlockingMode;
 };	// BsdSocket
 
 }	// namespace ro
-
-#include "../base/roLinkList.h"
-#include "../base/roMemory.h"
 
 namespace ro {
 
@@ -206,41 +203,23 @@ struct CoSocket : public BsdSocket
 	CoSocket();
 	~CoSocket();
 
-	roStatus	create			(SocketType type);
-	roStatus	setBlocking		(bool block);
-	roStatus	accept			(CoSocket& socket) const;
-	roStatus	connect			(const SockAddr& endPoint, float timeout=0);
+	roStatus	create(SocketType type);
+	roStatus	setBlocking(bool block);
+	roStatus	accept(CoSocket& socket) const;
+	roStatus	connect(const SockAddr& endPoint, float timeout = 0);
 
 	// If written is null, send will try to send all data in one call, fail otherwise
 	// If written is non-null, it will return as quick as possible and tell you how much data written
-	roStatus	send			(const void* data, roSize len, int flags=0, roSize* written=NULL);
+	roStatus	send(const void* data, roSize len, int flags = 0, roSize* written = NULL);
 
-	roStatus	receive			(void* buf, roSize& len, int flags=0);
-	roStatus	sendTo			(const void* data, roSize len, const SockAddr& destEndPoint, int flags=0);
-	roStatus	receiveFrom		(void* buf, roSize& len, SockAddr& srcEndPoint, float timeout=0.f, int flags=0);
+	roStatus	receive(void* buf, roSize& len, int flags = 0);
+	roStatus	sendTo(const void* data, roSize len, const SockAddr& destEndPoint, int flags = 0);
+	roStatus	receiveFrom(void* buf, roSize& len, SockAddr& srcEndPoint, float timeout = 0.f, int flags = 0);
 
-	roStatus	close			();
-
-	bool		isBlockingMode	() const;
+	roStatus	close();
 
 // Private
-	enum Operation {
-		Connect,
-		Accept,
-		Send,
-		Receive
-	};
-
-	struct Entry : public ListNode<Entry>
-	{
-		socket_t	fd;
-		Operation	operation;
-		Coroutine*	coro;
-	};
-
-	bool			_isCoBlockingMode;
-	mutable Entry	_readEntry;
-	mutable Entry	_writeEntry;
+	mutable Coroutine* blockingCoroutine = NULL;
 };	// CoSocket
 
 }	// namespace ro

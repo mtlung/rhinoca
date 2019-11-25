@@ -4,6 +4,7 @@
 #include "roSocket.h"
 #include "../base/roLinkList.h"
 #include "../base/roMap.h"
+#include "../base/roMemory.h"
 #include "../base/roString.h"
 #include <functional>
 

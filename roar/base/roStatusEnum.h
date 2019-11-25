@@ -56,6 +56,7 @@ roStatusEnum( file_ended )
 roStatusEnum( file_error_delete )
 
 roStatusEnum( file_is_empty )
+roStatusEnum( file_disk_full )
 
 // Network
 roStatusEnum( net_error )
@@ -71,7 +72,6 @@ roStatusEnum( net_connreset )	// ECONNRESET, Connection reset by peer
 roStatusEnum( net_connrefused )	// ECONNREFUSED, Connection refused
 roStatusEnum( net_hostdown )	// EHOSTDOWN, Host is down
 roStatusEnum( net_hostunreach )	// EHOSTUNREACH, No route to host
-roStatusEnum( net_inprogress )	// EINPROGRESS, Operation now in progress
 roStatusEnum( net_netdown )		// ENETDOWN, Network is down
 roStatusEnum( net_netreset )	// ENETRESET, Network dropped connection on reset
 roStatusEnum( net_nobufs )		// ENOBUFS, No buffer space available (recoverable)

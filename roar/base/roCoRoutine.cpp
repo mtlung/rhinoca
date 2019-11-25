@@ -5,6 +5,7 @@
 #include "roAtomic.h"
 #include "roLog.h"
 #include "roStackWalker.h"
+#include "roUtility.h"
 
 #ifdef _MSC_VER
 #	pragma warning(disable : 4611) // interaction between '_setjmp' and C++ object destruction is non-portable
@@ -51,6 +52,8 @@ struct CoSleepManager : public BgCoroutine
 
 		Entry entry = { timeToWake, &co };
 		sortedEntries.insertSorted(entry, Entry::less);
+
+		resumeWithId(this);
 	}
 
 	virtual void run() override
@@ -129,7 +132,6 @@ void coSleep(float seconds)
 
 	if(coroutine && sleepMgr) {
 		sleepMgr->add(*coroutine, seconds);
-		sleepMgr->resumeWithId(sleepMgr);
 		coroutine->suspendWithId(sleepMgr);
 	}
 }
@@ -192,28 +194,24 @@ CoroutineScheduler::CoroutineScheduler()
 
 CoroutineScheduler::~CoroutineScheduler()
 {
-	stop();
+	roAssert(!_keepRun && !_bgKeepRun && !_inUpdate);
 }
-
-extern BgCoroutine* createSocketManager();
 
 thread_local AtomicInteger _CoroutineSchedulerInitCount = 0;
 
 roStatus CoroutineScheduler::init(roSize stackSize)
 {
-	if(_CoroutineSchedulerInitCount > 0)
+	if(++_CoroutineSchedulerInitCount > 1)
 		return roStatus::already_initialized;
 
-	++_CoroutineSchedulerInitCount;
 	_keepRun = true;
 	_bgKeepRun = true;
 	_stack.resizeNoInit(stackSize);
 	coro_create(&context, NULL, NULL, NULL, 0);
 
 	add(*createSleepManager());
-	add(*createSocketManager());
 
-	return roStatus::ok;
+	return ioEventInit();
 }
 
 void CoroutineScheduler::add(Coroutine& coroutine)
@@ -221,7 +219,12 @@ void CoroutineScheduler::add(Coroutine& coroutine)
 	_resumeList.pushBack(coroutine);
 }
 
-roStatus CoroutineScheduler::add(const std::function<void()>& func, const char* debugName, size_t stackSize)
+void CoroutineScheduler::addFront(Coroutine& coroutine)
+{
+	_resumeList.pushFront(coroutine);
+}
+
+static roStatus coroutineSchedulerAdd(CoroutineScheduler& self, const std::function<void()>& func, const char* debugName, size_t stackSize, bool front)
 {
 	struct FunctorCoroutine : public Coroutine, private NonCopyable
 	{
@@ -233,9 +236,19 @@ roStatus CoroutineScheduler::add(const std::function<void()>& func, const char* 
 	roStatus st = c->initStack(stackSize); if(!st) return st;
 	c->f = func;
 	c->debugName = debugName;
-	add(*c);
+	front ? self.addFront(*c) : self.add(*c);
 
 	return st;
+}
+
+roStatus CoroutineScheduler::add(const std::function<void()>& func, const char* debugName, size_t stackSize)
+{
+	return coroutineSchedulerAdd(*this, func, debugName, stackSize, false);
+}
+
+roStatus CoroutineScheduler::addFront(const std::function<void()>& func, const char* debugName, size_t stackSize)
+{
+	return coroutineSchedulerAdd(*this, func, debugName, stackSize, true);
 }
 
 void CoroutineScheduler::addSuspended(Coroutine& coroutine)
@@ -374,24 +387,44 @@ void CoroutineScheduler::runTillAllFinish(float maxFps)
 	FrameRateRegulator regulator;
 	regulator.setTargetFraemRate(maxFps);
 
+	bool signal = false;
+	bool keepRun = true;
+	float elapsed = 0, timeRemain = 0;
+	Coroutine* eventCoroutine = NULL;
+
+	this->addFront([&]() {	// Use addFront to make sure ioEventDispatch run first
+		eventCoroutine = currentCoroutine();
+		ioEventDispatch(keepRun, timeRemain);
+		signal = true;
+	}, "IO Event dispatch loop", roKB(16));
+
 	while(taskCount() > 0) {
 		regulator.beginTask();
-		update(unsigned(1000.0f * regulator.targetFrameTime));
-		float elapsed, timeRemain;
+		roUint64 nextWakeUpTime;
+		update(unsigned(1000.0f * regulator.targetFrameTime), &nextWakeUpTime);
 		regulator.endTask(elapsed, timeRemain);
+		timeRemain = roMinOf2(timeRemain, (float)ticksToSeconds(nextWakeUpTime));
 
-		if(taskCount() == _backgroundList.size())
+		if(taskCount() == _backgroundList.size() + 1)	// +1 for eventCoroutine
 			break;
-		else {
-			int millSec = int(timeRemain * 1000);
-			if(millSec > 0)
-				TaskPool::sleep(millSec);
-		}
+		else
+			eventCoroutine->resumeWithId((void*)ioEventDispatch);
+	}
+
+	keepRun = false;
+	while (!signal) {
+		eventCoroutine->resumeWithId((void*)ioEventDispatch);
+		update();
 	}
 }
 
 void CoroutineScheduler::stop()
 {
+	if (_CoroutineSchedulerInitCount > 0) {
+		if(--_CoroutineSchedulerInitCount)
+			return;
+	}
+
 	requestStop();
 
 	FrameRateRegulator regulator;
@@ -411,6 +444,8 @@ void CoroutineScheduler::stop()
 				TaskPool::sleep(millSec);
 		}
 	}
+
+	ioEventShutdown();
 }
 
 bool CoroutineScheduler::keepRun() const
@@ -662,3 +697,6 @@ void roLongJmp(jmp_buf buf, int val)
 	longjmp(buf, val);
 }
 #endif
+
+#include "roCoroutine.iocp.inc"
+//#include "roCoroutine.select.inc"
