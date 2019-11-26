@@ -1,6 +1,8 @@
 #include "../network/roSocket.h"
 
 #if roOS_WIN
+#	undef FD_SETSIZE
+#	define FD_SETSIZE 1024
 #	include <winsock2.h>
 #endif
 
@@ -23,22 +25,27 @@ struct IoEventEntry
 	Coroutine* coroutine;
 };
 
-typedef TinyArray<IoEventEntry, FD_SETSIZE> IoEvents;
+typedef TinyArray<const IoEventEntry*, FD_SETSIZE> IoEvents;
 thread_local IoEvents* gReadEvents = NULL, * gWriteEvents = NULL;
 
 roStatus ioEventRead(const void* ioCtx)
 {
 	const IoEventEntry* e = reinterpret_cast<const IoEventEntry*>(ioCtx);
-	gReadEvents->pushBack(*e);
-	e->coroutine->suspendWithId((void*)ioEventRead);
-	return roStatus::ok;
+	gReadEvents->pushBack(e);
+	return (roStatus::Code)(roPtrInt)(e->coroutine->suspendWithId((void*)ioEventRead));
 }
 
 roStatus ioEventWrite(const void* ioCtx)
 {
 	const IoEventEntry* e = reinterpret_cast<const IoEventEntry*>(ioCtx);
-	gWriteEvents->pushBack(*e);
-	e->coroutine->suspendWithId((void*)ioEventWrite);
+	gWriteEvents->pushBack(e);
+	return (roStatus::Code)(roPtrInt)(e->coroutine->suspendWithId((void*)ioEventWrite));
+}
+
+roStatus ioEventCancel(const void* ioCtx)
+{
+	gReadEvents->removeByKey(ioCtx);
+	gWriteEvents->removeByKey(ioCtx);
 	return roStatus::ok;
 }
 
@@ -70,9 +77,9 @@ void ioEventDispatch(const bool& keepRun, const float& _timeAllowed)
 			FD_ZERO(&writeSet);
 			FD_ZERO(&errorSet);
 			for (auto&& i : readEvents)
-				FD_SET((SOCKET)i.fd, &readSet);
+				FD_SET((SOCKET)i->fd, &readSet);
 			for (auto&& i : writeEvents)
-				FD_SET((SOCKET)i.fd, &writeSet);
+				FD_SET((SOCKET)i->fd, &writeSet);
 
 			int ret = 0;
 			// In windows select on empty sets result error
@@ -83,18 +90,18 @@ void ioEventDispatch(const bool& keepRun, const float& _timeAllowed)
 
 			if (ret > 0) {
 				for (roSize i=0; i < readEvents.size();) {
-					IoEventEntry& e = readEvents[i];
-					if (FD_ISSET(e.fd, &readSet)) {
-						e.coroutine->resumeWithId((void*)ioEventRead);
+					const IoEventEntry* e = readEvents[i];
+					if (FD_ISSET(e->fd, &readSet)) {
+						e->coroutine->resumeWithId((void*)ioEventRead);
 						readEvents.removeBySwapAt(i);
 						continue;
 					}
 					++i;
 				}
 				for (roSize i=0; i < writeEvents.size();) {
-					IoEventEntry& e = writeEvents[i];
-					if (FD_ISSET(e.fd, &writeSet)) {
-						e.coroutine->resumeWithId((void*)ioEventWrite);
+					const IoEventEntry* e = writeEvents[i];
+					if (FD_ISSET(e->fd, &writeSet)) {
+						e->coroutine->resumeWithId((void*)ioEventWrite);
 						writeEvents.removeBySwapAt(i);
 						continue;
 					}

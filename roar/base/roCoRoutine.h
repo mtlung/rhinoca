@@ -122,7 +122,7 @@ struct CoroutineScheduler
 };	// CoroutineScheduler
 
 roStatus coRun(const std::function<void()>& func, const char* debugName = "unamed std::function", size_t stackSize = roMB(1));
-void coSleep(float seconds);
+bool coSleep(float seconds);			// Returns false if unblocked by coWakeup()
 void coWakeup(Coroutine* coroutine);	// Wake up the coroutine suspended by coSleep(). Passing a NULL coroutine will be ignored
 void coYield();
 void coYieldFrame();
@@ -131,6 +131,7 @@ roStatus ioEventInit();
 roStatus ioEventRegister(void* fdCtx);
 roStatus ioEventRead(const void* ioCtx);
 roStatus ioEventWrite(const void* ioCtx);
+roStatus ioEventCancel(const void* ioCtx);
 void ioEventDispatch(const bool& keepRun, const float& timeAllowed);	// Will suspend current coroutine, you need to remember it using Coroutine::current(); and resume it later on
 roStatus ioEventShutdown();
 

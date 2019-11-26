@@ -70,7 +70,7 @@ struct CoSleepManager : public BgCoroutine
 				if(entry.timeToWake > currentTime)
 					break;
 
-				entry.coro->resumeWithId(this);
+				entry.coro->resumeWithId(this, NULL);
 				sortedEntries.removeAt(0);
 			}
 
@@ -120,20 +120,22 @@ roStatus coRun(const std::function<void()>& func, const char* debugName, size_t 
 	return scheduler->add(func, debugName, stackSize);
 }
 
-void coSleep(float seconds)
+bool coSleep(float seconds)
 {
 	Coroutine* coroutine = Coroutine::current();
 	CoSleepManager* sleepMgr = _currentCoSleepManager;
 
 	if(coroutine && (!sleepMgr || seconds == 0)) {
 		coroutine->yield();
-		return;
+		return true;
 	}
 
 	if(coroutine && sleepMgr) {
 		sleepMgr->add(*coroutine, seconds);
-		coroutine->suspendWithId(sleepMgr);
+		return coroutine->suspendWithId(sleepMgr) == NULL;
 	}
+
+	return true;
 }
 
 void coWakeup(Coroutine* coroutine)
@@ -148,7 +150,7 @@ void coWakeup(Coroutine* coroutine)
 		return a.coro == b.coro;
 	};
 	sleepMgr->sortedEntries.removeByKey(CoSleepManager::Entry{ 0, coroutine }, equal);
-	coroutine->resumeWithId(sleepMgr);
+	coroutine->resumeWithId(sleepMgr, (void*)1);
 }
 
 void coYield()

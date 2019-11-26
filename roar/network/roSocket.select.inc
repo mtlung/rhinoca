@@ -56,14 +56,37 @@ roStatus CoSocket::connect(const SockAddr& endPoint, float timeout)
 
 	roStatus st = Super::connect(endPoint);
 
-	while (inProgress(st)) {
+	Coroutine* timeOutCoroutine = NULL;
+	if (inProgress(st)) {
 		auto e = std::make_pair((void*)fd(), coroutine);
+
+		if (timeout > 0.f) {
+			coRun([&]() {
+				timeOutCoroutine = Coroutine::current();
+				if (coSleep(timeout)) {
+					ioEventCancel(&e);
+					coroutine->resumeWithId(ioEventWrite, (void*)roStatus::net_connaborted);
+				}
+				timeOutCoroutine = NULL;
+				}, "Timeout sleep", roKB(4));
+		}
+
 		blockingCoroutine = coroutine;
 		st = ioEventWrite(&e);
 		blockingCoroutine = NULL;
+
+		coWakeup(timeOutCoroutine);
+		while (timeOutCoroutine)
+			coYield();
+
 		if (!st) return st;
 
-		st = Super::connect(endPoint);
+		// Check for connection error
+		int ret = SOCKET_ERROR;
+		socklen_t resultLen = sizeof(ret);
+		getsockopt(fd(), SOL_SOCKET, SO_ERROR, (char*)&ret, &resultLen);
+		lastError = ret;
+		st = errorToStatus(lastError);
 	}
 
 	return st;

@@ -180,7 +180,7 @@ TEST_FIXTURE(CoroutineTest, sleep)
 	for (roSize i = 0; i < count; ++i) {
 		coRun([&]() {
 			co[pos++] = Coroutine::current();
-			coSleep(10.0f);
+			CHECK(!coSleep(1.0f));	// Interrupted sleep returns false
 			++doneCount;
 		});
 	}
@@ -190,8 +190,10 @@ TEST_FIXTURE(CoroutineTest, sleep)
 			coYield();
 
 		coWakeup(co[i]);
-		coWakeup(co[i]);	// Wakeup twice
+		coWakeup(co[i]);	// Wakeup twice shall do nothing
 	}
+
+	CHECK(coSleep(1.0f));	// Un-interrupted sleep returns true
 
 	while (doneCount < count)
 		coYield();
@@ -204,7 +206,7 @@ TEST_FIXTURE(CoroutineTest, socket)
 	CoSocket a;
 	SockAddr anyAddr(SockAddr::ipAny(), 80);
 
-	unsigned count = 1024;
+	unsigned count = 128;
 	roVerify(a.create(BsdSocket::TCP));
 	roVerify(a.bind(anyAddr));
 	roVerify(a.listen(count));

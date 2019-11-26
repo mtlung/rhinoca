@@ -1,5 +1,6 @@
 #include "roSocket.h"
 #include "../base/roCoRoutine.iocp.inl"
+#include "../base/roCpuProfiler.h"
 #include <winsock2.h>
 #include <mswsock.h>
 
@@ -165,8 +166,8 @@ roStatus CoSocket::connect(const SockAddr& endPoint, float timeout)
 			if (timeout > 0.f) {
 				coRun([&]() {
 					timeOutCoroutine = Coroutine::current();
-					coSleep(timeout);
-					::CancelIoEx((HANDLE)fd(), &lp);
+					if(coSleep(timeout))
+						::CancelIoEx((HANDLE)fd(), &lp);
 					timeOutCoroutine = NULL;
 				}, "Timeout sleep", roKB(4));
 			}
