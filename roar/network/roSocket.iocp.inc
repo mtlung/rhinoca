@@ -131,7 +131,6 @@ roStatus CoSocket::accept(CoSocket& socket) const
 	return st;
 }
 
-// TODO: Implement timeout
 roStatus CoSocket::connect(const SockAddr& endPoint, float timeout)
 {
 	if (!ConnectEx) {
@@ -155,35 +154,42 @@ roStatus CoSocket::connect(const SockAddr& endPoint, float timeout)
 	lp.coroutine = coroutine;
 	addr = endPoint.asSockAddr();
 
-	// TODO: Look at SO_UPDATE_CONNECT_CONTEXT
 	BOOL ret = ::ConnectEx(fd(), &addr, sizeof(addr), NULL, 0, NULL, &lp);
 
 	if (!ret) {
 		lastError = getLastError();
 		st = errorToStatus(lastError);
 
+		Coroutine* timeOutCoroutine = NULL;
 		if (inProgress(st)) {
-/*			if (timeout > 0.f) {
+			if (timeout > 0.f) {
 				coRun([&]() {
+					timeOutCoroutine = Coroutine::current();
 					coSleep(timeout);
 					::CancelIoEx((HANDLE)fd(), &lp);
-				});
-			}*/
+					timeOutCoroutine = NULL;
+				}, "Timeout sleep", roKB(4));
+			}
 
 			blockingCoroutine = lp.coroutine;
 			lp.coroutine->suspend();
 			blockingCoroutine = NULL;
 
+			coWakeup(timeOutCoroutine);
+			while (timeOutCoroutine)
+				coYield();
+
 			DWORD transferred = 0;
 			lastError = ::GetOverlappedResult((HANDLE)fd(), &lp, &transferred, FALSE) ? OK : getLastError();
+			st = errorToStatus(lastError);
+			if (!st) return st;
 		}
 	}
 
-	// Make the connected socket well behave
-	st = _setOption(SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
-	if (!st) return st;
+	roAssert(st);
 
-	return errorToStatus(lastError);
+	// Make the connected socket well behave
+	return _setOption(SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
 }
 
 roStatus CoSocket::send(const void* data, roSize len, int flags, roSize* written)

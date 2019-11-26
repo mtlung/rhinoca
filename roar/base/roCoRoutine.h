@@ -123,6 +123,7 @@ struct CoroutineScheduler
 
 roStatus coRun(const std::function<void()>& func, const char* debugName = "unamed std::function", size_t stackSize = roMB(1));
 void coSleep(float seconds);
+void coWakeup(Coroutine* coroutine);	// Wake up the coroutine suspended by coSleep(). Passing a NULL coroutine will be ignored
 void coYield();
 void coYieldFrame();
 

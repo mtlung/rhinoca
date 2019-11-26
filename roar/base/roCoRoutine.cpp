@@ -136,6 +136,21 @@ void coSleep(float seconds)
 	}
 }
 
+void coWakeup(Coroutine* coroutine)
+{
+	if (!coroutine)
+		return;
+	CoSleepManager* sleepMgr = _currentCoSleepManager;
+	if (coroutine->_suspenderId != (void*)sleepMgr)
+		return;
+
+	bool(*equal)(const CoSleepManager::Entry&, const CoSleepManager::Entry&) = [](auto& a, auto& b) -> bool {
+		return a.coro == b.coro;
+	};
+	sleepMgr->sortedEntries.removeByKey(CoSleepManager::Entry{ 0, coroutine }, equal);
+	coroutine->resumeWithId(sleepMgr);
+}
+
 void coYield()
 {
 	Coroutine::current()->yield();

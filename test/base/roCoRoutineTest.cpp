@@ -169,6 +169,34 @@ TEST_FIXTURE(CoroutineTest, spawnCoroutineInCoroutine)
 	CHECK_EQUAL(8, SpawnCoroutine::maxInstanceCount);
 }
 
+TEST_FIXTURE(CoroutineTest, sleep)
+{
+	coWakeup(NULL);	// Wakeup NULL
+
+	constexpr unsigned count = 8;
+	Coroutine* co[count] = { NULL };
+	roSize pos = 0;
+	roSize doneCount = 0;
+	for (roSize i = 0; i < count; ++i) {
+		coRun([&]() {
+			co[pos++] = Coroutine::current();
+			coSleep(10.0f);
+			++doneCount;
+		});
+	}
+
+	for (roSize i = 0; i < count; ++i) {
+		while (!co[i])
+			coYield();
+
+		coWakeup(co[i]);
+		coWakeup(co[i]);	// Wakeup twice
+	}
+
+	while (doneCount < count)
+		coYield();
+}
+
 #include "../../roar/network/roSocket.h"
 
 TEST_FIXTURE(CoroutineTest, socket)
@@ -203,7 +231,7 @@ TEST_FIXTURE(CoroutineTest, socket)
 		SockAddr addr(SockAddr::ipLoopBack(), 80);
 
 		CHECK(s.create(BsdSocket::TCP));
-		CHECK(s.connect(addr, 100000));
+		CHECK(s.connect(addr, 1));
 
 		const roUtf8* request = "GET / HTTP/1.1\r\n\r\n";
 		roSize len = roStrLen(request);
@@ -212,4 +240,14 @@ TEST_FIXTURE(CoroutineTest, socket)
 
 	while (inUseCount)
 		coYield();
+}
+
+TEST_FIXTURE(CoroutineTest, socketTimeout)
+{
+	SockAddr addr;
+	CHECK(addr.parse("yahoo.com:123"));
+
+	CoSocket s;
+	CHECK(s.create(BsdSocket::TCP));
+	CHECK(s.connect(addr, 1) == roStatus::net_connaborted);
 }
