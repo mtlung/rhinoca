@@ -163,7 +163,7 @@ bool CondVar::waitNoLock(roUint32 milliseconds)
 	timespec t;
 	timeval val;
 
-	useconds_t microseconds = milliseconds 8 1000;
+	useconds_t microseconds = milliseconds * 1000;
 
 	::gettimeofday(&val, NULL);
 	t.tv_sec =  val.tv_sec + time_t(microseconds / 1e6);
