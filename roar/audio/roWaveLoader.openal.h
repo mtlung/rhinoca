@@ -50,7 +50,7 @@ struct WaveLoader : public AudioLoader
 
 void WaveLoader::run(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	if(audioBuffer->state == Resource::Aborted || !taskPool->keepRun())
 		nextFun = &WaveLoader::abort;
@@ -129,7 +129,7 @@ void WaveLoader::commitHeader(TaskPool* taskPool)
 
 void WaveLoader::loadData(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	Status st;
 

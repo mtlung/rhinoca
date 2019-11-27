@@ -1066,7 +1066,7 @@ static void _unmapTexture(roRDriverTexture* self, unsigned mipIndex, unsigned ar
 // Reference: http://www.seas.upenn.edu/~pcozzi/OpenGLInsights/OpenGLInsights-AsynchronousBufferTransfers.pdf
 static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsigned mipIndex, unsigned aryIndex, roSize& rowBytes)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);
@@ -1188,7 +1188,7 @@ static void* _mapTexture(roRDriverTexture* self, roRDriverMapUsage usage, unsign
 
 static void _unmapTexture(roRDriverTexture* self, unsigned mipIndex, unsigned aryIndex)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	roRDriverContextImpl* ctx = static_cast<roRDriverContextImpl*>(_getCurrentContext_GL());
 	roRDriverTextureImpl* impl = static_cast<roRDriverTextureImpl*>(self);

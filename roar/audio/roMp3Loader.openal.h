@@ -54,7 +54,7 @@ struct Mp3Loader : public AudioLoader
 
 void Mp3Loader::run(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	if(audioBuffer->state == Resource::Aborted || !taskPool->keepRun())
 		nextFun = &Mp3Loader::abort;
@@ -147,7 +147,7 @@ void Mp3Loader::checkRequest(TaskPool* taskPool)
 
 void Mp3Loader::processRequest(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	Status st;
 

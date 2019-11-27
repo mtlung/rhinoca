@@ -42,7 +42,7 @@ struct TextLoader : public Task
 
 void TextLoader::run(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	if(text->state == Resource::Aborted || !taskPool->keepRun()) {
 		nextFun = &TextLoader::abort;
@@ -56,7 +56,7 @@ void TextLoader::run(TaskPool* taskPool)
 
 void TextLoader::load(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	Status st = Status::ok;
 

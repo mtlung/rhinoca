@@ -540,7 +540,7 @@ static void _tick(roAudioDriver* self)
 	roAudioDriverImpl* impl = static_cast<roAudioDriverImpl*>(self);
 	if(!impl) return;
 
-	CpuProfilerScope cpuProfilerScope("roAudioDriver::tick");
+	roScopeProfile("roAudioDriver::tick");
 
 	// Loop for the active sound list
 	SoundSource::Active* next = NULL;
@@ -707,7 +707,7 @@ void roAudioDriverImpl::run(TaskPool* taskPool)
 
 void roAudioDriverImpl::init()
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	_alDeviceInit();
 	alContext = alcCreateContext(_alcDevice, NULL);

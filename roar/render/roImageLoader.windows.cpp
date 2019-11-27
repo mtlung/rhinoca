@@ -140,7 +140,7 @@ protected:
 
 void WICLoader::run(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	if(texture->state == Resource::Aborted || !taskPool->keepRun()) {
 		nextFun = &WICLoader::abort;

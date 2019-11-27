@@ -305,7 +305,7 @@ float CpuProfiler::timeSinceLastReset() const
 
 String CpuProfiler::report(roSize nameLength, float skipMargin) const
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	float fps_ = fps();
 

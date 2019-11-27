@@ -174,7 +174,7 @@ protected:
 
 void FontLoader::run(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	if((font->state == Resource::Aborted || !taskPool->keepRun()) && nextFun != &FontLoader::cleanup)
 		nextFun = &FontLoader::requestAbort;

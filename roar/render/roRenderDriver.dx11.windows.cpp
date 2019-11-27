@@ -272,7 +272,7 @@ void _driverSwapBuffers_DX11()
 		return;
 	}
 
-	CpuProfilerScope cpuProfilerScope("roRenderDriver::swapBuffer");
+	roScopeProfile("roRenderDriver::swapBuffer");
 
 	static const float removalTimeOut = 5;
 

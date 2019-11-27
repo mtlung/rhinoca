@@ -130,10 +130,10 @@ TEST_FIXTURE(TextureLoaderTest, stressTest)
 
 	bool allListed = false;
 
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	while(keepRun()) {
-		CpuProfilerScope cpuProfilerScope2("Main loop");
+		roScopeProfile("Main loop");
 
 		// Check if any of the texture are loaded
 		for(ResourcePtr& i : resources) {

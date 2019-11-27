@@ -151,7 +151,7 @@ TaskPool::~TaskPool()
 
 void TaskPool::sleep(int ms)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 #ifdef roUSE_PTHREAD
 	usleep(useconds_t(ms * 1000));
@@ -187,7 +187,7 @@ void TaskPool::_waitForTaskAvailableNoLock(unsigned timeoutInMs)
 void defaultThreadFunction(TaskPool* pool)
 {
 	String s("WORKER THREAD");	// NOTE: This make sure every thread have it's own copy of the scope name
-	CpuProfilerScope cpuProfilerScope(s.c_str());
+	roScopeProfile(s.c_str());
 
 	while(pool->keepRun()) {
 		pool->doSomeTask(0);

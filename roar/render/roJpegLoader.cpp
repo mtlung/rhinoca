@@ -76,7 +76,7 @@ struct JpegLoader : public Task
 
 void JpegLoader::run(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	if(texture->state == Resource::Aborted || !taskPool->keepRun()) {
 		nextFun = &JpegLoader::abort;
@@ -90,7 +90,7 @@ void JpegLoader::run(TaskPool* taskPool)
 
 void JpegLoader::loadHeader(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	Status st = Status::ok;
 
@@ -127,7 +127,7 @@ roEXCP_END
 
 void JpegLoader::initTexture(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 roEXCP_TRY
 	if(!roRDriverCurrentContext->driver->initTexture(texture->handle, width, height, 1, pixelDataFormat, roRDriverTextureFlag_None)) {
@@ -152,7 +152,7 @@ roEXCP_END
 
 void JpegLoader::loadPixelData(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	Status st;
 
@@ -198,7 +198,7 @@ roEXCP_END
 
 void JpegLoader::commit(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	if(mappedPtr) {
 		roRDriverCurrentContext->driver->unmapTexture(texture->handle, 0, 0);

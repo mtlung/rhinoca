@@ -204,7 +204,7 @@ roEXCP_END
 
 void PngLoader::processData(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	char buff[1024*8];
 

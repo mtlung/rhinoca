@@ -44,7 +44,7 @@ struct OggLoader : public AudioLoader
 
 void OggLoader::run(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	if(audioBuffer->state == Resource::Aborted || !taskPool->keepRun())
 		nextFun = &OggLoader::abort;
@@ -128,7 +128,7 @@ void OggLoader::checkRequest(TaskPool* taskPool)
 
 void OggLoader::processRequest(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	Status st;
 

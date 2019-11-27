@@ -53,7 +53,7 @@ protected:
 
 void BmpLoader::run(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	if(texture->state == Resource::Aborted || !taskPool->keepRun()) {
 		nextFun = &BmpLoader::abort;
@@ -146,7 +146,7 @@ static void _bgrToRgba(roBytePtr src, roBytePtr dst, unsigned width, unsigned he
 
 void BmpLoader::loadPixelData(TaskPool* taskPool)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	Status st;
 

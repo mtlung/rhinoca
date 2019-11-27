@@ -32,7 +32,7 @@ void CondVar::broadcast()
 
 bool CondVar::waitNoLock(roUint32 milliseconds)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 #if roDEBUG
 	roAssert(_locked);
@@ -82,7 +82,7 @@ void CondVar::broadcast()
 #pragma warning(disable: 4702)
 bool CondVar::waitNoLock(roUint32 milliseconds)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	roAssert(_locked);
 	++_waitCount;
@@ -152,7 +152,7 @@ void CondVar::waitNoLock()
 
 bool CondVar::waitNoLock(roUint32 milliseconds)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 #ifndef NDEBUG
 	roAssert(_locked);

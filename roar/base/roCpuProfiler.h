@@ -45,4 +45,6 @@ struct CpuProfilerScope
 
 }	// namespace ro
 
+#define roScopeProfile(name) ::ro::CpuProfilerScope scopeProfile##__LINE__(name);
+
 #endif	// __roCpuProfiler_h__

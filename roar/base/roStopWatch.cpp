@@ -289,7 +289,7 @@ void FrameRateRegulator::beginTask()
 void FrameRateRegulator::endTask(float& elapsed, float& timeRemain)
 {
 	elapsed = stopWatch.getFloat();
-	timeRemain = targetFrameTime - elapsed + refinementFactor;
+	timeRemain = targetFrameTime - elapsed;// +refinementFactor;
 }
 
 }	// namespace ro

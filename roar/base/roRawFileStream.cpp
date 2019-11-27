@@ -140,7 +140,7 @@ static Status _next_RawFileIStream(IStream& s, roUint64 bytesToRead)
 		self._ringBuf.commitRead(self.current - self.begin);
 
 	while(self.st && self._ringBuf.totalReadable() < bytesToRead) {
-		CpuProfilerScope cpuProfilerScope("rawFileIStream waiting");
+		roScopeProfile("rawFileIStream waiting");
 		if(self.readWillBlock(bytesToRead)) {
 			TaskPool::yield();	// TODO: Do something useful here instead of yield
 			continue;

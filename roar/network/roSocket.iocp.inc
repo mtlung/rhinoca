@@ -82,7 +82,7 @@ roStatus CoSocket::setBlocking(bool block)
 
 roStatus CoSocket::accept(CoSocket& socket) const
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	// We pipe operation one by one
 	Coroutine* coroutine = Coroutine::current();
@@ -195,7 +195,7 @@ roStatus CoSocket::connect(const SockAddr& endPoint, float timeout)
 
 roStatus CoSocket::send(const void* data, roSize len, int flags, roSize* written)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	if (len == 0)
 		return roStatus::ok;
@@ -262,7 +262,7 @@ roStatus CoSocket::send(const void* data, roSize len, int flags, roSize* written
 
 roStatus CoSocket::receive(void* buf, roSize& len, int flags)
 {
-	CpuProfilerScope cpuProfilerScope(__FUNCTION__);
+	roScopeProfile(__FUNCTION__);
 
 	if (len == 0)
 		return roStatus::ok;
