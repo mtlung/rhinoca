@@ -41,7 +41,8 @@ roStatus CoSocket::accept(CoSocket& socket) const
 		st = Super::accept(socket);
 	}
 
-	return st;
+	if (!st) return st;
+	return socket.Super::setBlocking(false);
 }
 
 // TODO: Implement timeout
@@ -65,7 +66,7 @@ roStatus CoSocket::connect(const SockAddr& endPoint, float timeout)
 				timeOutCoroutine = Coroutine::current();
 				if (coSleep(timeout)) {
 					ioEventCancel(&e);
-					coroutine->resumeWithId(ioEventWrite, (void*)roStatus::net_connaborted);
+					coroutine->resumeWithId((void*)ioEventWrite, (void*)roStatus::net_connaborted);
 				}
 				timeOutCoroutine = NULL;
 				}, "Timeout sleep", roKB(4));
