@@ -247,6 +247,23 @@ TaskId TaskPool::beginAdd(Task* task, ThreadId affinity)
 	return proxy->id;
 }
 
+struct FuncTask : public Task
+{
+	explicit FuncTask(const std::function<void()>& f) : func(f) {}
+	void run(TaskPool* taskPool) override
+	{
+		func();
+		delete this;
+	}
+	std::function<void()> func;
+};
+	
+TaskId TaskPool::beginAdd(const std::function<void()>& func, ThreadId affinity)
+{
+	FuncTask* t = _allocator.newObj<FuncTask>(func).unref();
+	return beginAdd(t, affinity);
+}
+
 void TaskPool::addChild(TaskId parent, TaskId child)
 {
 	roScopeLock(condVar);
@@ -319,6 +336,12 @@ TaskId TaskPool::addFinalized(Task* task, TaskId parent, TaskId dependency, Thre
 	_addPendingTask(proxy);
 
 	return proxy->id;
+}
+
+TaskId TaskPool::addFinalized(const std::function<void()>& func, TaskId parent, TaskId dependency, ThreadId affinity)
+{
+	FuncTask* t = _allocator.newObj<FuncTask>(func).unref();
+	return addFinalized(t, parent, dependency, affinity);
 }
 
 bool TaskPool::keepRun() const

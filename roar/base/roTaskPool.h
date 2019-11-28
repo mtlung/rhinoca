@@ -2,6 +2,7 @@
 #define __roTaskPool_h__
 
 #include "roCondVar.h"
+#include <functional>
 
 namespace ro {
 
@@ -62,6 +63,7 @@ public:
 	///		= threadId : the only thread that can run this task
 	///		= ~threadId : the only thread that can NOT run this task
 	TaskId beginAdd(Task* task, ThreadId affinity=0);
+	TaskId beginAdd(const std::function<void()>& func, ThreadId affinity=0);
 
 	/// A task is consider completed only if all it's children are completed
 	void addChild(TaskId parent, TaskId child);
@@ -74,6 +76,7 @@ public:
 
 	/// Add the task, set the properties and finish the add, all in a single function call
 	TaskId addFinalized(Task* task, TaskId parent=0, TaskId dependency=0, ThreadId affinity=0);
+	TaskId addFinalized(const std::function<void()>& func, TaskId parent=0, TaskId dependency=0, ThreadId affinity=0);
 
 	/// @note The TaskId may be reused for another task that you
 	/// were NOT waiting for, but that's not the problem since the
