@@ -284,12 +284,13 @@ void FrameRateRegulator::beginTask()
 		avgFrameTime = avgFrameTime * 0.5f + elapsedSinceLastFrame * 0.5f;
 
 	refinementFactor += targetFrameTime - avgFrameTime;
+	refinementFactor = roClamp(refinementFactor, -targetFrameTime, targetFrameTime);
 }
 
 void FrameRateRegulator::endTask(float& elapsed, float& timeRemain)
 {
 	elapsed = stopWatch.getFloat();
-	timeRemain = targetFrameTime - elapsed;// +refinementFactor;
+	timeRemain = targetFrameTime - elapsed + refinementFactor;
 }
 
 }	// namespace ro
