@@ -76,15 +76,20 @@ void ioEventDispatch(const bool& keepRun, const float& _timeAllowed)
 			FD_ZERO(&readSet);
 			FD_ZERO(&writeSet);
 			FD_ZERO(&errorSet);
-			for (auto&& i : readEvents)
-				FD_SET((SOCKET)i->fd, &readSet);
-			for (auto&& i : writeEvents)
-				FD_SET((SOCKET)i->fd, &writeSet);
+			int maxfd = 0;
+			for (auto&& i : readEvents) {
+				FD_SET(i->fd, &readSet);
+				maxfd = roMaxOf2(maxfd, i->fd);
+			}
+			for (auto&& i : writeEvents) {
+				FD_SET(i->fd, &writeSet);
+				maxfd = roMaxOf2(maxfd, i->fd);
+			}
 
 			int ret = 0;
 			// In windows select on empty sets result error
 			if (!readEvents.isEmpty() || !writeEvents.isEmpty())
-				ret = ::select(0, &readSet, &writeSet, &errorSet, &timeout);
+				ret = ::select(maxfd + 1, &readSet, &writeSet, &errorSet, &timeout);
 
 			roAssert(ret >= 0);
 
