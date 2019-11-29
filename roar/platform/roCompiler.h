@@ -93,6 +93,10 @@ char (*_roCountofHelper(count (&array)[size]))[size];
 
 #define roDelete(p) delete p, p = NULL
 
+// Join 2 macros together
+#define _roJoinMacro(a, b) a##b
+#define roJoinMacro(a, b) _roJoinMacro(a, b)
+
 namespace ro {
 
 // Make variable zero initialized by default

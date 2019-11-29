@@ -165,6 +165,6 @@ struct ScopeUnlockOnly : public Cancelable, private NonCopyable
 #endif	// __roMutex_h__
 
 /// Macros to ease the use of ScopeLock family
-#define roScopeLock(m)			::ro::ScopeLock<std::remove_reference_t<decltype(m)> > scopeLock##__LINE__(m);
-#define roScopeUnlock(m)		::ro::ScopeUnlock<std::remove_reference_t<decltype(m)> > scopeUnlock##__LINE__(m);
-#define roScopeUnlockOnly(m)	::ro::ScopeUnlockOnly<std::remove_reference_t<decltype(m)> > scopeUnlockOnly##__LINE__(m);
+#define roScopeLock(m)			::ro::ScopeLock<std::remove_reference_t<decltype(m)> >		roJoinMacro(scopeLock, __LINE__)(m);
+#define roScopeUnlock(m)		::ro::ScopeUnlock<std::remove_reference_t<decltype(m)> >	roJoinMacro(scopeUnlock, __LINE__)(m);
+#define roScopeUnlockOnly(m)	::ro::ScopeUnlockOnly<std::remove_reference_t<decltype(m)> >roJoinMacro(scopeUnlockOnly, __LINE__)(m);
