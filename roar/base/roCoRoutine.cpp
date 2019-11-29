@@ -420,7 +420,9 @@ void CoroutineScheduler::runTillAllFinish(float maxFps)
 		roUint64 nextWakeUpTime;
 		update(unsigned(1000.0f * regulator.targetFrameTime), &nextWakeUpTime);
 		regulator.endTask(elapsed, timeRemain);
-		timeRemain = roMinOf2(timeRemain, (float)ticksToSeconds(nextWakeUpTime));
+
+		float remainToWake = ticksToSeconds(nextWakeUpTime) - ticksToSeconds(currentTimeInTicks());
+		timeRemain = roMinOf2(timeRemain, remainToWake);
 
 		if(taskCount() == _backgroundList.size() + 1)	// +1 for eventCoroutine
 			break;
