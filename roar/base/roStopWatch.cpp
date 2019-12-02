@@ -198,6 +198,45 @@ void StopWatch::resume()
 	_timeAtResume = ticksSinceProgramStatup();
 }
 
+MultiStartStopWatch::MultiStartStopWatch()
+{
+	reset();
+}
+
+void MultiStartStopWatch::reset()
+{
+	_duration = 0;
+	_last = ticksSinceProgramStatup();
+}
+
+void MultiStartStopWatch::start()
+{
+	if (_multiplier >= 1)
+		_multiplier = _multiplier;
+
+	roUint64 now = ticksSinceProgramStatup();
+	_duration += _multiplier * (now - _last);
+	_last = now;
+	++_multiplier;
+}
+
+float MultiStartStopWatch::getAndStop()
+{
+	roUint64 now = ticksSinceProgramStatup();
+	_duration += _multiplier * (now - _last);
+	_last = now;
+	roAssert(_multiplier > 0);
+	--_multiplier;
+
+	return (float)ticksToSeconds(_duration);
+}
+
+float MultiStartStopWatch::getFloat() const
+{
+	roUint64 now = ticksSinceProgramStatup();
+	return (float)ticksToSeconds(_duration + _multiplier * (now - _last));
+}
+
 CountDownTimer::CountDownTimer(float timeOutInSecs)
 {
 	_beginTime = _stopWatch.getFloat();

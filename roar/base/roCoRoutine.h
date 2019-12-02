@@ -57,6 +57,7 @@ struct Coroutine : public ListNode<Coroutine>
 	bool				_isActive;
 	void*				_retValueForSuspend;
 	void*				_suspenderId;	// Only the one who can provide the same id can resume
+	void*				_profilerNode;	// Act as a coroutine specific variable for CpuProfiler
 	ThreadId			_runningThreadId;
 	ByteArray			_ownStack;
 	ByteArray			_backupStack;
@@ -121,19 +122,19 @@ struct CoroutineScheduler
 	BgCoroutine*		_sleepManager;
 };	// CoroutineScheduler
 
-roStatus coRun(const std::function<void()>& func, const char* debugName = "unamed std::function", size_t stackSize = roMB(1));
-bool coSleep(float seconds);			// Returns false if unblocked by coWakeup()
-void coWakeup(Coroutine* coroutine);	// Wake up the coroutine suspended by coSleep(). Passing a NULL coroutine will be ignored
-void coYield();
-void coYieldFrame();
+roStatus	coRun(const std::function<void()>& func, const char* debugName = "unamed std::function", size_t stackSize = roMB(1));
+bool		coSleep(float seconds);			// Returns false if unblocked by coWakeup()
+void		coWakeup(Coroutine* coroutine);	// Wake up the coroutine suspended by coSleep(). Passing a NULL coroutine will be ignored
+void		coYield();
+void		coYieldFrame();
 
-roStatus ioEventInit();
-roStatus ioEventRegister(void* fdCtx);
-roStatus ioEventRead(const void* ioCtx);
-roStatus ioEventWrite(const void* ioCtx);
-roStatus ioEventCancel(const void* ioCtx);
-void ioEventDispatch(const bool& keepRun, const float& timeAllowed);	// Will suspend current coroutine, you need to remember it using Coroutine::current(); and resume it later on
-roStatus ioEventShutdown();
+roStatus	ioEventInit();
+roStatus	ioEventRegister(void* fdCtx);
+roStatus	ioEventRead(const void* ioCtx);
+roStatus	ioEventWrite(const void* ioCtx);
+roStatus	ioEventCancel(const void* ioCtx);
+void		ioEventDispatch(const bool& keepRun, const float& timeAllowed);	// Will suspend current coroutine, you need to remember it using Coroutine::current(); and resume it later on
+roStatus	ioEventShutdown();
 
 }	// namespace ro
 

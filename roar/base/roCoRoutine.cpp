@@ -520,6 +520,7 @@ Coroutine::Coroutine()
 	, _isActive(false)
 	, _retValueForSuspend(NULL)
 	, _suspenderId(NULL)
+	, _profilerNode(NULL)
 	, _runningThreadId(0)
 	, scheduler(NULL)
 {
@@ -605,7 +606,10 @@ void* Coroutine::suspend()
 	}
 #endif
 
-	coro_transfer(&_context, &scheduler->context);
+	{	// Dummy profile scope to count yield time
+		roScopeProfile("");
+		coro_transfer(&_context, &scheduler->context);
+	}
 
 	void* ret = _retValueForSuspend;
 	_retValueForSuspend = NULL;

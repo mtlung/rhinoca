@@ -36,6 +36,23 @@ struct StopWatch
 	bool				_pause;
 };	// StopWatch
 
+/// Similar to StopWatch but it counts multiple start() / stop() even they are overlapped.
+/// This is very usefull when implementing CpuProfiler with Coroutine
+struct MultiStartStopWatch
+{
+	MultiStartStopWatch();
+
+	void		reset();
+	void		start();
+	float		getAndStop();
+	float		getFloat() const;
+
+// Private
+	unsigned	_multiplier = 0;
+	roUint64	_last = 0;
+	roUint64	_duration = 0;
+};	// MultiStartStopWatch
+
 /// Utility to keep track a time out
 struct CountDownTimer
 {

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "roCpuProfiler.h"
 #include "roArray.h"
+#include "roCoRoutine.h"
 #include "roStringFormat.h"
 #include "roTaskPool.h"
 #include "roTypeCast.h"
@@ -8,9 +9,7 @@
 
 namespace ro {
 
-namespace {
-
-struct CallstackNode
+struct CpuProfiler::CallstackNode
 {
 	CallstackNode(const char name[], CallstackNode* parent=NULL);
 	~CallstackNode();
@@ -36,14 +35,17 @@ struct CallstackNode
 	roSize callCount;
 	roSize callDepth() const;
 	float selfTime() const;
+	float yieldTime() const;
 	float inclusiveTime() const;
 	float peakInclusiveTime() const;	// NOTE: Under then current system, it's hard to do peak self time
 
 	float _inclusiveTime;
 	float _peakInclusiveTime;
-	mutable StopWatch _stopWatch;
+	mutable MultiStartStopWatch _stopWatch;
 	mutable RecursiveMutex mutex;
 };	// CallstackNode
+
+using CallstackNode = CpuProfiler::CallstackNode;
 
 CallstackNode::CallstackNode(const char name[], CallstackNode* parent)
 	: name(name)
@@ -100,21 +102,14 @@ CallstackNode* CallstackNode::getChildByName(const char name_[])
 
 void CallstackNode::begin()
 {
-	// Start the timer for the first call, ignore all later recursive call
-	if(recursionCount == 0)
-		_stopWatch.reset();
-
+	_stopWatch.start();
 	++callCount;
 }
 
 void CallstackNode::end()
 {
-	if(recursionCount == 0) {
-		float elasped = _stopWatch.getFloat();
-		_inclusiveTime += elasped;
-
-		_peakInclusiveTime = roMaxOf2(_peakInclusiveTime, elasped);
-	}
+	_inclusiveTime = _stopWatch.getAndStop();
+	_peakInclusiveTime = roMaxOf2(_peakInclusiveTime, _inclusiveTime);
 }
 
 void CallstackNode::reset()
@@ -138,7 +133,7 @@ roSize CallstackNode::callDepth() const
 {
 	CallstackNode* p = parent;
 	roSize depth = 0;
-	while(p) {
+	while(p && p->name[0]) {
 		p = p->parent;
 		++depth;
 	}
@@ -159,6 +154,20 @@ float CallstackNode::selfTime() const
 	return inclusiveTime() - sum;
 }
 
+float CallstackNode::yieldTime() const
+{
+	// Loop and sum for all direct children
+	float sum = 0;
+	const CallstackNode* n = static_cast<CallstackNode*>(firstChild);
+	while(n) {
+		roScopeLock(n->mutex);
+		sum += n->name[0] ? n->yieldTime() : n->inclusiveTime();
+		n = n->sibling;
+	}
+
+	return sum;
+}
+
 float CallstackNode::inclusiveTime() const
 {
 	if(recursionCount == 0)
@@ -167,7 +176,7 @@ float CallstackNode::inclusiveTime() const
 	// If the recursion count is not zero, means the profile scope
 	// hasn't finish yet, at the moment we try to generate the report.
 	// This happens in multi-thread situation.
-	return _inclusiveTime + _stopWatch.getFloat();
+	return _stopWatch.getFloat();
 }
 
 float CallstackNode::peakInclusiveTime() const
@@ -196,6 +205,8 @@ CallstackNode* CallstackNode::traverse(CallstackNode* n)
 	return n;
 }
 
+namespace {
+
 static CpuProfiler* _profiler = NULL;
 
 struct TlsStruct
@@ -207,7 +218,27 @@ struct TlsStruct
 
 	CallstackNode* currentNode()
 	{
-		if(_currentNode)
+		if (Coroutine* c = Coroutine::current()) {
+			CallstackNode*& n = reinterpret_cast<CallstackNode*&>(c->_profilerNode);
+
+			if (!n) {
+				if (_currentNode)
+					n = _currentNode;
+				else {
+					// If node is null, means a new thread is started
+					_currentNode = reinterpret_cast<CallstackNode*>(_profiler->_rootNode);
+					n = _currentNode;
+					_profiler->_begin(_threadName.c_str());
+					_currentNode = n;
+				}
+
+				_profiler->_begin(c->debugName.c_str());
+			}
+
+			return n;
+		}
+
+		if (_currentNode)
 			return _currentNode;
 
 		// If node is null, means a new thread is started
@@ -218,6 +249,10 @@ struct TlsStruct
 	}
 
 	CallstackNode* setCurrentNode(CallstackNode* node) {
+		if (Coroutine* c = Coroutine::current()) {
+			CallstackNode*& n = reinterpret_cast<CallstackNode*&>(c->_profilerNode);
+			return n = node;
+		}
 		return _currentNode = node;
 	}
 
@@ -233,18 +268,16 @@ RecursiveMutex _mutex;
 
 CpuProfilerScope::CpuProfilerScope(const char name[])
 {
-	if(_profiler && _profiler->enable) {
-		_name = name;
-		_profiler->_begin(name);
-	}
+	if(_profiler && _profiler->enable)
+		_node = _profiler->_begin(name);
 	else
-		_name = NULL;
+		_node = NULL;
 }
 
 CpuProfilerScope::~CpuProfilerScope()
 {
-	if(_profiler && _name)
-		_profiler->_end();
+	if(_profiler && _node)
+		_profiler->_end(_node);
 }
 
 CpuProfiler::CpuProfiler()
@@ -336,21 +369,25 @@ String CpuProfiler::report(roSize nameLength, float skipMargin) const
 		indentNodes[callDepth] = n;
 
 		float selfTime = n->selfTime();
-		float inclusiveTime = n->inclusiveTime();
+		float inclusiveTime = n->inclusiveTime() - n->yieldTime();
 
 		if(n == _rootNode) {
 			inclusiveTime = -selfTime;
 			selfTime = 0;
 		}
+		else if (n->parent == _rootNode) {	// Deal with thread node
+			inclusiveTime = n->inclusiveTime();
+			selfTime = 0;
+		}
 
 		// Skip node that have total time less than 1%
-		if(inclusiveTime / _frameCount * percent >= skipMargin)
+		if(roStrLen(n->name) != 0 && inclusiveTime / _frameCount * percent >= skipMargin)
 		{
 			// Print out the tree structure
 			name.clear();
 			for(roSize i=0; i<callDepth; ++i)
 			{
-				if(indentNodes.isInRange(i+1) && indentNodes[i+1]->sibling) {
+				if(indentNodes.isInRange(i+1) && indentNodes[i+1]->sibling && indentNodes[i + 1]->sibling->name[0]) {
 					if(i == callDepth - 1)
 						name.append('\xC3');	// Char 195: |-
 					else
@@ -389,7 +426,7 @@ void CpuProfiler::shutdown()
 	_rootNode = NULL;
 }
 
-void CpuProfiler::_begin(const char name[])
+CallstackNode* CpuProfiler::_begin(const char name[])
 {
 	CallstackNode* node = _tls.currentNode();
 
@@ -401,19 +438,16 @@ void CpuProfiler::_begin(const char name[])
 		lock.swapMutex(tmp->mutex);
 		node = tmp;
 
-		// Only alter the current node, if the child node is not recursing
-		if(node->recursionCount == 0)
-			_tls.setCurrentNode(node);
+		_tls.setCurrentNode(node);
 	}
 
 	node->begin();
 	node->recursionCount++;
+	return node;
 }
 
-void CpuProfiler::_end()
+void CpuProfiler::_end(CallstackNode* node)
 {
-	CallstackNode* node = _tls.currentNode();
-
 	// Race with CpuProfiler::reset(), CpuProfiler::defaultReport()
 	roScopeLock(node->mutex);
 
@@ -422,12 +456,8 @@ void CpuProfiler::_end()
 		return;
 
 	node->recursionCount--;
-
-	// Only back to the parent when the current node is not inside a recursive function
-	if(node->recursionCount == 0) {
-		node->end();
-		_tls.setCurrentNode(node->parent);
-	}
+	node->end();
+	_tls.setCurrentNode(node->parent);
 }
 
 }	// namespace ro

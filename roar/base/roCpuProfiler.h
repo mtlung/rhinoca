@@ -28,8 +28,10 @@ struct CpuProfiler
 	bool enable;
 
 // Private
-	void _begin(const char name[]);
-	void _end();
+	struct CallstackNode;
+
+	CallstackNode* _begin(const char name[]);
+	void _end(CallstackNode* node);
 
 	void* _rootNode;
 	roSize _frameCount;
@@ -40,7 +42,7 @@ struct CpuProfilerScope
 {
 	CpuProfilerScope(const char name[]);
 	~CpuProfilerScope();
-	const char* _name;
+	CpuProfiler::CallstackNode* _node;
 };
 
 }	// namespace ro
