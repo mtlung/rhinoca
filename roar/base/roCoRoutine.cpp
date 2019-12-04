@@ -206,6 +206,7 @@ CoroutineScheduler::CoroutineScheduler()
 	, _bgKeepRun(false)
 	, _inUpdate(false)
 	, _destroiedCoroutine(NULL)
+	, _stackToDestroy { NULL, 0 }
 	, _sleepManager(NULL)
 {}
 
@@ -216,14 +217,13 @@ CoroutineScheduler::~CoroutineScheduler()
 
 thread_local AtomicInteger _CoroutineSchedulerInitCount = 0;
 
-roStatus CoroutineScheduler::init(roSize stackSize)
+roStatus CoroutineScheduler::init()
 {
 	if(++_CoroutineSchedulerInitCount > 1)
 		return roStatus::already_initialized;
 
 	_keepRun = true;
 	_bgKeepRun = true;
-	_stack.resizeNoInit(stackSize);
 	coro_create(&context, NULL, NULL, NULL, 0);
 
 	add(*createSleepManager());
@@ -275,10 +275,6 @@ void CoroutineScheduler::addSuspended(Coroutine& coroutine)
 
 roStatus CoroutineScheduler::update(unsigned timeSliceMilliSeconds, roUint64* nextUpdateTime)
 {
-	if(_stack.isEmpty())
-		return roStatus::not_initialized;
-
-	roAssert(!_stack.isEmpty());
 	roAssert(!_inUpdate && "this is a non-reentrant function");
 
 	_inUpdate = true;
@@ -296,36 +292,8 @@ roStatus CoroutineScheduler::update(unsigned timeSliceMilliSeconds, roUint64* ne
 		current = co;
 
 		if(!co->scheduler) {
-			co->_backupStack.clear();
-
-			roByte* stackPtr = NULL;
-			roSize stackSize = 0;
-
-			if(co->_ownStack.isEmpty()) {
-				stackPtr = _stack.bytePtr();
-				stackSize = _stack.sizeInByte();
-			}
-			else {
-				stackPtr = co->_ownStack.bytePtr();
-				stackSize = co->_ownStack.sizeInByte();
-			}
-
-			stackSize = stackSize > Coroutine::_stackPadding ? stackSize - Coroutine::_stackPadding : 0;
-
-			// Check for alignment
-			const roSize alignment = 2 * sizeof(void*);
-			roByte* alignedStackPtr = NULL;
-			if(Coroutine::_isStackGrowthReverse) {
-				roByte* p = stackPtr + stackSize;
-				alignedStackPtr = (roByte*)(((roPtrInt(p) + alignment) / alignment) * alignment - alignment);
-				stackSize -= (p - alignedStackPtr);
-				alignedStackPtr -= stackSize;
-				roAssert(alignedStackPtr == stackPtr);
-			}
-			else {
-				alignedStackPtr = (roByte*)(((roPtrInt(stackPtr) - alignment) / alignment) * alignment + alignment);
-				stackSize -= (alignedStackPtr - stackPtr);
-			}
+			if(!co->_stack.sptr)
+				roVerify(co->initStack(Coroutine::defualtMaxStackSize));
 
 #if roCPU_x86
 			// Fake the frame in our stack so the callstack looks calling from CoroutineScheduler::update
@@ -342,14 +310,7 @@ roStatus CoroutineScheduler::update(unsigned timeSliceMilliSeconds, roUint64* ne
 			// To be implement
 #endif
 
-			coro_create(&co->_context, coroutineFunc, (void*)co, alignedStackPtr, stackSize);
-		}
-
-		// Copy stack from backup to running stack
-		roSize stackUsed = co->_backupStack.sizeInByte();
-		if(stackUsed) {
-			roMemcpy(&_stack.back() - stackUsed, co->_backupStack.bytePtr(), stackUsed);
-			co->_backupStack.clear();
+			coro_create(&co->_context, coroutineFunc, (void*)co, co->_stack.sptr, co->_stack.ssze);
 		}
 
 		_currentCoroutine = co;
@@ -360,6 +321,7 @@ roStatus CoroutineScheduler::update(unsigned timeSliceMilliSeconds, roUint64* ne
 
 		if(_destroiedCoroutine == co) {
 			_destroiedCoroutine = NULL;
+			coro_stack_free(&_stackToDestroy);
 			coro_destroy(&_contextToDestroy);
 		}
 
@@ -421,7 +383,7 @@ void CoroutineScheduler::runTillAllFinish(float maxFps)
 		update(unsigned(1000.0f * regulator.targetFrameTime), &nextWakeUpTime);
 		regulator.endTask(elapsed, timeRemain);
 
-		float remainToWake = ticksToSeconds(nextWakeUpTime) - ticksToSeconds(currentTimeInTicks());
+		float remainToWake = (float)(ticksToSeconds(nextWakeUpTime) - ticksToSeconds(currentTimeInTicks()));
 		timeRemain = roMinOf2(timeRemain, remainToWake);
 
 		if(taskCount() == _backgroundList.size() + 1)	// +1 for eventCoroutine
@@ -522,6 +484,7 @@ Coroutine::Coroutine()
 	, _suspenderId(NULL)
 	, _profilerNode(NULL)
 	, _runningThreadId(0)
+	, _stack { NULL, 0 }
 	, scheduler(NULL)
 {
 	coro_create(&_context, NULL, NULL, NULL, 0);
@@ -533,8 +496,8 @@ Coroutine::~Coroutine()
 		scheduler->_destroiedCoroutine = this;
 		scheduler->_contextToDestroy = _context;
 
-		// Prevent _ownStack to be destroyed right now, since we are still running on this stack memory!
-		roSwap(_ownStack, scheduler->_stackToDestroy);
+		// Prevent _stack to be destroyed right now, since we are still running on this stack memory!
+		roSwap(_stack, scheduler->_stackToDestroy);
 	}
 	else {
 		if(_isInRun) {
@@ -544,6 +507,8 @@ Coroutine::~Coroutine()
 
 		coro_destroy(&_context);
 	}
+
+	coro_stack_free(&_stack);
 }
 
 roStatus Coroutine::initStack(roSize stackSize)
@@ -551,9 +516,11 @@ roStatus Coroutine::initStack(roSize stackSize)
 	if(_isInRun || _isActive)
 		return roStatus::assertion;
 
-	_backupStack.clear();
-	_backupStack.condense();
-	return _ownStack.resizeNoInit(stackSize + _stackPadding);
+	coro_stack_free(&_stack);
+	if(!coro_stack_alloc(&_stack, unsigned(stackSize / sizeof(void*))))
+		return roStatus::not_enough_memory;
+
+	return roStatus::ok;
 }
 
 void Coroutine::yield()

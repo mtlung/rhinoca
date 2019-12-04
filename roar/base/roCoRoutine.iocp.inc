@@ -34,6 +34,7 @@ void ioEventDispatch(const bool& keepRun, const float& _timeAllowed)
 		float t = timeAllowed;
 
 		do {
+			roScopeProfile("IOCP loop");
 			if (GetQueuedCompletionStatusEx != NULL) {
 				OVERLAPPED_ENTRY entries[32];
 				ULONG eventCount = 0;

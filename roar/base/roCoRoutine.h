@@ -21,17 +21,16 @@ struct CoroutineScheduler;
 // http://blog.panicsoftware.com/coroutines-introduction/
 // Comparable library
 // https://swtch.com/libtask/
+// https://github.com/google/marl
 // http://state-threads.sourceforge.net/
 struct Coroutine : public ListNode<Coroutine>
 {
 	Coroutine();
 	~Coroutine();
 
-	// Calling initStack is optional; if no private stack assigned,
-	// the shared stack in CoroutineScheduler will be used and swap in/our with _backupStack.
-	// NOTE: When running the program under some tool (Visual Studio's profiler) more stack space
-	// may be needed (at least 32k).
-	roStatus initStack(roSize stackSize = roMB(1));
+	// Set the max stack size allowed
+	// Virtual memory will be allocated on demand
+	roStatus initStack(roSize maxStackSize = defualtMaxStackSize);
 
 	virtual void run() = 0;
 
@@ -52,6 +51,8 @@ struct Coroutine : public ListNode<Coroutine>
 	// Get the current thread's active co-routine, if any
 	static Coroutine* current();
 
+	static const roSize defualtMaxStackSize = roMB(4);
+
 // Private
 	bool				_isInRun;		// Is inside the run() function
 	bool				_isActive;
@@ -59,8 +60,8 @@ struct Coroutine : public ListNode<Coroutine>
 	void*				_suspenderId;	// Only the one who can provide the same id can resume
 	void*				_profilerNode;	// Act as a coroutine specific variable for CpuProfiler
 	ThreadId			_runningThreadId;
-	ByteArray			_ownStack;
-	ByteArray			_backupStack;
+
+	coro_stack			_stack;
 	coro_context		_context;
 	ConstString			debugName;
 	CoroutineScheduler*	scheduler;
@@ -79,11 +80,11 @@ struct CoroutineScheduler
 	CoroutineScheduler();
 	~CoroutineScheduler();
 
-	roStatus	init				(roSize statckSize = roMB(1));
+	roStatus	init				();
 	void		add					(Coroutine& coroutine);
-	roStatus	add					(const std::function<void()>& func, const char* debugName="unamed std::function", size_t stackSize = roMB(1));
+	roStatus	add					(const std::function<void()>& func, const char* debugName="unamed std::function", size_t stackSize = Coroutine::defualtMaxStackSize);
 	void		addFront			(Coroutine& coroutine);
-	roStatus	addFront			(const std::function<void()>& func, const char* debugName="unamed std::function", size_t stackSize = roMB(1));
+	roStatus	addFront			(const std::function<void()>& func, const char* debugName="unamed std::function", size_t stackSize = Coroutine::defualtMaxStackSize);
 	void		addSuspended		(Coroutine& coroutine);
 	roStatus	update				(unsigned timeSliceMilliSeconds=0, roUint64* nextUpdateTime=nullptr);
 	void		runTillAllFinish	(float maxFps=60.f);
@@ -115,14 +116,13 @@ struct CoroutineScheduler
 	LinkList<Coroutine> _resumeNextFrameList;
 	LinkList<Coroutine> _suspendedList;
 	LinkList<_ListNode>	_backgroundList;		// For those coroutine that provide very basic service (eg. sleep and IO) should register themselves in this list
-	ByteArray			_stack;					// Multiple coroutine run on the same stack. Stack will be copied when switching coroutines
 	void*				_destroiedCoroutine;	// Coroutine that have been destroied in run() function
 	coro_context		_contextToDestroy;		// We have to delay the destruction of context, until we switch back coro to the scheduler
-	ByteArray			_stackToDestroy;
+	coro_stack			_stackToDestroy;
 	BgCoroutine*		_sleepManager;
 };	// CoroutineScheduler
 
-roStatus	coRun(const std::function<void()>& func, const char* debugName = "unamed std::function", size_t stackSize = roMB(1));
+roStatus	coRun(const std::function<void()>& func, const char* debugName = "unamed std::function", size_t stackSize = Coroutine::defualtMaxStackSize);
 bool		coSleep(float seconds);			// Returns false if unblocked by coWakeup()
 void		coWakeup(Coroutine* coroutine);	// Wake up the coroutine suspended by coSleep(). Passing a NULL coroutine will be ignored
 void		coYield();

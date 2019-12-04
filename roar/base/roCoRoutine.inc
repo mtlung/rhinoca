@@ -553,7 +553,9 @@ coro_create (coro_context *ctx, coro_func coro, void *arg, void *sptr, size_t ss
   if (!coro)
     return;
 
-  ctx->fiber = CreateFiber (ssize, coro_init, ctx);
+  // Create fiber with stack of reserved szie (ssize) and initial commited size
+  const SIZE_T iniialCommitedSize = roKB(4);
+  ctx->fiber = ::CreateFiberEx (iniialCommitedSize, ssize, 0, coro_init, ctx);
 }
 
 void
@@ -708,6 +710,8 @@ coro_stack_free (struct coro_stack *stack)
     free (stack->sptr);
   #endif
 #endif
+  stack->sptr = NULL;
+  stack->ssze = 0;
 }
 
 #endif
