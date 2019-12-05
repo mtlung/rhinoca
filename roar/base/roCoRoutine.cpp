@@ -537,18 +537,6 @@ void Coroutine::yieldFrame()
 	suspend();
 }
 
-#if !CORO_FIBER
-#if roCOMPILER_VC
-#pragma warning(disable : 4172)	// Returning address of local variable or temporary
-__declspec(noinline)
-#endif
-static void* _getCurrentStackPtr()
-{
-	char dummy;
-	return (void*)&dummy;
-}
-#endif
-
 void* Coroutine::suspend()
 {
 	roAssert(_isInRun);
@@ -561,17 +549,6 @@ void* Coroutine::suspend()
 	// Check if it's already pending for resume (happens in yield)
 	if(getList() != &scheduler->_resumeList && getList() != &scheduler->_resumeNextFrameList)
 		scheduler->_suspendedList.pushBack(*this);
-
-#if !CORO_FIBER
-	if(_ownStack.isEmpty()) {
-		// See how much stack we are using
-		roByte* currentStack = (roByte*)_getCurrentStackPtr();
-		roSize stackUsed = (&scheduler->_stack.back()) - currentStack;
-
-		// Backup the current stack
-		_backupStack.assign((&scheduler->_stack.back()) - stackUsed, stackUsed);
-	}
-#endif
 
 	{	// Dummy profile scope to count yield time
 		roScopeProfile("");

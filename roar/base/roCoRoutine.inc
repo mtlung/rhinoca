@@ -692,6 +692,12 @@ coro_stack_alloc (struct coro_stack *stack, unsigned int size)
 #endif
 }
 
+#if roCOMPILER_VC
+#pragma warning(disable : 4172)	// Returning address of local variable or temporary
+__declspec(noinline)
+#elif roCOMPILER_GCC
+#pragma GCC diagnostic ignored "-Wreturn-stack-address"
+#endif
 void*
 coro_stack_current ()
 {

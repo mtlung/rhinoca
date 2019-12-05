@@ -211,9 +211,6 @@ void MultiStartStopWatch::reset()
 
 void MultiStartStopWatch::start()
 {
-	if (_multiplier >= 1)
-		_multiplier = _multiplier;
-
 	roUint64 now = ticksSinceProgramStatup();
 	_duration += _multiplier * (now - _last);
 	_last = now;
@@ -258,9 +255,6 @@ bool CountDownTimer::isExpired(float& hint)
 
 	float current = _stopWatch.getFloat();
 	float queryPerSec = _numQuery / (current - _beginTime);
-
-	if(_numQuery > 1)
-		_numQuery = _numQuery;
 
 	// Update the hint
 	if(hint < queryPerSec)

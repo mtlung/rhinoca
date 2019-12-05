@@ -66,6 +66,8 @@ void ioEventDispatch(const bool& keepRun, const float& _timeAllowed)
 		float t = timeAllowed;
 
 		do {
+			roScopeProfile("ioEventDispatch loop");
+
 			timeval timeout;
 			timeout.tv_sec = long(t);
 			timeout.tv_usec = long((t - long(t)) * 1000000);
