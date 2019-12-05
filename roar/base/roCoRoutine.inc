@@ -554,7 +554,7 @@ coro_create (coro_context *ctx, coro_func coro, void *arg, void *sptr, size_t ss
     return;
 
   // Create fiber with stack of reserved szie (ssize) and initial commited size
-  const SIZE_T iniialCommitedSize = roKB(4);
+  constexpr SIZE_T iniialCommitedSize = roKB(4);
   ctx->fiber = ::CreateFiberEx (iniialCommitedSize, ssize, 0, coro_init, ctx);
 }
 
@@ -689,6 +689,50 @@ coro_stack_alloc (struct coro_stack *stack, unsigned int size)
   stack->sptr = base;
   return 1;
 
+#endif
+}
+
+void*
+coro_stack_current ()
+{
+  volatile char dummy;
+  return (void*)&dummy;
+}
+
+void
+coro_stack_shrink ()
+{
+#if CORO_FIBER
+  // Reference:
+  // https://www.codeproject.com/Articles/12644/How-to-release-memory-pages-occupied-by-the-thread
+
+  char* pPtr = (char*)coro_stack_current();
+
+  char* pAllocate = pPtr - (((ptrdiff_t)pPtr) % PAGESIZE) - PAGESIZE;
+  char* pGuard = pAllocate - PAGESIZE;
+  char* pFree = pGuard - PAGESIZE;
+
+  // Get the stack last page.
+  MEMORY_BASIC_INFORMATION stMemBasicInfo;
+  ::VirtualQuery(pPtr, &stMemBasicInfo, sizeof(stMemBasicInfo));
+
+  // Well, let's see how many pages are left unallocated on the stack.
+  ::VirtualQuery(stMemBasicInfo.AllocationBase, &stMemBasicInfo, sizeof(stMemBasicInfo));
+//  roAssert(stMemBasicInfo.State == MEM_RESERVE);
+
+  char* pFirstAllocated = ((char*)stMemBasicInfo.BaseAddress) + stMemBasicInfo.RegionSize;
+  if (pFirstAllocated <= pFree) {
+	// The stack doesn't look the way we want. Let's fix it by touching it.
+	volatile char nVal = *pAllocate;
+
+	// Free all the pages up to pFree (including it too).
+	::VirtualFree(pFirstAllocated, pGuard - pFirstAllocated, MEM_DECOMMIT);
+
+	// Make the guard page.
+	::VirtualAlloc(pGuard, PAGESIZE, MEM_COMMIT, PAGE_READWRITE | PAGE_GUARD);
+  }
+#else
+  /* todo */
 #endif
 }
 

@@ -23,8 +23,10 @@ typedef unsigned char roByte;
 #endif
 
 #ifdef _WIN64
+#	define roOS_WIN   1
 #	define roOS_WIN64 1
 #elif _WIN32
+#	define roOS_WIN   1
 #	define roOS_WIN32 1
 #endif
 

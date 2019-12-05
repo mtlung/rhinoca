@@ -23,6 +23,8 @@ struct CoroutineScheduler;
 // https://swtch.com/libtask/
 // https://github.com/google/marl
 // http://state-threads.sourceforge.net/
+// Go-routine are going more preemptive
+// https://github.com/golang/proposal/blob/master/design/24543-non-cooperative-preemption.md
 struct Coroutine : public ListNode<Coroutine>
 {
 	Coroutine();
@@ -50,6 +52,9 @@ struct Coroutine : public ListNode<Coroutine>
 
 	// Get the current thread's active co-routine, if any
 	static Coroutine* current();
+
+	// Reclaim committed memory base on the current stack position
+	static void shrinkStack();
 
 	static const roSize defualtMaxStackSize = roMB(4);
 

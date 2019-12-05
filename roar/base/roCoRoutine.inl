@@ -284,6 +284,11 @@ struct coro_stack
 int coro_stack_alloc (struct coro_stack *stack, unsigned int size);
 
 /*
+ * Determine current stack pointer and de-commit memory pages that are not in use.
+ */
+void coro_stack_shrink();
+
+/*
  * Free the stack allocated by coro_stack_alloc again. It is safe to
  * call this function on the coro_stack structure even if coro_stack_alloc
  * failed.

@@ -638,6 +638,11 @@ Coroutine* Coroutine::current()
 	return _currentCoroutine;
 }
 
+void Coroutine::shrinkStack()
+{
+	coro_stack_shrink();
+}
+
 }	// namespace ro
 
 #if roCOMPILER_VC && roOS_WIN64
