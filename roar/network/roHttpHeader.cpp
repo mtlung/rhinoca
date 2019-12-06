@@ -8,7 +8,7 @@ namespace ro {
 //////////////////////////////////////////////////////////////////////////
 // HttpRequestHeader
 
-static const StaticArray<const char*, 30>  _requestEnumStringMapping = {
+static const StaticArray<const char*, 32>  _requestEnumStringMapping = {
 	"Accept",
 	"Accept-Charset",
 	"Accept-Encoding",
@@ -25,6 +25,8 @@ static const StaticArray<const char*, 30>  _requestEnumStringMapping = {
 	"Expect",
 	"From",
 	"Host",
+	"If-Match",
+	"If-None-Match",
 	"Max-Forwards",
 	"",	// Method
 	"Origin",
@@ -252,10 +254,11 @@ bool HttpRequestHeader::cmpFieldNoCase(HeaderField option, const char* value) co
 //////////////////////////////////////////////////////////////////////////
 // HttpResponseHeader
 
-static const StaticArray<const char*, 5>  _responseCodeStringMapping = {
+static const StaticArray<const char*, 6>  _responseCodeStringMapping = {
 	"100 Continue",
 	"101 Switching Protocols",
 	"200 OK",
+	"304 Not Modified",
 	"404 Not Found",
 	"500 Internal Server Error",
 };

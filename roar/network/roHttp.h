@@ -51,6 +51,8 @@ struct HttpRequestHeader
 		Expect,					// Expect: 100-continue
 		From,					// From: user@example.com
 		Host,					// Host: en.wikipedia.org:80
+		IfMatch,				// If-Match: ETagValue
+		IfNoneMatch,			// If-None-Match: ETagValue
 		MaxForwards,			// Max-Forwards: 10
 		Method,					// GET / HEAD / POST / PUT / DELETE / CONNECT / OPTIONS or TRACE
 		Origin,					// Origin: http://www.example-social-network.com
@@ -96,6 +98,7 @@ struct HttpResponseHeader
 		Continue,					// 100 - Everything so far is OK, client should continue the request
 		SwitchingProtocol,			// 101 - Response to an Upgrade
 		OK,							// 200 - The request has succeeded
+		NotModified,				// 304 - Not modified
 		NotFound,					// 404 - The server can not find requested resource
 		InternalServerError,		// 500 - The server has encountered a situation it doesn't know how to handle
 	};
@@ -206,6 +209,7 @@ struct HttpServer
 	{
 		Connection();
 
+		roStatus	response(HttpResponseHeader& header);
 		roStatus	response(HttpResponseHeader& header, OStream*& os);
 		roStatus	response(HttpResponseHeader& header, OStream*& os, roSize contentSize);
 

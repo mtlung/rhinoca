@@ -144,6 +144,15 @@ static roStatus responseCommon(HttpServer::Connection& connection, HttpResponseH
 	return connection.socket.send(header.string.c_str(), header.string.size());
 }
 
+roStatus HttpServer::Connection::response(HttpResponseHeader& header)
+{
+	header.addField(HttpResponseHeader::HeaderField::Server, "Roar");
+	header.addField(HttpResponseHeader::HeaderField::Connection, keepAlive ? "keep-alive" : "close");
+	header.addField(HttpResponseHeader::HeaderField::ContentLength, "0");
+	header.string += "\r\n";
+	return socket.send(header.string.c_str(), header.string.size());
+}
+
 roStatus HttpServer::Connection::response(HttpResponseHeader& header, OStream*& os)
 {
 	roStatus st = responseCommon(*this, header, NULL);
@@ -249,7 +258,11 @@ roStatus HttpServer::start()
 		}
 
 		st = onRequest(c, header); if(!st) break;
-		st = c.oStream->closeWrite(); if(!st) break;
+		if (c.oStream.ptr()) {
+			st = c.oStream->closeWrite();
+			c.oStream.ref(nullptr);
+			if (!st) break;
+		}
 	} while (c.keepAlive);
 
 	c.socket.close();

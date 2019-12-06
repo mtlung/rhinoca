@@ -82,7 +82,7 @@ TEST_FIXTURE(HttpTest, responseHeader)
 TEST_FIXTURE(HttpTest, server)
 {
 	HttpServer server;
-	server.backlog = 512;
+	server.backlog = 256;
 	CHECK(server.init());
 
 /*	HttpClient client;
@@ -103,17 +103,27 @@ TEST_FIXTURE(HttpTest, server)
 		if (method == HttpRequestHeader::Method::Get) {
 			RangedString resourceName;
 			request.getField(HttpRequestHeader::HeaderField::Resource, resourceName);
-			roLog("info", "Requesting http resource: %s\n", resourceName.toString().c_str());
+			//roLog("info", "Requesting http resource: %s\n", resourceName.toString().c_str());
 
-			HttpResponseHeader response;
-			response.make(HttpResponseHeader::ResponseCode::OK);
-			response.addField(HttpResponseHeader::HeaderField::ContentType, "text/html; charset=utf-8");
-
+			roStatus st;
 			OStream* os = NULL;
-			roStatus st = connection.response(response, os);
-			if (!st) return st;
+			HttpResponseHeader response;
 
-			st = os->write("Hello!", 6);
+			RangedString eTag;
+			if (request.getField(HttpRequestHeader::HeaderField::IfNoneMatch, eTag) && eTag == "version1") {
+				response.make(HttpResponseHeader::ResponseCode::NotModified);
+				st = connection.response(response);
+			}
+			else {
+				response.make(HttpResponseHeader::ResponseCode::OK);
+				response.addField(HttpResponseHeader::HeaderField::ContentType, "text/html; charset=utf-8");
+				response.addField(HttpResponseHeader::HeaderField::ETag, "version1");
+
+				st = connection.response(response, os, 6);
+				if (!st) return st;
+
+				st = os->write("Hello!", 6);
+			}
 			if (!st) return st;
 		}
 		else
@@ -154,7 +164,9 @@ TEST_FIXTURE(HttpTest, server)
 
 	// To use ApacheBench for benchmarking:
 	// apt-get install apache2-utils
-	// ab -n 1000 -c 20 http://example.com/
+	// ab -n 1000 -c 20 http://localhost/
+	// apt-get install wrk
+	// wrk -t4 -c100 http://localhost/
 
 	auto runOne = [&]() {
 		while (true)
