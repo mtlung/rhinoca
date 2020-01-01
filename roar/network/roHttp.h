@@ -24,7 +24,7 @@ struct HttpRequestHeader
 	// http://www.tutorialspoint.com/http/http_methods.htm
 	enum class Method {
 		Get = 0,
-		Head, 
+		Head,
 		Post,
 		Put,
 		Delete,

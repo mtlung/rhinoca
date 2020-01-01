@@ -15,7 +15,7 @@ typedef roPtrInt socket_t;
 #   define roMICROSOFT_ERROR_H
 #endif
 
-#ifndef roMICROSOFT_ERROR_H
+#if roOS_WIN && !defined(roMICROSOFT_ERROR_H)
 #	define EALREADY		WSAEALREADY		// Operation already in progress
 #	define ECONNABORTED	WSAECONNABORTED	// Software caused connection abort
 #	define ECONNRESET	WSAECONNRESET	// Connection reset by peer
@@ -203,20 +203,20 @@ struct CoSocket : public BsdSocket
 	CoSocket();
 	~CoSocket();
 
-	roStatus	create(SocketType type);
-	roStatus	setBlocking(bool block);
-	roStatus	accept(CoSocket& socket) const;
-	roStatus	connect(const SockAddr& endPoint, float timeout = 0);
+	roStatus	create			(SocketType type);
+	roStatus	setBlocking		(bool block);
+	roStatus	accept			(CoSocket& socket) const;
+	roStatus	connect			(const SockAddr& endPoint, float timeout=0);
 
 	// If written is null, send will try to send all data in one call, fail otherwise
 	// If written is non-null, it will return as quick as possible and tell you how much data written
-	roStatus	send(const void* data, roSize len, int flags = 0, roSize* written = NULL);
+	roStatus	send			(const void* data, roSize len, int flags=0, roSize* written=NULL);
 
-	roStatus	receive(void* buf, roSize& len, int flags = 0);
-	roStatus	sendTo(const void* data, roSize len, const SockAddr& destEndPoint, int flags = 0);
-	roStatus	receiveFrom(void* buf, roSize& len, SockAddr& srcEndPoint, float timeout = 0.f, int flags = 0);
+	roStatus	receive			(void* buf, roSize& len, int flags=0);
+	roStatus	sendTo			(const void* data, roSize len, const SockAddr& destEndPoint, int flags=0);
+	roStatus	receiveFrom		(void* buf, roSize& len, SockAddr& srcEndPoint, float timeout=0.f, int flags=0);
 
-	roStatus	close();
+	roStatus	close			();
 
 // Private
 	mutable Coroutine* blockingCoroutine = NULL;

@@ -5,7 +5,7 @@
 
 namespace ro {
 
-template<typename T>	
+template<typename T>
 struct TypeOf {
 	static T valueMin();
 	static T valueMax();
@@ -20,7 +20,7 @@ struct TypeOf {
 #endif
 };
 
-template<typename T>	
+template<typename T>
 struct TypeOf<T*> {
 	static bool isPOD() { return true; }
 };

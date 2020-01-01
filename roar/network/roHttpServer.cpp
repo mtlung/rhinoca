@@ -159,9 +159,9 @@ roStatus HttpServer::Connection::response(HttpResponseHeader& header, OStream*& 
 	if (!st) return st;
 
 	// TODO: Resue oStream if the type was the same
-	oStream = std::move(_allocator.newObj<HttpServerChunkedSizeOStream>(socket));
+	oStream = _allocator.newObj<HttpServerChunkedSizeOStream>(socket);
 	if (supportGZip) {
-		auto zip = std::move(_allocator.newObj<GZipOStream>());
+		auto zip = _allocator.newObj<GZipOStream>();
 		zip->init(std::move(oStream));
 		oStream = std::move(zip);
 	}
@@ -180,7 +180,7 @@ roStatus HttpServer::Connection::response(HttpResponseHeader& header, OStream*& 
 	if (!st) return st;
 
 	// TODO: Resue oStream if the type was the same
-	oStream = std::move(_allocator.newObj<HttpServerFixedSizeOStream>(socket, contentSize));
+	oStream = _allocator.newObj<HttpServerFixedSizeOStream>(socket, contentSize);
 	os = oStream.ptr();
 	return st;
 }

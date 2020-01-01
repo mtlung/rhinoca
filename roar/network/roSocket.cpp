@@ -170,7 +170,9 @@ static roStatus errorToStatus(BsdSocket::ErrorCode errorCode)
 	switch(errorCode) {
 	case OK:			return roStatus::ok;
 	case EALREADY:		return roStatus::net_already;
+#if roOS_WIN
 	case WSA_OPERATION_ABORTED:
+#endif
 	case ECONNABORTED:	return roStatus::net_connaborted;
 	case ECONNRESET:	return roStatus::net_connreset;
 	case ECONNREFUSED:	return roStatus::net_connrefused;
@@ -178,8 +180,10 @@ static roStatus errorToStatus(BsdSocket::ErrorCode errorCode)
 	case EHOSTDOWN:		return roStatus::net_hostdown;
 #endif
 	case EHOSTUNREACH:	return roStatus::net_hostunreach;
+#if roOS_WIN
 	case WSA_IO_PENDING:
 	case WSA_IO_INCOMPLETE:
+#endif
 	case EINPROGRESS:	return roStatus::in_progress;
 	case ENETDOWN:		return roStatus::net_netdown;
 	case ENETRESET:		return roStatus::net_netreset;

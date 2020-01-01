@@ -2,7 +2,11 @@
 #define __roCompressedStream_h__
 
 #include "roIOStream.h"
-#include "../../thirdParty/zlib/zlib.h"
+#if __has_include(<zlib.h>)
+#	include <zlib.h>
+#else
+#	include "../../thirdParty/zlib/zlib.h"
+#endif
 
 namespace ro {
 

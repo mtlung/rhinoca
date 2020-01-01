@@ -375,7 +375,7 @@ void CoroutineScheduler::runTillAllFinish(float maxFps)
 		eventCoroutine = currentCoroutine();
 		ioEventDispatch(keepRun, timeRemain);
 		signal = true;
-	}, "IO Event dispatch loop", roKB(16));
+	}, "IO Event dispatch loop", roKB(32));
 
 	while(taskCount() > 0) {
 		regulator.beginTask();
