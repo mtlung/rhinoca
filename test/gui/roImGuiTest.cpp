@@ -21,7 +21,7 @@ static const char* driverStr[] =
 TEST_FIXTURE(ImGuiTest, button)
 {
 	createWindow(300, 300);
-	initContext(driverStr[driverIndex]);
+	CHECK(initContext(driverStr[driverIndex]));
 	Canvas canvas;
 	canvas.init();
 	CHECK(guiInit());
@@ -73,7 +73,7 @@ TEST_FIXTURE(ImGuiTest, button)
 TEST_FIXTURE(ImGuiTest, autoSizedPanel)
 {
 	createWindow(380, 120);
-	initContext(driverStr[driverIndex]);
+	CHECK(initContext(driverStr[driverIndex]));
 	Canvas canvas;
 	canvas.init();
 	CHECK(guiInit());
@@ -97,7 +97,7 @@ TEST_FIXTURE(ImGuiTest, autoSizedPanel)
 			guiCheckBox(Rectf(120, 0), "Button auto size", autoSizedButton);
 
 			String str;
-			strFormat(str, "Outer most panel: width-{}, height-{}", panel[0].deducedRect.w, panel[0].deducedRect.h);
+			CHECK(strFormat(str, "Outer most panel: width-{}, height-{}", panel[0].deducedRect.w, panel[0].deducedRect.h));
 			guiLabel(Rectf(120, 40), str.c_str());
 		guiEnd();
 		driver->swapBuffers();
@@ -109,7 +109,7 @@ TEST_FIXTURE(ImGuiTest, autoSizedPanel)
 TEST_FIXTURE(ImGuiTest, flowLayout)
 {
 	createWindow(300, 300);
-	initContext(driverStr[driverIndex]);
+	CHECK(initContext(driverStr[driverIndex]));
 	Canvas canvas;
 	canvas.init();
 	CHECK(guiInit());
@@ -157,7 +157,7 @@ TEST_FIXTURE(ImGuiTest, flowLayout)
 TEST_FIXTURE(ImGuiTest, tabPanel)
 {
 	createWindow(300, 300);
-	initContext(driverStr[driverIndex]);
+	CHECK(initContext(driverStr[driverIndex]));
 	Canvas canvas;
 	canvas.init();
 	CHECK(guiInit());
@@ -193,7 +193,7 @@ TEST_FIXTURE(ImGuiTest, tabPanel)
 TEST_FIXTURE(ImGuiTest, textArea)
 {
 	createWindow(300, 300);
-	initContext(driverStr[driverIndex]);
+	CHECK(initContext(driverStr[driverIndex]));
 	Canvas canvas;
 	canvas.init();
 	CHECK(guiInit());

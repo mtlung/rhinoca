@@ -12,7 +12,7 @@ struct InputTest : GraphicsTestBase
 TEST_FIXTURE(InputTest, mouse)
 {
 	createWindow(200, 200);
-	subSystems.init();
+	CHECK(subSystems.init());
 
 	roInputDriver* inputDriver = subSystems.inputDriver;
 

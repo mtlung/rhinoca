@@ -192,6 +192,7 @@ inline roStatus RingBuffer::flushWrite(roSize sizeToFlush)
 inline void RingBuffer::compactReadBuffer()
 {
 	ByteArray& rb = _rBuf();
+	roAssert(rb.size() >= _rPos);
 	roSize size = rb.size() - _rPos;
 	roMemmov(rb.begin(), rb.begin() + _rPos, size);
 	rb.resize(size);

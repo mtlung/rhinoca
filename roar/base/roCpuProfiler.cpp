@@ -343,15 +343,15 @@ String CpuProfiler::report(roSize nameLength, float skipMargin) const
 	float fps_ = fps();
 
 	String str;
-	strFormat(str, "FPS: {}\n", static_cast<size_t>(fps_));
+	roVerify(strFormat(str, "FPS: {}\n", static_cast<size_t>(fps_)));
 
 	String name = "Name";
 	strPaddingRight(name, ' ', nameLength);
 
 	const char* format = "{}{pr12 }{pr12 }{pr12 }{pr12 }{pr12 }{pr12 }\n";
-	strFormat(str, format,
+	roVerify(strFormat(str, format,
 		name.c_str(), "TT/F %", "ST/F %", "TT/C", "ST/C", "Peak TT/C", "C/F"
-	);
+	));
 
 	CallstackNode* n = reinterpret_cast<CallstackNode*>(_rootNode);
 	float percent = 100 * fps_;
